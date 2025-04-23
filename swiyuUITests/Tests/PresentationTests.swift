@@ -10,12 +10,8 @@ final class PresentationTests: XCTestCase {
     app.launchArguments.append("-disable-onboarding")
     app.launchArguments.append("-presentation")
     app.launch()
-  }
-
-  override func tearDown() {
-    let screenshot = XCUIScreen.main.screenshot()
-    let attachment = XCTAttachment(screenshot: screenshot)
-    add(attachment)
+    XCUIDevice.shared.orientation = .portrait
+    XCTAssertTrue(XCUIDevice.shared.orientation.isPortrait)
   }
 
   override func tearDownWithError() throws {
@@ -24,7 +20,8 @@ final class PresentationTests: XCTestCase {
     add(attachment)
   }
 
-  func testBasicNavigation() {
+  func testBasicNavigation() throws {
+    throw XCTSkip("Skipping this test until mocking strategy is reworked.")
     let loginScreen = LoginScreen(app: app)
     loginScreen.login()
 

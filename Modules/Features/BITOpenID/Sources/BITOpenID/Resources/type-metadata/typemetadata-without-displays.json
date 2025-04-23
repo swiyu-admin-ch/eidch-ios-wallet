@@ -1,0 +1,8 @@
+{
+  "vct": "https://example.com/education_credential",
+  "name": "Education Credential",
+  "description": "A credential for academic achievements",
+  "extends": "https://example.com/base_credential",
+  "schema": "credential_schema",
+  "schema_uri": "https://example.com/schema.json"
+}

@@ -60,7 +60,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   func deny() async {
     denyTask = Task.detached(priority: .background) { [weak self] in
       guard let self else { return }
-      try? await denyPresentationUseCase.execute(context: context, error: .clientRejected)
+      try? await denyPresentationUseCase.execute(requestObject: context.requestObject, error: .clientRejected)
     }
     router.presentationResultState(with: .deny, context: context)
   }

@@ -1,13 +1,15 @@
+import BITCredentialShared
 import BITCrypto
 import BITJWT
 import BITOpenID
+import BITSdJWT
 import Foundation
 
 // MARK: - MockOpenIDRepository
 
 struct MockOpenIDRepository: OpenIDRepositoryProtocol {
   func fetchVcSchemaData(from url: URL) async throws -> VcSchema {
-    VcSchema()
+    TypeMetadata.Mock.vcSchemaData
   }
 
   func fetchTypeMetadata(from url: URL) async throws -> (TypeMetadata, Data) {
@@ -34,17 +36,16 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     CredentialResponse.Mock.sample
   }
 
-  func fetchCredentialStatus(from url: URL) async throws -> JWT {
-    try JWT.Mock.credentialStatusSample()
+  func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
+    try TokenStatusList.Mock.credentialStatusSample()
   }
 
   func fetchRequestObject(from url: URL) async throws -> Data {
-    Data()
+    RequestObject.Mock.sampleData
   }
 
-  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [String] {
-    let foo = try TrustStatement.Mock.trustStatementValidSample()
-    return foo
+  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [TrustStatement] {
+    try TrustStatement.Mock.trustStatementValidSample()
   }
 
 }
@@ -63,6 +64,7 @@ extension TypeMetadata {
   struct Mock {
     static let sample: TypeMetadata = Mocker.decode(fromFile: "typemetadata-ui-mocks")
     static let sampleData: Data = Mocker.getData(fromFile: "typemetadata-ui-mocks") ?? Data()
+    static let vcSchemaData: Data = Mocker.getData(fromFile: "vc-schema-ui-mocks") ?? Data()
   }
 }
 
@@ -98,11 +100,11 @@ extension PublicKeyInfo {
   }
 }
 
-// MARK: - JWT.Mock
+// MARK: - TokenStatusList.Mock
 
-extension JWT {
+extension TokenStatusList {
   struct Mock {
-    static func credentialStatusSample() throws -> JWT {
+    static func credentialStatusSample() throws -> JWS<TokenStatusList> {
       Mocker.decodeRawText(fromFile: "jwt-credential-status-ui-mocks")
     }
   }
@@ -112,9 +114,10 @@ extension JWT {
 
 extension TrustStatement {
   struct Mock {
-    static func trustStatementValidSample() throws -> [String] {
-      let rawTrustStatement: String = Mocker.decodeRawText(fromFile: "jwt-trust-statement-valid-ui-mocks")
-      return [rawTrustStatement]
+    static func trustStatementValidSample() throws -> [TrustStatement] {
+      let trustStatementData: Data = Mocker.getData(fromFile: "jwt-trust-statement-valid-ui-mocks", ofType: "txt") ?? Data()
+      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(TrustStatementPayload.self, from: trustStatementData)
+      return [trustStatement]
     }
   }
 }
@@ -124,5 +127,14 @@ extension TrustStatement {
 extension RequestObject {
   enum Mock {
     static let sample: RequestObject = Mocker.decode(fromFile: "request-object-multipass")
+    static let sampleData: Data = Mocker.getData(fromFile: "request-object-multipass") ?? Data()
+  }
+}
+
+// MARK: - Credential.Mock
+
+extension Credential {
+  enum Mock {
+    public static let sampleVC: Credential = Mocker.decode(fromFile: "credential-database-sample")
   }
 }

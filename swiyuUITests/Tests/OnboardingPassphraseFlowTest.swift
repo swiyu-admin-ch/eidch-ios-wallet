@@ -10,15 +10,10 @@ final class OnboardingPassphraseFlowTest: XCTestCase {
   override func setUp() {
     super.setUp()
     app = XCUIApplication()
-    app.launch()
+    app.launchArguments.append("-enable-onboarding")
     XCUIDevice.shared.orientation = .portrait
+    app.launch()
     XCTAssertTrue(XCUIDevice.shared.orientation.isPortrait)
-  }
-
-  override func tearDown() {
-    let screenshot = XCUIScreen.main.screenshot()
-    let attachment = XCTAttachment(screenshot: screenshot)
-    add(attachment)
   }
 
   override func tearDownWithError() throws {

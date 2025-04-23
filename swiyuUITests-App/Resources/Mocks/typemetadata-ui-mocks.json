@@ -125,5 +125,5 @@
     }
   ],
   "schema_uri": "https://exampleuniversity.com/public/credential-schema-0.9",
-  "schema_uri#integrity": "sha256-o984vn819a48ui1llkwPmKjZ5t0WRL5ca_xGgX3c1VLmXfh"
+  "schema_uri#integrity": "sha256-6RCaxIVvIkgL2SkBzWGqpBzBC4ou8i2TdmalL0h91CY="
 }

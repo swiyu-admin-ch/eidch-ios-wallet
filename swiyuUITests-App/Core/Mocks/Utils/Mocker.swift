@@ -1,7 +1,10 @@
 import BITJWT
+import BITOpenID
 import Foundation
 
 // MARK: - Mocker
+
+// swiftlint:disable force_unwrapping
 
 struct Mocker {
 
@@ -10,15 +13,16 @@ struct Mocker {
     return decode(fromData: data, dateFormatter: dateFormatter)
   }
 
-  static func decodeRawText(fromFile filename: String, bundle: Bundle = Bundle.main) -> JWT {
+  static func decodeRawText(fromFile filename: String, bundle: Bundle = Bundle.main) -> JWS<TokenStatusList> {
     guard let fileURL = bundle.url(forResource: filename, withExtension: "txt")
     else { fatalError("Impossible to read \(filename)") }
-    do { return try JWT(
-      from:
-      String(contentsOf: fileURL, encoding: .utf8)
+    let decoder = JWSDecoder()
+    do {
+      let rawString = try String(contentsOf: fileURL, encoding: .utf8)
         .replacingOccurrences(of: "\n", with: "")
         .replacingOccurrences(of: "\"", with: "")
-    ) }
+      return try decoder.decode(TokenStatusList.self, from: rawString.data(using: .utf8)!)
+    }
     catch { fatalError("Error reading the file: \(error.localizedDescription)") }
   }
 
@@ -72,3 +76,5 @@ extension JSONDecoder {
   }
 
 }
+
+// swiftlint:enable all

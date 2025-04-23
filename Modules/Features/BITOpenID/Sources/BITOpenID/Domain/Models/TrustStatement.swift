@@ -1,50 +1,41 @@
-import BITAnyCredentialFormat
+import BITCrypto
 import BITJWT
 import BITSdJWT
+import Foundation
 
-// MARK: - TrustStatementError
+public typealias TrustStatement = SdJWS<TrustStatementPayload>
 
-enum TrustStatementError: Error, Equatable {
-  case keyNotFound(_ key: String)
-}
+// MARK: - TrustStatementPayload
 
-// MARK: - TrustStatement
+public struct TrustStatementPayload: JWTPayload, Codable, Equatable {
 
-public class TrustStatement: VcSdJwt {
+  // MARK: Public
 
-  override public init(from rawVcSdJwt: String) throws {
-    try super.init(from: rawVcSdJwt)
+  public let type: String? = "vc+sd-jwt"
 
-    guard let typ = type, typ == CredentialFormat.vcSdJwt.rawValue else {
-      throw TrustStatementError.keyNotFound("typ")
-    }
+  public var issuer: String
 
-    guard let alg = JWTAlgorithm(rawValue: algorithm), alg == .ES256 else {
-      throw TrustStatementError.keyNotFound("alg")
-    }
+  public var activatedAt: Date
 
-    if subject == nil && disclosableClaims.first(where: { $0.key == "sub" })?.value == nil {
-      throw TrustStatementError.keyNotFound("sub")
-    }
+  public var expiredAt: Date
 
-    if vct == nil && disclosableClaims.first(where: { $0.key == "vct" })?.value == nil {
-      throw TrustStatementError.keyNotFound("vct")
-    }
+  public var vct: String
 
-    if issuedAt == nil {
-      throw TrustStatementError.keyNotFound("iat")
-    }
+  public var statusList: VcSdJwtTokenStatusList
 
-    if activatedAt == nil {
-      throw TrustStatementError.keyNotFound("nbf")
-    }
+  public var subject: String?
 
-    if expiredAt == nil {
-      throw TrustStatementError.keyNotFound("exp")
-    }
+  public var issuedAt: Date?
 
-    if statusList == nil {
-      throw TrustStatementError.keyNotFound("status")
-    }
+  // MARK: Internal
+
+  enum CodingKeys: String, CodingKey {
+    case issuer = "iss"
+    case activatedAt = "nbf"
+    case expiredAt = "exp"
+    case vct
+    case statusList = "status"
+    case subject = "sub"
+    case issuedAt = "iat"
   }
 }

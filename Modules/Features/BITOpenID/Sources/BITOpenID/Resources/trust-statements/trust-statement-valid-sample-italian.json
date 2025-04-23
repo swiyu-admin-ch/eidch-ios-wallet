@@ -1,0 +1,22 @@
+{
+  "iss": "issuer",
+  "nbf": 1729491478,
+  "exp": 1742455078,
+  "iat": 1729498679,
+  "status": {
+    "status_list": {
+      "idx": 6,
+      "uri": "status_list_uri"
+    }
+  },
+  "sub": "subject",
+  "orgName": {
+    "it-IT": "IT orgName"
+  },
+  "prefLang": "it-IT",
+  "vct": "TrustStatementMetadataV1",
+  "logoUri": {
+    "en": "en logoUri",
+    "de-CH": "de-CH logoUri"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "nbf": 1742428800,
+  "vct": "TrustStatementMetadataV1",
+  "iss": "issuer",
+  "exp": 1767225600,
+  "iat": 1742453211,
+  "status": {
+    "status_list": {
+      "uri": "status_list_uri",
+      "idx": 30
+    }
+  },
+  "orgName": {
+    "en": "EN orgName",
+    "de-CH": "de-CH orgName"
+  },
+  "sub": "subject"
+}

@@ -16,6 +16,10 @@ extension Container {
     self { CredentialOfferModule(credential: $0, trustStatement: $1) }
   }
 
+  var processPresentationRequestUseCase: Factory<ProcessPresentationRequestUseCaseProtocol> {
+    self { ProcessPresentationRequestUseCase() }
+  }
+
   // MARK: - Camera
 
   var cameraPermissionViewModel: ParameterFactory<InvitationRouterRoutes, CameraPermissionViewModel> {

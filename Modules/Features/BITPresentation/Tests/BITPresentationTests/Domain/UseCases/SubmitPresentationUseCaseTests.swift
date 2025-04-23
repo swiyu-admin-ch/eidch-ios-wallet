@@ -25,13 +25,13 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   }
 
   func testSubmitPresentation_Success_JustRuns() async throws {
-    try await useCase.execute(context: mockContext)
+    try await useCase.execute(context: context)
 
-    XCTAssertEqual(spyRepository.submitPresentationFromPresentationRequestBodyReceivedArguments?.url.absoluteString, mockContext.requestObject.responseUri)
+    XCTAssertEqual(spyRepository.submitPresentationFromPresentationRequestBodyReceivedArguments?.url.absoluteString, context.requestObject.responseUri)
     XCTAssertEqual(spyRepository.submitPresentationFromPresentationRequestBodyReceivedArguments?.presentationRequestBody, mockPresentationRequestBody)
 
     XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
-    XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.requestObject, mockContext.requestObject)
+    XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
     XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, mockInputDescriptor)
   }
 
@@ -47,10 +47,10 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   }
 
   func testSubmitPresentation_NoSelectedCredential_ThrowsException() async throws {
-    mockContext.selectedCredentials = [:]
+    context.selectedCredentials = [:]
 
     do {
-      try await useCase.execute(context: mockContext)
+      try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch SubmitPresentationError.inputDescriptorsNotFound {
       XCTAssertFalse(spyRepository.submitPresentationFromPresentationRequestBodyCalled)
@@ -63,7 +63,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(context: mockContext)
+      try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
       XCTAssertTrue(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorCalled)
@@ -76,7 +76,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     spyRepository.submitPresentationFromPresentationRequestBodyThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(context: mockContext)
+      try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
       XCTAssertTrue(spyRepository.submitPresentationFromPresentationRequestBodyCalled)
@@ -87,7 +87,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockContext = PresentationRequestContext.Mock.vcSdJwtSample
+  private let context = PresentationRequestContext.Mock.vcSdJwtSample
   private var mockPresentationRequestBody = PresentationRequestBody(vpToken: "vpToken", presentationSubmission: PresentationRequestBody.PresentationSubmission(id: "id", definitionId: "definitionId", descriptorMap: []))
 
   // swiftlint:disable all
@@ -108,12 +108,12 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
 
     mockCompatibleCredential = .Mock.BIT
     // swiftlint: disable all
-    mockInputDescriptor = mockContext.requestObject.presentationDefinition.inputDescriptors.first!
+    mockInputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first!
     // swiftlint: enable all
   }
 
   private func success() {
-    mockContext.selectedCredentials[mockInputDescriptor.id] = mockCompatibleCredential
+    context.selectedCredentials[mockInputDescriptor.id] = mockCompatibleCredential
     spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReturnValue = mockPresentationRequestBody
   }
 

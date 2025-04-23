@@ -3,5 +3,5 @@ import Spyable
 
 @Spyable
 public protocol DenyPresentationUseCaseProtocol {
-  func execute(context: PresentationRequestContext, error: PresentationErrorRequestBody.ErrorType) async throws
+  func execute(requestObject: RequestObject, error: PresentationErrorRequestBody.ErrorType) async throws
 }

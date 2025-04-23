@@ -1,6 +1,9 @@
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
+import Factory
 import Spyable
 import XCTest
 @testable import BITAnyCredentialFormat
+@testable import BITOca
 @testable import BITOpenID
 
 final class FetchAnyCredentialUseCaseFactoryTests: XCTestCase {
@@ -13,14 +16,18 @@ final class FetchAnyCredentialUseCaseFactoryTests: XCTestCase {
     spyFetchCredentialVcSdJwtUseCase = FetchAnyCredentialUseCaseProtocolSpy()
     mockDispatcher = [.vcSdJwt: spyFetchCredentialVcSdJwtUseCase]
 
-    useCase = FetchAnyCredentialUseCase(anyFetchCredentialDispatcher: mockDispatcher)
+    Container.shared.anyFetchCredentialDispatcher.register { self.mockDispatcher }
+
+    useCase = FetchAnyCredentialUseCase()
   }
 
   func testExecuteVcSdJwtUseCase() async throws {
-    spyFetchCredentialVcSdJwtUseCase.executeForReturnValue = mockVcSdJwtCredential
+    spyFetchCredentialVcSdJwtUseCase.executeForReturnValue = (mockVcSdJwtCredential, mockRawOcaBundle)
 
     let anyCredential = try await useCase.execute(for: .Mock.sampleVcSdJwt)
-    XCTAssertEqual(mockVcSdJwtCredential.raw, anyCredential.raw)
+
+    XCTAssertEqual(mockVcSdJwtCredential.raw, anyCredential.credential.raw)
+    XCTAssertEqual(anyCredential.ocaBundle, mockRawOcaBundle)
     XCTAssertTrue(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
   }
 
@@ -38,11 +45,11 @@ final class FetchAnyCredentialUseCaseFactoryTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
   private var useCase: FetchAnyCredentialUseCase!
   private var spyFetchCredentialVcSdJwtUseCase: FetchAnyCredentialUseCaseProtocolSpy!
   private var mockDispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]!
   private var mockVcSdJwtCredential: AnyCredentialSpy!
-  // swiftlint:enable all
-
+  private let mockRawOcaBundle = RawOcaBundle()
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

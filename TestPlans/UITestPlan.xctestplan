@@ -13,10 +13,6 @@
   },
   "testTargets" : [
     {
-      "skippedTests" : [
-        "PresentationTests",
-        "ReceiveTests"
-      ],
       "target" : {
         "containerPath" : "container:swiyu.xcodeproj",
         "identifier" : "94D86853381CAD4741192E8C",

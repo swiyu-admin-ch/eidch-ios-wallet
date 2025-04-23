@@ -196,4 +196,21 @@ extension CodableValue {
       "\(dictionary)"
     }
   }
+
+  public func convertToAny() -> Any {
+    switch self {
+    case .string(let string):
+      string
+    case .int(let int):
+      int
+    case .double(let double):
+      double
+    case .bool(let bool):
+      bool
+    case .array(let array):
+      array.map { $0?.convertToAny() }
+    case .dictionary(let dictionary):
+      dictionary.mapValues { $0?.convertToAny() }
+    }
+  }
 }

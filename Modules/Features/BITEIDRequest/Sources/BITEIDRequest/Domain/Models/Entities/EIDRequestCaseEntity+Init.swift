@@ -17,7 +17,7 @@ extension EIDRequestCaseEntity {
     rawMRZ = eIDRequestCase.rawMRZ
 
     if let eIDRequestCaseState = eIDRequestCase.state {
-      state = try EIDRequestStateEntity(eIDRequestCaseState)
+      state = EIDRequestStateEntity(eIDRequestCaseState)
     }
 
     documentNumber = eIDRequestCase.documentNumber

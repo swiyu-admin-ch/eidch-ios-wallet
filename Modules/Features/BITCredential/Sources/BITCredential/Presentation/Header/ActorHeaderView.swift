@@ -41,6 +41,7 @@ public struct ActorHeaderView: View {
             .padding(.x3)
             .background(ThemingAssets.Background.secondary.swiftUIColor)
             .clipShape(Circle())
+            .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
         }
 
         VStack(alignment: .leading, spacing: 0) {
@@ -49,6 +50,7 @@ public struct ActorHeaderView: View {
             .font(.custom.title3Emphasized)
             .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
             .accessibilityLabel(viewModel.name)
+            .accessibilityIdentifier(AccessibilityIdentifier.title.rawValue)
 
           HStack(alignment: .center, spacing: .x1) {
             if !sizeCategory.isAccessibilityCategory {
@@ -59,6 +61,7 @@ public struct ActorHeaderView: View {
               .foregroundStyle(viewModel.trustStatus.color)
               .accessibilityLabel(viewModel.trustStatus.description)
               .padding(.top, 2)
+              .accessibilityIdentifier(AccessibilityIdentifier.verifiedStatus.rawValue)
           }
         }
 
@@ -70,6 +73,12 @@ public struct ActorHeaderView: View {
   }
 
   // MARK: Internal
+
+  enum AccessibilityIdentifier: String {
+    case title
+    case verifiedStatus
+    case image
+  }
 
   @Environment(\.sizeCategory) var sizeCategory
   @Environment(\.colorScheme) var colorScheme

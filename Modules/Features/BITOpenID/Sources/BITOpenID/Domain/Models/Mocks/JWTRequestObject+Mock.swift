@@ -1,13 +1,21 @@
 #if DEBUG
 import Foundation
+@testable import BITJWT
 @testable import BITTestingCore
+
+// swiftlint: disable force_try
 
 extension JWTRequestObject: Mockable {
   struct Mock {
-    static let sample: JWTRequestObject = Mocker.decode(fromFile: "jwt-request-object-multipass", ofType: "json", bundle: Bundle.module)
-    static let sampleWithoutKid: JWTRequestObject = Mocker.decode(fromFile: "jwt-request-object-without-kid", ofType: "json", bundle: Bundle.module)
-    static let sampleWithUnsupportedAlgorithm: JWTRequestObject = Mocker.decode(fromFile: "jwt-request-object-unsupported-algo", ofType: "json", bundle: Bundle.module)
-    static let jwtSampleData: Data = Mocker.getData(fromFile: "jwt-request-object-multipass", ofType: "txt", bundle: Bundle.module) ?? Data()
+    private static let jwsHeader = JWSHeader(algorithm: JWTAlgorithm.ES256)
+    static let sample: JWTRequestObject = createObject(header: jwsHeader)
+    static let unsupportedAlgorithm: JWTRequestObject = createObject(header: JWSHeader(algorithm: JWTAlgorithm.ES384))
+
+    private static func createObject(header: JWSHeader) -> JWTRequestObject {
+      let jws = JWS(payload: RequestObject.Mock.VcSdJwt.sample, rawJWS: "rawJWS", rawPayload: "{\"iss\":\"issuer\"}", header: header)
+      return try! JWTRequestObject(from: jws)
+    }
   }
 }
+// swiftlint: enable all
 #endif

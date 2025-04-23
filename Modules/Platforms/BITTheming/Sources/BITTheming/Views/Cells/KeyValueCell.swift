@@ -23,6 +23,7 @@ public struct KeyValueCell: View {
         .lineLimit(lineLimit)
         .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
         .accessibilityLabel("\(L10n.cellValueAccessibilityLabel) \(value)")
+        .accessibilityIdentifier(key)
     }
   }
 
@@ -109,8 +110,14 @@ public struct IconKeyValueCell: View {
             Divider()
           }
         }
-      })
+      }).accessibilityIdentifier(AccessibilityIdentifier.button.rawValue)
     }
+  }
+
+  // MARK: Internal
+
+  enum AccessibilityIdentifier: String {
+    case button
   }
 
   // MARK: Private

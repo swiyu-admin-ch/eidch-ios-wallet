@@ -52,7 +52,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
     XCTAssertEqual(router.calledPresentationResultState, .success(claims: viewModel.credential.requestedClaims))
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
+    XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
   @MainActor
@@ -65,7 +65,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertEqual(router.calledPresentationResultState, .error)
     XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
+    XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
   @MainActor
@@ -78,7 +78,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertEqual(router.calledPresentationResultState, .invalidCredential(claims: viewModel.credential.requestedClaims))
     XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
+    XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
   @MainActor
@@ -91,7 +91,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertEqual(router.calledPresentationResultState, .cancelled)
     XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
+    XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
   @MainActor
@@ -101,22 +101,22 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertEqual(router.calledPresentationResultState, .deny)
-    XCTAssertTrue(denyPresentationUseCase.executeContextErrorCalled)
-    XCTAssertEqual(denyPresentationUseCase.executeContextErrorReceivedArguments?.error, .clientRejected)
+    XCTAssertTrue(denyPresentationUseCase.executeRequestObjectErrorCalled)
+    XCTAssertEqual(denyPresentationUseCase.executeRequestObjectErrorReceivedArguments?.error, .clientRejected)
     XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
   }
 
   @MainActor
   func testDeny_withError() async throws {
-    denyPresentationUseCase.executeContextErrorThrowableError = TestingError.error
+    denyPresentationUseCase.executeRequestObjectErrorThrowableError = TestingError.error
 
     await viewModel.deny()
     try await viewModel.denyTask?.value
 
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertEqual(router.calledPresentationResultState, .deny)
-    XCTAssertTrue(denyPresentationUseCase.executeContextErrorCalled)
-    XCTAssertEqual(denyPresentationUseCase.executeContextErrorReceivedArguments?.error, .clientRejected)
+    XCTAssertTrue(denyPresentationUseCase.executeRequestObjectErrorCalled)
+    XCTAssertEqual(denyPresentationUseCase.executeRequestObjectErrorReceivedArguments?.error, .clientRejected)
     XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
   }
 

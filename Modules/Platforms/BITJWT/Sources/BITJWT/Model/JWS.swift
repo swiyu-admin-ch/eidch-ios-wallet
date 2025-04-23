@@ -1,59 +1,51 @@
 import BITCrypto
 import Foundation
 
-// MARK: - JWTType
-
-public protocol JWTType {
-  var type: String { get }
-}
-
 // MARK: - JWS
 
 /// This class represents a signed JWT which is specified by https://www.rfc-editor.org/rfc/rfc7519.html
 /// The payload is generic and can consist of registered, public and private claims (see specifications for more details).
 
-open class JWS<T: JWTType & Codable & Equatable>: Equatable {
+open class JWS<T: Codable & Equatable>: JWSValidatable, Equatable {
 
   // MARK: Lifecycle
 
   public init(
     payload: T,
-    algorithm: String,
-    type: String? = nil,
-    keyIdentifier: String? = nil,
-    jwk: PublicKeyInfo.JWK? = nil) throws
+    rawJWS: String,
+    rawPayload: String,
+    header: JWSHeader)
   {
     self.payload = payload
-    self.algorithm = algorithm
-    self.type = type
-    self.keyIdentifier = keyIdentifier
-    self.jwk = jwk
+    self.rawJWS = rawJWS
+    self.rawPayload = rawPayload
+    self.header = header
   }
 
   // MARK: Public
 
-  /// Payload that consists of registered, public and private claims
+  /// Payload that consists of registered, public and private claims that are known
   public let payload: T
 
-  /// Header algorithm value aka `alg` in a JWSHeader
-  public let algorithm: String
+  /// Raw JWS as it was before decoding
+  public let rawJWS: String
 
-  /// Header type value aka `typ` in a JWSHeader
-  public let type: String?
+  /// Raw payload json that consists of all registered, public and private claims
+  public let rawPayload: String
 
-  /// The key ID is a hint indicating which key was used to secure the JWS
-  public let keyIdentifier: String?
+  /// The header of the JWS
+  public let header: JWSHeader
 
-  /// The key info
-  public let jwk: PublicKeyInfo.JWK?
+}
 
-  // MARK: Equatable
+// MARK: Equatable
+
+extension JWS {
 
   public static func == (lhs: JWS<T>, rhs: JWS<T>) -> Bool {
     lhs.payload == rhs.payload &&
-      lhs.algorithm == rhs.algorithm &&
-      lhs.type == rhs.type &&
-      lhs.keyIdentifier == rhs.keyIdentifier &&
-      lhs.jwk == rhs.jwk
+      lhs.rawJWS == rhs.rawJWS &&
+      lhs.rawPayload == rhs.rawPayload &&
+      lhs.header == rhs.header
   }
 }

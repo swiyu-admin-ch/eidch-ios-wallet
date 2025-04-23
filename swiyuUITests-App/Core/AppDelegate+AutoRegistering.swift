@@ -14,6 +14,7 @@ extension Container: AutoRegistering {
     loadingDelay.register { 0 }
 
     openIDRepository.register { MockOpenIDRepository() }
+
     versionEnforcementRepository.register { MockVersionEnforcementRepository() }
     trustRegistryRepository.register { MockTrustRegistryRepository() }
 
@@ -22,21 +23,15 @@ extension Container: AutoRegistering {
     hasDevicePinUseCase.register { MockHasDevicePinUseCase(true) }
     loginPinCodeUseCase.register { MockLoginPinCodeUseCase() }
     homeRouter.register { MockHomeRouter() }
-    jwtSignatureValidator.register { MockJWTSignatureValidator(true) }
-    dataStoreConfigurationManager.register { MockDataStoreConfigurationManager() }
+    jwsSignatureValidator.register { MockJWSSignatureValidator(true) }
 
     userSession.register { MockUserSession() }
+    dataStoreConfigurationManager.register { MockDataStoreConfigurationManager() }
     realmDataStoreConfiguration.register { Realm.Configuration(inMemoryIdentifier: "RealmDataStore") }
-    fetchRequestObjectUseCase.register { MockFetchRequestObjectUseCase() }
-    validateRequestObjectUseCase.register { MockValidateRequestObjectUseCase() }
     keyManager.register { MockKeyManager() }
 
-    presentationRepository.register { PresentationRepositoryProtocolSpy() }
-    getCompatibleCredentialsUseCase.register { MockGetCompatibleCredentialsUseCase() }
+    presentationRepository.register { MockPresentationRepository() }
     checkInvitationTypeUseCase.register { MockCheckInvitationTypeUseCase() }
-
-    typeMetadataService.register { MockTypeMetadataService() }
-    vcSchemaService.register { MockVcSchemaService() }
   }
 
 }

@@ -16,7 +16,7 @@ public class CompatibleCredentialsModule {
   {
     self.router = router
 
-    guard let compatibleCredentials = context.requests[inputDescriptorId] else {
+    guard let compatibleCredentials = context.compatibleCredentialsRequestMap[inputDescriptorId] else {
       throw CompatibleCredentialModuleError.missingCompatibleCredentials
     }
 

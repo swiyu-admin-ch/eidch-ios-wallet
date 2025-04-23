@@ -1,4 +1,5 @@
 import BITCore
+import BITJWT
 import Foundation
 
 // MARK: - RequestObjectError
@@ -12,7 +13,7 @@ enum RequestObjectError: Error {
 
 /// A srtructure representing OpenID Authorization Request
 /// https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
-public class RequestObject: Decodable {
+public class RequestObject: JWTPayload, Codable {
 
   // MARK: Lifecycle
 
@@ -29,6 +30,8 @@ public class RequestObject: Decodable {
 
   // MARK: Public
 
+  public let type: String? = nil
+
   public let presentationDefinition: PresentationDefinition
   public let nonce: String?
   public let responseUri: String
@@ -37,6 +40,10 @@ public class RequestObject: Decodable {
   public let clientId: String
   public let clientIdScheme: String?
   public let responseMode: String
+
+  public var firstInputDescriptor: InputDescriptor? {
+    presentationDefinition.inputDescriptors.first
+  }
 
   // MARK: Internal
 
@@ -72,9 +79,14 @@ public typealias Verifier = ClientMetadata
 
 // MARK: - ClientMetadata
 
-public struct ClientMetadata: Decodable, Equatable {
+public struct ClientMetadata: Codable, Equatable {
 
   // MARK: Lifecycle
+
+  public init(clientName: LocalizedDisplay?, logoUri: LocalizedDisplay?) throws {
+    self.clientName = clientName
+    self.logoUri = logoUri
+  }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
@@ -109,9 +121,13 @@ extension ClientMetadata {
 
   /// Data model providing a Hash representation of the localized display
   /// where the  key of the hash is the language in two letters form (ISO-639)
-  public struct LocalizedDisplay: Decodable, Equatable {
+  public struct LocalizedDisplay: Codable, Equatable {
 
     // MARK: Lifecycle
+
+    init(values: [String: String]) {
+      self.values = values
+    }
 
     init?(from container: KeyedDecodingContainer<DynamicCodingKeys>, withBaseKey baseKey: String) throws {
       for key in container.allKeys where key.stringValue.hasPrefix(baseKey) {
@@ -174,7 +190,7 @@ extension ClientMetadata {
 
 /// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
 
-public struct PresentationDefinition: Decodable, Equatable {
+public struct PresentationDefinition: Codable, Equatable {
   public let id: String
   public let name: String?
   public let purpose: String?
@@ -192,7 +208,7 @@ public struct PresentationDefinition: Decodable, Equatable {
 
 // MARK: - InputDescriptor
 
-public struct InputDescriptor: Decodable, Equatable {
+public struct InputDescriptor: Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -333,7 +349,7 @@ public struct Filter: Codable, Equatable {
 
 // MARK: - Format
 
-public enum Format: FormatType, Decodable {
+public enum Format: FormatType, Codable {
   case vcSdJwt(FormatType)
 
   // MARK: Lifecycle
@@ -366,6 +382,10 @@ public enum Format: FormatType, Decodable {
     switch self {
     case .vcSdJwt(let type): type.keyBindingAlgorithm
     }
+  }
+
+  public func encode(to encoder: any Encoder) throws {
+    abort() // will be implemented if we actually need it
   }
 
   // MARK: Internal

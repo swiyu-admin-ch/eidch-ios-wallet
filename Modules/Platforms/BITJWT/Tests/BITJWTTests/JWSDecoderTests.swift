@@ -5,7 +5,7 @@ import XCTest
 
 // MARK: - JWSDecoderTests
 
-// swiftlint: disable force_unwrapping
+// swiftlint: disable force_unwrapping force_cast
 
 final class JWSDecoderTests: XCTestCase {
 
@@ -21,11 +21,14 @@ final class JWSDecoderTests: XCTestCase {
 
     let jws = try decoder.decode(JWTRegisteredPayload.self, from: data)
 
-    XCTAssertEqual(jws.payload, JWTRegisteredPayload.Mock.registeredPayload)
-    XCTAssertEqual(jws.algorithm, "ES512")
-    XCTAssertEqual(jws.type, "jwt")
-    XCTAssertEqual(jws.keyIdentifier, "keyIdentifier")
-    XCTAssertEqual(jws.jwk, JWTRegisteredPayload.Mock.jwk)
+    let expectedData = JWTRegisteredPayload.Mock.registeredPayload
+    XCTAssertEqual(jws.payload, expectedData)
+    try assertRawPayload(jws.rawPayload, expectedData: expectedData)
+
+    XCTAssertEqual(jws.header.algorithm, JWTAlgorithm.ES512)
+    XCTAssertEqual(jws.header.type, "jwt")
+    XCTAssertEqual(jws.header.keyIdentifier, "keyIdentifier")
+    XCTAssertEqual(jws.header.jwk, JWTRegisteredPayload.Mock.jwk)
   }
 
   func testDecode_ValidJWSWithIsoDate_ReturnsJWS() throws {
@@ -35,10 +38,21 @@ final class JWSDecoderTests: XCTestCase {
     let jws = try decoder.decode(TestDatePayload.self, from: data)
 
     XCTAssertEqual(jws.payload, TestDatePayload(date: Date(timeIntervalSinceReferenceDate: 0)))
-    XCTAssertEqual(jws.algorithm, "ES512")
-    XCTAssertEqual(jws.type, "test")
-    XCTAssertNil(jws.keyIdentifier)
-    XCTAssertNil(jws.jwk)
+    XCTAssertEqual(jws.header.algorithm, JWTAlgorithm.ES512)
+    XCTAssertEqual(jws.header.type, "test")
+    XCTAssertNil(jws.header.keyIdentifier)
+    XCTAssertNil(jws.header.jwk)
+  }
+
+  func testDecode_ValidJWSWithNoType_ReturnsJWS() throws {
+    let data = JWTRegisteredPayload.Mock.noTypeData
+
+    let jws = try decoder.decode(TestEmptyPayload.self, from: data)
+
+    XCTAssertEqual(jws.header.algorithm, JWTAlgorithm.ES512)
+    XCTAssertNil(jws.header.type)
+    XCTAssertNil(jws.header.keyIdentifier)
+    XCTAssertNil(jws.header.jwk)
   }
 
   func testDecode_InvalidJWS_ThrowsError() throws {
@@ -77,13 +91,26 @@ final class JWSDecoderTests: XCTestCase {
 
   private var decoder = JWSDecoder()
 
+  private func assertRawPayload(_ rawPayload: String, expectedData: JWTRegisteredPayload) throws {
+    let rawPayloadData = rawPayload.data(using: .utf8)!
+    let payload = try JSONSerialization.jsonObject(with: rawPayloadData, options: []) as! [String: Any]
+    XCTAssertEqual(payload.count, 7)
+    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.issuer.rawValue] as? String, expectedData.issuer)
+    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.subject.rawValue] as? String, expectedData.subject)
+    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.audience.rawValue] as? String, expectedData.audience)
+    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.expiredAt.rawValue] as? TimeInterval, expectedData.expiredAt?.timeIntervalSince1970)
+    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.activatedAt.rawValue] as? TimeInterval, expectedData.activatedAt?.timeIntervalSince1970)
+    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.issuedAt.rawValue] as? TimeInterval, expectedData.issuedAt?.timeIntervalSince1970)
+    XCTAssertEqual(payload["test"] as? String, "value")
+  }
+
 }
 
 // MARK: - TestDatePayload
 
-private struct TestDatePayload: JWTType & Codable & Equatable {
+private struct TestDatePayload: JWTPayload & Codable & Equatable {
 
-  let type = "test"
+  let type: String? = "test"
   private let date: Date
 
   init(date: Date) {
@@ -96,4 +123,14 @@ private struct TestDatePayload: JWTType & Codable & Equatable {
 
 }
 
-// swiftlint: enable force_unwrapping
+// MARK: - TestEmptyPayload
+
+private struct TestEmptyPayload: JWTPayload & Codable & Equatable {
+
+  let type: String? = nil
+
+  enum CodingKeys: CodingKey {}
+
+}
+
+// swiftlint: enable force_unwrapping force_cast

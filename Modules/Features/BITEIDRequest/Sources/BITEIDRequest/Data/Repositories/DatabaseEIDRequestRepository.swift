@@ -42,6 +42,11 @@ struct DatabaseEIDRequestRepository: LocalEIDRequestRepositoryProtocol {
     return try EIDRequestCase(entity)
   }
 
+  func delete(_ eIDRequestCase: EIDRequestCase) async throws {
+    let entity = try await getEntity(eIDRequestCase.id)
+    try database.delete(entity)
+  }
+
   // MARK: Private
 
   @Injected(\.dataStore) private var database: RealmDataStoreProtocol

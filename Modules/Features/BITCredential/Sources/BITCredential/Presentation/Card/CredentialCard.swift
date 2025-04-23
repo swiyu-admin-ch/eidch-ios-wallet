@@ -27,9 +27,13 @@ public struct CredentialCard<Header: View>: View {
         }
       }
       .overlay {
+        if backgroundColor == nil {
+          fallbackBackground()
+        }
+      }
+      .overlay {
         if credential.environment == .demo {
           (controlSize < .regular ? Assets.credentialDemoPatternSmall.swiftUIImage : Assets.credentialDemoPattern.swiftUIImage)
-            .aspectRatio(contentMode: .fill)
             .opacity(0.5)
             .clipped()
         }
@@ -40,7 +44,7 @@ public struct CredentialCard<Header: View>: View {
     .if(ratio != nil, transform: {
       $0.aspectRatio(ratio, contentMode: .fit)
     })
-    .background(backgroundColor)
+    .background(backgroundColor ?? ThemingAssets.Background.fallback.swiftUIColor)
     .clipShape(.rect(cornerRadius: cornerRadius))
     .colorScheme(cardColorScheme)
     .foregroundStyle(cardColorScheme.standardColor())
@@ -59,11 +63,27 @@ public struct CredentialCard<Header: View>: View {
   private let defaultText = "n/a"
 
   private var cardColorScheme: ColorScheme {
-    backgroundColor?.suggestedColorScheme() ?? .dark
+    backgroundColor?.suggestedColorScheme() ?? .light
   }
 
   private var backgroundColor: Color? {
-    Color(hex: credential.preferredDisplay?.backgroundColor ?? ThemingAssets.Background.fallback.swiftUIColor.hexString())
+    guard let hexColor = credential.preferredDisplay?.backgroundColor else { return nil }
+    return Color(hex: hexColor)
+  }
+
+  @ViewBuilder
+  private func fallbackBackground() -> some View {
+    if controlSize > .small {
+      Assets.credentialFallbackBackground.swiftUIImage
+        .resizable()
+        .scaledToFill()
+        .opacity(0.5)
+        .clipped()
+    } else {
+      Assets.credentialFallbackBackground.swiftUIImage
+        .opacity(0.5)
+        .clipped()
+    }
   }
 
   @ViewBuilder
@@ -194,11 +214,11 @@ public struct CredentialCard<Header: View>: View {
   private func badges() -> some View {
     if credential.environment == .demo {
       Badge {
-        Text(L10n.tkGlobalCredentialStatusDemo)
+        Text(L10n.tkCredentialStatusDemo)
       }
       .badgeStyle(.bezeledGray)
       .colorScheme(cardColorScheme == .dark ? .light : .dark)
-      .accessibilityLabel(L10n.tkGlobalCredentialStatusDemoAlt)
+      .accessibilityLabel(L10n.tkCredentialStatusDemoAlt)
     }
 
     CredentialStatusBadge(credential: credential)

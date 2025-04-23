@@ -1,15 +1,20 @@
 import BITAnyCredentialFormat
+import BITOca
 import Factory
+import Spyable
+
+// MARK: - FetchAnyCredentialUseCaseProtocol
+
+@Spyable
+protocol FetchAnyCredentialUseCaseProtocol {
+  func execute(for context: FetchCredentialContext) async throws -> (credential: AnyCredential, ocaBundle: RawOcaBundle?)
+}
 
 // MARK: - FetchAnyCredentialUseCase
 
 struct FetchAnyCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
 
-  init(anyFetchCredentialDispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol] = Container.shared.anyFetchCredentialDispatcher()) {
-    dispatcher = anyFetchCredentialDispatcher
-  }
-
-  func execute(for context: FetchCredentialContext) async throws -> AnyCredential {
+  func execute(for context: FetchCredentialContext) async throws -> (credential: AnyCredential, ocaBundle: RawOcaBundle?) {
     guard let credentialFormat = CredentialFormat(rawValue: context.format), let dispatcherFormat = dispatcher[credentialFormat] else {
       throw CredentialFormatError.formatNotSupported
     }
@@ -17,5 +22,5 @@ struct FetchAnyCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
     return try await dispatcherFormat.execute(for: context)
   }
 
-  private let dispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]
+  @Injected(\.anyFetchCredentialDispatcher) private var dispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]
 }

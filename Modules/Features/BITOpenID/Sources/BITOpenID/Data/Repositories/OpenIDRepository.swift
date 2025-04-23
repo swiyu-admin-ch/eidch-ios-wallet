@@ -1,6 +1,7 @@
 import BITCrypto
 import BITJWT
 import BITNetworking
+import BITSdJWT
 import Factory
 import Foundation
 import Moya
@@ -49,10 +50,9 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.credential(url: url, body: credentialRequestBody, acccessToken: acccessToken.accessToken))
   }
 
-  func fetchCredentialStatus(from url: URL) async throws -> JWT {
+  func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
     let response = try await networkService.request(OpenIDEndpoint.status(url: url))
-    let raw = String(data: response.data, encoding: .utf8) ?? ""
-    return try JWT(from: raw)
+    return try jwsDecoder.decode(TokenStatusList.self, from: response.data)
   }
 
   func fetchRequestObject(from url: URL) async throws -> Data {
@@ -63,11 +63,17 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     }
   }
 
-  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [String] {
-    try await networkService.request(OpenIDEndpoint.trustStatements(url: url, issuerDid: issuerDid))
+  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [TrustStatement] {
+    let statements: [String] = try await networkService.request(OpenIDEndpoint.trustStatements(url: url, issuerDid: issuerDid))
+    return try statements.map {
+      let data = $0.data(using: .utf8) ?? Data()
+      return try sdJwsDecoder.decode(TrustStatementPayload.self, from: data)
+    }
   }
 
   // MARK: Private
 
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
+  @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
+  @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
 }

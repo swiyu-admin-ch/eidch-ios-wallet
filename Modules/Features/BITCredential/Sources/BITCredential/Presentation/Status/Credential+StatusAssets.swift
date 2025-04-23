@@ -11,25 +11,25 @@ extension Credential {
 
   public var statusText: String {
     switch status {
-    case .valid: L10n.tkGlobalCredentialStatusValid
-    case .expired: L10n.tkGlobalCredentialStatusInvalid
+    case .valid: L10n.tkCredentialStatusValid
+    case .expired: L10n.tkCredentialStatusInvalid
     case .notYetValid: getNotYetValidText()
-    case .revoked: L10n.tkGlobalCredentialStatusRevoked
-    case .suspended: L10n.tkGlobalCredentialStatusSuspended
+    case .revoked: L10n.tkCredentialStatusRevoked
+    case .suspended: L10n.tkCredentialStatusSuspended
     case .unknown,
-         .unsupported: L10n.tkGlobalCredentialStatusUnknown
+         .unsupported: L10n.tkCredentialStatusUnknown
     }
   }
 
   public var statusTextAlt: String {
     switch status {
-    case .valid: L10n.tkGlobalCredentialStatusValidAlt
-    case .expired: L10n.tkGlobalCredentialStatusInvalidAlt
+    case .valid: L10n.tkCredentialStatusValidAlt
+    case .expired: L10n.tkCredentialStatusInvalidAlt
     case .notYetValid: getNotYetValidAltText()
-    case .revoked: L10n.tkGlobalCredentialStatusRevokedAlt
-    case .suspended: L10n.tkGlobalCredentialStatusSuspendedAlt
+    case .revoked: L10n.tkCredentialStatusRevokedAlt
+    case .suspended: L10n.tkCredentialStatusSuspendedAlt
     case .unknown,
-         .unsupported: L10n.tkGlobalCredentialStatusUnknownAlt
+         .unsupported: L10n.tkCredentialStatusUnknownAlt
     }
   }
 
@@ -72,24 +72,24 @@ extension Credential {
   // MARK: Private
 
   private func getNotYetValidText() -> String {
-    guard let date = validFrom else { return L10n.tkGlobalCredentialStatusUnknown }
+    guard let date = validFrom else { return L10n.tkCredentialStatusUnknown }
     return if date.isWithinNext24Hours {
-      L10n.tkGlobalCredentialStatusSoon
+      L10n.tkCredentialStatusSoon
     } else if let days = date.numberOfDaysSince(Date()) {
-      L10n.tkGlobalCredentialStatusValidindaysIos(days)
+      L10n.tkCredentialStatusNotValidYet(days)
     } else {
-      L10n.tkGlobalCredentialStatusUnknown
+      L10n.tkCredentialStatusUnknown
     }
   }
 
   private func getNotYetValidAltText() -> String {
-    guard let date = validFrom else { return L10n.tkGlobalCredentialStatusUnknown }
+    guard let date = validFrom else { return L10n.tkCredentialStatusUnknown }
     return if date.isWithinNext24Hours {
-      L10n.tkGlobalCredentialStatusSoonAlt
+      L10n.tkCredentialStatusSoonAlt
     } else if let days = date.numberOfDaysSince(Date()) {
-      L10n.tkGlobalCredentialStatusValidindaysIosAlt(days)
+      L10n.tkCredentialStatusNotValidYetAlt(days)
     } else {
-      L10n.tkGlobalCredentialStatusUnknownAlt
+      L10n.tkCredentialStatusUnknownAlt
     }
   }
 }

@@ -1,3 +1,4 @@
+import BITCore
 import Foundation
 
 @MainActor
@@ -7,7 +8,7 @@ class QueueInformationViewViewModel {
 
   init(router: EIDRequestInternalRoutes, onlineSessionStartDate: Date) {
     self.router = router
-    expectedOnlineSessionStart = onlineSessionStartDate.formatted(date: .long, time: .omitted)
+    expectedOnlineSessionStart = onlineSessionStartDate.longDateFormat
   }
 
   // MARK: Internal

@@ -10,28 +10,21 @@ struct ValidateTrustStatementUseCase: ValidateTrustStatementUseCaseProtocol {
 
   func execute(_ trustStatement: TrustStatement) async -> Bool {
     do {
-      guard
-        let issuer = trustStatement.iss,
-        try isDidTrusted(issuer),
-        let statusList = trustStatement.statusList,
-        let kid = trustStatement.kid
-      else {
-        return false
-      }
+      let issuer = trustStatement.payload.issuer
+      guard try isDidTrusted(issuer) else { return false }
 
-      if try await jwtSignatureValidator.validate(trustStatement, did: issuer, kid: kid) {
-        return await tokenStatusListValidator.validate(statusList, issuer: issuer) == .valid
+      if try await jwsSignatureValidator.validate(trustStatement, did: issuer) {
+        return await tokenStatusListValidator.validate(trustStatement.payload.statusList, issuer: issuer) == .valid
       }
-
-      return false
     } catch {
-      return false
+      // treat errors as invalid
     }
+    return false
   }
 
   // MARK: Private
 
-  @Injected(\.jwtSignatureValidator) private var jwtSignatureValidator: JWTSignatureValidatorProtocol
+  @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
   @Injected(\.trustRegistryRepository) private var trustRegistryRepository: TrustRegistryRepositoryProtocol
   @Injected(\.tokenStatusListValidator) private var tokenStatusListValidator: AnyStatusCheckValidatorProtocol
 

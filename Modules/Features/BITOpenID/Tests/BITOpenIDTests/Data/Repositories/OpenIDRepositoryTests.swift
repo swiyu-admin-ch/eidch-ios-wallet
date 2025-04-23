@@ -137,18 +137,12 @@ final class OpenIDRepositoryTests: XCTestCase {
     let credentialRequestBody = CredentialRequestBody.Mock.sample
 
     mockResponse(code: 200, data: CredentialResponse.Mock.sampleData)
-    let expectedCredential = VcSdJwt.Mock.sample
 
     let credentialResponse = try await repository.fetchCredential(from: mockUrl, credentialRequestBody: credentialRequestBody, acccessToken: accessToken)
-    XCTAssertEqual(credentialResponse.rawCredential, expectedCredential.raw)
+    XCTAssertEqual(credentialResponse.rawCredential, CredentialResponse.Mock.sample.rawCredential)
     XCTAssertNil(credentialResponse.transactionId)
     XCTAssertNil(credentialResponse.cNonce)
     XCTAssertNil(credentialResponse.cNonceExpiresIn)
-    guard let vcSdJwt = try? VcSdJwt(from: credentialResponse.rawCredential) else {
-      XCTFail("The credential received can't be converted in a SD-JWT")
-      return
-    }
-    XCTAssertEqual(vcSdJwt.claims.count, expectedCredential.claims.count)
   }
 
   func testFetchCredential_failure() async throws {
@@ -168,8 +162,8 @@ final class OpenIDRepositoryTests: XCTestCase {
   // MARK: - Status
 
   func testFetchCredentialStatus_success() async throws {
-    mockResponse(code: 200, data: JWT.Mock.validStatusSampleData)
-    let expectedJWT = JWT.Mock.validStatusSample
+    mockResponse(code: 200, data: TokenStatusList.Mock.sampleData)
+    let expectedJWT = TokenStatusList.Mock.sample
     let jwt = try await repository.fetchCredentialStatus(from: mockUrl)
     XCTAssertEqual(jwt, expectedJWT)
   }
@@ -224,13 +218,15 @@ final class OpenIDRepositoryTests: XCTestCase {
   // MARK: - Trust Statements
 
   func testTrustStatementsSuccess() async throws {
-    let expectedStatements: [String] = [ TrustStatement.Mock.sdJwtSample, TrustStatement.Mock.sdJwtSample]
+    let expectedStatements = [ TrustStatementPayload.Mock.sdJwtSample, TrustStatementPayload.Mock.sdJwtSample]
     let mockStatementData = try JSONEncoder().encode(expectedStatements)
     mockResponse(code: 200, data: mockStatementData)
 
     let trustStatements = try await repository.fetchTrustStatements(from: mockUrl, issuerDid: "did")
 
-    XCTAssertEqual(expectedStatements, trustStatements)
+    XCTAssertEqual(trustStatements.count, 2)
+    XCTAssertEqual(trustStatements[0].payload, TrustStatementPayload.Mock.validSamplePayload)
+    XCTAssertEqual(trustStatements[1].payload, TrustStatementPayload.Mock.validSamplePayload)
   }
 
   func testTrustStatementsNetworkError() async throws {

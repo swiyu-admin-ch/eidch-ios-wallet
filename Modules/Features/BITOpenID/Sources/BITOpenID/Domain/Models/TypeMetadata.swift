@@ -1,5 +1,6 @@
 import BITCore
 import BITCrypto
+import BITOca
 import Foundation
 
 // MARK: - TypeMetadata
@@ -7,12 +8,19 @@ import Foundation
 /// TypeMetadata
 /// - Documentation: [SD-JWT-based Verifiable Credentials - Draft 06](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-06.html#name-sd-jwt-vc-type-metadata)
 public struct TypeMetadata: Decodable {
+
+  // MARK: Public
+
+  public let displays: [Display]?
+
+  // MARK: Internal
+
   enum CodingKeys: String, CodingKey {
     case vct
     case name
     case description
     case extends
-    case display
+    case displays = "display"
     case claims
     case schema
     case schemaUrl = "schema_uri"
@@ -23,7 +31,7 @@ public struct TypeMetadata: Decodable {
   let name: String?
   let description: String?
   let extends: URL?
-  let display: [Display]?
+
   let claims: [Claim]?
   let schemaUrl: URL?
   let schemaIntegrity: IntegrityHash?
@@ -41,7 +49,7 @@ extension TypeMetadata: Equatable {
       && lhs.name == rhs.name
       && lhs.description == rhs.description
       && lhs.extends == rhs.extends
-      && lhs.display == rhs.display
+      && lhs.displays == rhs.displays
   }
 }
 
@@ -49,18 +57,19 @@ extension TypeMetadata: Equatable {
 
 extension TypeMetadata {
 
-  struct Display: Decodable, Equatable {
-    static func == (lhs: TypeMetadata.Display, rhs: TypeMetadata.Display) -> Bool {
+  public struct Display: Decodable, Equatable {
+    public let lang: String
+    public let name: String
+    public let rendering: Rendering?
+
+    let description: String?
+
+    public static func == (lhs: TypeMetadata.Display, rhs: TypeMetadata.Display) -> Bool {
       lhs.lang == rhs.lang
         && lhs.name == rhs.name
         && lhs.description == rhs.description
         && lhs.rendering == rhs.rendering
     }
-
-    let lang: String
-    let name: String
-    let description: String?
-    let rendering: Rendering?
   }
 
 }
@@ -69,19 +78,28 @@ extension TypeMetadata {
 
 extension TypeMetadata.Display {
 
-  struct Rendering: Decodable, Equatable {
-    let simple: SimpleRendering?
-    let svgTemplates: [SVGTemplate]?
+  public struct Rendering: Decodable, Equatable {
+
+    // MARK: Public
+
+    public let oca: VcSdJwtOcaRendering?
+
+    public static func == (lhs: TypeMetadata.Display.Rendering, rhs: TypeMetadata.Display.Rendering) -> Bool {
+      lhs.simple == rhs.simple
+        && lhs.svgTemplates == rhs.svgTemplates
+        && lhs.oca == rhs.oca
+    }
+
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
       case simple
       case svgTemplates = "svg_templates"
+      case oca
     }
 
-    static func == (lhs: TypeMetadata.Display.Rendering, rhs: TypeMetadata.Display.Rendering) -> Bool {
-      lhs.simple == rhs.simple
-        && lhs.svgTemplates == rhs.svgTemplates
-    }
+    let simple: SimpleRendering?
+    let svgTemplates: [SVGTemplate]?
   }
 
 }
@@ -228,14 +246,18 @@ extension TypeMetadata.Claim {
 extension TypeMetadata: Mockable {
 
   struct Mock {
-    static let sample: TypeMetadata = Mocker.decode(fromFile: "typemetadata", bundle: .module)
+    static let sampleUrlOca: TypeMetadata = Mocker.decode(fromFile: "typemetadata-url-oca", bundle: .module)
+    static let sampleDataOca: TypeMetadata = Mocker.decode(fromFile: "typemetadata-data-oca", bundle: .module)
+
+    static let sampleWithoutDisplays: TypeMetadata = Mocker.decode(fromFile: "typemetadata-without-displays", bundle: .module)
+    static let sampleWithoutOca: TypeMetadata = Mocker.decode(fromFile: "typemetadata-without-oca", bundle: .module)
+
     static let sampleWithoutSchemaUrl: TypeMetadata = Mocker.decode(fromFile: "typemetadata-without-schema-url", bundle: .module)
     static let sampleWithoutUrlIntegrity: TypeMetadata = Mocker.decode(fromFile: "typemetadata-without-url-integrity", bundle: .module)
     static let sampleStandard: TypeMetadata = Mocker.decode(fromFile: "typemetadata-standard", bundle: .module) // Based on the Appendix proposed here: https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#ExampleTypeMetadata
-    static let sampleData: Data = Mocker.getData(fromFile: "typemetadata", bundle: .module) ?? Data()
+
     static let sampleStandardData: Data = Mocker.getData(fromFile: "typemetadata-standard", bundle: .module) ?? Data()
     static let sampleWithoutSchemaUrlData: Data = Mocker.getData(fromFile: "typemetadata-without-schema-url", bundle: .module) ?? Data()
-    static let sampleWithoutUrlIntegrityData: Data = Mocker.getData(fromFile: "typemetadata-without-url-integrity", bundle: .module) ?? Data()
   }
 
 }

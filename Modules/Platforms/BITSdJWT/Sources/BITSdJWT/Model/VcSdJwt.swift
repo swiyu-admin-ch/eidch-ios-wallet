@@ -1,79 +1,58 @@
-import BITCore
 import BITCrypto
-import Factory
+import BITJWT
 import Foundation
 
-// MARK: - VcSdJwtError
+public typealias VcSdJwt = SdJWS<VcSdJwtPayload>
 
-enum VcSdJwtError: Error, Equatable {
-  case keyNotFound(_ key: String)
-  case nonDisclosableClaimFound
-}
-
-// MARK: - VcSdJwt
+// MARK: - VcSdJwtPayload
 
 /// https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html
 
-open class VcSdJwt: SdJWT {
-
-  // MARK: Lifecycle
-
-  public init(from rawVcSdJwt: String) throws {
-    try super.init(from: rawVcSdJwt)
-
-    keyBinding = vcSdJwtDecoder.decodeKeyBinding(from: rawVcSdJwt)
-    let (vct, vctIntegrity) = vcSdJwtDecoder.decodeVct(from: rawVcSdJwt)
-    self.vct = vct
-    self.vctIntegrity = vctIntegrity
-    statusList = vcSdJwtDecoder.decodeTokenStatusList(from: rawVcSdJwt)
-
-    let claims = vcSdJwtDecoder.decodeNonDisclosableClaims(from: rawVcSdJwt)
-    guard claims.isEmpty else {
-      throw VcSdJwtError.nonDisclosableClaimFound
-    }
-
-    // issuer is required for VcSdJwt but optional on JWT so we check here
-    guard let vcIssuer = iss else {
-      throw VcSdJwtError.keyNotFound("iss")
-    }
-
-    self.vcIssuer = vcIssuer
-  }
+public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
 
   // MARK: Public
 
+  public let type: String? = "vc+sd-jwt"
+
   /// registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
 
-  /// JWT `cnf`
-  public var keyBinding: KeyBinding?
+  public var issuer: String
 
-  /// JWT `vct`
-  public var vct: String?
+  public var activatedAt: Date?
 
-  /// JWT `vct#integrity`
+  public var expiredAt: Date?
+
+  public var keyBinding: PublicKeyInfo.JWK?
+
+  public var vct: String
+
   public var vctIntegrity: String?
 
-  public var vcIssuer = ""
+  public var statusList: VcSdJwtTokenStatusList?
 
-  /// The information on how to read the status of the Verifiable Credential
-  public var statusList: TokenStatusList?
+  public var subject: String?
 
-  // MARK: Equatable
+  public var issuedAt: Date?
 
-  public static func == (lhs: VcSdJwt, rhs: VcSdJwt) -> Bool {
-    lhs as SdJWT == rhs as SdJWT && // Compare inherited properties
-      lhs.keyBinding == rhs.keyBinding
+  // MARK: Internal
+
+  enum CodingKeys: String, CodingKey {
+    case issuer = "iss"
+    case activatedAt = "nbf"
+    case expiredAt = "exp"
+    case keyBinding = "cnf"
+    case vct
+    case vctIntegrity = "vct#integrity"
+    case statusList = "status"
+    case subject = "sub"
+    case issuedAt = "iat"
   }
-
-  // MARK: Private
-
-  @Injected(\.vcSdJwtDecoder) private var vcSdJwtDecoder: VcSdJwtDecoderProtocol
 }
 
-// MARK: VcSdJwt.KeyBinding
+// MARK: VcSdJwtPayload.KeyBinding
 
-extension VcSdJwt {
-  public struct KeyBinding: Equatable {
+extension VcSdJwtPayload {
+  public struct KeyBinding: Codable, Equatable {
     public let jwk: PublicKeyInfo.JWK
 
     public init(jwk: PublicKeyInfo.JWK) {

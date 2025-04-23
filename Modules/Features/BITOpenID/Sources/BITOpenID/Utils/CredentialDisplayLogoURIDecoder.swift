@@ -1,13 +1,30 @@
 import BITCore
 import Foundation
+import Spyable
+
+// MARK: - CredentialDisplayLogoURIDecoderProtocol
+
+@Spyable
+public protocol CredentialDisplayLogoURIDecoderProtocol {
+  func decode(from string: String) -> Data?
+  func decode(_ url: URL) -> URI?
+}
 
 // MARK: - CredentialDisplayLogoURIDecoder
 
-public struct CredentialDisplayLogoURIDecoder {
+public struct CredentialDisplayLogoURIDecoder: CredentialDisplayLogoURIDecoderProtocol {
 
-  // MARK: Public
+  public func decode(from string: String) -> Data? {
+    guard
+      let urlString = URL(string: string),
+      let uri = decode(urlString)
+    else {
+      return nil
+    }
+    return Data(base64Encoded: uri)
+  }
 
-  public static func decode(_ url: URL) -> URI? {
+  public func decode(_ url: URL) -> URI? {
     let urlString = url.absoluteString
 
     switch url.scheme {
@@ -23,21 +40,6 @@ public struct CredentialDisplayLogoURIDecoder {
     default:
       return nil
     }
-  }
-
-  public static func decode(_ string: String) -> URI? {
-    guard let urlString = URL(string: string) else {
-      return nil
-    }
-
-    return decode(urlString)
-  }
-
-  // MARK: Private
-
-  private enum URLScheme: String {
-    case https
-    case data
   }
 }
 

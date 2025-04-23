@@ -1,3 +1,4 @@
+import BITCore
 import BITL10n
 import BITTheming
 import Factory
@@ -9,7 +10,7 @@ public struct RequestCasesListView: View {
 
   // MARK: Lifecycle
 
-  public init(_ requestCases: [EIDRequestCase], action: @escaping () -> Void) {
+  public init(_ requestCases: [EIDRequestCase], action: @escaping (EIDRequestCase) -> Void) {
     self.requestCases = requestCases
     self.action = action
   }
@@ -25,6 +26,8 @@ public struct RequestCasesListView: View {
             inQueueView(for: requestCase)
           case .readyForOnlineSession:
             readyForOnlineSessionView(for: requestCase)
+          case .expired:
+            expiredView(for: requestCase)
           default:
             EmptyView()
           }
@@ -41,7 +44,7 @@ public struct RequestCasesListView: View {
 
   @Environment(\.sizeCategory) private var sizeCategory
 
-  private let action: () -> Void
+  private let action: (EIDRequestCase) -> Void
   private let requestCases: [EIDRequestCase]
 }
 
@@ -53,8 +56,8 @@ extension RequestCasesListView {
     HStack(alignment: .top, spacing: .x4) {
       image()
       content(
-        title: L10n.tkGetEidNotificationEidProgressTitleIos("\(requestCase.firstName) \(requestCase.lastName)"),
-        content: L10n.tkGetEidNotificationEidProgressBodyIos(requestCase.state?.onlineSessionStartOpenAt?.formatted(date: .long, time: .omitted) ?? "-"))
+        title: L10n.tkGetEidNotificationEidProgressTitleIos(requestCase.fullName),
+        content: L10n.tkGetEidNotificationEidProgressBodyIos(requestCase.state?.onlineSessionStartOpenAt?.longDateFormat ?? "-"))
 
       Spacer()
     }
@@ -67,18 +70,36 @@ extension RequestCasesListView {
 
       VStack(alignment: .leading) {
         content(
-          title: L10n.tkGetEidNotificationEidReadyTitleIos("\(requestCase.firstName) \(requestCase.lastName)"),
-          content: L10n.tkGetEidNotificationEidReadyBodyIos(requestCase.state?.onlineSessionStartTimeoutAt?.formatted(date: .long, time: .omitted) ?? "-"))
+          title: L10n.tkGetEidNotificationEidReadyTitleIos(requestCase.fullName),
+          content: L10n.tkGetEidNotificationEidReadyBodyIos(requestCase.state?.onlineSessionStartTimeoutAt?.longDateFormat ?? "-"))
 
-        Button(L10n.tkGetEidNotificationEidReadyGreenButton, action: action)
-          .buttonStyle(.filledSecondary)
-          .controlSize(.regular)
-          .padding(.top, .x2)
-          .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        Button(L10n.tkGetEidNotificationEidReadyGreenButton, action: {
+          action(requestCase)
+        })
+        .buttonStyle(.filledSecondary)
+        .controlSize(.regular)
+        .padding(.top, .x2)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
       }
 
       Spacer()
     }
+  }
+
+  @ViewBuilder
+  private func expiredView(for requestCase: EIDRequestCase) -> some View {
+    HStack(alignment: .top, spacing: .x4) {
+      image()
+
+      content(title: L10n.tkGetEidNotificationEidExpiredTitleIos(requestCase.fullName), content: L10n.tkGetEidNotificationEidExpiredBody)
+
+      Button(action: {
+        action(requestCase)
+      }, label: {
+        Assets.close.swiftUIImage
+      })
+    }
+    .frame(maxWidth: .infinity)
   }
 }
 
@@ -107,3 +128,9 @@ extension RequestCasesListView {
     }
   }
 }
+
+#if DEBUG
+#Preview {
+  RequestCasesListView([.Mock.sampleExpired, .Mock.sampleAVReady, .Mock.sampleInQueue]) { _ in }
+}
+#endif

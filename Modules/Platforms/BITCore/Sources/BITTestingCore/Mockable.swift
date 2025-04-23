@@ -10,7 +10,6 @@ public protocol Mockable {
 // MARK: - Mocker
 
 public struct Mocker: Mockable {}
-
 extension Mockable {
 
   public static func getData(fromFile filename: String, ofType ext: String = "json", bundle: Bundle = Bundle.main) -> Data? {

@@ -12,6 +12,10 @@ extension Container {
     }
   }
 
+  public var sriValidator: Factory<SRIValidatorProtocol> {
+    self { SRIValidator() }
+  }
+
   // MARK: Private
 
   /// The number of iterations for the PBKDF2 function.

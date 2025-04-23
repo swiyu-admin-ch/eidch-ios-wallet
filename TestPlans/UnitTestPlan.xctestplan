@@ -206,6 +206,13 @@
         "identifier" : "BITEIDRequestTests",
         "name" : "BITEIDRequestTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITOca",
+        "identifier" : "BITOcaTests",
+        "name" : "BITOcaTests"
+      }
     }
   ],
   "version" : 1

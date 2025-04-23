@@ -1,76 +1,32 @@
 import XCTest
+@testable import BITJWT
 @testable import BITOpenID
+@testable import BITSdJWT
 @testable import BITTestingCore
 
 final class TrustStatementTests: XCTestCase {
 
-  func testInit_success() {
-    let rawSdJwt = TrustStatement.Mock.sdJwtSample
+  // MARK: Internal
 
-    XCTAssertNoThrow(try TrustStatement(from: rawSdJwt))
+  func testDecode_allFields() throws {
+    let data = TrustStatementPayload.Mock.allFieldsData
+
+    let sdJwt = try decoder.decode(TrustStatementPayload.self, from: data)
+    let payload = sdJwt.payload
+
+    let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 111, uri: "status_list_uri"))
+
+    XCTAssertEqual(sdJwt.header.type, "vc+sd-jwt")
+    XCTAssertEqual(payload.issuer, "issuer")
+    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1722499200))
+    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 1767168000))
+    XCTAssertEqual(payload.vct, "vc_type")
+    XCTAssertEqual(payload.statusList, expectedStatusList)
+    XCTAssertEqual(payload.subject, "subject")
+    XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1739282713))
   }
 
-  func testInit_incorrectHeaderType() {
-    let rawSdJwt = TrustStatement.Mock.noTypeSample
+  // MARK: Private
 
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("typ"))
-    }
-  }
-
-  func testInit_incorrectHeaderAlgorithm() {
-    let rawSdJwt = TrustStatement.Mock.incorrectAlgorithmSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("alg"))
-    }
-  }
-
-  func testInit_subMissing() {
-    let rawSdJwt = TrustStatement.Mock.noSubSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("sub"))
-    }
-  }
-
-  func testInit_vctMissing() {
-    let rawSdJwt = TrustStatement.Mock.noVctSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("vct"))
-    }
-  }
-
-  func testInit_iatMissing() {
-    let rawSdJwt = TrustStatement.Mock.noIssuingDateSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("iat"))
-    }
-  }
-
-  func testInit_nbfMissing() {
-    let rawSdJwt = TrustStatement.Mock.noActivationDateSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("nbf"))
-    }
-  }
-
-  func testInit_expMissing() {
-    let rawSdJwt = TrustStatement.Mock.noExpirationDateSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("exp"))
-    }
-  }
-
-  func testInit_statusMissing() {
-    let rawSdJwt = TrustStatement.Mock.noStatusSample
-
-    XCTAssertThrowsError(try TrustStatement(from: rawSdJwt)) { error in
-      XCTAssertEqual(error as? TrustStatementError, .keyNotFound("status"))
-    }
-  }
+  private var decoder = SdJWSDecoder()
 }

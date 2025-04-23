@@ -1,6 +1,6 @@
 import Foundation
 
-public struct KeyPair {
+public struct KeyPair: Equatable {
   public let identifier: UUID
   public let privateKey: SecKey
   public let algorithm: String

@@ -45,6 +45,9 @@ extension AppDelegate {
       try? Container.shared.registerPinCodeUseCase().execute(pinCode: "000000")
       UserDefaults.standard.set(false, forKey: "rootOnboardingIsEnabled")
     }
+    if ProcessInfo().arguments.contains("-enable-onboarding") {
+      UserDefaults.standard.set(true, forKey: "rootOnboardingIsEnabled")
+    }
   }
 }
 

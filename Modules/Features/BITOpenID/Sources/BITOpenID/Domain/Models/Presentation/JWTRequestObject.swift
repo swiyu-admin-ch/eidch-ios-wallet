@@ -1,16 +1,24 @@
 import BITJWT
 import Foundation
 
+// MARK: - JWTRequestObjectError
+
+enum JWTRequestObjectError: Error {
+  case invalidRawJWT
+  case missingIssuer
+}
+
 // MARK: - JWTRequestObject
 
 public class JWTRequestObject: RequestObject {
 
   // MARK: Lifecycle
 
-  init(jwt: JWT, payload: Data) throws {
-    self.jwt = jwt
+  init(from jws: JWS<RequestObject>) throws {
+    self.jws = jws
+    let base = jws.payload
 
-    let base = try JSONDecoder().decode(RequestObject.self, from: payload)
+    issuer = try Self.decodeIssuer(jws.rawPayload)
 
     super.init(
       presentationDefinition: base.presentationDefinition,
@@ -27,19 +35,30 @@ public class JWTRequestObject: RequestObject {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
     let rawJWT = try container.decode(String.self, forKey: .jwt)
-    jwt = try JWT(from: rawJWT)
+    guard let data = rawJWT.data(using: .utf8) else { throw JWTRequestObjectError.invalidRawJWT }
+    jws = try JWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(RequestObject.self, from: data)
+    issuer = try container.decode(String.self, forKey: .issuer)
 
     try super.init(from: decoder)
   }
 
-  // MARK: Internal
+  // MARK: Public
 
-  let jwt: JWT
+  public let jws: JWS<RequestObject>
+  public let issuer: String
 
   // MARK: Private
 
   private enum CodingKeys: String, CodingKey {
     case jwt
+    case issuer
+  }
+
+  private static func decodeIssuer(_ jwtPayload: String) throws -> String {
+    guard let data = jwtPayload.data(using: .utf8) else { throw JWTRequestObjectError.invalidRawJWT }
+    let payload = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    guard let issuer = payload?["iss"] as? String else { throw JWTRequestObjectError.missingIssuer }
+    return issuer
   }
 
 }

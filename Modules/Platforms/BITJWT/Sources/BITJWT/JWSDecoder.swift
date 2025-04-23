@@ -2,10 +2,17 @@ import BITCrypto
 import Foundation
 import JOSESwift
 
+// MARK: - JWSDecoderProtocol
+
+public protocol JWSDecoderProtocol {
+  func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWTPayload & Decodable
+}
+
 // MARK: - JWSDecoderError
 
 public enum JWSDecoderError: Error {
   case invalidType
+  case invalidPayload
   case algorithmNotFound
 }
 
@@ -23,10 +30,17 @@ public struct JWSDecoder: JWSDecoderProtocol {
 
   public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
 
-  public func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWTType & Decodable {
+  public func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWTPayload & Decodable {
     let jws = try JOSESwift.JWS(compactSerialization: data)
     let payload: T = try decodePayload(from: jws.payload.data())
-    return try createJWT(from: jws, payload: payload)
+    let rawPayload = try decodeRawPayload(from: jws.payload.data())
+    let header = try createHeader(from: jws)
+    if let type = payload.type, header.type != type { throw JWSDecoderError.invalidType }
+    return JWS(
+      payload: payload,
+      rawJWS: jws.compactSerializedString,
+      rawPayload: rawPayload,
+      header: header)
   }
 
   // MARK: Private
@@ -36,19 +50,27 @@ public struct JWSDecoder: JWSDecoderProtocol {
     return try decoder.decode(T.self, from: data)
   }
 
-  private func createJWT<T>(from jws: JOSESwift.JWS, payload: T) throws -> JWS<T> {
-    guard let algorithm = jws.header.algorithm else { throw JWSDecoderError.algorithmNotFound }
-    guard let headerType = jws.header.typ, headerType == payload.type else { throw JWSDecoderError.invalidType }
-    return try JWS(
-      payload: payload,
-      algorithm: algorithm.rawValue,
-      type: headerType,
+  private func decodeRawPayload(from data: Data) throws -> String {
+    guard let rawPayload = String(data: data, encoding: .utf8) else {
+      throw JWSDecoderError.invalidPayload
+    }
+    return rawPayload
+  }
+
+  private func createHeader(from jws: JOSESwift.JWS) throws -> JWSHeader {
+    guard
+      let algorithm = jws.header.algorithm,
+      let jwtAlgorithm = JWTAlgorithm(rawValue: algorithm.rawValue)
+    else { throw JWSDecoderError.algorithmNotFound }
+    return try JWSHeader(
+      algorithm: jwtAlgorithm,
+      type: jws.header.typ,
       keyIdentifier: jws.header.kid,
       jwk: jws.header.publicJwk())
   }
 }
 
-extension JWSHeader {
+extension JOSESwift.JWSHeader {
   fileprivate func publicJwk() throws -> PublicKeyInfo.JWK? {
     if let jwkData = jwkTyped?.jsonData() {
       try JSONDecoder().decode(PublicKeyInfo.JWK.self, from: jwkData)

@@ -6,6 +6,7 @@ import XCTest
 @testable import BITAppAuth
 @testable import BITOnboarding
 @testable import BITSettings
+@testable import BITTestingCore
 
 final class SetupViewModelTests: XCTestCase {
 
@@ -61,7 +62,7 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testRunSetupError() async {
-    registerPinCodeUseCase.executePinCodeThrowableError = NSError()
+    registerPinCodeUseCase.executePinCodeThrowableError = TestingError.error
     router.context.pincode = "123456"
 
     await viewModel.run()

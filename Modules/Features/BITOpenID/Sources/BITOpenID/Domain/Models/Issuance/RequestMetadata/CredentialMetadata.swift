@@ -151,7 +151,7 @@ extension CredentialMetadata {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       altText = try container.decodeIfPresent(String.self, forKey: .altText)
       if let url = try container.decodeIfPresent(URL.self, forKey: .uri) {
-        uri = CredentialDisplayLogoURIDecoder.decode(url)
+        uri = CredentialDisplayLogoURIDecoder().decode(url)
       } else {
         uri = nil
       }

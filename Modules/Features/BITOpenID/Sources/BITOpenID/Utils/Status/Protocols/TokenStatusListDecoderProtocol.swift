@@ -1,3 +1,4 @@
+import BITJWT
 import Foundation
 import Spyable
 
@@ -5,5 +6,5 @@ import Spyable
 
 @Spyable
 protocol TokenStatusListDecoderProtocol {
-  func decode(_ rawJWT: String, index: Int) throws -> StatusCode
+  func decode(_ jws: JWS<TokenStatusList>, index: Int) throws -> StatusCode
 }

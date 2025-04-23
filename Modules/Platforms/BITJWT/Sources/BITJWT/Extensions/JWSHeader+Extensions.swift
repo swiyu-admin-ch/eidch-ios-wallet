@@ -1,7 +1,7 @@
 import Foundation
 import JOSESwift
 
-extension JWSHeader {
+extension JOSESwift.JWSHeader {
 
   init(algorithm: SignatureAlgorithm, kid: String? = nil, type: String) {
     self.init(algorithm: algorithm)

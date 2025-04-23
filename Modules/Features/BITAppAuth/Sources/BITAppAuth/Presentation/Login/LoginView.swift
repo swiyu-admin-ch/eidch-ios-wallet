@@ -356,6 +356,7 @@ extension LoginView {
     .buttonStyle(.filledPrimary)
     .controlSize(.large)
     .accessibilityFocused($focus, equals: .loginButton)
+    .accessibilityIdentifier(AccessibilityIdentifier.loginButton.rawValue)
   }
 
 }

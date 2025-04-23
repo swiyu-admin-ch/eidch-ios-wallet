@@ -62,3 +62,5 @@ packages:
     path: Modules/Features/BITOpenID
   BITEIDRequest:
     path: Modules/Features/BITEIDRequest
+  BITOca:
+    path: Modules/Features/BITOca

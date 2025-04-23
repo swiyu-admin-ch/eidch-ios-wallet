@@ -10,7 +10,7 @@ extension VcSdJwt: AnyCredential {
   }
 
   public var issuer: String {
-    vcIssuer
+    payload.issuer
   }
 
   public var claims: [any AnyClaim] {
@@ -18,15 +18,15 @@ extension VcSdJwt: AnyCredential {
   }
 
   public var status: (any AnyStatus)? {
-    statusList
+    payload.statusList
   }
 
   public var validFrom: Date? {
-    activatedAt
+    payload.activatedAt
   }
 
   public var validUntil: Date? {
-    expiredAt
+    payload.expiredAt
   }
 }
 

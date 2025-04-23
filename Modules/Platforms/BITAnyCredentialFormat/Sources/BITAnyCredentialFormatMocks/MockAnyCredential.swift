@@ -15,16 +15,14 @@ public struct MockAnyCredential: AnyCredential {
 
   public var format = "vc+sd-jwt"
 
+  public var issuer = "did:tdw:mock=:mock.swiyu.admin.ch:api:v1:did:25c2db14-8dc8-4e58-933f-070048079748"
+
   public var raw: String {
     String(data: payload, encoding: .utf8) ?? UUID().uuidString
   }
 
   public var claims: [any AnyClaim] {
     [] // will be decoded by the VcSdJwtDecoder in the VcSdJwt init
-  }
-
-  public var issuer: String {
-    "did:tdw:mock=:mock.swiyu.admin.ch:api:v1:did:25c2db14-8dc8-4e58-933f-070048079748"
   }
 
   public var status: (any BITAnyCredentialFormat.AnyStatus)? {

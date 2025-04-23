@@ -337,6 +337,7 @@ targets:
       - package: BITOpenID
       - package: BITAnyCredentialFormat
       - package: BITEIDRequest
+      - package: BITOca
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh

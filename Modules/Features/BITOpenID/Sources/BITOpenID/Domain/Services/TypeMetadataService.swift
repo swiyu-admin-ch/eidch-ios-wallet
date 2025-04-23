@@ -28,7 +28,7 @@ public protocol TypeMetadataServiceProtocol {
   /// - `TypeMetadataServiceError.missingVctIntegrity` if `vc.vctIntegrity` is not available but `vc.vct` is present.
   /// - `TypeMetadataServiceError.typeMetadataInvalidIntegrity` if the `SRI` validator fails to validate integrity.
   ///
-  func fetch(_ vc: VcSdJwt) async throws -> TypeMetadata?
+  func fetch(_ vc: VcSdJwtPayload) async throws -> TypeMetadata?
 }
 
 // MARK: - TypeMetadataService
@@ -37,8 +37,8 @@ struct TypeMetadataService: TypeMetadataServiceProtocol {
 
   // MARK: Internal
 
-  func fetch(_ vc: VcSdJwt) async throws -> TypeMetadata? {
-    guard let vct = vc.vct, let url = URL(string: vct), url.isValidHttpUrl else {
+  func fetch(_ vc: VcSdJwtPayload) async throws -> TypeMetadata? {
+    guard let url = URL(string: vc.vct), url.isValidHttpUrl else {
       return nil
     }
 

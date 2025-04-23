@@ -5,12 +5,16 @@ extension Container {
 
   // MARK: Public
 
-  public var jwtHelper: Factory<JWTHelperProtocol> {
-    self { JWTHelper() }
+  public var jwsSignatureValidator: Factory<JWSSignatureValidatorProtocol> {
+    self { JWSSignatureValidator() }
   }
 
-  public var jwtSignatureValidator: Factory<JWTSignatureValidatorProtocol> {
-    self { JWTSignatureValidator() }
+  public var jwsDecoder: Factory<JWSDecoderProtocol> {
+    self { JWSDecoder() }
+  }
+
+  public var jwsEncoder: Factory<JWSEncoderProtocol> {
+    self { JWSEncoder() }
   }
 
   // MARK: Internal

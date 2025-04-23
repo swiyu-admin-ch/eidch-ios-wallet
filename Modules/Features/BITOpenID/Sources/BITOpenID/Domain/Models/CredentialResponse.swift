@@ -12,7 +12,6 @@ public struct CredentialResponse: Codable, Equatable {
 
   public init(rawCredential: String, transactionId: String? = nil, cNonce: String? = nil, cNonceExpiresIn: String? = nil, notificationId: String? = nil) {
     self.rawCredential = rawCredential
-    rawJWT = rawCredential.asRawJWT()
     self.transactionId = transactionId
     self.cNonce = cNonce
     self.cNonceExpiresIn = cNonceExpiresIn
@@ -23,10 +22,6 @@ public struct CredentialResponse: Codable, Equatable {
 
   /// The rawCredential without any treatment
   public let rawCredential: String
-
-  /// The rawCredential processed to keep only the JWT "header.payload.signature".
-  /// e.g. for an SD-JWT, the disclosures after the "~" will have been removed.
-  public let rawJWT: String?
 
   /// Identifying a deferred issuance transaction
   public let transactionId: String?
@@ -44,19 +39,10 @@ public struct CredentialResponse: Codable, Equatable {
 
   enum CodingKeys: String, CodingKey {
     case rawCredential = "credential"
-    case rawJWT
     case transactionId = "transaction_id"
     case cNonce = "c_nonce"
     case cNonceExpiresIn = "c_nonce_expires_in"
     case notificationId = "notification_id"
   }
 
-}
-
-extension String {
-  fileprivate func asRawJWT() -> String? {
-    let jwt = separatedByDisclosures.first.map(String.init) ?? self
-    guard jwt.split(separator: ".").count == 3 else { return nil }
-    return jwt
-  }
 }

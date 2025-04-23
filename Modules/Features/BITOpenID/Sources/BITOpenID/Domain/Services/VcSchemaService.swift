@@ -13,7 +13,7 @@ enum VcSchemaServiceError: Error {
 
 @Spyable
 public protocol VcSchemaServiceProtocol {
-  func fetch(for vc: VcSdJwt, with typeMetadata: TypeMetadata) async throws -> VcSchema?
+  func fetch(for typeMetadata: TypeMetadata) async throws -> VcSchema?
   func validate(_ vcSchema: VcSchema, with vcSdJwt: VcSdJwt) -> Bool
 }
 
@@ -23,7 +23,7 @@ struct VcSchemaService: VcSchemaServiceProtocol {
 
   // MARK: Internal
 
-  func fetch(for vc: VcSdJwt, with typeMetadata: TypeMetadata) async throws -> VcSchema? {
+  func fetch(for typeMetadata: TypeMetadata) async throws -> VcSchema? {
     guard let schemaUrl = typeMetadata.schemaUrl else {
       return nil
     }
@@ -43,9 +43,7 @@ struct VcSchemaService: VcSchemaServiceProtocol {
 
   func validate(_ vcSchema: VcSchema, with vcSdJwt: VcSdJwt) -> Bool {
     do {
-      let jsonString = try vcSdJwt.replaceDigestsWithDisclosedClaims()
-
-      guard let data = jsonString.data(using: .utf8) else {
+      guard let data = vcSdJwt.rawPayload.data(using: .utf8) else {
         return false
       }
 

@@ -4,6 +4,7 @@ import XCTest
 @testable import BITCrypto
 @testable import BITOpenID
 @testable import BITSdJWT
+@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 final class VcSchemaServiceTests: XCTestCase {
@@ -23,11 +24,10 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testFetchVcSchema_success() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     sriValidator.validateWithReturnValue = true
     repository.fetchVcSchemaDataFromReturnValue = mockVcSchemaData
 
-    let vcSchema = try await service.fetch(for: mockVcSdJwt, with: mockTypeMetadata)
+    let vcSchema = try await service.fetch(for: mockTypeMetadata)
 
     XCTAssertNotNil(vcSchema)
     XCTAssertEqual(repository.fetchVcSchemaDataFromReceivedUrl, mockTypeMetadata.schemaUrl)
@@ -36,9 +36,7 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testFetchVcSchema_withoutSchemaUrl_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
-
-    let vcSchema = try await service.fetch(for: mockVcSdJwt, with: .Mock.sampleWithoutSchemaUrl)
+    let vcSchema = try await service.fetch(for: .Mock.sampleWithoutSchemaUrl)
 
     XCTAssertNil(vcSchema)
     XCTAssertFalse(repository.fetchVcSchemaDataFromCalled)
@@ -46,11 +44,10 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testFetchVcSchema_repositoryError_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     repository.fetchVcSchemaDataFromThrowableError = TestingError.error
 
     do {
-      _ = try await service.fetch(for: mockVcSdJwt, with: mockTypeMetadata)
+      _ = try await service.fetch(for: mockTypeMetadata)
       XCTFail("Expected an error")
     } catch TestingError.error {
       XCTAssertFalse(sriValidator.validateWithCalled)
@@ -60,11 +57,10 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testFetchVcSchema_withoutUrlIntegrity_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     let mockTypeMetadata: TypeMetadata = .Mock.sampleWithoutUrlIntegrity
     repository.fetchVcSchemaDataFromReturnValue = mockVcSchemaData
 
-    let vcSchema = try await service.fetch(for: mockVcSdJwt, with: mockTypeMetadata)
+    _ = try await service.fetch(for: mockTypeMetadata)
 
     XCTAssertNotNil(mockTypeMetadata.schemaUrl)
     XCTAssertEqual(repository.fetchVcSchemaDataFromReceivedUrl, mockTypeMetadata.schemaUrl)
@@ -72,12 +68,11 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testFetchVcSchema_sriValidationError_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     sriValidator.validateWithThrowableError = TestingError.error
     repository.fetchVcSchemaDataFromReturnValue = mockVcSchemaData
 
     do {
-      _ = try await service.fetch(for: mockVcSdJwt, with: mockTypeMetadata)
+      _ = try await service.fetch(for: mockTypeMetadata)
       XCTFail("Expected an error")
     } catch TestingError.error {
       XCTAssertEqual(repository.fetchVcSchemaDataFromReceivedUrl, mockTypeMetadata.schemaUrl)
@@ -88,12 +83,11 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testFetchVcSchema_sriValidationReturnsFalse_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     sriValidator.validateWithReturnValue = false
     repository.fetchVcSchemaDataFromReturnValue = mockVcSchemaData
 
     do {
-      _ = try await service.fetch(for: mockVcSdJwt, with: mockTypeMetadata)
+      _ = try await service.fetch(for: mockTypeMetadata)
       XCTFail("Expected an error")
     } catch VcSchemaServiceError.invalidVcSchema {
       XCTAssertEqual(repository.fetchVcSchemaDataFromReceivedUrl, mockTypeMetadata.schemaUrl)
@@ -104,7 +98,6 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testValidateVcSchema_success() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     jsonSchemaValidator.validateWithReturnValue = true
 
     let result = service.validate(mockVcSchemaData, with: mockVcSdJwt)
@@ -114,7 +107,6 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testValidateVcSchema_jsonSchemaValidatorReturnsFalse_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     jsonSchemaValidator.validateWithReturnValue = false
 
     let result = service.validate(mockVcSchemaData, with: mockVcSdJwt)
@@ -124,7 +116,6 @@ final class VcSchemaServiceTests: XCTestCase {
   }
 
   func testValidateVcSchema_jsonSchemaValidatorThrowsError_failure() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
     jsonSchemaValidator.validateWithThrowableError = TestingError.error
 
     let result = service.validate(mockVcSchemaData, with: mockVcSdJwt)
@@ -139,7 +130,7 @@ final class VcSchemaServiceTests: XCTestCase {
   private var repository: OpenIDRepositoryProtocolSpy!
   private var jsonSchemaValidator: JsonSchemaSpy!
   private var service: VcSchemaService!
-  private var mockVcSdJwt: VcSdJwt!
+  private var mockVcSdJwt = VcSdJwtPayload.Mock.sample
 
   private let mockVcSchemaData = VcSchema()
   private let mockTypeMetadata = TypeMetadata.Mock.sampleStandard

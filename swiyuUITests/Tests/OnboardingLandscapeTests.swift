@@ -12,15 +12,10 @@ final class OnboardingLandscapeTests: XCTestCase {
   override func setUp() {
     super.setUp()
     app = XCUIApplication()
-    app.launch()
+    app.launchArguments.append("-enable-onboarding")
     XCUIDevice.shared.orientation = .landscapeRight
+    app.launch()
     XCTAssertTrue(XCUIDevice.shared.orientation.isLandscape)
-  }
-
-  override func tearDown() {
-    let screenshot = XCUIScreen.main.screenshot()
-    let attachment = XCTAttachment(screenshot: screenshot)
-    add(attachment)
   }
 
   override func tearDownWithError() throws {

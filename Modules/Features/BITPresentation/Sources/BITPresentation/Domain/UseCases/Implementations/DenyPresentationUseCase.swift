@@ -4,8 +4,8 @@ import Foundation
 
 struct DenyPresentationUseCase: DenyPresentationUseCaseProtocol {
 
-  func execute(context: PresentationRequestContext, error: PresentationErrorRequestBody.ErrorType) async throws {
-    guard let url = URL(string: context.requestObject.responseUri) else {
+  func execute(requestObject: RequestObject, error: PresentationErrorRequestBody.ErrorType) async throws {
+    guard let url = URL(string: requestObject.responseUri) else {
       throw SubmitPresentationError.wrongSubmissionUrl
     }
 

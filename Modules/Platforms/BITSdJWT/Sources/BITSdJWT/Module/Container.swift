@@ -2,7 +2,8 @@ import Factory
 
 extension Container {
 
-  var vcSdJwtDecoder: Factory<VcSdJwtDecoderProtocol> {
-    self { VcSdJwtDecoder() }
+  public var sdJwsDecoder: Factory<SdJWSDecoderProtocol> {
+    self { SdJWSDecoder(strictPayloadDecoding: true) }
   }
+
 }

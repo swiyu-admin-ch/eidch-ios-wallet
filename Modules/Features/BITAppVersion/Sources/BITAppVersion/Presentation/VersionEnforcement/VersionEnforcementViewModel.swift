@@ -29,8 +29,6 @@ class VersionEnforcementViewModel: ObservableObject {
     return display.body
   }
 
-  #warning("Add AppStore URL here")
-
   func openAppStore() {
     guard let appStoreUrl = URL(string: L10n.versionEnforcementStoreLink) else {
       return

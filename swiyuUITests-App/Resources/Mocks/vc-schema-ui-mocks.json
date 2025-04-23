@@ -1,0 +1,54 @@
+{
+   "$schema":"https://json-schema.org/draft/2020-12/schema",
+   "$id":"https://issuer-agent.swiyu.admin.ch/elfa-sdjwt.json",
+   "title":"ELFA",
+   "description":"An electronic driving license in the SD-JWT format",
+   "type":"object",
+   "properties": {
+     "photoImage": {
+       "type": "string"
+     }
+     "restrictionsA": {
+       "type": "string"
+     }
+     "categroyRestrictions": {
+       "type": "string"
+     }
+     "licenceNumber": {
+       "type": "string"
+     }
+     "categoryCode": {
+       "type": "string"
+     }
+     "faberPin": {
+       "type": "string"
+     }
+     "issuerEntity": {
+       "type": "string"
+     }
+     "dateOfBirth": {
+       "type": "string"
+     }
+     "dateOfExpiration": {
+       "type": "string"
+     }
+     "lastName": {
+       "type": "string"
+     }
+     "issuerEntityDate": {
+       "type": "string"
+     }
+     "restrictionsB": {
+       "type": "string"
+     }
+     "hometown": {
+       "type": "string"
+     }
+     "signatureImage": {
+       "type": "string"
+     }
+     "firstName": {
+       "type": "string"
+     }
+   }
+}

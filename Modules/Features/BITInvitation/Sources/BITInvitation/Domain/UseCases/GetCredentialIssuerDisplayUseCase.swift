@@ -1,8 +1,19 @@
 import BITCore
 import BITCredentialShared
 import BITOpenID
+import BITSdJWT
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - GetCredentialIssuerDisplayUseCaseProtocol
+
+@Spyable
+protocol GetCredentialIssuerDisplayUseCaseProtocol {
+  func execute(for credentialId: UUID, trustStatement: TrustStatement, fallbackDisplay: CredentialIssuerDisplay?) -> CredentialIssuerDisplay?
+}
+
+// MARK: - GetCredentialIssuerDisplayUseCase
 
 /// Get `CredentialIssuerDisplay` from `Credential` and `TrustStatement` if present
 /// If cannot decode the `TrustStatement`, return credential's `preferredIssuerDisplay`
@@ -12,16 +23,18 @@ struct GetCredentialIssuerDisplayUseCase: GetCredentialIssuerDisplayUseCaseProto
 
   // MARK: Internal
 
-  func execute(for credential: Credential, trustStatement: TrustStatement) -> CredentialIssuerDisplay? {
-    let preferredImage = credential.preferredIssuerDisplay?.image
+  func execute(for credentialId: UUID, trustStatement: TrustStatement, fallbackDisplay: CredentialIssuerDisplay?) -> CredentialIssuerDisplay? {
+    let preferredImage = fallbackDisplay?.image
     guard
-      let orgName = try? trustStatement.disclosableClaims.first(where: { $0.key == Self.orgNameKey })?.anyValue() as? [String: Any],
-      let name = getDisplayForClaim(orgName, with: Self.orgNameKey, in: trustStatement)
+      let data = trustStatement.rawPayload.data(using: .utf8),
+      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let orgName = json[Self.orgNameKey] as? [String: Any],
+      let name = getDisplayForClaim(orgName, with: Self.orgNameKey, in: json)
     else {
-      return credential.preferredIssuerDisplay
+      return fallbackDisplay
     }
 
-    return CredentialIssuerDisplay(name: name, credentialId: credential.id, image: preferredImage)
+    return CredentialIssuerDisplay(name: name, credentialId: credentialId, image: preferredImage)
   }
 
   // MARK: Private
@@ -31,25 +44,25 @@ struct GetCredentialIssuerDisplayUseCase: GetCredentialIssuerDisplayUseCaseProto
 
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 
-  private func getDisplayForClaim(_ claim: [String: Any], with key: String, in trustStatement: TrustStatement) -> String? {
+  private func getDisplayForClaim(_ claim: [String: Any], with key: String, in dictionary: [String: Any]) -> String? {
     for preferredLanguageCode in preferredUserLanguageCodes {
-      if let entry = claim.first(where: { $0.key.starts(with: "\(preferredLanguageCode)-") }) {
-        return (entry.value as? CodableValue)?.rawValue
+      if let entry = claim.first(where: { $0.key.starts(with: "\(preferredLanguageCode)") }) {
+        return entry.value as? String
       }
     }
 
     if let entry = claim.first(where: { $0.key.starts(with: UserLanguageCode.defaultAppLanguageCode) }) {
-      return (entry.value as? CodableValue)?.rawValue
+      return entry.value as? String
     }
 
     guard
-      let prefLang = trustStatement.disclosableClaims.first(where: { $0.key == Self.prefLangKey })?.value?.rawValue,
+      let prefLang = dictionary[Self.prefLangKey] as? String,
       let entry = claim.first(where: { $0.key.starts(with: prefLang) })
     else {
       return key
     }
 
-    return (entry.value as? CodableValue)?.rawValue
+    return entry.value as? String
   }
 
 }

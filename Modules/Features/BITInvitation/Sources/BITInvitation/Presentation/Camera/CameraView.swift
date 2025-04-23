@@ -64,14 +64,14 @@ struct CameraView: View {
           .appearFrom(.centerScale)
           .position(.center)
       }
-      .popup(isPresented: $viewModel.isPopupErrorPresented) {
-        if let invitationError = viewModel.qrScannerError as? CameraViewModel.CameraError {
+      .popup(isPresented: $viewModel.isErrorPopupPresented) {
+        if let error = viewModel.error {
           if orientation.isPortrait {
-            errorView(invitationError)
+            errorView(error)
           } else {
             HStack {
               Spacer()
-              errorView(invitationError)
+              errorView(error)
             }
           }
         }
@@ -89,7 +89,6 @@ struct CameraView: View {
       .task {
         await viewModel.onAppear()
       }
-      .animation(.default, value: viewModel.isLoading)
       .navigationBarBackButtonHidden()
       .toolbar { toolbarContent() }
       .accessibilityElement(children: .contain)
@@ -161,7 +160,7 @@ extension CameraView {
   }
 
   @ViewBuilder
-  private func errorView(_ error: CameraViewModel.CameraError) -> some View {
+  private func errorView(_ error: InvitationError) -> some View {
     tipView(primary: error.primaryText, secondary: error.secondaryText, icon: error.icon, close: viewModel.closeErrorView)
       .frame(maxWidth: orientation.isPortrait ? .infinity : Constants.tipViewMaxWidth)
       .padding(.horizontal, orientation.isPortrait ? .x3 : .x1)

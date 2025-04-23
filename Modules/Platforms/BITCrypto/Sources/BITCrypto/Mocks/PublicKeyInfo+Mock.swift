@@ -17,7 +17,7 @@ extension PublicKeyInfo: Mockable {
 extension PublicKeyInfo.JWK: Mockable {
   struct Mock {
     static let validSample: PublicKeyInfo.JWK = Mocker.decode(fromFile: "valid-jwk", bundle: Bundle.module)
-    static let invalidSample: PublicKeyInfo.JWK = Mocker.decode(fromFile: "valid-jwk", bundle: Bundle.module)
+    static let invalidSample: PublicKeyInfo.JWK = Mocker.decode(fromFile: "invalid-jwk", bundle: Bundle.module)
   }
 }
 #endif

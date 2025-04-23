@@ -21,9 +21,11 @@ final class HomeViewModelTests: XCTestCase {
     enableEIDRequestAfterOnboardingUseCase = EnableEIDRequestAfterOnboardingUseCaseProtocolSpy()
     getEIDRequestCaseListUseCase = GetEIDRequestCaseListUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
 
     Container.shared.getEIDRequestCaseListUseCase.register { self.getEIDRequestCaseListUseCase }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCase }
+    Container.shared.deleteEIDRequestCaseUseCase.register { self.deleteEIDRequestCaseUseCase }
 
     isUserLoggedInUseCase = IsUserLoggedInUseCaseProtocolSpy()
     isUserLoggedInUseCase.executeReturnValue = true
@@ -341,9 +343,9 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.getEIDRequestCases()
 
-    XCTAssertEqual(viewModel.eIDRequestCases.count, mockEIDRequestCases.count - 1)
+    XCTAssertEqual(viewModel.eIDRequestCases.count, mockEIDRequestCases.count)
     XCTAssertTrue(getEIDRequestCaseListUseCase.executeCalled)
-    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeReceivedRequestCases, mockEIDRequestCasesFiltered)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeReceivedRequestCases, mockEIDRequestCases)
   }
 
   @MainActor
@@ -363,7 +365,7 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.fetchEIDRequestStatus()
 
-    XCTAssertEqual(viewModel.eIDRequestCases.count, mockEIDRequestCases.count - 1)
+    XCTAssertEqual(viewModel.eIDRequestCases.count, mockEIDRequestCases.count)
   }
 
   @MainActor
@@ -384,6 +386,47 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallAutoVerification)
   }
 
+  @MainActor
+  func testRequestCaseAction_expiredCase_deletesCase() async throws {
+    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
+    getEIDRequestCaseListUseCase.executeReturnValue = []
+
+    try await viewModel.requestCaseAction(mockEIDRequestCase)
+
+    XCTAssertEqual(deleteEIDRequestCaseUseCase.executeReceivedRequestCase, mockEIDRequestCase)
+    XCTAssertTrue(getEIDRequestCaseListUseCase.executeCalled)
+    XCTAssertFalse(mockEIDRequestCases.contains(mockEIDRequestCase))
+  }
+
+  @MainActor
+  func testDeleteRequestCase_failure() async throws {
+    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
+    deleteEIDRequestCaseUseCase.executeThrowableError = TestingError.error
+
+    try await viewModel.requestCaseAction(mockEIDRequestCase)
+
+    XCTAssertFalse(getEIDRequestCaseListUseCase.executeCalled)
+  }
+
+  @MainActor
+  func testDeleteRequestCaseGetRequestCasesList_ThrowsError() async throws {
+    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
+    getEIDRequestCaseListUseCase.executeThrowableError = TestingError.error
+
+    try await viewModel.requestCaseAction(mockEIDRequestCase)
+
+    XCTAssertEqual(deleteEIDRequestCaseUseCase.executeReceivedRequestCase, mockEIDRequestCase)
+  }
+
+  @MainActor
+  func testRequestCaseAction_ReadyForAVStatus() async throws {
+    let requestCase: EIDRequestCase = .Mock.sampleAVReady
+
+    try await viewModel.requestCaseAction(requestCase)
+
+    XCTAssertTrue(mockRouter.didCallAutoVerification)
+  }
+
   // MARK: Private
 
   // swiftlint:disable all
@@ -392,6 +435,7 @@ final class HomeViewModelTests: XCTestCase {
   private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
   private var isEIDRequestAfterOnboardingEnabledUseCase: IsEIDRequestAfterOnboardingEnabledUseCaseProtocolSpy!
   private var enableEIDRequestAfterOnboardingUseCase: EnableEIDRequestAfterOnboardingUseCaseProtocolSpy!
+  private var deleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocolSpy!
   private var viewModel: HomeViewModel!
   private var mockRouter: HomeRouterMock!
   private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocolSpy!

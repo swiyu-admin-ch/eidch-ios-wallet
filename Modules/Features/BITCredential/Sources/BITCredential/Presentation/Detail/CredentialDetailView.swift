@@ -119,7 +119,7 @@ extension CredentialDetailView {
         .padding(.top, .x4)
     }
     .accessibilityElement(children: .contain)
-    .accessibilityLabel(L10n.credentialOfferContentSectionTitle)
+    .accessibilityLabel(L10n.tkReceiveCredentialOfferContentSectionPrimary)
     .accessibilitySortPriority(10)
   }
 

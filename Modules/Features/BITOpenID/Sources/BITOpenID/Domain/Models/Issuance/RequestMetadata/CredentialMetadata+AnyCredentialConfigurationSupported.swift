@@ -5,7 +5,7 @@ extension CredentialMetadata {
   // MARK: Public
 
   /// This protocol is needed in order to make the `credential_configurations_supported`property  format agnostic
-  public protocol AnyCredentialConfigurationSupported {
+  public protocol AnyCredentialConfigurationSupported: Equatable {
     var format: String { get }
     var scope: String? { get }
     var cryptographicBindingMethodsSupported: [CryptographicBindingMethod]? { get }

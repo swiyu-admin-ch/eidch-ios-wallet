@@ -1,100 +1,47 @@
-import BITJWT
 import Foundation
 import XCTest
+@testable import BITCrypto
+@testable import BITJWT
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
-@testable import BITTestingCore
 
 final class VcSdJwtTests: XCTestCase {
 
-  func testDecodeSample() throws {
-    let rawString = VcSdJwt.Mock.sampleRaw
+  // MARK: Internal
 
-    guard let vcSdJwt = try? VcSdJwt(from: rawString) else {
-      XCTFail("init from rawCredential failed")
-      return
-    }
+  func testDecode_allFields() throws {
+    let data = VcSdJwtPayload.Mock.allFieldsData
 
-    XCTAssertFalse(vcSdJwt.raw.isEmpty)
-    XCTAssertFalse(vcSdJwt.digests.isEmpty)
-    XCTAssertEqual(16, vcSdJwt.disclosableClaims.count)
-    XCTAssertEqual(16, vcSdJwt.digests.count)
-    XCTAssertNotNil(vcSdJwt.issuedAt)
-    XCTAssertNotNil(vcSdJwt.expiredAt)
-    XCTAssertNotNil(vcSdJwt.activatedAt)
-    XCTAssertNotNil(vcSdJwt.iss)
-    XCTAssertTrue((vcSdJwt.iss?.isEmpty) == false)
-    XCTAssertNotNil(vcSdJwt.vcIssuer)
-    XCTAssertFalse(vcSdJwt.vcIssuer.isEmpty)
+    let sdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)
+    let payload = sdJwt.payload
 
-    // swiftlint:disable all
-    XCTAssertTrue(vcSdJwt.issuedAt! < vcSdJwt.expiredAt!)
-    XCTAssertTrue(Date() < vcSdJwt.expiredAt!)
+    let expectedJwk = PublicKeyInfo.JWK(kty: "key_type", kid: nil, crv: "curve", x: "test_x", y: "test_y")
+    let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 111, uri: "status_list_uri"))
 
-    XCTAssertTrue(vcSdJwt.activatedAt! < vcSdJwt.expiredAt!)
-    XCTAssertTrue(Date() < vcSdJwt.expiredAt!)
-    // swiftlint:enable all
-
-    XCTAssertNotNil(vcSdJwt.keyBinding)
-    XCTAssertNotNil(vcSdJwt.vct)
-    XCTAssertNotNil(vcSdJwt.vctIntegrity)
-    XCTAssertNotNil(vcSdJwt.statusList)
+    XCTAssertEqual(sdJwt.header.type, "vc+sd-jwt")
+    XCTAssertEqual(payload.issuer, "issuer")
+    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1722499200))
+    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 1767168000))
+    XCTAssertEqual(payload.keyBinding, expectedJwk)
+    XCTAssertEqual(payload.vct, "vc_type")
+    XCTAssertEqual(payload.vctIntegrity, "vct_integrity")
+    XCTAssertEqual(payload.statusList, expectedStatusList)
+    XCTAssertEqual(payload.subject, "subject")
+    XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1739282713))
   }
 
-  func testDecodeFullSample() throws {
-    let vcSdJwt = VcSdJwt.Mock.fullSample
+  func testDecode_requiredFields() throws {
+    let data = VcSdJwtPayload.Mock.requiredFieldsData
 
-    XCTAssertFalse(vcSdJwt.raw.isEmpty)
+    let sdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)
+    let payload = sdJwt.payload
 
-    XCTAssertNotNil(vcSdJwt.iss)
-    XCTAssertNotNil(vcSdJwt.vcIssuer)
-    XCTAssertNotNil(vcSdJwt.subject)
-    XCTAssertNotNil(vcSdJwt.audience)
-    XCTAssertNotNil(vcSdJwt.expiredAt)
-    XCTAssertNotNil(vcSdJwt.issuedAt)
-    XCTAssertNotNil(vcSdJwt.activatedAt)
-
-    XCTAssertFalse(vcSdJwt.digests.isEmpty)
-    XCTAssertEqual(16, vcSdJwt.disclosableClaims.count)
-    XCTAssertEqual(16, vcSdJwt.digests.count)
-
-    XCTAssertNotNil(vcSdJwt.keyBinding)
-    XCTAssertNotNil(vcSdJwt.vct)
-    XCTAssertNotNil(vcSdJwt.statusList)
+    XCTAssertEqual(payload.issuer, "issuer")
+    XCTAssertEqual(payload.vct, "vc_type")
   }
 
-  func testDecode_NoKeyBinding_ReturnsNil() throws {
-    let vcSdJwt = VcSdJwt.Mock.sampleNoKeyBinding
+  // MARK: Private
 
-    XCTAssertNil(vcSdJwt.keyBinding)
-  }
-
-  func testDecode_NoVct_ReturnsNil() throws {
-    let vcSdJwt = VcSdJwt.Mock.sampleNoVct
-
-    XCTAssertNil(vcSdJwt.vct)
-  }
-
-  func testDecode_NoStatus_ReturnsNil() throws {
-    let vcSdJwt = VcSdJwt.Mock.sampleNoStatus
-
-    XCTAssertNil(vcSdJwt.statusList)
-  }
-
-  func testDecode_NoIssuer_ShouldThrow() throws {
-    let rawString = VcSdJwt.Mock.sampleNoIssuer
-
-    XCTAssertThrowsError(try VcSdJwt(from: rawString)) { error in
-      XCTAssertEqual(error as? VcSdJwtError, .keyNotFound("iss"))
-    }
-  }
-
-  func testDecode_NonDisclosableClaims_ShouldThrow() throws {
-    let rawString = VcSdJwt.Mock.sampleNonDisclosableClaims
-
-    XCTAssertThrowsError(try VcSdJwt(from: rawString)) { error in
-      XCTAssertEqual(error as? VcSdJwtError, .nonDisclosableClaimFound)
-    }
-  }
+  private var decoder = SdJWSDecoder()
 
 }

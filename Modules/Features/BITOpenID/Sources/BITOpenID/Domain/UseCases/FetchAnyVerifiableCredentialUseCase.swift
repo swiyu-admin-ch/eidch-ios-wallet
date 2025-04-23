@@ -3,6 +3,7 @@ import BITAnyCredentialFormat
 import BITCrypto
 import BITJWT
 import BITNetworking
+import BITOca
 import Factory
 import Foundation
 import Spyable
@@ -25,7 +26,7 @@ public enum FetchAnyVerifiableCredentialError: Error {
 
 // MARK: - FetchAnyVerifiableCredentialUseCaseProtocol
 
-public typealias CredentialBundle = (metadataWrapper: CredentialMetadataWrapper, anyCredential: AnyCredential, keyPair: KeyPair?)
+public typealias CredentialBundle = (metadataWrapper: CredentialMetadataWrapper, anyCredential: AnyCredential, keyPair: KeyPair?, ocaBundle: RawOcaBundle?)
 
 // MARK: - FetchAnyVerifiableCredentialUseCaseProtocol
 
@@ -64,7 +65,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       credentialEndpoint: credentialEndpoint)
 
     let anyCredential = try await fetchAnyCredentialUseCase.execute(for: context)
-    return (metadataWrapper, anyCredential, keyPair)
+    return (metadataWrapper, anyCredential.credential, keyPair, anyCredential.ocaBundle)
   }
 
   // MARK: Private

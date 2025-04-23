@@ -101,7 +101,7 @@ extension CredentialDisplay {
     }
 
     var logoUrl: URL? {
-      url?.scheme == "https" ? url : nil
+      url?.scheme == URLScheme.https.rawValue ? url : nil
     }
 
     var data: Data? {

@@ -18,13 +18,13 @@ struct TokenStatusListValidator: AnyStatusCheckValidatorProtocol {
   func validate(_ anyStatus: any AnyStatus, issuer: String) async -> VcStatus {
     do {
       guard
-        let statusList = anyStatus as? TokenStatusList,
+        let statusList = anyStatus as? VcSdJwtTokenStatusList,
         let statusUri = URL(string: statusList.statusList.uri),
-        let statusJwt = try? await repository.fetchCredentialStatus(from: statusUri),
-        try await isValidStatusJwt(statusJwt, issuer: issuer, statusListUri: statusUri.absoluteString)
+        let statusJws = try? await repository.fetchCredentialStatus(from: statusUri),
+        try await isValidStatusJws(statusJws, issuer: issuer, statusListUri: statusUri.absoluteString)
       else { return .unknown }
 
-      let statusCode = try tokenStatusListDecoder.decode(statusJwt.raw, index: statusList.statusList.index)
+      let statusCode = try tokenStatusListDecoder.decode(statusJws, index: statusList.statusList.index)
       return statusCode.credentialStatus
     } catch {
       return .unknown
@@ -33,27 +33,21 @@ struct TokenStatusListValidator: AnyStatusCheckValidatorProtocol {
 
   // MARK: Private
 
-  private static let statusListType = "statuslist+jwt"
-
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.tokenStatusListDecoder) private var tokenStatusListDecoder: TokenStatusListDecoderProtocol
-  @Injected(\.jwtSignatureValidator) private var jwtSignatureValidator: JWTSignatureValidatorProtocol
+  @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
 
-  private func isValidStatusJwt(_ jwt: JWT, issuer: String, statusListUri: String) async throws -> Bool {
+  private func isValidStatusJws(_ jws: JWS<TokenStatusList>, issuer: String, statusListUri: String) async throws -> Bool {
     guard
-      let iss = jwt.iss,
-      let kid = jwt.kid,
-      jwt.type == Self.statusListType,
-      jwt.issuedAt != nil,
-      jwt.subject == statusListUri,
-      iss == issuer
+      jws.payload.subject == statusListUri,
+      jws.payload.issuer == issuer
     else {
       return false
     }
-    guard try await jwtSignatureValidator.validate(jwt, did: iss, kid: kid) else {
+    guard try await jwsSignatureValidator.validate(jws, did: issuer) else {
       return false
     }
-    guard let expiredAt = jwt.expiredAt else { return true }
+    guard let expiredAt = jws.payload.expiredAt else { return true }
     return expiredAt > Date()
   }
 }

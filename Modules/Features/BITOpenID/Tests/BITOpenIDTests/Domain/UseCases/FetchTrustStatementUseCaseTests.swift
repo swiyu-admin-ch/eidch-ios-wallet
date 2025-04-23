@@ -6,181 +6,145 @@ import XCTest
 @testable import BITOpenID
 @testable import BITTestingCore
 
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
+
 final class FetchTrustStatementUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
-    Container.shared.openIDRepository.register { self.openIDRepositorySpy }
+    super.setUp()
+    Container.shared.reset()
+
     Container.shared.trustRegistryRepository.register { self.trustRegistryRepositorySpy }
+    Container.shared.openIDRepository.register { self.openIDRepositorySpy }
     Container.shared.validateTrustStatementUseCase.register { self.validateTrustStatementUseCaseSpy }
-
-    useCase = FetchTrustStatementUseCase()
-  }
-
-  func testFetchTrustStatementCredential_success() async throws {
-    let mockAnyCredential = MockAnyCredential()
-
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
-    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ TrustStatement.Mock.sdJwtSample ]
-    validateTrustStatementUseCaseSpy.executeReturnValue = true
-
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
-
-    XCTAssertEqual(trustStatement?.iss, TrustStatement.Mock.validSample?.iss)
-
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-    XCTAssertEqual(trustStatement, validateTrustStatementUseCaseSpy.executeReceivedTrustStatement)
-
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
-  }
-
-  func testFetchTrustStatementJwtRequestOject_success() async throws {
-    let jwtRequestObject = JWTRequestObject.Mock.sample
-
-    Container.shared.baseRegistryDomainPattern.register { #"^did:([^:]+):[^:]+$"# }
-
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
-    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ TrustStatement.Mock.sdJwtSample ]
-    validateTrustStatementUseCaseSpy.executeReturnValue = true
+    Container.shared.baseRegistryDomainPattern.register { #"^did:tdw:([^:]+)$"# }
 
     useCase = FetchTrustStatementUseCase()
 
-    let trustStatement = try await useCase.execute(jwtRequestObject: jwtRequestObject)
+    success()
+  }
 
-    XCTAssertEqual(trustStatement?.iss, TrustStatement.Mock.validSample?.iss)
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("example", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
+  func testExecute_success_returnsTrustStatement() async throws {
+    let trustStatement = try await useCase.execute(issuer: issuerMock)
+
+    XCTAssertEqual(trustStatement, trustStatementMock)
+  }
+
+  func testExecute_validAnyCredential_argumentsPassed() async throws {
+    let trustStatement = try await useCase.execute(issuer: issuerMock)
+
+    XCTAssertEqual(trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain, Self.issuerDomain)
+    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.url.absoluteString, "https://\(Self.registryDomain)")
+    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, issuerMock)
     XCTAssertEqual(validateTrustStatementUseCaseSpy.executeReceivedTrustStatement, trustStatement)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, jwtRequestObject.jwt.iss)
   }
 
-  func testFetchTrustStatementCredenialMultiple_success() async throws {
-    let mockAnyCredential = MockAnyCredential()
-
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
+  func testExecute_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
     openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [
-      TrustStatement.Mock.noVctClaimSdJwtSample,
-      TrustStatement.Mock.unsupportedVctSdJwtSample,
-      TrustStatement.Mock.sdJwtSample,
+      unsupportedTrustStatement,
+      TrustStatementPayload.Mock.validSampleItalian,
+      trustStatementMock,
     ]
-    validateTrustStatementUseCaseSpy.executeReturnValue = true
+    var count = 0
+    validateTrustStatementUseCaseSpy.executeClosure = { _ in
+      if count == 0 {
+        count += 1
+        return false
+      } else {
+        return true
+      }
+    }
 
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
+    let trustStatement = try await useCase.execute(issuer: issuerMock)
 
-    XCTAssertEqual(trustStatement?.iss, TrustStatement.Mock.validSample?.iss)
-
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-    XCTAssertEqual(trustStatement, validateTrustStatementUseCaseSpy.executeReceivedTrustStatement)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
+    XCTAssertEqual(trustStatement, trustStatementMock)
   }
 
-  func testFetchTrustStatementCredentialWithInvalidBaseRegistry() async throws {
-    let mockAnyCredential = MockAnyCredential()
-
-    trustRegistryRepositorySpy.getTrustedDidsThrowableError = TestingError.error
+  func testExecute_notMatchingBaseRegistryDomain_throwsError() async throws {
+    Container.shared.baseRegistryDomainPattern.register { #"^not_matching:([^:]+)$"# }
+    useCase = FetchTrustStatementUseCase()
 
     do {
-      _ = try await useCase.execute(credential: mockAnyCredential)
+      _ = try await useCase.execute(issuer: issuerMock)
       XCTFail("An error was expected")
-    } catch FetchTrustStatementUseCase.FetchTrustStatementUseCaseError.cannotParseTrustRegistryDomain {
-      XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-      XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-      XCTAssertFalse(validateTrustStatementUseCaseSpy.executeCalled)
-      XCTAssertFalse(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidCalled)
     } catch {
-      XCTFail("Not the expected error")
+      XCTAssertEqual(error as? FetchTrustStatementUseCaseError, .cannotParseTrustRegistryDomain)
     }
   }
 
-  func testFetchTrustStatementCredentialWhenNoTrustStatements() async throws {
-    let mockAnyCredential = MockAnyCredential()
+  func testExecute_trustRegistryRepositoryReturnsNil_throwsError() async throws {
+    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = nil
 
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
+    do {
+      _ = try await useCase.execute(issuer: issuerMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? FetchTrustStatementUseCaseError, .cannotParseTrustRegistryDomain)
+    }
+  }
+
+  func testExecute_fetchTrustStatementsThrows_throwsError() async throws {
+    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(issuer: issuerMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testExecute_noTrustStatements_returnsNil() async throws {
     openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = []
 
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
+    let trustStatement = try await useCase.execute(issuer: issuerMock)
 
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-    XCTAssertFalse(validateTrustStatementUseCaseSpy.executeCalled)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
     XCTAssertNil(trustStatement)
   }
 
-  func testFetchTrustStatementCredentialWithInvalidTrustStatement() async throws {
-    let mockAnyCredential = MockAnyCredential()
+  func testExecute_unsupportedTrustStatementVct_returnsNil() async throws {
+    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [unsupportedTrustStatement]
 
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
-    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [TrustStatement.Mock.invalidSample]
+    let trustStatement = try await useCase.execute(issuer: issuerMock)
 
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
-
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-    XCTAssertFalse(validateTrustStatementUseCaseSpy.executeCalled)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
     XCTAssertNil(trustStatement)
   }
 
-  func testFetchTrustStatementCredentialWhenValidationFails() async throws {
-    let mockAnyCredential = MockAnyCredential()
-
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
-    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ TrustStatement.Mock.sdJwtSample ]
+  func testExecute_invalidTrustStatement_returnsNil() async throws {
     validateTrustStatementUseCaseSpy.executeReturnValue = false
 
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
+    let trustStatement = try await useCase.execute(issuer: issuerMock)
 
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-
-    guard let trustStatementVcSdJwt = try? VcSdJwt(from: TrustStatement.Mock.sdJwtSample) else {
-      XCTFail("Could not create VcSdJwt")
-      return
-    }
-    XCTAssertEqual(trustStatementVcSdJwt, validateTrustStatementUseCaseSpy.executeReceivedTrustStatement)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
-    XCTAssertNil(trustStatement)
-  }
-
-  func testFetchTrustStatementCredentialWhenNoVctClaims() async throws {
-    let mockAnyCredential = MockAnyCredential()
-
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
-    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ TrustStatement.Mock.noVctClaimSdJwtSample ]
-
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
-
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
-    XCTAssertFalse(validateTrustStatementUseCaseSpy.executeCalled)
-    XCTAssertNil(trustStatement)
-  }
-
-  func testFetchTrustStatementCredentialNotSupportedVctClaims() async throws {
-    let mockAnyCredential = MockAnyCredential()
-
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = "registry"
-    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ TrustStatement.Mock.unsupportedVctSdJwtSample ]
-
-    let trustStatement = try await useCase.execute(credential: mockAnyCredential)
-
-    XCTAssertTrue(trustRegistryRepositorySpy.getTrustRegistryDomainForCalled)
-    XCTAssertEqual("mock.swiyu.admin.ch", trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, mockAnyCredential.issuer)
-    XCTAssertFalse(validateTrustStatementUseCaseSpy.executeCalled)
     XCTAssertNil(trustStatement)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var useCase: FetchTrustStatementUseCase!
-  private var openIDRepositorySpy = OpenIDRepositoryProtocolSpy()
+  private static let registryDomain = "registry.ch"
+  private static let issuerDomain = "issuer.ch"
+
+  private var issuerMock = "did:tdw:\(issuerDomain)"
+  private let trustStatementMock = TrustStatementPayload.Mock.validSample
+
   private var trustRegistryRepositorySpy = TrustRegistryRepositoryProtocolSpy()
+  private var openIDRepositorySpy = OpenIDRepositoryProtocolSpy()
   private var validateTrustStatementUseCaseSpy = ValidateTrustStatementUseCaseProtocolSpy()
-  // swiftlint:enable all
+
+  private var useCase: FetchTrustStatementUseCase!
+
+  private var unsupportedTrustStatement: TrustStatement {
+    var payload = TrustStatementPayload.Mock.validSamplePayload
+    payload.vct = "unsupported"
+    return TrustStatementPayload.Mock.createSdJWSMock(from: payload)
+  }
+
+  private func success() {
+    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = Self.registryDomain
+    openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ trustStatementMock ]
+    validateTrustStatementUseCaseSpy.executeReturnValue = true
+  }
+
+  // swiftlint:enable force_unwrapping implicitly_unwrapped_optional
 }

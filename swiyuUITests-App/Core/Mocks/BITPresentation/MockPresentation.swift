@@ -10,7 +10,7 @@ extension CompatibleCredential {
     static let fieldFirstName = PresentationField(jsonPath: "$.firstName", value: CodableValue(value: "Fritz", as: "string"))
     static let fieldLastName = PresentationField(jsonPath: "$.lastName", value: CodableValue(value: "Test", as: "string"))
 
-    static var BIT = CompatibleCredential(credential: .Mock.sample, requestedFields: [fieldFirstName, fieldLastName])
+    static var BIT = CompatibleCredential(credential: .Mock.sampleVC, requestedFields: [fieldFirstName, fieldLastName])
   }
 }
 
@@ -18,7 +18,26 @@ extension CompatibleCredential {
 
 extension PresentationRequestContext {
 
+  // MARK: Lifecycle
+
+  public convenience init(requestObject: RequestObject, compatibleCredentials: [CompatibleCredential], trustStatement: TrustStatement? = nil) {
+    self.init(requestObject: requestObject)
+    let inputDescriptors = requestObject.presentationDefinition.inputDescriptors.map(\.id)
+    var requests: [InputDescriptorID: [CompatibleCredential]] = [:]
+    for inputDescriptorID in inputDescriptors {
+      requests[inputDescriptorID] = compatibleCredentials
+    }
+    if let descriptorId = inputDescriptors.first, let credential = compatibleCredentials.first {
+      selectedCredentials[descriptorId] = credential
+    }
+
+    self.trustStatement = trustStatement
+  }
+
+  // MARK: Internal
+
   enum Mock {
     static let vcSdJwtSample = PresentationRequestContext(requestObject: .Mock.sample, compatibleCredentials: CompatibleCredential.Mock.array)
   }
+
 }

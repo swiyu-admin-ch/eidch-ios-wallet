@@ -24,15 +24,11 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   override func setUp() {
     Container.shared.validateCredentialOfferInvitationUrlUseCase.register { self.validateCredentialOfferInvitationUrlUseCase }
-    Container.shared.fetchRequestObjectUseCase.register { self.fetchRequestObjectUseCase }
+    Container.shared.processPresentationRequestUseCase.register { self.processPresentationRequestUseCase }
     Container.shared.checkInvitationTypeUseCase.register { self.checkInvitationTypeUseCase }
     Container.shared.getCompatibleCredentialsUseCase.register { self.getCompatibleCredentialsUseCase }
     Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
     Container.shared.getCredentialsCountUseCase.register { self.getCredentialsCountUseCase }
-    Container.shared.fetchTrustStatementUseCase.register { self.fetchTrustStatementUseCase }
-    Container.shared.denyPresentationUseCase.register { self.denyPresentationUseCase }
-    Container.shared.validateRequestObjectUseCase.register { self.validateRequestObjectUseCase }
-    Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCase }
 
     mockRequestObject = .Mock.VcSdJwt.sample
     // MockAnyCredential
@@ -44,11 +40,10 @@ final class CameraViewModelTests: XCTestCase {
   func testWithInitialData() async {
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isLoading)
-    XCTAssertTrue(viewModel.isTipPresented)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
-    XCTAssertNil(viewModel.qrScannerError)
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isScannerActive)
+    XCTAssertFalse(viewModel.isTipPresented)
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
+    XCTAssertNil(viewModel.error)
+    XCTAssertTrue(viewModel.isScanEnabled)
   }
 
   // MARK: - Issuing
@@ -60,27 +55,21 @@ final class CameraViewModelTests: XCTestCase {
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = credential
-    createAnyCredentialUseCase.executeFromFormatReturnValue = mockAnyCredential
-    fetchTrustStatementUseCase.executeCredentialReturnValue = .Mock.validSample
+    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustStatementPayload.Mock.validSample)
 
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(router.didCallCredentialOffer)
     XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
 
     XCTAssertTrue(validateCredentialOfferInvitationUrlUseCase.executeCalled)
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
-//    XCTAssertEqual(mockCredentialWithKeyBinding.anyCredential.raw, saveCredentialUseCase.executeCredentialWithKeyBindingMetadataWrapperReceivedArguments?.credentialWithKeyBinding.anyCredential.raw)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, credential.format)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, credential.payload)
-    XCTAssertEqual(fetchTrustStatementUseCase.executeCredentialReceivedCredential?.issuer, mockAnyCredential.issuer)
 
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -91,13 +80,10 @@ final class CameraViewModelTests: XCTestCase {
 
     let viewModel = CameraViewModel(router: router)
 
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
 
-    fetchCredentialUseCase.executeFromReturnValue = credential
-
-    createAnyCredentialUseCase.executeFromFormatReturnValue = mockAnyCredential
-    fetchTrustStatementUseCase.executeCredentialReturnValue = .Mock.validSample
+    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustStatementPayload.Mock.validSample)
 
     await viewModel.setMetadataUrl(url)
 
@@ -113,11 +99,8 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(1, fetchCredentialUseCase.executeFromCallsCount)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, credential.format)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, credential.payload)
-    XCTAssertEqual(fetchTrustStatementUseCase.executeCredentialReceivedCredential?.issuer, mockAnyCredential.issuer)
 
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -126,15 +109,13 @@ final class CameraViewModelTests: XCTestCase {
     let mockCredentialOffer = CredentialOffer.Mock.sample
     let credential = Credential.Mock.sample
 
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
+    getCredentialsCountUseCase.executeReturnValue = 2
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = credential
-
-    createAnyCredentialUseCase.executeFromFormatReturnValue = mockAnyCredential
-    fetchTrustStatementUseCase.executeCredentialReturnValue = .Mock.validSample
+    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustStatementPayload.Mock.validSample)
 
     viewModel = createViewModel(mode: .deeplink(url: url))
-    try? await Task.sleep(nanoseconds: 1_000_000_000)
+    await viewModel.onAppear()
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
 
@@ -144,26 +125,22 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(1, fetchCredentialUseCase.executeFromCallsCount)
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, credential.format)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, credential.payload)
-    XCTAssertEqual(fetchTrustStatementUseCase.executeCredentialReceivedCredential?.issuer, mockAnyCredential.issuer)
   }
 
   @MainActor
   func testValidateCredentialOfferFailure() async {
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
+    getCredentialsCountUseCase.executeReturnValue = 2
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeThrowableError = ValidateCredentialOfferInvitationUrlError.unexpectedScheme
 
-    viewModel.isTorchEnabled = true
     viewModel.isTorchEnabled = true
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .invalidQRCode)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .invalidQRCode)
     XCTAssertTrue(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
@@ -175,15 +152,15 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
   @MainActor
   func testValidateCredentialOfferVerificationFailure() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
-
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
+    getCredentialsCountUseCase.executeReturnValue = 2
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
     fetchCredentialUseCase.executeFromThrowableError = FetchAnyVerifiableCredentialError.validationFailed
 
@@ -191,9 +168,8 @@ final class CameraViewModelTests: XCTestCase {
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .validationFailed)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .validationFailed)
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
@@ -206,7 +182,7 @@ final class CameraViewModelTests: XCTestCase {
 
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -218,25 +194,21 @@ final class CameraViewModelTests: XCTestCase {
       return
     }
 
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
     fetchCredentialUseCase.executeFromThrowableError = FetchAnyVerifiableCredentialError.unknownIssuer
 
-    viewModel.isTorchEnabled = true
-
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .unknownIssuer)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .unknownIssuer)
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
     XCTAssertEqual(url, checkInvitationTypeUseCase.executeUrlReceivedUrl)
-//    XCTAssertEqual(mockCredentialOffer, fetchCredentialUseCase.executeFromReceivedArguments?.offer)
 
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -244,7 +216,7 @@ final class CameraViewModelTests: XCTestCase {
   func testFetchCredentialExpired() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
 
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
     fetchCredentialUseCase.executeFromThrowableError = FetchAnyVerifiableCredentialError.expiredInvitation
 
@@ -252,9 +224,8 @@ final class CameraViewModelTests: XCTestCase {
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .expiredInvitation)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .expiredInvitation)
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
@@ -267,66 +238,7 @@ final class CameraViewModelTests: XCTestCase {
 
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
-  }
-
-  @MainActor
-  func testValidateCredentialOffer_fetchTrustStatement_failure() async {
-    let mockCredentialOffer = CredentialOffer.Mock.sample
-    let credential = Credential.Mock.sample
-
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
-    validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = credential
-    createAnyCredentialUseCase.executeFromFormatReturnValue = MockAnyCredential()
-    fetchTrustStatementUseCase.executeCredentialThrowableError = TestingError.error
-
-    await viewModel.setMetadataUrl(url)
-
-    XCTAssertTrue(router.didCallCredentialOffer)
-    XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
-
-    XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
-
-    XCTAssertTrue(validateCredentialOfferInvitationUrlUseCase.executeCalled)
-    XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertTrue(fetchTrustStatementUseCase.executeCredentialCalled)
-
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
-  }
-
-  @MainActor
-  func testValidateCredentialOffer_CreateAnyCredential_failure() async {
-    let mockCredentialOffer = CredentialOffer.Mock.sample
-    let credential = Credential.Mock.sample
-
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
-    validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-
-    fetchCredentialUseCase.executeFromReturnValue = credential
-
-    createAnyCredentialUseCase.executeFromFormatThrowableError = TestingError.error
-
-    await viewModel.setMetadataUrl(url)
-
-    XCTAssertTrue(router.didCallCredentialOffer)
-    XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
-
-    XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
-
-    XCTAssertTrue(validateCredentialOfferInvitationUrlUseCase.executeCalled)
-    XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
-
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, credential.format)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, credential.payload)
-
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -334,236 +246,76 @@ final class CameraViewModelTests: XCTestCase {
 
   @MainActor
   func testValidatePresentationWithOneCredentialSuccess() async throws {
-    let context = PresentationRequestContext.Mock.vcSdJwtSample
+    let bundle = PresentationRequestContext.Mock.vcSdJwtSample
 
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = context.requestObject
-    validateRequestObjectUseCase.executeReturnValue = true
-    // swiftlint: disable all
-    getCompatibleCredentialsUseCase.executeUsingReturnValue = [context.requestObject.presentationDefinition.inputDescriptors.first!.id: [.Mock.BIT]]
-    // swiftlint: enable all
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
+    processPresentationRequestUseCase.executeUrlReturnValue = bundle
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(router.didCallPresentationReview)
+    XCTAssertFalse(router.didCallPresentationReview)
     XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(1, fetchRequestObjectUseCase.executeCallsCount)
-
-    XCTAssertTrue(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(1, getCompatibleCredentialsUseCase.executeUsingCallsCount)
-    XCTAssertEqual(context.requestObject, getCompatibleCredentialsUseCase.executeUsingReceivedRequestObject)
+    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertEqual(1, processPresentationRequestUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-
-    XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, context.requestObject)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-  }
-
-  @MainActor
-  func testValidatePresentationWithJWTRequestObjectSuccess() async throws {
-    let context = PresentationRequestContext.Mock.vcSdJwtJwtSample
-
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = context.requestObject
-    validateRequestObjectUseCase.executeReturnValue = true
-    fetchTrustStatementUseCase.executeJwtRequestObjectReturnValue = .Mock.validSample
-
-    // swiftlint: disable all
-    getCompatibleCredentialsUseCase.executeUsingReturnValue = [context.requestObject.presentationDefinition.inputDescriptors.first!.id: [.Mock.BIT]]
-    // swiftlint: enable all
-
-    await viewModel.setMetadataUrl(url)
-
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(router.didCallPresentationReview)
-    XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
-
-    XCTAssertEqual(checkInvitationTypeUseCase.executeUrlReceivedUrl, url)
-    XCTAssertEqual(fetchRequestObjectUseCase.executeReceivedUrl, url)
-    XCTAssertEqual(getCompatibleCredentialsUseCase.executeUsingReceivedRequestObject, context.requestObject)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, context.requestObject)
-    XCTAssertEqual(fetchTrustStatementUseCase.executeJwtRequestObjectReceivedJwtRequestObject, (context.requestObject as? JWTRequestObject))
   }
 
   @MainActor
   func testValidatePresentationWithMultipleCredentialSuccess() async throws {
     let context = PresentationRequestContext.Mock.vcSdJwtSample
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = context.requestObject
-    validateRequestObjectUseCase.executeReturnValue = true
+    context.inputDescriptorId = "test-id"
 
-    // swiftlint: disable all
-    getCompatibleCredentialsUseCase.executeUsingReturnValue = [context.requestObject.presentationDefinition.inputDescriptors.first!.id: CompatibleCredential.Mock.array]
-    // swiftlint: enable all
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
+    processPresentationRequestUseCase.executeUrlReturnValue = context
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
     XCTAssertTrue(router.didCallCompatibleCredentials)
     XCTAssertFalse(router.didCallPresentationReview)
     XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(1, fetchRequestObjectUseCase.executeCallsCount)
-
-    XCTAssertTrue(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(1, getCompatibleCredentialsUseCase.executeUsingCallsCount)
-    XCTAssertEqual(context.requestObject, getCompatibleCredentialsUseCase.executeUsingReceivedRequestObject)
+    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertEqual(1, processPresentationRequestUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-
-    XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, context.requestObject)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
   }
 
   @MainActor
   func testValidatePresentationFailure() async {
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeThrowableError = TestingError.error
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
+    processPresentationRequestUseCase.executeUrlThrowableError = TestingError.error
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
     XCTAssertFalse(viewModel.isTipPresented)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(1, fetchRequestObjectUseCase.executeCallsCount)
+    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertEqual(1, processPresentationRequestUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
     XCTAssertEqual(0, getCompatibleCredentialsUseCase.executeUsingCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertFalse(validateRequestObjectUseCase.executeCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-  }
-
-  @MainActor
-  func testValidatePresentationEmptyCompatibleCredentialsFailure() async {
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = mockRequestObject
-    getCompatibleCredentialsUseCase.executeUsingThrowableError = CompatibleCredentialsError.compatibleCredentialNotFound
-    validateRequestObjectUseCase.executeReturnValue = true
-
-    await viewModel.setMetadataUrl(url)
-
-    XCTAssertNil(viewModel.offer)
-
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .compatibleCredentialNotFound)
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isTipPresented)
-
-    XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
-
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(1, fetchRequestObjectUseCase.executeCallsCount)
-
-    XCTAssertTrue(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(1, getCompatibleCredentialsUseCase.executeUsingCallsCount)
-
-    XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-
-    XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, mockRequestObject)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-  }
-
-  @MainActor
-  func testValidatePresentationInvalidInvitationFail() async {
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeThrowableError = FetchRequestObjectError.invalidPresentationInvitation
-
-    await viewModel.setMetadataUrl(url)
-
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .invalidPresentationRequest)
-
-    XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
-
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(1, fetchRequestObjectUseCase.executeCallsCount)
-
-    XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(0, getCompatibleCredentialsUseCase.executeUsingCallsCount)
-
-    XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-
-    XCTAssertFalse(validateRequestObjectUseCase.executeCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-  }
-
-  @MainActor
-  func testEmptyWalletPath() async throws {
-    getCompatibleCredentialsUseCase.executeUsingThrowableError = CompatibleCredentialsError.emptyWallet
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = mockRequestObject
-    validateRequestObjectUseCase.executeReturnValue = true
-
-    // swiftlint: disable all
-    await viewModel.setMetadataUrl(.init(string: "http://")!)
-    // swiftlint: enable all
-
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .emptyWallet)
-    XCTAssertTrue(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(1, getCompatibleCredentialsUseCase.executeUsingCallsCount)
-
-    XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-    XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, mockRequestObject)
-  }
-
-  @MainActor
-  func testNoCompatibleCredentialsPath() async throws {
-    getCompatibleCredentialsUseCase.executeUsingThrowableError = CompatibleCredentialsError.compatibleCredentialNotFound
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = mockRequestObject
-    validateRequestObjectUseCase.executeReturnValue = true
-
-    // swiftlint: disable all
-    await viewModel.setMetadataUrl(.init(string: "http://")!)
-    // swiftlint: enable all
-
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .compatibleCredentialNotFound)
-    XCTAssertTrue(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertEqual(1, getCompatibleCredentialsUseCase.executeUsingCallsCount)
-
-    XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-    XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, mockRequestObject)
   }
 
   @MainActor
   func testFetchCredentialFailed_networkError() async {
-    checkInvitationTypeUseCase.executeUrlReturnValue = .credentialOffer
-    validateCredentialOfferInvitationUrlUseCase.executeReturnValue = .Mock.sample
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
+    validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample
 
     fetchCredentialUseCase.executeFromThrowableError = NetworkError(status: .noConnection)
 
@@ -575,58 +327,21 @@ final class CameraViewModelTests: XCTestCase {
 
   @MainActor
   func testSubmitPresentationFailed_networkError() async throws {
-    let context = PresentationRequestContext.Mock.vcSdJwtSample
-
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeThrowableError = NetworkError(status: .noConnection)
-    // swiftlint: disable all
-    getCompatibleCredentialsUseCase.executeUsingReturnValue = [context.requestObject.presentationDefinition.inputDescriptors.first!.id: [.Mock.BIT]]
-    // swiftlint: enable all
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
+    processPresentationRequestUseCase.executeUrlThrowableError = NetworkError(status: .noConnection)
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .noConnection)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .noConnection)
     XCTAssertFalse(router.didCallCompatibleCredentials)
     XCTAssertFalse(router.didCallPresentationReview)
     XCTAssertFalse(viewModel.isTorchEnabled)
-    XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
-  }
-
-  @MainActor
-  func testSubmitPresentationWithInvalidRequestObject() async throws {
-    let context = PresentationRequestContext.Mock.vcSdJwtSample
-
-    // swiftlint: disable all
-    getCompatibleCredentialsUseCase.executeUsingReturnValue = [context.requestObject.presentationDefinition.inputDescriptors.first!.id: [.Mock.BIT]]
-    // swiftlint: enable all
-    checkInvitationTypeUseCase.executeUrlReturnValue = .presentation
-    fetchRequestObjectUseCase.executeReturnValue = context.requestObject
-    validateRequestObjectUseCase.executeReturnValue = false
-
-    await viewModel.setMetadataUrl(url)
-
-    XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
-    XCTAssertFalse(getCredentialsCountUseCase.executeCalled)
-    XCTAssertFalse(router.didCallCompatibleCredentials)
-    XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-
-    XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
-    XCTAssertEqual(validateRequestObjectUseCase.executeReceivedRequestObject, context.requestObject)
-    XCTAssertTrue(denyPresentationUseCase.executeContextErrorCalled)
-    XCTAssertEqual(denyPresentationUseCase.executeContextErrorReceivedArguments?.error, .invalidRequest)
-
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .invalidPresentationRequest)
   }
 
   @MainActor
@@ -640,7 +355,8 @@ final class CameraViewModelTests: XCTestCase {
   func testCloseErrorView() async {
     viewModel.closeErrorView()
 
-    XCTAssertFalse(viewModel.isPopupErrorPresented)
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
+    XCTAssertNil(viewModel.error)
   }
 
   @MainActor
@@ -651,12 +367,10 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testShowErrorView() async {
-    viewModel.showErrorView()
-
-    XCTAssertFalse(viewModel.isTipPresented)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertTrue(viewModel.isScannerActive)
+  func testToggleTorch() async {
+    let initialState = viewModel.isTorchEnabled
+    viewModel.toggleTorch()
+    XCTAssertEqual(viewModel.isTorchEnabled, !initialState)
   }
 
   @MainActor
@@ -690,17 +404,12 @@ final class CameraViewModelTests: XCTestCase {
 
   // swiftlint: disable all
   private var validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
-  private var fetchRequestObjectUseCase = FetchRequestObjectUseCaseProtocolSpy()
+  private var processPresentationRequestUseCase = ProcessPresentationRequestUseCaseProtocolSpy()
   private var checkInvitationTypeUseCase = CheckInvitationTypeUseCaseProtocolSpy()
   private var getCompatibleCredentialsUseCase = GetCompatibleCredentialsUseCaseProtocolSpy()
   private var fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
   private var getCredentialsCountUseCase = GetCredentialsCountUseCaseProtocolSpy()
-  private var fetchTrustStatementUseCase = FetchTrustStatementUseCaseProtocolSpy()
-  private var denyPresentationUseCase = DenyPresentationUseCaseProtocolSpy()
-  private var validateRequestObjectUseCase = ValidateRequestObjectUseCaseProtocolSpy()
-  private var createAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
   private var mockRequestObject: RequestObject!
-  private var mockAnyCredential = MockAnyCredential()
   private var router = InvitationRouterMock()
 
   private var viewModel: CameraViewModel!
@@ -727,20 +436,16 @@ extension CameraViewModelTests {
 
   @MainActor
   private func assertsNoInternetConnexion() {
-    XCTAssertNil(viewModel.offer)
-    XCTAssertTrue(viewModel.isPopupErrorPresented)
-    XCTAssertEqual(viewModel.qrScannerError as? CameraViewModel.CameraError, .noConnection)
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .noConnection)
     XCTAssertFalse(router.didCallCompatibleCredentials)
     XCTAssertFalse(router.didCallPresentationReview)
-    XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
     XCTAssertTrue(validateCredentialOfferInvitationUrlUseCase.executeCalled)
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertFalse(fetchRequestObjectUseCase.executeCalled)
+    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
-    XCTAssertFalse(validateRequestObjectUseCase.executeCalled)
-    XCTAssertFalse(denyPresentationUseCase.executeContextErrorCalled)
   }
 }

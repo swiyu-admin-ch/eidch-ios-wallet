@@ -1,98 +1,121 @@
 import Factory
+import Spyable
 import XCTest
 @testable import BITCore
 @testable import BITCredentialShared
 @testable import BITOpenID
 @testable import BITPresentation
 
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional force_try
+
 final class GetVerifierDisplayUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
-  // swiftlint:disable all
-  var useCase: GetVerifierDisplayUseCase!
-  var mockRequestObject = RequestObject.Mock.VcSdJwt.sample
-  var preferredUserLanguageCodes: [UserLanguageCode] = []
-
-  var mockRequestObjectNameEN = "EN Verifier"
-  var mockTrustedNameEN = "EN trusted issuer"
-  var mockTrustedNameIT = "IT trusted issuer"
-
-  // swiftlint:enable all
-
   override func setUp() {
+    super.setUp()
+    Container.shared.reset()
+
+    verifierMock = Self.createVerifier()
+    logoUriDecoderSpy = CredentialDisplayLogoURIDecoderProtocolSpy()
+
     Container.shared.preferredUserLanguageCodes.register { self.preferredUserLanguageCodes }
+    Container.shared.credentialDisplayLogoURIDecoder.register { self.logoUriDecoderSpy }
+
+    logoUriDecoderSpy.decodeFromReturnValue = Self.logoDataMock
+    preferredUserLanguageCodes = ["en", "de"]
 
     useCase = GetVerifierDisplayUseCase()
   }
 
-  func testExecuteWithoutTrustStatement() {
-    let verifierDisplay = useCase.execute(for: mockRequestObject.clientMetadata, trustStatement: nil)
+  func testExecute_withoutTrustStatement_returnsUntrustedNameFromVerifier() {
+    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: nil)
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .unverified)
-    XCTAssertEqual(verifierDisplay?.name, mockRequestObjectNameEN)
-    assertVerifierDisplayLogo(verifierDisplay, logoUriDisplay: mockRequestObject.clientMetadata?.logoUri)
+    XCTAssertEqual(verifierDisplay?.name, Self.clientNameEN)
+    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
   }
 
-  func testExecuteWithTrustStatement_ReturnsPreferredLanguages() {
-    preferredUserLanguageCodes = ["en", "de"]
-
-    guard let mockTrustStatement: TrustStatement = .Mock.validSample else {
-      fatalError("Cannot parse trust statement")
-    }
-
-    let verifierDisplay = useCase.execute(for: mockRequestObject.clientMetadata, trustStatement: mockTrustStatement)
+  func testExecute_trustStatementInPreferredLanguage_returnsNameFromTrustStatement() {
+    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: trustStatementMock)
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(verifierDisplay?.name, mockTrustedNameEN)
-    assertVerifierDisplayLogo(verifierDisplay, logoUriDisplay: mockRequestObject.clientMetadata?.logoUri)
+    XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameEN)
+    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
   }
 
-  func testExecuteWithTrustStatement_ReturnsDefaultLanguage() {
+  func testExecute_trustStatementInDefaultLanguage_returnsNameFromTrustStatement() {
     preferredUserLanguageCodes = []
+    useCase = GetVerifierDisplayUseCase()
 
-    guard let mockTrustStatement: TrustStatement = .Mock.validSample else {
-      fatalError("Cannot parse trust statement")
-    }
-
-    let verifierDisplay = useCase.execute(for: mockRequestObject.clientMetadata, trustStatement: mockTrustStatement)
+    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: trustStatementMock)
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(verifierDisplay?.name, mockTrustedNameEN)
-    assertVerifierDisplayLogo(verifierDisplay, logoUriDisplay: mockRequestObject.clientMetadata?.logoUri)
+    XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameEN)
+    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
   }
 
-  func testExecuteWithTrustStatement_ReturnsIssuerPreferredLanguage() {
+  func testExecute_trustStatementWithPreferredLanguage_returnsNameFromTrustStatement() {
+    verifierMock = Self.createVerifier(multipleLanguages: true)
+    let italianSample = TrustStatementPayload.Mock.validSampleItalian
     preferredUserLanguageCodes = []
+    useCase = GetVerifierDisplayUseCase()
 
-    guard let mockItalianTrustStatement: TrustStatement = .Mock.validSampleItalian else {
-      fatalError("Cannot parse trust statement")
-    }
-
-    let verifierDisplay = useCase.execute(for: mockRequestObject.clientMetadata, trustStatement: mockItalianTrustStatement)
+    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: italianSample)
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(verifierDisplay?.name, mockTrustedNameIT)
-    assertVerifierDisplayLogo(verifierDisplay, logoUriDisplay: mockRequestObject.clientMetadata?.logoUri)
+    XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameIT)
+    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
+  }
+
+  func testExecute_trustStatementNotMatchingLanguage_returnsNameFromKey() {
+    preferredUserLanguageCodes = []
+    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.italian.rawValue
+    useCase = GetVerifierDisplayUseCase()
+
+    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: trustStatementMock)
+
+    XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
+    XCTAssertEqual(verifierDisplay?.name, "orgName")
+    XCTAssertNil(verifierDisplay?.logo)
+
+    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.english.rawValue
   }
 
   // MARK: Private
 
-  /// logo is always taken from request-object. Never from Trust Statement
-  private func assertVerifierDisplayLogo(_ verifierDisplay: VerifierDisplay?, logoUriDisplay: Verifier.LocalizedDisplay?) {
-    XCTAssertNotNil(verifierDisplay?.logo)
-    guard
-      let logoUri = Verifier.LocalizedDisplay.getPreferredDisplay(
-        from: logoUriDisplay, considering: preferredUserLanguageCodes),
-      let decodedURI = CredentialDisplayLogoURIDecoder.decode(logoUri),
-      let decodedLogo = Data(base64Encoded: decodedURI)
-    else
-    {
-      XCTFail("Unexpected logoURI from verifierDisplay (ClientMetadata)")
-      return
-    }
+  private static var clientNameEN = "EN clientName"
+  private static var clientNameIT = "IT clientName"
+  private static var logoUriEN = "EN logoUri"
+  private static var logoUriIT = "IT logoUri"
+  private static var logoDataMock = "logoData".data(using: .utf8)!
 
-    XCTAssertEqual(verifierDisplay?.logo, decodedLogo)
+  private static let trustStatementNameEN = "EN orgName"
+  private static let trustStatementNameIT = "IT orgName"
+
+  private var verifierMock = createVerifier()
+  private let trustStatementMock = TrustStatementPayload.Mock.validSample
+
+  private var preferredUserLanguageCodes: [UserLanguageCode] = []
+  private var logoUriDecoderSpy = CredentialDisplayLogoURIDecoderProtocolSpy()
+
+  private var useCase: GetVerifierDisplayUseCase!
+
+  private static func createVerifier(multipleLanguages: Bool = false) -> Verifier {
+    var names = ["en": Self.clientNameEN]
+    var logos = ["en": Self.logoUriEN]
+    if multipleLanguages {
+      names["it"] = Self.clientNameIT
+      logos["it"] = Self.logoUriIT
+    }
+    let clientName = ClientMetadata.LocalizedDisplay(values: names)
+    let logoUri = ClientMetadata.LocalizedDisplay(values: logos)
+    return try! Verifier(clientName: clientName, logoUri: logoUri)
   }
+  // swiftlint:enable force_unwrapping implicitly_unwrapped_optional force_try
 
 }

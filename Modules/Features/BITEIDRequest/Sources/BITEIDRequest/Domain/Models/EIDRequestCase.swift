@@ -48,6 +48,10 @@ public struct EIDRequestCase: Decodable, Identifiable {
   public let id: String
   public var state: EIDRequestState?
 
+  public var fullName: String {
+    "\(firstName) \(lastName)"
+  }
+
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {

@@ -15,167 +15,130 @@ final class TokenStatusListValidatorTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    spyOpenIdRepository = OpenIDRepositoryProtocolSpy()
-    Container.shared.openIDRepository.register { self.spyOpenIdRepository }
+    openIdRepositorySpy = OpenIDRepositoryProtocolSpy()
+    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+    tokenStatusListDecoderSpy = TokenStatusListDecoderProtocolSpy()
 
-    spyTokenStatusListDecoder = TokenStatusListDecoderProtocolSpy()
-    Container.shared.tokenStatusListDecoder.register { self.spyTokenStatusListDecoder }
-
-    spyJwtSignatureValidator = JWTSignatureValidatorProtocolSpy()
-    Container.shared.jwtSignatureValidator.register { self.spyJwtSignatureValidator }
+    Container.shared.openIDRepository.register { self.openIdRepositorySpy }
+    Container.shared.tokenStatusListDecoder.register { self.tokenStatusListDecoderSpy }
+    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
 
     validator = TokenStatusListValidator()
+
+    success()
   }
 
   func testValidate_ValidCredential_ShouldReturnValid() async throws {
-    let statusJwt = JWT.Mock.validStatusSample
-
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = statusJwt
-    spyJwtSignatureValidator.validateDidKidReturnValue = true
-    spyTokenStatusListDecoder.decodeIndexReturnValue = StatusCode(0)
-
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .valid)
-    XCTAssertEqual(statusJwt.raw, spyTokenStatusListDecoder.decodeIndexReceivedArguments?.rawJWT)
-    XCTAssertEqual(285, spyTokenStatusListDecoder.decodeIndexReceivedArguments?.index)
-    XCTAssertEqual(spyJwtSignatureValidator.validateDidKidReceivedArguments?.jwt.raw, statusJwt.raw)
-    XCTAssertEqual(spyJwtSignatureValidator.validateDidKidReceivedArguments?.did, statusJwt.iss)
-    XCTAssertEqual(spyJwtSignatureValidator.validateDidKidReceivedArguments?.kid, statusJwt.kid)
+  }
+
+  func testValidate_ValidCredential_ArgumentsPassed() async throws {
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
+
+    XCTAssertEqual(jwsMock, tokenStatusListDecoderSpy.decodeIndexReceivedArguments?.jws)
+    XCTAssertEqual(Self.indexMock, tokenStatusListDecoderSpy.decodeIndexReceivedArguments?.index)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedJws as? JWS, jwsMock)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedDid, jwsMock.payload.issuer)
   }
 
   func testValidate_RevokedCredential_ShouldReturnRevoked() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.validStatusSample
-    spyJwtSignatureValidator.validateDidKidReturnValue = true
-    spyTokenStatusListDecoder.decodeIndexReturnValue = StatusCode(1)
+    tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(1)
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .revoked)
   }
 
   func testValidate_SuspendedCredential_ShouldReturnSuspended() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.validStatusSample
-    spyJwtSignatureValidator.validateDidKidReturnValue = true
-    spyTokenStatusListDecoder.decodeIndexReturnValue = StatusCode(2)
+    tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(2)
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .suspended)
   }
 
   func testValidate_UnsupportedCredentialStatus_ShouldReturnUnsupported() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.validStatusSample
-    spyJwtSignatureValidator.validateDidKidReturnValue = true
-    spyTokenStatusListDecoder.decodeIndexReturnValue = StatusCode(3)
+    tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(3)
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unsupported)
   }
 
   func testValidate_FetchThrowsError_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromThrowableError = TestingError.error
+    openIdRepositorySpy.fetchCredentialStatusFromThrowableError = TestingError.error
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
   }
 
-  func testValidate_WrongStatusListType_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListWrongType
+  func testValidate_StatusListWithInvalidSubject_ShouldReturnUnknown() async throws {
+    let payload = TokenStatusList(issuer: jwsMock.payload.issuer, subject: "invalid", issuedAt: jwsMock.payload.issuedAt, statusList: jwsMock.payload.statusList)
+    let jws = JWS(payload: payload, rawJWS: jwsMock.rawJWS, rawPayload: jwsMock.rawPayload, header: jwsMock.header)
+    openIdRepositorySpy.fetchCredentialStatusFromReturnValue = jws
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
   }
 
-  func testValidate_StatusListWithoutIssuedAt_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListWithoutIssuedAt
+  func testValidate_StatusListWithInvalidIssuer_ShouldReturnUnknown() async throws {
+    let payload = TokenStatusList(issuer: "invalid", subject: jwsMock.payload.subject, issuedAt: jwsMock.payload.issuedAt, statusList: jwsMock.payload.statusList)
+    let jws = JWS(payload: payload, rawJWS: jwsMock.rawJWS, rawPayload: jwsMock.rawPayload, header: jwsMock.header)
+    openIdRepositorySpy.fetchCredentialStatusFromReturnValue = jws
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
-
-    XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
-  }
-
-  func testValidate_StatusListWithWrongSubject_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListWrongSubject
-
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
-  }
-
-  func testValidate_StatusListWithoutIssuer_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListWrongSubject
-
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
-
-    XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
-  }
-
-  func testValidate_StatusListWithWrongIssuer_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListWrongIssuer
-
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
-
-    XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
   }
 
   func testValidate_StatusListInvalidSignature_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.validStatusSample
-    spyJwtSignatureValidator.validateDidKidReturnValue = false
+    jwsSignatureValidatorMock.validateJwsDidReturnValue = false
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyJwtSignatureValidator.validateDidKidCalled)
-  }
-
-  func testValidate_StatusListNotExpired_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListNotExpired
-    spyJwtSignatureValidator.validateDidKidReturnValue = true
-    spyTokenStatusListDecoder.decodeIndexReturnValue = StatusCode(0)
-
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
-
-    XCTAssertEqual(result, .valid)
   }
 
   func testValidate_StatusListExpired_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.tokenStatusListExpired
-    spyJwtSignatureValidator.validateDidKidReturnValue = true
+    openIdRepositorySpy.fetchCredentialStatusFromReturnValue = TokenStatusList.Mock.expired
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyOpenIdRepository.fetchCredentialStatusFromCalled)
   }
 
   func testValidate_ValidatorThrowsError_ShouldReturnUnknown() async throws {
-    spyOpenIdRepository.fetchCredentialStatusFromReturnValue = JWT.Mock.validStatusSample
-    spyJwtSignatureValidator.validateDidKidThrowableError = TestingError.error
+    jwsSignatureValidatorMock.validateJwsDidThrowableError = TestingError.error
 
-    let result = await validator.validate(mockStatus, issuer: mockIssuer)
+    let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .unknown)
-    XCTAssertTrue(spyJwtSignatureValidator.validateDidKidCalled)
   }
 
   // MARK: Private
 
   // swiftlint:disable all
+  private static let statusListUriMock = "https://example.com/statuslist/example.jwt"
+  private static let issuerMock = "did:tdw:example"
+  private static let indexMock = 285
+
+  private let jwsMock = TokenStatusList.Mock.sample
+  private var mockStatus = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: indexMock, uri: statusListUriMock))
+
+  private var openIdRepositorySpy: OpenIDRepositoryProtocolSpy!
+  private var tokenStatusListDecoderSpy: TokenStatusListDecoderProtocolSpy!
+  private var jwsSignatureValidatorMock: JWSSignatureValidatorMock!
+
   private var validator: TokenStatusListValidator!
-  private var spyOpenIdRepository: OpenIDRepositoryProtocolSpy!
-  private var spyTokenStatusListDecoder: TokenStatusListDecoderProtocolSpy!
-  private var spyJwtSignatureValidator: JWTSignatureValidatorProtocolSpy!
-  private var mockStatus = VcSdJwt.Mock.sample.status!
-  private var mockIssuer = VcSdJwt.Mock.sample.issuer
+
+  private func success() {
+    openIdRepositorySpy.fetchCredentialStatusFromReturnValue = jwsMock
+    jwsSignatureValidatorMock.validateJwsDidReturnValue = true
+    tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(0)
+  }
   // swiftlint:enable all
 }

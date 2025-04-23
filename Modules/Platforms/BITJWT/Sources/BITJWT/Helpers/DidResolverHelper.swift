@@ -9,7 +9,7 @@ import Spyable
 
 @Spyable
 protocol DidResolverHelperProtocol {
-  func getJWKS(from did: String, keyIdentifier: String) async throws -> [PublicKeyInfo.JWK]
+  func getJWKS(from did: String, keyIdentifier: String?) async throws -> [PublicKeyInfo.JWK]
 }
 
 // MARK: - DidResolverHelperError
@@ -25,7 +25,7 @@ struct DidResolverHelper: DidResolverHelperProtocol {
 
   // MARK: Internal
 
-  func getJWKS(from did: String, keyIdentifier: String) async throws -> [PublicKeyInfo.JWK] {
+  func getJWKS(from did: String, keyIdentifier: String?) async throws -> [PublicKeyInfo.JWK] {
     let didDocument = try await resolve(didRaw: did)
 
     if didDocument.getDeactivated() {

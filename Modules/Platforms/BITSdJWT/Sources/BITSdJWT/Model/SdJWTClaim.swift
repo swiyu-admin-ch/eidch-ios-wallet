@@ -4,7 +4,7 @@ import Foundation
 // MARK: - SdJWTClaimError
 
 enum SdJWTClaimError: Error {
-  case invalidKey, invalidStructure, invalidValueType
+  case invalidValueType
 }
 
 // MARK: - SdJWTClaim
@@ -13,14 +13,11 @@ public struct SdJWTClaim: Equatable {
 
   // MARK: Lifecycle
 
-  public init(disclosableClaim: [Any], disclosure: String, digest: SdJwtDigest) throws {
-    guard disclosableClaim.count >= 3 else { throw SdJWTClaimError.invalidStructure }
-    guard let key = disclosableClaim[1] as? String else { throw SdJWTClaimError.invalidKey }
-
+  public init(key: String, value: Any, disclosure: String, digest: SdJwtDigest) throws {
     self.key = key
     self.digest = digest
     self.disclosure = disclosure
-    value = try CodableValue(anyValue: disclosableClaim[2])
+    self.value = try CodableValue(anyValue: value)
   }
 
   // MARK: Public

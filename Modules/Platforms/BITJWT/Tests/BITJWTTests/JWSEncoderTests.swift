@@ -24,16 +24,16 @@ final class JWSEncoderTests: XCTestCase {
 
     let decoded = try JWSDecoder().decode(JWTRegisteredPayload.self, from: jws)
     XCTAssertEqual(decoded.payload, payload)
-    XCTAssertEqual(decoded.algorithm, mockKeyPair.algorithm)
-    XCTAssertNil(decoded.keyIdentifier)
-    XCTAssertEqual(decoded.type, payload.type)
+    XCTAssertEqual(decoded.header.algorithm.rawValue, mockKeyPair.algorithm)
+    XCTAssertNil(decoded.header.keyIdentifier)
+    XCTAssertEqual(decoded.header.type, payload.type)
 
-    guard let keyComponents = try mockKeyPair.publicKey?.ecPublicKeyComponents() else {
-      fatalError("Failed to extract key components")
+    guard let keyComponents = try mockKeyPair.publicKey?.ecPublicKeyComponents(), let jwk = decoded.header.jwk else {
+      fatalError("Failed to parse JWK")
     }
-    XCTAssertEqual(decoded.jwk?.crv, keyComponents.crv)
-    XCTAssertEqual(decoded.jwk?.x.data(using: .utf8), keyComponents.x.base64URLEncodedData())
-    XCTAssertEqual(decoded.jwk?.y.data(using: .utf8), keyComponents.y.base64URLEncodedData())
+    XCTAssertEqual(jwk.crv, keyComponents.crv)
+    XCTAssertEqual(jwk.x.data(using: .utf8), keyComponents.x.base64URLEncodedData())
+    XCTAssertEqual(jwk.y.data(using: .utf8), keyComponents.y.base64URLEncodedData())
   }
 
   func testEncode_EncodePayloadAndDecodeNoneKeyEncodingStrategy_PayloadAndHeaderFieldsMatch() throws {
@@ -44,10 +44,10 @@ final class JWSEncoderTests: XCTestCase {
 
     let decoded = try JWSDecoder().decode(JWTRegisteredPayload.self, from: jws)
     XCTAssertEqual(decoded.payload, payload)
-    XCTAssertEqual(decoded.algorithm, mockKeyPair.algorithm)
-    XCTAssertNil(decoded.keyIdentifier)
-    XCTAssertEqual(decoded.type, payload.type)
-    XCTAssertNil(decoded.jwk)
+    XCTAssertEqual(decoded.header.algorithm.rawValue, mockKeyPair.algorithm)
+    XCTAssertNil(decoded.header.keyIdentifier)
+    XCTAssertEqual(decoded.header.type, payload.type)
+    XCTAssertNil(decoded.header.jwk)
   }
 
   func testEncode_EncodePayloadAndDecodeIsoDateEncodingStrategy_PayloadAndHeaderFieldsMatch() throws {
@@ -60,10 +60,10 @@ final class JWSEncoderTests: XCTestCase {
 
     let decoded = try decoder.decode(JWTRegisteredPayload.self, from: jws)
     XCTAssertEqual(decoded.payload, payload)
-    XCTAssertEqual(decoded.algorithm, mockKeyPair.algorithm)
-    XCTAssertNil(decoded.keyIdentifier)
-    XCTAssertEqual(decoded.type, payload.type)
-    XCTAssertNil(decoded.jwk)
+    XCTAssertEqual(decoded.header.algorithm.rawValue, mockKeyPair.algorithm)
+    XCTAssertNil(decoded.header.keyIdentifier)
+    XCTAssertEqual(decoded.header.type, payload.type)
+    XCTAssertNil(decoded.header.jwk)
   }
 
   func testEncode_InvalidAlgorithm_ThrowsError() throws {

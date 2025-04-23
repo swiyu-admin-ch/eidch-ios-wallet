@@ -18,8 +18,10 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
     var name = getVerifierName(from: verifier)
     if
       let trustStatement,
-      let orgName = try? trustStatement.disclosableClaims.first(where: { $0.key == Self.orgNameKey })?.anyValue() as? [String: Any],
-      let trustedName = getDisplayForClaim(orgName, with: Self.orgNameKey, in: trustStatement)
+      let data = trustStatement.rawPayload.data(using: .utf8),
+      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let orgName = json[Self.orgNameKey] as? [String: Any],
+      let trustedName = getDisplayForClaim(orgName, with: Self.orgNameKey, in: json)
     {
       name = trustedName
     }
@@ -33,26 +35,27 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
   private static let prefLangKey = "prefLang"
 
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
+  @Injected(\.credentialDisplayLogoURIDecoder) private var credentialDisplayLogoURIDecoder: CredentialDisplayLogoURIDecoderProtocol
 
-  private func getDisplayForClaim(_ claim: [String: Any], with key: String, in trustStatement: TrustStatement) -> String? {
+  private func getDisplayForClaim(_ claim: [String: Any], with key: String, in dictionary: [String: Any]) -> String? {
     for preferredLanguageCode in preferredUserLanguageCodes {
-      if let entry = claim.first(where: { $0.key.starts(with: "\(preferredLanguageCode)-") }) {
-        return (entry.value as? CodableValue)?.rawValue
+      if let entry = claim.first(where: { $0.key.starts(with: "\(preferredLanguageCode)") }) {
+        return entry.value as? String
       }
     }
 
     if let entry = claim.first(where: { $0.key.starts(with: UserLanguageCode.defaultAppLanguageCode) }) {
-      return (entry.value as? CodableValue)?.rawValue
+      return entry.value as? String
     }
 
     guard
-      let prefLang = trustStatement.disclosableClaims.first(where: { $0.key == Self.prefLangKey })?.value?.rawValue,
+      let prefLang = dictionary[Self.prefLangKey] as? String,
       let entry = claim.first(where: { $0.key.starts(with: prefLang) })
     else {
       return key
     }
 
-    return (entry.value as? CodableValue)?.rawValue
+    return entry.value as? String
   }
 
   private func getVerifierName(from verifier: Verifier?) -> String? {
@@ -60,12 +63,9 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
   }
 
   private func getVerifierLogo(from verifier: Verifier?) -> Data? {
-    guard
-      let logoUri = Verifier.LocalizedDisplay.getPreferredDisplay(from: verifier?.logoUri, considering: preferredUserLanguageCodes),
-      let decodedURI = CredentialDisplayLogoURIDecoder.decode(logoUri) else
-    {
+    guard let logoUri = Verifier.LocalizedDisplay.getPreferredDisplay(from: verifier?.logoUri, considering: preferredUserLanguageCodes) else {
       return nil
     }
-    return Data(base64Encoded: decodedURI)
+    return credentialDisplayLogoURIDecoder.decode(from: logoUri)
   }
 }

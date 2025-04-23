@@ -12,7 +12,7 @@ public protocol OpenIDRepositoryProtocol {
   func fetchIssuerPublicKeyInfo(from jwksUrl: URL) async throws -> PublicKeyInfo
   func fetchAccessToken(from url: URL, preAuthorizedCode: String) async throws -> AccessToken
   func fetchCredential(from url: URL, credentialRequestBody: CredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse
-  func fetchCredentialStatus(from url: URL) async throws -> JWT
+  func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList>
   func fetchRequestObject(from url: URL) async throws -> Data
-  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [String]
+  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [TrustStatement]
 }

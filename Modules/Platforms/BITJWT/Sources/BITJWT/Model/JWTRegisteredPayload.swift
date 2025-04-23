@@ -1,10 +1,9 @@
-import BITCore
 import Foundation
 
 // MARK: - JWTRegisteredPayload
 
 /// This class contains all registered claims which are specified by https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1
-public struct JWTRegisteredPayload: JWTType, Codable, Equatable {
+public struct JWTRegisteredPayload: JWTPayload, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -26,7 +25,7 @@ public struct JWTRegisteredPayload: JWTType, Codable, Equatable {
 
   // MARK: Public
 
-  public let type = "jwt"
+  public let type: String? = "jwt"
 
   public let issuer: String?
   public let subject: String?

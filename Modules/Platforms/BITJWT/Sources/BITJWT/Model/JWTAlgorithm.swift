@@ -4,8 +4,8 @@ import Foundation
 
 public enum JWTAlgorithm: String, Decodable {
   case ES256
+  case ES384
   case ES512
-  case BBS2023
 }
 
 // MARK: JWTAlgorithm.AlgorithmError

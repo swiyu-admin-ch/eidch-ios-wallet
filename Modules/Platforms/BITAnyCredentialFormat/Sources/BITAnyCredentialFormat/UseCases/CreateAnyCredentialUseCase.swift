@@ -5,6 +5,9 @@ import Foundation
 // MARK: - CreateAnyCredentialUseCase
 
 struct CreateAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol {
+
+  // MARK: Internal
+
   func execute(from payload: CredentialPayload, format: String) throws -> AnyCredential {
     guard let rawCredential = String(data: payload, encoding: .utf8) else {
       throw CreateAnyCredentialUseCaseError.credentialPayloadInvalid
@@ -16,12 +19,17 @@ struct CreateAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol {
 
     switch credentialFormat {
     case .vcSdJwt:
-      let vcSdJwt = try VcSdJwt(from: rawCredential)
-      return vcSdJwt
+      let data = rawCredential.data(using: .utf8) ?? Data()
+      return try sdJwsDecoder.decode(VcSdJwtPayload.self, from: data)
     default:
       throw CreateAnyCredentialUseCaseError.credentialFormatNotSupported
     }
   }
+
+  // MARK: Private
+
+  @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
+
 }
 
 // MARK: CreateAnyCredentialUseCase.CreateAnyCredentialUseCaseError

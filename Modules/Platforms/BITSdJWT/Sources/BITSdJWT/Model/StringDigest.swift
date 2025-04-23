@@ -30,9 +30,9 @@ struct StringDigest {
 
 extension StringDigest {
   enum Algorithm: String {
-    case sha256 = "SHA-256"
-    case sha384 = "SHA-384"
-    case sha512 = "SHA-512"
+    case sha256 = "sha-256"
+    case sha384 = "sha-384"
+    case sha512 = "sha-512"
 
     func hash(data: Data) -> Data {
       switch self {

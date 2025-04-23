@@ -67,6 +67,10 @@ extension Container {
     self { UpdateEIDRequestCaseStatusUseCase() }
   }
 
+  public var deleteEIDRequestCaseUseCase: Factory<DeleteEIDRequestCaseUseCaseProtocol> {
+    self { DeleteEIDRequestCaseUseCase() }
+  }
+
   // MARK: Internal
 
   var eIDRequestResponseDecoder: Factory<JSONDecoder> {

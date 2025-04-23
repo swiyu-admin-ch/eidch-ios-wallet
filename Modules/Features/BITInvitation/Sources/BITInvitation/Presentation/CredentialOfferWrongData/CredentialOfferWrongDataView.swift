@@ -15,16 +15,19 @@ struct CredentialOfferWrongDataView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case closeButton
+  }
+
   var body: some View {
     InformationView(
       image: Assets.xmarkCircle.swiftUIImage,
       backgroundColor: ThemingAssets.Background.system.swiftUIColor,
       content: {
         DefaultInformationContentView(
-          primary: L10n.tkReceiveIncorrectdataSubtitle,
-          secondary: L10n.tkReceiveIncorrectdataBody)
+          primary: L10n.tkReceiveCredentialOfferWrongDataPrimary,
+          secondary: L10n.tkReceiveCredentialOfferWrongDataSecondary)
       })
-      .navigationTitle(L10n.tkReceiveIncorrectdataTitle)
       .toolbar(content: toolbarContent)
       .ignoresSafeArea(edges: .bottom)
   }
@@ -38,7 +41,7 @@ struct CredentialOfferWrongDataView: View {
     ToolbarItem(placement: .topBarLeading) {
       Button(action: viewModel.close, label: {
         Assets.close.swiftUIImage
-      })
+      }).accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
     }
   }
 }

@@ -22,6 +22,13 @@ struct CredentialOfferView: View {
 
   enum AccessibilityIdentifier: String {
     case acceptButton
+    case declineButton
+    case bottomAcceptButton
+    case bottomDeclineButton
+    case confirmDeclineButton
+    case cancelDeclineButton
+    case card
+    case details
   }
 
   var body: some View {
@@ -68,7 +75,7 @@ extension CredentialOfferView {
   private func claimsList() -> some View {
     VStack(alignment: .leading, spacing: .x10) {
       VStack(alignment: .leading) {
-        Text(L10n.credentialOfferContentSectionTitle)
+        Text(L10n.tkReceiveCredentialOfferContentSectionPrimary)
           .font(.custom.body)
           .padding(.top, .x4)
           .padding(.leading, .x6)
@@ -83,7 +90,7 @@ extension CredentialOfferView {
 
       VStack(alignment: .leading) {
         Divider()
-        IconKeyValueCell(key: "", value: L10n.tkReceiveIncorrectdataTitle, image: Assets.warning.swiftUIImage, disclosureIndicator: Image(systemName: "chevron.right"), onTap: { Task { await viewModel.send(event: .openWrongData) } })
+        IconKeyValueCell(key: "", value: L10n.tkReceiveCredentialOfferWrongDataSectionCellPrimary, image: Assets.warning.swiftUIImage, disclosureIndicator: Image(systemName: "chevron.right"), onTap: { Task { await viewModel.send(event: .openWrongData) } })
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
           .padding(.leading, .x6)
       }
@@ -95,7 +102,7 @@ extension CredentialOfferView {
       }
     }
     .accessibilityElement(children: .contain)
-    .accessibilityLabel(L10n.credentialOfferContentSectionTitle)
+    .accessibilityLabel(L10n.tkReceiveCredentialOfferContentSectionPrimary)
     .accessibilitySortPriority(10)
   }
 
@@ -106,6 +113,7 @@ extension CredentialOfferView {
       CredentialCard(viewModel.credential)
         .padding(.horizontal, .x10)
         .accessibilityHidden(true)
+        .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
       Spacer(minLength: compression.isCompressed ? .x6 : .x12)
 
       footerButtons(addAccessibilityIdentifier: true)
@@ -128,6 +136,7 @@ extension CredentialOfferView {
           CredentialCard(viewModel.credential)
             .padding(.horizontal, .x10)
             .accessibilityHidden(true)
+            .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
           Spacer(minLength: compression.isCompressed ? .x6 : .x12)
 
           ProgressView()
@@ -162,12 +171,12 @@ extension CredentialOfferView {
                 .accessibilityHidden(true)
             }
 
-            Text(L10n.tkReceiveDeny1Title)
+            Text(L10n.tkReceiveDeclineOfferPrimary)
               .multilineTextAlignment(.center)
               .font(.custom.bodyEmphasized)
               .foregroundStyle(ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
               .accessibilitySortPriority(1000)
-            Text(L10n.tkReceiveDeny1Body)
+            Text(L10n.tkReceiveDeclineOfferSecondary)
               .multilineTextAlignment(.center)
               .font(.custom.body)
               .foregroundStyle(ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor.opacity(0.8))
@@ -175,7 +184,7 @@ extension CredentialOfferView {
           }
           Spacer()
 
-          declineButtons()
+          declineButtons(addAccessibilityIdentifier: true)
             .padding(.top, .x4)
         }
         .padding(.vertical, compression.isCompressed ? .x2 : .x6)
@@ -199,10 +208,10 @@ extension CredentialOfferView {
 
   @ViewBuilder
   private func subtitle() -> some View {
-    Text(L10n.credentialOfferHeaderSecondary)
+    Text(L10n.tkReceiveCredentialOfferHeaderSectionSecondary)
       .font(.custom.title3)
       .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-      .accessibilityLabel(L10n.credentialOfferHeaderSecondary)
+      .accessibilityIdentifier(AccessibilityIdentifier.details.rawValue)
   }
 
   @ViewBuilder
@@ -210,7 +219,7 @@ extension CredentialOfferView {
     VStack {
       ButtonStackView {
         Button { Task { await viewModel.send(event: .decline) } } label: {
-          Label(L10n.tkGlobalDecline, systemImage: "xmark")
+          Label(L10n.tkReceiveCredentialOfferButtonDecline, systemImage: "xmark")
             .multilineTextAlignment(.center)
             .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
             .frame(maxWidth: .infinity)
@@ -218,10 +227,11 @@ extension CredentialOfferView {
         .buttonStyle(.filledPrimary)
         .controlSize(.large)
         .accessibilityLabel(L10n.credentialOfferRefuseButton)
+        .accessibilityIdentifier(addAccessibilityIdentifier ? AccessibilityIdentifier.declineButton.rawValue : AccessibilityIdentifier.bottomDeclineButton.rawValue)
         .accessibilitySortPriority(50)
 
         Button { Task { await viewModel.send(event: .accept) } } label: {
-          Label(L10n.tkGlobalAdd, systemImage: "checkmark")
+          Label(L10n.tkReceiveCredentialOfferButtonAccept, systemImage: "checkmark")
             .multilineTextAlignment(.center)
             .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
             .frame(maxWidth: .infinity)
@@ -229,17 +239,17 @@ extension CredentialOfferView {
         .buttonStyle(.filledSecondary)
         .controlSize(.large)
         .accessibilityLabel(L10n.credentialOfferAcceptButton)
-        .accessibilityIdentifier(addAccessibilityIdentifier ? AccessibilityIdentifier.acceptButton.rawValue : "")
+        .accessibilityIdentifier(addAccessibilityIdentifier ? AccessibilityIdentifier.acceptButton.rawValue : AccessibilityIdentifier.bottomAcceptButton.rawValue)
         .accessibilitySortPriority(100)
       }
     }
   }
 
   @ViewBuilder
-  private func declineButtons() -> some View {
+  private func declineButtons(addAccessibilityIdentifier: Bool = false) -> some View {
     ButtonStackView {
       Button { Task { await viewModel.send(event: .confirmDecline) } } label: {
-        Text(L10n.tkReceiveDeny1Primarybutton)
+        Text(L10n.tkReceiveDeclineOfferPrimaryButton)
           .multilineTextAlignment(.center)
           .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
           .frame(maxWidth: .infinity)
@@ -247,7 +257,8 @@ extension CredentialOfferView {
       .buttonStyle(.bezeledLightReversed)
       .preferredColorScheme(.light)
       .controlSize(.large)
-      .accessibilityLabel(L10n.tkReceiveDeny1Primarybutton)
+      .accessibilityLabel(L10n.tkReceiveDeclineOfferPrimaryButton)
+      .accessibilityIdentifier(addAccessibilityIdentifier ? AccessibilityIdentifier.confirmDeclineButton.rawValue : "")
       .accessibilitySortPriority(100)
 
       Button { Task { await viewModel.send(event: .cancelDecline) } } label: {
@@ -260,6 +271,7 @@ extension CredentialOfferView {
       .buttonStyle(.plain)
       .controlSize(.large)
       .accessibilityLabel(L10n.tkGlobalCancel)
+      .accessibilityIdentifier(addAccessibilityIdentifier ? AccessibilityIdentifier.cancelDeclineButton.rawValue : "")
       .accessibilitySortPriority(50)
     }
     .frame(maxWidth: 450)
@@ -316,7 +328,7 @@ extension CredentialOfferView {
   @ViewBuilder
   private func credentialLandscapeContainer(isLoading: Bool) -> some View {
     HStack(spacing: .x5) {
-      credentialCard()
+      credentialCard().accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
       if isLoading {
         ProgressView()
           .controlSize(.large)
@@ -348,6 +360,7 @@ extension CredentialOfferView {
       VStack {
         CredentialCard(viewModel.credential)
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+          .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
       }
       .padding(.x5)
       .background(Color(uiColor: .secondarySystemBackground))

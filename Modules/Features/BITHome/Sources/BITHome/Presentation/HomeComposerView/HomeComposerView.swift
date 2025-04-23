@@ -91,8 +91,12 @@ extension HomeComposerView {
   @ViewBuilder
   private func mainContent() -> some View {
     List {
-      RequestCasesListView(viewModel.eIDRequestCases, action: viewModel.openAutoVerification)
-        .listRowSeparator(.hidden)
+      RequestCasesListView(viewModel.eIDRequestCases) { requestCase in
+        Task {
+          try await viewModel.requestCaseAction(requestCase)
+        }
+      }
+      .listRowSeparator(.hidden)
       switch viewModel.state {
       case .results:
         credentialsList()

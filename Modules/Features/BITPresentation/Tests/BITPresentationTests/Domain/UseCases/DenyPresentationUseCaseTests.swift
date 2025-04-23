@@ -24,7 +24,7 @@ final class DenyPresentationUseCaseTests: XCTestCase {
     // swiftlint: enable all
 
     context.selectedCredentials = [inputDescriptor.id: CompatibleCredential.Mock.BIT]
-    try await useCase.execute(context: context, error: mockErrorType)
+    try await useCase.execute(requestObject: context.requestObject, error: mockErrorType)
 
     XCTAssertTrue(repository.submitPresentationFromPresentationErrorRequestBodyCalled)
     XCTAssertEqual(repository.submitPresentationFromPresentationErrorRequestBodyCallsCount, 1)
@@ -33,10 +33,10 @@ final class DenyPresentationUseCaseTests: XCTestCase {
   }
 
   func test_denyPresentationFailure() async throws {
-    repository.submitPresentationFromPresentationRequestBodyThrowableError = TestingError.error
+    repository.submitPresentationFromPresentationErrorRequestBodyThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(context: context, error: mockErrorType)
+      try await useCase.execute(requestObject: context.requestObject, error: mockErrorType)
     } catch TestingError.error {
       XCTAssertTrue(repository.submitPresentationFromPresentationErrorRequestBodyCalled)
       XCTAssertEqual(repository.submitPresentationFromPresentationErrorRequestBodyCallsCount, 1)

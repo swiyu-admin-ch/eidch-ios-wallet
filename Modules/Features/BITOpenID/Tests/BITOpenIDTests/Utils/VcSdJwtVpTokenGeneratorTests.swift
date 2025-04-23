@@ -1,3 +1,4 @@
+import Factory
 import Spyable
 import XCTest
 @testable import BITAnyCredentialFormat
@@ -11,19 +12,29 @@ import XCTest
 @testable import BITTestingCore
 @testable import BITVault
 
+// swiftlint: disable force_unwrapping implicitly_unwrapped_optional
+
 final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
-    jwtHelper = JWTHelperProtocolSpy()
-    sha2656Hasher = HashableSpy()
+    super.setUp()
+    Container.shared.reset()
+
     mockKeyPair = KeyPair(identifier: mockIdentifier, algorithm: mockAlgorithm, privateKey: mockPrivateKey)
 
-    jwtHelper.jwtWithKeyPairTypeReturnValue = mockKeyBindingJwt
-    sha2656Hasher.hashReturnValue = Data()
+    sha256HasherSpy = HashableSpy()
+    jwsEncoderMock = JWSEncoderMock()
 
-    generator = VcSdJwtVpTokenGenerator(sha256Hasher: sha2656Hasher, jwtHelper: jwtHelper)
+    Container.shared.sha256Hasher.register { self.sha256HasherSpy }
+    Container.shared.jwsEncoder.register { self.jwsEncoderMock }
+
+    jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
+    jwsEncoderMock.expectedKeyPair = mockKeyPair
+    sha256HasherSpy.hashReturnValue = Data()
+
+    generator = VcSdJwtVpTokenGenerator()
   }
 
   func testGenerate_oneClaimRequested() throws {
@@ -51,7 +62,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   }
 
   func testGenerate_noKeyBinding() throws {
-    let mockCredentialNoKeyBinding = VcSdJwt.Mock.sampleNoKeyBinding
+    let mockCredentialNoKeyBinding = VcSdJwtPayload.Mock.noKeyBinding
     let requestedClaims = [ "firstName" ]
 
     let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredentialNoKeyBinding, keyPair: nil, fields: requestedClaims)
@@ -68,24 +79,24 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     do {
       _ = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
     } catch {
-      XCTAssertFalse(jwtHelper.jwtWithKeyPairTypeCalled)
-      XCTAssertFalse(sha2656Hasher.hashCalled)
+      XCTAssertFalse(sha256HasherSpy.hashCalled)
     }
   }
 
   // MARK: Private
 
+  private static let mockJwtString = "jwtString"
+  private static let mockJwtData = mockJwtString.data(using: .utf8)!
+
   private let mockPrivateKey: SecKey = SecKeyTestsHelper.createPrivateKey()
   private let mockIdentifier = UUID()
   private let mockAlgorithm = "ES256"
-  private let mockKeyBindingJwt = JWT.Mock.sampleKeyBinding
   private let mockReason = "mockReason"
 
-  // swiftlint:disable all
-  private var jwtHelper: JWTHelperProtocolSpy!
+  private var jwsEncoderMock: JWSEncoderMock<KeyBindingPayload>!
   private var generator: VcSdJwtVpTokenGenerator!
-  private var sha2656Hasher = HashableSpy()
-  private var mockCredential = VcSdJwt.Mock.sample
+  private var sha256HasherSpy = HashableSpy()
+  private var mockCredential = VcSdJwtPayload.Mock.sample
   private var mockKeyPair: KeyPair!
 
   private func asserts(_ vpToken: VpToken, nbOfDisclosures: Int, hasKeyBinding: Bool) {
@@ -93,14 +104,14 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     let disclosures = vpToken.split(separator: "~")
     if hasKeyBinding {
       XCTAssertEqual(2 + nbOfDisclosures, disclosures.count)
-      XCTAssertTrue(sha2656Hasher.hashCalled)
-      XCTAssertEqual(jwtHelper.jwtWithKeyPairTypeReceivedArguments?.keyPair.privateKey, mockPrivateKey)
-      XCTAssertEqual(mockKeyBindingJwt.raw, String(disclosures.last ?? ""))
+      XCTAssertTrue(sha256HasherSpy.hashCalled)
+      XCTAssertEqual(String(disclosures.last ?? ""), Self.mockJwtString)
     } else {
       XCTAssertEqual(1 + nbOfDisclosures, disclosures.count)
-      XCTAssertFalse(sha2656Hasher.hashCalled)
-      XCTAssertFalse(jwtHelper.jwtWithKeyPairTypeCalled)
+      XCTAssertFalse(sha256HasherSpy.hashCalled)
     }
   }
 
 }
+
+// swiftlint: enable all

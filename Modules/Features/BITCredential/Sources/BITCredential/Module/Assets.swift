@@ -27,6 +27,7 @@ enum Assets {
   static let closeAlt = ImageAsset(name: "CloseAlt")
   static let credentialDemoPattern = ImageAsset(name: "CredentialDemoPattern")
   static let credentialDemoPatternSmall = ImageAsset(name: "CredentialDemoPatternSmall")
+  static let credentialFallbackBackground = ImageAsset(name: "CredentialFallbackBackground")
   static let deleteCredential = ImageAsset(name: "DeleteCredential")
   static let menu = ImageAsset(name: "Menu")
   static let noActivities = ImageAsset(name: "NoActivities")

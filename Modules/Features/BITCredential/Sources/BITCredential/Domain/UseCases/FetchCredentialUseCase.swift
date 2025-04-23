@@ -8,23 +8,25 @@ import Spyable
 
 @Spyable
 public protocol FetchCredentialUseCaseProtocol {
-  func execute(from offer: CredentialOffer) async throws -> Credential
+  func execute(from offer: CredentialOffer) async throws -> (Credential, TrustStatement?)
 }
 
 // MARK: - FetchCredentialUseCase
 
 struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
-  func execute(from offer: CredentialOffer) async throws -> Credential {
-    let (metadataWrapper, credential, keyPair) = try await fetchAnyVerifiableCredentialUseCase.execute(from: offer)
+  func execute(from offer: CredentialOffer) async throws -> (Credential, TrustStatement?) {
+    let (metadataWrapper, credential, keyPair, ocaBundle) = try await fetchAnyVerifiableCredentialUseCase.execute(from: offer)
 
-    // OCA
 
     let savedCredential = try await saveCredentialUseCase.execute(credential: credential, keyPair: keyPair, metadataWrapper: metadataWrapper)
+    let updatedCredential = (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
+    let trustStatement = try? await fetchTrustStatementUseCase.execute(issuer: credential.issuer)
 
-    return (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
+    return (updatedCredential, trustStatement)
   }
 
   @Injected(\.fetchAnyVerifiableCredentialUseCase) private var fetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseProtocol
   @Injected(\.saveCredentialUseCase) private var saveCredentialUseCase: SaveCredentialUseCaseProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
+  @Injected(\.fetchTrustStatementUseCase) private var fetchTrustStatementUseCase: FetchTrustStatementUseCaseProtocol
 }

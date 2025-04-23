@@ -39,12 +39,12 @@ public struct CredentialCell: View {
             HStack(spacing: .x3) {
               if credential.environment == .demo {
                 Badge {
-                  Text(L10n.tkGlobalCredentialStatusDemo)
+                  Text(L10n.tkCredentialStatusDemo)
                 }
                 .badgeStyle(.bezeledGray)
                 .controlSize(.small)
                 .colorScheme(.light)
-                .accessibilityLabel(L10n.tkGlobalCredentialStatusDemoAlt)
+                .accessibilityLabel(L10n.tkCredentialStatusDemoAlt)
               }
 
               HStack(spacing: .x1) {

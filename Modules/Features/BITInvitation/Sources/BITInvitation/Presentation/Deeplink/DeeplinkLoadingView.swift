@@ -19,11 +19,12 @@ struct DeeplinkLoadingView: View {
   @StateObject var viewModel: DeeplinkViewModel
 
   var body: some View {
-    if let invitationError = viewModel.qrScannerError as? DeeplinkViewModel.CameraError {
-      errorView(invitationError)
-    } else {
-      progressView()
-    }
+    content
+      .onAppear {
+        Task {
+          await viewModel.onAppear()
+        }
+      }
   }
 
   // MARK: Private
@@ -32,6 +33,16 @@ struct DeeplinkLoadingView: View {
     static let innerGradientMaxWidth = 250.0
     static let innerGradientMaxHeight = 462.0
   }
+
+  @ViewBuilder
+  private var content: some View {
+    if let error = viewModel.error {
+      errorView(error)
+    } else {
+      progressView()
+    }
+  }
+
 }
 
 // MARK: - Components
@@ -75,7 +86,7 @@ extension DeeplinkLoadingView {
   }
 
   @ViewBuilder
-  private func errorView(_ error: DeeplinkViewModel.CameraError) -> some View {
+  private func errorView(_ error: InvitationError) -> some View {
     VStack(spacing: .x1) {
       Spacer()
 

@@ -17,7 +17,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   // swiftlint:disable all
   var viewModel: CredentialOfferViewModel!
   var credential = Credential.Mock.sample
-  var trustStatement: TrustStatement? = .Mock.validSample
+  var trustStatement: TrustStatement? = TrustStatementPayload.Mock.validSample
   var router: MockCredentialOfferRouter!
   var delayAfterAcceptingCredential: UInt64 = 0
   var deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
@@ -43,9 +43,9 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertNotEqual(viewModel.issuerDisplay, credential.preferredIssuerDisplay)
     XCTAssertEqual(viewModel.state, .result)
     XCTAssertEqual(viewModel.issuerTrustStatus, .verified)
-    XCTAssertTrue(getCredentialIssuerDisplayUseCase.executeForTrustStatementCalled)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementReceivedArguments?.credential, credential)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, trustStatement)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.credentialId, credential.id)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.trustStatement, trustStatement)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.fallbackDisplay, credential.preferredIssuerDisplay)
   }
 
   func testInitValuesWithoutTrustStatement() async {
@@ -55,8 +55,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.credentialBody, CredentialDetailBody(from: credential))
     XCTAssertEqual(viewModel.state, .result)
     XCTAssertEqual(viewModel.issuerTrustStatus, .unverified)
-    XCTAssertFalse(getCredentialIssuerDisplayUseCase.executeForTrustStatementCalled)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, nil)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.trustStatement, nil)
   }
 
   func testAccept() async {

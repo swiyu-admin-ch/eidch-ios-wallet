@@ -2,6 +2,12 @@ import BITCrypto
 import Foundation
 import JOSESwift
 
+// MARK: - JWSEncoderProtocol
+
+public protocol JWSEncoderProtocol {
+  func encode<T>(_ value: T, using keyPair: KeyPair) throws -> Data where T: JWTPayload & Encodable
+}
+
 // MARK: - JWSEncoderError
 
 public enum JWSEncoderError: Error {
@@ -31,7 +37,7 @@ public struct JWSEncoder: JWSEncoderProtocol {
   public var keyEncodingStrategy: KeyEncodingStrategy
   public var dateEncodingStrategy: JSONEncoder.DateEncodingStrategy
 
-  public func encode(_ jwtPayload: some JWTType & Encodable, using keyPair: KeyPair) throws -> Data {
+  public func encode(_ jwtPayload: some JWTPayload & Encodable, using keyPair: KeyPair) throws -> Data {
     let algorithm = try parseAlgorithm(keyPair.algorithm)
     let header = try header(using: keyPair, algorithm: algorithm, type: jwtPayload.type)
     let payload = try createPayload(jwtPayload)
@@ -51,8 +57,8 @@ public struct JWSEncoder: JWSEncoderProtocol {
     return try SignatureAlgorithm(from: jwtAlgorithm)
   }
 
-  private func header(using keyPair: KeyPair, algorithm: SignatureAlgorithm, type: String) throws -> JWSHeader {
-    var parameters: [String: Any] = ["typ": type]
+  private func header(using keyPair: KeyPair, algorithm: SignatureAlgorithm, type: String?) throws -> JOSESwift.JWSHeader {
+    var parameters: [String: Any] = if let typ = type { ["typ": typ] } else { [:] }
     switch keyEncodingStrategy {
     case .jwk:
       parameters["jwk"] = try createJwk(keyPair: keyPair).parameters
@@ -60,7 +66,7 @@ public struct JWSEncoder: JWSEncoderProtocol {
       break
     }
     parameters[JWKParameter.algorithm.rawValue] = algorithm.rawValue
-    return try JWSHeader(parameters: parameters)
+    return try JOSESwift.JWSHeader(parameters: parameters)
   }
 
   private func createJwk(keyPair: KeyPair) throws -> JWK {

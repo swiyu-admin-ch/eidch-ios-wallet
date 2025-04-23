@@ -4,6 +4,7 @@ import XCTest
 @testable import BITCrypto
 @testable import BITOpenID
 @testable import BITSdJWT
+@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 final class TypeMetadataServiceTests: XCTestCase {
@@ -21,23 +22,22 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testFetchTypeMetadata_success() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
-
     sriValidator.validateWithReturnValue = true
     repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
 
     let typeMetadata = try await service.fetch(mockVcSdJwt)
 
     XCTAssertNotNil(typeMetadata)
-    XCTAssertEqual(repository.fetchTypeMetadataFromReceivedUrl, URL(string: mockVcSdJwt.vct!))
+    XCTAssertEqual(repository.fetchTypeMetadataFromReceivedUrl, URL(string: mockVcSdJwt.vct))
     XCTAssertEqual(sriValidator.validateWithReceivedArguments?.data, mockTypeMetadataData)
     XCTAssertEqual(sriValidator.validateWithReceivedArguments?.integrity, mockVcSdJwt.vctIntegrity)
   }
 
   func testTypeMetadata_vctIsNotAnURL() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sampleWithVctNotAnURL.rawCredential)
+    var vcSdJwt = mockVcSdJwt
+    vcSdJwt.vct = "not-a-url"
 
-    let typeMetadata = try await service.fetch(mockVcSdJwt)
+    let typeMetadata = try await service.fetch(vcSdJwt)
 
     XCTAssertNil(typeMetadata)
     XCTAssertFalse(sriValidator.validateWithCalled)
@@ -45,8 +45,6 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_fetchFailed() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
-
     repository.fetchTypeMetadataFromThrowableError = TestingError.error
 
     do {
@@ -60,12 +58,12 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_vctMismatch() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sampleWithVctMismatch.rawCredential)
-
+    var vcSdJwt = mockVcSdJwt
+    vcSdJwt.vct = "https://other.com"
     repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
 
     do {
-      _ = try await service.fetch(mockVcSdJwt)
+      _ = try await service.fetch(vcSdJwt)
       XCTFail("Expected a FetchCredentialError.vctMismatch")
     } catch TypeMetadataServiceError.vctMismatch {
       XCTAssertTrue(repository.fetchTypeMetadataFromCalled)
@@ -77,11 +75,12 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_missingIntegrity() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sampleWithVctMissingIntegrity.rawCredential)
+    var vcSdJwt = mockVcSdJwt
+    vcSdJwt.vctIntegrity = nil
     repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
 
     do {
-      _ = try await service.fetch(mockVcSdJwt)
+      _ = try await service.fetch(vcSdJwt)
       XCTFail("Expected a FetchCredentialError.missingVctIntegrity")
     } catch TypeMetadataServiceError.missingVctIntegrity {
       XCTAssertTrue(repository.fetchTypeMetadataFromCalled)
@@ -93,8 +92,6 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_sriValidationFailed() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
-
     repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
     sriValidator.validateWithReturnValue = false
 
@@ -110,8 +107,6 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_sriValidationError() async throws {
-    let mockVcSdJwt = try VcSdJwt(from: CredentialResponse.Mock.sample.rawCredential)
-
     repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
     sriValidator.validateWithThrowableError = TestingError.error
 
@@ -127,6 +122,8 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   // MARK: Private
+
+  private let mockVcSdJwt = VcSdJwtPayload.Mock.samplePayload
 
   private var sriValidator: SRIValidatorProtocolSpy!
   private var repository: OpenIDRepositoryProtocolSpy!

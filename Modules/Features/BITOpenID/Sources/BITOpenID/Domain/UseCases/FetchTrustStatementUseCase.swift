@@ -1,7 +1,14 @@
 import BITAnyCredentialFormat
 import BITCore
+import BITJWT
 import Factory
 import Foundation
+
+// MARK: - FetchTrustStatementUseCaseError
+
+enum FetchTrustStatementUseCaseError: Error {
+  case cannotParseTrustRegistryDomain
+}
 
 // MARK: - FetchTrustStatementUseCase
 
@@ -9,16 +16,8 @@ struct FetchTrustStatementUseCase: FetchTrustStatementUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(credential: AnyCredential) async throws -> TrustStatement? {
-    try await fetchTrustStatement(from: credential.issuer)
-  }
-
-  func execute(jwtRequestObject: JWTRequestObject) async throws -> TrustStatement? {
-    guard let issuer = jwtRequestObject.jwt.iss else {
-      return nil
-    }
-
-    return try await fetchTrustStatement(from: issuer)
+  func execute(issuer: String) async throws -> TrustStatement? {
+    try await fetchTrustStatement(from: issuer)
   }
 
   // MARK: Private
@@ -52,26 +51,17 @@ struct FetchTrustStatementUseCase: FetchTrustStatementUseCaseProtocol {
       throw FetchTrustStatementUseCaseError.cannotParseTrustRegistryDomain
     }
 
-    let trustStatementJwts = try await openIDRepository.fetchTrustStatements(from: trustStatementURL, issuerDid: issuer)
-    let trustStatements: [TrustStatement] = trustStatementJwts
-      .compactMap { try? TrustStatement(from: $0) }
+    let trustStatements = try await openIDRepository.fetchTrustStatements(from: trustStatementURL, issuerDid: issuer)
+    let v1TrustStatements = trustStatements
       .filter {
-        $0.vct == Self.trustStatementMetadataV1Key
+        $0.payload.vct == Self.trustStatementMetadataV1Key
       }
 
-    for trustStatement in trustStatements where await validateTrustStatementUseCase.execute(trustStatement) {
+    for trustStatement in v1TrustStatements where await validateTrustStatementUseCase.execute(trustStatement) {
       return trustStatement
     }
 
     return nil
   }
 
-}
-
-// MARK: FetchTrustStatementUseCase.FetchTrustStatementUseCaseError
-
-extension FetchTrustStatementUseCase {
-  enum FetchTrustStatementUseCaseError: Error {
-    case cannotParseTrustRegistryDomain
-  }
 }

@@ -4,78 +4,82 @@ import XCTest
 @testable import BITCredentialShared
 @testable import BITInvitation
 @testable import BITOpenID
+@testable import BITSdJWT
+
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
 
 final class GetCredentialIssuerDisplayUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
-  // swiftlint:disable all
-  var useCase: GetCredentialIssuerDisplayUseCase!
-  var mockCredential = Credential.Mock.sample
-  var preferredUserLanguageCodes: [UserLanguageCode] = []
-
-  var mockITIssuerName = "IT trusted issuer"
-  var mockENIssuerName = "EN trusted issuer"
-
-  // swiftlint:enable all
-
   override func setUp() {
+    super.setUp()
+    Container.shared.reset()
+
     Container.shared.preferredUserLanguageCodes.register { self.preferredUserLanguageCodes }
+
+    preferredUserLanguageCodes = []
 
     useCase = GetCredentialIssuerDisplayUseCase()
   }
 
-  func testExecuteWithTrustStatement_ReturnsPreferredLanguages() {
+  func testExecute_trustStatementInPreferredLanguage_returnsNameFromTrustStatement() {
     preferredUserLanguageCodes = ["en", "de"]
+    useCase = GetCredentialIssuerDisplayUseCase()
 
-    guard let mockTrustStatement: TrustStatement = .Mock.validSample else {
-      fatalError("Cannot parse trust statement")
-    }
+    let issuer = useCase.execute(for: Self.credentialId, trustStatement: trustStatementMock, fallbackDisplay: fallbackDisplayMock)
 
-    let issuer = useCase.execute(for: mockCredential, trustStatement: mockTrustStatement)
-
-    XCTAssertNotEqual(issuer, mockCredential.preferredIssuerDisplay)
-    XCTAssertNotEqual(issuer?.name, mockCredential.preferredIssuerDisplay?.name)
-    XCTAssertEqual(issuer?.name, mockENIssuerName)
-    assertCredentialIssuerDisplayImage(from: issuer, preferredIssuerDisplay: mockCredential.preferredIssuerDisplay)
+    XCTAssertEqual(issuer?.credentialId, Self.credentialId)
+    XCTAssertEqual(issuer?.name, Self.trustStatementNameEN)
+    XCTAssertEqual(issuer?.image, Self.image)
   }
 
-  func testExecuteWithTrustStatement_ReturnsDefaultLanguage() {
-    preferredUserLanguageCodes = []
+  func testExecute_trustStatementInDefaultLanguage_returnsNameFromTrustStatement() {
+    let issuer = useCase.execute(for: Self.credentialId, trustStatement: trustStatementMock, fallbackDisplay: fallbackDisplayMock)
 
-    guard let mockTrustStatement: TrustStatement = .Mock.validSample else {
-      fatalError("Cannot parse trust statement")
-    }
-
-    let issuer = useCase.execute(for: mockCredential, trustStatement: mockTrustStatement)
-
-    XCTAssertNotEqual(issuer, mockCredential.preferredIssuerDisplay)
-    XCTAssertNotEqual(issuer?.name, mockCredential.preferredIssuerDisplay?.name)
-    XCTAssertEqual(issuer?.name, mockENIssuerName)
-    assertCredentialIssuerDisplayImage(from: issuer, preferredIssuerDisplay: mockCredential.preferredIssuerDisplay)
+    XCTAssertEqual(issuer?.credentialId, Self.credentialId)
+    XCTAssertEqual(issuer?.name, Self.trustStatementNameEN)
+    XCTAssertEqual(issuer?.image, Self.image)
   }
 
-  func testExecuteWithTrustStatement_ReturnsIssuerPreferredLanguage() {
-    preferredUserLanguageCodes = []
+  func testExecute_trustStatementWithPreferredLanguage_returnsNameFromTrustStatement() {
+    let italianSample = TrustStatementPayload.Mock.validSampleItalian
 
-    guard let mockItalianTrustStatement: TrustStatement = .Mock.validSampleItalian else {
-      fatalError("Cannot parse trust statement")
-    }
+    let issuer = useCase.execute(for: Self.credentialId, trustStatement: italianSample, fallbackDisplay: fallbackDisplayMock)
 
-    let issuer = useCase.execute(for: mockCredential, trustStatement: mockItalianTrustStatement)
+    XCTAssertEqual(issuer?.credentialId, Self.credentialId)
+    XCTAssertEqual(issuer?.name, Self.trustStatementNameIT)
+    XCTAssertEqual(issuer?.image, Self.image)
+  }
 
-    XCTAssertNotEqual(issuer, mockCredential.preferredIssuerDisplay)
-    XCTAssertNotEqual(issuer?.name, mockCredential.preferredIssuerDisplay?.name)
-    XCTAssertEqual(issuer?.name, mockITIssuerName)
-    assertCredentialIssuerDisplayImage(from: issuer, preferredIssuerDisplay: mockCredential.preferredIssuerDisplay)
+  func testExecute_trustStatementNotMatchingLanguage_returnsNameFromKey() {
+    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.italian.rawValue
+
+    let issuer = useCase.execute(for: Self.credentialId, trustStatement: TrustStatementPayload.Mock.validSample, fallbackDisplay: fallbackDisplayMock)
+
+    XCTAssertEqual(issuer?.credentialId, Self.credentialId)
+    XCTAssertEqual(issuer?.name, "orgName")
+    XCTAssertEqual(issuer?.image, Self.image)
+
+    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.english.rawValue
   }
 
   // MARK: Private
 
-  /// image is always taken from preferredIssuerDisplay (source is OID metadata). Never from Trust Statement
-  private func assertCredentialIssuerDisplayImage(from issuerDisplay: CredentialIssuerDisplay?, preferredIssuerDisplay: CredentialIssuerDisplay?) {
-    XCTAssertNotNil(issuerDisplay?.image)
-    XCTAssertEqual(issuerDisplay?.image, preferredIssuerDisplay?.image)
+  private static let trustStatementNameEN = "EN orgName"
+  private static let trustStatementNameIT = "IT orgName"
+  private static let fallbackIssuerName = "fallback"
+  private static let image = "image".data(using: .utf8)!
+  private static let credentialId = UUID()
+
+  private let trustStatementMock = TrustStatementPayload.Mock.validSample
+  private var preferredUserLanguageCodes: [UserLanguageCode] = []
+
+  private var useCase: GetCredentialIssuerDisplayUseCase!
+
+  private var fallbackDisplayMock: CredentialIssuerDisplay {
+    CredentialIssuerDisplay(name: Self.fallbackIssuerName, credentialId: Self.credentialId, image: Self.image)
   }
+  // swiftlint:enable force_unwrapping implicitly_unwrapped_optional
 
 }

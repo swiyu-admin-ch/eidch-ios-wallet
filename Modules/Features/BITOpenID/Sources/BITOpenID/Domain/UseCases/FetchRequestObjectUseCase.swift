@@ -30,19 +30,15 @@ public struct FetchRequestObjectUseCase: FetchRequestObjectUseCaseProtocol {
 
   // MARK: Private
 
-  @Injected(\.jwtDecoder) private var jwtDecoder: JWTDecoderProtocol
+  @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
 
   private func createRequestObject(from requestObjectData: Data) throws -> RequestObject {
-    guard
-      let strRequestObject = String(data: requestObjectData, encoding: .utf8),
-      let requestObjectJWT = try? JWT(from: strRequestObject),
-      let payload = jwtDecoder.decodePayload(from: requestObjectJWT.raw)
-    else {
+    guard let jws = try? jwsDecoder.decode(RequestObject.self, from: requestObjectData) else {
       return try JSONDecoder().decode(RequestObject.self, from: requestObjectData)
     }
 
-    return try JWTRequestObject(jwt: requestObjectJWT, payload: payload)
+    return try JWTRequestObject(from: jws)
   }
 
 }

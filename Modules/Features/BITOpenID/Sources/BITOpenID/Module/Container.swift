@@ -57,30 +57,22 @@ extension Container {
     self { VcSchemaService() }
   }
 
+  public var credentialDisplayLogoURIDecoder: Factory<CredentialDisplayLogoURIDecoderProtocol> {
+    self { CredentialDisplayLogoURIDecoder() }
+  }
+
   // MARK: Internal
 
   var credentialKeyPairGenerator: Factory<CredentialKeyPairGeneratorProtocol> {
     self { CredentialKeyPairGenerator() }
   }
 
-  var jwtContextHelper: Factory<JWTContextHelperProtocol> {
-    self { JWTContextHelper() }
-  }
-
-  var sha256Hasher: Factory<SHA256Hasher> {
+  var sha256Hasher: Factory<Hashable> {
     self { SHA256Hasher() }
-  }
-
-  var jwtDecoder: Factory<JWTDecoderProtocol> {
-    self { JWTDecoder() }
   }
 
   var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
     self { [.ES256] }
-  }
-
-  var sriValidator: Factory<SRIValidatorProtocol> {
-    self { SRIValidator() }
   }
 
   var jsonSchemaValidator: Factory<JsonSchema> {
@@ -218,10 +210,6 @@ extension Container {
 
   var validateTrustStatementUseCase: Factory<ValidateTrustStatementUseCaseProtocol> {
     self { ValidateTrustStatementUseCase() }
-  }
-
-  var constraintPathRegex: Factory<String> {
-    self { #".*\[\s*\?.*"# }
   }
 
 }

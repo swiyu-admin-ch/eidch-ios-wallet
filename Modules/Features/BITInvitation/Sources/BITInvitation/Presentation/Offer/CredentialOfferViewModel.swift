@@ -25,7 +25,7 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
       return
     }
 
-    issuerDisplay = getCredentialIssuerDisplayUseCase.execute(for: credential, trustStatement: trustStatement)
+    issuerDisplay = getCredentialIssuerDisplayUseCase.execute(for: credential.id, trustStatement: trustStatement, fallbackDisplay: credential.preferredIssuerDisplay)
   }
 
   // MARK: Internal

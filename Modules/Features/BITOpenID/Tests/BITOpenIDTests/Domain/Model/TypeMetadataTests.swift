@@ -1,4 +1,3 @@
-
 import XCTest
 @testable import BITOpenID
 
@@ -8,7 +7,7 @@ final class TypeMetadataTests: XCTestCase {
   // MARK: - Valid JSON Decoding
 
   func testValidTypeMetadataDecoding() {
-    let metadata = TypeMetadata.Mock.sample
+    let metadata = TypeMetadata.Mock.sampleUrlOca
 
     XCTAssertEqual(metadata.vct, "https://example.com/education_credential")
     XCTAssertEqual(metadata.name, "Education Credential")
@@ -18,11 +17,15 @@ final class TypeMetadataTests: XCTestCase {
     XCTAssertEqual(metadata.schemaUrl, URL(string: "https://example.com/schema.json"))
 
     // Display Checks
-    XCTAssertEqual(metadata.display?.count, 1)
-    let display = metadata.display!.first!
+    XCTAssertEqual(metadata.displays?.count, 1)
+    let display = metadata.displays!.first!
     XCTAssertEqual(display.lang, "en")
     XCTAssertEqual(display.name, "Education Credential")
     XCTAssertEqual(display.description, "Academic credential for students")
+
+    // OCA
+    XCTAssertEqual(display.rendering?.oca?.uri, "https://example.com/oca/oca-bundle.json")
+    XCTAssertEqual(display.rendering?.oca?.uriIntegrity, "sha256-9cLlJNXN-TsMk-PmKjZ5t0WRL5ca_xGgX3c1VLmXfh-WRL5")
 
     // Rendering Checks
     let rendering = display.rendering!
@@ -93,7 +96,7 @@ final class TypeMetadataTests: XCTestCase {
       XCTAssertNil(metadata.name)
       XCTAssertNil(metadata.description)
       XCTAssertNil(metadata.extends)
-      XCTAssertNil(metadata.display)
+      XCTAssertNil(metadata.displays)
       XCTAssertNil(metadata.claims)
       XCTAssertNil(metadata.schema)
       XCTAssertNil(metadata.schemaUrl)
@@ -121,9 +124,9 @@ final class TypeMetadataTests: XCTestCase {
       let metadata = try JSONDecoder().decode(TypeMetadata.self, from: jsonData)
       XCTAssertEqual(metadata.vct, "https://example.com/education_credential")
       XCTAssertEqual(metadata.name, "Education Credential")
-      XCTAssertEqual(metadata.display?.count, 1)
+      XCTAssertEqual(metadata.displays?.count, 1)
 
-      let display = metadata.display!.first!
+      let display = metadata.displays!.first!
       XCTAssertEqual(display.lang, "en")
       XCTAssertEqual(display.name, "Partial Display")
       XCTAssertNil(display.description)

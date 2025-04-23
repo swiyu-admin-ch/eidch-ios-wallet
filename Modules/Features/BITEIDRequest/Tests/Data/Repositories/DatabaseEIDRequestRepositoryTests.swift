@@ -1,3 +1,4 @@
+// swiftlint:disable implicitly_unwrapped_optional
 import Factory
 import RealmSwift
 import XCTest
@@ -49,10 +50,24 @@ final class DatabaseEIDRequestRepositoryTests: XCTestCase {
     XCTAssertEqual(eIDRequestCase, savedRequestCase)
   }
 
+  func testDeleteEIDRequestCaseSuccess() async throws {
+    let expired = try await repository.create(eIDRequestCase: .Mock.sampleExpired)
+
+    try await repository.delete(expired)
+
+    do {
+      _ = try await repository.get(id: expired.id)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? DatabaseEIDRequestRepositoryError, .notFound)
+    }
+  }
+
   // MARK: Private
 
-  // swiftlint:disable implicitly_unwrapped_optional
   private var repository: LocalEIDRequestRepositoryProtocol!
   private let mockEIDRequestState = EIDRequestState.Mock.sample
-  // swiftlint:enable implicitly_unwrapped_optional
+
 }
+
+// swiftlint:enable implicitly_unwrapped_optional

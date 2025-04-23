@@ -7,6 +7,10 @@ extension Date {
     return self > now && timeIntervalSince(now) < 60 * 60 * 24
   }
 
+  public var longDateFormat: String {
+    formatted(date: .long, time: .omitted)
+  }
+
   public static func create(_ year: Int, _ month: Int, _ day: Int) -> Date {
     create(year, month, day, 0, 0, 0)
   }
