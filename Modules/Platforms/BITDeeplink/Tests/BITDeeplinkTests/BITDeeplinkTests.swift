@@ -73,10 +73,7 @@ final class DeeplinkTests: XCTestCase {
 
     let deeplink = URL(string: "\(deeplinkScheme)://menu")!
 
-    do {
-      let _ = try manager.dispatchFirst(deeplink)
-      XCTFail("Expected a failure with a not found route.")
-    } catch {
+    XCTAssertThrowsError(try manager.dispatchFirst(deeplink)) { error in
       XCTAssertEqual(error as? DeeplinkError, DeeplinkError.routeNotFound)
     }
   }
@@ -97,10 +94,7 @@ final class DeeplinkTests: XCTestCase {
 
     let deeplink = URL(string: "test-not-found://route")!
 
-    do {
-      let _ = try manager.dispatchFirst(deeplink)
-      XCTFail("Expected a failure with a not found route.")
-    } catch {
+    XCTAssertThrowsError(try manager.dispatchFirst(deeplink)) { error in
       XCTAssertEqual(error as? DeeplinkError, DeeplinkError.routeNotFound)
     }
   }

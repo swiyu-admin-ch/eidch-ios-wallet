@@ -16,6 +16,9 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
   var dataPrivacyCalled = false
   var cameraPermissionCalled = false
   var queueInformationArgument: Date?
+  var legalRepresentantCalled = false
+  var legalRepresentantConsentArgument: String?
+  var legalRepresentantQRCodeArgument: String?
 
   func checkCardIntroduction() {
     checkCardIntroductionCalled = true
@@ -67,5 +70,17 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
 
   func settings() {
     settingsCalled = true
+  }
+
+  func legalRepresentant() {
+    legalRepresentantCalled = true
+  }
+
+  func legalRepresentantConsent(caseId: String) {
+    legalRepresentantConsentArgument = caseId
+  }
+
+  func legalRepresentantQRCode(caseId: String) {
+    legalRepresentantQRCodeArgument = caseId
   }
 }

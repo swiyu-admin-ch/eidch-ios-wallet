@@ -7,7 +7,7 @@ import RealmSwift
 
 public protocol RealmDataStoreProtocol {
   func get<T: RealmFetchable>(_ type: T.Type, configuration: Realm.Configuration) throws -> Results<T>
-  func get<T: RealmSwiftObject, KeyType>(_ type: T.Type, forPrimaryKey: KeyType, configuration: Realm.Configuration) throws -> T?
+  func get<T: RealmSwiftObject>(_ type: T.Type, forPrimaryKey: some Any, configuration: Realm.Configuration) throws -> T?
 
   func save(_ data: Object, policy: Realm.UpdatePolicy, configuration: Realm.Configuration) throws
   func save(_ data: [Object], policy: Realm.UpdatePolicy, configuration: Realm.Configuration) throws

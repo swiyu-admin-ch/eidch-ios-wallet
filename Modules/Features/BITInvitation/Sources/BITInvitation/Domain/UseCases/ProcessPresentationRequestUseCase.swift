@@ -83,7 +83,7 @@ struct ProcessPresentationRequestUseCase: ProcessPresentationRequestUseCaseProto
   private func validate(requestObject: RequestObject) async throws {
     guard await validateRequestObjectUseCase.execute(requestObject) else {
       try await denyPresentationUseCase.execute(requestObject: requestObject, error: .invalidRequest)
-      throw FetchRequestObjectError.invalidPresentationInvitation
+      throw FetchRequestObjectError.invalid
     }
   }
 

@@ -70,7 +70,7 @@ struct CredentialBox: View {
   @ViewBuilder
   private func credentialContent(_ credential: Credential, alignment: HorizontalAlignment) -> some View {
     VStack(alignment: alignment) {
-      Text(credential.preferredDisplay?.name ?? L10n.globalNotAssigned)
+      Text(credential.preferredDisplay?.name ?? L10n.tkGlobalNotAssigned)
         .font(.custom.body)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(alignment.textAlignment)

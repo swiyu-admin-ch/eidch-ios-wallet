@@ -29,4 +29,8 @@ public struct OtherMockAnyCredential: AnyCredential {
   public var validUntil: Date? {
     nil
   }
+
+  public func getClaimsDictionary(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> [String: Any] {
+    [:]
+  }
 }

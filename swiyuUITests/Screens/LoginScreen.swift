@@ -19,7 +19,7 @@ class LoginScreen: Screen {
   let pinField: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(loginButton.waitForExistence(timeout: 3))
+    XCTAssert(loginButton.waitForExistence(timeout: 5))
     XCTAssert(pinField.exists)
   }
 

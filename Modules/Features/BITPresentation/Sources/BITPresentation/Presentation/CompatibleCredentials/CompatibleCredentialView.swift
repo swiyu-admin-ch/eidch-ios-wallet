@@ -22,13 +22,13 @@ public struct CompatibleCredentialView: View {
   public var body: some View {
     List {
       VStack {
-        trustHeader()
+        ActorHeaderView(verifier: viewModel.verifierDisplay)
           .padding(.top, .x3)
       }
       .listRowSeparator(.hidden)
 
       VStack(alignment: .leading) {
-        Text(L10n.tkPresentMultiplecredentialsTitle)
+        Text(L10n.tkPresentCompatibleCredentialsPrimary)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
           .padding(.bottom, .x1)
@@ -69,7 +69,7 @@ public struct CompatibleCredentialView: View {
       Spacer()
 
       Button(action: { viewModel.close() }) {
-        Label(L10n.tkGlobalCancelPrimarybutton, systemImage: "xmark")
+        Label(L10n.tkGlobalCancel, systemImage: "xmark")
           .lineLimit(1)
           .if(sizeCategory.isAccessibilityCategory) {
             $0.frame(maxWidth: .infinity)
@@ -79,13 +79,6 @@ public struct CompatibleCredentialView: View {
       .controlSize(.large)
 
       Spacer()
-    }
-  }
-
-  @ViewBuilder
-  private func trustHeader() -> some View {
-    if let verifierDisplay = viewModel.verifierDisplay {
-      ActorHeaderView(verifier: verifierDisplay)
     }
   }
 

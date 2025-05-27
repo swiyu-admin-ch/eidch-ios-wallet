@@ -37,6 +37,24 @@ final class CameraPermissionViewModelTests: XCTestCase {
   }
 
   @MainActor
+  func testButtonAction_PermissionStatusNotDetermined_assertCallCamera() async {
+    let viewModel = CameraPermissionViewModel(initialState: .authorized, router: mockRouter)
+
+    viewModel.buttonAction()
+
+    XCTAssertTrue(mockRouter.didCallCamera)
+  }
+
+  @MainActor
+  func testButtonAction_PermissionStatusDetermined_assertCallSettings() async {
+    let viewModel = CameraPermissionViewModel(initialState: .denied, router: mockRouter)
+
+    viewModel.buttonAction()
+
+    XCTAssertTrue(mockRouter.didCallSettings)
+  }
+
+  @MainActor
   func testAllowCamera() async {
     let viewModel = CameraPermissionViewModel(initialState: .authorized, router: mockRouter)
 

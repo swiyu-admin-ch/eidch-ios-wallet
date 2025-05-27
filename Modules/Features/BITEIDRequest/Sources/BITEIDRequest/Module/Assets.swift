@@ -24,9 +24,12 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 enum Assets {
   static let camera = ImageAsset(name: "Camera")
   static let card = ImageAsset(name: "Card")
+  static let check = ImageAsset(name: "Check")
   static let checkCard = ImageAsset(name: "CheckCard")
   static let close = ImageAsset(name: "Close")
   static let eidRequestCaseIcon = ImageAsset(name: "EIDRequestCaseIcon")
+  static let emergency = ImageAsset(name: "Emergency")
+  static let person = ImageAsset(name: "Person")
   static let shield = ImageAsset(name: "Shield")
   static let timer = ImageAsset(name: "Timer")
   static let walletPairing = ImageAsset(name: "WalletPairing")
@@ -119,8 +122,6 @@ extension SwiftUI.Image {
   }
 }
 #endif
-
-// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

@@ -3,12 +3,12 @@ import SwiftUI
 
 // MARK: - InformationView
 
-public struct InformationView<Content: View, Footer: View>: View {
+public struct InformationView<Content: View, Footer: View, ImageView: View>: View {
 
   // MARK: Lifecycle
 
   public init(
-    image: Image,
+    image: ImageView,
     backgroundImage: Image = ThemingAssets.Gradient.gradient4.swiftUIImage,
     @ViewBuilder content: () -> Content,
     @ViewBuilder footer: () -> Footer = { EmptyView() })
@@ -17,7 +17,7 @@ public struct InformationView<Content: View, Footer: View>: View {
   }
 
   public init(
-    image: Image,
+    image: ImageView,
     backgroundColor: Color,
     @ViewBuilder content: () -> Content,
     @ViewBuilder footer: () -> Footer = { EmptyView() })
@@ -26,7 +26,7 @@ public struct InformationView<Content: View, Footer: View>: View {
   }
 
   private init(
-    image: Image,
+    image: ImageView,
     backgroundImage: Image?,
     backgroundColor: Color?,
     @ViewBuilder content: () -> Content,
@@ -78,7 +78,7 @@ public struct InformationView<Content: View, Footer: View>: View {
   private let footer: Footer
   private let content: Content
 
-  private let image: Image
+  private let image: ImageView
   private let backgroundImage: Image?
   private let backgroundColor: Color?
 
@@ -97,12 +97,12 @@ extension InformationView {
   @ViewBuilder
   private func card() -> some View {
     if let backgroundImage {
-      Card(background: .image(backgroundImage), image: image)
+      Card(background: .image(backgroundImage), content: { image })
         .foregroundStyle(ThemingAssets.Grays.white.swiftUIColor)
         .accessibilityHidden(true)
         .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
     } else if let backgroundColor {
-      Card(background: .color(backgroundColor), image: image)
+      Card(background: .color(backgroundColor), content: { image })
         .foregroundStyle(ThemingAssets.Grays.white.swiftUIColor)
         .accessibilityHidden(true)
         .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)

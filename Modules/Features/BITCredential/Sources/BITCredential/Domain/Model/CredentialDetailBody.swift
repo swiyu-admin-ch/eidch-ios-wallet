@@ -10,7 +10,7 @@ public struct CredentialDetailBody: Equatable {
 
   // MARK: Lifecycle
 
-  public init(display: Self.Display, claims: [Self.Claim], status: VcStatus) {
+  public init(display: Self.Display, claims: [Self.Claim], status: CredentialStatus) {
     self.display = display
     self.claims = claims
     self.status = status
@@ -26,7 +26,7 @@ public struct CredentialDetailBody: Equatable {
       claims.append(Self.Claim(id: claim.id, key: displayName, value: claim.value, type: valueType))
     }
 
-    let issuerDisplayName = credential.preferredDisplay?.name ?? L10n.globalNotAssigned
+    let issuerDisplayName = credential.preferredDisplay?.name ?? L10n.tkGlobalNotAssigned
     self.init(display: Display(id: credential.id, name: issuerDisplayName), claims: claims, status: credential.status)
   }
 
@@ -34,7 +34,7 @@ public struct CredentialDetailBody: Equatable {
 
   public var display: Self.Display
   public var claims: [Self.Claim]
-  public var status: VcStatus
+  public var status: CredentialStatus
 
 }
 

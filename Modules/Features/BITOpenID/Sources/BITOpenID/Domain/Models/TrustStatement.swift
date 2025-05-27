@@ -25,7 +25,7 @@ public struct TrustStatementPayload: JWTPayload, Codable, Equatable {
 
   public var subject: String?
 
-  public var issuedAt: Date?
+  public var issuedAt: Date
 
   // MARK: Internal
 

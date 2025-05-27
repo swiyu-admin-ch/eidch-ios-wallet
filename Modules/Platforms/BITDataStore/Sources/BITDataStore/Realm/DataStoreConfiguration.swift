@@ -10,7 +10,6 @@ public protocol DataStoreConfigurationManagerProtocol {
 
   var configuration: Realm.Configuration { get }
 
-  func reset()
   func setEncryption(key: Data)
 
 }
@@ -32,11 +31,6 @@ public class DataStoreConfiguration: DataStoreConfigurationManagerProtocol {
   // MARK: Public
 
   public private(set) var configuration: Realm.Configuration
-
-  public func reset() {
-    Container.shared.realmDataStoreConfiguration.reset()
-    configuration = Container.shared.realmDataStoreConfiguration()
-  }
 
   public func setEncryption(key: Data) {
     var configuration = Container.shared.realmDataStoreConfiguration()

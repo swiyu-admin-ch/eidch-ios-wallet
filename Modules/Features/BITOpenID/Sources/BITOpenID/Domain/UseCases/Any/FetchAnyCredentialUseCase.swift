@@ -7,14 +7,14 @@ import Spyable
 
 @Spyable
 protocol FetchAnyCredentialUseCaseProtocol {
-  func execute(for context: FetchCredentialContext) async throws -> (credential: AnyCredential, ocaBundle: RawOcaBundle?)
+  func execute(for context: FetchCredentialContext) async throws -> AnyCredential
 }
 
 // MARK: - FetchAnyCredentialUseCase
 
 struct FetchAnyCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
 
-  func execute(for context: FetchCredentialContext) async throws -> (credential: AnyCredential, ocaBundle: RawOcaBundle?) {
+  func execute(for context: FetchCredentialContext) async throws -> AnyCredential {
     guard let credentialFormat = CredentialFormat(rawValue: context.format), let dispatcherFormat = dispatcher[credentialFormat] else {
       throw CredentialFormatError.formatNotSupported
     }

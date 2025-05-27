@@ -75,7 +75,7 @@ extension Container {
     self { [.ES256] }
   }
 
-  var jsonSchemaValidator: Factory<JsonSchema> {
+  var jsonSchemaValidator: Factory<JsonSchemaValidatorProtocol> {
     self { JsonSchemaValidator() }
   }
 
@@ -117,6 +117,10 @@ extension Container {
     self { AnyVpTokenGenerator() }
   }
 
+  public var fetchVcMetadataUseCase: Factory<FetchVcMetadataUseCaseProtocol> {
+    self { FetchVcMetadataUseCase() }
+  }
+
   // MARK: Internal
 
   var fetchAnyCredentialUseCase: Factory<FetchAnyCredentialUseCaseProtocol> {
@@ -155,6 +159,14 @@ extension Container {
     self {
       [
         CredentialFormat.vcSdJwt: VcSdJwtVpTokenGenerator(),
+      ]
+    }
+  }
+
+  var fetchVcMetadataForAnyCredentialDispatcher: Factory<[CredentialFormat: FetchVcMetadataForAnyCredentialUseCaseProtocol]> {
+    self {
+      [
+        CredentialFormat.vcSdJwt: FetchVcMetadataForVcSdJwtUseCase(),
       ]
     }
   }

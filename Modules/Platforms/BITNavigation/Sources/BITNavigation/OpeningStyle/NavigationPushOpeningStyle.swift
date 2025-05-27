@@ -89,9 +89,8 @@ extension NavigationPushOpeningStyle: UINavigationControllerDelegate {
     if operation == .push {
       animation.isPresenting = true
       return animation
-    } else {
-      animation.isPresenting = false
-      return animation
     }
+    animation.isPresenting = false
+    return animation
   }
 }

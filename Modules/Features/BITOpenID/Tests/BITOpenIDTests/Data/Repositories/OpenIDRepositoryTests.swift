@@ -1,6 +1,7 @@
 import BITCore
 import BITNetworking
 import BITSdJWT
+import Factory
 import XCTest
 @testable import BITJWT
 @testable import BITOpenID
@@ -13,6 +14,9 @@ final class OpenIDRepositoryTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+    Container.shared.reset()
+
     repository = OpenIDRepository()
 
     NetworkContainer.shared.reset()
@@ -23,6 +27,23 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   // MARK: - Metadata
 
+  func testFetchTypeMetadataSuccess() async throws {
+    let expectedTypeMetadata = TypeMetadata.Mock.sampleStandard
+    mockResponse(code: 200, data: TypeMetadata.Mock.sampleStandardData)
+
+    let (typeMetadata, _) = try await repository.fetchTypeMetadata(from: mockUrl)
+
+    XCTAssertEqual(expectedTypeMetadata.displays, typeMetadata.displays)
+    XCTAssertEqual(expectedTypeMetadata.vct, typeMetadata.vct)
+    XCTAssertEqual(expectedTypeMetadata.name, typeMetadata.name)
+    XCTAssertEqual(expectedTypeMetadata.description, typeMetadata.description)
+    XCTAssertEqual(expectedTypeMetadata.extends, typeMetadata.extends)
+    XCTAssertEqual(expectedTypeMetadata.claims?.count, typeMetadata.claims?.count)
+    XCTAssertEqual(expectedTypeMetadata.schemaUrl, typeMetadata.schemaUrl)
+    XCTAssertEqual(expectedTypeMetadata.schemaIntegrity, typeMetadata.schemaIntegrity)
+    XCTAssertEqual(expectedTypeMetadata.schema, typeMetadata.schema)
+  }
+
   func testFetchMetadataSuccess() async throws {
     let expectedMetadata = CredentialMetadata.Mock.sample
     mockResponse(code: 200, data: CredentialMetadata.Mock.sampleData)
@@ -32,7 +53,7 @@ final class OpenIDRepositoryTests: XCTestCase {
     XCTAssertEqual(expectedMetadata.credentialEndpoint, metadata.credentialEndpoint)
     XCTAssertEqual(expectedMetadata.credentialIssuer, metadata.credentialIssuer)
     XCTAssertEqual(expectedMetadata.credentialConfigurationsSupported.count, metadata.credentialConfigurationsSupported.count)
-    XCTAssertEqual(expectedMetadata.display.count, metadata.display.count)
+    XCTAssertEqual(expectedMetadata.display?.count, metadata.display?.count)
     XCTAssertEqual(expectedMetadata.preferredDisplay, metadata.preferredDisplay)
   }
 
@@ -200,6 +221,18 @@ final class OpenIDRepositoryTests: XCTestCase {
     } catch {
       guard let error = error as? OpenIdRepositoryError else { return XCTFail("Expected a OpenIdRepositoryError") }
       XCTAssertEqual(error, .presentationProcessClosed)
+    }
+  }
+
+  func testFetchRequestObject_NotFoundError_ReturnsAuthorizationRequestObjectNotFoundError() async throws {
+    mockResponse(code: 404)
+
+    do {
+      _ = try await repository.fetchRequestObject(from: mockUrl)
+      XCTFail("Should have thrown an error")
+    } catch {
+      guard let error = error as? OpenIdRepositoryError else { return XCTFail("Expected a OpenIdRepositoryError") }
+      XCTAssertEqual(error, .authorizationRequestObjectNotFound)
     }
   }
 

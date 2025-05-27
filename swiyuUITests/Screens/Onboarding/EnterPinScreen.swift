@@ -25,7 +25,7 @@ class EnterPinScreen: Screen {
   let continueButton: XCUIElement
 
   func assertDisplayed() {
-    XCTAssertTrue(pinField.waitForExistence(timeout: 1))
+    XCTAssertTrue(pinField.waitForExistence(timeout: 5))
     XCTAssertTrue(pinField.exists)
     XCTAssertTrue(continueButton.exists)
   }

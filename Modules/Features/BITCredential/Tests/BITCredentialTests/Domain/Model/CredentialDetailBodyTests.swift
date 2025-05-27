@@ -114,7 +114,7 @@ final class CredentialDetailBodyTests: XCTestCase {
     let credentialDetailBody = CredentialDetailBody(from: mockCredential)
 
     // Ensure that the default text of a claim without translations is "not assigned"
-    XCTAssertEqual(L10n.globalNotAssigned, credentialDetailBody.display.name)
+    XCTAssertEqual(L10n.tkGlobalNotAssigned, credentialDetailBody.display.name)
 
     XCTAssertEqual(mockCredential.claims.count, credentialDetailBody.claims.count)
     XCTAssertEqual(mockCredential.status, credentialDetailBody.status)

@@ -18,9 +18,9 @@ class DataPrivacyViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testOpenCheckCardIntroduction() {
-    viewModel.openCheckCardIntroduction()
-    XCTAssertTrue(router.checkCardIntroductionCalled)
+  func testPrimaryAction() {
+    viewModel.primaryAction()
+    XCTAssertTrue(router.legalRepresentantCalled)
   }
 
   @MainActor

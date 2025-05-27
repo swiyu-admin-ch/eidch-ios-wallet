@@ -18,12 +18,12 @@ final class TrustStatementTests: XCTestCase {
 
     XCTAssertEqual(sdJwt.header.type, "vc+sd-jwt")
     XCTAssertEqual(payload.issuer, "issuer")
-    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1722499200))
-    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 1767168000))
+    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1742453210))
+    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 2209014000))
     XCTAssertEqual(payload.vct, "vc_type")
     XCTAssertEqual(payload.statusList, expectedStatusList)
     XCTAssertEqual(payload.subject, "subject")
-    XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1739282713))
+    XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1742453211))
   }
 
   // MARK: Private

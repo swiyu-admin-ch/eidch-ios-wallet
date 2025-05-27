@@ -1,4 +1,4 @@
-// swiftlint:disable implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import XCTest
 @testable import BITCrypto
@@ -14,11 +14,9 @@ final class VcSchemaServiceTests: XCTestCase {
   override func setUp() {
     repository = OpenIDRepositoryProtocolSpy()
     sriValidator = SRIValidatorProtocolSpy()
-    jsonSchemaValidator = JsonSchemaSpy()
 
     Container.shared.openIDRepository.register { self.repository }
     Container.shared.sriValidator.register { self.sriValidator }
-    Container.shared.jsonSchemaValidator.register { self.jsonSchemaValidator }
 
     service = VcSchemaService()
   }
@@ -97,44 +95,16 @@ final class VcSchemaServiceTests: XCTestCase {
     }
   }
 
-  func testValidateVcSchema_success() async throws {
-    jsonSchemaValidator.validateWithReturnValue = true
-
-    let result = service.validate(mockVcSchemaData, with: mockVcSdJwt)
-
-    XCTAssertTrue(result)
-    XCTAssertEqual(jsonSchemaValidator.validateWithReceivedArguments?.jsonSchema, mockVcSchemaData)
-  }
-
-  func testValidateVcSchema_jsonSchemaValidatorReturnsFalse_failure() async throws {
-    jsonSchemaValidator.validateWithReturnValue = false
-
-    let result = service.validate(mockVcSchemaData, with: mockVcSdJwt)
-
-    XCTAssertFalse(result)
-    XCTAssertEqual(jsonSchemaValidator.validateWithReceivedArguments?.jsonSchema, mockVcSchemaData)
-  }
-
-  func testValidateVcSchema_jsonSchemaValidatorThrowsError_failure() async throws {
-    jsonSchemaValidator.validateWithThrowableError = TestingError.error
-
-    let result = service.validate(mockVcSchemaData, with: mockVcSdJwt)
-
-    XCTAssertFalse(result)
-    XCTAssertEqual(jsonSchemaValidator.validateWithReceivedArguments?.jsonSchema, mockVcSchemaData)
-  }
-
   // MARK: Private
 
   private var sriValidator: SRIValidatorProtocolSpy!
   private var repository: OpenIDRepositoryProtocolSpy!
-  private var jsonSchemaValidator: JsonSchemaSpy!
   private var service: VcSchemaService!
-  private var mockVcSdJwt = VcSdJwtPayload.Mock.sample
+  private var mockPayload = "mockPayload".data(using: .utf8)!
 
   private let mockVcSchemaData = VcSchema()
   private let mockTypeMetadata = TypeMetadata.Mock.sampleStandard
   private let mockTypeMetadataData = TypeMetadata.Mock.sampleStandardData
 }
 
-// swiftlint:enable implicitly_unwrapped_optional
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

@@ -52,9 +52,8 @@ final class FetchTrustStatementUseCaseTests: XCTestCase {
       if count == 0 {
         count += 1
         return false
-      } else {
-        return true
       }
+      return true
     }
 
     let trustStatement = try await useCase.execute(issuer: issuerMock)

@@ -11,7 +11,13 @@ struct ValidateTrustStatementUseCase: ValidateTrustStatementUseCaseProtocol {
   func execute(_ trustStatement: TrustStatement) async -> Bool {
     do {
       let issuer = trustStatement.payload.issuer
-      guard try isDidTrusted(issuer) else { return false }
+      guard
+        isDidTrusted(issuer),
+        trustStatement.payload.subject != nil,
+        trustStatement.payload.expiredAt >= now,
+        trustStatement.payload.activatedAt <= now.addingTimeInterval(dateBuffer),
+        trustStatement.header.algorithm == JWTAlgorithm.ES256
+      else { return false }
 
       if try await jwsSignatureValidator.validate(trustStatement, did: issuer) {
         return await tokenStatusListValidator.validate(trustStatement.payload.statusList, issuer: issuer) == .valid
@@ -27,9 +33,14 @@ struct ValidateTrustStatementUseCase: ValidateTrustStatementUseCaseProtocol {
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
   @Injected(\.trustRegistryRepository) private var trustRegistryRepository: TrustRegistryRepositoryProtocol
   @Injected(\.tokenStatusListValidator) private var tokenStatusListValidator: AnyStatusCheckValidatorProtocol
+  @Injected(\.dateBuffer) private var dateBuffer: TimeInterval
 
-  private func isDidTrusted(_ did: String) throws -> Bool {
-    try trustRegistryRepository.getTrustedDids().contains(did)
+  private var now: Date {
+    Date()
+  }
+
+  private func isDidTrusted(_ did: String) -> Bool {
+    trustRegistryRepository.getTrustedDids().contains(did)
   }
 
 }

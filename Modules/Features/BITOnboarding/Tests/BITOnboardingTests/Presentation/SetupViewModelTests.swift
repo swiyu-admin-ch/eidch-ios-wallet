@@ -75,6 +75,23 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isOnboardingEnabled)
   }
 
+  @MainActor
+  func testRestartSetup() async {
+    router.context.pincode = "123456"
+
+    viewModel.restartSetup()
+
+    try? await Task.sleep(nanoseconds: 3_000_000_000)
+
+    XCTAssertTrue(registerPinCodeUseCase.executePinCodeCalled)
+    XCTAssertTrue(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+
+    XCTAssertFalse(viewModel.isOnboardingEnabled)
+
+    try? await Task.sleep(nanoseconds: 2_100_000_000)
+    XCTAssertTrue(router.completedCalled)
+  }
+
   // MARK: Private
 
   // swiftlint:disable all

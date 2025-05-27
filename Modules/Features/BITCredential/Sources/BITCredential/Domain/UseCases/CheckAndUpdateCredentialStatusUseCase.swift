@@ -29,9 +29,8 @@ public struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialSta
     let status = try await getStatus(of: credential)
     if status != .unknown {
       return try await updateCredentialStatus(credential, to: status)
-    } else {
-      return credential
     }
+    return credential
   }
 
   // MARK: Private
@@ -43,7 +42,7 @@ public struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialSta
 }
 
 extension CheckAndUpdateCredentialStatusUseCase {
-  private func getStatus(of credential: Credential) async throws -> VcStatus {
+  private func getStatus(of credential: Credential) async throws -> CredentialStatus {
     let anyCredential = try createAnyCredentialUseCase.execute(from: credential.payload, format: credential.format)
     let dateStatus = checkDateValidity(anyCredential: anyCredential)
     guard dateStatus == .valid else {
@@ -55,12 +54,12 @@ extension CheckAndUpdateCredentialStatusUseCase {
     else { return .unknown }
     let status = await validator.validate(anyStatus, issuer: anyCredential.issuer)
     if status != .unknown {
-      return status
+      return CredentialStatus(status)
     }
     return .unknown
   }
 
-  private func checkDateValidity(anyCredential: AnyCredential) -> VcStatus {
+  private func checkDateValidity(anyCredential: AnyCredential) -> CredentialStatus {
     let now = Date()
     if let validFrom = anyCredential.validFrom, validFrom > now.addingTimeInterval(dateBuffer) {
       return .notYetValid
@@ -71,11 +70,29 @@ extension CheckAndUpdateCredentialStatusUseCase {
     return .valid
   }
 
-  private func updateCredentialStatus(_ credential: Credential, to status: VcStatus) async throws -> Credential {
+  private func updateCredentialStatus(_ credential: Credential, to status: CredentialStatus) async throws -> Credential {
     var credentialCopy = credential
     credentialCopy.status = status
 
     return try await localRepository.update(credentialCopy)
   }
 
+}
+
+extension CredentialStatus {
+
+  init(_ vcStatus: VcStatus) {
+    self = switch vcStatus {
+    case .valid:
+      .valid
+    case .revoked:
+      .revoked
+    case .suspended:
+      .suspended
+    case .unsupported:
+      .unsupported
+    case .unknown:
+      .unknown
+    }
+  }
 }

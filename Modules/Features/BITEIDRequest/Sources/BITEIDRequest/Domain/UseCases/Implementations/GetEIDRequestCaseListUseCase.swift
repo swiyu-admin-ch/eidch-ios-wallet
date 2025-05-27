@@ -8,6 +8,7 @@ struct GetEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol {
 
   func execute() async throws -> [EIDRequestCase] {
     try await localEIDRequestRepository.getAll()
+      .filter { $0.state?.state != .cancelled }
       .reorder(by: requestCasePriorityOrder, using: { $0.state?.state ?? .unknown })
   }
 

@@ -1,3 +1,4 @@
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import Spyable
 import XCTest
@@ -13,71 +14,69 @@ final class SubmitEIDRequestUseCaseTests: XCTestCase {
 
     repository = EIDRequestRepositoryProtocolSpy()
     localRepository = LocalEIDRequestRepositoryProtocolSpy()
+    legalRepresentantRepository = LegalRepresentantRepositoryProcotolSpy()
+    legalRepresentantRepository.getReturnValue = false
 
     Container.shared.eIDRequestRepository.register { self.repository }
     Container.shared.localEIDRequestRepository.register { self.localRepository }
+    Container.shared.legalRepresentantRepository.register { self.legalRepresentantRepository }
 
     useCase = SubmitEIDRequestUseCase()
   }
 
-  func testHappyPath() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
+  func testExecute_happyPath() async throws {
     repository.submitRequestWithReturnValue = mockEIDRequestResponse
     repository.fetchRequestStatusForReturnValue = mockEIDRequestStatus
     localRepository.createEIDRequestCaseReturnValue = mockEIDRequestCase
 
-    let result = try await useCase.execute(payload)
+    let result = try await useCase.execute(mockPayload.mrz)
 
-    XCTAssertEqual(repository.submitRequestWithReceivedPayload, payload)
+    XCTAssertEqual(repository.submitRequestWithReceivedPayload, mockPayload)
     XCTAssertEqual(repository.fetchRequestStatusForReceivedCaseId, mockEIDRequestResponse.caseId)
     XCTAssertEqual(localRepository.createEIDRequestCaseReceivedEIDRequestCase?.id, mockEIDRequestResponse.caseId)
     XCTAssertNotNil(localRepository.createEIDRequestCaseReceivedEIDRequestCase?.state)
-    XCTAssertEqual(result, mockEIDRequestCase)
+    XCTAssertEqual(result.requestCase, mockEIDRequestCase)
+    XCTAssertEqual(result.status, mockEIDRequestStatus)
   }
 
-  func testFailure() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
+  func testExecute_submitRequest_throwsError() async throws {
     repository.submitRequestWithThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(payload)
-    } catch TestingError.error {
-      XCTAssertEqual(repository.submitRequestWithReceivedPayload, payload)
+      _ = try await useCase.execute(mockPayload.mrz)
     } catch {
-      XCTFail("Unexpected error")
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
-  func testGetStatus_Failure() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
+  func testExecute_fetchRequestStatusThrowsError_returnsNil() async throws {
     repository.submitRequestWithReturnValue = mockEIDRequestResponse
     repository.fetchRequestStatusForThrowableError = TestingError.error
-    localRepository.createEIDRequestCaseReturnValue = mockEIDRequestCaseWithoutState
+
+    let result = try await useCase.execute(mockPayload.mrz)
+
+    XCTAssertNil(result.status)
+    XCTAssertEqual(result.requestCase.id, mockEIDRequestResponse.caseId)
+    XCTAssertEqual(result.requestCase.lastName, mockEIDRequestResponse.lastName)
+    XCTAssertEqual(result.requestCase.firstName, mockEIDRequestResponse.firstName)
+    XCTAssertEqual(result.requestCase.documentNumber, mockEIDRequestResponse.identityNumber)
+  }
+
+  func testExecute_saveRequestCase_throwsError() async throws {
+    repository.submitRequestWithReturnValue = mockEIDRequestResponse
+    repository.fetchRequestStatusForReturnValue = mockEIDRequestStatus
+    localRepository.createEIDRequestCaseThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(payload)
-    } catch TestingError.error {
-      XCTAssertEqual(repository.submitRequestWithReceivedPayload, payload)
-      XCTAssertEqual(repository.fetchRequestStatusForReceivedCaseId, mockEIDRequestResponse.caseId)
-      XCTAssertEqual(localRepository.createEIDRequestCaseReceivedEIDRequestCase, mockEIDRequestCaseWithoutState)
-      XCTAssertNil(localRepository.createEIDRequestCaseReceivedEIDRequestCase?.state)
+      _ = try await useCase.execute(mockPayload.mrz)
     } catch {
-      XCTFail("Unexpected error")
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
+  private let mockPayload = MRZData.Mock.array.first!.payload
   private let mockEIDRequestResponse: EIDRequestResponse = .Mock.sample
   private let mockEIDRequestStatus: EIDRequestStatus = .Mock.inQueueSample
   private let mockEIDRequestCase: EIDRequestCase = .Mock.sampleWithoutState
@@ -85,6 +84,8 @@ final class SubmitEIDRequestUseCaseTests: XCTestCase {
   private var repository: EIDRequestRepositoryProtocolSpy!
   private var useCase: SubmitEIDRequestUseCase!
   private var localRepository: LocalEIDRequestRepositoryProtocolSpy!
-  // swiftlint:enable all
+  private var legalRepresentantRepository: LegalRepresentantRepositoryProcotolSpy!
 
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

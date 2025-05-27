@@ -29,8 +29,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     let expectedPayload = TestSdJWTPayload.Mock.samplePayload
     XCTAssertEqual(sdJWT.payload, expectedPayload)
-    let rawPayloadData = sdJWT.rawPayload.data(using: .utf8)!
-    let payload = try JSONSerialization.jsonObject(with: rawPayloadData, options: []) as! [String: Any]
+    let payload = sdJWT.rawPayload
     XCTAssertEqual(payload.count, 4)
     expectedPayload.assertIn(payload)
     XCTAssertEqual(payload["test_key_4"] as? String, "test_value_4")
@@ -96,8 +95,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     let expectedPayload = TestSdJWTPayload.Mock.samplePayload
     XCTAssertEqual(sdJWT.payload, expectedPayload)
-    let rawPayloadData = sdJWT.rawPayload.data(using: .utf8)!
-    let payload = try JSONSerialization.jsonObject(with: rawPayloadData, options: []) as! [String: Any]
+    let payload = sdJWT.rawPayload
     XCTAssertEqual(payload.count, 3)
     expectedPayload.assertIn(payload)
 

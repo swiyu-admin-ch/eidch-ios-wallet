@@ -44,8 +44,11 @@ public class JWTRequestObject: RequestObject {
 
   // MARK: Public
 
-  public let jws: JWS<RequestObject>
   public let issuer: String
+
+  // MARK: Internal
+
+  let jws: JWS<RequestObject>
 
   // MARK: Private
 

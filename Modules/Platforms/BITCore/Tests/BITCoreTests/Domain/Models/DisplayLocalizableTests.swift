@@ -73,8 +73,8 @@ final class DisplayLocalizableTests: XCTestCase {
 
   func testWhenDisplayIsSentAsLanguageIdentifier() {
     let displays = [
-      MockDisplay(locale: UserLocale.LanguageIdentifier.german.rawValue),
       MockDisplay(locale: UserLocale.LanguageIdentifier.italian.rawValue),
+      MockDisplay(locale: UserLocale.LanguageIdentifier.german.rawValue),
       MockDisplay(locale: UserLocale.LanguageIdentifier.french.rawValue),
     ]
 

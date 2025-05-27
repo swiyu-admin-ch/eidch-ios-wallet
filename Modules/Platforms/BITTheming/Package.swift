@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.10.1
 
 import PackageDescription
 
@@ -15,8 +15,8 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../../Platforms/BITL10n"),
-    .package(url: "https://github.com/siteline/swiftui-introspect", exact: "1.1.1"),
-    .package(url: "https://github.com/airbnb/lottie-ios", exact: "4.4.3"),
+    .package(url: "https://github.com/siteline/swiftui-introspect", exact: "1.3.0"),
+    .package(url: "https://github.com/airbnb/lottie-ios", exact: "4.5.1"),
   ],
   targets: [
     .target(

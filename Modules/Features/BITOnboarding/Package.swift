@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -22,7 +22,7 @@ let package = Package(
     .package(path: "../../Platforms/BITSettings"),
     .package(path: "../BITAppAuth"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/exyte/PopupView", exact: "3.0.0"),
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.0.2 available
   ],
   targets: [
     .target(
@@ -30,7 +30,7 @@ let package = Package(
       dependencies: [
         .product(name: "Factory", package: "Factory"),
         .product(name: "BITL10n", package: "BITL10n"),
-        .product(name: "BITCore", package: "BITAppAuth"),
+        .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITSettings", package: "BITSettings"),

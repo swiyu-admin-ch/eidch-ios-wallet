@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -32,7 +32,7 @@ let package = Package(
     .package(path: "../BITOpenID"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/KittyMac/Sextant.git", revision: "e59c57e4fa19a02f336cd91b9f6cd8e4022e5ed0"),
+    .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.33"),
   ],
   targets: [
     .target(

@@ -24,12 +24,24 @@ extension Container {
     self { MRZScannerViewModel(router: $0) }
   }
 
-  var queueInformationViewModel: ParameterFactory<(EIDRequestInternalRoutes, Date), QueueInformationViewViewModel> {
-    self { QueueInformationViewViewModel(router: $0, onlineSessionStartDate: $1) }
+  var queueInformationViewModel: ParameterFactory<(EIDRequestInternalRoutes, Date), QueueInformationViewModel> {
+    self { QueueInformationViewModel(router: $0, onlineSessionStartDate: $1) }
   }
 
   var walletPairingViewModel: ParameterFactory<EIDRequestInternalRoutes, WalletPairingViewModel> {
     self { WalletPairingViewModel(router: $0) }
+  }
+
+  var legalRepresentantViewModel: ParameterFactory<EIDRequestInternalRoutes, LegalRepresentantViewModel> {
+    self { LegalRepresentantViewModel(router: $0) }
+  }
+
+  var legalRepresentantConsentViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantConsentViewModel> {
+    self { LegalRepresentantConsentViewModel(router: $0, caseId: $1) }
+  }
+
+  var legalRepresentantQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantQRCodeViewModel> {
+    self { LegalRepresentantQRCodeViewModel(router: $0, caseId: $1) }
   }
 
 }
@@ -101,5 +113,14 @@ extension Container {
 
   var requestCasePriorityOrder: Factory<[EIDRequestStatus.State]> {
     self { [.readyForOnlineSession, .inQueue] }
+  }
+
+  var legalRepresentantRepository: Factory<LegalRepresentantRepositoryProcotol> {
+    self { LegalRepresentantRepository() }
+      .scope(.shared)
+  }
+
+  var getLegalRepresentantVerificationQRCodeUseCase: Factory<GetLegalRepresentantVerificationQRCodeUseCaseProtocol> {
+    self { GetLegalRepresentantVerificationQRCodeUseCase() }
   }
 }

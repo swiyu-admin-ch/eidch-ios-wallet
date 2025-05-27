@@ -1,7 +1,6 @@
 import BITAnyCredentialFormat
 import BITCore
 import BITEntities
-import BITOpenID
 import Foundation
 
 // MARK: - CredentialClaim
@@ -10,7 +9,7 @@ public struct CredentialClaim: Codable {
 
   // MARK: Lifecycle
 
-  init(id: UUID = UUID(), key: String, valueType: String = "string", value: String, order: Int16 = 0, credentialId: UUID? = nil, displays: [CredentialClaimDisplay] = []) {
+  public init(id: UUID = UUID(), key: String, valueType: String = "string", value: String, order: Int16 = 0, credentialId: UUID? = nil, displays: [CredentialClaimDisplay] = []) {
     self.id = id
     self.key = key
     self.valueType = valueType
@@ -51,21 +50,6 @@ public struct CredentialClaim: Codable {
       order: entity.order,
       credentialId: entity.credential.first?.id,
       displays: displays)
-  }
-
-  public init?(_ metadataClaim: CredentialMetadata.Claim?, anyClaim: AnyClaim, credentialId: UUID) {
-    guard let value = anyClaim.value?.rawValue else { return nil }
-
-    let order = metadataClaim?.order ?? Int(Int16.max)
-    let id = UUID()
-    self.init(
-      id: id,
-      key: anyClaim.key,
-      valueType: metadataClaim?.valueType?.rawValue ?? ValueType.string.rawValue,
-      value: value,
-      order: Int16(order),
-      credentialId: credentialId,
-      displays: metadataClaim?.display?.map({ CredentialClaimDisplay($0, claimId: id) }) ?? [])
   }
 
   // MARK: Public

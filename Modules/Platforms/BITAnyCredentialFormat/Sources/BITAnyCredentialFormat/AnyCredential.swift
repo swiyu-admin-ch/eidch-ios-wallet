@@ -14,4 +14,6 @@ public protocol AnyCredential {
   var status: (any AnyStatus)? { get }
   var validFrom: Date? { get }
   var validUntil: Date? { get }
+
+  func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any]
 }

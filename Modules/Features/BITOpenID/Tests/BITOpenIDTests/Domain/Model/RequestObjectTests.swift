@@ -1,4 +1,5 @@
 import XCTest
+@testable import BITCore
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -22,7 +23,28 @@ final class RequestObjectTests: XCTestCase {
       XCTFail("No input descriptor")
       return
     }
+    XCTAssertEqual(mockRequestObject.firstInputDescriptor, mockRequestObject.presentationDefinition.inputDescriptors.first)
     XCTAssertFalse(firstInputDescriptor.formats.isEmpty)
+
+    let preferredLanguages: [UserLanguageCode] = ["de", "en", "fr"]
+
+    let preferredClientName = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
+      from: mockRequestObject.clientMetadata?.clientName,
+      considering: preferredLanguages)
+    let defaultClientName = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
+      from: mockRequestObject.clientMetadata?.clientName,
+      considering: [])
+    let emptyDisplays = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
+      from: nil,
+      considering: [])
+
+    XCTAssertEqual(preferredClientName, "DE Verifier")
+    XCTAssertEqual(defaultClientName, "EN Verifier")
+    XCTAssertNil(emptyDisplays)
+    XCTAssertNotNil(mockRequestObject.clientMetadata?.clientName?.fallback())
+
+    XCTAssertEqual(mockRequestObject.firstInputDescriptor?.formats.first?.vcAlgorithm?.first, "ES256")
+    XCTAssertEqual(mockRequestObject.firstInputDescriptor?.formats.first?.keyBindingAlgorithm?.first, "ES256")
   }
 
   func testDecodingVcSdJwtRequestObjectWithUnsupportedClientMetadata() throws {

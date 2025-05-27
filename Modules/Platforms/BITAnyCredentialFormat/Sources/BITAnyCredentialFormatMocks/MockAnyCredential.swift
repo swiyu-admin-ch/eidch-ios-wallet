@@ -37,6 +37,10 @@ public struct MockAnyCredential: AnyCredential {
     nil
   }
 
+  public func getClaimsDictionary(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> [String: Any] {
+    [:]
+  }
+
   // MARK: Internal
 
   let payload: Data

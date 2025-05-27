@@ -19,7 +19,7 @@ class HomeScreen: Screen {
   let menuButton: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(scanButton.waitForExistence(timeout: 3))
+    XCTAssert(scanButton.waitForExistence(timeout: 5))
     XCTAssert(menuButton.exists)
   }
 

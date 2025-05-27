@@ -37,7 +37,7 @@ struct QueueInformationView: View {
     case startDateText
   }
 
-  private var viewModel: QueueInformationViewViewModel
+  private var viewModel: QueueInformationViewModel
 }
 
 // MARK: - Components
@@ -70,7 +70,7 @@ extension QueueInformationView {
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier(AccessibilityIdentifier.tertiaryText.rawValue)
 
-        Text(viewModel.expectedOnlineSessionStart ?? "-")
+        Text(viewModel.expectedOnlineSessionStart)
           .font(.custom.bodyBold)
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           .multilineTextAlignment(.leading)

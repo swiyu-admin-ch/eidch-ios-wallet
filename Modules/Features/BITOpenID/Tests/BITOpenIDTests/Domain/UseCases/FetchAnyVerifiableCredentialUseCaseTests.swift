@@ -23,7 +23,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     fetchMetadataUseCase = FetchMetadataUseCaseProtocolSpy()
 
     keyPairGenerator.generateIdentifierAlgorithmReturnValue = mockKeyPair
-    fetchAnyCredentialUseCase.executeForReturnValue = (mockAnyCredential, nil)
+    fetchAnyCredentialUseCase.executeForReturnValue = mockAnyCredential
     repository.fetchOpenIdConfigurationFromReturnValue = mockOpenIdConfiguration
     repository.fetchAccessTokenFromPreAuthorizedCodeReturnValue = mockAccessToken
     repository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = mockResponse
@@ -46,7 +46,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   func testFetchCredentialSuccess_withAccessToken() async throws {
     mockAnyCredential.raw = UUID().uuidString
-    let (_, credential, keyPair, _) = try await useCase.execute(from: mockCredentialOffer)
+    let (_, credential, keyPair) = try await useCase.execute(from: mockCredentialOffer)
 
     XCTAssertEqual(mockAnyCredential.raw, credential.raw)
     XCTAssertEqual(mockKeyPair.algorithm, keyPair?.algorithm)
@@ -63,7 +63,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
       return
     }
 
-    XCTAssertEqual(mockMetadataWrapper.selectedCredential?.format, receivedContext.format)
+    XCTAssertEqual(mockMetadataWrapper.selectedCredential.format, receivedContext.format)
     XCTAssertEqual(mockKeyPair.privateKey, receivedContext.keyPair?.privateKey)
     XCTAssertEqual(mockAccessToken, receivedContext.accessToken)
     XCTAssertEqual(mockMetadataWrapper.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
@@ -75,7 +75,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   func testFetchCredentialSuccess_withoutProofType() async throws {
     fetchMetadataUseCase.executeFromReturnValue = CredentialMetadata.Mock.sampleWithoutProofTypes
     mockAnyCredential.raw = UUID().uuidString
-    let (metadataWrapper, credential, _, _) = try await useCase.execute(from: mockCredentialOffer)
+    let (metadataWrapper, credential, _) = try await useCase.execute(from: mockCredentialOffer)
 
     XCTAssertEqual(mockAnyCredential.raw, credential.raw)
     XCTAssertTrue(repository.fetchOpenIdConfigurationFromCalled)
@@ -89,7 +89,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
       XCTFail("receivedContext must not be nill")
       return
     }
-    XCTAssertEqual(metadataWrapper.selectedCredential?.format, receivedContext.format)
+    XCTAssertEqual(metadataWrapper.selectedCredential.format, receivedContext.format)
     XCTAssertNil(receivedContext.keyPair)
     XCTAssertEqual(mockAccessToken, receivedContext.accessToken)
     XCTAssertEqual(metadataWrapper.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
@@ -100,14 +100,14 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   func testFetchCredentialSuccess_withoutAccessToken() async throws {
     mockAnyCredential.raw = UUID().uuidString
-    let (_, credential, _, _) = try await useCase.execute(from: mockCredentialOffer)
+    let (_, credential, _) = try await useCase.execute(from: mockCredentialOffer)
 
     XCTAssertEqual(mockAnyCredential.raw, credential.raw)
     XCTAssertTrue(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
     XCTAssertEqual(mockOpenIdConfiguration.tokenEndpoint, repository.fetchAccessTokenFromPreAuthorizedCodeReceivedArguments?.url)
     XCTAssertTrue(keyPairGenerator.generateIdentifierAlgorithmCalled)
     XCTAssertTrue(fetchAnyCredentialUseCase.executeForCalled)
-    XCTAssertEqual(mockMetadataWrapper.selectedCredential?.format, fetchAnyCredentialUseCase.executeForReceivedContext?.format)
+    XCTAssertEqual(mockMetadataWrapper.selectedCredential.format, fetchAnyCredentialUseCase.executeForReceivedContext?.format)
     XCTAssertFalse(repository.fetchCredentialFromCredentialRequestBodyAcccessTokenCalled)
     XCTAssertFalse(repository.fetchIssuerPublicKeyInfoFromCalled)
 
@@ -116,7 +116,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   func testFetchCredentialSuccess_metaDataClaimNotMatchingVCClaims() async throws {
     mockAnyCredential.raw = UUID().uuidString
-    let (_, credential, keyPair, _) = try await useCase.execute(from: mockCredentialOffer)
+    let (_, credential, keyPair) = try await useCase.execute(from: mockCredentialOffer)
 
     XCTAssertEqual(mockAnyCredential.raw, credential.raw)
     XCTAssertEqual(mockKeyPair.algorithm, keyPair?.algorithm)
@@ -133,7 +133,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
       return
     }
 
-    XCTAssertEqual(mockMetadataWrapper.selectedCredential?.format, receivedContext.format)
+    XCTAssertEqual(mockMetadataWrapper.selectedCredential.format, receivedContext.format)
     XCTAssertEqual(mockKeyPair.privateKey, receivedContext.keyPair?.privateKey)
     XCTAssertEqual(mockAccessToken, receivedContext.accessToken)
     XCTAssertEqual(mockMetadataWrapper.credentialMetadata.credentialEndpoint, receivedContext.credentialEndpoint.absoluteString)
@@ -147,6 +147,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     do {
       _ = try await useCase.execute(from: mockCredentialOffer)
     } catch {
+      XCTAssertEqual(error as? TestingError, .error)
       XCTAssertTrue(keyPairGenerator.generateIdentifierAlgorithmCalled)
       XCTAssertFalse(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
       XCTAssertFalse(fetchAnyCredentialUseCase.executeForCalled)
@@ -176,10 +177,10 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     }
   }
 
-  func testCredentialEnpoindInvalid() async {
-    await testCredentialEnpoindInvalid(endpoint: "")
-    await testCredentialEnpoindInvalid(endpoint: "1234")
-    await testCredentialEnpoindInvalid(endpoint: "abc/cde")
+  func testCredentialEndpointInvalid() async {
+    await testCredentialEndpointInvalid(endpoint: "")
+    await testCredentialEndpointInvalid(endpoint: "1234")
+    await testCredentialEndpointInvalid(endpoint: "abc/cde")
   }
 
   func testFetchCredentialThrowsException_withIncorrectPreferredAlgorithms() async throws {
@@ -204,7 +205,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     let mockPreferredAlgos: [JWTAlgorithm] = [.ES512, .ES384, .ES512]
     Container.shared.preferredKeyBindingAlgorithmsOrdered.register { mockPreferredAlgos }
 
-    guard let supportedAlgos = mockMetadataWrapper.selectedCredential?.proofTypesSupported.first?.algorithms else {
+    guard let supportedAlgos = mockMetadataWrapper.selectedCredential.proofTypesSupported.first?.algorithms else {
       fatalError("Cannot extract supported algorithms")
     }
 
@@ -241,8 +242,8 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private var repository = OpenIDRepositoryProtocolSpy()
   private var useCase = FetchAnyVerifiableCredentialUseCase()
 
-  private func testCredentialEnpoindInvalid(endpoint: String) async {
-    fetchMetadataUseCase.executeFromReturnValue = CredentialMetadata(credentialIssuer: "valid-issuer", credentialEndpoint: endpoint, credentialConfigurationsSupported: [:], display: [])
+  private func testCredentialEndpointInvalid(endpoint: String) async {
+    fetchMetadataUseCase.executeFromReturnValue = CredentialMetadata(credentialIssuer: mockMetadata.credentialIssuer, credentialEndpoint: endpoint, credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported, display: mockMetadata.display)
     do {
       _ = try await useCase.execute(from: mockCredentialOffer)
       XCTFail("Expected a `FetchAnyVerifiableCredentialError.credentialEndpointCreationError`")
@@ -261,7 +262,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   }
 
   private func assertUnsupportedAlgorithmException(for metadataWrapper: CredentialMetadataWrapper, preferredAlgos: [JWTAlgorithm]) async throws {
-    guard let supportedAlgos = metadataWrapper.selectedCredential?.proofTypesSupported.first?.algorithms else {
+    guard let supportedAlgos = metadataWrapper.selectedCredential.proofTypesSupported.first?.algorithms else {
       fatalError("Cannot extract supported algorithms")
     }
 

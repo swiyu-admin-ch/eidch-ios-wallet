@@ -1,7 +1,6 @@
 import BITCore
 import BITCrypto
 import BITEntities
-import BITOpenID
 import Foundation
 
 // MARK: - CredentialIssuerDisplay
@@ -25,14 +24,6 @@ public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable {
       name: entity.name,
       credentialId: entity.credential.first?.id,
       image: entity.image)
-  }
-
-  public init(_ display: CredentialMetadata.CredentialMetadataDisplay, credentialId: UUID) {
-    self.init(
-      locale: display.locale,
-      name: display.name,
-      credentialId: credentialId,
-      image: display.logo?.uri.flatMap { Data(base64Encoded: $0) })
   }
 
   public init(from decoder: Decoder) throws {

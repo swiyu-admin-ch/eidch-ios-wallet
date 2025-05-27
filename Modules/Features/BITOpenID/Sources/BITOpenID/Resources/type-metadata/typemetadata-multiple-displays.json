@@ -1,0 +1,24 @@
+{
+  "display": [
+    {
+      "lang": "language",
+      "name": "name",
+      "rendering": {
+        "oca": {
+          "uri":"ocaUri",
+          "uri#integrity":"ocaUriIntegrity"
+        }
+      }
+    },
+    {
+      "lang": "otherLanguage",
+      "name": "otherName",
+      "rendering": {
+        "oca": {
+          "uri":"otherOcaUri",
+          "uri#integrity":"otherOcaUriIntegrity"
+        }
+      }
+    }
+  ]
+}

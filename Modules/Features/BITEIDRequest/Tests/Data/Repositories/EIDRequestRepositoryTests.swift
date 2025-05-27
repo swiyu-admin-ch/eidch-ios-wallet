@@ -47,6 +47,18 @@ final class EIDRequestRepositoryTests: XCTestCase {
     XCTAssertEqual(expectedResponse, response)
   }
 
+  func testFetchLegalRepresentantVerification() async throws {
+    let expected = LegalRepresentantVerificationResponse.Mock.sample
+
+    NetworkContainer.shared.endpointClosure.register {
+      .networkResponse(200, LegalRepresentantVerificationResponse.Mock.sampleData)
+    }
+
+    let response = try await repository.fetchLegalRepresentantVerification(for: "caseId")
+
+    XCTAssertEqual(expected, response)
+  }
+
   // MARK: Private
 
   private let strURL = "some://url"

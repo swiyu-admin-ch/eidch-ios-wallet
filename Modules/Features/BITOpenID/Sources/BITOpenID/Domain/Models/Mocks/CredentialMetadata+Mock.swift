@@ -5,6 +5,10 @@ import Foundation
 extension CredentialMetadata: Mockable {
   struct Mock {
     static let sample: CredentialMetadata = Mocker.decode(fromFile: "uetliberg-credential-metadata", bundle: Bundle.module)
+    static let simpleSample: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-simple-sample", bundle: Bundle.module)
+    static let simpleSampleWithoutOrder: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-simple-sample-without-order", bundle: Bundle.module)
+    static let simpleSampleWithoutDisplays: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-empty-displays", bundle: Bundle.module)
+    static let simpleSampleWithoutValueType: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-simple-sample-without-value-type", bundle: Bundle.module)
     static let sampleNoClaims: CredentialMetadata = Mocker.decode(fromFile: "uetliberg-credential-metadata-noclaims", bundle: Bundle.module)
     static let sampleMultipass: CredentialMetadata = Mocker.decode(fromFile: "multipass-credential-metadata", bundle: Bundle.module)
     static let sampleUnknownAlgorithm: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-unknown-algo", bundle: Bundle.module)

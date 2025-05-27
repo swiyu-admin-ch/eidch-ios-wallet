@@ -6,8 +6,7 @@ public struct EIDRequestStatus: Decodable, Equatable {
   let state: State
   let onlineSessionStartCloseAt: Date?
   let queueInformation: QueueInformation?
-
-  private let legalRepresentant: LegalRepresentant?
+  let legalRepresentant: LegalRepresentant?
 
   private enum CodingKeys: String, CodingKey {
     case state
@@ -80,7 +79,7 @@ extension EIDRequestStatus {
   }
 
   struct LegalRepresentant: Decodable, Equatable {
-    private let isVerified: Bool
+    let isVerified: Bool
     private let verificationLink: String
 
     private enum CodingKeys: String, CodingKey {

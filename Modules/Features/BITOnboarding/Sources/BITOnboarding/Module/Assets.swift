@@ -123,8 +123,6 @@ extension SwiftUI.Image {
 }
 #endif
 
-// MARK: - BundleToken
-
 // swiftlint:disable convenience_type
 private final class BundleToken {
   static let bundle: Bundle = {

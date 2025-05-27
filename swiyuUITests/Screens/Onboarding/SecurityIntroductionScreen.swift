@@ -26,6 +26,7 @@ class SecurityIntroductionScreen: InformationScreen {
 
   func navigateFromAppStartToScreen() {
     let welcomeScreen = WelcomeIntroductionScreen(app: app)
+    welcomeScreen.assertDisplayed()
     welcomeScreen.primaryButton.tap()
     assertDisplayed()
 

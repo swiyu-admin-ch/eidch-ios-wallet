@@ -29,7 +29,6 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
     let requestCases = try await useCase.execute()
 
     XCTAssertEqual(requestCases, sortedArray)
-    XCTAssertEqual(requestCases.count, mockEIDRequestCases.count)
   }
 
   func testExecuteSucces_withoutPriorities() async throws {
@@ -38,7 +37,8 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
 
     let requestCases = try await useCase.execute()
 
-    XCTAssertEqual(requestCases.count, mockEIDRequestCases.count)
+    XCTAssertEqual(requestCases.count, mockEIDRequestCases.count - 1) // Removal of .cancelled cases
+    XCTAssertTrue(requestCases.allSatisfy( { $0.state?.state != .cancelled }))
   }
 
   func testExecuteWithRepositoryError() async throws {
@@ -56,7 +56,13 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
 
   // swiftlint:disable all
   private var useCase: GetEIDRequestCaseListUseCase!
-  private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleAVReady, .Mock.sampleInQueue, .Mock.sampleInQueueNoOnlineSessionStart, .Mock.sampleWithoutState]
+  private var mockEIDRequestCases: [EIDRequestCase] = [
+    .Mock.sampleAVReady,
+    .Mock.sampleInQueue,
+    .Mock.sampleInQueueNoOnlineSessionStart,
+    .Mock.sampleWithoutState,
+    .Mock.sampleCancelled,
+  ]
   private var repository: LocalEIDRequestRepositoryProtocolSpy!
   // swiftlint:enable all
 

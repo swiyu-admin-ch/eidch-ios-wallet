@@ -1,6 +1,5 @@
 import BITAnyCredentialFormat
 import BITJWT
-import BITOca
 import BITSdJWT
 import Factory
 import Foundation
@@ -17,8 +16,7 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(for context: FetchCredentialContext) async throws -> (credential: AnyCredential, ocaBundle: RawOcaBundle?) {
-    var ocaBundle: RawOcaBundle? = nil
+  func execute(for context: FetchCredentialContext) async throws -> AnyCredential {
     var proof: CredentialRequestProof? = nil
     if let keyPair = context.keyPair {
       let payload = JWTProofPayload(audience: context.credentialIssuer, nonce: context.accessToken.cNonce, issuedAt: UInt64(context.createdAt.timeIntervalSince1970))
@@ -48,23 +46,7 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
       guard try await jwsSignatureValidator.validate(vcSdJwt, did: vcSdJwt.payload.issuer) else {
         throw FetchAnyVerifiableCredentialError.validationFailed
       }
-
-      guard let typeMetadata = try await typeMetadataService.fetch(vcSdJwt.payload) else {
-        return (vcSdJwt, nil)
-      }
-
-      guard let vcSchema = try await vcSchemaService.fetch(for: typeMetadata) else {
-        ocaBundle = try await fetchOCABundle(from: typeMetadata)
-        return (vcSdJwt, ocaBundle)
-      }
-
-      if !vcSchemaService.validate(vcSchema, with: vcSdJwt) {
-        throw FetchAnyVerifiableCredentialError.invalidVcSchema
-      }
-
-      ocaBundle = try await fetchOCABundle(from: typeMetadata)
-
-      return (vcSdJwt, ocaBundle)
+      return vcSdJwt
     } catch JWSSignatureValidatorError.cannotResolveDid(_) {
       throw FetchAnyVerifiableCredentialError.unknownIssuer
     } catch {
@@ -77,22 +59,6 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
-  @Injected(\.vcSchemaService) private var vcSchemaService: VcSchemaServiceProtocol
-  @Injected(\.typeMetadataService) private var typeMetadataService: TypeMetadataServiceProtocol
-  @Injected(\.ocaBundleService) private var ocaBundleService: OCABundleServiceProtocol
-  @Injected(\.isOCABundleFetchFeatureEnabled) private var isOCABundleFetchFeatureEnabled: Bool
   @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
-
-  private func fetchOCABundle(from typeMetadata: TypeMetadata) async throws -> RawOcaBundle? {
-    guard
-      isOCABundleFetchFeatureEnabled,
-      let oca = typeMetadata.displays?.first(where: { $0.rendering?.oca != nil })?.rendering?.oca, // OCA localization is not taken in consideration in the display: we take the first one available
-      let ocaBundle = try await ocaBundleService.fetchVcSdJwtOcaBundle(from: oca)
-    else {
-      return nil
-    }
-
-    return ocaBundle
-  }
 
 }

@@ -1,6 +1,5 @@
 import BITCore
 import BITEntities
-import BITOpenID
 import Foundation
 
 // MARK: - CredentialDisplay
@@ -9,7 +8,7 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable {
 
   // MARK: Lifecycle
 
-  init(
+  public init(
     id: UUID = UUID(),
     name: String,
     backgroundColor: String? = nil,
@@ -48,21 +47,9 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable {
       backgroundColor: entity.backgroundColor,
       locale: entity.locale ?? UserLocale.defaultLocaleIdentifier,
       logoAltText: entity.logoAltText,
-      logoBase64: entity.logoData ?? Data(),
+      logoBase64: entity.logoData,
       summary: entity.summary,
       credentialId: entity.credential.first?.id)
-  }
-
-  init(_ credentialSupported: CredentialMetadata.CredentialSupportedDisplay) {
-    let logoUri = LogoUri(uri: credentialSupported.logo?.uri)
-
-    self.init(
-      name: credentialSupported.name,
-      backgroundColor: credentialSupported.backgroundColor,
-      locale: credentialSupported.locale ?? UserLocale.defaultLocaleIdentifier,
-      logoAltText: credentialSupported.logo?.altText,
-      logoBase64: logoUri.data,
-      summary: credentialSupported.summary)
   }
 
   // MARK: Public
@@ -86,30 +73,6 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable {
   public var logoBase64: Data?
   public var summary: String?
   public var credentialId: UUID?
-}
-
-// MARK: CredentialDisplay.LogoUri
-
-extension CredentialDisplay {
-
-  struct LogoUri {
-    let url: URL?
-
-    init(uri: URI?) {
-      self.uri = uri
-      url = uri.flatMap { URL(string: $0) }
-    }
-
-    var logoUrl: URL? {
-      url?.scheme == URLScheme.https.rawValue ? url : nil
-    }
-
-    var data: Data? {
-      uri.flatMap({ Data(base64Encoded: $0) })
-    }
-
-    private let uri: URI?
-  }
 }
 
 // MARK: Equatable

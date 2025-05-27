@@ -7,6 +7,7 @@ import Moya
 enum EIDRequestEndpoint {
   case submit(payload: EIDRequestPayload)
   case getStatus(caseId: String)
+  case legalRepresentantVerification(caseId: String)
 }
 
 // MARK: TargetType
@@ -22,13 +23,16 @@ extension EIDRequestEndpoint: TargetType {
       "eid/apply"
     case .getStatus(let caseId):
       "eid/\(caseId)/state"
+    case .legalRepresentantVerification(let caseId):
+      "eid/\(caseId)/legal-representant-verification"
     }
   }
 
   var method: Moya.Method {
     switch self {
     case .submit: .post
-    case .getStatus: .get
+    case .getStatus,
+         .legalRepresentantVerification: .get
     }
   }
 
@@ -36,7 +40,8 @@ extension EIDRequestEndpoint: TargetType {
     switch self {
     case .submit(let payload):
       .requestParameters(parameters: payload.asDictionary(), encoding: JSONEncoding.default)
-    case .getStatus:
+    case .getStatus,
+         .legalRepresentantVerification:
       .requestPlain
     }
   }
@@ -44,6 +49,7 @@ extension EIDRequestEndpoint: TargetType {
   var headers: [String: String]? {
     switch self {
     case .getStatus,
+         .legalRepresentantVerification,
          .submit:
       NetworkHeader.standard.raw
     }

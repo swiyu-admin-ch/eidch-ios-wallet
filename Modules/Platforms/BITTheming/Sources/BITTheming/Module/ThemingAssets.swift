@@ -212,8 +212,6 @@ extension SwiftUI.Color {
 }
 #endif
 
-// MARK: - ImageAsset
-
 public struct ImageAsset {
   #if os(macOS)
   public typealias Image = NSImage
@@ -297,8 +295,6 @@ extension SwiftUI.Image {
   }
 }
 #endif
-
-// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

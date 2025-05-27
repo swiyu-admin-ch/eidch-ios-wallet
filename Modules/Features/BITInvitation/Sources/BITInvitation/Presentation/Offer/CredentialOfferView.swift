@@ -33,10 +33,10 @@ struct CredentialOfferView: View {
 
   var body: some View {
     content()
-      .accessibilityAction(named: L10n.credentialOfferAcceptButton, {
+      .accessibilityAction(named: L10n.tkReceiveCredentialOfferButtonAccept, {
         Task { await viewModel.send(event: .accept) }
       })
-      .accessibilityAction(named: L10n.credentialOfferRefuseButton, {
+      .accessibilityAction(named: L10n.tkReceiveCredentialOfferButtonDecline, {
         Task { await viewModel.send(event: .decline) }
       })
       .readSize(onChange: { size in
@@ -200,10 +200,8 @@ extension CredentialOfferView {
 
   @ViewBuilder
   private func issuerHeader() -> some View {
-    if let issuer = viewModel.issuerDisplay {
-      ActorHeaderView(issuer: issuer, trustStatus: viewModel.issuerTrustStatus)
-        .accessibilitySortPriority(500)
-    }
+    ActorHeaderView(issuer: viewModel.issuerDisplay, trustStatus: viewModel.issuerTrustStatus)
+      .accessibilitySortPriority(500)
   }
 
   @ViewBuilder
@@ -238,7 +236,6 @@ extension CredentialOfferView {
         }
         .buttonStyle(.filledSecondary)
         .controlSize(.large)
-        .accessibilityLabel(L10n.credentialOfferAcceptButton)
         .accessibilityIdentifier(addAccessibilityIdentifier ? AccessibilityIdentifier.acceptButton.rawValue : AccessibilityIdentifier.bottomAcceptButton.rawValue)
         .accessibilitySortPriority(100)
       }

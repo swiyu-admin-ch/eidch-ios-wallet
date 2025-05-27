@@ -19,12 +19,21 @@
       }
     },
     {
-      "identity" : "chronometer",
+      "identity" : "cryptoswift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/KittyMac/Chronometer.git",
+      "location" : "https://github.com/krzyzanowskim/CryptoSwift.git",
       "state" : {
-        "revision" : "d21b89e5cb5929b5175bdb3ad710a52cbf497eaa",
-        "version" : "0.1.12"
+        "revision" : "729e01bc9b9dab466ac85f21fb9ee2bc1c61b258",
+        "version" : "1.8.4"
+      }
+    },
+    {
+      "identity" : "didresolver-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiyu-admin-ch/didresolver-swift.git",
+      "state" : {
+        "revision" : "2c324e97849523392be341282b666fe56856d0dd",
+        "version" : "2.0.0"
       }
     },
     {
@@ -34,24 +43,6 @@
       "state" : {
         "revision" : "061b3afe0358a0da7ce568f8272c847910be3dd7",
         "version" : "2.2.0"
-      }
-    },
-    {
-      "identity" : "gzipswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/1024jp/GzipSwift",
-      "state" : {
-        "revision" : "731037f6cc2be2ec01562f6597c1d0aa3fe6fd05",
-        "version" : "6.0.1"
-      }
-    },
-    {
-      "identity" : "hitch",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/KittyMac/Hitch.git",
-      "state" : {
-        "revision" : "328211598c24f356fccbcb5451cc48e21071a963",
-        "version" : "0.4.139"
       }
     },
     {
@@ -118,23 +109,6 @@
       }
     },
     {
-      "identity" : "sextant",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/KittyMac/Sextant.git",
-      "state" : {
-        "revision" : "e59c57e4fa19a02f336cd91b9f6cd8e4022e5ed0"
-      }
-    },
-    {
-      "identity" : "spanker",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/KittyMac/Spanker.git",
-      "state" : {
-        "revision" : "96e58f68274a2e6f370fff153ceb5674a06936c4",
-        "version" : "0.2.47"
-      }
-    },
-    {
       "identity" : "swift-mobile-sdk",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Dynatrace/swift-mobile-sdk.git",
@@ -148,13 +122,14 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Matejkob/swift-spyable",
       "state" : {
-        "revision" : "8f78f36989bde9f06cc5a5254a6748c23c16b045"
+        "revision" : "f6b90c803e1f4c989ede0a75e8e456fd41dcf27f",
+        "version" : "0.8.0"
       }
     },
     {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-syntax.git",
+      "location" : "https://github.com/swiftlang/swift-syntax",
       "state" : {
         "revision" : "64889f0c732f210a935a0ad7cda38f77f876262d",
         "version" : "509.1.1"

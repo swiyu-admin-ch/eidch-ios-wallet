@@ -1,7 +1,5 @@
-import BITCore
 import BITL10n
 import BITTheming
-import Factory
 import SwiftUI
 
 // MARK: - RequestCasesListView
@@ -10,9 +8,8 @@ public struct RequestCasesListView: View {
 
   // MARK: Lifecycle
 
-  public init(_ requestCases: [EIDRequestCase], action: @escaping (EIDRequestCase) -> Void) {
+  public init(_ requestCases: [RequestCaseViewState]) {
     self.requestCases = requestCases
-    self.action = action
   }
 
   // MARK: Public
@@ -21,19 +18,16 @@ public struct RequestCasesListView: View {
     Section {
       ForEach(requestCases) { requestCase in
         VStack {
-          switch requestCase.state?.state {
-          case .inQueue:
-            inQueueView(for: requestCase)
-          case .readyForOnlineSession:
-            readyForOnlineSessionView(for: requestCase)
-          case .expired:
-            expiredView(for: requestCase)
-          default:
-            EmptyView()
+          switch requestCase {
+          case .inQueue(let state):
+            inQueueView(for: state)
+          case .readyForOnlineSession(let state):
+            readyForOnlineSessionView(for: state)
+          case .expired(let state):
+            expiredView(for: state)
           }
         }
         .padding(.x6)
-        .accessibilityElement(children: .combine)
         .background(ThemingAssets.Background.secondary.swiftUIColor)
         .cornerRadius(.CornerRadius.m)
       }
@@ -42,44 +36,48 @@ public struct RequestCasesListView: View {
 
   // MARK: Private
 
+  private enum AccessibilityPriority: Double {
+    case x1 = 100
+    case x2 = 80
+    case x3 = 50
+  }
+
   @Environment(\.sizeCategory) private var sizeCategory
 
-  private let action: (EIDRequestCase) -> Void
-  private let requestCases: [EIDRequestCase]
+  private let requestCases: [RequestCaseViewState]
 }
 
 // MARK: - Cells
 
 extension RequestCasesListView {
   @ViewBuilder
-  private func inQueueView(for requestCase: EIDRequestCase) -> some View {
+  private func inQueueView(for state: InQueueStateViewModel) -> some View {
     HStack(alignment: .top, spacing: .x4) {
       image()
       content(
-        title: L10n.tkGetEidNotificationEidProgressTitleIos(requestCase.fullName),
-        content: L10n.tkGetEidNotificationEidProgressBodyIos(requestCase.state?.onlineSessionStartOpenAt?.longDateFormat ?? "-"))
+        title: L10n.tkGetEidNotificationEidProgressPrimary(state.fullName),
+        content: L10n.tkGetEidNotificationEidProgressSecondary(state.formattedDate))
 
       Spacer()
     }
   }
 
   @ViewBuilder
-  private func readyForOnlineSessionView(for requestCase: EIDRequestCase) -> some View {
+  private func readyForOnlineSessionView(for state: ReadyForOnlineSessionStateViewModel) -> some View {
     HStack(alignment: .top, spacing: .x4) {
       image()
 
       VStack(alignment: .leading) {
         content(
-          title: L10n.tkGetEidNotificationEidReadyTitleIos(requestCase.fullName),
-          content: L10n.tkGetEidNotificationEidReadyBodyIos(requestCase.state?.onlineSessionStartTimeoutAt?.longDateFormat ?? "-"))
+          title: L10n.tkGetEidNotificationEidReadyPrimary(state.fullName),
+          content: L10n.tkGetEidNotificationEidReadySecondary(state.formattedDate))
 
-        Button(L10n.tkGetEidNotificationEidReadyGreenButton, action: {
-          action(requestCase)
-        })
-        .buttonStyle(.filledSecondary)
-        .controlSize(.regular)
-        .padding(.top, .x2)
-        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        Button(L10n.tkGetEidNotificationEidReadyGreenButton, action: state.primaryAction)
+          .buttonStyle(.filledSecondary)
+          .controlSize(.regular)
+          .padding(.top, .x2)
+          .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       }
 
       Spacer()
@@ -87,16 +85,20 @@ extension RequestCasesListView {
   }
 
   @ViewBuilder
-  private func expiredView(for requestCase: EIDRequestCase) -> some View {
+  private func expiredView(for state: ExpiredStateViewModel) -> some View {
     HStack(alignment: .top, spacing: .x4) {
       image()
 
-      content(title: L10n.tkGetEidNotificationEidExpiredTitleIos(requestCase.fullName), content: L10n.tkGetEidNotificationEidExpiredBody)
+      content(title: L10n.tkGetEidNotificationEidExpiredPrimary(state.fullName), content: L10n.tkGetEidNotificationEidExpiredSecondary)
 
       Button(action: {
-        action(requestCase)
+        Task {
+          await state.primaryAction()
+        }
       }, label: {
         Assets.close.swiftUIImage
+          .accessibilityLabel(L10n.tkGetEidNotificationCloseButton)
+          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       })
     }
     .frame(maxWidth: .infinity)
@@ -113,10 +115,13 @@ extension RequestCasesListView {
       Text(title)
         .font(.custom.footnoteEmphasized)
         .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
       Text(content)
         .font(.custom.footnote)
         .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
+        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
     }
   }
 
@@ -128,9 +133,3 @@ extension RequestCasesListView {
     }
   }
 }
-
-#if DEBUG
-#Preview {
-  RequestCasesListView([.Mock.sampleExpired, .Mock.sampleAVReady, .Mock.sampleInQueue]) { _ in }
-}
-#endif

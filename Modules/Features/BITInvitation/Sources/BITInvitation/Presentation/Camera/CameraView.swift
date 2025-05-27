@@ -1,5 +1,5 @@
 import BITL10n
-import BITQRScanner
+import BITQRCode
 import BITTheming
 import Factory
 import PopupView
@@ -199,6 +199,7 @@ extension CameraView {
       })
       .accessibilitySortPriority(10)
       .accessibilityFocused($focus, equals: .close)
+      .accessibilityLabel(L10n.tkQrscannerButtonCloseAlt)
     }
   }
 }

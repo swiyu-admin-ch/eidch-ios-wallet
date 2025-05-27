@@ -1,6 +1,5 @@
 import BITCore
 import BITEntities
-import BITOpenID
 import Foundation
 
 public struct CredentialClaimDisplay: Codable, Hashable, Equatable, DisplayLocalizable {
@@ -20,10 +19,6 @@ public struct CredentialClaimDisplay: Codable, Hashable, Equatable, DisplayLocal
       locale: entity.locale,
       name: entity.name,
       claimId: entity.claim.first?.id)
-  }
-
-  public init(_ claim: CredentialMetadata.ClaimDisplay, claimId: UUID? = nil) {
-    self.init(locale: claim.locale, name: claim.name, claimId: claimId)
   }
 
   public init(from decoder: Decoder) throws {

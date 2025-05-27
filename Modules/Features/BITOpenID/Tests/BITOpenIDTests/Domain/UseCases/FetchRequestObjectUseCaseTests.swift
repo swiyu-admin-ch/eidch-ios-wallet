@@ -60,7 +60,7 @@ final class FetchRequestObjectUseCaseTests: XCTestCase {
     do {
       _ = try await useCase.execute(mockUrl)
       XCTFail("Should have thrown an exception")
-    } catch FetchRequestObjectError.invalidPresentationInvitation {
+    } catch FetchRequestObjectError.invalid {
       XCTAssertTrue(repositorySpy.fetchRequestObjectFromCalled)
     } catch {
       XCTFail("Not the error expected")
@@ -73,7 +73,20 @@ final class FetchRequestObjectUseCaseTests: XCTestCase {
     do {
       _ = try await useCase.execute(mockUrl)
       XCTFail("Should have thrown an exception")
-    } catch FetchRequestObjectError.invalidPresentationInvitation {
+    } catch FetchRequestObjectError.expired {
+      XCTAssertTrue(repositorySpy.fetchRequestObjectFromCalled)
+    } catch {
+      XCTFail("No the expected execution")
+    }
+  }
+
+  func testFetchRequestObject_AuthorizationRequestObjectNotFound_Failure() async throws {
+    repositorySpy.fetchRequestObjectFromThrowableError = OpenIdRepositoryError.authorizationRequestObjectNotFound
+
+    do {
+      _ = try await useCase.execute(mockUrl)
+      XCTFail("Should have thrown an exception")
+    } catch FetchRequestObjectError.invalid {
       XCTAssertTrue(repositorySpy.fetchRequestObjectFromCalled)
     } catch {
       XCTFail("No the expected execution")

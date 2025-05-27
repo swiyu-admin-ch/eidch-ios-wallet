@@ -9,12 +9,12 @@ public struct CredentialMetadata: Decodable {
 
   // MARK: Lifecycle
 
-  init(credentialIssuer: String, credentialEndpoint: String, credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported], display: [CredentialMetadataDisplay]) {
+  init(credentialIssuer: String, credentialEndpoint: String, credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported], display: [CredentialMetadataDisplay]?) {
     self.credentialIssuer = credentialIssuer
     self.credentialEndpoint = credentialEndpoint
     self.credentialConfigurationsSupported = credentialConfigurationsSupported
     self.display = display
-    preferredDisplay = display.findDisplayWithFallback() as? CredentialMetadataDisplay
+    preferredDisplay = display?.findDisplayWithFallback() as? CredentialMetadataDisplay
   }
 
   public init(from decoder: Decoder) throws {
@@ -33,7 +33,7 @@ public struct CredentialMetadata: Decodable {
 
   public let credentialEndpoint: String
   public let credentialIssuer: String
-  public let display: [CredentialMetadataDisplay]
+  public let display: [CredentialMetadataDisplay]?
 
   // MARK: Internal
 
@@ -230,14 +230,14 @@ extension CredentialMetadata {
       mandatory = try container.decodeIfPresent(Bool.self, forKey: .mandatory)
       valueType = try container.decodeIfPresent(ValueType.self, forKey: .valueType)
       display = try container.decodeIfPresent([ClaimDisplay].self, forKey: .display)
-      order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
+      order = try container.decodeIfPresent(Int.self, forKey: .order)
       guard let key = container.codingPath.last?.stringValue else {
         throw NSError(domain: "No key found", code: 1)
       }
       self.key = key
     }
 
-    init(from claim: Claim, order: Int) {
+    init(from claim: Claim, order: Int?) {
       key = claim.key
       mandatory = claim.mandatory
       valueType = claim.valueType
@@ -251,7 +251,7 @@ extension CredentialMetadata {
     public let key: String
     public let valueType: ValueType?
     public let display: [ClaimDisplay]?
-    public let order: Int
+    public let order: Int?
 
     // MARK: Internal
 

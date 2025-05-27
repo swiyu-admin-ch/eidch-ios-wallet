@@ -48,7 +48,7 @@ extension CredentialMetadata {
       claims = []
 
       for claim in metadataClaims.claims {
-        let index = orderClaims?.firstIndex(where: { $0 == claim.key }) ?? 0
+        let index = orderClaims?.firstIndex(where: { $0 == claim.key })
         claims.append(CredentialMetadata.Claim(from: claim, order: index))
       }
     }

@@ -15,287 +15,173 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
-    spyRepository = OpenIDRepositoryProtocolSpy()
-    jwsEncoderMock = JWSEncoderMock()
-    vcSchemaService = VcSchemaServiceProtocolSpy()
-    typeMetadataService = TypeMetadataServiceProtocolSpy()
-    ocaBundleService = OCABundleServiceProtocolSpy()
-
-    Container.shared.openIDRepository.register { self.spyRepository }
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
-    Container.shared.jwsEncoder.register { self.jwsEncoderMock }
-    Container.shared.vcSchemaService.register { self.vcSchemaService }
-    Container.shared.typeMetadataService.register { self.typeMetadataService }
-    Container.shared.ocaBundleService.register { self.ocaBundleService }
-    Container.shared.isOCABundleFetchFeatureEnabled.register { true }
-
+    super.setUp()
+    Container.shared.reset()
+    registerMocks()
+    success()
     useCase = FetchVcSdJwtCredentialUseCase()
-
-    mockFetchCredentialContext = .Mock.sampleVcSdJwt
   }
 
-  func testFetchHappyPath() async throws {
-    let mockCredentialResponse = CredentialResponse.Mock.sample
-    let mockVcSdJwt = VcSdJwtPayload.Mock.sample
+  func testExecute_success_returnsVcSdJwt() async throws {
+    let credential = try await useCase.execute(for: fetchCredentialContextMock)
 
-    spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = mockCredentialResponse
-    jwsSignatureValidatorMock.validateJwsDidReturnValue = true
-    jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
-    vcSchemaService.fetchForReturnValue = mockVcSchema
-    vcSchemaService.validateWithReturnValue = true
-    typeMetadataService.fetchReturnValue = mockTypeMetadata
-    ocaBundleService.fetchVcSdJwtOcaBundleFromReturnValue = mockRawOcaBundle
-    useCase = FetchVcSdJwtCredentialUseCase()
+    XCTAssertEqual(credential.raw, vcSdJwtMock.raw)
+    XCTAssertEqual(credential as? SdJWS<VcSdJwtPayload>, vcSdJwtMock)
+  }
 
-    let credential = try await useCase.execute(for: mockFetchCredentialContext)
+  func testExecute_success_argumentsPassed() async throws {
+    let _ = try await useCase.execute(for: fetchCredentialContextMock)
 
-    if let fetchArguments = spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
-      XCTAssertEqual(fetchArguments.url, mockFetchCredentialContext.credentialEndpoint)
-      XCTAssertEqual(fetchArguments.acccessToken, mockFetchCredentialContext.accessToken)
-      XCTAssertEqual(fetchArguments.credentialRequestBody.format, mockFetchCredentialContext.format)
+    if let fetchArguments = repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
+      XCTAssertEqual(fetchArguments.url, fetchCredentialContextMock.credentialEndpoint)
+      XCTAssertEqual(fetchArguments.acccessToken, fetchCredentialContextMock.accessToken)
+      XCTAssertEqual(fetchArguments.credentialRequestBody.format, fetchCredentialContextMock.format)
       XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.proofType, "jwt")
-      XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.jwt, Self.mockJwtString)
+      XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.jwt, Self.jwtStringMock)
     } else {
       XCTFail("fetchCredential no arguments received")
     }
 
-    XCTAssertEqual(credential.ocaBundle, mockRawOcaBundle)
-    XCTAssertNotNil(mockTypeMetadata.schemaUrl)
-    XCTAssertNotNil(mockTypeMetadata.schemaIntegrity)
-    XCTAssertEqual(typeMetadataService.fetchReceivedVc, mockVcSdJwt.payload)
-
-    XCTAssertEqual((jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt)?.raw, mockVcSdJwt.raw)
-    XCTAssertEqual(ocaBundleService.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, mockTypeMetadata.displays?.first?.rendering?.oca)
-
-    XCTAssertEqual(vcSchemaService.fetchForReceivedTypeMetadata, mockTypeMetadata)
-    XCTAssertEqual(vcSchemaService.validateWithReceivedArguments?.vcSchema, mockVcSchema)
-    XCTAssertEqual(vcSchemaService.validateWithReceivedArguments?.vcSdJwt.raw, mockVcSdJwt.raw)
+    XCTAssertEqual(jwsEncoderMock.receivedKeyPair, fetchCredentialContextMock.keyPair)
+    XCTAssertEqual(jwsEncoderMock.receivedValue?.audience, fetchCredentialContextMock.credentialIssuer)
+    XCTAssertEqual(jwsEncoderMock.receivedValue?.nonce, fetchCredentialContextMock.accessToken.cNonce)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt, vcSdJwtMock)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedDid, Self.issuerMock)
   }
 
-  func testFetchHappyPathWithoutHolderBinding() async throws {
-    let mockCredentialResponse = CredentialResponse.Mock.sample
+  func testExecute_withoutHolderBinding_returnsVcSdJwt() async throws {
     let context = FetchCredentialContext.Mock.sampleVcSdJwtWithoutHolderBinding
-    let mockVcSdJwt = VcSdJwtPayload.Mock.sample
 
-    spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = mockCredentialResponse
-    jwsSignatureValidatorMock.validateJwsDidReturnValue = true
-    vcSchemaService.fetchForReturnValue = mockVcSchema
-    vcSchemaService.validateWithReturnValue = true
-    typeMetadataService.fetchReturnValue = mockTypeMetadata
-    ocaBundleService.fetchVcSdJwtOcaBundleFromReturnValue = mockRawOcaBundle
+    let credential = try await useCase.execute(for: context)
+
+    XCTAssertEqual(credential.raw, vcSdJwtMock.raw)
+    XCTAssertEqual(credential as? SdJWS<VcSdJwtPayload>, vcSdJwtMock)
+  }
+
+  func testExecute_withoutHolderBinding_argumentsPassed() async throws {
+    let context = FetchCredentialContext.Mock.sampleVcSdJwtWithoutHolderBinding
 
     _ = try await useCase.execute(for: context)
 
-    if let fetchArguments = spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
-      XCTAssertEqual(fetchArguments.url, mockFetchCredentialContext.credentialEndpoint)
-      XCTAssertEqual(fetchArguments.acccessToken, mockFetchCredentialContext.accessToken)
-      XCTAssertEqual(fetchArguments.credentialRequestBody.format, mockFetchCredentialContext.format)
+    if let fetchArguments = repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
+      XCTAssertEqual(fetchArguments.url, fetchCredentialContextMock.credentialEndpoint)
+      XCTAssertEqual(fetchArguments.acccessToken, fetchCredentialContextMock.accessToken)
+      XCTAssertEqual(fetchArguments.credentialRequestBody.format, fetchCredentialContextMock.format)
       XCTAssertNil(fetchArguments.credentialRequestBody.proof)
     } else {
       XCTFail("fetchCredential no arguments received")
     }
 
-    XCTAssertEqual((jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt)?.raw, mockVcSdJwt.raw)
-    XCTAssertNil(spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments?.credentialRequestBody.proof)
-    XCTAssertEqual(typeMetadataService.fetchReceivedVc, mockVcSdJwt.payload)
-    XCTAssertEqual(vcSchemaService.fetchForReceivedTypeMetadata, mockTypeMetadata)
-    XCTAssertEqual(ocaBundleService.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, mockTypeMetadata.displays?.first?.rendering?.oca)
+    XCTAssertNil(jwsEncoderMock.receivedKeyPair)
+    XCTAssertNil(jwsEncoderMock.receivedValue?.audience)
+    XCTAssertNil(jwsEncoderMock.receivedValue?.nonce)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt, vcSdJwtMock)
   }
 
-  func testCredentialValidation_fails() async throws {
-    let mockCredentialResponse = CredentialResponse.Mock.sample
-    let mockVcSdJwt = VcSdJwtPayload.Mock.sample
-
-    spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = mockCredentialResponse
-    jwsSignatureValidatorMock.validateJwsDidReturnValue = false
-    jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
+  func testExecute_proofEncodingFailure_throwsError() async throws {
+    jwsEncoderMock.encodeUsingThrowableError = TestingError.error
     useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
-      _ = try await useCase.execute(for: mockFetchCredentialContext)
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
       XCTFail("An error was expected")
-    } catch FetchAnyVerifiableCredentialError.validationFailed {
-      if let fetchArguments = spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
-        XCTAssertEqual(fetchArguments.url, mockFetchCredentialContext.credentialEndpoint)
-        XCTAssertEqual(fetchArguments.acccessToken, mockFetchCredentialContext.accessToken)
-        XCTAssertEqual(fetchArguments.credentialRequestBody.format, mockFetchCredentialContext.format)
-        XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.proofType, "jwt")
-        XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.jwt, Self.mockJwtString)
-      } else {
-        XCTFail("fetchCredential no arguments received")
-      }
-
-      XCTAssertEqual((jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt)?.raw, mockVcSdJwt.raw)
-      XCTAssertEqual(spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments?.credentialRequestBody.proof?.jwt, Self.mockJwtString)
-      XCTAssertFalse(typeMetadataService.fetchCalled)
-      XCTAssertFalse(vcSchemaService.fetchForCalled)
-      XCTAssertFalse(vcSchemaService.validateWithCalled)
     } catch {
-      XCTFail("Another error was expected")
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
-  func testCredentialValidation_unknownIssuer() async throws {
-    jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
-    spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = CredentialResponse.Mock.sample
+  func testExecute_fetchCredentialFailure_throwsError() async throws {
+    repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testExecute_credentialDecodingFailure_throwsError() async throws {
+    sdJwsDecoderMock.throwingError = TestingError.error
+    useCase = FetchVcSdJwtCredentialUseCase()
+
+    do {
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .validationFailed)
+    }
+  }
+
+  func testExecute_validationReturnsFalse_throwsError() async throws {
+    jwsSignatureValidatorMock.validateJwsDidReturnValue = false
+    useCase = FetchVcSdJwtCredentialUseCase()
+
+    do {
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .validationFailed)
+    }
+  }
+
+  func testExecute_validationFailure_throwsError() async throws {
+    jwsSignatureValidatorMock.validateJwsDidThrowableError = TestingError.error
+    useCase = FetchVcSdJwtCredentialUseCase()
+
+    do {
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testExecute_cannotResolveDid_throwsErrors() async throws {
     jwsSignatureValidatorMock.validateJwsDidThrowableError = JWSSignatureValidatorError.cannotResolveDid(TestingError.error)
     useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
-      _ = try await useCase.execute(for: mockFetchCredentialContext)
-      XCTFail("An error was expected")
-    } catch FetchAnyVerifiableCredentialError.unknownIssuer {
-      XCTAssertTrue(spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenCalled)
-      XCTAssertTrue(jwsSignatureValidatorMock.validateJwsDidReceivedDid != nil)
-      XCTAssertFalse(typeMetadataService.fetchCalled)
-      XCTAssertFalse(vcSchemaService.fetchForCalled)
-      XCTAssertFalse(vcSchemaService.validateWithCalled)
-    } catch {
-      XCTFail("Another error was expected")
-    }
-  }
-
-  // MARK: - TypeMetadataService
-
-  func testFetchTypeMetadata_ThrowsError_failure() async throws {
-    initSuccessMocks()
-    typeMetadataService.fetchThrowableError = TestingError.error
-
-    do {
-      _ = try await useCase.execute(for: mockFetchCredentialContext)
-      XCTFail("An error was expected")
-    } catch TestingError.error {
-      XCTAssertFalse(vcSchemaService.validateWithCalled)
-      XCTAssertFalse(vcSchemaService.fetchForCalled)
-    } catch {
-      XCTFail("Another error was expected")
-    }
-  }
-
-  func testFetchTypeMetadata_ReturnsNil_failure() async throws {
-    initSuccessMocks()
-    typeMetadataService.fetchReturnValue = nil
-
-    _ = try await useCase.execute(for: mockFetchCredentialContext)
-
-    XCTAssertFalse(vcSchemaService.validateWithCalled)
-    XCTAssertFalse(vcSchemaService.fetchForCalled)
-  }
-
-  func testFetchTypeMetadata_WithoutOca_ReturnsNil() async throws {
-    initSuccessMocks()
-    typeMetadataService.fetchReturnValue = .Mock.sampleWithoutOca
-
-    let credential = try await useCase.execute(for: mockFetchCredentialContext)
-
-    XCTAssertEqual(credential.ocaBundle, nil)
-  }
-
-  // MARK: - VcSchemaService
-
-  func testFetchVcSchema_ThrowsError_failure() async throws {
-    initSuccessMocks()
-    vcSchemaService.fetchForThrowableError = TestingError.error
-
-    do {
-      _ = try await useCase.execute(for: mockFetchCredentialContext)
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
       XCTFail("An error was expected")
     } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertFalse(vcSchemaService.validateWithCalled)
+      XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .unknownIssuer)
     }
-  }
-
-  func testFetchVcSchema_ReturnsNil_failure() async throws {
-    initSuccessMocks()
-    vcSchemaService.fetchForReturnValue = nil
-
-    let credential = try await useCase.execute(for: mockFetchCredentialContext)
-
-    XCTAssertEqual(credential.ocaBundle, nil)
-    XCTAssertFalse(vcSchemaService.validateWithCalled)
-  }
-
-  func testValidateVcSchema_ReturnsFalse() async throws {
-    initSuccessMocks()
-    vcSchemaService.validateWithReturnValue = false
-
-    do {
-      _ = try await useCase.execute(for: mockFetchCredentialContext)
-      XCTFail("An error was expected")
-    } catch {
-      XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .invalidVcSchema)
-    }
-  }
-
-  // MARK: - OCA Bundle service
-
-  func testFetchVcSdJwtOcaBundle_WithOCAFeatureDisable() async throws {
-    initSuccessMocks()
-    Container.shared.isOCABundleFetchFeatureEnabled.register { false }
-
-    useCase = FetchVcSdJwtCredentialUseCase()
-
-    let credential = try await useCase.execute(for: mockFetchCredentialContext)
-
-    XCTAssertEqual(credential.ocaBundle, nil)
-    XCTAssertFalse(ocaBundleService.fetchVcSdJwtOcaBundleFromCalled)
-  }
-
-  func testFetchVcSdJwtOcaBundle_ThrowsError() async throws {
-    initSuccessMocks()
-    ocaBundleService.fetchVcSdJwtOcaBundleFromThrowableError = TestingError.error
-
-    do {
-      _ = try await useCase.execute(for: mockFetchCredentialContext)
-      XCTFail("Expected a TestingError.error instead")
-    } catch TestingError.error {
-      XCTAssertTrue(vcSchemaService.validateWithCalled)
-      XCTAssertTrue(vcSchemaService.fetchForCalled)
-    } catch {
-      XCTFail("Expected another error")
-    }
-  }
-
-  func testFetchTypeMetadata_WithoutDisplay_ReturnsNil() async throws {
-    initSuccessMocks()
-    typeMetadataService.fetchReturnValue = .Mock.sampleWithoutDisplays
-
-    let credential = try await useCase.execute(for: mockFetchCredentialContext)
-
-    XCTAssertEqual(credential.ocaBundle, nil)
-    XCTAssertFalse(ocaBundleService.fetchVcSdJwtOcaBundleFromCalled)
   }
 
   // MARK: Private
 
-  private static let mockJwtString = "mockJwt"
-  private static let mockJwtData = mockJwtString.data(using: .utf8)!
+  private static let jwtStringMock = "mockJwt"
+  private static let jwtDataMock = jwtStringMock.data(using: .utf8)!
+  private static let issuerMock = "did:tdw:example"
 
-  private var useCase: FetchVcSdJwtCredentialUseCase!
-  private var jwsSignatureValidatorMock: JWSSignatureValidatorMock!
-  private var jwsEncoderMock: JWSEncoderMock<VcSdJwtPayload>!
-  private var spyRepository: OpenIDRepositoryProtocolSpy!
-  private var mockFetchCredentialContext: FetchCredentialContext!
-  private var vcSchemaService: VcSchemaServiceProtocolSpy!
-  private var typeMetadataService: TypeMetadataServiceProtocolSpy!
-  private var ocaBundleService: OCABundleServiceProtocolSpy!
+  private let vcSdJwtMock = VcSdJwtPayload.Mock.sample
+  private let credentialResponseMock = CredentialResponse.Mock.sample
+  private var fetchCredentialContextMock: FetchCredentialContext = .Mock.sampleVcSdJwt
 
-  private let mockRawOcaBundle = RawOcaBundle()
-  private let mockVcSchema = VcSchema()
-  private let mockTypeMetadata = TypeMetadata.Mock.sampleUrlOca
+  private var useCase = FetchVcSdJwtCredentialUseCase()
+  private var jwsEncoderMock = JWSEncoderMock<JWTProofPayload>()
+  private var repositorySpy = OpenIDRepositoryProtocolSpy()
+  private var sdJwsDecoderMock = SdJWSDecoderMock<VcSdJwtPayload>()
+  private var jwsSignatureValidatorMock = JWSSignatureValidatorMock()
 
-  private func initSuccessMocks() {
-    let mockCredentialResponse = CredentialResponse.Mock.sample
+  private func registerMocks() {
+    jwsEncoderMock = JWSEncoderMock()
+    repositorySpy = OpenIDRepositoryProtocolSpy()
+    sdJwsDecoderMock = SdJWSDecoderMock()
+    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
 
-    spyRepository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = mockCredentialResponse
-    jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
+    Container.shared.jwsEncoder.register { self.jwsEncoderMock }
+    Container.shared.openIDRepository.register { self.repositorySpy }
+    Container.shared.sdJwsDecoder.register { self.sdJwsDecoderMock }
+    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
+  }
+
+  private func success() {
+    jwsEncoderMock.encodeUsingReturnValue = Self.jwtDataMock
+    repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = credentialResponseMock
+    sdJwsDecoderMock.decodeReturnValue = vcSdJwtMock
     jwsSignatureValidatorMock.validateJwsDidReturnValue = true
-    typeMetadataService.fetchReturnValue = mockTypeMetadata
-    vcSchemaService.fetchForReturnValue = mockVcSchema
-    vcSchemaService.validateWithReturnValue = true
-    useCase = FetchVcSdJwtCredentialUseCase()
   }
 }
 

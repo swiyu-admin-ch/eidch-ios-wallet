@@ -35,6 +35,24 @@ final class CameraPermissionViewModelTests: XCTestCase {
   }
 
   @MainActor
+  func testButtonActuityNotDetermined() async {
+    let viewModel = CameraPermissionViewModel(initialState: .authorized, router: mockRouter)
+
+    viewModel.buttonAction()
+
+    XCTAssertTrue(mockRouter.mrzScannerCalled)
+  }
+
+  @MainActor
+  func testButtonActuityDenied() async {
+    let viewModel = CameraPermissionViewModel(initialState: .denied, router: mockRouter)
+
+    viewModel.buttonAction()
+
+    XCTAssertTrue(mockRouter.settingsCalled)
+  }
+
+  @MainActor
   func testAllowCamera() async {
     let viewModel = CameraPermissionViewModel(initialState: .authorized, router: mockRouter)
 
@@ -54,6 +72,15 @@ final class CameraPermissionViewModelTests: XCTestCase {
     viewModel.openSettings()
 
     XCTAssertTrue(mockRouter.settingsCalled)
+  }
+
+  @MainActor
+  func testClose() async {
+    let viewModel = CameraPermissionViewModel(initialState: .denied, router: mockRouter)
+
+    viewModel.close()
+
+    XCTAssertTrue(mockRouter.closeCalled)
   }
 
   // MARK: Private

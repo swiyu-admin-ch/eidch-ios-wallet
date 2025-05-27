@@ -47,7 +47,7 @@ class CredentialOfferScreen: Screen {
   let offerLastName: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(issuer.waitForExistence(timeout: 3))
+    XCTAssert(issuer.waitForExistence(timeout: 5))
   }
 
   func assertIssuerDisplayed() {

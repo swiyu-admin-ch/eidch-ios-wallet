@@ -34,6 +34,12 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
 
   // MARK: Public
 
+  public static let reservedClaimNames: Set<String> = [
+    "iss", "sub", "aud", "exp", "iat", "nbf", "jti", // JWT
+    "_sd_alg", "_sd", // SD-JWT
+    "cnf", "vct", "status", "vct#integrity", // VcSdJwt
+  ]
+
   public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
   public var strictPayloadDecoding: Bool
 
@@ -46,9 +52,8 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     guard let jwtData = jwt.data(using: .utf8) else { throw SdJWSDecoderError.invalidRawSdJwt }
     if let disclosures = rawDisclosures {
       return try decodeSdJwt(jwtData, disclosures: String(disclosures), rawSdJWT: rawSdJWT)
-    } else {
-      return try decodeUndisclosedSdJwt(jwtData, rawSdJWT: rawSdJWT)
     }
+    return try decodeUndisclosedSdJwt(jwtData, rawSdJWT: rawSdJWT)
   }
 
   // MARK: Internal
@@ -61,12 +66,6 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     case sd = "_sd"
     case sdAlgorithm = "_sd_alg"
   }
-
-  private static let reservedClaimNames: Set<String> = [
-    "iss", "sub", "aud", "exp", "iat", "nbf", "jti", // JWT
-    "_sd_alg", "_sd", // SD-JWT
-    "cnf", "vct", "status", "vct#integrity", // VcSdJwt
-  ]
 
   private static let jwtCharacters = OneOrMore {
     ChoiceOf {
@@ -115,11 +114,12 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     }
 
     let claims = try decodeClaims(from: payloadJson, rawDisclosures: String(disclosures))
-    let payloadData = try resolvePayload(from: payloadJson, claims: claims)
+    let resolvedPayload = try resolvePayload(from: payloadJson, claims: claims)
     let decoder = JSONDecoder(dateDecodingStrategy: dateDecodingStrategy)
+    let payloadData = try JSONSerialization.data(withJSONObject: resolvedPayload)
     let payload = try decoder.decode(T.self, from: payloadData)
     guard let rawPayload = String(data: payloadData, encoding: .utf8) else { throw SdJWSDecoderError.invalidJWTPayload }
-    return SdJWS(payload: payload, rawPayload: rawPayload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: claims)
+    return SdJWS(payload: payload, rawPayload: resolvedPayload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: claims)
   }
 
   private func decodeClaims(from payload: [String: Any], rawDisclosures: String) throws -> [SdJWTClaim] {
@@ -164,7 +164,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   }
 
   /// Resolve payload by replacing digests with actual claim value. Only supports flat hierarchy so far (for more info see: https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html#name-example-flat-sd-jwt)
-  private func resolvePayload(from payload: [String: Any], claims: [SdJWTClaim]) throws -> Data {
+  private func resolvePayload(from payload: [String: Any], claims: [SdJWTClaim]) throws -> [String: Any] {
     var resolvedPayload = payload
     for claim in claims {
       guard resolvedPayload[claim.key] == nil else {
@@ -175,13 +175,17 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     resolvedPayload.removeValue(forKey: JsonKey.sd.rawValue)
     resolvedPayload.removeValue(forKey: JsonKey.sdAlgorithm.rawValue)
 
-    return try JSONSerialization.data(withJSONObject: resolvedPayload)
+    return resolvedPayload
   }
 
   private func decodeUndisclosedSdJwt<T>(_ data: Data, rawSdJWT: String) throws -> SdJWS<T> where T: JWTPayload & Decodable {
     let jws = try jwsDecoder.decode(T.self, from: data)
-    guard let rawJWS = String(data: data, encoding: .utf8) else { throw SdJWSDecoderError.invalidJWTPayload }
-    return SdJWS(payload: jws.payload, rawPayload: jws.rawPayload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: [])
+    guard
+      let rawJWS = String(data: data, encoding: .utf8),
+      let payloadData = jws.rawPayload.data(using: .utf8),
+      let payload = try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
+    else { throw SdJWSDecoderError.invalidJWTPayload }
+    return SdJWS(payload: jws.payload, rawPayload: payload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: [])
   }
 }
 

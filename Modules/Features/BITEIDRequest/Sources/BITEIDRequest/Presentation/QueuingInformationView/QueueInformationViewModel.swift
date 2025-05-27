@@ -1,8 +1,7 @@
-import BITCore
 import Foundation
 
 @MainActor
-class QueueInformationViewViewModel {
+class QueueInformationViewModel {
 
   // MARK: Lifecycle
 
@@ -13,7 +12,7 @@ class QueueInformationViewViewModel {
 
   // MARK: Internal
 
-  var expectedOnlineSessionStart: String?
+  var expectedOnlineSessionStart: String
 
   func primaryAction() {
     router.close()

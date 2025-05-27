@@ -52,8 +52,6 @@ public enum L10n {
   public static let cameraPermissionSecondary = L10n.tr("Localizable", "cameraPermission_secondary", fallback: "MISSING: Erlauben Sie den Zugriff auf die Kamera für das Scannen von QR-Codes um Ausweise zu empfangen oder eine Überprüfung durchzuführen.")
   /// Value:
   public static let cellValueAccessibilityLabel = L10n.tr("Localizable", "cell_value_accessibility_label", fallback: "Value:")
-  /// Allow
-  public static let credentialOfferAcceptButton = L10n.tr("Localizable", "credential_offer_acceptButton", fallback: "Allow")
   /// Refuse
   public static let credentialOfferRefuseButton = L10n.tr("Localizable", "credential_offer_refuseButton", fallback: "Refuse")
   /// Data Analysis
@@ -92,8 +90,6 @@ public enum L10n {
   public static let globalErrorNoDevicePinMessage = L10n.tr("Localizable", "global_error_no_device_pin_message", fallback: "Please define a smartphone passcode so that you can use the app.")
   /// Missing smartphone code
   public static let globalErrorNoDevicePinTitle = L10n.tr("Localizable", "global_error_no_device_pin_title", fallback: "Missing smartphone code")
-  /// n/a
-  public static let globalNotAssigned = L10n.tr("Localizable", "global_not_assigned", fallback: "n/a")
   /// App Version
   public static let impressumAppVersion = L10n.tr("Localizable", "impressum_app_version", fallback: "App Version")
   /// Build number
@@ -193,20 +189,14 @@ public enum L10n {
   public static let onboardingSecurityPrimary = L10n.tr("Localizable", "onboarding_security_primary", fallback: "Your data - with you")
   /// Your credentials are stored exclusively on your device. Only you have access to them.
   public static let onboardingSecuritySecondary = L10n.tr("Localizable", "onboarding_security_secondary", fallback: "Your credentials are stored exclusively on your device. Only you have access to them.")
-  /// Share information
-  public static let presentationAcceptButtonText = L10n.tr("Localizable", "presentation_accept_button_text", fallback: "Share information")
   /// The verification was canceled and no data was transferred.
   public static let presentationDeclinedMessage = L10n.tr("Localizable", "presentation_declined_message", fallback: "The verification was canceled and no data was transferred.")
   /// Verification was canceled
   public static let presentationDeclinedTitle = L10n.tr("Localizable", "presentation_declined_title", fallback: "Verification was canceled")
-  /// Deny
-  public static let presentationDenyButtonText = L10n.tr("Localizable", "presentation_deny_button_text", fallback: "Deny")
   /// Please select the correct credential below and click on it.
   public static let presentationSelectCredentialSubtitle = L10n.tr("Localizable", "presentation_select_credential_subtitle", fallback: "Please select the correct credential below and click on it.")
   /// Which credential must be presented?
   public static let presentationSelectCredentialTitle = L10n.tr("Localizable", "presentation_select_credential_title", fallback: "Which credential must be presented?")
-  /// Unknown verifier
-  public static let presentationVerifierNameUnknown = L10n.tr("Localizable", "presentation_verifier_name_unknown", fallback: "Unknown verifier")
   /// Analysis & Improvements
   public static let securitySettingsAnalysisTitle = L10n.tr("Localizable", "securitySettings_analysisTitle", fallback: "Analysis & Improvements")
   /// Biometrics
@@ -416,6 +406,36 @@ public enum L10n {
   public static let tkGetEidGeneralErrorBody = L10n.tr("Localizable", "tk_getEid_generalError_body", fallback: "Please scan the ID again or use a different ID. (deepl)")
   /// An error has occurred (deepl)
   public static let tkGetEidGeneralErrorTitle = L10n.tr("Localizable", "tk_getEid_generalError_title", fallback: "An error has occurred (deepl)")
+  /// Finish
+  public static let tkGetEidGuardianConsentButtonFinish = L10n.tr("Localizable", "tk_getEid_guardianConsent_button_finish", fallback: "Finish")
+  /// Share QR-Code
+  public static let tkGetEidGuardianConsentButtonShare = L10n.tr("Localizable", "tk_getEid_guardianConsent_button_share", fallback: "Share QR-Code")
+  /// Scan QR Code
+  public static let tkGetEidGuardianConsentPrimary = L10n.tr("Localizable", "tk_getEid_guardianConsent_primary", fallback: "Scan QR Code")
+  /// QR-Code
+  public static let tkGetEidGuardianConsentQrAlt = L10n.tr("Localizable", "tk_getEid_guardianConsent_qr_alt", fallback: "QR-Code")
+  /// Try again
+  public static let tkGetEidGuardianConsentQrButtonRetry = L10n.tr("Localizable", "tk_getEid_guardianConsent_qr_button_retry", fallback: "Try again")
+  /// An error occurred while generating the QR code.
+  public static let tkGetEidGuardianConsentQrError = L10n.tr("Localizable", "tk_getEid_guardianConsent_qr_error", fallback: "An error occurred while generating the QR code.")
+  /// Your parent or guardian must scan the QR code with their own swiyu app to give consent for you.
+  public static let tkGetEidGuardianConsentSecondary = L10n.tr("Localizable", "tk_getEid_guardianConsent_secondary", fallback: "Your parent or guardian must scan the QR code with their own swiyu app to give consent for you.")
+  /// Continue as a parent/guardian
+  public static let tkGetEidGuardianSelectionButtonContinueAsGuardian = L10n.tr("Localizable", "tk_getEid_guardianSelection_button_continueAsGuardian", fallback: "Continue as a parent/guardian")
+  /// Obtain consent
+  public static let tkGetEidGuardianSelectionButtonObtainConsent = L10n.tr("Localizable", "tk_getEid_guardianSelection_button_obtainConsent", fallback: "Obtain consent")
+  /// We need the consent of the parents or guardian to create this ID.
+  public static let tkGetEidGuardianSelectionPrimary = L10n.tr("Localizable", "tk_getEid_guardianSelection_primary", fallback: "We need the consent of the parents or guardian to create this ID.")
+  /// How would you like to proceed?
+  public static let tkGetEidGuardianSelectionSecondary = L10n.tr("Localizable", "tk_getEid_guardianSelection_secondary", fallback: "How would you like to proceed?")
+  /// No
+  public static let tkGetEidGuardianshipButtonNo = L10n.tr("Localizable", "tk_getEid_guardianship_button_no", fallback: "No")
+  /// Yes
+  public static let tkGetEidGuardianshipButtonYes = L10n.tr("Localizable", "tk_getEid_guardianship_button_yes", fallback: "Yes")
+  /// Are you under comprehensive guardianship?
+  public static let tkGetEidGuardianshipPrimary = L10n.tr("Localizable", "tk_getEid_guardianship_primary", fallback: "Are you under comprehensive guardianship?")
+  /// Comprehensive guardianship means that another person (not your parents) makes all important decisions for you.
+  public static let tkGetEidGuardianshipSecondary = L10n.tr("Localizable", "tk_getEid_guardianship_secondary", fallback: "Comprehensive guardianship means that another person (not your parents) makes all important decisions for you.")
   /// e-ID bestellen (deepl)
   public static let tkGetEidHomePrimaryButton = L10n.tr("Localizable", "tk_getEid_home_primaryButton", fallback: "e-ID bestellen (deepl)")
   /// First, your ID will be checked. This is followed by an identity check.
@@ -431,8 +451,10 @@ public enum L10n {
   public static let tkGetEidIntroSmallBody = L10n.tr("Localizable", "tk_getEid_intro_smallBody", fallback: "Exceptions\nProtecting your identity is our top priority. In rare cases, the identity check requires additional verification. This may result in a waiting period of several days. (deepl)")
   /// Create your e-ID (deepl)
   public static let tkGetEidIntroTitle = L10n.tr("Localizable", "tk_getEid_intro_title", fallback: "Create your e-ID (deepl)")
+  /// Close button
+  public static let tkGetEidNotificationCloseButton = L10n.tr("Localizable", "tk_getEid_notification_close_button", fallback: "Close button")
   /// You did not fully complete the ordering process. Please restart it to receive your e-ID.
-  public static let tkGetEidNotificationEidExpiredBody = L10n.tr("Localizable", "tk_getEid_notification_eidExpired_body", fallback: "You did not fully complete the ordering process. Please restart it to receive your e-ID.")
+  public static let tkGetEidNotificationEidExpiredSecondary = L10n.tr("Localizable", "tk_getEid_notification_eidExpired_secondary", fallback: "You did not fully complete the ordering process. Please restart it to receive your e-ID.")
   /// Start identification (deepl)
   public static let tkGetEidNotificationEidReadyGreenButton = L10n.tr("Localizable", "tk_getEid_notification_eidReady_greenButton", fallback: "Start identification (deepl)")
   /// Unfortunately, your order cannot be processed immediately due to high demand. You will be notified via the app as soon as it is your turn. This may take a few days. (deepl)
@@ -469,30 +491,22 @@ public enum L10n {
   public static let tkGlobalBetaidUrl = L10n.tr("Localizable", "tk_global_betaid_url", fallback: "https://www.bcs.admin.ch/bcs-web/?lang=EN")
   /// Cancel
   public static let tkGlobalCancel = L10n.tr("Localizable", "tk_global_cancel", fallback: "Cancel")
-  /// Cancel
-  public static let tkGlobalCancelPrimarybutton = L10n.tr("Localizable", "tk_global_cancel_primarybutton", fallback: "Cancel")
   /// Change password
   public static let tkGlobalChangepassword = L10n.tr("Localizable", "tk_global_changepassword", fallback: "Change password")
   /// Would like to check your age
   public static let tkGlobalCheckage = L10n.tr("Localizable", "tk_global_checkage", fallback: "Would like to check your age")
-  /// Would like to check your credential
-  public static let tkGlobalCheckcredential = L10n.tr("Localizable", "tk_global_checkcredential", fallback: "Would like to check your credential")
   /// Done
   public static let tkGlobalClose = L10n.tr("Localizable", "tk_global_close", fallback: "Done")
   /// Close details
   public static let tkGlobalClosedetailsAlt = L10n.tr("Localizable", "tk_global_closedetails_alt", fallback: "Close details")
   /// Close learner's licence
   public static let tkGlobalCloseelfaAlt = L10n.tr("Localizable", "tk_global_closeelfa_alt", fallback: "Close learner's licence")
-  /// Close QR code scanner
-  public static let tkGlobalClosescanAlt = L10n.tr("Localizable", "tk_global_closescan_alt", fallback: "Close QR code scanner")
   /// Close warning
   public static let tkGlobalClosewarningAlt = L10n.tr("Localizable", "tk_global_closewarning_alt", fallback: "Close warning")
   /// Next
   public static let tkGlobalContinue = L10n.tr("Localizable", "tk_global_continue", fallback: "Next")
   /// Credential
   public static let tkGlobalCredential = L10n.tr("Localizable", "tk_global_credential", fallback: "Credential")
-  /// Decline
-  public static let tkGlobalDeclineSecondarybutton = L10n.tr("Localizable", "tk_global_decline_secondarybutton", fallback: "Decline")
   /// Delete
   public static let tkGlobalDelete = L10n.tr("Localizable", "tk_global_delete", fallback: "Delete")
   /// Open details
@@ -519,14 +533,10 @@ public enum L10n {
   public static let tkGlobalNewpassword = L10n.tr("Localizable", "tk_global_newpassword", fallback: "New password")
   /// No thanks
   public static let tkGlobalNo = L10n.tr("Localizable", "tk_global_no", fallback: "No thanks")
+  /// n/a
+  public static let tkGlobalNotAssigned = L10n.tr("Localizable", "tk_global_notAssigned", fallback: "n/a")
   /// Not verified
   public static let tkGlobalNotVerified = L10n.tr("Localizable", "tk_global_notVerified", fallback: "Not verified")
-  /// Please wait
-  public static let tkGlobalPleasewait = L10n.tr("Localizable", "tk_global_pleasewait", fallback: "Please wait")
-  /// Please wait. Your data are being sent.
-  public static let tkGlobalPleasewaitAlt = L10n.tr("Localizable", "tk_global_pleasewait_alt", fallback: "Please wait. Your data are being sent.")
-  /// Try again
-  public static let tkGlobalRepeatPrimarybutton = L10n.tr("Localizable", "tk_global_repeat_primarybutton", fallback: "Try again")
   /// Scan
   public static let tkGlobalScanPrimarybutton = L10n.tr("Localizable", "tk_global_scan_primarybutton", fallback: "Scan")
   /// Scan
@@ -557,6 +567,10 @@ public enum L10n {
   public static let tkHomeFirstuseTitle = L10n.tr("Localizable", "tk_home_firstuse_title", fallback: "Wallet empty")
   /// swiyu app start screen
   public static let tkHomeHomescreenAlt = L10n.tr("Localizable", "tk_home_homescreen_alt", fallback: "swiyu app start screen")
+  /// Not verified
+  public static let tkIssuerNotTrusted = L10n.tr("Localizable", "tk_issuer_notTrusted", fallback: "Not verified")
+  /// Verified
+  public static let tkIssuerTrusted = L10n.tr("Localizable", "tk_issuer_trusted", fallback: "Verified")
   /// Confirm swiyu app password
   public static let tkLoginConfirmPasswordAlt = L10n.tr("Localizable", "tk_login_confirmPassword_alt", fallback: "Confirm swiyu app password")
   /// Retry
@@ -806,34 +820,54 @@ public enum L10n {
   public static let tkOnboardingSomethingwentwrongPrimarybutton = L10n.tr("Localizable", "tk_onboarding_somethingwentwrong_primarybutton", fallback: "Try again")
   /// Something went wrong
   public static let tkOnboardingSomethingwentwrongTitle = L10n.tr("Localizable", "tk_onboarding_somethingwentwrong_title", fallback: "Something went wrong")
-  /// Your details have been successfully checked.
-  public static let tkPresentAcceptTitle = L10n.tr("Localizable", "tk_present_accept_title", fallback: "Your details have been successfully checked.")
-  /// Required credential available
-  public static let tkPresentAcceptTitle2 = L10n.tr("Localizable", "tk_present_accept_title2", fallback: "Required credential available")
   /// Requested data
   public static let tkPresentApprovalTitle = L10n.tr("Localizable", "tk_present_approval_title", fallback: "Requested data")
-  /// The verification was canceled and no data was transferred.
-  public static let tkPresentCanceledverificationSubtitle = L10n.tr("Localizable", "tk_present_canceledverification_subtitle", fallback: "The verification was canceled and no data was transferred.")
-  /// Aborted verification
-  public static let tkPresentCanceledverificationTitle = L10n.tr("Localizable", "tk_present_canceledverification_title", fallback: "Aborted verification")
-  /// Confirmation
-  public static let tkPresentConfirmAlt = L10n.tr("Localizable", "tk_present_confirm_alt", fallback: "Confirmation")
-  /// Data was not transmitted
-  public static let tkPresentDeclineTitle = L10n.tr("Localizable", "tk_present_decline_title", fallback: "Data was not transmitted")
-  /// Please try again
-  public static let tkPresentErrorSubtitle = L10n.tr("Localizable", "tk_present_error_subtitle", fallback: "Please try again")
-  /// Oops, something went wrong!
-  public static let tkPresentErrorTitle = L10n.tr("Localizable", "tk_present_error_title", fallback: "Oops, something went wrong!")
   /// Select ID or document
-  public static let tkPresentMultiplecredentialsTitle = L10n.tr("Localizable", "tk_present_multiplecredentials_title", fallback: "Select ID or document")
+  public static let tkPresentCompatibleCredentialsPrimary = L10n.tr("Localizable", "tk_present_compatibleCredentials_primary", fallback: "Select ID or document")
   /// Sorry, no details could be sent
   public static let tkPresentNoinformationprovidedTitle = L10n.tr("Localizable", "tk_present_noinformationprovided_title", fallback: "Sorry, no details could be sent")
+  /// Aborted verification
+  public static let tkPresentResultCanceledVerificationPrimary = L10n.tr("Localizable", "tk_present_result_canceledVerification_primary", fallback: "Aborted verification")
+  /// The verification was canceled and no data was transferred.
+  public static let tkPresentResultCanceledVerificationSecondary = L10n.tr("Localizable", "tk_present_result_canceledVerification_secondary", fallback: "The verification was canceled and no data was transferred.")
+  /// Confirmation
+  public static let tkPresentResultConfirmAlt = L10n.tr("Localizable", "tk_present_result_confirm_alt", fallback: "Confirmation")
+  /// Data was not transmitted
+  public static let tkPresentResultDeclinedPrimary = L10n.tr("Localizable", "tk_present_result_declined_primary", fallback: "Data was not transmitted")
+  /// Try again
+  public static let tkPresentResultErrorButtonRetry = L10n.tr("Localizable", "tk_present_result_error_button_retry", fallback: "Try again")
+  /// Oops, something went wrong!
+  public static let tkPresentResultErrorPrimary = L10n.tr("Localizable", "tk_present_result_error_primary", fallback: "Oops, something went wrong!")
+  /// Please try again
+  public static let tkPresentResultErrorSecondary = L10n.tr("Localizable", "tk_present_result_error_secondary", fallback: "Please try again")
   /// Verification of the transmitted data failed.
   public static let tkPresentResultInvalidCredentialPrimary = L10n.tr("Localizable", "tk_present_result_invalidCredential_primary", fallback: "Verification of the transmitted data failed.")
   /// Please check the validity of your credential.
   public static let tkPresentResultInvalidCredentialSecondary = L10n.tr("Localizable", "tk_present_result_invalidCredential_secondary", fallback: "Please check the validity of your credential.")
+  /// Your details have been successfully checked.
+  public static let tkPresentResultSuccessPrimary = L10n.tr("Localizable", "tk_present_result_success_primary", fallback: "Your details have been successfully checked.")
+  /// Required credential available
+  public static let tkPresentResultSuccessPrimary2 = L10n.tr("Localizable", "tk_present_result_success_primary2", fallback: "Required credential available")
   /// Warning
-  public static let tkPresentWarningAlt = L10n.tr("Localizable", "tk_present_warning_alt", fallback: "Warning")
+  public static let tkPresentResultWarningAlt = L10n.tr("Localizable", "tk_present_result_warning_alt", fallback: "Warning")
+  /// Would like to check your credential
+  public static let tkPresentReviewCredentialSectionPrimary = L10n.tr("Localizable", "tk_present_review_credential_section_primary", fallback: "Would like to check your credential")
+  /// Please wait
+  public static let tkPresentReviewLoading = L10n.tr("Localizable", "tk_present_review_loading", fallback: "Please wait")
+  /// Please wait. Your data are being sent.
+  public static let tkPresentReviewLoadingAlt = L10n.tr("Localizable", "tk_present_review_loading_alt", fallback: "Please wait. Your data are being sent.")
+  /// Allow
+  public static let tkPresentReviewPrimaryButton = L10n.tr("Localizable", "tk_present_review_primaryButton", fallback: "Allow")
+  /// Share information
+  public static let tkPresentReviewPrimaryButtonAlt = L10n.tr("Localizable", "tk_present_review_primaryButton_alt", fallback: "Share information")
+  /// Decline
+  public static let tkPresentReviewSecondaryButton = L10n.tr("Localizable", "tk_present_review_secondaryButton", fallback: "Decline")
+  /// Deny
+  public static let tkPresentReviewSecondaryButtonAlt = L10n.tr("Localizable", "tk_present_review_secondaryButton_alt", fallback: "Deny")
+  /// Unknown verifier
+  public static let tkPresentVerifierNameUnknown = L10n.tr("Localizable", "tk_present_verifier_name_unknown", fallback: "Unknown verifier")
+  /// Close QR code scanner
+  public static let tkQrscannerButtonCloseAlt = L10n.tr("Localizable", "tk_qrscanner_button_close_alt", fallback: "Close QR code scanner")
   /// This QR code has already been used. Please request a new QR code.
   public static let tkQrscannerInvalidcodeBody = L10n.tr("Localizable", "tk_qrscanner_invalidcode_body", fallback: "This QR code has already been used. Please request a new QR code.")
   /// Was the QR code used without your knowledge?
@@ -905,10 +939,6 @@ public enum L10n {
   public static let tkReceiveDeny2Title = L10n.tr("Localizable", "tk_receive_deny2_title", fallback: "Credential declined")
   /// Report incorrect details
   public static let tkReceiveIncorrectdataTitle = L10n.tr("Localizable", "tk_receive_incorrectdata_title", fallback: "Report incorrect details")
-  /// Not verified
-  public static let tkReceiveIssuerNotTrusted = L10n.tr("Localizable", "tk_receive_issuer_notTrusted", fallback: "Not verified")
-  /// Verified
-  public static let tkReceiveIssuerTrusted = L10n.tr("Localizable", "tk_receive_issuer_trusted", fallback: "Verified")
   /// Camera searching for QR code
   public static let tkReceiveScanningAlt = L10n.tr("Localizable", "tk_receive_scanning_alt", fallback: "Camera searching for QR code")
   /// No QR code found. Try to reposition the camera.
@@ -972,28 +1002,28 @@ public enum L10n {
   }
 
   /// e-ID Order for %@ expired
-  public static func tkGetEidNotificationEidExpiredTitleIos(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidExpired_title_ios", String(describing: p1), fallback: "e-ID Order for %@ expired")
-  }
-
-  /// Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.  (deepl)
-  public static func tkGetEidNotificationEidProgressBodyIos(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_body_ios", String(describing: p1), fallback: "Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.  (deepl)")
+  public static func tkGetEidNotificationEidExpiredPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_eidExpired_primary", String(describing: p1), fallback: "e-ID Order for %@ expired")
   }
 
   /// e-ID for %@ in progress (deepl)
-  public static func tkGetEidNotificationEidProgressTitleIos(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_title_ios", String(describing: p1), fallback: "e-ID for %@ in progress (deepl)")
+  public static func tkGetEidNotificationEidProgressPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_primary", String(describing: p1), fallback: "e-ID for %@ in progress (deepl)")
   }
 
-  /// Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)
-  public static func tkGetEidNotificationEidReadyBodyIos(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidReady_body_ios", String(describing: p1), fallback: "Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)")
+  /// Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.  (deepl)
+  public static func tkGetEidNotificationEidProgressSecondary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_secondary", String(describing: p1), fallback: "Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.  (deepl)")
   }
 
   /// e-ID ready for %@ (deepl)
-  public static func tkGetEidNotificationEidReadyTitleIos(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidReady_title_ios", String(describing: p1), fallback: "e-ID ready for %@ (deepl)")
+  public static func tkGetEidNotificationEidReadyPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_eidReady_primary", String(describing: p1), fallback: "e-ID ready for %@ (deepl)")
+  }
+
+  /// Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)
+  public static func tkGetEidNotificationEidReadySecondary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_eidReady_secondary", String(describing: p1), fallback: "Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)")
   }
 
   /// Unlock with %@
@@ -1132,8 +1162,8 @@ public enum L10n {
   }
 
   /// Would like to read %@ detail(s)
-  public static func tkPresentApprovalSubtitleAffectedDetailsIos(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_present_approval_subtitle_affectedDetails_ios", String(describing: p1), fallback: "Would like to read %@ detail(s)")
+  public static func tkPresentReviewClaimsSectionPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_present_review_claims_section_primary", String(describing: p1), fallback: "Would like to read %@ detail(s)")
   }
 
   /// wants to issue %@ credential
@@ -1154,8 +1184,6 @@ extension L10n {
     return String(format: format, locale: Locale.current, arguments: args)
   }
 }
-
-// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

@@ -18,16 +18,16 @@ configs:
   Prod (release): release
 
 fileGroups: [
-  "Project/project.yml",
-  "Project/packages.yml",
-  "Project/targets.yml",
-  "Project/schemes.yml",
+  "project.yml",
+  "packages.yml",
+  "targets.yml",
+  "schemes.yml",
 
-  "TestPlans/UnitTestPlan.xctestplan",
-  "TestPlans/UITestPlan.xctestplan",
-  "TestPlans/FullTestPlan.xctestplan",
+  "../TestPlans/UnitTestPlan.xctestplan",
+  "../TestPlans/UITestPlan.xctestplan",
+  "../TestPlans/FullTestPlan.xctestplan",
 
-  "Modules",
+  "../Modules",
 
-  "Makefile"
+  "../Makefile"
 ]

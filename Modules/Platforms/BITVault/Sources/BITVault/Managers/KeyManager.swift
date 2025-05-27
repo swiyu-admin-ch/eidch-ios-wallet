@@ -40,9 +40,8 @@ public struct KeyManager: KeyManagerProtocol {
     guard let privateKey = SecKeyCreateRandomKey(userQuery as CFDictionary, &error) else {
       if let keyGenError = error?.takeRetainedValue() {
         throw VaultError.keyGenerationError(reason: "Key generation failed with error: \(keyGenError)")
-      } else {
-        throw VaultError.keyGenerationError(reason: "Unknown error during key generation.")
       }
+      throw VaultError.keyGenerationError(reason: "Unknown error during key generation.")
     }
 
     return privateKey

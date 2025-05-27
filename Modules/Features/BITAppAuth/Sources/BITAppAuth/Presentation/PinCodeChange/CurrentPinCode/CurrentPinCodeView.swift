@@ -5,9 +5,13 @@ import SwiftUI
 
 struct CurrentPinCodeView: View {
 
+  // MARK: Lifecycle
+
   init(_ router: ChangePinCodeInternalRoutes) {
     _viewModel = StateObject(wrappedValue: Container.shared.currentPinCodeViewModel(router))
   }
+
+  // MARK: Internal
 
   var body: some View {
     PinCodeFormView(
@@ -21,6 +25,8 @@ struct CurrentPinCodeView: View {
       .onAppear { viewModel.onAppear() }
       .navigationTitle(L10n.tkGlobalChangepassword)
   }
+
+  // MARK: Private
 
   @StateObject private var viewModel: CurrentPinCodeViewModel
 

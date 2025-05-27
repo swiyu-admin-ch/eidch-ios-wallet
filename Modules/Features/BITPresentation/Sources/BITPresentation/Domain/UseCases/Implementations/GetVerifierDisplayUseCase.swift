@@ -17,11 +17,9 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
     let logo = getVerifierLogo(from: verifier)
     var name = getVerifierName(from: verifier)
     if
-      let trustStatement,
-      let data = trustStatement.rawPayload.data(using: .utf8),
-      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let orgName = json[Self.orgNameKey] as? [String: Any],
-      let trustedName = getDisplayForClaim(orgName, with: Self.orgNameKey, in: json)
+      let payload = trustStatement?.rawPayload,
+      let orgName = payload[Self.orgNameKey] as? [String: Any],
+      let trustedName = getDisplayForClaim(orgName, with: Self.orgNameKey, in: payload)
     {
       name = trustedName
     }
@@ -31,7 +29,6 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
   // MARK: Private
 
   private static let orgNameKey = "orgName"
-  private static let logoUriKey = "logoUri"
   private static let prefLangKey = "prefLang"
 
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]

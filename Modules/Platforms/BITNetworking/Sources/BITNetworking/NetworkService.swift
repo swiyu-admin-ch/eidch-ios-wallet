@@ -74,12 +74,11 @@ public struct NetworkService {
         stubClosure: NetworkContainer.shared.stubClosure(),
         session: NetworkContainer.shared.session(),
         plugins: NetworkContainer.shared.plugins())
-    } else {
-      return MoyaProvider<T>(
-        stubClosure: NetworkContainer.shared.stubClosure(),
-        session: NetworkContainer.shared.session(),
-        plugins: NetworkContainer.shared.plugins())
     }
+    return MoyaProvider<T>(
+      stubClosure: NetworkContainer.shared.stubClosure(),
+      session: NetworkContainer.shared.session(),
+      plugins: NetworkContainer.shared.plugins())
   }
 
   private func fetch(_ target: some TargetType, _ completion: @escaping (Result<Response, Error>) -> Void) {

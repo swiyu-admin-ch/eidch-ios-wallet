@@ -39,12 +39,22 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
       return .Mock.sampleInQueue
     }
 
+    var getCount = 0
+    repository.getIdClosure = { _ in
+      if getCount == 1 {
+        return .Mock.sampleAVReady
+      }
+      getCount += 1
+
+      return .Mock.sampleInQueue
+    }
+
     let sortedArray: [EIDRequestCase] = [
       .Mock.sampleAVReady,
       .Mock.sampleInQueue,
     ]
 
-    let updateRequestCases = try await useCase.execute(mockEIDRequestCases)
+    let updateRequestCases = try await useCase.execute(mockEIDRequestCases.map(\.id))
 
     XCTAssertEqual(updateRequestCases, sortedArray)
     XCTAssertEqual(updateRequestCases.count, mockEIDRequestCases.count)
@@ -56,18 +66,31 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
 
     remoteRepository.fetchRequestStatusForReturnValue = mockStatus
     repository.updateReturnValue = mockEIDRequestCase
+    repository.getIdReturnValue = mockEIDRequestCase
 
-    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue)
+    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
 
     XCTAssertEqual(result.state, mockEIDRequestCase.state)
     XCTAssertEqual(remoteRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
     XCTAssertEqual(repository.updateReceivedEIDRequestCase?.state?.state, mockStatus.state)
+    XCTAssertEqual(repository.getIdReceivedId, mockEIDRequestCaseInQueue.id)
+  }
+
+  func testExecute_getRequestCaseThrowsError_throwsError() async throws {
+    repository.getIdThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
   }
 
   func testExecuteWithFetchStatusError() async throws {
+    repository.getIdReturnValue = mockEIDRequestCaseInQueue
     remoteRepository.fetchRequestStatusForThrowableError = TestingError.error
 
-    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue)
+    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
 
     XCTAssertEqual(remoteRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
     XCTAssertEqual(mockEIDRequestCaseInQueue, result)
@@ -76,10 +99,11 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
   func testExecuteWithUpdateRequestCaseError() async throws {
     let mockStatus = EIDRequestStatus.Mock.readyForAVSample
 
+    repository.getIdReturnValue = mockEIDRequestCaseInQueue
     remoteRepository.fetchRequestStatusForReturnValue = mockStatus
     repository.updateThrowableError = TestingError.error
 
-    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue)
+    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
 
     XCTAssertEqual(remoteRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
     XCTAssertEqual(repository.updateReceivedEIDRequestCase?.state?.state, mockStatus.state)

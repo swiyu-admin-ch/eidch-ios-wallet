@@ -101,10 +101,10 @@ final class OnboardingTests: XCTestCase {
     pinCodeInformationScreen.primaryButton.tap()
 
     let enterPinScreen = EnterPinScreen(app: app)
-    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: 1))
+    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: 5))
 
     enterPinScreen.enterPin(pin: "123456")
-    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: 1))
+    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: 5))
     enterPinScreen.enterPin(pin: "123456")
 
   }

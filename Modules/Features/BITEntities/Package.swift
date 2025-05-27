@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -16,7 +16,7 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../../Platforms/BITDataStore"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "10.50.0"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "10.54.3"),
   ],
   targets: [
     .target(

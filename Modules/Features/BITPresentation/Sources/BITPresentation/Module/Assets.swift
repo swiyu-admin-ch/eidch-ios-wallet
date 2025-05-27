@@ -29,6 +29,7 @@ enum Assets {
   static let presentationSuccess = ImageAsset(name: "presentationSuccess")
   static let presentationSuccessItem = ImageAsset(name: "presentationSuccessItem")
   static let qrCode = ImageAsset(name: "qrCode")
+  static let questionmarkCircle = ImageAsset(name: "questionmark.circle")
   static let wallet = ImageAsset(name: "wallet")
 }
 
@@ -119,8 +120,6 @@ extension SwiftUI.Image {
   }
 }
 #endif
-
-// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

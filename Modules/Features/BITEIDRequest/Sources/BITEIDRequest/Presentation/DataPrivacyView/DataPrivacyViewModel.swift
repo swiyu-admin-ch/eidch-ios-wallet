@@ -12,8 +12,8 @@ class DataPrivacyViewModel {
 
   // MARK: Internal
 
-  func openCheckCardIntroduction() {
-    router.checkCardIntroduction()
+  func primaryAction() {
+    router.legalRepresentant()
   }
 
   func close() {

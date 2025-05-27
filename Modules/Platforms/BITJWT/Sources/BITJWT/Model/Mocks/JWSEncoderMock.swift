@@ -8,26 +8,23 @@ import Foundation
 
 enum JWSEncoderMockError: Error {
   case noReturnValue
-  case unexpectedKeyPair(input: KeyPair, expected: KeyPair)
 }
 
 // MARK: - JWSEncoderMock
 
-struct JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
-
-  // MARK: Internal
+class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
 
   var encodeUsingReturnValue: Data? = nil
-  var expectedKeyPair: KeyPair? = nil
+  var receivedKeyPair: KeyPair? = nil
+  var receivedValue: U? = nil
   var encodeUsingThrowableError: Error? = nil
 
   func encode(_ value: some JWTPayload & Encodable, using keyPair: KeyPair) throws -> Data {
     if let encodeUsingThrowableError {
       throw encodeUsingThrowableError
     }
-    if let expKeyPair = expectedKeyPair, expKeyPair != keyPair {
-      throw JWSEncoderMockError.unexpectedKeyPair(input: keyPair, expected: expKeyPair)
-    }
+    receivedKeyPair = keyPair
+    receivedValue = value as? U
     guard let data = encodeUsingReturnValue else { throw JWSEncoderMockError.noReturnValue }
     return data
   }

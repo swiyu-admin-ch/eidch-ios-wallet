@@ -28,6 +28,15 @@ extension VcSdJwt: AnyCredential {
   public var validUntil: Date? {
     payload.expiredAt
   }
+
+  public func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any] {
+    switch claimSet {
+    case .all:
+      rawPayload
+    case .nonTechnical:
+      rawPayload.filter { !SdJWSDecoder.reservedClaimNames.contains($0.key) }
+    }
+  }
 }
 
 // MARK: - SdJWTClaim + AnyClaim

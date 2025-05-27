@@ -8,7 +8,7 @@ import BITL10n
 import BITNetworking
 import BITOpenID
 import BITPresentation
-import BITQRScanner
+import BITQRCode
 import Combine
 import Factory
 import SwiftUI
@@ -148,7 +148,9 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   private func handleError(_ error: Error) {
     vibrate(.error)
-    analytics.log(error)
+    if error as? CheckCameraError != .wrongScheme {
+      analytics.log(error)
+    }
 
     let invitationError = InvitationError.from(error)
     self.error = invitationError

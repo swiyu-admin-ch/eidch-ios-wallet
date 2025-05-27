@@ -1,0 +1,41 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IFGp2Z7bUcN2ZBywYXO5poVj3koUUdHGrN0Fn0yKGaJG",
+      "attributes": {
+        "lastName": "Text",
+        "isOver18": "Boolean"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "type": "extend/overlays/data_source/1.0",
+      "capture_base": "IFGp2Z7bUcN2ZBywYXO5poVj3koUUdHGrN0Fn0yKGaJG",
+      "format": "vc+sd-jwt",
+      "attribute_sources": {
+        "lastName": "$.lastName",
+        "isOver18": "$.isOver18"
+      }
+    },
+    {
+      "type": "spec/overlays/label/1.0",
+      "capture_base": "IFGp2Z7bUcN2ZBywYXO5poVj3koUUdHGrN0Fn0yKGaJG",
+      "language": "de-CH",
+      "attribute_labels": {
+        "lastName": "lastName de-CH",
+        "isOver18": "isOver18 de-CH"
+      }
+    },
+    {
+      "type": "spec/overlays/label/1.0",
+      "capture_base": "IFGp2Z7bUcN2ZBywYXO5poVj3koUUdHGrN0Fn0yKGaJG",
+      "language": "en-US",
+      "attribute_labels": {
+        "lastName": "lastName en-US",
+        "isOver18": "isOver18 en-US"
+      }
+    }
+  ]
+}

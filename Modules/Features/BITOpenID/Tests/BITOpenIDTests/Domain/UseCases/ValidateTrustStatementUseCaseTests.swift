@@ -19,11 +19,11 @@ final class ValidateTrustStatementUseCaseTests: XCTestCase {
     Container.shared.trustRegistryRepository.register { self.trustRegistryRepository }
     Container.shared.tokenStatusListValidator.register { self.tokenStatusListValidator }
 
+    trustRegistryRepository.getTrustedDidsReturnValue = trustedDids
     useCase = ValidateTrustStatementUseCase()
   }
 
   func testValidateTrustStatement() async throws {
-    trustRegistryRepository.getTrustedDidsReturnValue = trustedDids
     jwsSignatureValidator.validateJwsDidReturnValue = true
     tokenStatusListValidator.validateIssuerReturnValue = .valid
 
@@ -46,8 +46,39 @@ final class ValidateTrustStatementUseCaseTests: XCTestCase {
     XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
   }
 
+  func testValidateNoSubject() async throws {
+    let result = await useCase.execute(TrustStatementPayload.Mock.noSubject)
+
+    XCTAssertFalse(result)
+    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
+  }
+
+  func testValidateWrongAlgorithm() async throws {
+    let result = await useCase.execute(TrustStatementPayload.Mock.wrongAlgorithm)
+
+    XCTAssertFalse(result)
+    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
+  }
+
+  func testValidateNotYetValidJWT() async throws {
+    jwsSignatureValidator.validateJwsDidReturnValue = true
+    tokenStatusListValidator.validateIssuerReturnValue = .valid
+    let result = await useCase.execute(TrustStatementPayload.Mock.notYetValid)
+
+    XCTAssertFalse(result)
+    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
+  }
+
+  func testValidateExpiredJWT() async throws {
+    jwsSignatureValidator.validateJwsDidReturnValue = true
+    tokenStatusListValidator.validateIssuerReturnValue = .valid
+    let result = await useCase.execute(TrustStatementPayload.Mock.expired)
+
+    XCTAssertFalse(result)
+    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
+  }
+
   func testValidateNotValidSignatureTrustStatement() async throws {
-    trustRegistryRepository.getTrustedDidsReturnValue = trustedDids
     jwsSignatureValidator.validateJwsDidReturnValue = false
 
     let result = await useCase.execute(trustStatementMock)
@@ -59,7 +90,6 @@ final class ValidateTrustStatementUseCaseTests: XCTestCase {
   }
 
   func testValidateValidatorThrowsTrustStatement() async throws {
-    trustRegistryRepository.getTrustedDidsReturnValue = trustedDids
     jwsSignatureValidator.validateJwsDidThrowableError = TestingError.error
 
     let result = await useCase.execute(trustStatementMock)
@@ -72,7 +102,6 @@ final class ValidateTrustStatementUseCaseTests: XCTestCase {
 
   func testValidateTrustStatementWithNotValidStatus() async throws {
     jwsSignatureValidator.validateJwsDidReturnValue = true
-    trustRegistryRepository.getTrustedDidsReturnValue = trustedDids
     tokenStatusListValidator.validateIssuerReturnValue = .revoked
 
     let result = await useCase.execute(trustStatementMock)

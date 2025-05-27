@@ -48,7 +48,7 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isLicensesPresented)
     XCTAssertFalse(viewModel.isVerificationInstructionPresented)
     XCTAssertEqual(viewModel.state, .results)
-    XCTAssertTrue(viewModel.eIDRequestCases.isEmpty)
+    XCTAssertTrue(viewModel.requestCases.isEmpty)
   }
 
   @MainActor
@@ -343,9 +343,9 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.getEIDRequestCases()
 
-    XCTAssertEqual(viewModel.eIDRequestCases.count, mockEIDRequestCases.count)
+    XCTAssertEqual(viewModel.requestCases.count, mockEIDRequestCases.count)
     XCTAssertTrue(getEIDRequestCaseListUseCase.executeCalled)
-    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeReceivedRequestCases, mockEIDRequestCases)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeReceivedRequestCaseIds, mockEIDRequestCases.map(\.id))
   }
 
   @MainActor
@@ -354,7 +354,7 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.getEIDRequestCases()
 
-    XCTAssertTrue(viewModel.eIDRequestCases.isEmpty)
+    XCTAssertTrue(viewModel.requestCases.isEmpty)
     XCTAssertTrue(getEIDRequestCaseListUseCase.executeCalled)
     XCTAssertFalse(updateEIDRequestCaseStatusUseCase.executeCalled)
   }
@@ -365,64 +365,24 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.fetchEIDRequestStatus()
 
-    XCTAssertEqual(viewModel.eIDRequestCases.count, mockEIDRequestCases.count)
+    XCTAssertEqual(viewModel.requestCases.count, mockEIDRequestCases.count)
   }
 
   @MainActor
   func testUpdateRequestCasesStatus_failure() async throws {
+    let mockRequestCases = try mockEIDRequestCases.map { try RequestCaseViewState($0, delegate: viewModel) }
     updateEIDRequestCaseStatusUseCase.executeThrowableError = TestingError.error
 
-    viewModel.eIDRequestCases = mockEIDRequestCases
+    viewModel.requestCases = mockRequestCases
 
     await viewModel.fetchEIDRequestStatus()
 
-    XCTAssertEqual(mockEIDRequestCases, viewModel.eIDRequestCases)
+    XCTAssertEqual(mockRequestCases, viewModel.requestCases)
   }
 
   @MainActor
-  func testOpenWalletPairing() {
-    viewModel.openAutoVerification()
-
-    XCTAssertTrue(mockRouter.didCallAutoVerification)
-  }
-
-  @MainActor
-  func testRequestCaseAction_expiredCase_deletesCase() async throws {
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
-    getEIDRequestCaseListUseCase.executeReturnValue = []
-
-    try await viewModel.requestCaseAction(mockEIDRequestCase)
-
-    XCTAssertEqual(deleteEIDRequestCaseUseCase.executeReceivedRequestCase, mockEIDRequestCase)
-    XCTAssertTrue(getEIDRequestCaseListUseCase.executeCalled)
-    XCTAssertFalse(mockEIDRequestCases.contains(mockEIDRequestCase))
-  }
-
-  @MainActor
-  func testDeleteRequestCase_failure() async throws {
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
-    deleteEIDRequestCaseUseCase.executeThrowableError = TestingError.error
-
-    try await viewModel.requestCaseAction(mockEIDRequestCase)
-
-    XCTAssertFalse(getEIDRequestCaseListUseCase.executeCalled)
-  }
-
-  @MainActor
-  func testDeleteRequestCaseGetRequestCasesList_ThrowsError() async throws {
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
-    getEIDRequestCaseListUseCase.executeThrowableError = TestingError.error
-
-    try await viewModel.requestCaseAction(mockEIDRequestCase)
-
-    XCTAssertEqual(deleteEIDRequestCaseUseCase.executeReceivedRequestCase, mockEIDRequestCase)
-  }
-
-  @MainActor
-  func testRequestCaseAction_ReadyForAVStatus() async throws {
-    let requestCase: EIDRequestCase = .Mock.sampleAVReady
-
-    try await viewModel.requestCaseAction(requestCase)
+  func testDidStartAutoVerification() {
+    viewModel.didStartAutoVerification()
 
     XCTAssertTrue(mockRouter.didCallAutoVerification)
   }
@@ -440,8 +400,7 @@ final class HomeViewModelTests: XCTestCase {
   private var mockRouter: HomeRouterMock!
   private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocolSpy!
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
-  private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueueNoOnlineSessionStart, .Mock.sampleAVReady, .Mock.sampleWithoutState]
-  private var mockEIDRequestCasesFiltered: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueueNoOnlineSessionStart, .Mock.sampleAVReady]
+  private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
   // swiftlint:enable all
 

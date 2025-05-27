@@ -146,7 +146,9 @@ targets:
         GCC_WARN_UNUSED_VARIABLE: YES
         MTL_FAST_MATH: YES
         ENABLE_BITCODE: NO
-                
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+
       configs:
         Dev (debug):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-DEV
@@ -315,7 +317,7 @@ targets:
       - package: BITNavigation
       - package: BITCrypto
       - package: BITAppAuth
-      - package: BITQRScanner
+      - package: BITQRCode
       - package: BITVault
       - package: BITNetworking
       - package: BITDataStore
@@ -501,7 +503,7 @@ targets:
       - package: BITNavigation
       - package: BITCrypto
       - package: BITAppAuth
-      - package: BITQRScanner
+      - package: BITQRCode
       - package: BITVault
       - package: BITNetworking
       - package: BITDataStore
@@ -575,7 +577,7 @@ targets:
       - package: BITNavigation
       - package: BITCrypto
       - package: BITAppAuth
-      - package: BITQRScanner
+      - package: BITQRCode
       - package: BITVault
       - package: BITNetworking
       - package: BITDataStore

@@ -249,6 +249,7 @@ extension TypeMetadata: Mockable {
     static let sampleUrlOca: TypeMetadata = Mocker.decode(fromFile: "typemetadata-url-oca", bundle: .module)
     static let sampleDataOca: TypeMetadata = Mocker.decode(fromFile: "typemetadata-data-oca", bundle: .module)
 
+    static let sampleMultipleDisplays: TypeMetadata = Mocker.decode(fromFile: "typemetadata-multiple-displays", bundle: .module)
     static let sampleWithoutDisplays: TypeMetadata = Mocker.decode(fromFile: "typemetadata-without-displays", bundle: .module)
     static let sampleWithoutOca: TypeMetadata = Mocker.decode(fromFile: "typemetadata-without-oca", bundle: .module)
 

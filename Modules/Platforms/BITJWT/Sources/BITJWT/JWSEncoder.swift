@@ -5,7 +5,7 @@ import JOSESwift
 // MARK: - JWSEncoderProtocol
 
 public protocol JWSEncoderProtocol {
-  func encode<T>(_ value: T, using keyPair: KeyPair) throws -> Data where T: JWTPayload & Encodable
+  func encode(_ value: some JWTPayload & Encodable, using keyPair: KeyPair) throws -> Data
 }
 
 // MARK: - JWSEncoderError

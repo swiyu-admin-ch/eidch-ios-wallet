@@ -5,6 +5,8 @@ import Foundation
 @testable import BITSdJWT
 @testable import BITTestingCore
 
+// swiftlint:disable force_try force_cast force_unwrapping
+
 extension TrustStatementPayload: Mockable {
   struct Mock {
 
@@ -12,18 +14,25 @@ extension TrustStatementPayload: Mockable {
 
     static let validSample: TrustStatement = encodePayload(fromFile: "trust-statement-valid-sample")
     static let validSamplePayload: TrustStatementPayload = decode(fromFile: "trust-statement-valid-sample", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    static let noSubject: TrustStatement = encodePayload(fromFile: "trust-statement-no-subject")
+    static let wrongAlgorithm: TrustStatement = encodePayload(fromFile: "trust-statement-valid-sample", jwtAlgorithm: JWTAlgorithm.ES384)
+    static let notYetValid: TrustStatement = encodePayload(fromFile: "trust-statement-not-yet-valid-sample")
+    static let expired: TrustStatement = encodePayload(fromFile: "trust-statement-expired-sample")
     static let validSampleItalian: TrustStatement = encodePayload(fromFile: "trust-statement-valid-sample-italian")
     static let sdJwtSample: String = getString(fromFile: "trust-statement-sd-jwt", bundle: Bundle.module)
 
-    static func encodePayload(fromFile filename: String, bundle: Bundle = Bundle.module) -> TrustStatement {
+    static func encodePayload(fromFile filename: String, jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256, bundle: Bundle = Bundle.module) -> TrustStatement {
       let trustStatement: TrustStatementPayload = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
-      let rawPayload = getString(fromFile: filename, ofType: "json", bundle: bundle)
-      return createSdJWSMock(from: trustStatement, rawPayload: rawPayload)
+      let payloadData = getData(fromFile: filename, ofType: "json", bundle: bundle)!
+      let payload = try! JSONSerialization.jsonObject(with: payloadData) as! [String: Any]
+      return createSdJWSMock(from: trustStatement, rawPayload: payload, jwtAlgorithm: jwtAlgorithm)
     }
 
-    static func createSdJWSMock(from trustStatement: TrustStatementPayload, rawPayload: String? = nil) -> TrustStatement {
-      SdJWS(payload: trustStatement, rawPayload: rawPayload ?? "rawPayload", header: JWSHeader(algorithm: JWTAlgorithm.ES256), raw: "raw", rawJWS: "rawJWS", disclosableClaims: [])
+    static func createSdJWSMock(from trustStatement: TrustStatementPayload, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> TrustStatement {
+      SdJWS(payload: trustStatement, rawPayload: rawPayload, header: JWSHeader(algorithm: jwtAlgorithm), raw: "raw", rawJWS: "rawJWS", disclosableClaims: [])
     }
   }
 }
+// swiftlint:enable all
+
 #endif

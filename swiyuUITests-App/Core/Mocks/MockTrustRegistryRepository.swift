@@ -7,7 +7,7 @@ struct MockTrustRegistryRepository: TrustRegistryRepositoryProtocol {
     "https://example.com"
   }
 
-  func getTrustedDids() throws -> [String] {
+  func getTrustedDids() -> [String] {
     ["did:tdw:example"]
   }
 

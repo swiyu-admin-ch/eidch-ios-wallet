@@ -36,8 +36,6 @@ public struct FooterView<Content: View>: View {
 
   // MARK: Internal
 
-  @Environment(\.horizontalSizeClass) var horizontalSizeClass
-  @Environment(\.verticalSizeClass) var verticalSizeClass
   @Environment(\.sizeCategory) var sizeCategory
 
   let content: () -> Content

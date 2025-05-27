@@ -1,6 +1,6 @@
 import BITCrypto
-import BITSdJWT
 import Factory
+import Foundation
 import Spyable
 
 // MARK: - VcSchemaServiceError
@@ -14,7 +14,6 @@ enum VcSchemaServiceError: Error {
 @Spyable
 public protocol VcSchemaServiceProtocol {
   func fetch(for typeMetadata: TypeMetadata) async throws -> VcSchema?
-  func validate(_ vcSchema: VcSchema, with vcSdJwt: VcSdJwt) -> Bool
 }
 
 // MARK: - VcSchemaService
@@ -41,22 +40,9 @@ struct VcSchemaService: VcSchemaServiceProtocol {
     return vcSchema
   }
 
-  func validate(_ vcSchema: VcSchema, with vcSdJwt: VcSdJwt) -> Bool {
-    do {
-      guard let data = vcSdJwt.rawPayload.data(using: .utf8) else {
-        return false
-      }
-
-      return try jsonSchemaValidator.validate(data, with: vcSchema)
-    } catch {
-      return false
-    }
-  }
-
   // MARK: Private
 
   @Injected(\.sriValidator) private var sriValidator: SRIValidatorProtocol
-  @Injected(\.jsonSchemaValidator) private var jsonSchemaValidator: JsonSchema
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
 
 }

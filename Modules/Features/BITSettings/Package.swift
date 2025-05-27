@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -22,7 +22,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITAnalytics"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
-    .package(url: "https://github.com/exyte/PopupView", exact: "3.0.0"),
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.0.2 available
   ],
   targets: [
     .target(

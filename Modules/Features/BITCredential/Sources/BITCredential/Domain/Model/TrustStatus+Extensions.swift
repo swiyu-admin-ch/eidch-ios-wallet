@@ -15,8 +15,8 @@ extension TrustStatus {
 
   public var description: String {
     switch self {
-    case .verified: L10n.tkReceiveIssuerTrusted
-    case .unverified: L10n.tkReceiveIssuerNotTrusted
+    case .verified: L10n.tkIssuerTrusted
+    case .unverified: L10n.tkIssuerNotTrusted
     }
   }
 

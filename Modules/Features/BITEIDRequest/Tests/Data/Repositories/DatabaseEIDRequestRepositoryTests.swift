@@ -53,7 +53,7 @@ final class DatabaseEIDRequestRepositoryTests: XCTestCase {
   func testDeleteEIDRequestCaseSuccess() async throws {
     let expired = try await repository.create(eIDRequestCase: .Mock.sampleExpired)
 
-    try await repository.delete(expired)
+    try await repository.delete(expired.id)
 
     do {
       _ = try await repository.get(id: expired.id)

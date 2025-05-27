@@ -15,6 +15,9 @@ protocol EIDRequestInternalRoutes: ClosableRoutes, ExternalRoutes {
   func cameraPermission()
   func mrzScanner()
   func queueInformation(_ onlineSessionStartDate: Date)
+  func legalRepresentant()
+  func legalRepresentantConsent(caseId: String)
+  func legalRepresentantQRCode(caseId: String)
 }
 
 extension EIDRequestInternalRoutes where Self: RouterProtocol {
@@ -41,6 +44,21 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
 
   func queueInformation(_ onlineSessionStartDate: Date) {
     let viewController = HideBackButtonHostingController(rootView: QueueInformationView(router: self, onlineSessionStartDate: onlineSessionStartDate))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func legalRepresentant() {
+    let viewController = UIHostingController(rootView: LegalRepresentantView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func legalRepresentantConsent(caseId: String) {
+    let viewController = UIHostingController(rootView: LegalRepresentantConsentView(router: self, caseId: caseId))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func legalRepresentantQRCode(caseId: String) {
+    let viewController = UIHostingController(rootView: LegalRepresentantQRCodeView(router: self, caseId: caseId))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 }

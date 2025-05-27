@@ -27,7 +27,7 @@ extension Array where Element: DisplayLocalizable {
             return false
           }
 
-          return locale.starts(with: "\(preferredLanguageCode)-")
+          return locale.starts(with: "\(preferredLanguageCode)")
         })
       {
         return requestedDisplay
@@ -40,7 +40,7 @@ extension Array where Element: DisplayLocalizable {
           return false
         }
 
-        return locale.starts(with: "\(UserLanguageCode.defaultAppLanguageCode)-")
+        return locale.starts(with: "\(UserLanguageCode.defaultAppLanguageCode)")
       })
     {
       return defaultAppLanguageDisplay

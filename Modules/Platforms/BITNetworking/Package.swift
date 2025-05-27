@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -16,7 +16,7 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../BITCore"),
-    .package(url: "https://github.com/Moya/Moya.git", from: "15.0.0"),
+    .package(url: "https://github.com/Moya/Moya.git", from: "15.0.3"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
   ],
   targets: [

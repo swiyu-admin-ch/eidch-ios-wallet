@@ -1,7 +1,11 @@
 only_rules:
   - closure_spacing
   - colon
+  - comment_spacing
+  - closure_parameter_position
+  - custom_rules
   - empty_enum_arguments
+  - explicit_init
   - fatal_error_message
   - force_cast
   - force_try
@@ -12,17 +16,19 @@ only_rules:
   - legacy_constructor
   - legacy_nsgeometry_functions
   - operator_usage_whitespace
+  - overriden_super_call
   - redundant_string_enum_value
   - redundant_void_return
   - return_arrow_whitespace
+  - superfluous_else
   - trailing_newline
   - type_name
   - unused_closure_parameter
   - unused_optional_binding
   - vertical_whitespace
   - void_return
-  - custom_rules
-  - explicit_init
+  - weak_delegate
+  - yoda_condition
 
 excluded:
   - Carthage
@@ -39,12 +45,95 @@ indentation: 2
 
 type_name:   
   max_length:
-      warning: 90
-      error: 100 
+    warning: 90
+    error: 100 
   min_length:
-      warning: 3
+    warning: 3
 
 custom_rules:
+
+### Clean Architecture enforcements
+
+  viewmodel_in_presentation_folder:
+    name: "ViewModels must be in Presentation folder"
+    included: ".*/.*ViewModel\\.swift$"  
+    excluded: ".*/Presentation/.*ViewModel\\.swift$"
+    regex: ".*" 
+    message: "ViewModel files should be located in the Presentation directory or its subdirectories"
+    severity: error
+  
+  repository_protocol_in_domain_folder:
+    name: "Repository protocol must be in Domain folder"
+    included: ".*RepositoryProtocol\\.swift$"
+    excluded: ".*/Domain/.*RepositoryProtocol\\.swift$"
+    regex: ".*"
+    message: "Repository protocols must be declared in the Domain layer"
+    severity: error
+
+  usecase_in_domain_folder:
+    name: "A UseCase must be in Domain folder"
+    included: ".*UseCase\\.swift$"
+    excluded: "(.*/Domain/.*UseCase\\.swift$|.*/swiyuUITests-App)"
+    regex: ".*"
+    message: "UseCase implementations must be located in the Domain layer"
+    severity: error
+
+  service_in_domain_folder:
+    name: "A Service must be in Domain folder"
+    included: ".*Service\\.swift$"
+    excluded: "(.*/Domain/.*Service\\.swift$|.*/Services|.*/BITNetworking|.*/swiyuUITests-App)"
+    regex: ".*"
+    message: "Service implementations must be declared in the Domain layer"
+    severity: error
+
+  views_must_not_reference_usecases:
+    name: "Views must not reference UseCases"
+    included: ".*View\\.swift$"
+    regex: '\\b(let|var)\\b[^\\n]*?(?i:usecase)'
+    message: "Views must not hold references to UseCases"
+    severity: error
+
+  views_must_not_reference_repositories:
+    name: "Views must not reference Repositories"
+    included: ".*View\\.swift$"
+    regex: '\\b(let|var)\\b[^\\n]*?(?i:repository)'
+    message: "Views must not hold references to Repositories"
+    severity: error
+
+  viewmodels_must_not_reference_repository:
+    included: ".*ViewModel\\.swift"
+    name: "ViewModels must not reference repositories"
+    regex: '\b(let|var)\b[^\n]*?(?i:repository)'
+    message: "ViewModels must not hold references to repositories"
+    severity: error
+
+  usecases_must_not_reference_viewmodels:
+    included: ".*UseCase\\.swift"
+    name: "UseCases must not reference ViewModels"
+    regex: '\b(let|var)\b[^\n]*?(?i:viewmodel)'
+    message: "UseCases must not hold references to ViewModels"
+    severity: error
+
+### Modules (SPM)
+
+  module_platform_dependencies:
+    name: "Module Platform cannot contain feature dependencies"
+    included: ".*/Platforms/.*/Package\\.swift$"
+    regex: ".*/Features/"
+    message: "Platform modules must not import feature modules"
+    severity: error
+
+  swift_tool_version_in_spm:
+    name: "SPM Swift version must be aligned to project requirements"
+    included: ".*Package\\.swift$"
+    regex: "swift-tools-version: (?!5\\.10)"
+    message: "SPM Swift version must be aligned to project requirements"
+    match_kinds: 
+      - comment
+    severity: error
+
+### Miscellaneous
+
   init_with_name:
     name: "Init with full object name"
     message: "Prefer let object = Class() instead of let object: Class = .init()"
@@ -54,15 +143,25 @@ custom_rules:
       - identifier
       - keyword
     severity: warning
+
   no_objcMembers:
     name: "@objcMembers"
     regex: "@objcMembers"
     message: "Explicitly use @objc on each member you want to expose to Objective-C"
     severity: error
+
   no_direct_standard_out_logs:
     name: "Writing log messages directly to standard out is disallowed"
     regex: "(\\bprint|\\bdebugPrint|\\bdump|Swift\\.print|Swift\\.debugPrint|Swift\\.dump)\\s*\\("
     match_kinds:
-    - identifier
+      - identifier
     message: "Don't commit `print(…)`, `debugPrint(…)`, or `dump(…)` as they write to standard out in release. Either log to a dedicated logging system or silence this warning in debug-only scenarios explicitly using `// swiftlint:disable:next no_direct_standard_out_logs`"
     severity: warning
+
+  # avoid_service_locator_usage:
+  #   name: "Avoid Service Locator (Container.shared)"
+  #   included: ".*\\.swift"
+  #   excluded: "(.*Container\\.swift$|.*Tests\\.swift$|AppDelegate.*\\.swift$|.*View\\.swift$|.*Module\\.swift$)"
+  #   regex: "Container\\.shared\\."
+  #   message: "Avoid using the Service Locator pattern (Container.shared). Prefer explicit dependency injection instead."
+  #   severity: warning

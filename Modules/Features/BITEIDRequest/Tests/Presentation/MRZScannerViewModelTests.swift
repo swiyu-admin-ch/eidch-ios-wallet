@@ -1,3 +1,4 @@
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import XCTest
 @testable import BITEIDRequest
@@ -20,89 +21,61 @@ class MRZScannerViewModelTests: XCTestCase {
   func testInitialState() {
     XCTAssertFalse(viewModel.isErrorPresented)
     XCTAssertNil(viewModel.errorDescription)
-    XCTAssertFalse(viewModel.hasLegalRepresentant)
   }
 
-  func testSubmit_InQueueState_success() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleInQueue
-
-    submitEIDRequestUseCase.executeReturnValue = mockEIDRequestCase
+  func testSubmit_inQueueState_withLegalRepresentant() async throws {
+    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, mockEidRequestStatus)
 
     await viewModel.submit(payload)
 
-    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedPayload, payload)
-    XCTAssertEqual(router.queueInformationArgument, mockEIDRequestCase.state?.onlineSessionStartOpenAt)
+    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedMrz, payload.mrz)
+    XCTAssertEqual(router.legalRepresentantConsentArgument, mockEidRequestCase.id)
     XCTAssertFalse(viewModel.isErrorPresented)
     XCTAssertNil(viewModel.errorDescription)
   }
 
-  func testSubmit_ReadyState_success() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleAVReady
-
-    submitEIDRequestUseCase.executeReturnValue = mockEIDRequestCase
+  func testSubmit_inQueueState_withoutLegalRepresentant() async throws {
+    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, mockEidRequestStatusWithoutLegalRepresentant)
 
     await viewModel.submit(payload)
 
-    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedPayload, payload)
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedMrz, payload.mrz)
+    XCTAssertEqual(router.queueInformationArgument, mockEidRequestCase.state?.onlineSessionStartOpenAt)
     XCTAssertFalse(viewModel.isErrorPresented)
     XCTAssertNil(viewModel.errorDescription)
   }
 
-  func testSubmit_NoRequestState() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleWithoutState
-
-    submitEIDRequestUseCase.executeReturnValue = mockEIDRequestCase
+  func testSubmit_inQueueState_withLegalRepresentantVerified() async throws {
+    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, .Mock.inQueueWithVerifiedLegalRepresentant)
 
     await viewModel.submit(payload)
 
-    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedPayload, payload)
-    XCTAssertTrue(router.closeCalled)
-    XCTAssertFalse(viewModel.isErrorPresented)
-    XCTAssertNil(viewModel.errorDescription)
+    XCTAssertFalse(router.legalRepresentantCalled)
   }
 
-  func testSubmit_InQueue_WithoutOnlineSessionStartOpenAt() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleInQueueNoOnlineSessionStart
-
-    submitEIDRequestUseCase.executeReturnValue = mockEIDRequestCase
-
-    await viewModel.submit(payload)
-
-    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedPayload, payload)
-    XCTAssertTrue(router.closeCalled)
-    XCTAssertFalse(viewModel.isErrorPresented)
-    XCTAssertNil(viewModel.errorDescription)
-  }
-
-  func testSubmit_error() async throws {
-    guard let payload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
-      fatalError("Failed to create mock EIDRequestPayload")
-    }
-
+  func testSubmit_useCaseThrowsError() async throws {
     submitEIDRequestUseCase.executeThrowableError = TestingError.error
 
     await viewModel.submit(payload)
 
-    XCTAssertNil(router.queueInformationArgument)
     XCTAssertTrue(viewModel.isErrorPresented)
     XCTAssertNotNil(viewModel.errorDescription)
+  }
+
+  func testSubmit_useCaseReturnsNoStatus() async throws {
+    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, nil)
+
+    await viewModel.submit(payload)
+
+    XCTAssertTrue(router.closeCalled)
+  }
+
+  func testSubmit_submitRequestReturnsOtherStateThanInQueue() async throws {
+    submitEIDRequestUseCase.executeReturnValue = (.Mock.sampleAVReady, mockEidRequestStatusWithoutLegalRepresentant)
+
+    await viewModel.submit(payload)
+
+    XCTAssertTrue(router.closeCalled)
   }
 
   @MainActor
@@ -118,10 +91,14 @@ class MRZScannerViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
+  private let payload = MRZData.Mock.array.first!.payload
+  private let mockEidRequestCase: EIDRequestCase = .Mock.sampleInQueue
+  private let mockEidRequestStatus: EIDRequestStatus = .Mock.inQueueSample
+  private let mockEidRequestStatusWithoutLegalRepresentant: EIDRequestStatus = .Mock.inQueueWithoutLegalRepresentantSample
+
   private var router: MockEIDRequestRouter!
   private var viewModel: MRZScannerViewModel!
   private var submitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocolSpy!
-  // swiftlint:enable all
-
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

@@ -1,9 +1,8 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
-#warning("Remove OpenID reference when DisplayLocalizable is refactor out of BITOpenID")
 let package = Package(
   name: "BITCredentialShared",
   defaultLocalization: "en",
@@ -18,9 +17,10 @@ let package = Package(
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITVault"),
+    .package(path: "../../Platforms/BITL10n"),
+    .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITAnyCredentialFormat"),
     .package(path: "../BITEntities"),
-    .package(path: "../BITOpenID"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
   ],
   targets: [
@@ -30,7 +30,8 @@ let package = Package(
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITVault", package: "BITVault"),
-        .product(name: "BITOpenID", package: "BITOpenID"),
+        .product(name: "BITL10n", package: "BITL10n"),
+        .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "BITAnyCredentialFormat", package: "BITAnyCredentialFormat"),
         .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "Factory", package: "Factory"),
@@ -43,6 +44,7 @@ let package = Package(
       name: "BITCredentialSharedTests",
       dependencies: [
         "BITCredentialShared",
+        .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
       ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),

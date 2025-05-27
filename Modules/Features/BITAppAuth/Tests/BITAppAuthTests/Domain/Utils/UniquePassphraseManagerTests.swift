@@ -35,6 +35,13 @@ final class UniquePassphraseManagerTests: XCTestCase {
     try testSave(withBiometrics: false)
   }
 
+  func testSaveWithAuthMethod() throws {
+    let uniquePassphrase = Data()
+    let context: LAContextProtocol = LAContextProtocolSpy()
+    try uniquePassphraseManager.save(uniquePassphrase: uniquePassphrase, for: .biometric, context: context)
+    XCTAssertTrue(spyUniquePassphraseRepository.saveUniquePassphraseForAuthMethodInContextCalled)
+  }
+
   func testGetUniquePassphraseForAppPin() throws {
     try testGetUniquePassphrase(authMethod: .appPin)
   }

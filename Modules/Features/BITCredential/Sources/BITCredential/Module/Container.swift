@@ -15,8 +15,24 @@ extension Container {
 
 extension Container {
 
+  // MARK: Public
+
   public var vaultProtection: Factory<CFString> {
     self { kSecAttrAccessibleWhenUnlockedThisDeviceOnly }
+  }
+
+  // MARK: Internal
+
+  var credentialGenerator: Factory<CredentialGeneratorProtocol> {
+    self { CredentialGenerator() }
+  }
+
+  var metadataCredentialGenerator: Factory<MetadataCredentialGeneratorProtocol> {
+    self { MetadataCredentialGenerator() }
+  }
+
+  var ocaCredentialGenerator: Factory<OcaCredentialGeneratorProtocol> {
+    self { OcaCredentialGenerator() }
   }
 
 }
@@ -48,10 +64,6 @@ extension Container {
 // MARK: - Use cases
 
 extension Container {
-
-  public var saveCredentialUseCase: Factory<SaveCredentialUseCaseProtocol> {
-    self { SaveCredentialUseCase() }
-  }
 
   public var getCredentialListUseCase: Factory<GetCredentialListUseCaseProtocol> {
     self { GetCredentialListUseCase() }

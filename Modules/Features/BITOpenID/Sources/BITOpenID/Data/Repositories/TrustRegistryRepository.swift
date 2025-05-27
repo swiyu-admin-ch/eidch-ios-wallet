@@ -1,5 +1,16 @@
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - TrustRegistryRepositoryProtocol
+
+@Spyable
+public protocol TrustRegistryRepositoryProtocol {
+  func getTrustRegistryDomain(for baseRegistryDomain: String) -> String?
+  func getTrustedDids() -> [String]
+}
+
+// MARK: - TrustRegistryRepository
 
 struct TrustRegistryRepository: TrustRegistryRepositoryProtocol {
 

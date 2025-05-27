@@ -15,16 +15,13 @@ struct MRZScannerView: View {
   var body: some View {
     ZStack(alignment: .center) {
       List {
-        Section {
-          Toggle("Haben Sie einen Beistand?", isOn: $viewModel.hasLegalRepresentant)
-            .listSectionSeparator(.hidden, edges: .top)
-        }
-
         ForEach(MRZData.Mock.array) { mrzData in
-          Button(mrzData.displayName) {
+          AsyncButton {
             Task {
               await viewModel.submit(mrzData.payload)
             }
+          } label: {
+            Text(mrzData.displayName)
           }
           .buttonStyle(.filledPrimary)
           .controlSize(.large)

@@ -1,0 +1,8 @@
+{
+  "state": "IN_QUEUING",
+  "queueInformation": {
+    "positionInQueue": 3978,
+    "totalInQueue": 5789,
+    "expectedOnlineSessionStart": "2024-03-24T11:55:23Z"
+  }
+}

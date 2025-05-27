@@ -3,7 +3,6 @@ import BITAnyCredentialFormat
 import BITCrypto
 import BITJWT
 import BITNetworking
-import BITOca
 import Factory
 import Foundation
 import Spyable
@@ -26,7 +25,7 @@ public enum FetchAnyVerifiableCredentialError: Error {
 
 // MARK: - FetchAnyVerifiableCredentialUseCaseProtocol
 
-public typealias CredentialBundle = (metadataWrapper: CredentialMetadataWrapper, anyCredential: AnyCredential, keyPair: KeyPair?, ocaBundle: RawOcaBundle?)
+public typealias CredentialBundle = (metadataWrapper: CredentialMetadataWrapper, anyCredential: AnyCredential, keyPair: KeyPair?)
 
 // MARK: - FetchAnyVerifiableCredentialUseCaseProtocol
 
@@ -44,7 +43,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
   func execute(from offer: CredentialOffer) async throws -> CredentialBundle {
     let metadataWrapper = try await fetchMetadata(from: offer)
     let credentialEndpoint = try getCredentialEndpoint(from: metadataWrapper)
-    let (credentialFormat, selectedCredential) = try extractCredentialData(from: metadataWrapper)
 
     let keyPair = try generateHolderBindingKeyPair(from: metadataWrapper)
 
@@ -56,8 +54,8 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       credentialOffer: offer)
 
     let context = FetchCredentialContext(
-      format: credentialFormat,
-      selectedCredential: selectedCredential,
+      format: metadataWrapper.selectedCredential.format,
+      selectedCredential: metadataWrapper.selectedCredential,
       credentialOffers: offer.credentialConfigurationIds,
       credentialIssuer: metadataWrapper.credentialMetadata.credentialIssuer,
       keyPair: keyPair,
@@ -65,7 +63,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       credentialEndpoint: credentialEndpoint)
 
     let anyCredential = try await fetchAnyCredentialUseCase.execute(for: context)
-    return (metadataWrapper, anyCredential.credential, keyPair, anyCredential.ocaBundle)
+    return (metadataWrapper, anyCredential, keyPair)
   }
 
   // MARK: Private
@@ -95,16 +93,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     return issuerUrl
   }
 
-  private func extractCredentialData(from metadataWrapper: CredentialMetadataWrapper) throws -> (String, any CredentialMetadata.AnyCredentialConfigurationSupported) {
-    guard
-      let format = metadataWrapper.selectedCredential?.format,
-      let credential = metadataWrapper.selectedCredential else
-    {
-      throw FetchAnyVerifiableCredentialError.selectedCredentialNotFound
-    }
-    return (format, credential)
-  }
-
   private func fetchMetadata(from offer: CredentialOffer) async throws -> CredentialMetadataWrapper {
     let issuerUrl = try getIssuerUrl(from: offer)
 
@@ -113,7 +101,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     }
 
     let metadata = try await fetchMetadataUseCase.execute(from: issuerUrl)
-    return CredentialMetadataWrapper(selectedCredentialSupportedId: selectedCredentialId, credentialMetadata: metadata)
+    return try CredentialMetadataWrapper(selectedCredentialSupportedId: selectedCredentialId, credentialMetadata: metadata)
   }
 
   private func fetchAccessToken(considering accessToken: AccessToken?, tokenEndpoint: URL, credentialOffer: CredentialOffer) async throws -> AccessToken {
@@ -129,7 +117,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
   }
 
   private func generateHolderBindingKeyPair(from metadataWrapper: CredentialMetadataWrapper) throws -> KeyPair? {
-    guard let supportedAlgorithms = metadataWrapper.selectedCredential?.proofTypesSupported.first?.algorithms else {
+    guard let supportedAlgorithms = metadataWrapper.selectedCredential.proofTypesSupported.first?.algorithms else {
       return nil
     }
 

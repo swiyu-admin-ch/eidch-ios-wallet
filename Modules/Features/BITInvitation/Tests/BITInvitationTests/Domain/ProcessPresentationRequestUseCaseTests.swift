@@ -93,7 +93,7 @@ final class ProcessPresentationRequestUseCaseTests: XCTestCase {
     do {
       _ = try await useCase.execute(url: url)
       XCTFail("Should have thrown an error")
-    } catch FetchRequestObjectError.invalidPresentationInvitation {
+    } catch FetchRequestObjectError.invalid {
       XCTAssertTrue(fetchRequestObjectUseCase.executeCalled)
       XCTAssertTrue(validateRequestObjectUseCase.executeCalled)
       XCTAssertTrue(denyPresentationUseCase.executeRequestObjectErrorCalled)

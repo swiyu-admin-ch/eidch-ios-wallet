@@ -1,16 +1,11 @@
 import Factory
-import Spyable
 import XCTest
-@testable import BITAnyCredentialFormat
-@testable import BITAnyCredentialFormatMocks
 @testable import BITCrypto
 @testable import BITJWT
-@testable import BITLocalAuthentication
 @testable import BITOpenID
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
-@testable import BITVault
 
 // swiftlint: disable force_unwrapping implicitly_unwrapped_optional
 
@@ -31,7 +26,6 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     Container.shared.jwsEncoder.register { self.jwsEncoderMock }
 
     jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
-    jwsEncoderMock.expectedKeyPair = mockKeyPair
     sha256HasherSpy.hashReturnValue = Data()
 
     generator = VcSdJwtVpTokenGenerator()
@@ -106,6 +100,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
       XCTAssertEqual(2 + nbOfDisclosures, disclosures.count)
       XCTAssertTrue(sha256HasherSpy.hashCalled)
       XCTAssertEqual(String(disclosures.last ?? ""), Self.mockJwtString)
+      XCTAssertEqual(jwsEncoderMock.receivedKeyPair, mockKeyPair)
     } else {
       XCTAssertEqual(1 + nbOfDisclosures, disclosures.count)
       XCTAssertFalse(sha256HasherSpy.hashCalled)

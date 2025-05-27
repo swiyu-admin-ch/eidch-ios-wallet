@@ -26,6 +26,7 @@ extension CredentialEntity {
     format = credential.format
     issuer = credential.issuer
     validFrom = credential.validFrom
+    validUntil = credential.validUntil
     createdAt = credential.createdAt
     updatedAt = credential.updatedAt
   }

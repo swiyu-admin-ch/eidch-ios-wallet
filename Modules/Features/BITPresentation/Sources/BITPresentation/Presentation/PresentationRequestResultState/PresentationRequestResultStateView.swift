@@ -23,12 +23,10 @@ struct PresentationRequestResultStateView: View {
 
   var body: some View {
     VStack {
-      if let verifierDisplay = viewModel.verifierDisplay {
-        ActorHeaderView(verifier: verifierDisplay)
-          .padding(.horizontal, .x6)
-          .padding(.top, .x3)
-          .padding(.bottom, .x4)
-      }
+      ActorHeaderView(verifier: viewModel.verifierDisplay)
+        .padding(.horizontal, .x6)
+        .padding(.top, .x3)
+        .padding(.bottom, .x4)
       sheetView()
     }
     .applyScrollViewIfNeeded()
@@ -89,15 +87,15 @@ struct PresentationRequestResultStateView: View {
     case .deny:
       denyView()
     case .cancelled:
-      errorMessages(title: L10n.tkPresentCanceledverificationTitle, subtitle: L10n.tkPresentCanceledverificationSubtitle)
+      errorMessages(title: L10n.tkPresentResultCanceledVerificationPrimary, subtitle: L10n.tkPresentResultCanceledVerificationSecondary)
     case .error:
-      errorMessages(title: L10n.tkPresentErrorTitle, subtitle: L10n.tkPresentErrorSubtitle)
+      errorMessages(title: L10n.tkPresentResultErrorSecondary, subtitle: L10n.tkPresentResultErrorSecondary)
     }
   }
 
   @ViewBuilder
   private func successView(claims: [CredentialClaim]) -> some View {
-    Text(L10n.tkPresentAcceptTitle)
+    Text(L10n.tkPresentResultSuccessPrimary)
       .multilineTextAlignment(.center)
       .font(.custom.body)
       .foregroundStyle(ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
@@ -161,7 +159,7 @@ struct PresentationRequestResultStateView: View {
 
   @ViewBuilder
   private func denyView() -> some View {
-    Text(L10n.tkPresentDeclineTitle)
+    Text(L10n.tkPresentResultDeclinedPrimary)
       .multilineTextAlignment(.center)
       .font(.custom.body)
       .foregroundStyle(ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
@@ -215,7 +213,7 @@ struct PresentationRequestResultStateView: View {
     ButtonStackView {
       let buttonSize = sizeCategory.isAccessibilityCategory ? .infinity : (min(availableWidth, 450) - .x2) / 2
       Button { viewModel.retry() } label: {
-        Text(L10n.tkGlobalRepeatPrimarybutton)
+        Text(L10n.tkPresentResultErrorButtonRetry)
           .frame(maxWidth: buttonSize)
       }
       .buttonStyle(.bezeled)
@@ -265,10 +263,10 @@ extension PresentationRequestResultState {
     case .deny,
          .invalidCredential,
          .success:
-      L10n.tkPresentConfirmAlt
+      L10n.tkPresentResultConfirmAlt
     case .cancelled,
          .error:
-      L10n.tkPresentWarningAlt
+      L10n.tkPresentResultWarningAlt
     }
   }
 }

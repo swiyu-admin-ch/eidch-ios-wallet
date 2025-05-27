@@ -1,4 +1,6 @@
+import BITAnyCredentialFormat
 import BITCredentialShared
+import BITOca
 import BITOpenID
 import Factory
 import Foundation
@@ -14,19 +16,33 @@ public protocol FetchCredentialUseCaseProtocol {
 // MARK: - FetchCredentialUseCase
 
 struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
+
+  // MARK: Internal
+
   func execute(from offer: CredentialOffer) async throws -> (Credential, TrustStatement?) {
-    let (metadataWrapper, credential, keyPair, ocaBundle) = try await fetchAnyVerifiableCredentialUseCase.execute(from: offer)
+    let (metadataWrapper, anyCredential, keyPair) = try await fetchAnyVerifiableCredentialUseCase.execute(from: offer)
 
+    var ocaBundle: OcaBundle? = nil
+    if isOCABundleFetchFeatureEnabled {
+      ocaBundle = try await fetchVcMetadataUseCase.execute(for: anyCredential)
+    }
 
-    let savedCredential = try await saveCredentialUseCase.execute(credential: credential, keyPair: keyPair, metadataWrapper: metadataWrapper)
+    let credential = try credentialGenerator.generate(for: anyCredential, keyPair: keyPair, ocaBundle: ocaBundle, metadataWrapper: metadataWrapper)
+    let savedCredential = try await credentialRepository.create(credential: credential)
     let updatedCredential = (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
-    let trustStatement = try? await fetchTrustStatementUseCase.execute(issuer: credential.issuer)
+    let trustStatement = try? await fetchTrustStatementUseCase.execute(issuer: anyCredential.issuer)
 
     return (updatedCredential, trustStatement)
   }
 
+  // MARK: Private
+
+  @Injected(\.isOCABundleFetchFeatureEnabled) private var isOCABundleFetchFeatureEnabled: Bool
+
   @Injected(\.fetchAnyVerifiableCredentialUseCase) private var fetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseProtocol
-  @Injected(\.saveCredentialUseCase) private var saveCredentialUseCase: SaveCredentialUseCaseProtocol
+  @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol
+  @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
+  @Injected(\.databaseCredentialRepository) private var credentialRepository: CredentialRepositoryProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.fetchTrustStatementUseCase) private var fetchTrustStatementUseCase: FetchTrustStatementUseCaseProtocol
 }

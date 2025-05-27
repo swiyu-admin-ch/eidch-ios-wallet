@@ -10,6 +10,7 @@ import Moya
 
 enum OpenIdRepositoryError: Error {
   case presentationProcessClosed
+  case authorizationRequestObjectNotFound
 }
 
 // MARK: - OpenIDRepository
@@ -60,6 +61,8 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
       return try await networkService.request(OpenIDEndpoint.requestObject(url: url)).data
     } catch let error as NetworkError where error.status == .gone {
       throw OpenIdRepositoryError.presentationProcessClosed
+    } catch let error as NetworkError where error.status == .notFound {
+      throw OpenIdRepositoryError.authorizationRequestObjectNotFound
     }
   }
 

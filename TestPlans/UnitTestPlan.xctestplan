@@ -85,9 +85,9 @@
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITQRScanner",
-        "identifier" : "BITQRScannerTests",
-        "name" : "BITQRScannerTests"
+        "containerPath" : "container:Modules\/Platforms\/BITQRCode",
+        "identifier" : "BITQRCodeTests",
+        "name" : "BITQRCodeTests"
       }
     },
     {

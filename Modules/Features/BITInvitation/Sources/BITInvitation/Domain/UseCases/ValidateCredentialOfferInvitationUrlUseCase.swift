@@ -24,9 +24,8 @@ public struct ValidateCredentialOfferInvitationUrlUseCase: ValidateCredentialOff
     guard let parameters = url.queryParameters else { throw ValidateCredentialOfferInvitationUrlError.missingUrlParameters }
     if let credentialEncodedParameter = parameters["credential_offer"] {
       return try createCredentialOffer(from: credentialEncodedParameter)
-    } else {
-      throw ValidateCredentialOfferInvitationUrlError.missingExpectedOfferParameter
     }
+    throw ValidateCredentialOfferInvitationUrlError.missingExpectedOfferParameter
   }
 
   // MARK: Private

@@ -11,7 +11,7 @@ open class SdJWS<T: Codable & Equatable>: JWSValidatable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(payload: T, rawPayload: String, header: JWSHeader, raw: String, rawJWS: String, disclosableClaims: [SdJWTClaim]) {
+  public init(payload: T, rawPayload: [String: Any], header: JWSHeader, raw: String, rawJWS: String, disclosableClaims: [SdJWTClaim]) {
     self.payload = payload
     self.rawPayload = rawPayload
     self.header = header
@@ -26,7 +26,7 @@ open class SdJWS<T: Codable & Equatable>: JWSValidatable, Equatable {
   public let payload: T
 
   /// The raw payload json after resolving the digests using the disclosures. This includes all JWT claims (registered, public & private) and disclosable claims.
-  public let rawPayload: String
+  public let rawPayload: [String: Any]
 
   /// The header of the JWS
   public let header: JWSHeader
@@ -54,7 +54,7 @@ extension SdJWS {
 
   public static func == (lhs: SdJWS, rhs: SdJWS) -> Bool {
     lhs.payload == rhs.payload &&
-      lhs.rawPayload == rhs.rawPayload &&
+      lhs.rawPayload.keys == rhs.rawPayload.keys &&
       lhs.header == rhs.header &&
       lhs.rawJWS == rhs.rawJWS &&
       lhs.raw == rhs.raw &&

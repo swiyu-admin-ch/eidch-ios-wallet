@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -21,6 +21,7 @@ let package = Package(
     .package(path: "../../Platforms/BITNavigation"),
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITNetworking"),
+    .package(path: "../../Platforms/BITQRCode"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
@@ -31,6 +32,7 @@ let package = Package(
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "Factory", package: "Factory"),
+        .product(name: "BITQRCode", package: "BITQRCode"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITNavigation", package: "BITNavigation"),
         .product(name: "BITTheming", package: "BITTheming"),

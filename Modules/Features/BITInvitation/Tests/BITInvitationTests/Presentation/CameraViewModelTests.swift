@@ -4,6 +4,8 @@ import Factory
 import Foundation
 import Spyable
 import XCTest
+@testable import BITAnalytics
+@testable import BITAnalyticsMocks
 @testable import BITAnyCredentialFormat
 @testable import BITAnyCredentialFormatMocks
 @testable import BITCredential
@@ -29,6 +31,12 @@ final class CameraViewModelTests: XCTestCase {
     Container.shared.getCompatibleCredentialsUseCase.register { self.getCompatibleCredentialsUseCase }
     Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
     Container.shared.getCredentialsCountUseCase.register { self.getCredentialsCountUseCase }
+
+    analyticsProvider = MockProvider()
+    analytics = Analytics()
+    analytics.register(analyticsProvider)
+
+    Container.shared.analytics.register { self.analytics }
 
     mockRequestObject = .Mock.VcSdJwt.sample
     // MockAnyCredential
@@ -345,6 +353,17 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
+  func testCheckInvitationTypeFailed_wrongScheme() async throws {
+    checkInvitationTypeUseCase.executeUrlThrowableError = CheckCameraError.wrongScheme
+
+    await viewModel.setMetadataUrl(url)
+
+    XCTAssertTrue(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error, .invalidQRCode)
+    XCTAssertEqual(analyticsProvider.logCounter, 0)
+  }
+
+  @MainActor
   func testClose() async {
     viewModel.close()
 
@@ -416,6 +435,9 @@ final class CameraViewModelTests: XCTestCase {
   private var mockCredentialWithKeyBinding: (AnyCredential, KeyPair?)!
   private let url = URL(string: "openid-credential-offer://url")!
   private let scannerDelay: UInt64 = 0
+
+  private var analytics: AnalyticsProtocol!
+  private var analyticsProvider: MockProvider!
   // swiftlint: enable all
 }
 

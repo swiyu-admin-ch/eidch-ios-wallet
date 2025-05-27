@@ -14,16 +14,8 @@ public struct ButtonStackView<Content: View>: View {
   // MARK: Public
 
   public var body: some View {
-    Group {
-      if sizeCategory.isAccessibilityCategory {
-        VStack(spacing: .x2) {
-          content()
-        }
-      } else {
-        HStack(spacing: .x2) {
-          content()
-        }
-      }
+    layout {
+      content()
     }
   }
 
@@ -32,5 +24,11 @@ public struct ButtonStackView<Content: View>: View {
   @Environment(\.sizeCategory) var sizeCategory
 
   let content: () -> Content
+
+  // MARK: Private
+
+  private var layout: AnyLayout {
+    sizeCategory.isAccessibilityCategory ? AnyLayout(VStackLayout(spacing: .x2)) : AnyLayout(HStackLayout(spacing: .x2))
+  }
 
 }

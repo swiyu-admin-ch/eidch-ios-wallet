@@ -6,7 +6,8 @@ import Foundation
 // MARK: - FetchRequestObjectError
 
 public enum FetchRequestObjectError: Error {
-  case invalidPresentationInvitation
+  case expired
+  case invalid
 }
 
 // MARK: - FetchRequestObjectUseCase
@@ -20,9 +21,11 @@ public struct FetchRequestObjectUseCase: FetchRequestObjectUseCaseProtocol {
       let requestObjectData: Data = try await repository.fetchRequestObject(from: url)
       return try createRequestObject(from: requestObjectData)
     } catch is DecodingError {
-      throw FetchRequestObjectError.invalidPresentationInvitation
+      throw FetchRequestObjectError.invalid
     } catch OpenIdRepositoryError.presentationProcessClosed {
-      throw FetchRequestObjectError.invalidPresentationInvitation
+      throw FetchRequestObjectError.expired
+    } catch OpenIdRepositoryError.authorizationRequestObjectNotFound {
+      throw FetchRequestObjectError.invalid
     } catch {
       throw error
     }

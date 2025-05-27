@@ -9,7 +9,7 @@ final class CredentialMetadataTests: XCTestCase {
     let credentialMetadata = CredentialMetadata.Mock.sample
 
     XCTAssertFalse(credentialMetadata.credentialConfigurationsSupported.isEmpty)
-    XCTAssertFalse(credentialMetadata.display.isEmpty)
+    XCTAssertFalse(credentialMetadata.display?.isEmpty == true)
 
     guard let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
       return XCTFail("credentialSupported is nil")

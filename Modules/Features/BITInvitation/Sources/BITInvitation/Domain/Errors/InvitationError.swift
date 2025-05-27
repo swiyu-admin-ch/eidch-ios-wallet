@@ -64,7 +64,9 @@ extension InvitationError {
 
     if let fetchError = error as? FetchRequestObjectError {
       switch fetchError {
-      case .invalidPresentationInvitation:
+      case .expired:
+        return .expiredInvitation
+      case .invalid:
         return .invalidPresentationRequest
       }
     }

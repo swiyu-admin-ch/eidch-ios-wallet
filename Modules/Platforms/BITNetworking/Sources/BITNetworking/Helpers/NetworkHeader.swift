@@ -8,6 +8,9 @@ public enum NetworkHeader {
   case form
   case statusList
   case did
+  case vcSchema
+
+  // MARK: Private
 
   // Keys
   private static let keyAccept = "accept"
@@ -20,6 +23,8 @@ public enum NetworkHeader {
   private static let valueApplicationJsonLines = "application/jsonl+json"
   private static let valueApplicationFormUrlEncoded = "application/x-www-form-urlencoded"
   private static let valueApplicationStatusList = "application/statuslist+jwt"
+  private static let valueApplicationVcSchema = "application/schema+json"
+  private static let valueApplicationVcSchemaInstance = "application/schema-instance+json"
 }
 
 extension NetworkHeader {
@@ -41,6 +46,9 @@ extension NetworkHeader {
       ]
     case .did: [
         Self.keyContentType: Self.valueApplicationJsonLines,
+      ]
+    case .vcSchema: [
+        Self.keyAccept: [Self.valueApplicationJson, Self.valueApplicationVcSchema, Self.valueApplicationVcSchemaInstance].joined(separator: ", "),
       ]
     }
   }

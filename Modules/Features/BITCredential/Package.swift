@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -36,10 +36,10 @@ let package = Package(
     .package(path: "../BITOca"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/SDWebImage/SDWebImageSwiftUI", exact: "2.2.6"),
-    .package(url: "https://github.com/KittyMac/Sextant.git", revision: "e59c57e4fa19a02f336cd91b9f6cd8e4022e5ed0"),
-    .package(url: "https://github.com/gh123man/SwiftUI-Refresher", exact: "1.1.8"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "10.50.0"),
+    .package(url: "https://github.com/SDWebImage/SDWebImageSwiftUI", exact: "2.2.7"), // 3.1.3 available
+    .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.33"),
+    .package(url: "https://github.com/gh123man/SwiftUI-Refresher", exact: "1.1.9"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "10.54.3"),
   ],
   targets: [
     .target(

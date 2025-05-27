@@ -23,6 +23,13 @@ NCPU := $(shell sysctl -n hw.ncpu)
 SPM_DIRS := $(shell find Modules/Features Modules/Platforms -type d -mindepth 1 -maxdepth 1)
 
 .PHONY: clean-locks
+
+install: 
+	@printf "$(GREEN)=> Install dependencies$(RESET)\n"
+	brew update
+	brew bundle
+	bundle install
+
 clean-locks:
 	@rm -rf $(LOCK_DIR)
 

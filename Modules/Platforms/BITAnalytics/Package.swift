@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -18,9 +18,9 @@ let package = Package(
       targets: ["BITAnalyticsMocks"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", .upToNextMajor(from: "2.1.4")),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/Dynatrace/swift-mobile-sdk.git", branch: "main"),
+    .package(url: "https://github.com/Dynatrace/swift-mobile-sdk.git", exact: "8.309.1"),
     .package(path: "../../Platforms/BITCore"),
   ],
   targets: [

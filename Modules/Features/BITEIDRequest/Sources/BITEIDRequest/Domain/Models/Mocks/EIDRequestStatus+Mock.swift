@@ -8,6 +8,8 @@ extension EIDRequestStatus: Mockable {
     // MARK: Internal
 
     static let inQueueSample: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-queue", bundle: Bundle.module)
+    static let inQueueWithoutLegalRepresentantSample: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-queue-without-legal-representant", bundle: Bundle.module)
+    static let inQueueWithVerifiedLegalRepresentant: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-queue-legal-representant-verified", bundle: Bundle.module)
     static let readyForAVSample: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-ready", bundle: Bundle.module)
     static let sampleData: Data = Mocker.getData(fromFile: "eid-request-status-queue", bundle: Bundle.module) ?? Data()
   }

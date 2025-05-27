@@ -19,10 +19,10 @@ public struct PresentationRequestReviewView: View {
 
   public var body: some View {
     content()
-      .accessibilityAction(named: L10n.presentationAcceptButtonText) {
+      .accessibilityAction(named: L10n.tkPresentReviewPrimaryButtonAlt) {
         Task { await viewModel.submit() }
       }
-      .accessibilityAction(named: L10n.presentationDenyButtonText) {
+      .accessibilityAction(named: L10n.tkPresentReviewSecondaryButtonAlt) {
         Task { await viewModel.deny() }
       }
       .readSize(onChange: { size in
@@ -133,7 +133,7 @@ extension PresentationRequestReviewView {
   @ViewBuilder
   private func claimsList(_ compatibleCredential: CompatibleCredential) -> some View {
     VStack(alignment: .leading) {
-      Text(L10n.tkPresentApprovalSubtitleAffectedDetailsIos(compatibleCredential.requestedClaims.count))
+      Text(L10n.tkPresentReviewClaimsSectionPrimary(compatibleCredential.requestedClaims.count))
         .font(.custom.body)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .padding(.horizontal, .x6)
@@ -153,7 +153,7 @@ extension PresentationRequestReviewView {
     FooterView {
       ButtonStackView {
         Button { Task { await viewModel.deny() } } label: {
-          Label(L10n.tkGlobalDeclineSecondarybutton, systemImage: "xmark")
+          Label(L10n.tkPresentReviewSecondaryButton, systemImage: "xmark")
             .if(!sizeCategory.isAccessibilityCategory, transform: {
               $0.multilineTextAlignment(.center)
                 .lineLimit(1)
@@ -167,7 +167,7 @@ extension PresentationRequestReviewView {
         .accessibilityIdentifier(AccessibilityIdentifier.denyButton.rawValue)
 
         Button { Task { await viewModel.submit() } } label: {
-          Label(L10n.credentialOfferAcceptButton, systemImage: "checkmark")
+          Label(L10n.tkPresentReviewPrimaryButton, systemImage: "checkmark")
             .if(!sizeCategory.isAccessibilityCategory, transform: {
               $0.multilineTextAlignment(.center)
                 .lineLimit(1)
@@ -241,8 +241,9 @@ extension PresentationRequestReviewView {
         .controlSize(.large)
 
       if viewModel.showLoadingMessage {
-        Text(L10n.tkGlobalPleasewait)
+        Text(L10n.tkPresentReviewLoading)
           .font(.custom.body)
+          .accessibilityLabel(L10n.tkPresentReviewLoadingAlt)
       }
     }
     .animation(.default, value: viewModel.showLoadingMessage)
@@ -262,7 +263,7 @@ extension PresentationRequestReviewView {
 
   @ViewBuilder
   private func subtitle() -> some View {
-    Text(L10n.tkGlobalCheckcredential)
+    Text(L10n.tkPresentReviewCredentialSectionPrimary)
       .font(.custom.title3)
       .foregroundStyle(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
       .accessibilityAddTraits(.isHeader)

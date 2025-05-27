@@ -2,7 +2,6 @@ import BITAnyCredentialFormat
 import BITCore
 import BITCrypto
 import BITEntities
-import BITOpenID
 import BITVault
 import Factory
 import Foundation
@@ -21,15 +20,16 @@ public struct Credential: Identifiable, Codable {
 
   // MARK: Lifecycle
 
-  init(
+  public init(
     id: UUID = UUID(),
-    status: VcStatus = .valid,
+    status: CredentialStatus = .unknown,
     keyBindingIdentifier: UUID? = nil,
     keyBindingAlgorithm: String? = nil,
     payload: CredentialPayload,
     format: String,
     issuer: String,
     validFrom: Date? = nil,
+    validUntil: Date? = nil,
     createdAt: Date = Date(),
     updatedAt: Date? = nil,
     claims: [CredentialClaim] = [],
@@ -44,6 +44,7 @@ public struct Credential: Identifiable, Codable {
     self.format = format
     self.issuer = issuer
     self.validFrom = validFrom
+    self.validUntil = validUntil
     self.createdAt = createdAt
     self.updatedAt = updatedAt
     self.claims = claims
@@ -63,13 +64,14 @@ public struct Credential: Identifiable, Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     try self.init(
       id: container.decode(UUID.self, forKey: .id),
-      status: container.decode(VcStatus.self, forKey: .status),
+      status: container.decode(CredentialStatus.self, forKey: .status),
       keyBindingIdentifier: container.decodeIfPresent(UUID.self, forKey: .keyBindingIdentifier),
       keyBindingAlgorithm: container.decodeIfPresent(String.self, forKey: .keyBindingAlgorithm),
       payload: container.decode(Data.self, forKey: .payload),
       format: container.decode(String.self, forKey: .format),
       issuer: container.decode(String.self, forKey: .issuer),
       validFrom: container.decodeIfPresent(Date.self, forKey: .validFrom),
+      validUntil: container.decodeIfPresent(Date.self, forKey: .validUntil),
       createdAt: container.decode(Date.self, forKey: .createdAt),
       updatedAt: container.decodeIfPresent(Date.self, forKey: .updatedAt),
       claims: container.decode([CredentialClaim].self, forKey: .claims),
@@ -84,13 +86,14 @@ public struct Credential: Identifiable, Codable {
 
     self.init(
       id: entity.id,
-      status: VcStatus(rawValue: entity.status) ?? .unknown,
+      status: CredentialStatus(rawValue: entity.status) ?? .unknown,
       keyBindingIdentifier: entity.keyBindingIdentifier,
       keyBindingAlgorithm: entity.keyBindingAlgorithm,
       payload: entity.payload,
       format: entity.format,
       issuer: entity.issuer,
       validFrom: entity.validFrom,
+      validUntil: entity.validUntil,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       claims: claims,
@@ -98,36 +101,10 @@ public struct Credential: Identifiable, Codable {
       displays: displays)
   }
 
-  public init(anyCredential: AnyCredential, keyPair: KeyPair?, metadataWrapper: CredentialMetadataWrapper) throws {
-    guard let selectedCredential = metadataWrapper.selectedCredential else {
-      throw CredentialError.selectedCredentialNotFound
-    }
-    guard let payload = anyCredential.raw.data(using: .utf8) else {
-      throw CredentialError.invalidPayload
-    }
-    let id = UUID()
-    let credentialClaims = try Self.getCredentialClaims(from: anyCredential.claims, selectedCredential: selectedCredential, id: id)
-
-    self.init(
-      id: id,
-      status: .unknown,
-      keyBindingIdentifier: keyPair?.identifier,
-      keyBindingAlgorithm: keyPair?.algorithm,
-      payload: payload,
-      format: anyCredential.format,
-      issuer: anyCredential.issuer,
-      validFrom: anyCredential.validFrom,
-      createdAt: Date(),
-      updatedAt: nil,
-      claims: credentialClaims,
-      issuerDisplays: metadataWrapper.credentialMetadata.display.map { CredentialIssuerDisplay($0, credentialId: id) },
-      displays: selectedCredential.display?.map { CredentialDisplay($0) } ?? [])
-  }
-
   // MARK: Public
 
   public var id = UUID()
-  public var status = VcStatus.unknown
+  public var status = CredentialStatus.unknown
   public var keyBindingIdentifier: UUID? = nil
   public var keyBindingAlgorithm: String? = nil
   public var payload: CredentialPayload
@@ -135,6 +112,7 @@ public struct Credential: Identifiable, Codable {
   public var issuer: String
 
   public var validFrom: Date? = nil
+  public var validUntil: Date? = nil
   public var createdAt = Date()
   public var updatedAt: Date? = nil
 
@@ -157,6 +135,7 @@ public struct Credential: Identifiable, Codable {
     case format
     case issuer
     case validFrom
+    case validUntil
     case createdAt
     case updatedAt
     case claims
@@ -167,22 +146,6 @@ public struct Credential: Identifiable, Codable {
   }
 
   @Injected(\.demoCredentialPattern) private var demoCredentialPattern: String
-}
-
-// MARK: Static
-
-extension Credential {
-
-  private static func getCredentialClaims(from anyClaims: [AnyClaim], selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, id: UUID) throws -> [CredentialClaim] {
-    var credentialClaims = [CredentialClaim]()
-    for anyClaim in anyClaims {
-      let metadataClaim = selectedCredential.claims.first(where: { $0.key == anyClaim.key })
-      guard let credentialClaim = CredentialClaim(metadataClaim, anyClaim: anyClaim, credentialId: id) else { continue }
-      credentialClaims.append(credentialClaim)
-    }
-    return credentialClaims
-  }
-
 }
 
 // MARK: Equatable
@@ -198,6 +161,7 @@ extension Credential: Equatable {
       lhs.format == rhs.format &&
       lhs.issuer == rhs.issuer &&
       lhs.validFrom == rhs.validFrom &&
+      lhs.validUntil == rhs.validUntil &&
       lhs.createdAt == rhs.createdAt &&
       lhs.updatedAt == rhs.updatedAt &&
       lhs.claims.map({ claimLhs in rhs.claims.contains(where: { $0 == claimLhs }) }).allSatisfy({ $0 }) &&

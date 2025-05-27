@@ -25,11 +25,10 @@ struct GetCredentialIssuerDisplayUseCase: GetCredentialIssuerDisplayUseCaseProto
 
   func execute(for credentialId: UUID, trustStatement: TrustStatement, fallbackDisplay: CredentialIssuerDisplay?) -> CredentialIssuerDisplay? {
     let preferredImage = fallbackDisplay?.image
+    let payload = trustStatement.rawPayload
     guard
-      let data = trustStatement.rawPayload.data(using: .utf8),
-      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let orgName = json[Self.orgNameKey] as? [String: Any],
-      let name = getDisplayForClaim(orgName, with: Self.orgNameKey, in: json)
+      let orgName = payload[Self.orgNameKey] as? [String: Any],
+      let name = getDisplayForClaim(orgName, with: Self.orgNameKey, in: payload)
     else {
       return fallbackDisplay
     }

@@ -27,7 +27,7 @@ struct DataPrivacyView: View {
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkGetEidDataPrivacyPrimaryButton,
-          primaryButtonAction: viewModel.openCheckCardIntroduction)
+          primaryButtonAction: viewModel.primaryAction)
       })
       .toolbar { toolbarContent() }
   }

@@ -51,7 +51,7 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
     case setError(_ error: Error)
   }
 
-  @Published var eIDRequestCases: [EIDRequestCase] = []
+  @Published var requestCases: [RequestCaseViewState] = []
   @Published var credentials: [Credential] = []
   @Published var isImpressumPresented = false
   @Published var isSecurityPresented = false
@@ -125,21 +125,23 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
     }
   }
 
-  #warning("TODO: Remove the filter when handling .cancelled states")
   func getEIDRequestCases() async {
-    eIDRequestCases = (try? await getEIDRequestCaseListUseCase.execute()
-      .filter { $0.state?.state != .cancelled }) ?? []
+    do {
+      requestCases = try await getEIDRequestCaseListUseCase.execute()
+        .map { try RequestCaseViewState($0, delegate: self) }
 
-    if !eIDRequestCases.isEmpty {
-      await fetchEIDRequestStatus()
+      if !requestCases.isEmpty {
+        await fetchEIDRequestStatus()
+      }
+    } catch {
+      requestCases = []
     }
   }
 
-  #warning("TODO: Remove the filter when handling .cancelled states")
   func fetchEIDRequestStatus() async {
     do {
-      eIDRequestCases = try await updateEIDRequestCaseStatusUseCase.execute(eIDRequestCases)
-        .filter { $0.state?.state != .cancelled }
+      requestCases = try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.id))
+        .map { try RequestCaseViewState($0, delegate: self) }
     } catch {
       // Request cases list is not updated if error
     }
@@ -158,20 +160,6 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
   @Injected(\.enableEIDRequestAfterOnboardingUseCase) private var enableEIDRequestAfterOnboardingUseCase: EnableEIDRequestAfterOnboardingUseCaseProtocol
   @Injected(\.getEIDRequestCaseListUseCase) private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
-  @Injected(\.deleteEIDRequestCaseUseCase) private var deleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocol
-
-  #warning("TODO: Remove the filter when handling .cancelled states")
-
-  private func deleteEIDRequestCase(_ requestCase: EIDRequestCase) async throws {
-    do {
-      try await deleteEIDRequestCaseUseCase.execute(requestCase)
-
-      eIDRequestCases = try await getEIDRequestCaseListUseCase.execute()
-        .filter { $0.state?.state != .cancelled }
-    } catch {
-      // Do nothing
-    }
-  }
 
   private func registerNotifications() {
     notificationCenter.addObserver(forName: .didLogin, object: nil, queue: .main, using: { [weak self] _ in self?.onDidLogin() })
@@ -187,10 +175,6 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
 }
 
 extension HomeViewModel {
-
-  func openAutoVerification() {
-    router.autoVerification()
-  }
 
   func openScanner() {
     router.invitation()
@@ -238,22 +222,18 @@ extension HomeViewModel {
   func openEIDRequest() {
     router.eIDRequest()
   }
+}
 
-  func requestCaseAction(_ eidRequestCase: EIDRequestCase) async throws {
-    switch eidRequestCase.state?.state {
-    case .readyForOnlineSession: openAutoVerification()
-    case .expired: try await deleteEIDRequestCase(eidRequestCase)
-    case .cancelled,
-         .closed,
-         .denied,
-         .inAutoVerification,
-         .inIssuing,
-         .inQueue,
-         .inTargetWalletPairing,
-         .none,
-         .readyForEntitlementCheck,
-         .unknown: ()
+// MARK: RequestCaseViewStateDelegate
+
+extension HomeViewModel: RequestCaseViewStateDelegate {
+  func didDeleteRequestCase() {
+    Task {
+      await fetchEIDRequestStatus()
     }
   }
 
+  func didStartAutoVerification() {
+    router.autoVerification()
+  }
 }

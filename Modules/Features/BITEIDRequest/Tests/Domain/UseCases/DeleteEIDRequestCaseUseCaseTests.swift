@@ -17,19 +17,19 @@ final class DeleteEIDRequestCaseUseCaseTests: XCTestCase {
   }
 
   func testExecuteSucces() async throws {
-    try await useCase.execute(mockEIDRequestCase)
+    try await useCase.execute(mockEIDRequestCase.id)
 
-    XCTAssertEqual(repository.deleteReceivedEIDRequestCase, mockEIDRequestCase)
+    XCTAssertEqual(repository.deleteReceivedId, mockEIDRequestCase.id)
   }
 
   func testExecuteFailure() async throws {
     repository.deleteThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(mockEIDRequestCase)
+      _ = try await useCase.execute(mockEIDRequestCase.id)
       XCTFail("An error was expected")
     } catch TestingError.error {
-      XCTAssertEqual(repository.deleteReceivedEIDRequestCase, mockEIDRequestCase)
+      XCTAssertEqual(repository.deleteReceivedId, mockEIDRequestCase.id)
     }
   }
 

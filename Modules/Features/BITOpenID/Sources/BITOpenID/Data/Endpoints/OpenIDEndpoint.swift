@@ -105,13 +105,14 @@ extension OpenIDEndpoint: TargetType {
          .publicKeyInfo,
          .requestObject,
          .trustStatements,
-         .typeMetadata,
-         .vcSchema:
+         .typeMetadata:
       NetworkHeader.standard.raw
     case .credential(_, _, let token):
       NetworkHeader.authorization(token).raw
     case .status:
       NetworkHeader.statusList.raw
+    case .vcSchema:
+      NetworkHeader.vcSchema.raw
     }
   }
 

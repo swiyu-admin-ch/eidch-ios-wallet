@@ -26,8 +26,6 @@ extension Container: AutoRegistering {
     jwsSignatureValidator.register { MockJWSSignatureValidator(true) }
 
     userSession.register { MockUserSession() }
-    dataStoreConfigurationManager.register { MockDataStoreConfigurationManager() }
-    realmDataStoreConfiguration.register { Realm.Configuration(inMemoryIdentifier: "RealmDataStore") }
     keyManager.register { MockKeyManager() }
 
     presentationRepository.register { MockPresentationRepository() }
