@@ -17,7 +17,7 @@ struct PinCodeConfirmationView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
-    case continueButton
+    case continueButton = "pinCodeConfirmationContinueButton"
   }
 
   var body: some View {

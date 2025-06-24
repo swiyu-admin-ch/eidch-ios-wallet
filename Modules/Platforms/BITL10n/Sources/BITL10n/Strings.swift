@@ -324,6 +324,72 @@ public enum L10n {
   public static let tkDisplaydeleteWrongdataNavigationTitle = L10n.tr("Localizable", "tk_displaydelete_wrongdata_navigation_title", fallback: "Found any incorrect data?")
   /// Report incorrect details
   public static let tkDisplaydeleteWrongdataTitle = L10n.tr("Localizable", "tk_displaydelete_wrongdata_title", fallback: "Report incorrect details")
+  /// Continue (deepl)
+  public static let tkEidRequestAttestationButtonPrimary = L10n.tr("Localizable", "tk_eidRequest_attestation_button_primary", fallback: "Continue (deepl)")
+  /// One moment - Verifying compatibility (deepl)
+  public static let tkEidRequestAttestationPrimary = L10n.tr("Localizable", "tk_eidRequest_attestation_primary", fallback: "One moment - Verifying compatibility (deepl)")
+  /// We’re checking if your device meets the safety and performance requirements. (deepl)
+  public static let tkEidRequestAttestationSecondary = L10n.tr("Localizable", "tk_eidRequest_attestation_secondary", fallback: "We’re checking if your device meets the safety and performance requirements. (deepl)")
+  /// Etwas ist schiefgelaufen.
+  public static let tkEidRequestAttestationUnknownErrorPrimary = L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_primary", fallback: "Etwas ist schiefgelaufen.")
+  /// Wiederholen
+  public static let tkEidRequestAttestationUnknownErrorPrimaryButton = L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_primary_button", fallback: "Wiederholen")
+  /// Bitte versuchen Sie es erneut.
+  public static let tkEidRequestAttestationUnknownErrorSecondary = L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_secondary", fallback: "Bitte versuchen Sie es erneut.")
+  /// Abbrechen
+  public static let tkEidRequestAttestationUnknownErrorSecondaryButton = L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_secondary_button", fallback: "Abbrechen")
+  /// Start
+  public static let tkEidRequestAutoVerificationIdentityCheckButton = L10n.tr("Localizable", "tk_eidRequest_autoVerificationIdentityCheck_button", fallback: "Start")
+  /// Verification of your identity
+  public static let tkEidRequestAutoVerificationIdentityCheckPrimary = L10n.tr("Localizable", "tk_eidRequest_autoVerificationIdentityCheck_primary", fallback: "Verification of your identity")
+  /// Please have your ID ready. A short video of your face and the ID will be recorded.
+  public static let tkEidRequestAutoVerificationIdentityCheckSecondary = L10n.tr("Localizable", "tk_eidRequest_autoVerificationIdentityCheck_secondary", fallback: "Please have your ID ready. A short video of your face and the ID will be recorded.")
+  /// Please do not cancel the process, otherwise all the information will be lost.
+  public static let tkEidRequestAutoVerificationIdentityCheckTertiary = L10n.tr("Localizable", "tk_eidRequest_autoVerificationIdentityCheck_tertiary", fallback: "Please do not cancel the process, otherwise all the information will be lost.")
+  /// Tip
+  public static let tkEidRequestAutoVerificationIdentityCheckTertiaryTip = L10n.tr("Localizable", "tk_eidRequest_autoVerificationIdentityCheck_tertiary_tip", fallback: "Tip")
+  /// Start
+  public static let tkEidRequestAutoVerificationWelcomeButton = L10n.tr("Localizable", "tk_eidRequest_autoVerificationWelcome_button", fallback: "Start")
+  /// Welcome back – Final verification of your e-ID
+  public static let tkEidRequestAutoVerificationWelcomePrimary = L10n.tr("Localizable", "tk_eidRequest_autoVerificationWelcome_primary", fallback: "Welcome back – Final verification of your e-ID")
+  /// The next steps is to make sure that you really are the person who has the ID. Therefore, have your ID ready. We will make video recording of it and a selfie from you.
+  public static let tkEidRequestAutoVerificationWelcomeSecondary = L10n.tr("Localizable", "tk_eidRequest_autoVerificationWelcome_secondary", fallback: "The next steps is to make sure that you really are the person who has the ID. Therefore, have your ID ready. We will make video recording of it and a selfie from you.")
+  /// Please take a few minutes and do not cancel the process, otherwise all the information will be lost.
+  public static let tkEidRequestAutoVerificationWelcomeTertiary = L10n.tr("Localizable", "tk_eidRequest_autoVerificationWelcome_tertiary", fallback: "Please take a few minutes and do not cancel the process, otherwise all the information will be lost.")
+  /// Tip
+  public static let tkEidRequestAutoVerificationWelcomeTertiaryTip = L10n.tr("Localizable", "tk_eidRequest_autoVerificationWelcome_tertiary_tip", fallback: "Tip")
+  /// https://www.eid.admin.ch/
+  public static let tkEidRequestClientAttestationErrorHelpLink = L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_help_link", fallback: "https://www.eid.admin.ch/")
+  /// Diese Wallet-App wird nicht unterstützt
+  public static let tkEidRequestClientAttestationErrorPrimary = L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_primary", fallback: "Diese Wallet-App wird nicht unterstützt")
+  /// swiyu App herunterladen
+  public static let tkEidRequestClientAttestationErrorPrimaryButton = L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_primary_button", fallback: "swiyu App herunterladen")
+  /// Bitte verwenden Sie die offizielle swiyu App oder eine andere Wallet-App, die kompatibel ist.
+  public static let tkEidRequestClientAttestationErrorSecondary = L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_secondary", fallback: "Bitte verwenden Sie die offizielle swiyu App oder eine andere Wallet-App, die kompatibel ist.")
+  /// Schliessen
+  public static let tkEidRequestClientAttestationErrorSecondaryButton = L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_secondary_button", fallback: "Schliessen")
+  /// Hilfe & FAQ
+  public static let tkEidRequestClientAttestationErrorTertiary = L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_tertiary", fallback: "Hilfe & FAQ")
+  /// Swiss ID Card
+  public static let tkEidRequestDocumentSelectionIdCard = L10n.tr("Localizable", "tk_eidRequest_documentSelection_idCard", fallback: "Swiss ID Card")
+  /// Swiss Passport
+  public static let tkEidRequestDocumentSelectionPassport = L10n.tr("Localizable", "tk_eidRequest_documentSelection_passport", fallback: "Swiss Passport")
+  /// Choose your document
+  public static let tkEidRequestDocumentSelectionPrimary = L10n.tr("Localizable", "tk_eidRequest_documentSelection_primary", fallback: "Choose your document")
+  /// Swiss Resident Permit
+  public static let tkEidRequestDocumentSelectionResidentPermit = L10n.tr("Localizable", "tk_eidRequest_documentSelection_residentPermit", fallback: "Swiss Resident Permit")
+  /// Select one of the listed documents to proof your eligibility. Only original and valid documents will be accepted.
+  public static let tkEidRequestDocumentSelectionSecondary = L10n.tr("Localizable", "tk_eidRequest_documentSelection_secondary", fallback: "Select one of the listed documents to proof your eligibility. Only original and valid documents will be accepted.")
+  /// https://www.eid.admin.ch/
+  public static let tkEidRequestKeyAttestationErrorHelpLink = L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_help_link", fallback: "https://www.eid.admin.ch/")
+  /// Dieses Gerät wird leider nicht unterstützt
+  public static let tkEidRequestKeyAttestationErrorPrimary = L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_primary", fallback: "Dieses Gerät wird leider nicht unterstützt")
+  /// Schliessen
+  public static let tkEidRequestKeyAttestationErrorPrimaryButton = L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_primary_button", fallback: "Schliessen")
+  /// Zur Sicherheit müssen bestimmte technische Voraussetzungen erfüllt sein. Mit diesem Gerät ist das leider nicht möglich.
+  public static let tkEidRequestKeyAttestationErrorSecondary = L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_secondary", fallback: "Zur Sicherheit müssen bestimmte technische Voraussetzungen erfüllt sein. Mit diesem Gerät ist das leider nicht möglich.")
+  /// Hilfe & FAQ
+  public static let tkEidRequestKeyAttestationErrorTertiary = L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_tertiary", fallback: "Hilfe & FAQ")
   /// Please try again.
   public static let tkErrorConnectionproblemBody = L10n.tr("Localizable", "tk_error_connectionproblem_body", fallback: "Please try again.")
   /// Connection problems
@@ -388,10 +454,16 @@ public enum L10n {
   /// Swiss passport
   /// Swiss ID card
   /// Swiss residence permit
-  /// (deepl)
-  public static let tkGetEidCheckIdBody = L10n.tr("Localizable", "tk_getEid_checkId_body", fallback: "The next step is to check the validity of your ID.\n\nWhat types of ID are accepted?\nSwiss passport \nSwiss ID card\nSwiss residence permit\n(deepl)")
-  /// check ID (deepl)
-  public static let tkGetEidCheckIdTitle = L10n.tr("Localizable", "tk_getEid_checkId_title", fallback: "check ID (deepl)")
+  ///
+  public static let tkGetEidCheckIdBody = L10n.tr("Localizable", "tk_getEid_checkId_body", fallback: "The next step is to check the validity of your ID.\n\nWhat types of ID are accepted?\nSwiss passport \nSwiss ID card\nSwiss residence permit\n")
+  /// Identity document check
+  public static let tkGetEidCheckIdTitle = L10n.tr("Localizable", "tk_getEid_checkId_title", fallback: "Identity document check")
+  /// Your request is in the queue.
+  public static let tkGetEidConsentOkAvQueuePrimary = L10n.tr("Localizable", "tk_getEid_consentOk_avQueue_primary", fallback: "Your request is in the queue.")
+  /// Your electronic identity is currently in the queue.
+  ///
+  /// As soon as it’s your turn, you will receive a notification via the app.
+  public static let tkGetEidConsentOkAvQueueSecondary = L10n.tr("Localizable", "tk_getEid_consentOk_avQueue_secondary", fallback: "Your electronic identity is currently in the queue.\n\nAs soon as it’s your turn, you will receive a notification via the app.")
   /// We attach great importance to the protection of your data and your privacy. To create an e-ID, we require your consent to the data protection declaration.
   public static let tkGetEidDataPrivacyBody = L10n.tr("Localizable", "tk_getEid_dataPrivacy_body", fallback: "We attach great importance to the protection of your data and your privacy. To create an e-ID, we require your consent to the data protection declaration.")
   /// Privacy Statement
@@ -438,31 +510,77 @@ public enum L10n {
   public static let tkGetEidGuardianshipSecondary = L10n.tr("Localizable", "tk_getEid_guardianship_secondary", fallback: "Comprehensive guardianship means that another person (not your parents) makes all important decisions for you.")
   /// e-ID bestellen (deepl)
   public static let tkGetEidHomePrimaryButton = L10n.tr("Localizable", "tk_getEid_home_primaryButton", fallback: "e-ID bestellen (deepl)")
-  /// First, your ID will be checked. This is followed by an identity check.
-  ///
-  /// In the best case, it takes about 5 minutes. (deepl)
-  public static let tkGetEidIntroBody = L10n.tr("Localizable", "tk_getEid_intro_body", fallback: "First, your ID will be checked. This is followed by an identity check.\n\nIn the best case, it takes about 5 minutes. (deepl)")
-  /// Create now (deepl)
-  public static let tkGetEidIntroPrimaryButton = L10n.tr("Localizable", "tk_getEid_intro_primaryButton", fallback: "Create now (deepl)")
-  /// later (deepl)
-  public static let tkGetEidIntroSecondaryButton = L10n.tr("Localizable", "tk_getEid_intro_secondaryButton", fallback: "later (deepl)")
+  /// First your identity document will be checked. Then your identity will be verified.
+  /// It takes about 5 minutes.
+  public static let tkGetEidIntroBody = L10n.tr("Localizable", "tk_getEid_intro_body", fallback: "First your identity document will be checked. Then your identity will be verified.\nIt takes about 5 minutes.")
+  /// Order now
+  public static let tkGetEidIntroPrimaryButton = L10n.tr("Localizable", "tk_getEid_intro_primaryButton", fallback: "Order now")
+  /// Later
+  public static let tkGetEidIntroSecondaryButton = L10n.tr("Localizable", "tk_getEid_intro_secondaryButton", fallback: "Later")
   /// Exceptions
-  /// Protecting your identity is our top priority. In rare cases, the identity check requires additional verification. This may result in a waiting period of several days. (deepl)
-  public static let tkGetEidIntroSmallBody = L10n.tr("Localizable", "tk_getEid_intro_smallBody", fallback: "Exceptions\nProtecting your identity is our top priority. In rare cases, the identity check requires additional verification. This may result in a waiting period of several days. (deepl)")
-  /// Create your e-ID (deepl)
-  public static let tkGetEidIntroTitle = L10n.tr("Localizable", "tk_getEid_intro_title", fallback: "Create your e-ID (deepl)")
+  /// Protecting your identity is our top priority. In rare cases, we may need to carry out an additional check to verify your identity. This can take several days more.
+  ///
+  public static let tkGetEidIntroSmallBody = L10n.tr("Localizable", "tk_getEid_intro_smallBody", fallback: "Exceptions\nProtecting your identity is our top priority. In rare cases, we may need to carry out an additional check to verify your identity. This can take several days more.\n")
+  /// Create your e-ID
+  public static let tkGetEidIntroTitle = L10n.tr("Localizable", "tk_getEid_intro_title", fallback: "Create your e-ID")
+  /// Consent has been provided, you can start now with the verification process.
+  public static let tkGetEidLegalRepresentantGivenConsentReadyForAVPrimary = L10n.tr("Localizable", "tk_getEid_legalRepresentantGivenConsent_readyForAV_primary", fallback: "Consent has been provided, you can start now with the verification process.")
+  /// Please have a valid ID ready.
+  public static let tkGetEidLegalRepresentantGivenConsentReadyForAVSecondary = L10n.tr("Localizable", "tk_getEid_legalRepresentantGivenConsent_readyForAV_secondary", fallback: "Please have a valid ID ready.")
+  /// Order has expired.
+  public static let tkGetEidLegalRepresentantPendingConsentExpiredPrimary = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_expired_primary", fallback: "Order has expired.")
+  /// Unfortunately, your ordering deadline has expired.
+  ///
+  /// Reason: Your legal representative did not approve the order.
+  ///
+  /// You can place a new order at any time.
+  public static let tkGetEidLegalRepresentantPendingConsentExpiredSecondary = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_expired_secondary", fallback: "Unfortunately, your ordering deadline has expired.\n\nReason: Your legal representative did not approve the order.\n\nYou can place a new order at any time.")
+  /// Consent is missing, your e-ID is in the queue.
+  public static let tkGetEidLegalRepresentantPendingConsentInQueuePrimary = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_inQueue_primary", fallback: "Consent is missing, your e-ID is in the queue.")
+  /// Your electronic identity is currently in the queue.
+  ///
+  /// As soon as it’s your turn, you will receive a notification via the app.
+  ///
+  /// Your parents’ or legal guardian’s consent is still missing.
+  public static let tkGetEidLegalRepresentantPendingConsentInQueueSecondary = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_inQueue_secondary", fallback: "Your electronic identity is currently in the queue.\n\nAs soon as it’s your turn, you will receive a notification via the app.\n\nYour parents’ or legal guardian’s consent is still missing.")
+  /// Consent is pending.
+  public static let tkGetEidLegalRepresentantPendingConsentReadyForAVPrimary = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_readyForAV_primary", fallback: "Consent is pending.")
+  /// Please verify your identity by
+  public static let tkGetEidLegalRepresentantPendingConsentReadyForAVSecondaryPrefix = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_readyForAV_secondary_prefix", fallback: "Please verify your identity by ")
+  /// , otherwise your order will be canceled.
+  ///
+  /// Your parents’ or legal guardian’s consent is still missing. You need to obtain the consent first in order to proceed.
+  public static let tkGetEidLegalRepresentantPendingConsentReadyForAVSecondarySuffix = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_readyForAV_secondary_suffix", fallback: ", otherwise your order will be canceled.\n\nYour parents’ or legal guardian’s consent is still missing. You need to obtain the consent first in order to proceed.")
+  /// Start
+  public static let tkGetEidLegalRepresentantPendingConsentStartButton = L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_start_button", fallback: "Start")
   /// Close button
   public static let tkGetEidNotificationCloseButton = L10n.tr("Localizable", "tk_getEid_notification_close_button", fallback: "Close button")
   /// You did not fully complete the ordering process. Please restart it to receive your e-ID.
   public static let tkGetEidNotificationEidExpiredSecondary = L10n.tr("Localizable", "tk_getEid_notification_eidExpired_secondary", fallback: "You did not fully complete the ordering process. Please restart it to receive your e-ID.")
-  /// Start identification (deepl)
-  public static let tkGetEidNotificationEidReadyGreenButton = L10n.tr("Localizable", "tk_getEid_notification_eidReady_greenButton", fallback: "Start identification (deepl)")
-  /// Unfortunately, your order cannot be processed immediately due to high demand. You will be notified via the app as soon as it is your turn. This may take a few days. (deepl)
-  public static let tkGetEidQueuingBody = L10n.tr("Localizable", "tk_getEid_queuing_body", fallback: "Unfortunately, your order cannot be processed immediately due to high demand. You will be notified via the app as soon as it is your turn. This may take a few days. (deepl)")
+  /// Start identification
+  public static let tkGetEidNotificationEidReadyGreenButton = L10n.tr("Localizable", "tk_getEid_notification_eidReady_greenButton", fallback: "Start identification")
+  /// Press to refresh
+  public static let tkGetEidNotificationEidUnknownStateButton = L10n.tr("Localizable", "tk_getEid_notification_eidUnknownState_button:", fallback: "Press to refresh")
+  /// Unable to retrieve the status status of your e-ID order.
+  public static let tkGetEidNotificationEidUnknownStateSecondary = L10n.tr("Localizable", "tk_getEid_notification_eidUnknownState_secondary", fallback: "Unable to retrieve the status status of your e-ID order.")
+  /// Obtain consent
+  public static let tkGetEidNotificationLegalRepresentantPendingConsentInQueueButton = L10n.tr("Localizable", "tk_getEid_notification_legalRepresentantPendingConsent_inQueue_button", fallback: "Obtain consent")
+  /// Obtain consent
+  public static let tkGetEidNotificationLegalRepresentantPendingConsentInQueuePrimary = L10n.tr("Localizable", "tk_getEid_notification_legalRepresentantPendingConsent_inQueue_primary", fallback: "Obtain consent")
+  /// Your electronic identity is currently in the queue. Your parents’ or legal guardian’s consent is still missing.
+  public static let tkGetEidNotificationLegalRepresentantPendingConsentInQueueSecondary = L10n.tr("Localizable", "tk_getEid_notification_legalRepresentantPendingConsent_inQueue_secondary", fallback: "Your electronic identity is currently in the queue. Your parents’ or legal guardian’s consent is still missing.")
+  /// Obtain consent
+  public static let tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVButton = L10n.tr("Localizable", "tk_getEid_notification_legalRepresentantPendingConsent_readyForAV_button", fallback: "Obtain consent")
+  /// Obtain consent
+  public static let tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVPrimary = L10n.tr("Localizable", "tk_getEid_notification_legalRepresentantPendingConsent_readyForAV_primary", fallback: "Obtain consent")
+  /// We have received your request. Unfortunately, your order cannot be processed immediately due to high demand.
+  ///
+  /// As soon as it is your turn, you will receive a message via the app.
+  public static let tkGetEidQueuingBody = L10n.tr("Localizable", "tk_getEid_queuing_body", fallback: "We have received your request. Unfortunately, your order cannot be processed immediately due to high demand. \n\nAs soon as it is your turn, you will receive a message via the app.")
   /// Expected date:
   public static let tkGetEidQueuingBody2Ios = L10n.tr("Localizable", "tk_getEid_queuing_body2_ios", fallback: "Expected date:")
-  /// processing delay (deepl)
-  public static let tkGetEidQueuingTitle = L10n.tr("Localizable", "tk_getEid_queuing_title", fallback: "processing delay (deepl)")
+  /// In Queue for Processing
+  public static let tkGetEidQueuingTitle = L10n.tr("Localizable", "tk_getEid_queuing_title", fallback: "In Queue for Processing")
   /// Please have your ID ready and point the camera at the area with the code line.
   /// Allow access to the camera so that the scan can be carried out. (deepl)
   public static let tkGetEidStartScanBody = L10n.tr("Localizable", "tk_getEid_startScan_body", fallback: "Please have your ID ready and point the camera at the area with the code line.\nAllow access to the camera so that the scan can be carried out. (deepl)")
@@ -545,6 +663,8 @@ public enum L10n {
   public static let tkGlobalScanqrcode = L10n.tr("Localizable", "tk_global_scanqrcode", fallback: "Scan QR code")
   /// Skip
   public static let tkGlobalSkip = L10n.tr("Localizable", "tk_global_skip", fallback: "Skip")
+  /// https://apps.apple.com/ch/app/swiyu/id6737259614
+  public static let tkGlobalStoreLink = L10n.tr("Localizable", "tk_global_store_link", fallback: "https://apps.apple.com/ch/app/swiyu/id6737259614")
   /// Go to settings
   public static let tkGlobalTothesettings = L10n.tr("Localizable", "tk_global_tothesettings", fallback: "Go to settings")
   /// Verified
@@ -674,8 +794,8 @@ public enum L10n {
   public static let tkMenuSecurityPrivacyAndroidStatusActivating = L10n.tr("Localizable", "tk_menu_securityPrivacy_android_status_activating", fallback: "Biometric unlocking has been activated.")
   /// diagnostic data (deepl)
   public static let tkMenuSecurityPrivacyDataProtectionDiagnosticData = L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_diagnosticData", fallback: "diagnostic data (deepl)")
-  /// Privacy Statement (deepl)
-  public static let tkMenuSecurityPrivacyDataProtectionPrivacyPolicy = L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_privacyPolicy", fallback: "Privacy Statement (deepl)")
+  /// Privacy Statement
+  public static let tkMenuSecurityPrivacyDataProtectionPrivacyPolicy = L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_privacyPolicy", fallback: "Privacy Statement")
   /// Share diagnostic data (deepl)
   public static let tkMenuSecurityPrivacyDataProtectionShareData = L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_shareData", fallback: "Share diagnostic data (deepl)")
   /// Help us improve swyiu by allowing the occasional, anonymous submission of information such as error messages and crashes. (deepl)
@@ -953,8 +1073,6 @@ public enum L10n {
   public static let tkUnsafedeviceUnsafeTitle = L10n.tr("Localizable", "tk_unsafedevice_unsafe_title", fallback: "Missing smartphone code")
   /// Update app
   public static let versionEnforcementButton = L10n.tr("Localizable", "version_enforcement_button", fallback: "Update app")
-  /// https://apps.apple.com/ch/app/swiyu/id6737259614
-  public static let versionEnforcementStoreLink = L10n.tr("Localizable", "version_enforcement_store_link", fallback: "https://apps.apple.com/ch/app/swiyu/id6737259614")
 
   /// Would you like to activate %@ to unlock the app?
   public static func biometricSetupContent(_ p1: Any) -> String {
@@ -1024,6 +1142,18 @@ public enum L10n {
   /// Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)
   public static func tkGetEidNotificationEidReadySecondary(_ p1: Any) -> String {
     L10n.tr("Localizable", "tk_getEid_notification_eidReady_secondary", String(describing: p1), fallback: "Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)")
+  }
+
+  /// e-ID status for %@ unknown
+  public static func tkGetEidNotificationEidUnknownStatePrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_eidUnknownState_primary", String(describing: p1), fallback: "e-ID status for %@ unknown")
+  }
+
+  /// Please verify your identity by %@, otherwise your order will be canceled.
+  ///
+  /// Your parents’ or legal guardian’s consent is still missing.
+  public static func tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVSecondary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_legalRepresentantPendingConsent_readyForAV_secondary", String(describing: p1), fallback: "Please verify your identity by %@, otherwise your order will be canceled.\n\nYour parents’ or legal guardian’s consent is still missing.")
   }
 
   /// Unlock with %@

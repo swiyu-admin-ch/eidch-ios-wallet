@@ -1,4 +1,5 @@
 {
+  "originHash" : "295a2b06f39632627b3b0536efb21df88c8fbaae6b5adf8d079c8f57209978af",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -70,6 +71,15 @@
       "state" : {
         "revision" : "10ed3b6736def7c26eb87135466b1cb46ea7e37f",
         "version" : "2.4.0"
+      }
+    },
+    {
+      "identity" : "jsonschema-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiyu-admin-ch/jsonschema-swift.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "cebc8693b3840552f1943786cbaabac0e853ac1b"
       }
     },
     {
@@ -226,5 +236,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

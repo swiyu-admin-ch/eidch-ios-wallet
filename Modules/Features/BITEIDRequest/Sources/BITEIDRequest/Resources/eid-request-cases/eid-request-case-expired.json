@@ -10,5 +10,6 @@
     "state": "TIMEOUT",
     "lastPolledAt": "2001-07-16T19:20:30+01:00",
     "onlineSessionStartOpenAt": "2001-07-16T19:20:30+01:00",
+    "legalRepresentantConsent": "VERIFIED"
   }
 }

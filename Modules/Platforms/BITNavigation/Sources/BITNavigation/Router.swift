@@ -18,8 +18,9 @@ open class Router<VC>: RouterProtocol where VC: UIViewController {
   public var current: OpeningStyle?
 
   public func open(_ viewController: UIViewController, on parentViewController: UIViewController? = nil, as style: OpeningStyle) {
-    style.viewController = parentViewController ?? self.viewController
-    style.open(viewController)
+    current = style
+    current?.viewController = parentViewController ?? self.viewController
+    current?.open(viewController)
   }
 
   public func close(onComplete: (() -> Void)? = nil) {

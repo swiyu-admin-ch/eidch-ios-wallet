@@ -10,5 +10,4 @@ extension SecKey {
     }
     return data
   }
-
 }

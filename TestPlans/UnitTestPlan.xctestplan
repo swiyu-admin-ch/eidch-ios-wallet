@@ -213,7 +213,21 @@
         "identifier" : "BITOcaTests",
         "name" : "BITOcaTests"
       }
-    }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITAppAttestation",
+        "identifier" : "BITAppAttestationTests",
+        "name" : "BITAppAttestationTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITEntities",
+        "identifier" : "BITEntitiesTests",
+        "name" : "BITEntitiesTests"
+      }
+    },
   ],
   "version" : 1
 }

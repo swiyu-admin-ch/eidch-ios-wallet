@@ -57,6 +57,26 @@ public struct NetworkService {
     })
   }
 
+  @discardableResult
+  public func request<D>(_ target: some TargetType, decoder: JSONDecoder = NetworkContainer.shared.decoder()) async throws -> NetworkResponse<D> where D: Decodable {
+    try await withCheckedThrowingContinuation({ continuation in
+      fetch(target) { result in
+        switch result {
+        case .success(let response):
+          do {
+            let decodedObject = try decoder.decode(D.self, from: response.data)
+            let networkResponse = NetworkResponse(object: decodedObject, data: response.data)
+            continuation.resume(returning: networkResponse)
+          } catch {
+            continuation.resume(throwing: error)
+          }
+        case .failure(let error):
+          continuation.resume(throwing: error)
+        }
+      }
+    })
+  }
+
   // MARK: Private
 
   private func makeProvider<T>(_ target: T) -> MoyaProvider<T> where T: TargetType {

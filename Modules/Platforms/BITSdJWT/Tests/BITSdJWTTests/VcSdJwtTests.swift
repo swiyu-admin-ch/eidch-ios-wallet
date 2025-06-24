@@ -10,38 +10,44 @@ final class VcSdJwtTests: XCTestCase {
   // MARK: Internal
 
   func testDecode_allFields() throws {
-    let data = VcSdJwtPayload.Mock.allFieldsData
-
-    let sdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)
-    let payload = sdJwt.payload
-
-    let expectedJwk = PublicKeyInfo.JWK(kty: "key_type", kid: nil, crv: "curve", x: "test_x", y: "test_y")
-    let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 111, uri: "status_list_uri"))
-
-    XCTAssertEqual(sdJwt.header.type, "vc+sd-jwt")
-    XCTAssertEqual(payload.issuer, "issuer")
-    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1722499200))
-    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 1767168000))
-    XCTAssertEqual(payload.keyBinding, expectedJwk)
-    XCTAssertEqual(payload.vct, "vc_type")
-    XCTAssertEqual(payload.vctIntegrity, "vct_integrity")
-    XCTAssertEqual(payload.statusList, expectedStatusList)
-    XCTAssertEqual(payload.subject, "subject")
-    XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1739282713))
+    let vcSdJwt = VcSdJwtPayload.Mock.allFieldsData
+    try assertVcSdJwt(vcSdJwt)
   }
 
-  func testDecode_requiredFields() throws {
-    let data = VcSdJwtPayload.Mock.requiredFieldsData
+  // MARK: - Hotfix decoding
 
-    let sdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)
-    let payload = sdJwt.payload
+  func testDecode_expandedFormat_success() throws {
+    let vcSdJwt = VcSdJwtPayload.ExpandedMock.validSample
+    try assertVcSdJwt(vcSdJwt)
+  }
 
-    XCTAssertEqual(payload.issuer, "issuer")
-    XCTAssertEqual(payload.vct, "vc_type")
+  func testDecode_expandedFormatWithoutJWK_success() throws {
+    let vcSdJwt = VcSdJwtPayload.ExpandedMock.sampleWithoutJwk
+    try assertVcSdJwt(vcSdJwt)
+  }
+
+  func testDecode_expandedFormatWithoutKeyDetails_success() throws {
+    let vcSdJwt = VcSdJwtPayload.ExpandedMock.sampleWithoutKeyDetails
+    try assertVcSdJwt(vcSdJwt)
   }
 
   // MARK: Private
 
   private var decoder = SdJWSDecoder()
+
+  private func assertVcSdJwt(_ data: Data) throws {
+    let vcSdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)
+    let payload = vcSdJwt.payload
+    let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 285, uri: "https://example.com/statuslist/example.jwt"))
+
+    XCTAssertEqual(vcSdJwt.header.type, "vc+sd-jwt")
+    XCTAssertEqual(payload.issuer, "did:tdw:example")
+    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1722499200))
+    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 1767168000))
+    XCTAssertEqual(payload.vct, "https://credentials.example.com/identity_credential")
+    XCTAssertEqual(payload.vctIntegrity, "sha265-onXnKxyPhvWaqkNqWgpL0r1lEoBfLIsJQfFuY5ydHPg")
+    XCTAssertEqual(payload.statusList, expectedStatusList)
+    XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1739282713))
+  }
 
 }

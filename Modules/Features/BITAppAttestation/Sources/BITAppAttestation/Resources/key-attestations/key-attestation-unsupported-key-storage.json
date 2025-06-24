@@ -1,0 +1,14 @@
+{
+  "iss": "did:tdw:example.com",
+  "iat": 1747230798,
+  "exp": 4902903692,
+  "key_storage": ["iso_18045_moderate"],
+  "attested_keys": [
+    {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "18wHLeIgW9wVN6VD1Txgpqy2LszYkMf6J8njVAibvhM",
+      "y": "-V4dS4UaLMgP_4fY4j8ir7cl1TXlFdAgcx55o7TkcSA"
+    }
+  ]
+}

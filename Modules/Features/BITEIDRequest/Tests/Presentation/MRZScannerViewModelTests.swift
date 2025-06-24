@@ -1,5 +1,6 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
+import Spyable
 import XCTest
 @testable import BITEIDRequest
 @testable import BITTestingCore
@@ -11,6 +12,7 @@ class MRZScannerViewModelTests: XCTestCase {
 
   override func setUp() {
     router = MockEIDRequestRouter()
+    router.context.hasLegalRepresentant = true
     submitEIDRequestUseCase = SubmitEIDRequestUseCaseProtocolSpy()
 
     Container.shared.submitEIDRequestUseCase.register { self.submitEIDRequestUseCase }
@@ -21,61 +23,56 @@ class MRZScannerViewModelTests: XCTestCase {
   func testInitialState() {
     XCTAssertFalse(viewModel.isErrorPresented)
     XCTAssertNil(viewModel.errorDescription)
+    XCTAssertFalse(viewModel.isLoading)
   }
 
-  func testSubmit_inQueueState_withLegalRepresentant() async throws {
-    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, mockEidRequestStatus)
+  func testSubmit_inQueueStateVerified_routeToQueueInformation() async throws {
+    let mockEidRequestCase = EIDRequestCase.Mock.sampleInQueue
+    let viewState = try RequestCaseViewState(mockEidRequestCase)
+    submitEIDRequestUseCase.executeMrzHasLegalRepresentantReturnValue = mockEidRequestCase
 
     await viewModel.submit(payload)
 
-    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedMrz, payload.mrz)
+    XCTAssertEqual(submitEIDRequestUseCase.executeMrzHasLegalRepresentantReceivedArguments?.mrz, payload.mrz)
+    XCTAssertEqual(submitEIDRequestUseCase.executeMrzHasLegalRepresentantReceivedArguments?.hasLegalRepresentant, true)
+    XCTAssertFalse(viewModel.isErrorPresented)
+    XCTAssertNil(viewModel.errorDescription)
+
+    if case .inQueue(let inQueueStateViewModel) = viewState {
+      XCTAssertEqual(router.queueInformationArgument, inQueueStateViewModel.onlineSessionStartOpenAt)
+    }
+  }
+
+  func testSubmit_noState_close() async throws {
+    submitEIDRequestUseCase.executeMrzHasLegalRepresentantReturnValue = EIDRequestCase.Mock.sampleWithoutState
+
+    await viewModel.submit(payload)
+
+    XCTAssertTrue(router.closeCalled)
+    XCTAssertFalse(viewModel.isErrorPresented)
+    XCTAssertNil(viewModel.errorDescription)
+  }
+
+  func testSubmit_inQueueStateNotVerified_routeToLegalRepresentantConsent() async throws {
+    let mockEidRequestCase = EIDRequestCase.Mock.sampleInQueueNotVerified
+    submitEIDRequestUseCase.executeMrzHasLegalRepresentantReturnValue = mockEidRequestCase
+
+    await viewModel.submit(payload)
+
     XCTAssertEqual(router.legalRepresentantConsentArgument, mockEidRequestCase.id)
     XCTAssertFalse(viewModel.isErrorPresented)
     XCTAssertNil(viewModel.errorDescription)
   }
 
-  func testSubmit_inQueueState_withoutLegalRepresentant() async throws {
-    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, mockEidRequestStatusWithoutLegalRepresentant)
+  func testSubmit_readyForAVVerified_routeToAutoverificationIDCheck() async throws {
+    let mockEidRequestCase = EIDRequestCase.Mock.sampleAVReady
+    submitEIDRequestUseCase.executeMrzHasLegalRepresentantReturnValue = mockEidRequestCase
 
     await viewModel.submit(payload)
 
-    XCTAssertEqual(submitEIDRequestUseCase.executeReceivedMrz, payload.mrz)
-    XCTAssertEqual(router.queueInformationArgument, mockEidRequestCase.state?.onlineSessionStartOpenAt)
+    XCTAssertTrue(router.avIdentityCheckCalled)
     XCTAssertFalse(viewModel.isErrorPresented)
     XCTAssertNil(viewModel.errorDescription)
-  }
-
-  func testSubmit_inQueueState_withLegalRepresentantVerified() async throws {
-    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, .Mock.inQueueWithVerifiedLegalRepresentant)
-
-    await viewModel.submit(payload)
-
-    XCTAssertFalse(router.legalRepresentantCalled)
-  }
-
-  func testSubmit_useCaseThrowsError() async throws {
-    submitEIDRequestUseCase.executeThrowableError = TestingError.error
-
-    await viewModel.submit(payload)
-
-    XCTAssertTrue(viewModel.isErrorPresented)
-    XCTAssertNotNil(viewModel.errorDescription)
-  }
-
-  func testSubmit_useCaseReturnsNoStatus() async throws {
-    submitEIDRequestUseCase.executeReturnValue = (mockEidRequestCase, nil)
-
-    await viewModel.submit(payload)
-
-    XCTAssertTrue(router.closeCalled)
-  }
-
-  func testSubmit_submitRequestReturnsOtherStateThanInQueue() async throws {
-    submitEIDRequestUseCase.executeReturnValue = (.Mock.sampleAVReady, mockEidRequestStatusWithoutLegalRepresentant)
-
-    await viewModel.submit(payload)
-
-    XCTAssertTrue(router.closeCalled)
   }
 
   @MainActor
@@ -92,10 +89,6 @@ class MRZScannerViewModelTests: XCTestCase {
   // MARK: Private
 
   private let payload = MRZData.Mock.array.first!.payload
-  private let mockEidRequestCase: EIDRequestCase = .Mock.sampleInQueue
-  private let mockEidRequestStatus: EIDRequestStatus = .Mock.inQueueSample
-  private let mockEidRequestStatusWithoutLegalRepresentant: EIDRequestStatus = .Mock.inQueueWithoutLegalRepresentantSample
-
   private var router: MockEIDRequestRouter!
   private var viewModel: MRZScannerViewModel!
   private var submitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocolSpy!

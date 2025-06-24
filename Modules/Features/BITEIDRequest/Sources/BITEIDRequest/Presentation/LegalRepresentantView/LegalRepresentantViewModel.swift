@@ -1,5 +1,3 @@
-import Factory
-
 @MainActor
 class LegalRepresentantViewModel {
 
@@ -11,14 +9,9 @@ class LegalRepresentantViewModel {
 
   // MARK: Internal
 
-  func yesAction() {
-    legalRepresentantRepository.set(true)
-    router.checkCardIntroduction()
-  }
-
-  func noAction() {
-    legalRepresentantRepository.set(false)
-    router.checkCardIntroduction()
+  func action(_ value: Bool) {
+    router.context.hasLegalRepresentant = value
+    router.documentSelection()
   }
 
   func close() {
@@ -28,7 +21,4 @@ class LegalRepresentantViewModel {
   // MARK: Private
 
   private let router: EIDRequestInternalRoutes
-  // swiftlint:disable viewmodels_must_not_reference_repository
-  @Injected(\.legalRepresentantRepository) private var legalRepresentantRepository: LegalRepresentantRepositoryProcotol
-  // swiftlint:enable viewmodels_must_not_reference_repository
 }

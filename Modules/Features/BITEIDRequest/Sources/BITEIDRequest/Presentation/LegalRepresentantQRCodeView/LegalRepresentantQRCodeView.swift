@@ -16,20 +16,17 @@ struct LegalRepresentantQRCodeView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
-      image: image(),
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkGetEidGuardianConsentPrimary,
-          secondary: L10n.tkGetEidGuardianConsentSecondary)
-      },
-      footer: {
-        viewFooter()
-      })
-      .task {
-        await viewModel.getVerificationQRCode()
-      }
+    AdaptiveColumnsView(primaryContent: card) {
+      DefaultInformationContentView(
+        primary: L10n.tkGetEidGuardianConsentPrimary,
+        secondary: L10n.tkGetEidGuardianConsentSecondary)
+        .padding(.horizontal, .x6)
+    } footer: {
+      viewFooter()
+    }
+    .task {
+      await viewModel.getVerificationQRCode()
+    }
   }
 
   // MARK: Private
@@ -42,11 +39,13 @@ struct LegalRepresentantQRCodeView: View {
 extension LegalRepresentantQRCodeView {
 
   @ViewBuilder
-  private func image() -> some View {
-    switch viewModel.state {
-    case .loading: loadingView()
-    case .error: errorView()
-    case .result: qrCodeView()
+  private func card() -> some View {
+    Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) {
+      switch viewModel.state {
+      case .loading: loadingView()
+      case .error: errorView()
+      case .result: qrCodeView()
+      }
     }
   }
 
@@ -88,8 +87,21 @@ extension LegalRepresentantQRCodeView {
 
   @ViewBuilder
   private func viewFooter() -> some View {
-    if case .result(_, let qrCodeURL) = viewModel.state {
-      ShareLink(item: qrCodeURL) {
+    FooterView {
+      if case .result(_, let qrCodeURL) = viewModel.state {
+        ShareLink(item: qrCodeURL) {
+          Button(action: { }) {
+            Text(L10n.tkGetEidGuardianConsentButtonShare)
+              .multilineTextAlignment(.center)
+              .lineLimit(1)
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.bezeledLight)
+          .controlSize(.large)
+          .allowsHitTesting(false) // Disable the button without changing its background color
+        }
+        .disabled(viewModel.isShareQRCodeDisabled)
+      } else {
         Button(action: { }) {
           Text(L10n.tkGetEidGuardianConsentButtonShare)
             .multilineTextAlignment(.center)
@@ -98,29 +110,20 @@ extension LegalRepresentantQRCodeView {
         }
         .buttonStyle(.bezeledLight)
         .controlSize(.large)
-        .allowsHitTesting(false) // Disable the button without changing its background color
+        .disabled(true)
       }
-      .disabled(viewModel.isShareQRCodeDisabled)
-    } else {
-      Button(action: { }) {
-        Text(L10n.tkGetEidGuardianConsentButtonShare)
-          .multilineTextAlignment(.center)
-          .lineLimit(1)
-          .frame(maxWidth: .infinity)
-      }
-      .buttonStyle(.bezeledLight)
-      .controlSize(.large)
-      .disabled(true)
-    }
 
-    Button(action: viewModel.finish) {
-      Text(L10n.tkGetEidGuardianConsentButtonFinish)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-        .frame(maxWidth: .infinity)
+      AsyncButton(
+        action: { await viewModel.finish() },
+        actionOptions: [.showProgressView],
+        label: {
+          Text(L10n.tkGetEidGuardianConsentButtonFinish)
+            .multilineTextAlignment(.center)
+            .lineLimit(1)
+        })
+        .buttonStyle(.filledPrimary)
+        .controlSize(.large)
     }
-    .buttonStyle(.filledPrimary)
-    .controlSize(.large)
   }
 }
 

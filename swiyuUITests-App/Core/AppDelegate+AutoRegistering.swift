@@ -14,6 +14,7 @@ extension Container: AutoRegistering {
     loadingDelay.register { 0 }
 
     openIDRepository.register { MockOpenIDRepository() }
+    ocaRepository.register { MockOCARepository() }
 
     versionEnforcementRepository.register { MockVersionEnforcementRepository() }
     trustRegistryRepository.register { MockTrustRegistryRepository() }

@@ -14,7 +14,7 @@ class VersionEnforcementViewModel: ObservableObject {
   // MARK: Internal
 
   var title: String {
-    guard let display = versionEnforcement.displays.findDisplayWithFallback() as? VersionEnforcement.Display else {
+    guard let display = versionEnforcement.displays.findDisplayWithFallback() else {
       return "n/a"
     }
 
@@ -22,7 +22,7 @@ class VersionEnforcementViewModel: ObservableObject {
   }
 
   var content: String {
-    guard let display = versionEnforcement.displays.findDisplayWithFallback() as? VersionEnforcement.Display else {
+    guard let display = versionEnforcement.displays.findDisplayWithFallback() else {
       return "n/a"
     }
 
@@ -30,7 +30,7 @@ class VersionEnforcementViewModel: ObservableObject {
   }
 
   func openAppStore() {
-    guard let appStoreUrl = URL(string: L10n.versionEnforcementStoreLink) else {
+    guard let appStoreUrl = URL(string: L10n.tkGlobalStoreLink) else {
       return
     }
 

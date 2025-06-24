@@ -101,17 +101,16 @@ final class OnboardingTests: XCTestCase {
     pinCodeInformationScreen.primaryButton.tap()
 
     let enterPinScreen = EnterPinScreen(app: app)
-    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: 5))
+    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: .defaultTimeout))
 
     enterPinScreen.enterPin(pin: "123456")
-    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: 5))
+    XCTAssertTrue(enterPinScreen.pinField.waitForExistence(timeout: .defaultTimeout))
     enterPinScreen.enterPin(pin: "123456")
 
   }
 
   func testDynatraceDeclineNavigation() {
-    let privacyPermissionScreen = PrivacyPermissionScreen(app: app)
-    privacyPermissionScreen.navigateFromAppStartToScreen()
+    let privacyPermissionScreen = PrivacyPermissionScreen.createAndNavigateFromAppStart(app: app)
     privacyPermissionScreen.declineButton.tap()
 
     let pinCodeInformationScreen = PinCodeInformationScreen(app: app)

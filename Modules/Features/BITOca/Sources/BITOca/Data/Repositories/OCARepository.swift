@@ -7,7 +7,7 @@ import Spyable
 // MARK: - OCARepositoryProtocol
 
 @Spyable
-protocol OCARepositoryProtocol {
+public protocol OCARepositoryProtocol {
   func fetchOCABundle(from url: URL) async throws -> RawOcaBundle
 }
 

@@ -20,6 +20,7 @@ extension CredentialDisplayEntity {
     logoData = display.logoBase64
     summary = display.summary
     backgroundColor = display.backgroundColor
+    theme = display.theme
   }
 
 }

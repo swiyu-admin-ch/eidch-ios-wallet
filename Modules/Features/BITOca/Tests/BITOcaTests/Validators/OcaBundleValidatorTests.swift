@@ -18,16 +18,9 @@ final class OcaBundleValidatorTests: XCTestCase {
     successState()
   }
 
-  func testValidate_valid_justRuns() throws {
-    XCTAssertNoThrow(try validator.validate(OcaBundle.Mock.elfa))
-    XCTAssertNoThrow(try validator.validate(OcaBundle.Mock.simpleSample))
-  }
-
   func testValidate_valid_argumentsPassed() throws {
     let overlay = Self.createLabelOverlay(captureBaseDigest: Self.digestMock)
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock], overlays: [overlay])
-
-    try validator.validate(ocaBundle)
+    try validator.validate([emptyCaptureBaseMock], [overlay])
 
     XCTAssertEqual(localeValidatorSpy.validateCallsCount, 1)
     XCTAssertEqual(localeValidatorSpy.validateReceivedLocale, Self.languageMock)
@@ -41,58 +34,34 @@ final class OcaBundleValidatorTests: XCTestCase {
     let captureBase1 = Self.createCaptureBase(digest: digest1, attributes: ["test": .reference(digest: digest3)])
     let captureBase2 = Self.createCaptureBase(digest: digest2, attributes: ["test": .array(type: .reference(digest: digest3))])
     let captureBase3 = Self.createCaptureBase(digest: digest3)
-    let ocaBundle = OcaBundle(captureBases: [rootCaptureBase, captureBase1, captureBase2, captureBase3], overlays: [])
 
-    XCTAssertNoThrow(try validator.validate(ocaBundle))
+    XCTAssertNoThrow(try validator.validate([rootCaptureBase, captureBase1, captureBase2, captureBase3], []))
   }
 
   func testValidate_additionalOverlayAttribute_justRuns() throws {
     let overlay = Self.createLabelOverlay(captureBaseDigest: Self.digestMock, attributes: ["test": "test"])
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock], overlays: [overlay])
 
-    XCTAssertNoThrow(try validator.validate(ocaBundle))
+    XCTAssertNoThrow(try validator.validate([emptyCaptureBaseMock], [overlay]))
   }
 
-  func testValidate_noCaptureBases_throwsRootCaptureBaseError() throws {
-    let ocaBundle = OcaBundle(captureBases: [], overlays: [])
+  func testValidate_brandingOverlay_justRuns() throws {
+    let overlay = try Self.createBrandingOverlay(logo: URL(string: "data:image/png;base64,iVBORw0KG"))
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
-      XCTAssertEqual(error as? OcaError, .invalidRootCaptureBase)
-    }
-  }
-
-  func testValidate_noRootCaptureBase_throwsRootCaptureBaseError() throws {
-    let captureBase1 = Self.createCaptureBase(attributes: ["test": referenceAttributeMock])
-    let captureBase2 = Self.createCaptureBase(attributes: ["test": .array(type: referenceAttributeMock)])
-    let ocaBundle = OcaBundle(captureBases: [captureBase1, captureBase2], overlays: [])
-
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
-      XCTAssertEqual(error as? OcaError, .invalidRootCaptureBase)
-    }
-  }
-
-  func testValidate_multiRootCaptureBases_throwsError() throws {
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock, emptyCaptureBaseMock], overlays: [])
-
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
-      XCTAssertEqual(error as? OcaError, .invalidRootCaptureBase)
-    }
+    XCTAssertNoThrow(try validator.validate([emptyCaptureBaseMock], [overlay]))
   }
 
   func testValidate_invalidAttributeTypeReference_throwsInvalidReferenceAttributeError() throws {
     let captureBase = Self.createCaptureBase(digest: "otherDigest", attributes: ["test": referenceAttributeMock, "test_other": .reference(digest: "invalid")])
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock, captureBase], overlays: [])
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([emptyCaptureBaseMock, captureBase], [])) { error in
       XCTAssertEqual(error as? OcaError, .invalidCaptureBaseReferenceAttribute)
     }
   }
 
   func testValidate_invalidArrayAttributeTypeReference_throwsInvalidReferenceAttributeError() throws {
     let captureBase = Self.createCaptureBase(digest: "otherDigest", attributes: ["test": referenceAttributeMock, "test_other": .array(type: .reference(digest: "invalid"))])
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock, captureBase], overlays: [])
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([emptyCaptureBaseMock, captureBase], [])) { error in
       XCTAssertEqual(error as? OcaError, .invalidCaptureBaseReferenceAttribute)
     }
   }
@@ -101,9 +70,9 @@ final class OcaBundleValidatorTests: XCTestCase {
     let digest = "otherDigest"
     let rootCaptureBase = Self.createCaptureBase(digest: Self.digestMock, attributes: ["test": .reference(digest: digest)])
     let captureBase = Self.createCaptureBase(digest: digest, attributes: ["test": .reference(digest: digest)])
-    let ocaBundle = OcaBundle(captureBases: [rootCaptureBase, captureBase], overlays: [])
+    rootCaptureBaseResolverSpy.resolveReturnValue = rootCaptureBase
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([rootCaptureBase, captureBase], [])) { error in
       XCTAssertEqual(error as? OcaError, .captureBaseCycleError)
     }
   }
@@ -114,9 +83,9 @@ final class OcaBundleValidatorTests: XCTestCase {
     let rootCaptureBase = Self.createCaptureBase(digest: Self.digestMock, attributes: ["test": .reference(digest: digest1)])
     let captureBase1 = Self.createCaptureBase(digest: digest1, attributes: ["test": .reference(digest: digest2)])
     let captureBase2 = Self.createCaptureBase(digest: digest2, attributes: ["test": .reference(digest: digest1)])
-    let ocaBundle = OcaBundle(captureBases: [rootCaptureBase, captureBase1, captureBase2], overlays: [])
+    rootCaptureBaseResolverSpy.resolveReturnValue = rootCaptureBase
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([rootCaptureBase, captureBase1, captureBase2], [])) { error in
       XCTAssertEqual(error as? OcaError, .captureBaseCycleError)
     }
   }
@@ -129,44 +98,34 @@ final class OcaBundleValidatorTests: XCTestCase {
     let captureBase1 = Self.createCaptureBase(digest: digest1, attributes: ["test": .array(type: .reference(digest: digest2))])
     let captureBase2 = Self.createCaptureBase(digest: digest2, attributes: ["test": .reference(digest: digest3)])
     let captureBase3 = Self.createCaptureBase(digest: digest3, attributes: ["test": .reference(digest: digest1)])
-    let ocaBundle = OcaBundle(captureBases: [rootCaptureBase, captureBase1, captureBase2, captureBase3], overlays: [])
+    rootCaptureBaseResolverSpy.resolveReturnValue = rootCaptureBase
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([rootCaptureBase, captureBase1, captureBase2, captureBase3], [])) { error in
       XCTAssertEqual(error as? OcaError, .captureBaseCycleError)
+    }
+  }
+
+  func testValidate_rootCaptureBaseResolverThrows_rethrowsError() throws {
+    rootCaptureBaseResolverSpy.resolveThrowableError = OcaError.invalidRootCaptureBase
+
+    XCTAssertThrowsError(try validator.validate([emptyCaptureBaseMock], [])) { error in
+      XCTAssertEqual(error as? OcaError, .invalidRootCaptureBase)
     }
   }
 
   func testValidate_invalidOverlayCaptureBaseDigest_throwsOverlayCaptureBaseError() throws {
     let overlay = Self.createLabelOverlay(captureBaseDigest: "otherDigest", attributes: ["test": "test"])
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock], overlays: [overlay])
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([emptyCaptureBaseMock], [overlay])) { error in
       XCTAssertEqual(error as? OcaError, .invalidOverlayCaptureBaseDigest)
     }
   }
 
-//  func testValidate_missingCharacterEncodingOverlay_throwsMissingMandatoryOverlayError() throws {
-//    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock], overlays: [])
-//
-//    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
-//      XCTAssertEqual(error as? OcaError, .missingMandatoryOverlayError)
-//    }
-//  }
-//
-//  func testValidate_missingFormatOverlay_throwsMissingMandatoryOverlayError() throws {
-//    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock], overlays: [])
-//
-//    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
-//      XCTAssertEqual(error as? OcaError, .missingMandatoryOverlayError)
-//    }
-//  }
-
   func testValidate_invalidOverlayLanguage_throwsLanguageCodeError() throws {
     let overlay = Self.createLabelOverlay(captureBaseDigest: Self.digestMock)
-    let ocaBundle = OcaBundle(captureBases: [emptyCaptureBaseMock], overlays: [overlay])
     localeValidatorSpy.validateReturnValue = false
 
-    XCTAssertThrowsError(try validator.validate(ocaBundle)) { error in
+    XCTAssertThrowsError(try validator.validate([emptyCaptureBaseMock], [overlay])) { error in
       XCTAssertEqual(error as? OcaError, .invalidOverlayLanguageCode)
     }
   }
@@ -180,6 +139,7 @@ final class OcaBundleValidatorTests: XCTestCase {
   private let referenceAttributeMock = AttributeType.reference(digest: digestMock)
 
   private var localeValidatorSpy = LocaleValidatorProtocolSpy()
+  private var rootCaptureBaseResolverSpy = RootCaptureBaseResolverProtocolSpy()
 
   private var validator = OcaBundleValidator()
 
@@ -191,12 +151,19 @@ final class OcaBundleValidatorTests: XCTestCase {
     LabelOverlay1x0(captureBaseDigest: captureBaseDigest, language: language, attributeLabels: attributes, attributeCategories: nil, categoryLabels: nil)
   }
 
+  private static func createBrandingOverlay(captureBaseDigest: String = digestMock, language: String = languageMock, logo: URL? = nil) throws -> BrandingOverlay1x1 {
+    try BrandingOverlay1x1(captureBaseDigest: captureBaseDigest, logo: logo, language: language)
+  }
+
   private func registerMocks() {
     localeValidatorSpy = LocaleValidatorProtocolSpy()
     Container.shared.localeValidator.register { self.localeValidatorSpy }
+    Container.shared.rootCaptureBaseResolver.register { self.rootCaptureBaseResolverSpy }
   }
 
   private func successState() {
     localeValidatorSpy.validateReturnValue = true
+    rootCaptureBaseResolverSpy.resolveReturnValue = Self.createCaptureBase()
   }
+
 }

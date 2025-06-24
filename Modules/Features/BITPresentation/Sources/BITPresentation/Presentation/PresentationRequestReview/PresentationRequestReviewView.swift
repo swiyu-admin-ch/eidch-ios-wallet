@@ -36,6 +36,9 @@ public struct PresentationRequestReviewView: View {
           focus = .subtitle
         }
       }
+      .onColorSchemeChange { scheme in
+        viewModel.updateCredentialViewModel(with: scheme.rawValue)
+      }
   }
 
   // MARK: Internal
@@ -95,7 +98,9 @@ extension PresentationRequestReviewView {
         .padding(.vertical, .x4)
         .padding(.horizontal, .x6)
 
-      CredentialBox(credential: credential.credential, compression: compression)
+      if let credentialViewModel = viewModel.credentialViewModel {
+        CredentialBox(credentialViewModel, compression: compression)
+      }
 
       claimsList(credential)
         .padding(.top, .x2)
@@ -142,8 +147,7 @@ extension PresentationRequestReviewView {
       Divider()
 
       LazyVStack {
-        PresentationRequestClaimList(compatibleCredential.requestedClaims)
-          .padding(.leading, .x6)
+        ClaimListView(compatibleCredential.requestedClaims)
       }
     }
   }
@@ -208,9 +212,10 @@ extension PresentationRequestReviewView {
         Spacer()
         HStack(spacing: .x3) {
           Spacer()
-          CredentialCard(credential)
-            .controlSize(.small)
-
+          if let credentialViewModel = viewModel.credentialViewModel {
+            CredentialCard(credentialViewModel)
+              .controlSize(.small)
+          }
           Spacer()
         }
         Spacer(minLength: .x4)
@@ -277,7 +282,9 @@ extension PresentationRequestReviewView {
         .padding(.top, .x4)
         .fixedSize()
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-      CredentialBox(credential: credential, compression: compression)
+      if let credentialViewModel = viewModel.credentialViewModel {
+        CredentialBox(credentialViewModel, compression: compression)
+      }
     }
   }
 }

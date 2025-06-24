@@ -28,13 +28,13 @@ final class RequestObjectTests: XCTestCase {
 
     let preferredLanguages: [UserLanguageCode] = ["de", "en", "fr"]
 
-    let preferredClientName = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
+    let preferredClientName: String? = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
       from: mockRequestObject.clientMetadata?.clientName,
       considering: preferredLanguages)
-    let defaultClientName = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
+    let defaultClientName: String? = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
       from: mockRequestObject.clientMetadata?.clientName,
       considering: [])
-    let emptyDisplays = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
+    let emptyDisplays: String? = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
       from: nil,
       considering: [])
 

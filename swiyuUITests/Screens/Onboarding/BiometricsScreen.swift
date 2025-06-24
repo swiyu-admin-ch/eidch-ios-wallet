@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 @testable import BITOnboarding
+@testable import BITTheming
 
 class BiometricsScreen: Screen {
 
@@ -8,9 +9,10 @@ class BiometricsScreen: Screen {
 
   init(app: XCUIApplication) {
     self.app = app
-    skipButton = app.buttons[BiometricView.AccessibilityIdentifier.skipButton.rawValue]
-    settingsButton = app.buttons[BiometricView.AccessibilityIdentifier.settingsButton.rawValue]
-    backButton = app.buttons["Back"]
+    skipButton = app.buttons[DefaultInformationFooterView.AccessibilityIdentifier.secondaryButton.rawValue]
+    _ = skipButton.waitForExistence(timeout: .defaultTimeout)
+    settingsButton = app.buttons[DefaultInformationFooterView.AccessibilityIdentifier.primaryButton.rawValue]
+    backButton = app.navigationBars.buttons.element(boundBy: 0)
     primaryText = app.staticTexts[BiometricView.AccessibilityIdentifier.primaryText.rawValue]
     secondaryText = app.staticTexts[BiometricView.AccessibilityIdentifier.secondaryText.rawValue]
   }

@@ -2,7 +2,6 @@ import Foundation
 import XCTest
 @testable import BITAppAuth
 @testable import BITOnboarding
-@testable import BITTheming
 
 class EnterPinScreen: Screen {
 
@@ -10,10 +9,11 @@ class EnterPinScreen: Screen {
 
   init(app: XCUIApplication) {
     self.app = app
-    pinField = app.secureTextFields.firstMatch
-    backButton = app.buttons["Back"]
-    titleText = app.textFields["Enter password (deepl)"]
     continueButton = app.buttons[PinCodeView.AccessibilityIdentifier.continueButton.rawValue]
+    _ = continueButton.waitForExistence(timeout: .defaultTimeout)
+    pinField = app.secureTextFields.firstMatch
+    backButton = app.navigationBars.buttons.element(boundBy: 0)
+    titleText = app.navigationBars.textFields.element(boundBy: 0)
   }
 
   // MARK: Internal
@@ -25,14 +25,14 @@ class EnterPinScreen: Screen {
   let continueButton: XCUIElement
 
   func assertDisplayed() {
-    XCTAssertTrue(pinField.waitForExistence(timeout: 5))
+    XCTAssertTrue(pinField.waitForExistence(timeout: .defaultTimeout))
     XCTAssertTrue(pinField.exists)
     XCTAssertTrue(continueButton.exists)
   }
 
   func enterPin(pin: String) {
     assertDisplayed()
-    pinField.tap()
+    pinField.forceTapElement()
     pinField.typeText(pin)
     continueButton.tap()
   }

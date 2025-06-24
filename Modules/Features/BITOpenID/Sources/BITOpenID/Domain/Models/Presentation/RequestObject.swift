@@ -83,21 +83,21 @@ public struct ClientMetadata: Codable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(clientName: LocalizedDisplay?, logoUri: LocalizedDisplay?) throws {
+  public init(clientName: LocalizedDisplay<String>?, logoUri: LocalizedDisplay<URL>?) throws {
     self.clientName = clientName
     self.logoUri = logoUri
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
-    clientName = try LocalizedDisplay(from: container, withBaseKey: "client_name")
-    logoUri = try LocalizedDisplay(from: container, withBaseKey: "logo_uri")
+    clientName = try LocalizedDisplay<String>(from: container, withBaseKey: "client_name")
+    logoUri = try LocalizedDisplay<URL>(from: container, withBaseKey: "logo_uri")
   }
 
   // MARK: Public
 
-  public let clientName: LocalizedDisplay?
-  public let logoUri: LocalizedDisplay?
+  public let clientName: LocalizedDisplay<String>?
+  public let logoUri: LocalizedDisplay<URL>?
 
   // MARK: Internal
 
@@ -119,20 +119,22 @@ public struct ClientMetadata: Codable, Equatable {
 
 extension ClientMetadata {
 
+  // MARK: Public
+
   /// Data model providing a Hash representation of the localized display
   /// where the  key of the hash is the language in two letters form (ISO-639)
-  public struct LocalizedDisplay: Codable, Equatable {
+  public struct LocalizedDisplay<T: Codable & Equatable>: Codable, Equatable {
 
     // MARK: Lifecycle
 
-    init(values: [String: String]) {
+    init(values: [String: T]) {
       self.values = values
     }
 
     init?(from container: KeyedDecodingContainer<DynamicCodingKeys>, withBaseKey baseKey: String) throws {
       for key in container.allKeys where key.stringValue.hasPrefix(baseKey) {
-        let language = key.stringValue.components(separatedBy: Self.separator).dropFirst().joined(separator: Self.separator)
-        if let value = try? container.decode(String.self, forKey: key) {
+        let language = key.stringValue.components(separatedBy: ClientMetadata.separator).dropFirst().joined(separator: ClientMetadata.separator)
+        if let value = try? container.decode(T.self, forKey: key) {
           values[String(language)] = value
         }
       }
@@ -148,7 +150,7 @@ extension ClientMetadata {
     /// prioritizing the user's preferred language codes.
     ///
     /// - Returns: The best matching display string based on the preferred languages, the app's default language, or a fallback if available. Returns `nil` if no display is found.
-    public static func getPreferredDisplay(from displays: LocalizedDisplay?, considering preferredUserLanguageCodes: [UserLanguageCode] ) -> String? {
+    public static func getPreferredDisplay(from displays: LocalizedDisplay?, considering preferredUserLanguageCodes: [UserLanguageCode] ) -> T? {
       guard let displays else {
         return nil
       }
@@ -170,20 +172,23 @@ extension ClientMetadata {
       return nil
     }
 
-    public func value(for locale: String) -> String? {
+    public func value(for locale: String) -> T? {
       values[locale]
     }
 
-    public func fallback() -> String? {
+    public func fallback() -> T? {
       values[""]
     }
 
     // MARK: Private
 
-    private static let separator = "#"
-
-    private var values: [String: String] = [:]
+    private var values: [String: T] = [:]
   }
+
+  // MARK: Fileprivate
+
+  fileprivate static let separator = "#"
+
 }
 
 // MARK: - PresentationDefinition

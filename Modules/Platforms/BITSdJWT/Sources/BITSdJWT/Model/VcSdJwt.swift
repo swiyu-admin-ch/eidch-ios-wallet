@@ -22,7 +22,7 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
 
   public var expiredAt: Date?
 
-  public var keyBinding: PublicKeyInfo.JWK?
+  public var keyBinding: ExpandedKeyBinding?
 
   public var vct: String
 
@@ -49,14 +49,30 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
   }
 }
 
-// MARK: VcSdJwtPayload.KeyBinding
+// MARK: VcSdJwtPayload.ExpandedKeyBinding
 
 extension VcSdJwtPayload {
-  public struct KeyBinding: Codable, Equatable {
-    public let jwk: PublicKeyInfo.JWK
 
-    public init(jwk: PublicKeyInfo.JWK) {
-      self.jwk = jwk
-    }
+  /// Supporting temporarly both malformed and standard format of `cnf` claim.
+  /// Example `cnf` content:
+  /// {
+  ///   "kty": "EC",
+  ///   "crv": "P-256",
+  ///   "x": "oXPOuWfF6dJWVhchYmalVp4kNgE1ShXN6wrtt4PQhY4",
+  ///   "y": "LLSwewMUqxqX2eNLxx_BpTeC7dq1bxZQZv6lr6AsHQg",
+  ///   "jwk": {
+  ///     "kty": "EC",
+  ///     "crv": "P-256",
+  ///     "x": "oXPOuWfF6dJWVhchYmalVp4kNgE1ShXN6wrtt4PQhY4",
+  ///     "y": "LLSwewMUqxqX2eNLxx_BpTeC7dq1bxZQZv6lr6AsHQg"
+  ///   }
+  /// }
+  public struct ExpandedKeyBinding: Codable, Equatable {
+    let jwk: JWK?
+
+    let x: String?
+    let y: String?
+    let crv: String?
+    let kty: String?
   }
 }

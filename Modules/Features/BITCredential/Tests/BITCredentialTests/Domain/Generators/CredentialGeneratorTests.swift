@@ -25,77 +25,90 @@ final class CredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withOca_returnsCredentialFromOcaGenerator() throws {
-    let credential = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: ocaBundleMock, metadataWrapper: metadataWrapperMock)
+    let credential = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: rawOcaBundleMock, metadataWrapper: metadataWrapperMock)
 
     XCTAssertEqual(credential, ocaCredential)
-    XCTAssertEqual(ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysCallsCount, 1)
+    XCTAssertEqual(ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysRawCredentialDataCallsCount, 1)
   }
 
   func testGenerate_withOca_argumentsPassed() throws {
-    _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: ocaBundleMock, metadataWrapper: metadataWrapperMock)
+    _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: rawOcaBundleMock, metadataWrapper: metadataWrapperMock)
 
-    if let arguments = ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysReceivedArguments {
+    XCTAssertEqual(ocaBundlerSpy.createOcaBundleReceivedData, rawOcaBundleMock)
+    if let arguments = ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysRawCredentialDataReceivedArguments {
       XCTAssertEqual(arguments.anyCredential.raw, anyCredentialMock.raw)
       XCTAssertEqual(arguments.keyPair, keyPairMock)
       XCTAssertNotNil(arguments.ocaBundle)
       assertIssuerDisplays(arguments.issuerDisplays, credentialId: arguments.id)
+      XCTAssertEqual(arguments.rawCredentialData.rawOIDMetadata, metadataWrapperMock.rawData)
+      XCTAssertEqual(arguments.rawCredentialData.rawOcaBundle, rawOcaBundleMock)
     } else {
       XCTFail("Arguments not passed")
     }
   }
 
   func testGenerate_withoutOca_returnsCredentialFromMetadataGenerator() throws {
-    let credential = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: nil, metadataWrapper: metadataWrapperMock)
+    let credential = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: nil, metadataWrapper: metadataWrapperMock)
 
     XCTAssertEqual(credential, metadataCredential)
-    XCTAssertEqual(metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysCallsCount, 1)
+    XCTAssertEqual(metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysRawCredentialDataCallsCount, 1)
   }
 
   func testGenerate_withoutOca_argumentsPassed() throws {
-    _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: nil, metadataWrapper: metadataWrapperMock)
+    _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: nil, metadataWrapper: metadataWrapperMock)
 
-    if let arguments = metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysReceivedArguments {
+    if let arguments = metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysRawCredentialDataReceivedArguments {
       XCTAssertEqual(arguments.anyCredential.raw, anyCredentialMock.raw)
       XCTAssertEqual(arguments.keyPair, keyPairMock)
       XCTAssertEqual(arguments.selectedCredential.claims, metadataWrapperMock.selectedCredential.claims)
       assertIssuerDisplays(arguments.issuerDisplays, credentialId: arguments.id)
+      XCTAssertEqual(arguments.rawCredentialData.rawOIDMetadata, metadataWrapperMock.rawData)
+      XCTAssertNil(arguments.rawCredentialData.rawOcaBundle)
     } else {
       XCTFail("Arguments not passed")
     }
   }
 
-  func testGenerate_ocaCredentialGeneratorFailure_throwsError() async throws {
-    ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysThrowableError = TestingError.error
+  func testGenerate_ocaBundlerFailure_returnsCredentialFromMetadataGenerator() async throws {
+    ocaBundlerSpy.createOcaBundleThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: ocaBundleMock, metadataWrapper: metadataWrapperMock)) { error in
+    let credential = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: rawOcaBundleMock, metadataWrapper: metadataWrapperMock)
+
+    XCTAssertEqual(credential, metadataCredential)
+  }
+
+  func testGenerate_ocaCredentialGeneratorFailure_throwsError() async throws {
+    ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysRawCredentialDataThrowableError = TestingError.error
+
+    XCTAssertThrowsError(try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: rawOcaBundleMock, metadataWrapper: metadataWrapperMock)) { error in
       XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
   func testGenerate_metadataCredentialGeneratorFailure_throwsError() async throws {
-    metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysThrowableError = TestingError.error
+    metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysRawCredentialDataThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: nil, metadataWrapper: metadataWrapperMock)) { error in
+    XCTAssertThrowsError(try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: nil, metadataWrapper: metadataWrapperMock)) { error in
       XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
   func testGenerate_withOcaAndNoIssuerMetadata_returnsEmptyIssuerDisplays() throws {
-    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays)
+    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
 
-    let _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: ocaBundleMock, metadataWrapper: emptyMetadata)
+    let _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: rawOcaBundleMock, metadataWrapper: emptyMetadata)
 
-    let issuerDisplays = ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysReceivedArguments?.issuerDisplays
+    let issuerDisplays = ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysRawCredentialDataReceivedArguments?.issuerDisplays
 
     XCTAssertEqual(issuerDisplays, [])
   }
 
   func testGenerate_withoutOcaAndNoIssuerMetadata_returnsEmptyIssuerDisplays() throws {
-    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays)
+    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
 
-    let _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, ocaBundle: nil, metadataWrapper: emptyMetadata)
+    let _ = try generator.generate(for: anyCredentialMock, keyPair: keyPairMock, rawOcaBundle: nil, metadataWrapper: emptyMetadata)
 
-    let issuerDisplays = metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysReceivedArguments?.issuerDisplays
+    let issuerDisplays = metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysRawCredentialDataReceivedArguments?.issuerDisplays
 
     XCTAssertEqual(issuerDisplays, [])
   }
@@ -104,28 +117,33 @@ final class CredentialGeneratorTests: XCTestCase {
 
   private let anyCredentialMock = MockAnyCredential()
   private lazy var keyPairMock = KeyPair(identifier: UUID(), algorithm: "keyAlgorithm", privateKey: SecKeyTestsHelper.createPrivateKey())
-  private let metadataWrapperMock = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSample)
+  private let metadataWrapperMock = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSample, rawData: CredentialMetadata.Mock.simpleSampleData)
   private let ocaBundleMock: OcaBundle = .Mock.simpleSample
+  private let rawOcaBundleMock: RawOcaBundle = OcaBundle.Mock.simpleSampleData
 
   private let ocaCredential: Credential = .Mock.sample
   private let metadataCredential: Credential = .Mock.sampleDisplaysFallback
 
+  private var ocaBundlerSpy: OcaBundlerProtocolSpy!
   private var ocaCredentialGeneratorSpy: OcaCredentialGeneratorProtocolSpy!
   private var metadataCredentialGeneratorSpy: MetadataCredentialGeneratorProtocolSpy!
 
   private var generator = CredentialGenerator()
 
   private func registerMocks() {
+    ocaBundlerSpy = OcaBundlerProtocolSpy()
     ocaCredentialGeneratorSpy = OcaCredentialGeneratorProtocolSpy()
     metadataCredentialGeneratorSpy = MetadataCredentialGeneratorProtocolSpy()
 
+    Container.shared.ocaBundler.register { self.ocaBundlerSpy }
     Container.shared.ocaCredentialGenerator.register { self.ocaCredentialGeneratorSpy }
     Container.shared.metadataCredentialGenerator.register { self.metadataCredentialGeneratorSpy }
   }
 
   private func success() {
-    ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysReturnValue = ocaCredential
-    metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysReturnValue = metadataCredential
+    ocaBundlerSpy.createOcaBundleReturnValue = ocaBundleMock
+    ocaCredentialGeneratorSpy.generateForIdKeyPairOcaBundleIssuerDisplaysRawCredentialDataReturnValue = ocaCredential
+    metadataCredentialGeneratorSpy.generateForIdKeyPairSelectedCredentialIssuerDisplaysRawCredentialDataReturnValue = metadataCredential
   }
 
   private func assertIssuerDisplays(_ displays: [CredentialIssuerDisplay], credentialId: UUID) {

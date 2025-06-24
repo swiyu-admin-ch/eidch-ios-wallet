@@ -43,6 +43,9 @@ struct CredentialOfferView: View {
         compression = UICompressionStyle(height: size.height)
       })
       .navigationBarHidden(true)
+      .onColorSchemeChange { scheme in
+        viewModel.updateCredentialViewModel(with: scheme.rawValue)
+      }
   }
 
   // MARK: Private
@@ -83,9 +86,9 @@ extension CredentialOfferView {
         Divider()
 
         LazyVStack {
-          CredentialOfferClaimListView(viewModel.credentialBody.claims)
+          let claims = viewModel.credential.clusters.flatMap(\.claims)
+          ClaimListView(claims)
         }
-        .padding(.leading, .x6)
       }
 
       VStack(alignment: .leading) {
@@ -110,10 +113,13 @@ extension CredentialOfferView {
   private func credentialContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
-      CredentialCard(viewModel.credential)
-        .padding(.horizontal, .x10)
-        .accessibilityHidden(true)
-        .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+      if let credentialViewMOdel = viewModel.credentialViewModel {
+        CredentialCard(credentialViewMOdel)
+          .padding(.horizontal, .x10)
+          .accessibilityHidden(true)
+          .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+      }
+
       Spacer(minLength: compression.isCompressed ? .x6 : .x12)
 
       footerButtons(addAccessibilityIdentifier: true)
@@ -133,10 +139,12 @@ extension CredentialOfferView {
       VStack {
         VStack {
           Spacer(minLength: compression.isCompressed ? .x4 : .x12)
-          CredentialCard(viewModel.credential)
-            .padding(.horizontal, .x10)
-            .accessibilityHidden(true)
-            .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+          if let credentialViewMOdel = viewModel.credentialViewModel {
+            CredentialCard(credentialViewMOdel)
+              .padding(.horizontal, .x10)
+              .accessibilityHidden(true)
+              .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+          }
           Spacer(minLength: compression.isCompressed ? .x6 : .x12)
 
           ProgressView()
@@ -341,7 +349,7 @@ extension CredentialOfferView {
         .applyScrollViewIfNeeded()
         .safeAreaInset(edge: .bottom) {
           if !sizeCategory.isAccessibilityCategory {
-            footerButtons()
+            footerButtons(addAccessibilityIdentifier: true)
               .padding(.x3)
               .background(ThemingAssets.Background.primary.swiftUIColor)
           }
@@ -355,9 +363,11 @@ extension CredentialOfferView {
     VStack {
       Spacer()
       VStack {
-        CredentialCard(viewModel.credential)
-          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-          .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+        if let viewModel = viewModel.credentialViewModel {
+          CredentialCard(viewModel)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+        }
       }
       .padding(.x5)
       .background(Color(uiColor: .secondarySystemBackground))

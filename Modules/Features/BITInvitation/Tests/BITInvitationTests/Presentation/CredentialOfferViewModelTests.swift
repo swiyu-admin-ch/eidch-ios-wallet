@@ -3,7 +3,6 @@ import Foundation
 import Spyable
 import XCTest
 @testable import BITCredential
-@testable import BITCredentialMocks
 @testable import BITCredentialShared
 @testable import BITInvitation
 @testable import BITOpenID
@@ -14,51 +13,68 @@ import XCTest
 @MainActor
 final class CredentialOfferViewModelTests: XCTestCase {
 
-  // swiftlint:disable all
-  var viewModel: CredentialOfferViewModel!
-  var credential = Credential.Mock.sample
-  var trustStatement: TrustStatement? = TrustStatementPayload.Mock.validSample
-  var router: MockCredentialOfferRouter!
-  var delayAfterAcceptingCredential: UInt64 = 0
-  var deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
-  var getCredentialIssuerDisplayUseCase = GetCredentialIssuerDisplayUseCaseProtocolSpy()
-
-  // swiftlint:enable all
+  // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+    Container.shared.reset()
+    registerMocks()
     router = MockCredentialOfferRouter()
+    createSuccessState()
 
-    Container.shared.delayAfterAcceptingCredential.register { self.delayAfterAcceptingCredential }
-    Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCase }
-    Container.shared.getCredentialIssuerDisplayUseCase.register { self.getCredentialIssuerDisplayUseCase }
-
-    viewModel = CredentialOfferViewModel(credential: credential, router: router)
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: trustStatementMock, router: router)
   }
 
-  func testInitValuesWithTrustStatement() async {
-    viewModel = CredentialOfferViewModel(credential: credential, trustStatement: trustStatement, router: router)
+  func testInit_ValuesWithTrustStatement() async {
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: trustStatementMock, router: router)
 
-    XCTAssertEqual(viewModel.credential, credential)
-    XCTAssertEqual(viewModel.credentialBody, CredentialDetailBody(from: credential))
-    XCTAssertNotEqual(viewModel.issuerDisplay, credential.preferredIssuerDisplay)
+    XCTAssertEqual(viewModel.credential, credentialMock)
     XCTAssertEqual(viewModel.state, .result)
     XCTAssertEqual(viewModel.issuerTrustStatus, .verified)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.credentialId, credential.id)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.trustStatement, trustStatement)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.fallbackDisplay, credential.preferredIssuerDisplay)
   }
 
-  func testInitValuesWithoutTrustStatement() async {
-    viewModel = CredentialOfferViewModel(credential: credential, trustStatement: nil, router: router)
+  func testInit_ValuesWithoutTrustStatement() async {
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: nil, router: router)
 
-    XCTAssertEqual(viewModel.credential, credential)
-    XCTAssertEqual(viewModel.credentialBody, CredentialDetailBody(from: credential))
+    XCTAssertEqual(viewModel.credential, credentialMock)
     XCTAssertEqual(viewModel.state, .result)
     XCTAssertEqual(viewModel.issuerTrustStatus, .unverified)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCase.executeForTrustStatementFallbackDisplayReceivedArguments?.trustStatement, nil)
   }
 
-  func testAccept() async {
+  func testUpdateCredentialViewModel_withoutTrustStatement_setsIssuerDisplayFromViewModel() {
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: nil, router: router)
+
+    viewModel.updateCredentialViewModel(with: themeMock)
+
+    XCTAssertEqual(viewModel.issuerDisplay, viewModel.credentialViewModel?.issuerDisplay)
+  }
+
+  func testUpdateCredentialViewModel_withTrustStatement_setsIssuerDisplayFromUseCase() {
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: trustStatementMock, router: router)
+
+    viewModel.updateCredentialViewModel(with: themeMock)
+
+    XCTAssertEqual(viewModel.issuerDisplay, issuerDisplaysMock)
+  }
+
+  func testUpdateCredentialViewModel_light_setsViewModel() {
+    viewModel.updateCredentialViewModel(with: themeMock)
+
+    XCTAssertEqual(viewModel.credentialViewModel?.credentialDisplay, .Mock.lightEnglish)
+    XCTAssertEqual(viewModel.credentialViewModel?.credential, credentialMock)
+  }
+
+  func testUpdateCredentialViewModel_light_argumentsPassed() {
+    viewModel.updateCredentialViewModel(with: themeMock)
+
+    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, themeMock)
+    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, credentialMock.displays)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReceivedArguments?.credentialId, credentialMock.id)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReceivedArguments?.trustStatement, trustStatementMock)
+    XCTAssertEqual(getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReceivedArguments?.fallbackDisplay, viewModel.credentialViewModel?.issuerDisplay)
+  }
+
+  func testAccept_loadingStateThencloseCalled() async {
     await viewModel.send(event: .accept)
     XCTAssertEqual(viewModel.state, .loading)
 
@@ -67,37 +83,68 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertTrue(router.closeCalled)
   }
 
-  func testDecline() async {
+  func testDecline_setsDeclineState() async {
     await viewModel.send(event: .decline)
+
     XCTAssertEqual(viewModel.state, .decline)
   }
 
-  func testDeclineConfirmation() async {
+  func testDeclineConfirmation_correctCalls() async {
     await viewModel.send(event: .confirmDecline)
-    XCTAssertTrue(deleteCredentialUseCase.executeCalled)
-    XCTAssertEqual(deleteCredentialUseCase.executeCallsCount, 1)
+
+    XCTAssertTrue(deleteCredentialUseCaseSpy.executeCalled)
+    XCTAssertEqual(deleteCredentialUseCaseSpy.executeCallsCount, 1)
     XCTAssertTrue(router.closeCalled)
   }
 
-  func testDeclineConfirmation_onError() async {
-    deleteCredentialUseCase.executeThrowableError = TestingError.error
+  func testSend_declineConfirmation_setsErrorState() async {
+    deleteCredentialUseCaseSpy.executeThrowableError = TestingError.error
 
     await viewModel.send(event: .confirmDecline)
-    XCTAssertTrue(deleteCredentialUseCase.executeCalled)
-    XCTAssertEqual(deleteCredentialUseCase.executeCallsCount, 1)
+
+    XCTAssertTrue(deleteCredentialUseCaseSpy.executeCalled)
+    XCTAssertEqual(deleteCredentialUseCaseSpy.executeCallsCount, 1)
     XCTAssertFalse(router.closeCalled)
     XCTAssertEqual(viewModel.state, .error)
     XCTAssertNotNil(viewModel.stateError)
   }
 
-  func testDeclineCancellation() async {
+  func testSend_declineCancellation_setsResultState() async {
     await viewModel.send(event: .cancelDecline)
     XCTAssertEqual(viewModel.state, .result)
   }
 
-  func testOpenWrongData() async {
+  func testSend_openWrongData_correctCalls() async {
     await viewModel.send(event: .openWrongData)
     XCTAssertTrue(router.wrongDataCalled)
+  }
+
+  // MARK: Private
+
+  // swiftlint:disable all
+  private var viewModel: CredentialOfferViewModel!
+  private var credentialMock = Credential.Mock.sample
+  private var trustStatementMock: TrustStatement? = TrustStatementPayload.Mock.validSample
+  private let themeMock = "light"
+  private var router: MockCredentialOfferRouter!
+  private var delayAfterAcceptingCredential: UInt64 = 0
+  private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
+  private var getCredentialIssuerDisplayUseCaseSpy = GetCredentialIssuerDisplayUseCaseProtocolSpy()
+  private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
+  // swiftlint:enable all
+
+  private let issuerDisplaysMock = CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)
+
+  private func registerMocks() {
+    Container.shared.delayAfterAcceptingCredential.register { self.delayAfterAcceptingCredential }
+    Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCaseSpy }
+    Container.shared.getCredentialIssuerDisplayUseCase.register { self.getCredentialIssuerDisplayUseCaseSpy }
+    Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
+  }
+
+  private func createSuccessState() {
+    getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReturnValue = issuerDisplaysMock
+    getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = .Mock.lightEnglish
   }
 
 }

@@ -9,34 +9,42 @@ public struct CredentialClaim: Codable {
 
   // MARK: Lifecycle
 
-  public init(id: UUID = UUID(), key: String, valueType: String = "string", value: String, order: Int16 = 0, credentialId: UUID? = nil, displays: [CredentialClaimDisplay] = []) {
+  public init(
+    id: UUID = UUID(),
+    key: String,
+    value: String,
+    valueType: String = "string",
+    valueDisplayInfo: String? = nil,
+    order: Int = 0,
+    displays: [CredentialClaimDisplay] = [])
+  {
     self.id = id
     self.key = key
-    self.valueType = valueType
     self.value = value
+    self.valueType = valueType
+    self.valueDisplayInfo = valueDisplayInfo
     self.order = order
-    self.credentialId = credentialId
     self.displays = displays
-    preferredDisplay = displays.findDisplayWithFallback() as? CredentialClaimDisplay ?? CredentialClaimDisplay(name: key)
+    preferredDisplay = displays.findDisplayWithFallback() ?? CredentialClaimDisplay(name: key)
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let id = try container.decode(UUID.self, forKey: .id)
     let key = try container.decode(String.self, forKey: .key)
-    let valueType = try container.decode(String.self, forKey: .valueType)
     let value = try container.decode(String.self, forKey: .value)
-    let order = try container.decode(Int16.self, forKey: .order)
-    let credentialId = try container.decodeIfPresent(UUID.self, forKey: .credentialId)
+    let valueType = try container.decode(String.self, forKey: .valueType)
+    let valueDisplayInfo = try container.decodeIfPresent(String.self, forKey: .valueDisplayInfo)
+    let order = try container.decode(Int.self, forKey: .order)
     let displays = try container.decode([CredentialClaimDisplay].self, forKey: .displays)
 
     self.init(
       id: id,
       key: key,
-      valueType: valueType,
       value: value,
+      valueType: valueType,
+      valueDisplayInfo: valueDisplayInfo,
       order: order,
-      credentialId: credentialId,
       displays: displays)
   }
 
@@ -45,10 +53,10 @@ public struct CredentialClaim: Codable {
     self.init(
       id: entity.id,
       key: entity.key,
-      valueType: entity.valueType,
       value: entity.value,
-      order: entity.order,
-      credentialId: entity.credential.first?.id,
+      valueType: entity.valueType,
+      valueDisplayInfo: entity.valueDisplayInfo,
+      order: Int(entity.order),
       displays: displays)
   }
 
@@ -56,10 +64,10 @@ public struct CredentialClaim: Codable {
 
   public var id: UUID
   public var key: String
-  public var valueType: String
   public var value: String
-  public var order: Int16
-  public var credentialId: UUID?
+  public var valueType: String
+  public var valueDisplayInfo: String?
+  public var order: Int
   public var displays: [CredentialClaimDisplay]
   public var preferredDisplay: CredentialClaimDisplay?
 
@@ -68,10 +76,10 @@ public struct CredentialClaim: Codable {
   enum CodingKeys: String, CodingKey {
     case id
     case key
-    case valueType = "value_type"
     case value
+    case valueType = "value_type"
+    case valueDisplayInfo = "value_display_info"
     case order
-    case credentialId = "credential_id"
     case displays
   }
 
@@ -96,10 +104,11 @@ extension CredentialClaim: Equatable {
   public static func == (lhs: CredentialClaim, rhs: CredentialClaim) -> Bool {
     lhs.id == rhs.id &&
       lhs.key == rhs.key &&
-      lhs.valueType == rhs.valueType &&
       lhs.value == rhs.value &&
+      lhs.valueType == rhs.valueType &&
+      lhs.valueDisplayInfo == rhs.valueDisplayInfo &&
       lhs.order == rhs.order &&
-      lhs.credentialId == rhs.credentialId
+      lhs.displays.allSatisfy(rhs.displays.contains) && rhs.displays.allSatisfy(lhs.displays.contains)
   }
 
 }

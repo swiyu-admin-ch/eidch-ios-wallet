@@ -1,31 +1,35 @@
 import Foundation
 import XCTest
+@testable import BITOnboarding
 
 class PinCodeInformationScreen: InformationScreen {
 
   // MARK: Lifecycle
 
   override init(app: XCUIApplication) {
-    backButton = app.buttons["Back"]
+    content = app.descendants(matching: .any)[PinCodeInformationView.AccessibilityIdentifier.pinCodeInformationContent.rawValue]
+    _ = content.waitForExistence(timeout: .defaultTimeout)
+    backButton = app.navigationBars.buttons.element(boundBy: 0)
     super.init(app: app)
   }
 
   // MARK: Internal
 
   let backButton: XCUIElement
-  let expectedImageLabel = "lock"
+  let content: XCUIElement
 
   override func assertDisplayed() {
-    super.assertDisplayed()
-    XCTAssertEqual(getImagelabel(), expectedImageLabel)
+    XCTAssertTrue(content.waitForExistence(timeout: .defaultTimeout))
     XCTAssertTrue(secondaryText.exists)
+    super.assertDisplayed()
   }
 
-  func navigateFromAppStartToScreen() {
-    let privacyPermission = PrivacyPermissionScreen(app: app)
-    privacyPermission.navigateFromAppStartToScreen()
-    privacyPermission.acceptButton.tap()
-    assertDisplayed()
+  static func createAndNavigateFromAppStart(app: XCUIApplication) -> PinCodeInformationScreen {
+    let credentialIntroduction = PrivacyPermissionScreen.createAndNavigateFromAppStart(app: app)
+    credentialIntroduction.acceptButton.tap()
+    let currentScreen = PinCodeInformationScreen(app: app)
+    currentScreen.assertDisplayed()
+    return currentScreen
   }
 
 }

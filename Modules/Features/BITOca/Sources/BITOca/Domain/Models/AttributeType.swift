@@ -21,6 +21,19 @@ public indirect enum AttributeType: Decodable, Equatable {
     self = try Self.parseAttributeType(type)
   }
 
+  // MARK: Public
+
+  public var referenceDigest: String? {
+    switch self {
+    case .reference(let digest):
+      digest
+    case .array(let innerType):
+      innerType.referenceDigest
+    default:
+      nil
+    }
+  }
+
   // MARK: Private
 
   private static func parseAttributeType(_ type: String) throws -> AttributeType {
@@ -54,7 +67,7 @@ private let arrayRegex = Regex {
 
 extension String {
   fileprivate func parseReference() throws -> String {
-    guard let reference = split(separator: ":").first else { throw OcaError.invalidCaptureBaseReferenceAttribute }
+    guard let reference = split(separator: ":").last else { throw OcaError.invalidCaptureBaseReferenceAttribute }
     return String(reference)
   }
 

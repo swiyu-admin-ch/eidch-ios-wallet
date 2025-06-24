@@ -13,9 +13,6 @@ let package = Package(
     .library(
       name: "BITCredential",
       targets: ["BITCredential"]),
-    .library(
-      name: "BITCredentialMocks",
-      targets: ["BITCredentialMocks"]),
   ],
   dependencies: [
     .package(path: "../BITAppAuth"),
@@ -67,18 +64,10 @@ let package = Package(
         .product(name: "RealmSwift", package: "realm-swift"),
       ],
       resources: [.process("Resources")]),
-    .target(
-      name: "BITCredentialMocks",
-      dependencies: [
-        "BITCredential",
-        .product(name: "BITCore", package: "BITCore"),
-        .product(name: "BITTestingCore", package: "BITCore"),
-      ]),
     .testTarget(
       name: "BITCredentialTests",
       dependencies: [
         "BITCredential",
-        "BITCredentialMocks",
         "BITSdJWT",
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
         .product(name: "BITJWT", package: "BITJWT"),

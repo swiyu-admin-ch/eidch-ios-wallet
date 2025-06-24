@@ -33,7 +33,7 @@ final class ReceiveTests: XCTestCase {
 
     let credentialOfferScreen = CredentialOfferScreen(app: app)
     credentialOfferScreen.assertDisplayed()
-    credentialOfferScreen.acceptButton.tap()
+    credentialOfferScreen.acceptButton.forceTapElement()
     homeScreen.assertDisplayed()
   }
 
@@ -49,7 +49,7 @@ final class ReceiveTests: XCTestCase {
     let credentialOfferScreen = CredentialOfferScreen(app: app)
     credentialOfferScreen.assertDisplayed()
     credentialOfferScreen.declineButton.tap()
-    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: 5))
+    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
     credentialOfferScreen.confirmDeclineButton.tap()
     homeScreen.assertDisplayed()
   }
@@ -65,10 +65,10 @@ final class ReceiveTests: XCTestCase {
     let credentialOfferScreen = CredentialOfferScreen(app: app)
     credentialOfferScreen.assertDisplayed()
     credentialOfferScreen.declineButton.tap()
-    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: 5))
+    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
     credentialOfferScreen.cancelDeclineButton.tap()
     credentialOfferScreen.assertDisplayed()
-    credentialOfferScreen.acceptButton.tap()
+    credentialOfferScreen.acceptButton.forceTapElement()
     homeScreen.assertDisplayed()
   }
 
@@ -84,11 +84,11 @@ final class ReceiveTests: XCTestCase {
     credentialOfferScreen.assertDisplayed()
     for _ in 1...10 {
       credentialOfferScreen.declineButton.tap()
-      XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: 5))
+      XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
       credentialOfferScreen.cancelDeclineButton.tap()
       credentialOfferScreen.assertDisplayed()
     }
-    credentialOfferScreen.acceptButton.tap()
+    credentialOfferScreen.acceptButton.forceTapElement()
     homeScreen.assertDisplayed()
   }
 
@@ -160,6 +160,7 @@ final class ReceiveTests: XCTestCase {
 
     let credentialOfferScreen = CredentialOfferScreen(app: app)
     credentialOfferScreen.assertDisplayed()
+    credentialOfferScreen.bottomAcceptButton.scrollDownToElement(app: app)
     credentialOfferScreen.bottomAcceptButton.tap()
     homeScreen.assertDisplayed()
   }

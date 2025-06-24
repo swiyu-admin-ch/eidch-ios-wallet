@@ -41,4 +41,8 @@ extension VcSdJwt: AnyCredential {
 
 // MARK: - SdJWTClaim + AnyClaim
 
-extension SdJWTClaim: AnyClaim {}
+extension SdJWTClaim: AnyClaim {
+  public var key: String {
+    jsonPath
+  }
+}

@@ -17,8 +17,13 @@ extension VcSdJwtPayload: Mockable {
     static let samplePayload: VcSdJwtPayload = decode(fromFile: "vc-sd-jwt-sample-payload", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let reservedClaimsWithOneClaim: VcSdJwt = decode(fromFile: "vc-sd-jwt-reserved-claims-with-one-claim")
     static let noKeyBinding: VcSdJwt = decode(fromFile: "vc-sd-jwt-no-key-binding")
-    static let allFieldsData: Data = getData(fromFile: "vc-sd-jwt-all-fields", ofType: "txt", bundle: Bundle.module) ?? Data()
-    static let requiredFieldsData: Data = getData(fromFile: "vc-sd-jwt-required-fields", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let allFieldsData: Data = getData(fromFile: "vc-sd-jwt-sample", ofType: "txt", bundle: Bundle.module) ?? Data()
+  }
+
+  struct ExpandedMock {
+    static let validSample: Data = getData(fromFile: "vc-sd-jwt-sample-expanded-format-valid", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let sampleWithoutJwk: Data = getData(fromFile: "vc-sd-jwt-sample-expanded-format-no-jwk", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let sampleWithoutKeyDetails: Data = getData(fromFile: "vc-sd-jwt-sample-expanded-format-no-key-details", ofType: "txt", bundle: Bundle.module) ?? Data()
   }
 
   static func decode(fromFile filename: String, bundle: Bundle = Bundle.module) -> VcSdJwt {

@@ -1,7 +1,6 @@
 import Foundation
 import XCTest
 @testable import BITOnboarding
-@testable import BITTheming
 
 class ConfirmPinScreen: Screen {
 
@@ -9,10 +8,11 @@ class ConfirmPinScreen: Screen {
 
   init(app: XCUIApplication) {
     self.app = app
-    pinField = app.secureTextFields.firstMatch
-    backButton = app.buttons["Back"]
-    titleText = app.textFields["Confirm code (deepl)"]
     continueButton = app.buttons[PinCodeConfirmationView.AccessibilityIdentifier.continueButton.rawValue]
+    _ = continueButton.waitForExistence(timeout: .defaultTimeout)
+    pinField = app.secureTextFields.firstMatch
+    backButton = app.navigationBars.buttons.element(boundBy: 0)
+    titleText = app.navigationBars.textFields.element(boundBy: 0)
   }
 
   // MARK: Internal
@@ -24,7 +24,7 @@ class ConfirmPinScreen: Screen {
   let continueButton: XCUIElement
 
   func assertDisplayed() {
-    XCTAssertTrue(pinField.waitForExistence(timeout: 5))
+    XCTAssertTrue(pinField.waitForExistence(timeout: .defaultTimeout))
     XCTAssertTrue(pinField.exists)
     XCTAssertTrue(continueButton.exists)
   }

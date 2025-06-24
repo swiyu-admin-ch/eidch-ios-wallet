@@ -35,6 +35,7 @@ extension BITServerTrustManager {
     case versionEnforcement
     case trustInfra
     case trustInfraInt
+    case attestationService
 
     // MARK: Internal
 
@@ -44,13 +45,15 @@ extension BITServerTrustManager {
       case .versionEnforcement: Domain.enforcementServiceBitAdminCh
       case .trustInfra: Domain.trustInfraSwiyuAdminCh
       case .trustInfraInt: Domain.trustInfraIntSwiyuAdminCh
+      case .attestationService: Domain.attestationServiceCh
       }
     }
 
     var certificate: [Certificate] {
       switch self {
       case .dynatrace: [.dynatraceRoot]
-      case .trustInfra,
+      case .attestationService,
+           .trustInfra,
            .trustInfraInt,
            .versionEnforcement: [.adminChRoot]
       }
@@ -62,6 +65,7 @@ extension BITServerTrustManager {
     case enforcementServiceBitAdminCh
     case trustInfraSwiyuAdminCh
     case trustInfraIntSwiyuAdminCh
+    case attestationServiceCh
 
     // MARK: Internal
 
@@ -71,6 +75,7 @@ extension BITServerTrustManager {
       case .enforcementServiceBitAdminCh: Self.getVersionEnforcementDomain()
       case .trustInfraSwiyuAdminCh: Self.getTrustInfraDomain()
       case .trustInfraIntSwiyuAdminCh: Self.getTrustInfraIntDomain()
+      case .attestationServiceCh: Self.getAttestationServiceDomain()
       }
     }
 
@@ -93,6 +98,10 @@ extension BITServerTrustManager {
 
     private static func getTrustInfraIntDomain() -> String {
       Container.shared.trustInfraIntWildCardDomain()
+    }
+
+    private static func getAttestationServiceDomain() -> String {
+      Container.shared.attestationServiceDomain()
     }
   }
 

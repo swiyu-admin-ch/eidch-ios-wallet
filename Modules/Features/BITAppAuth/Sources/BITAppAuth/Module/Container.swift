@@ -161,6 +161,9 @@ extension Container {
     self { .ecdhKeyExchangeStandardX963SHA256 }
   }
 
+  var vaultAlgorithm: Factory<VaultAlgorithm> {
+    self { .eciesEncryptionStandardVariableIVX963SHA256AESGCM }
+  }
 }
 
 // MARK: - Repository
@@ -171,6 +174,10 @@ extension Container {
 
   public var biometricRepository: Factory<BiometricRepositoryProtocol> {
     self { UserDefaultBiometricRepository() }
+  }
+
+  public var appAttestationKeyRepository: Factory<AppAttestationKeyRepositoryProtocol> {
+    self { self.secretsRepository() }
   }
 
   // MARK: Internal

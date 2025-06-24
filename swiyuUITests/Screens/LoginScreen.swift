@@ -9,6 +9,7 @@ class LoginScreen: Screen {
   init(app: XCUIApplication) {
     self.app = app
     loginButton = app.buttons[LoginView.AccessibilityIdentifier.loginButton.rawValue]
+    _ = loginButton.waitForExistence(timeout: .defaultTimeout)
     pinField = app.secureTextFields[LoginView.AccessibilityIdentifier.pinField.rawValue]
   }
 
@@ -19,7 +20,7 @@ class LoginScreen: Screen {
   let pinField: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(loginButton.waitForExistence(timeout: 5))
+    XCTAssert(loginButton.exists)
     XCTAssert(pinField.exists)
   }
 

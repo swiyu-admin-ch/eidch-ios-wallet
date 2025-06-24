@@ -1,0 +1,19 @@
+{
+   "errors":[
+      {
+         "id":"5296099910592404644",
+         "status":422,
+         "message":"",
+         "code":"InvalidClientAttestation",
+         "transferId":"7da5b2e1ee4af8ff96f253ecf5b3e855.d28b5c52f4b9f6af&fhd4vs7l",
+         "correlationId":null,
+         "translations":{
+
+         },
+         "messageKey":"global.error.msg.InvalidClientAttestation",
+         "params":{
+
+         }
+      }
+   ]
+}

@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 @testable import BITOnboarding
+@testable import BITTheming
 
 class PrivacyPermissionScreen: Screen {
 
@@ -10,8 +11,9 @@ class PrivacyPermissionScreen: Screen {
     self.app = app
     acceptButton = app.buttons[PrivacyPermissionView.AccessibilityIdentifier.acceptButton.rawValue]
     declineButton = app.buttons[PrivacyPermissionView.AccessibilityIdentifier.declineButton.rawValue]
-    backButton = app.buttons["Back"]
-    image = app.images[PrivacyPermissionView.AccessibilityIdentifier.image.rawValue]
+    _ = declineButton.waitForExistence(timeout: .defaultTimeout)
+    backButton = app.navigationBars.buttons.element(boundBy: 0)
+    image = app.images[InformationView<DefaultInformationContentView, DefaultInformationFooterView>.AccessibilityIdentifier.image.rawValue]
     primaryText = app.staticTexts[PrivacyPermissionView.AccessibilityIdentifier.primaryText.rawValue]
     secondaryText = app.staticTexts[PrivacyPermissionView.AccessibilityIdentifier.secondaryText.rawValue]
     dataProtectionLink = app.links[PrivacyPermissionView.AccessibilityIdentifier.privacyLink.rawValue]
@@ -29,19 +31,20 @@ class PrivacyPermissionScreen: Screen {
   let dataProtectionLink: XCUIElement
   let expectedImageLabel = "verify cross"
 
+  static func createAndNavigateFromAppStart(app: XCUIApplication) -> PrivacyPermissionScreen {
+    let credentialIntroduction = CredentialIntroductionScreen.createAndNavigateFromAppStart(app: app)
+    credentialIntroduction.primaryButton.tap()
+    let currentScreen = PrivacyPermissionScreen(app: app)
+    currentScreen.assertDisplayed()
+    return currentScreen
+  }
+
   func assertDisplayed() {
     XCTAssertTrue(primaryText.exists)
   }
 
   func getImagelabel() -> String {
-    app.descendants(matching: .image).matching(identifier: PrivacyPermissionView.AccessibilityIdentifier.image.rawValue).allElementsBoundByIndex[0].label
-  }
-
-  func navigateFromAppStartToScreen() {
-    let credentialIntroduction = CredentialIntroductionScreen(app: app)
-    credentialIntroduction.navigateFromAppStartToScreen()
-    credentialIntroduction.primaryButton.tap()
-    assertDisplayed()
+    app.descendants(matching: .image).matching(identifier: InformationView<DefaultInformationContentView, DefaultInformationFooterView>.AccessibilityIdentifier.image.rawValue).allElementsBoundByIndex[0].label
   }
 
 }

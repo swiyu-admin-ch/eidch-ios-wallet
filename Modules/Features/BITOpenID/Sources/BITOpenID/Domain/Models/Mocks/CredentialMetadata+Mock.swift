@@ -17,6 +17,12 @@ extension CredentialMetadata: Mockable {
     static let sampleUnsupportedCryptographicBindingMethodData: Data = Mocker.getData(fromFile: "credential-metadata-unsupported-cryptographic-binding-method", bundle: Bundle.module) ?? Data()
 
     static let sampleData: Data = Mocker.getData(fromFile: "uetliberg-credential-metadata", bundle: Bundle.module) ?? Data()
+    static let simpleSampleData: Data = Mocker.getData(fromFile: "credential-metadata-simple-sample", bundle: Bundle.module) ?? Data()
+    static let simpleSampleWithoutDisplaysData: Data = Mocker.getData(fromFile: "credential-metadata-empty-displays", bundle: Bundle.module) ?? Data()
+    static let sampleNoClaimsData: Data = Mocker.getData(fromFile: "uetliberg-credential-metadata-noclaims", bundle: Bundle.module) ?? Data()
+    static let sampleMultipassData: Data = Mocker.getData(fromFile: "multipass-credential-metadata", bundle: Bundle.module) ?? Data()
+    static let sampleUnknownAlgorithmData: Data = Mocker.getData(fromFile: "credential-metadata-unknown-algo", bundle: Bundle.module) ?? Data()
+    static let sampleWithoutProofTypesData: Data = Mocker.getData(fromFile: "credential-metadata-without-proof-types", bundle: Bundle.module) ?? Data()
     static let sampleWithUnknownFormatData: Data = Mocker.getData(fromFile: "credential-metadata-with-unknown-format", bundle: Bundle.module) ?? Data()
   }
 }

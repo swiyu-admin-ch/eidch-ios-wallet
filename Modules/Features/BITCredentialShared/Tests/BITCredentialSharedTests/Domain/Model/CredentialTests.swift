@@ -63,9 +63,8 @@ final class CredentialTests: XCTestCase {
     Container.shared.preferredUserLocales.register { [UserLocale.LocaleIdentifier.swissItalian.rawValue] }
     let credential = Credential.Mock.sampleDisplaysUnsupported
 
-    let display = credential.preferredDisplay
-    XCTAssertNotNil(display)
-    for claim in credential.claims {
+    let claims = credential.clusters.first?.claims ?? []
+    for claim in claims {
       let claimDisplay = claim.preferredDisplay
       XCTAssertNotNil(claimDisplay)
     }
@@ -75,9 +74,8 @@ final class CredentialTests: XCTestCase {
     Container.shared.preferredUserLocales.register { [UserLocale.LocaleIdentifier.swissItalian.rawValue] }
     let credential = Credential.Mock.sampleDisplaysEmpty
 
-    let display = credential.preferredDisplay
-    XCTAssertNil(display)
-    for claim in credential.claims {
+    let claims = credential.clusters.first?.claims ?? []
+    for claim in claims {
       let claimDisplay = claim.preferredDisplay
       XCTAssertEqual(claimDisplay?.name, claim.key)
     }
@@ -86,15 +84,10 @@ final class CredentialTests: XCTestCase {
   // MARK: Private
 
   private func assertDisplays(credential: Credential, expectedLanguageCode: UserLanguageCode) {
-    let display = credential.preferredDisplay
-    XCTAssertNotNil(display)
-    guard let display else { fatalError("display is nil") }
-    XCTAssertTrue(display.locale?.starts(with: "\(expectedLanguageCode)-") ?? false)
-    XCTAssertEqual(credential.id, display.credentialId)
-    for claim in credential.claims {
+    let claims = credential.clusters.first?.claims ?? []
+    for claim in claims {
       let claimDisplay = claim.preferredDisplay
       XCTAssertNotNil(claimDisplay)
-      XCTAssertEqual(claim.id, claimDisplay?.claimId)
       guard let claimDisplay else { fatalError("claim display is nil") }
       XCTAssertTrue(claimDisplay.locale?.starts(with: "\(expectedLanguageCode)-") ?? false)
     }

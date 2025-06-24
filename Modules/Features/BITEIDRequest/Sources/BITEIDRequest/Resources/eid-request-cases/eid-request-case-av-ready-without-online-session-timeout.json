@@ -9,6 +9,7 @@
     "id": "3e3da175-993c-41ba-8b42-f209b7517c17",
     "state": "READY_FOR_ONLINE_SESSION",
     "lastPolledAt": "1997-07-16T19:20:30+01:00",
-    "onlineSessionStartOpenAt": "1997-07-16T19:20:30+01:00"
+    "onlineSessionStartOpenAt": "1997-07-16T19:20:30+01:00",
+    "legalRepresentantConsent": "VERIFIED"
   }
 }

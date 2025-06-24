@@ -17,14 +17,23 @@ public struct EIDRequestState: Decodable {
     self.lastPolledAt = lastPolledAt
     onlineSessionStartOpenAt = status.queueInformation?.onlineSessionStartOpenAt
     onlineSessionStartTimeoutAt = status.onlineSessionStartCloseAt
+    legalRepresentantConsent = LegalRepresentantConsent(status.legalRepresentant)
   }
 
-  init(id: UUID = UUID(), state: EIDRequestStatus.State, lastPolledAt: Date = Date(), onlineSessionStartOpenAt: Date? = nil, onlineSessionStartTimeoutAt: Date? = nil) {
+  init(
+    id: UUID = UUID(),
+    state: EIDRequestStatus.State,
+    legalRepresentantConsent: LegalRepresentantConsent,
+    lastPolledAt: Date = Date(),
+    onlineSessionStartOpenAt: Date? = nil,
+    onlineSessionStartTimeoutAt: Date? = nil)
+  {
     self.id = id
     self.state = state
     self.lastPolledAt = lastPolledAt
     self.onlineSessionStartOpenAt = onlineSessionStartOpenAt
     self.onlineSessionStartTimeoutAt = onlineSessionStartTimeoutAt
+    self.legalRepresentantConsent = legalRepresentantConsent
   }
 
   init(_ entity: EIDRequestStateEntity) throws {
@@ -33,6 +42,7 @@ public struct EIDRequestState: Decodable {
     self.init(
       id: entity.id,
       state: state,
+      legalRepresentantConsent: LegalRepresentantConsent(entity.legalRepresentantConsent),
       lastPolledAt: entity.lastPolledAt,
       onlineSessionStartOpenAt: entity.onlineSessionStartOpenAt,
       onlineSessionStartTimeoutAt: entity.onlineSessionStartTimeoutAt)
@@ -51,6 +61,7 @@ public struct EIDRequestState: Decodable {
     lastPolledAt = try container.decode(Date.self, forKey: .lastPolledAt)
     onlineSessionStartOpenAt = try container.decodeIfPresent(Date.self, forKey: .onlineSessionStartOpenAt)
     onlineSessionStartTimeoutAt = try container.decodeIfPresent(Date.self, forKey: .onlineSessionStartTimeoutAt)
+    legalRepresentantConsent = try container.decode(LegalRepresentantConsent.self, forKey: .legalRepresentantConsent)
   }
 
   // MARK: Public
@@ -65,12 +76,14 @@ public struct EIDRequestState: Decodable {
     case lastPolledAt
     case onlineSessionStartOpenAt
     case onlineSessionStartTimeoutAt
+    case legalRepresentantConsent
   }
 
   let id: UUID
   let lastPolledAt: Date
   let onlineSessionStartOpenAt: Date?
   let onlineSessionStartTimeoutAt: Date?
+  let legalRepresentantConsent: LegalRepresentantConsent
 }
 
 // MARK: Equatable
@@ -81,6 +94,7 @@ extension EIDRequestState: Equatable {
       lhs.state == rhs.state &&
       lhs.lastPolledAt == rhs.lastPolledAt &&
       lhs.onlineSessionStartOpenAt == rhs.onlineSessionStartOpenAt &&
-      lhs.onlineSessionStartTimeoutAt == rhs.onlineSessionStartTimeoutAt
+      lhs.onlineSessionStartTimeoutAt == rhs.onlineSessionStartTimeoutAt &&
+      lhs.legalRepresentantConsent == rhs.legalRepresentantConsent
   }
 }

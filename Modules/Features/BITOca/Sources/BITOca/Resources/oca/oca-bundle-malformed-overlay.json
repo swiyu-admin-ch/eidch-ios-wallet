@@ -1,0 +1,17 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IFGp2Z7bUcN2ZBywYXO5poVj3koUUdHGrN0Fn0yKGaJG",
+      "attributes": {
+        "lastName": "Text",
+        "isOver18": "Boolean"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "type": "spec/overlays/label/1.0",
+    }
+  ]
+}

@@ -2,5 +2,6 @@
   "id": "CB0527F5-CE81-47F9-B1A6-0AB0B731CC4E",
   "state": "IN_QUEUING",
   "lastPolledAt": "2024-07-16T19:20:30+01:00",
-  "onlineSessionStartOpenAt": "2025-07-20T19:20:30+01:00"
+  "onlineSessionStartOpenAt": "2025-07-20T19:20:30+01:00",
+  "legalRepresentantConsent": "VERIFIED"
 }

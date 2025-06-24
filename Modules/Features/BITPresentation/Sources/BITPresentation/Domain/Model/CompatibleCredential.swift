@@ -21,7 +21,8 @@ public struct CompatibleCredential: Identifiable {
   public let id: UUID
 
   public var requestedClaims: [CredentialClaim] {
-    credential.claims.filter { claim in requestedFields.contains { $0.key == claim.key } }
+    let clusterDisplayClaims = credential.clusters.flatMap(\.claims)
+    return clusterDisplayClaims.filter { claim in requestedFields.contains { $0.key == claim.key } }
   }
 
   // MARK: Internal

@@ -1,5 +1,7 @@
 import Factory
 import XCTest
+@testable import BITCredential
+@testable import BITCredentialShared
 @testable import BITOpenID
 @testable import BITPresentation
 
@@ -12,64 +14,89 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
   @MainActor
   override func setUp() {
     super.setUp()
-
-    Container.shared.getVerifierDisplayUseCase.register { self.getVerifierDisplayUseCase }
+    Container.shared.reset()
+    registerMocks()
+    viewModel = CompatibleCredentialViewModel(context: Self.contextMock, inputDescriptorId: Self.inputDescriptorMock.id, compatibleCredentials: compatibleCredentialMocks, router: router)
+    createSuccessState()
   }
 
   @MainActor
-  func testInitialState() {
-    getVerifierDisplayUseCase.executeForTrustStatementReturnValue = .Mock.sample
+  func testInit_setsValues() {
+    viewModel = CompatibleCredentialViewModel(context: Self.contextMock, inputDescriptorId: Self.inputDescriptorMock.id, compatibleCredentials: compatibleCredentialMocks, router: router)
 
-    guard let inputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first else {
-      fatalError("Cannot get input descriptor")
-    }
-
-    viewModel = CompatibleCredentialViewModel(context: context, inputDescriptorId: inputDescriptor.id, compatibleCredentials: mockCompatibleCredentials, router: router)
-
-    XCTAssertEqual(viewModel.compatibleCredentials, mockCompatibleCredentials)
-    XCTAssertNotNil(context.trustStatement)
+    XCTAssertNotNil(Self.contextMock.trustStatement)
     XCTAssertNotNil(viewModel.verifierDisplay)
     XCTAssertEqual(viewModel.verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, context.trustStatement)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
+    XCTAssertEqual(getVerifierDisplayUseCaseSpy.executeForTrustStatementReceivedArguments?.trustStatement, Self.contextMock.trustStatement)
+    XCTAssertEqual(getVerifierDisplayUseCaseSpy.executeForTrustStatementReceivedArguments?.verifier, Self.contextMock.requestObject.clientMetadata)
   }
 
   @MainActor
-  func testCredentialSelection() async throws {
-    let credential = CompatibleCredential.Mock.BIT
+  func testDidSelect_navigatesAndSelectsCredential() async throws {
+    viewModel.didSelect(credential: compatibleCredentialMocks[1].credential)
 
-    guard let inputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first else {
-      fatalError("Cannot get input descriptor")
-    }
-
-    viewModel = CompatibleCredentialViewModel(context: context, inputDescriptorId: inputDescriptor.id, compatibleCredentials: mockCompatibleCredentials, router: router)
-
-    viewModel.didSelect(credential: credential)
     XCTAssertTrue(router.didCallPresentationReview)
-    XCTAssertEqual(context.selectedCredentials[inputDescriptor.id], credential)
+    XCTAssertEqual(Self.contextMock.selectedCredentials[Self.inputDescriptorMock.id], compatibleCredentialMocks[1])
   }
 
   @MainActor
   func testClose() {
-    let credential: CompatibleCredential = .Mock.BIT
+    viewModel.close()
 
-    guard let inputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first else {
-      fatalError("Cannot get input descriptor")
+    XCTAssertTrue(router.closeCalled)
+  }
+
+  func testUpdateCredentialViewModels_light_setsViewModel() async {
+    var calls = 0
+    getCredentialDisplayUseCaseSpy.executeForColorSchemeClosure = { _, _ in
+      if calls == 0 {
+        calls += 1
+        return .Mock.lightEnglish
+      }
+      return .Mock.sample
     }
 
-    viewModel = CompatibleCredentialViewModel(context: context, inputDescriptorId: inputDescriptor.id, compatibleCredentials: mockCompatibleCredentials, router: router)
+    viewModel.updateCredentialViewModels(with: themeMock)
 
-    viewModel.close()
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(viewModel.credentialViewModels[0].credentialDisplay, .Mock.lightEnglish)
+    XCTAssertEqual(viewModel.credentialViewModels[0].credential, compatibleCredentialMocks[0].credential)
+    XCTAssertEqual(viewModel.credentialViewModels[1].credentialDisplay, .Mock.sample)
+    XCTAssertEqual(viewModel.credentialViewModels[1].credential, compatibleCredentialMocks[1].credential)
+  }
+
+  func testUpdateCredentialViewModels_argumentsPassed() async {
+    viewModel.updateCredentialViewModels(with: themeMock)
+
+    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedInvocations[0].colorScheme, themeMock)
+    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedInvocations[0].displays, compatibleCredentialMocks[0].credential.displays)
+    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedInvocations[1].colorScheme, themeMock)
+    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedInvocations[1].displays, compatibleCredentialMocks[1].credential.displays)
   }
 
   // MARK: Private
 
   // swiftlint:disable all
+  private static var contextMock = PresentationRequestContext.Mock.vcSdJwtJwtSample
+  private static let inputDescriptorMock = contextMock.requestObject.presentationDefinition.inputDescriptors.first!
+
+  private let themeMock = "light"
+
   private var viewModel: CompatibleCredentialViewModel!
-  private var context = PresentationRequestContext.Mock.vcSdJwtJwtSample
-  private var getVerifierDisplayUseCase = GetVerifierDisplayUseCaseProtocolSpy()
+  private var getVerifierDisplayUseCaseSpy = GetVerifierDisplayUseCaseProtocolSpy()
+  private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
+
   private let router = MockPresentationRouter()
-  private let mockCompatibleCredentials = [CompatibleCredential(credential: .Mock.sample, requestedFields: [.init(jsonPath: "$.firstName", value: .string("firstName"))])]
+  private let compatibleCredentialMocks = [CompatibleCredential.Mock.BIT, CompatibleCredential.Mock.diploma]
+
   // swiftlint:enable all
+
+  private func createSuccessState() {
+    getVerifierDisplayUseCaseSpy.executeForTrustStatementReturnValue = .Mock.sample
+    getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = .Mock.lightEnglish
+  }
+
+  private func registerMocks() {
+    Container.shared.getVerifierDisplayUseCase.register { self.getVerifierDisplayUseCaseSpy }
+    Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
+  }
 }

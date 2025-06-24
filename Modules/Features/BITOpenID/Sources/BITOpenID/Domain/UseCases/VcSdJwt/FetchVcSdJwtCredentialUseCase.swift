@@ -17,18 +17,18 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   // MARK: Internal
 
   func execute(for context: FetchCredentialContext) async throws -> AnyCredential {
-    var proof: CredentialRequestProof? = nil
+    var proof: VcSdJwtCredentialRequestBody.Proof? = nil
     if let keyPair = context.keyPair {
       let payload = JWTProofPayload(audience: context.credentialIssuer, nonce: context.accessToken.cNonce, issuedAt: UInt64(context.createdAt.timeIntervalSince1970))
       let jwtData = try jwsEncoder.encode(payload, using: keyPair)
       guard let rawJws = String(data: jwtData, encoding: .utf8) else { throw FetchVcSdJwtCredentialUseCaseError.invalidRawJWS }
-      proof = CredentialRequestProof(jwt: rawJws)
+      proof = VcSdJwtCredentialRequestBody.Proof(jwt: rawJws)
     }
 
-    let credentialBody = CredentialRequestBody(
+    let credentialBody = VcSdJwtCredentialRequestBody(
       format: context.format,
       proof: proof,
-      credentialDefinition: CredentialRequestBodyDefinition(types: context.credentialOffers))
+      vct: context.selectedCredential.vct)
 
     let credentialResponse = try await repository.fetchCredential(
       from: context.credentialEndpoint,

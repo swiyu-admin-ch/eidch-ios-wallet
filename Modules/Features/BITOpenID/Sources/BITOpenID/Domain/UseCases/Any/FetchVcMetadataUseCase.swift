@@ -8,7 +8,7 @@ import Spyable
 
 @Spyable
 public protocol FetchVcMetadataUseCaseProtocol {
-  func execute(for anyCredential: AnyCredential) async throws -> OcaBundle?
+  func execute(for anyCredential: AnyCredential) async throws -> RawOcaBundle?
 }
 
 // MARK: - FetchVcMetadataUseCase
@@ -17,7 +17,7 @@ struct FetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(for anyCredential: AnyCredential) async throws -> OcaBundle? {
+  func execute(for anyCredential: AnyCredential) async throws -> RawOcaBundle? {
     guard let credentialFormat = CredentialFormat(rawValue: anyCredential.format), let dispatcherFormat = dispatcher[credentialFormat] else {
       throw CredentialFormatError.formatNotSupported
     }
@@ -30,13 +30,11 @@ struct FetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol {
         throw FetchAnyVerifiableCredentialError.invalidVcSchema
       }
     }
-    guard let rawOcaBundle else { return nil }
-    return try ocaBundler.createOcaBundle(rawOcaBundle)
+    return rawOcaBundle
   }
 
   // MARK: Private
 
   @Injected(\.fetchVcMetadataForAnyCredentialDispatcher) private var dispatcher: [CredentialFormat: FetchVcMetadataForAnyCredentialUseCaseProtocol]
   @Injected(\.jsonSchemaValidator) private var jsonSchemaValidator: JsonSchemaValidatorProtocol
-  @Injected(\.ocaBundler) private var ocaBundler: OcaBundlerProtocol
 }

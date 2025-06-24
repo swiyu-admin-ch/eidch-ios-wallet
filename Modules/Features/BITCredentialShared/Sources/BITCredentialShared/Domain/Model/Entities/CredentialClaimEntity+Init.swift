@@ -16,9 +16,10 @@ extension CredentialClaimEntity {
 
   func setValues(from claim: CredentialClaim) {
     key = claim.key
-    order = claim.order
     value = claim.value
     valueType = claim.valueType
+    valueDisplayInfo = claim.valueDisplayInfo
+    order = Int16(claim.order)
   }
 
 }

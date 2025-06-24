@@ -9,6 +9,7 @@ class HomeScreen: Screen {
   init(app: XCUIApplication) {
     self.app = app
     scanButton = app.buttons[HomeComposerView.AccessibilityIdentifier.scanButton.rawValue]
+    _ = scanButton.waitForExistence(timeout: .defaultTimeout)
     menuButton = app.buttons[HomeComposerView.AccessibilityIdentifier.menuButton.rawValue]
   }
 
@@ -19,7 +20,7 @@ class HomeScreen: Screen {
   let menuButton: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(scanButton.waitForExistence(timeout: 5))
+    XCTAssert(scanButton.exists)
     XCTAssert(menuButton.exists)
   }
 

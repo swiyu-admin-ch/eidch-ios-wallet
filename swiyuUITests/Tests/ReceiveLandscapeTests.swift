@@ -45,7 +45,7 @@ final class ReceiveLandscapeTests: XCTestCase {
     let credentialOfferScreen = CredentialOfferScreen(app: app)
     credentialOfferScreen.assertDisplayed()
     credentialOfferScreen.bottomDeclineButton.tap()
-    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: 5))
+    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
     credentialOfferScreen.cancelDeclineButton.tap()
     credentialOfferScreen.assertDisplayed()
     credentialOfferScreen.bottomAcceptButton.tap()
@@ -64,7 +64,7 @@ final class ReceiveLandscapeTests: XCTestCase {
     credentialOfferScreen.assertDisplayed()
     for _ in 1...10 {
       credentialOfferScreen.bottomDeclineButton.tap()
-      XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: 5))
+      XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
       credentialOfferScreen.cancelDeclineButton.tap()
       credentialOfferScreen.assertDisplayed()
     }

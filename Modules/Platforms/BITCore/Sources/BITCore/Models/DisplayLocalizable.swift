@@ -15,38 +15,36 @@ enum DisplayLocalizableError: Error {
 
 extension Array where Element: DisplayLocalizable {
 
+  // MARK: Public
+
   /// 1. User Preferred Languages
   /// 2. Default App Language
   /// 3. First available language
   /// 4. Nil
-  public func findDisplayWithFallback(preferredLanguageCodes: [UserLanguageCode] = Container.shared.preferredUserLanguageCodes()) -> DisplayLocalizable? {
-    for preferredLanguageCode in preferredLanguageCodes {
-      if
-        let requestedDisplay = first(where: { element in
-          guard let locale = element.locale else {
-            return false
-          }
-
-          return locale.starts(with: "\(preferredLanguageCode)")
-        })
-      {
-        return requestedDisplay
-      }
-    }
-
-    if
-      let defaultAppLanguageDisplay = first(where: { element in
-        guard let locale = element.locale else {
-          return false
-        }
-
-        return locale.starts(with: "\(UserLanguageCode.defaultAppLanguageCode)")
-      })
-    {
-      return defaultAppLanguageDisplay
-    }
-
-    return first
+  public func findDisplayWithFallback(preferredLanguageCodes: [UserLanguageCode] = Container.shared.preferredUserLanguageCodes()) -> Element? {
+    findDisplaysWithFallback(preferredLanguageCodes: preferredLanguageCodes).first
   }
 
+  public func findDisplaysWithFallback(
+    preferredLanguageCodes: [UserLanguageCode] = Container.shared.preferredUserLanguageCodes()
+  ) -> [Element] {
+    (preferredLanguageCodes + [UserLanguageCode.defaultAppLanguageCode])
+      .lazy
+      .map { code in
+        filter { display in
+          display.locale?.hasPrefix("\(code)") == true
+        }
+      }
+      .first(where: { preferredDisplays in
+        !preferredDisplays.isEmpty
+      })
+      ?? getFallbackDisplays()
+  }
+
+  // MARK: Private
+
+  private func getFallbackDisplays() -> [Element] {
+    guard let locale = first?.locale else { return [] }
+    return findDisplaysWithFallback(preferredLanguageCodes: [locale])
+  }
 }

@@ -28,7 +28,7 @@ extension JWTRegisteredPayload: Mockable {
       expiredAt: Date(timeIntervalSince1970: 1767168000),
       activatedAt: Date(timeIntervalSince1970: 1722499200),
       issuedAt: Date(timeIntervalSince1970: 1729168416))
-    static let jwk = PublicKeyInfo.JWK(
+    static let jwk = JWK(
       kty: "EC",
       kid: nil,
       crv: "P-521",

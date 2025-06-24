@@ -53,7 +53,7 @@ struct Mocker {
     }
 
     do {
-      let text = try String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8).replacingOccurrences(of: "\n", with: "")
+      let text = try String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8)
       return text.data(using: .utf8) ?? Data()
     } catch {
       fatalError("Error reading the file: \(error.localizedDescription)")

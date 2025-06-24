@@ -16,6 +16,12 @@ struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForAnyCredentialUseCaseP
     var vcSchema: VcSchema? = nil
     if let metadata = typeMetadata {
       vcSchema = try await vcSchemaService.fetch(for: metadata)
+      if let vcSchema {
+        let claims = anyCredential.getClaimsDictionary(.all)
+        guard try vcSdJwtSchemaValidator.validate(claims, schema: vcSchema) else {
+          throw FetchAnyVerifiableCredentialError.invalidVcSchema
+        }
+      }
       rawOcaBundle = try await fetchOCABundle(from: metadata)
     }
     return (vcSchema, rawOcaBundle)
@@ -24,6 +30,7 @@ struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForAnyCredentialUseCaseP
   // MARK: Private
 
   @Injected(\.vcSchemaService) private var vcSchemaService: VcSchemaServiceProtocol
+  @Injected(\.vcSdJwtSchemaValidator) private var vcSdJwtSchemaValidator: VcSdJwtSchemaValidatorProtocol
   @Injected(\.typeMetadataService) private var typeMetadataService: TypeMetadataServiceProtocol
   @Injected(\.ocaBundleService) private var ocaBundleService: OCABundleServiceProtocol
 

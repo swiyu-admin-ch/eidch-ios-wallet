@@ -21,6 +21,7 @@ extension Credential: Mockable {
     public static let diploma: Credential = Mocker.decode(fromFile: Self.File.diploma, bundle: .module)
     public static let sampleDisplaysAdditional: Credential = Mocker.decode(fromFile: File.displaysAdditional, bundle: .module)
     public static let otherSampleDisplaysAdditional: Credential = Mocker.decode(fromFile: File.displaysAdditional, bundle: .module)
+    public static let displaysThemed: Credential = Mocker.decode(fromFile: File.displaysThemed, bundle: .module)
 
     // MARK: Internal
 
@@ -32,6 +33,7 @@ extension Credential: Mockable {
       static let displaysAppDefault = "credential-database-locale-app-default"
       static let displaysFallback = "credential-database-locale-fallback"
       static let displaysUnsupported = "credential-database-locale-unsupported"
+      static let displaysThemed = "credential-database-displays-themed"
       static let displaysEmpty = "credential-database-locale-empty"
     }
 

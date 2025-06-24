@@ -5,7 +5,6 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
 
   var closeCalled = false
   var closeOnCompleteCalled = false
-  var checkCardIntroductionCalled = false
   var popCalled = false
   var popNumberCalled = false
   var popToRootCalled = false
@@ -19,9 +18,34 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
   var legalRepresentantCalled = false
   var legalRepresentantConsentArgument: String?
   var legalRepresentantQRCodeArgument: String?
+  var legalRepresentantConsentStateArgument: RequestCaseViewState?
+  var documentSelectionCalled = false
+  var attestationCalled = false
+  var walletPairingCalled = false
+  var avIdentityCheckCalled = false
+  var clientAttestationErrorCalled = false
+  var keyAttestationErrorCalled = false
+  var attestationErrorCalled = false
+  var context = EIDRequestContext()
 
-  func checkCardIntroduction() {
-    checkCardIntroductionCalled = true
+  func avIdentityCheck() {
+    avIdentityCheckCalled = true
+  }
+
+  func walletPairing() {
+    walletPairingCalled = true
+  }
+
+  func clientAttestationError() {
+    clientAttestationErrorCalled = true
+  }
+
+  func keyAttestationError() {
+    keyAttestationErrorCalled = true
+  }
+
+  func attestationError(delegate: any AttestationErrorDelegate) {
+    attestationErrorCalled = true
   }
 
   func dataPrivacy() {
@@ -82,5 +106,17 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
 
   func legalRepresentantQRCode(caseId: String) {
     legalRepresentantQRCodeArgument = caseId
+  }
+
+  func legalRepresentantConsentState(_ state: RequestCaseViewState) {
+    legalRepresentantConsentStateArgument = state
+  }
+
+  func documentSelection() {
+    documentSelectionCalled = true
+  }
+
+  func attestation() {
+    attestationCalled = true
   }
 }

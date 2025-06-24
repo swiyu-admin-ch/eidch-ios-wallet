@@ -14,7 +14,6 @@ class CredentialDetailViewModel: ObservableObject {
   init(_ credential: Credential, router: CredentialDetailInternalRoutes) {
     self.credential = credential
     self.router = router
-    credentialBody = CredentialDetailBody(from: credential)
     configureObservers()
   }
 
@@ -25,12 +24,12 @@ class CredentialDetailViewModel: ObservableObject {
     case deleteCredentialError(_ error: Error)
   }
 
-  @Published var credentialBody: CredentialDetailBody
+  @Published var credentialViewModel: CredentialViewModel?
   @Published var isDeleteCredentialAlertPresented = false
 
   @Published var credential: Credential {
     didSet {
-      credentialBody = CredentialDetailBody(from: credential)
+      updateCredentialViewModel(with: colorScheme)
     }
   }
 
@@ -59,12 +58,21 @@ class CredentialDetailViewModel: ObservableObject {
     router.close()
   }
 
+  func updateCredentialViewModel(with colorScheme: String) {
+    self.colorScheme = colorScheme
+    let display = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
+    credentialViewModel = CredentialViewModel(credential: credential, credentialDisplay: display)
+  }
+
   // MARK: Private
+
+  private var colorScheme = String()
 
   private let router: CredentialDetailInternalRoutes
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
+  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
 
   private func updateCredentialStatus() async {
     guard let credential = try? await checkAndUpdateCredentialStatusUseCase.execute(for: credential) else {

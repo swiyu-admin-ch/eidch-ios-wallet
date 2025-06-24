@@ -15,6 +15,7 @@ let package = Package(
       targets: ["BITEntities"]),
   ],
   dependencies: [
+    .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITDataStore"),
     .package(url: "https://github.com/realm/realm-swift", exact: "10.54.3"),
   ],
@@ -22,9 +23,11 @@ let package = Package(
     .target(
       name: "BITEntities",
       dependencies: [
+        .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITDataStore", package: "BITDataStore"),
         .product(name: "RealmSwift", package: "realm-swift"),
-      ]),
+      ],
+      resources: [.process("Resources")]),
     .testTarget(
       name: "BITEntitiesTests",
       dependencies: [

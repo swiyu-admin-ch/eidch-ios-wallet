@@ -77,7 +77,7 @@ public struct CustomButton: View {
       })
       .background(configuration.isPressed ? .black.opacity(0.3) : .clear)
       .foregroundColor(isEnabled ? buttonConfiguration.foregroundColor : ThemingAssets.Label.tertiary.swiftUIColor)
-      .progressViewStyle(CircularProgressViewStyle(tint: buttonConfiguration.progressViewTint))
+      .progressViewStyle(CircularProgressViewStyle(tint: isEnabled ? buttonConfiguration.progressViewTint : ThemingAssets.Label.tertiary.swiftUIColor))
       .clipShape(.capsule)
       .scaleEffect(configuration.isPressed ? CGSize(width: 0.95, height: 0.95) : CGSize(width: 1.0, height: 1.0))
       .animation(.interactiveSpring, value: configuration.isPressed)

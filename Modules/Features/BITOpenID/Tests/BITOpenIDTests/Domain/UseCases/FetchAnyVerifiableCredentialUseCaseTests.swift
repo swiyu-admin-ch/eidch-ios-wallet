@@ -1,4 +1,4 @@
-import BITNetworking
+
 import Factory
 import XCTest
 @testable import BITAnalytics
@@ -6,6 +6,7 @@ import XCTest
 @testable import BITAnyCredentialFormat
 @testable import BITCrypto
 @testable import BITJWT
+@testable import BITNetworking
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -17,7 +18,6 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   override func setUp() {
     repository = OpenIDRepositoryProtocolSpy()
-    didJWKGenerator = CredentialDidJWKGeneratorProtocolSpy()
     keyPairGenerator = CredentialKeyPairGeneratorProtocolSpy()
     fetchAnyCredentialUseCase = FetchAnyCredentialUseCaseProtocolSpy()
     fetchMetadataUseCase = FetchMetadataUseCaseProtocolSpy()
@@ -28,7 +28,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     repository.fetchAccessTokenFromPreAuthorizedCodeReturnValue = mockAccessToken
     repository.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = mockResponse
     repository.fetchIssuerPublicKeyInfoFromReturnValue = mockIssuerPublicKeyInfo
-    fetchMetadataUseCase.executeFromReturnValue = mockMetadata
+    fetchMetadataUseCase.executeFromReturnValue = NetworkResponse(object: mockMetadata, data: mockMetadataData)
 
     analyticsProvider = MockProvider()
     analytics = Analytics()
@@ -67,13 +67,15 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(mockKeyPair.privateKey, receivedContext.keyPair?.privateKey)
     XCTAssertEqual(mockAccessToken, receivedContext.accessToken)
     XCTAssertEqual(mockMetadataWrapper.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
+    XCTAssertEqual(mockMetadataWrapper.rawData, mockMetadataData)
     XCTAssertEqual(mockMetadataWrapper.credentialMetadata.credentialEndpoint, receivedContext.credentialEndpoint.absoluteString)
 
     XCTAssertEqual(analyticsProvider.logCounter, 0)
   }
 
   func testFetchCredentialSuccess_withoutProofType() async throws {
-    fetchMetadataUseCase.executeFromReturnValue = CredentialMetadata.Mock.sampleWithoutProofTypes
+    let dataMock = CredentialMetadata.Mock.sampleWithoutProofTypesData
+    fetchMetadataUseCase.executeFromReturnValue = NetworkResponse(object: CredentialMetadata.Mock.sampleWithoutProofTypes, data: dataMock)
     mockAnyCredential.raw = UUID().uuidString
     let (metadataWrapper, credential, _) = try await useCase.execute(from: mockCredentialOffer)
 
@@ -93,6 +95,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertNil(receivedContext.keyPair)
     XCTAssertEqual(mockAccessToken, receivedContext.accessToken)
     XCTAssertEqual(metadataWrapper.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
+    XCTAssertEqual(metadataWrapper.rawData, dataMock)
     XCTAssertEqual(metadataWrapper.credentialMetadata.credentialEndpoint, receivedContext.credentialEndpoint.absoluteString)
 
     XCTAssertEqual(analyticsProvider.logCounter, 0)
@@ -225,6 +228,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private let mockAnyCredential = AnyCredentialSpy()
   private let mockOpenIdConfiguration = OpenIdConfiguration.Mock.sample
   private let mockMetadata = CredentialMetadata.Mock.sample
+  private let mockMetadataData = CredentialMetadata.Mock.sampleData
   private let mockMetadataWrapper = CredentialMetadataWrapper.Mock.sample
   private let mockCredentialOffer = CredentialOffer.Mock.sample
   private let mockAccessToken = AccessToken.Mock.sample
@@ -237,13 +241,13 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   private var fetchAnyCredentialUseCase = FetchAnyCredentialUseCaseProtocolSpy()
   private var fetchMetadataUseCase = FetchMetadataUseCaseProtocolSpy()
-  private var didJWKGenerator = CredentialDidJWKGeneratorProtocolSpy()
   private var keyPairGenerator = CredentialKeyPairGeneratorProtocolSpy()
   private var repository = OpenIDRepositoryProtocolSpy()
   private var useCase = FetchAnyVerifiableCredentialUseCase()
 
   private func testCredentialEndpointInvalid(endpoint: String) async {
-    fetchMetadataUseCase.executeFromReturnValue = CredentialMetadata(credentialIssuer: mockMetadata.credentialIssuer, credentialEndpoint: endpoint, credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported, display: mockMetadata.display)
+    let metadata = CredentialMetadata(credentialIssuer: mockMetadata.credentialIssuer, credentialEndpoint: endpoint, credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported, display: mockMetadata.display)
+    fetchMetadataUseCase.executeFromReturnValue = NetworkResponse(object: metadata, data: mockMetadataData)
     do {
       _ = try await useCase.execute(from: mockCredentialOffer)
       XCTFail("Expected a `FetchAnyVerifiableCredentialError.credentialEndpointCreationError`")
@@ -253,7 +257,6 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
       XCTAssertFalse(repository.fetchIssuerPublicKeyInfoFromCalled)
       XCTAssertFalse(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
       XCTAssertFalse(keyPairGenerator.generateIdentifierAlgorithmCalled)
-      XCTAssertFalse(didJWKGenerator.generateFromPrivateKeyCalled)
       XCTAssertFalse(fetchAnyCredentialUseCase.executeForCalled)
       XCTAssertEqual(analyticsProvider.logCounter, 0)
     } catch {

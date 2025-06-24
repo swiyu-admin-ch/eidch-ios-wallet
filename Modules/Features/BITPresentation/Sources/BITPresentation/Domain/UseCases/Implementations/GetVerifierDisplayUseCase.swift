@@ -32,7 +32,6 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
   private static let prefLangKey = "prefLang"
 
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
-  @Injected(\.credentialDisplayLogoURIDecoder) private var credentialDisplayLogoURIDecoder: CredentialDisplayLogoURIDecoderProtocol
 
   private func getDisplayForClaim(_ claim: [String: Any], with key: String, in dictionary: [String: Any]) -> String? {
     for preferredLanguageCode in preferredUserLanguageCodes {
@@ -60,9 +59,7 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
   }
 
   private func getVerifierLogo(from verifier: Verifier?) -> Data? {
-    guard let logoUri = Verifier.LocalizedDisplay.getPreferredDisplay(from: verifier?.logoUri, considering: preferredUserLanguageCodes) else {
-      return nil
-    }
-    return credentialDisplayLogoURIDecoder.decode(from: logoUri)
+    let dataURL = Verifier.LocalizedDisplay.getPreferredDisplay(from: verifier?.logoUri, considering: preferredUserLanguageCodes)
+    return dataURL?.dataURLData
   }
 }

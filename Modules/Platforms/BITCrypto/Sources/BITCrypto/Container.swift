@@ -16,6 +16,10 @@ extension Container {
     self { SRIValidator() }
   }
 
+  public var sha256Hasher: Factory<Hashable> {
+    self { SHA256Hasher() }
+  }
+
   // MARK: Private
 
   /// The number of iterations for the PBKDF2 function.

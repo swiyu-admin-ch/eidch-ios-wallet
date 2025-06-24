@@ -1,3 +1,5 @@
+import BITCredential
+import BITCredentialShared
 import Factory
 import Foundation
 
@@ -23,12 +25,13 @@ public class CompatibleCredentialViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published var compatibleCredentials: [CompatibleCredential]
+  @Published var credentialViewModels: [CredentialViewModel] = []
 
   var verifierDisplay: VerifierDisplay? = nil
 
-  func didSelect(credential: CompatibleCredential) {
-    context.selectedCredentials[inputDescriptorId] = credential
+  func didSelect(credential: Credential) {
+    guard let compatibleCredential = compatibleCredentials.first(where: { $0.id == credential.id }) else { return }
+    context.selectedCredentials[inputDescriptorId] = compatibleCredential
     router.presentationReview(with: context)
   }
 
@@ -36,11 +39,20 @@ public class CompatibleCredentialViewModel: ObservableObject {
     router.close()
   }
 
+  func updateCredentialViewModels(with colorScheme: String) {
+    credentialViewModels = compatibleCredentials.map(\.credential).map {
+      let display = getCredentialDisplayUseCase.execute(for: $0.displays, colorScheme: colorScheme)
+      return CredentialViewModel(credential: $0, credentialDisplay: display)
+    }
+  }
+
   // MARK: Private
 
+  private let compatibleCredentials: [CompatibleCredential]
   private var inputDescriptorId: String
   private var context: PresentationRequestContext
   private var router: PresentationRouterRoutes
   @Injected(\.getVerifierDisplayUseCase) private var getVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol
+  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
 
 }

@@ -10,24 +10,21 @@ class LegalRepresentantViewModelTests: XCTestCase {
 
   override func setUp() {
     router = MockEIDRequestRouter()
-    legalRepresentantRepository = LegalRepresentantRepositoryProcotolSpy()
-
-    Container.shared.legalRepresentantRepository.register { self.legalRepresentantRepository }
     viewModel = LegalRepresentantViewModel(router: router)
   }
 
   func testYesAction() {
-    viewModel.yesAction()
+    viewModel.action(true)
 
-    XCTAssertEqual(legalRepresentantRepository.setReceivedValue, true)
-    XCTAssertTrue(router.checkCardIntroductionCalled)
+    XCTAssertTrue(router.documentSelectionCalled)
+    XCTAssertEqual(router.context.hasLegalRepresentant, true)
   }
 
   func testNoAction() {
-    viewModel.noAction()
+    viewModel.action(false)
 
-    XCTAssertEqual(legalRepresentantRepository.setReceivedValue, false)
-    XCTAssertTrue(router.checkCardIntroductionCalled)
+    XCTAssertTrue(router.documentSelectionCalled)
+    XCTAssertEqual(router.context.hasLegalRepresentant, false)
   }
 
   func testClose() {
@@ -39,7 +36,6 @@ class LegalRepresentantViewModelTests: XCTestCase {
 
   private var router: MockEIDRequestRouter!
   private var viewModel: LegalRepresentantViewModel!
-  private var legalRepresentantRepository: LegalRepresentantRepositoryProcotolSpy!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping

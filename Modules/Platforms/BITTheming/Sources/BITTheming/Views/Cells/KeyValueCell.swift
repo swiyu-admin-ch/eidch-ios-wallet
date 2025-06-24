@@ -55,6 +55,7 @@ public struct KeyValueCustomCell<Content: View>: View {
         .accessibilityHidden(true)
       content
     }
+    .padding(.vertical, .x2)
     .accessibilityElement(children: .contain)
     .accessibilityLabel(key)
   }

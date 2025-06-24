@@ -23,8 +23,7 @@ final class OnboardingPassphraseFlowTest: XCTestCase {
   }
 
   func testPincodeEntry() {
-    let pinCodeInformationScreen = PinCodeInformationScreen(app: app)
-    pinCodeInformationScreen.navigateFromAppStartToScreen()
+    let pinCodeInformationScreen = PinCodeInformationScreen.createAndNavigateFromAppStart(app: app)
     pinCodeInformationScreen.primaryButton.tap()
 
     let enterPinScreen = EnterPinScreen(app: app)
@@ -38,8 +37,7 @@ final class OnboardingPassphraseFlowTest: XCTestCase {
   }
 
   func testShortPincode() {
-    let pinCodeInformationScreen = PinCodeInformationScreen(app: app)
-    pinCodeInformationScreen.navigateFromAppStartToScreen()
+    let pinCodeInformationScreen = PinCodeInformationScreen.createAndNavigateFromAppStart(app: app)
     pinCodeInformationScreen.primaryButton.tap()
 
     let enterPinScreen = EnterPinScreen(app: app)
@@ -48,8 +46,7 @@ final class OnboardingPassphraseFlowTest: XCTestCase {
   }
 
   func testnonMatchingPincode() {
-    let pinCodeInformationScreen = PinCodeInformationScreen(app: app)
-    pinCodeInformationScreen.navigateFromAppStartToScreen()
+    let pinCodeInformationScreen = PinCodeInformationScreen.createAndNavigateFromAppStart(app: app)
     pinCodeInformationScreen.primaryButton.tap()
 
     let enterPinScreen = EnterPinScreen(app: app)
@@ -62,8 +59,7 @@ final class OnboardingPassphraseFlowTest: XCTestCase {
 
   func testLongPincodeEntry() {
     let longPassword = "QxM5dtwcQ51GOL54C9arEHsTl4b7^BQGQYPmA7C57^SMdsd34%FjBWB2fv^sLfIWmJ3!c!Rb27kqNzVbHqf5DlBRb&522Yhe74KqKIPIrtCh1PuUo3Xal0bE9Y@lrWaA"
-    let pinCodeInformationScreen = PinCodeInformationScreen(app: app)
-    pinCodeInformationScreen.navigateFromAppStartToScreen()
+    let pinCodeInformationScreen = PinCodeInformationScreen.createAndNavigateFromAppStart(app: app)
     pinCodeInformationScreen.primaryButton.tap()
 
     let enterPinScreen = EnterPinScreen(app: app)

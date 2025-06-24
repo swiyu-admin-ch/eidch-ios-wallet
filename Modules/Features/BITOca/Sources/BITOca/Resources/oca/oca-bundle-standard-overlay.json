@@ -1,0 +1,22 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "ILcFABt53QWPh1O1t01_B3akCFEs3mtLo0T9CP5QYHIc",
+      "attributes": {
+        "dataUrl": "Text",
+        "unknown": "Text"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "capture_base": "ILcFABt53QWPh1O1t01_B3akCFEs3mtLo0T9CP5QYHIc",
+      "type": "spec/overlays/standard/1.0",
+      "attr_standards": {
+        "dataUrl": "urn:ietf:rfc:2397",
+        "unknown": "unknown"
+      }
+    }
+  ]
+}

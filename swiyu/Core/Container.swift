@@ -32,4 +32,8 @@ extension Container {
     self { "*.trust-infra.swiyu-int.admin.ch" }
   }
 
+  var attestationServiceDomain: Factory<String> {
+    self { "*.attestations-service.swiyu.admin.ch" }
+  }
+
 }

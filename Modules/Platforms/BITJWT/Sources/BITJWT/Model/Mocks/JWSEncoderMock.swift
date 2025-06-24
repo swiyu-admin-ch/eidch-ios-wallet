@@ -18,6 +18,7 @@ class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
   var receivedKeyPair: KeyPair? = nil
   var receivedValue: U? = nil
   var encodeUsingThrowableError: Error? = nil
+  var encodeReturnValue: JWS<U>? = nil
 
   func encode(_ value: some JWTPayload & Encodable, using keyPair: KeyPair) throws -> Data {
     if let encodeUsingThrowableError {
@@ -27,6 +28,17 @@ class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
     receivedValue = value as? U
     guard let data = encodeUsingReturnValue else { throw JWSEncoderMockError.noReturnValue }
     return data
+  }
+
+  func encode<T>(_ value: T, keyPair: KeyPair) throws -> JWS<T> where T: JWTPayload, T: Decodable, T: Encodable, T: Equatable {
+    if let encodeUsingThrowableError {
+      throw encodeUsingThrowableError
+    }
+    receivedKeyPair = keyPair
+    receivedValue = value as? U
+    guard let jws = encodeReturnValue else { throw JWSEncoderMockError.noReturnValue }
+
+    return jws as! JWS<T>
   }
 }
 

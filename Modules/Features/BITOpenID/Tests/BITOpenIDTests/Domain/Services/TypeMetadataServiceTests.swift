@@ -2,6 +2,7 @@
 import Factory
 import XCTest
 @testable import BITCrypto
+@testable import BITNetworking
 @testable import BITOpenID
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
@@ -23,13 +24,13 @@ final class TypeMetadataServiceTests: XCTestCase {
 
   func testFetchTypeMetadata_success() async throws {
     sriValidator.validateWithReturnValue = true
-    repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
+    repository.fetchTypeMetadataFromReturnValue = mockResponse
 
     let typeMetadata = try await service.fetch(mockVcSdJwt)
 
-    XCTAssertNotNil(typeMetadata)
+    XCTAssertEqual(typeMetadata, Self.mockTypeMetadata)
     XCTAssertEqual(repository.fetchTypeMetadataFromReceivedUrl, URL(string: mockVcSdJwt.vct))
-    XCTAssertEqual(sriValidator.validateWithReceivedArguments?.data, mockTypeMetadataData)
+    XCTAssertEqual(sriValidator.validateWithReceivedArguments?.data, Self.mockTypeMetadataData)
     XCTAssertEqual(sriValidator.validateWithReceivedArguments?.integrity, mockVcSdJwt.vctIntegrity)
   }
 
@@ -60,7 +61,7 @@ final class TypeMetadataServiceTests: XCTestCase {
   func testTypeMetadata_vctMismatch() async throws {
     var vcSdJwt = mockVcSdJwt
     vcSdJwt.vct = "https://other.com"
-    repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
+    repository.fetchTypeMetadataFromReturnValue = mockResponse
 
     do {
       _ = try await service.fetch(vcSdJwt)
@@ -77,7 +78,7 @@ final class TypeMetadataServiceTests: XCTestCase {
   func testTypeMetadata_missingIntegrity() async throws {
     var vcSdJwt = mockVcSdJwt
     vcSdJwt.vctIntegrity = nil
-    repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
+    repository.fetchTypeMetadataFromReturnValue = mockResponse
 
     do {
       _ = try await service.fetch(vcSdJwt)
@@ -92,7 +93,7 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_sriValidationFailed() async throws {
-    repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
+    repository.fetchTypeMetadataFromReturnValue = mockResponse
     sriValidator.validateWithReturnValue = false
 
     do {
@@ -107,7 +108,7 @@ final class TypeMetadataServiceTests: XCTestCase {
   }
 
   func testTypeMetadata_sriValidationError() async throws {
-    repository.fetchTypeMetadataFromReturnValue = (mockTypeMetadata, mockTypeMetadataData)
+    repository.fetchTypeMetadataFromReturnValue = mockResponse
     sriValidator.validateWithThrowableError = TestingError.error
 
     do {
@@ -123,14 +124,17 @@ final class TypeMetadataServiceTests: XCTestCase {
 
   // MARK: Private
 
+  private static let mockTypeMetadata = TypeMetadata.Mock.sampleStandard
+  private static let mockTypeMetadataData = TypeMetadata.Mock.sampleStandardData
+
+  private let mockResponse = NetworkResponse(object: mockTypeMetadata, data: mockTypeMetadataData)
+
   private let mockVcSdJwt = VcSdJwtPayload.Mock.samplePayload
 
   private var sriValidator: SRIValidatorProtocolSpy!
   private var repository: OpenIDRepositoryProtocolSpy!
   private var service: TypeMetadataService!
 
-  private let mockTypeMetadata = TypeMetadata.Mock.sampleStandard
-  private let mockTypeMetadataData = TypeMetadata.Mock.sampleStandardData
 }
 
 // swiftlint:enable all

@@ -16,18 +16,17 @@ struct MRZScannerView: View {
     ZStack(alignment: .center) {
       List {
         ForEach(MRZData.Mock.array) { mrzData in
-          AsyncButton {
-            Task {
-              await viewModel.submit(mrzData.payload)
-            }
-          } label: {
-            Text(mrzData.displayName)
-          }
-          .buttonStyle(.filledPrimary)
-          .controlSize(.large)
-          .frame(maxWidth: .infinity, alignment: .center)
-          .listRowSeparator(.hidden)
-          .listStyle(.plain)
+          AsyncButton(
+            action: { await viewModel.submit(mrzData.payload) },
+            actionOptions: [.showProgressView, .disableButton],
+            label: {
+              Text(mrzData.displayName)
+            })
+            .buttonStyle(.filledPrimary)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .listRowSeparator(.hidden)
+            .listStyle(.plain)
         }
       }
       .listStyle(.plain)

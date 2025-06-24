@@ -8,7 +8,7 @@ final class TrustRegistryRepositoryTests: XCTestCase {
 
   override func setUp() {
     Container.shared.trustRegistryMapping.register { self.mockTrustRegistryMapping }
-    Container.shared.trustedDids.register { self.mockTrustedDids }
+    Container.shared.trustRegistryTrustedDids.register { self.mockTrustedDids }
     repository = TrustRegistryRepository()
   }
 

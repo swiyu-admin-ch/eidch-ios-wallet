@@ -1,34 +1,35 @@
 import Foundation
 import XCTest
-@testable import BITTheming
+@testable import BITOnboarding
 
 class CredentialIntroductionScreen: InformationScreen {
 
   // MARK: Lifecycle
 
   override init(app: XCUIApplication) {
-    backButton = app.buttons["Back"]
-    tertiaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.tertiaryText.rawValue]
+    content = app.descendants(matching: .any)[CredentialIntroductionView.AccessibilityIdentifier.credentialIntroductionContent.rawValue]
+    _ = content.waitForExistence(timeout: .defaultTimeout)
+    backButton = app.navigationBars.buttons.element(boundBy: 0)
     super.init(app: app)
   }
 
   // MARK: Internal
 
   let backButton: XCUIElement
-  let tertiaryText: XCUIElement
-  let expectedImageLabel = "e-id"
+  let content: XCUIElement
 
   override func assertDisplayed() {
-    super.assertDisplayed()
-    XCTAssertEqual(getImagelabel(), expectedImageLabel)
+    XCTAssertTrue(content.waitForExistence(timeout: .defaultTimeout))
     XCTAssertTrue(secondaryText.exists)
+    super.assertDisplayed()
   }
 
-  func navigateFromAppStartToScreen() {
-    let securityIntroduction = SecurityIntroductionScreen(app: app)
-    securityIntroduction.navigateFromAppStartToScreen()
+  static func createAndNavigateFromAppStart(app: XCUIApplication) -> CredentialIntroductionScreen {
+    let securityIntroduction = SecurityIntroductionScreen.createAndNavigateFromAppStart(app: app)
     securityIntroduction.primaryButton.tap()
-    assertDisplayed()
+    let currentScreen = CredentialIntroductionScreen(app: app)
+    currentScreen.assertDisplayed()
+    return currentScreen
   }
 
 }

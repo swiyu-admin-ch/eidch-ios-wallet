@@ -99,6 +99,28 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     }
   }
 
+  func testExecute_vcSchemaValidationThrows_throwsError() async throws {
+    vcSdJwtSchemaValidatorSpy.validateSchemaThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(for: vcSdJwtMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testExecute_vcSchemaValidationFails_throwsError() async throws {
+    vcSdJwtSchemaValidatorSpy.validateSchemaReturnValue = false
+
+    do {
+      _ = try await useCase.execute(for: vcSdJwtMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .invalidVcSchema)
+    }
+  }
+
   // MARK: Private
 
   private let vcSdJwtMock = VcSdJwtPayload.Mock.sample
@@ -108,6 +130,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   private let ocaRenderingMock = VcSdJwtOcaRendering(uri: "ocaUri", uriIntegrity: "ocaUriIntegrity")
 
   private var vcSchemaServiceSpy = VcSchemaServiceProtocolSpy()
+  private var vcSdJwtSchemaValidatorSpy = VcSdJwtSchemaValidatorProtocolSpy()
   private var typeMetadataServiceSpy = TypeMetadataServiceProtocolSpy()
   private var ocaBundleServiceSpy = OCABundleServiceProtocolSpy()
 
@@ -115,17 +138,19 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
 
   private func registerMocks() {
     vcSchemaServiceSpy = VcSchemaServiceProtocolSpy()
+    vcSdJwtSchemaValidatorSpy = VcSdJwtSchemaValidatorProtocolSpy()
     typeMetadataServiceSpy = TypeMetadataServiceProtocolSpy()
     ocaBundleServiceSpy = OCABundleServiceProtocolSpy()
 
     Container.shared.vcSchemaService.register { self.vcSchemaServiceSpy }
+    Container.shared.vcSdJwtSchemaValidator.register { self.vcSdJwtSchemaValidatorSpy }
     Container.shared.typeMetadataService.register { self.typeMetadataServiceSpy }
     Container.shared.ocaBundleService.register { self.ocaBundleServiceSpy }
-    Container.shared.isOCABundleFetchFeatureEnabled.register { true }
   }
 
   private func success() {
     vcSchemaServiceSpy.fetchForReturnValue = vcSchemaMock
+    vcSdJwtSchemaValidatorSpy.validateSchemaReturnValue = true
     typeMetadataServiceSpy.fetchReturnValue = typeMetadataMock
     ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReturnValue = ocaBundleMock
   }

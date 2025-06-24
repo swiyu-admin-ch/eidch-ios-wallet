@@ -44,6 +44,9 @@ struct HomeComposerView: View {
       .accessibilityAction(named: L10n.tkGlobalMoreoptionsAlt, {
         focus = .menu
       })
+      .onColorSchemeChange { scheme in
+        viewModel.updateCredentialViewModels(with: scheme.rawValue)
+      }
 
     NavigationLink(destination: PrivacyView(), isActive: $viewModel.isSecurityPresented) {
       EmptyView()
@@ -232,9 +235,9 @@ extension HomeComposerView {
 
   @ViewBuilder
   private func credentialsList() -> some View {
-    ForEach(viewModel.credentials) { credential in
-      Button(action: { viewModel.openDetail(for: credential) }, label: {
-        CredentialCell(credential)
+    ForEach(viewModel.credentialViewModels) { credentialViewModel in
+      Button(action: { viewModel.openDetail(for: credentialViewModel.credential) }, label: {
+        CredentialCell(credentialViewModel)
       })
     }
   }

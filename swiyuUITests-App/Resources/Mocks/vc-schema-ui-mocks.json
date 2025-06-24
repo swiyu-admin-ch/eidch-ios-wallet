@@ -1,54 +1,101 @@
 {
-   "$schema":"https://json-schema.org/draft/2020-12/schema",
-   "$id":"https://issuer-agent.swiyu.admin.ch/elfa-sdjwt.json",
-   "title":"ELFA",
-   "description":"An electronic driving license in the SD-JWT format",
-   "type":"object",
-   "properties": {
-     "photoImage": {
-       "type": "string"
-     }
-     "restrictionsA": {
-       "type": "string"
-     }
-     "categroyRestrictions": {
-       "type": "string"
-     }
-     "licenceNumber": {
-       "type": "string"
-     }
-     "categoryCode": {
-       "type": "string"
-     }
-     "faberPin": {
-       "type": "string"
-     }
-     "issuerEntity": {
-       "type": "string"
-     }
-     "dateOfBirth": {
-       "type": "string"
-     }
-     "dateOfExpiration": {
-       "type": "string"
-     }
-     "lastName": {
-       "type": "string"
-     }
-     "issuerEntityDate": {
-       "type": "string"
-     }
-     "restrictionsB": {
-       "type": "string"
-     }
-     "hometown": {
-       "type": "string"
-     }
-     "signatureImage": {
-       "type": "string"
-     }
-     "firstName": {
-       "type": "string"
-     }
-   }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+     "vct": {
+      "type":"string"
+    },
+    "iss": {
+      "type":"string"
+    },
+    "nbf": {
+      "type":"number"
+    },
+    "exp": {
+      "type":"number"
+    },
+    "cnf": {
+      "type":"object"
+    },
+    "status": {
+      "type":"object"
+    },
+    "sub": {
+      "type":"string"
+    },
+    "iat": {
+      "type":"number"
+    },
+    "photoImage": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "dateOfBirth": {
+      "type": "string"
+    },
+    "hometown": {
+      "type": "string"
+    },
+    "issuerEntity": {
+      "type": "string"
+    },
+    "issuerEntityDate": {
+      "type": "string"
+    },
+    "dateOfExpiration": {
+      "type": "string"
+    },
+    "categoryIcon": {
+      "type": "string"
+    },
+    "categoryCode": {
+      "type": "string"
+    },
+    "categoryRestrictions": {
+      "type": "string"
+    },
+    "restrictionsA": {
+      "type": "string"
+    },
+    "restrictionsB": {
+      "type": "string"
+    },
+    "faberPin": {
+      "type": "number"
+    },
+    "licenceNumber": {
+      "type": "string"
+    },
+    "signatureImage": {
+      "type": "string"
+    },
+    "policeQRImage": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "iss",
+    "vct",
+    "photoImage",
+    "lastName",
+    "firstName",
+    "dateOfBirth",
+    "hometown",
+    "issuerEntity",
+    "issuerEntityDate",
+    "dateOfExpiration",
+    "categoryIcon",
+    "categoryCode",
+    "categoryRestrictions",
+    "restrictionsA",
+    "restrictionsB",
+    "faberPin",
+    "licenceNumber",
+    "signatureImage"
+  ]
 }

@@ -1,3 +1,4 @@
+import BITCredentialShared
 import BITTheming
 import Foundation
 import SwiftUI
@@ -6,7 +7,7 @@ public struct ClaimListView: View {
 
   // MARK: Lifecycle
 
-  public init(_ claims: [CredentialDetailBody.Claim]) {
+  public init(_ claims: [CredentialClaim]) {
     self.claims = claims
   }
 
@@ -16,16 +17,16 @@ public struct ClaimListView: View {
     ForEach(Array(zip(claims.indices, claims)), id: \.0) { index, claim in
       VStack(alignment: .leading, spacing: 0) {
         if let imageData = claim.imageData {
-          KeyValueCustomCell(key: claim.key) {
+          KeyValueCustomCell(key: claim.preferredDisplay?.name ?? claim.key) {
             Image(data: imageData)?
               .resizable()
               .aspectRatio(contentMode: .fit)
-              .frame(maxWidth: Defaults.maxImageWidth, maxHeight: Defaults.maxImageHeight)
+              .frame(maxWidth: Defaults.maxImageWidth, maxHeight: Defaults.maxImageHeight, alignment: .leading)
           }
-          .padding(.vertical, .x2)
+          .padding(.trailing, .x6)
         } else {
-          KeyValueCell(key: claim.key, value: claim.value)
-            .padding(.vertical, .x2)
+          KeyValueCell(key: claim.preferredDisplay?.name ?? claim.key, value: claim.value)
+            .padding(.trailing, .x6)
         }
 
         if index != claims.count - 1 {
@@ -33,6 +34,7 @@ public struct ClaimListView: View {
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.leading, .x6)
     }
   }
 
@@ -43,6 +45,6 @@ public struct ClaimListView: View {
     static let maxImageWidth: CGFloat = 120
   }
 
-  private var claims: [CredentialDetailBody.Claim]
+  private var claims: [CredentialClaim]
 
 }

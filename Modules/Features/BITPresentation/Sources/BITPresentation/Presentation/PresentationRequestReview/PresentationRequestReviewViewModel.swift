@@ -1,5 +1,6 @@
 import BITAnalytics
 import BITCore
+import BITCredential
 import Combine
 import Factory
 import Foundation
@@ -41,6 +42,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
 
   @Published var state = ViewState.result
   @Published var showLoadingMessage = false
+  @Published var credentialViewModel: CredentialViewModel?
 
   var verifierDisplay: VerifierDisplay?
   let credential: CompatibleCredential
@@ -65,6 +67,11 @@ public class PresentationRequestReviewViewModel: ObservableObject {
     router.presentationResultState(with: .deny, context: context)
   }
 
+  func updateCredentialViewModel(with colorScheme: String) {
+    let display = getCredentialDisplayUseCase.execute(for: credential.credential.displays, colorScheme: colorScheme)
+    credentialViewModel = CredentialViewModel(credential: credential.credential, credentialDisplay: display)
+  }
+
   // MARK: Private
 
   private var context: PresentationRequestContext
@@ -74,6 +81,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   @Injected(\.submitPresentationUseCase) private var submitPresentationUseCase: SubmitPresentationUseCaseProtocol
   @Injected(\.denyPresentationUseCase) private var denyPresentationUseCase: DenyPresentationUseCaseProtocol
   @Injected(\.getVerifierDisplayUseCase) private var getVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol
+  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
   @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
 
   private func startDelayedLoadingMessageTask() {

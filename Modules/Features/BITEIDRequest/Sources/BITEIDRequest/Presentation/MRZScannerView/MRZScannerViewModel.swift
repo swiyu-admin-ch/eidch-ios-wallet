@@ -13,25 +13,33 @@ class MRZScannerViewModel: ObservableObject {
 
   // MARK: Internal
 
+  @Published var isLoading = false
   @Published var isErrorPresented = false
   @Published var errorDescription: String? = nil
 
   func submit(_ payload: EIDRequestPayload) async {
+    if isLoading {
+      return
+    }
+
     do {
-      let (requestCase, status) = try await submitEIDRequestUseCase.execute(payload.mrz)
+      isLoading = true
+      let requestCase = try await submitEIDRequestUseCase.execute(mrz: payload.mrz, hasLegalRepresentant: router.context.hasLegalRepresentant)
+      isLoading = false
 
-      guard let status else {
+      guard requestCase.state != nil else {
         return close()
-      }
-
-      if let legalRepresentant = status.legalRepresentant, !legalRepresentant.isVerified {
-        return router.legalRepresentantConsent(caseId: requestCase.id)
       }
 
       let viewState = try RequestCaseViewState(requestCase)
 
+      if !viewState.isLegalRepresentantConsentVerified {
+        return router.legalRepresentantConsent(caseId: requestCase.id)
+      }
+
       return switch viewState {
       case .inQueue(let state): router.queueInformation(state.onlineSessionStartOpenAt)
+      case .readyForOnlineSession: router.avIdentityCheck()
       default: close()
       }
     } catch let error as NetworkError {
@@ -43,6 +51,8 @@ class MRZScannerViewModel: ObservableObject {
       errorDescription = error.localizedDescription
       isErrorPresented = true
     }
+
+    isLoading = false
   }
 
   func close() {

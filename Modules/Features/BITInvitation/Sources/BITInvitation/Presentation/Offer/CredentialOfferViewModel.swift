@@ -16,16 +16,8 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   init(credential: Credential, trustStatement: TrustStatement? = nil, state: CredentialOfferViewModel.State = .result, router: CredentialOfferInternalRoutes) {
     self.credential = credential
     self.trustStatement = trustStatement
-    credentialBody = CredentialDetailBody(from: credential)
     self.router = router
     super.init(state)
-
-    guard let trustStatement else {
-      issuerDisplay = credential.preferredIssuerDisplay
-      return
-    }
-
-    issuerDisplay = getCredentialIssuerDisplayUseCase.execute(for: credential.id, trustStatement: trustStatement, fallbackDisplay: credential.preferredIssuerDisplay)
   }
 
   // MARK: Internal
@@ -50,8 +42,9 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   }
 
   let credential: Credential
-  let credentialBody: CredentialDetailBody
-  var issuerDisplay: CredentialIssuerDisplay? = nil
+
+  @Published var issuerDisplay: CredentialIssuerDisplay?
+  @Published var credentialViewModel: CredentialViewModel?
 
   var issuerTrustStatus: TrustStatus {
     (trustStatement != nil) ? .verified : .unverified
@@ -92,6 +85,18 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
     return nil
   }
 
+  func updateCredentialViewModel(with colorScheme: String) {
+    let display = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
+    credentialViewModel = CredentialViewModel(credential: credential, credentialDisplay: display)
+
+    guard let trustStatement else {
+      issuerDisplay = credentialViewModel?.issuerDisplay
+      return
+    }
+
+    issuerDisplay = getCredentialIssuerDisplayUseCase.execute(for: credential.id, trustStatement: trustStatement, fallbackDisplay: credentialViewModel?.issuerDisplay)
+  }
+
   // MARK: Private
 
   private let router: CredentialOfferInternalRoutes
@@ -99,5 +104,6 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @Injected(\.getCredentialIssuerDisplayUseCase) private var getCredentialIssuerDisplayUseCase: GetCredentialIssuerDisplayUseCaseProtocol
+  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
 
 }

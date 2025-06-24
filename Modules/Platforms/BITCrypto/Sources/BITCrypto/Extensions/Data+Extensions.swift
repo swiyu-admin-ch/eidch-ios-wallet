@@ -5,6 +5,10 @@ extension Data {
 
   // MARK: Public
 
+  public var hexString: String {
+    map { String(format: "%02hhx", $0) }.joined()
+  }
+
   /// Generate randomly an array of bytes and return it as Data object
   /// - Parameters:
   ///   - length:the length of the bytes array to generate in bytes

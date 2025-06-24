@@ -58,7 +58,6 @@ let package = Package(
         "BITInvitation",
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITNavigationTestCore", package: "BITNavigation"),
-        .product(name: "BITCredentialMocks", package: "BITCredential"),
         .product(name: "BITSdJWTMocks", package: "BITSdJWT"),
         .product(name: "BITAnalyticsMocks", package: "BITAnalytics"),
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),

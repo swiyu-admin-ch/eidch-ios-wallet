@@ -21,13 +21,9 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
 
   func execute(from offer: CredentialOffer) async throws -> (Credential, TrustStatement?) {
     let (metadataWrapper, anyCredential, keyPair) = try await fetchAnyVerifiableCredentialUseCase.execute(from: offer)
+    let rawOcaBundle = try await fetchVcMetadataUseCase.execute(for: anyCredential)
 
-    var ocaBundle: OcaBundle? = nil
-    if isOCABundleFetchFeatureEnabled {
-      ocaBundle = try await fetchVcMetadataUseCase.execute(for: anyCredential)
-    }
-
-    let credential = try credentialGenerator.generate(for: anyCredential, keyPair: keyPair, ocaBundle: ocaBundle, metadataWrapper: metadataWrapper)
+    let credential = try credentialGenerator.generate(for: anyCredential, keyPair: keyPair, rawOcaBundle: rawOcaBundle, metadataWrapper: metadataWrapper)
     let savedCredential = try await credentialRepository.create(credential: credential)
     let updatedCredential = (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
     let trustStatement = try? await fetchTrustStatementUseCase.execute(issuer: anyCredential.issuer)
@@ -36,8 +32,6 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
   }
 
   // MARK: Private
-
-  @Injected(\.isOCABundleFetchFeatureEnabled) private var isOCABundleFetchFeatureEnabled: Bool
 
   @Injected(\.fetchAnyVerifiableCredentialUseCase) private var fetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseProtocol
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol

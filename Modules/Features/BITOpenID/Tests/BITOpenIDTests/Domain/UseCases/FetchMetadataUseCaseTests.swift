@@ -1,5 +1,6 @@
 import Spyable
 import XCTest
+@testable import BITNetworking
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -14,13 +15,16 @@ final class FetchMetadataUseCaseTests: XCTestCase {
 
   func testFetchMetadataHappyPath() async throws {
     let mockMetadata = CredentialMetadata.Mock.sample
+    let mockMetadataData = CredentialMetadata.Mock.sampleData
     guard let mockUrl = URL(string: "http://mock.url") else { fatalError("url generation") }
-    spyRepository.fetchMetadataFromReturnValue = mockMetadata
+    spyRepository.fetchMetadataFromReturnValue = NetworkResponse(object: mockMetadata, data: mockMetadataData)
 
-    let metadata = try await useCase.execute(from: mockUrl)
+    let response = try await useCase.execute(from: mockUrl)
+    let metadata = response.object
 
     XCTAssertEqual(mockMetadata.credentialEndpoint, metadata.credentialEndpoint)
     XCTAssertEqual(mockMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, metadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
+    XCTAssertEqual(mockMetadataData, response.data)
     XCTAssertTrue(spyRepository.fetchMetadataFromCalled)
     XCTAssertEqual(1, spyRepository.fetchMetadataFromCallsCount)
     XCTAssertEqual(mockUrl, spyRepository.fetchMetadataFromReceivedInvocations.first)

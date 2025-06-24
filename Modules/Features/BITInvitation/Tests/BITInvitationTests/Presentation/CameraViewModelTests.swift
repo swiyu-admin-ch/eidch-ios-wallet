@@ -9,7 +9,6 @@ import XCTest
 @testable import BITAnyCredentialFormat
 @testable import BITAnyCredentialFormatMocks
 @testable import BITCredential
-@testable import BITCredentialMocks
 @testable import BITCredentialShared
 @testable import BITInvitation
 @testable import BITOpenID

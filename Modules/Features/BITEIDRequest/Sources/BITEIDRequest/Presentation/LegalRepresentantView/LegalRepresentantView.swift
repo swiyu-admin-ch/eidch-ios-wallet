@@ -27,7 +27,7 @@ struct LegalRepresentantView: View {
       footer: {
         viewFooter()
       })
-      .toolbar { toolbarContent() }
+      .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 
   // MARK: Private
@@ -44,7 +44,7 @@ extension LegalRepresentantView {
 
   @ViewBuilder
   private func viewFooter() -> some View {
-    Button(action: viewModel.yesAction) {
+    Button(action: { viewModel.action(true) }) {
       Text(L10n.tkGetEidGuardianshipButtonYes)
         .multilineTextAlignment(.center)
         .lineLimit(1)
@@ -53,9 +53,8 @@ extension LegalRepresentantView {
     .buttonStyle(.bezeledLight)
     .controlSize(.large)
     .accessibilityIdentifier(AccessibilityIdentifier.yesButton.rawValue)
-    .accessibilityLabel(L10n.tkGetEidGuardianshipButtonYes)
 
-    Button(action: viewModel.noAction) {
+    Button(action: { viewModel.action(false) }) {
       Text(L10n.tkGetEidGuardianshipButtonNo)
         .multilineTextAlignment(.center)
         .lineLimit(1)
@@ -64,16 +63,6 @@ extension LegalRepresentantView {
     .buttonStyle(.bezeledLight)
     .controlSize(.large)
     .accessibilityIdentifier(AccessibilityIdentifier.noButton.rawValue)
-    .accessibilityLabel(L10n.tkGetEidGuardianshipButtonNo)
-  }
-
-  @ToolbarContentBuilder
-  private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
-        Assets.close.swiftUIImage
-      })
-    }
   }
 }
 

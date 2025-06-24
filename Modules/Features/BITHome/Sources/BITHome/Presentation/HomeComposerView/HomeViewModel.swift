@@ -52,7 +52,7 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
   }
 
   @Published var requestCases: [RequestCaseViewState] = []
-  @Published var credentials: [Credential] = []
+  @Published var credentialViewModels: [CredentialViewModel] = []
   @Published var isImpressumPresented = false
   @Published var isSecurityPresented = false
   @Published var isLicensesPresented = false
@@ -128,7 +128,7 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
   func getEIDRequestCases() async {
     do {
       requestCases = try await getEIDRequestCaseListUseCase.execute()
-        .map { try RequestCaseViewState($0, delegate: self) }
+        .compactMap { try? RequestCaseViewState($0, delegate: self) }
 
       if !requestCases.isEmpty {
         await fetchEIDRequestStatus()
@@ -147,11 +147,22 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
     }
   }
 
+  func updateCredentialViewModels(with colorScheme: String) {
+    self.colorScheme = colorScheme
+    credentialViewModels = credentials.map {
+      let display = getCredentialDisplayUseCase.execute(for: $0.displays, colorScheme: colorScheme)
+      return CredentialViewModel(credential: $0, credentialDisplay: display)
+    }
+  }
+
   // MARK: Private
+
+  private var colorScheme = String()
 
   private let router: HomeRouterRoutes
 
   private let notificationCenter: NotificationCenter
+
   @Injected(\.getCredentialListUseCase) private var getCredentialListUseCase: GetCredentialListUseCaseProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.isUserLoggedInUseCase) private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocol
@@ -160,6 +171,13 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
   @Injected(\.enableEIDRequestAfterOnboardingUseCase) private var enableEIDRequestAfterOnboardingUseCase: EnableEIDRequestAfterOnboardingUseCaseProtocol
   @Injected(\.getEIDRequestCaseListUseCase) private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
+  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
+
+  private var credentials: [Credential] = [] {
+    didSet {
+      updateCredentialViewModels(with: colorScheme)
+    }
+  }
 
   private func registerNotifications() {
     notificationCenter.addObserver(forName: .didLogin, object: nil, queue: .main, using: { [weak self] _ in self?.onDidLogin() })
@@ -229,11 +247,21 @@ extension HomeViewModel {
 extension HomeViewModel: RequestCaseViewStateDelegate {
   func didDeleteRequestCase() {
     Task {
-      await fetchEIDRequestStatus()
+      await getEIDRequestCases()
     }
   }
 
   func didStartAutoVerification() {
     router.autoVerification()
+  }
+
+  func didUpdateRequestCaseState() {
+    Task {
+      await fetchEIDRequestStatus()
+    }
+  }
+
+  func didTapObtainConsent(caseId: String) {
+    router.obtainConsent(caseId: caseId)
   }
 }

@@ -29,21 +29,12 @@ struct DataPrivacyView: View {
           primaryButtonLabel: L10n.tkGetEidDataPrivacyPrimaryButton,
           primaryButtonAction: viewModel.primaryAction)
       })
-      .toolbar { toolbarContent() }
+      .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 
   // MARK: Private
 
   private var viewModel: DataPrivacyViewModel
-
-  @ToolbarContentBuilder
-  private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
-        Assets.close.swiftUIImage
-      })
-    }
-  }
 }
 
 #Preview {

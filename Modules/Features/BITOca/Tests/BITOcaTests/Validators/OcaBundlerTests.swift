@@ -20,22 +20,21 @@ final class OcaBundlerTests: XCTestCase {
     successState()
   }
 
-  func testValidate_valid_returnsOcaBundle() throws {
+  func testCreateOcaBundle_valid_returnsOcaBundle() throws {
     let bundle = try bundler.createOcaBundle(ocaBundleDataMock)
 
-    XCTAssertEqual(bundle.captureBases.count, 1)
-    XCTAssertEqual(bundle.overlays.count, 3)
+    XCTAssertEqual(bundle.captureBases.count, 2)
+    XCTAssertEqual(bundle.overlays.count, 25)
   }
 
-  func testValidate_valid_argumentsPassed() throws {
+  func testCreateOcaBundle_valid_argumentsPassed() throws {
     let bundle = try bundler.createOcaBundle(ocaBundleDataMock)
 
     XCTAssertEqual(digestsValidatorSpy.validateReceivedRawOcaData, ocaBundleDataMock)
-    XCTAssertEqual(ocaBundleValidatorSpy.validateReceivedOcaBundle?.captureBases.count, bundle.captureBases.count)
-    XCTAssertEqual(ocaBundleValidatorSpy.validateReceivedOcaBundle?.overlays.count, bundle.overlays.count)
+    XCTAssertEqual(brandingOverlayResolverSpy.resolveOverlaysReceivedOverlays?.count, bundle.overlays.count)
   }
 
-  func testValidate_digestValidatorReturnsFalse_throwsInvalidCESRHashError() throws {
+  func testCreateOcaBundle_digestValidatorReturnsFalse_throwsInvalidCESRHashError() throws {
     digestsValidatorSpy.validateReturnValue = false
 
     XCTAssertThrowsError(try bundler.createOcaBundle(ocaBundleDataMock)) { error in
@@ -43,19 +42,46 @@ final class OcaBundlerTests: XCTestCase {
     }
   }
 
-  func testValidate_decodingError_throwsError() throws {
+  func testCreateOcaBundle_resolvedOverlays_verifyBrandingOverlaysAdded() throws {
+    let bundle = try bundler.createOcaBundle(ocaBundleDataMock)
+    XCTAssertEqual(bundle.overlays.compactMap { $0 as? BrandingOverlay1x1 }.count, 5)
+  }
+
+  func testCreateOcaBundle_missingBrandingOverlays_verifyBrandingOverlaysEmpty() throws {
+    brandingOverlayResolverSpy.resolveOverlaysReturnValue = []
+    let bundle = try bundler.createOcaBundle(OcaBundle.Mock.emptyBrandingOverlayData)
+    XCTAssertEqual(bundle.overlays.compactMap { $0 as? BrandingOverlay1x1 }.count, 0)
+  }
+
+  func testCreateOcaBundle_decodingError_throwsError() throws {
     let data = "invalid".data(using: .utf8)!
 
     XCTAssertThrowsError(try bundler.createOcaBundle(data)) { error in
-      XCTAssertTrue(error is DecodingError)
+      XCTAssertEqual(error as? OcaError, .invalidJsonObject)
     }
   }
 
-  func testValidate_bundleValidatorThrows_throwsError() throws {
-    ocaBundleValidatorSpy.validateThrowableError = TestingError.error
+  func testCreateOcaBundle_MissingCaptureBases_throwsError() throws {
+    XCTAssertThrowsError(try bundler.createOcaBundle(OcaBundle.Mock.missingCaptureBasesData)) { error in
+      XCTAssertEqual(error as? OcaError, .invalidRootCaptureBase)
+    }
+  }
 
-    XCTAssertThrowsError(try bundler.createOcaBundle(ocaBundleDataMock)) { error in
-      XCTAssertEqual(error as? TestingError, .error)
+  func testCreateOcaBundle_MissingOverlays_throwsError() throws {
+    XCTAssertThrowsError(try bundler.createOcaBundle(OcaBundle.Mock.missingOverlaysData)) { error in
+      XCTAssertEqual(error as? OcaError, .invalidOverlayCaptureBaseDigest)
+    }
+  }
+
+  func testCreateOcaBundle_MalformedCaputureBases_throwsError() throws {
+    XCTAssertThrowsError(try bundler.createOcaBundle(OcaBundle.Mock.malformedCaptureBasesData)) { error in
+      XCTAssertNotNil(error as? DecodingError)
+    }
+  }
+
+  func testCreateOcaBundle_MalformedOverlays_throwsError() throws {
+    XCTAssertThrowsError(try bundler.createOcaBundle(OcaBundle.Mock.malformedOverlaysData)) { error in
+      XCTAssertNotNil(error as? DecodingError)
     }
   }
 
@@ -68,17 +94,18 @@ final class OcaBundlerTests: XCTestCase {
   private var bundler = OcaBundler()
 
   private var digestsValidatorSpy = OcaCaptureBaseDigestsValidatorProtocolSpy()
-  private var ocaBundleValidatorSpy = OcaBundleValidatorProtocolSpy()
+  private var brandingOverlayResolverSpy = BrandingOverlayResolverProtocolSpy()
 
   private func registerMocks() {
     digestsValidatorSpy = OcaCaptureBaseDigestsValidatorProtocolSpy()
-    ocaBundleValidatorSpy = OcaBundleValidatorProtocolSpy()
+    brandingOverlayResolverSpy = BrandingOverlayResolverProtocolSpy()
     Container.shared.ocaCaptureBaseDigestsValidator.register { self.digestsValidatorSpy }
-    Container.shared.ocaBundleValidator.register { self.ocaBundleValidatorSpy }
+    Container.shared.brandingOverlayResolver.register { self.brandingOverlayResolverSpy }
   }
 
   private func successState() {
     digestsValidatorSpy.validateReturnValue = true
+    brandingOverlayResolverSpy.resolveOverlaysReturnValue = OcaBundle.Mock.elfa.overlays
   }
 }
 

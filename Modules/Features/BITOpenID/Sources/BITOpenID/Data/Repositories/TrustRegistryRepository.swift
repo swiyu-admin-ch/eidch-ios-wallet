@@ -27,5 +27,5 @@ struct TrustRegistryRepository: TrustRegistryRepositoryProtocol {
   // MARK: Private
 
   @Injected(\.trustRegistryMapping) private var trustRegistryMapping: [String: String]
-  @Injected(\.trustedDids) private var trustedDids: [String]
+  @Injected(\.trustRegistryTrustedDids) private var trustedDids: [String]
 }

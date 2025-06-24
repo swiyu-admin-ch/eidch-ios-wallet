@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - JWSHeader
 
-/// This class represents the header of a signed JWT which is specified by https://www.rfc-editor.org/rfc/rfc7519.html
+/// This class represents the header of a signed JWT (JWS) which is specified by https://www.rfc-editor.org/rfc/rfc7515.html
 open class JWSHeader: Equatable {
 
   // MARK: Lifecycle
@@ -12,7 +12,7 @@ open class JWSHeader: Equatable {
     algorithm: JWTAlgorithm,
     type: String? = nil,
     keyIdentifier: String? = nil,
-    jwk: PublicKeyInfo.JWK? = nil)
+    jwk: JWK? = nil)
   {
     self.algorithm = algorithm
     self.type = type
@@ -32,7 +32,7 @@ open class JWSHeader: Equatable {
   public let keyIdentifier: String?
 
   /// The key info
-  public let jwk: PublicKeyInfo.JWK?
+  public let jwk: JWK?
 
   // MARK: Equatable
 

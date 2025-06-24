@@ -6,10 +6,6 @@ extension Container {
 
   // MARK: Public
 
-  public var isOCABundleFetchFeatureEnabled: Factory<Bool> {
-    self { false }
-  }
-
   public var ocaBundleService: Factory<OCABundleServiceProtocol> {
     self { OCABundleService() }
   }
@@ -18,11 +14,15 @@ extension Container {
     self { OcaBundler() }
   }
 
-  // MARK: Internal
+  public var captureBaseDisplayGenerator: Factory<CaptureBaseDisplayGeneratorProtocol> {
+    self { CaptureBaseDisplayGenerator() }
+  }
 
-  var ocaRepository: Factory<OCARepositoryProtocol> {
+  public var ocaRepository: Factory<OCARepositoryProtocol> {
     self { OCARepository() }
   }
+
+  // MARK: Internal
 
   var jsonCanonicalizer: Factory<JsonCanonicalizerProtocol> {
     self { JsonCanonicalizer() }
@@ -40,7 +40,20 @@ extension Container {
     self { OcaBundleValidator() }
   }
 
+  var brandingOverlayResolver: Factory<BrandingOverlayResolverProtocol> {
+    self { BrandingOverlayResolver() }
+  }
+
+  var rootCaptureBaseResolver: Factory<RootCaptureBaseResolverProtocol> {
+    self { RootCaptureBaseResolver() }
+  }
+
   var localeValidator: Factory<LocaleValidatorProtocol> {
     self { LocaleValidator() }
   }
+
+  var overlayBundleAttributesGenerator: Factory<OverlayBundleAttributesGeneratorProtocol> {
+    self { OverlayBundleAttributesGenerator() }
+  }
+
 }

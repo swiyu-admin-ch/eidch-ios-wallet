@@ -71,9 +71,9 @@ public struct JWSDecoder: JWSDecoderProtocol {
 }
 
 extension JOSESwift.JWSHeader {
-  fileprivate func publicJwk() throws -> PublicKeyInfo.JWK? {
+  fileprivate func publicJwk() throws -> BITCrypto.JWK? {
     if let jwkData = jwkTyped?.jsonData() {
-      try JSONDecoder().decode(PublicKeyInfo.JWK.self, from: jwkData)
+      try JSONDecoder().decode(BITCrypto.JWK.self, from: jwkData)
     } else {
       nil
     }

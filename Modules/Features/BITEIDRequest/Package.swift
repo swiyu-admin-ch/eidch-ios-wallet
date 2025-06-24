@@ -16,6 +16,8 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../BITEntities"),
+    .package(path: "../BITAppAttestation"),
+    .package(path: "../BITAppAuth"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITNavigation"),
@@ -24,12 +26,15 @@ let package = Package(
     .package(path: "../../Platforms/BITQRCode"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
+    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", branch: "main"),
   ],
   targets: [
     .target(
       name: "BITEIDRequest",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITAppAttestation", package: "BITAppAttestation"),
+        .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "BITQRCode", package: "BITQRCode"),
@@ -39,6 +44,7 @@ let package = Package(
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITEntities", package: "BITEntities"),
+        .product(name: "BITAVWrapper", package: "eidch-ios-av-lib"),
       ],
       resources: [.process("Resources")]),
     .testTarget(

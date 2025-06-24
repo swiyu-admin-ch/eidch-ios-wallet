@@ -11,8 +11,8 @@ struct CredentialBox: View {
 
   // MARK: Lifecycle
 
-  init(credential: Credential, compression: UICompressionStyle) {
-    self.credential = credential
+  init(_ viewModel: CredentialViewModel, compression: UICompressionStyle) {
+    self.viewModel = viewModel
     self.compression = compression
   }
 
@@ -37,14 +37,14 @@ struct CredentialBox: View {
 
   @Orientation private var orientation
 
+  private let viewModel: CredentialViewModel
   private let compression: UICompressionStyle
-  private let credential: Credential
 
   @ViewBuilder
   private func portraitContent() -> some View {
     HStack(spacing: .x4) {
-      credentialCard(credential)
-      credentialContent(credential, alignment: .leading)
+      credentialCard()
+      credentialContent(alignment: .leading)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
   }
@@ -53,29 +53,29 @@ struct CredentialBox: View {
   private func landscapeContent() -> some View {
     Spacer()
     VStack(spacing: .x3) {
-      credentialCard(credential)
+      credentialCard()
         .padding(.horizontal, .x25)
-      credentialContent(credential, alignment: .center)
+      credentialContent(alignment: .center)
     }
     Spacer()
   }
 
   @ViewBuilder
-  private func credentialCard(_ credential: Credential) -> some View {
-    CredentialCard(credential)
+  private func credentialCard() -> some View {
+    CredentialCard(viewModel)
       .controlSize(.small)
       .accessibilityHidden(true)
   }
 
   @ViewBuilder
-  private func credentialContent(_ credential: Credential, alignment: HorizontalAlignment) -> some View {
+  private func credentialContent(alignment: HorizontalAlignment) -> some View {
     VStack(alignment: alignment) {
-      Text(credential.preferredDisplay?.name ?? L10n.tkGlobalNotAssigned)
+      Text(viewModel.credentialDisplay?.name ?? L10n.tkGlobalNotAssigned)
         .font(.custom.body)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(alignment.textAlignment)
 
-      if let summary = credential.preferredDisplay?.summary {
+      if let summary = viewModel.credentialDisplay?.summary {
         Text(summary)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)

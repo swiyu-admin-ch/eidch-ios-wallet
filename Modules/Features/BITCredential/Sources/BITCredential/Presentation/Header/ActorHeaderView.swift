@@ -8,20 +8,14 @@ public struct ActorHeaderView: View {
 
   // MARK: Lifecycle
 
-  public init(name: String, trustStatus: TrustStatus) {
-    _viewModel = StateObject(wrappedValue: ActorHeaderViewModel(name: name, trustStatus: trustStatus))
-  }
-
-  public init(name: String, trustStatus: TrustStatus, image: Image) {
-    _viewModel = StateObject(wrappedValue: ActorHeaderViewModel(name: name, trustStatus: trustStatus, image: image))
+  public init(name: String, trustStatus: TrustStatus, image: Image?) {
+    self.name = name
+    self.trustStatus = trustStatus
+    self.image = image
   }
 
   public init(name: String, trustStatus: TrustStatus, imageData: Data) {
-    _viewModel = StateObject(wrappedValue: ActorHeaderViewModel(name: name, trustStatus: trustStatus, imageData: imageData))
-  }
-
-  public init(name: String, trustStatus: TrustStatus, imageUrl: URL) {
-    _viewModel = StateObject(wrappedValue: ActorHeaderViewModel(name: name, trustStatus: trustStatus, imageUrl: imageUrl))
+    self.init(name: name, trustStatus: trustStatus, image: Image(data: imageData))
   }
 
   // MARK: Public
@@ -31,7 +25,7 @@ public struct ActorHeaderView: View {
       HStack(alignment: .top, spacing: .x4) {
 
         if !sizeCategory.isAccessibilityCategory {
-          (viewModel.image ?? Assets.unknownIcon.swiftUIImage)
+          (image ?? Assets.unknownIcon.swiftUIImage)
             .renderingMode(.template)
             .resizable()
             .aspectRatio(contentMode: .fit)
@@ -45,21 +39,21 @@ public struct ActorHeaderView: View {
         }
 
         VStack(alignment: .leading, spacing: 0) {
-          Text(viewModel.name)
+          Text(name)
             .lineSpacing(Self.lineSpacing)
             .font(.custom.title3Emphasized)
             .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-            .accessibilityLabel(viewModel.name)
+            .accessibilityLabel(name)
             .accessibilityIdentifier(AccessibilityIdentifier.title.rawValue)
 
           HStack(alignment: .center, spacing: .x1) {
             if !sizeCategory.isAccessibilityCategory {
-              viewModel.trustStatus.icon
+              trustStatus.icon
             }
-            Text(viewModel.trustStatus.description)
+            Text(trustStatus.description)
               .font(.custom.body)
-              .foregroundStyle(viewModel.trustStatus.color)
-              .accessibilityLabel(viewModel.trustStatus.description)
+              .foregroundStyle(trustStatus.color)
+              .accessibilityLabel(trustStatus.description)
               .padding(.top, 2)
               .accessibilityIdentifier(AccessibilityIdentifier.verifiedStatus.rawValue)
           }
@@ -88,13 +82,15 @@ public struct ActorHeaderView: View {
   private static let imageMaxSize: CGFloat = 24
   private static let lineSpacing: CGFloat = -10
 
-  @StateObject private var viewModel: ActorHeaderViewModel
+  private let image: Image?
+  private let name: String
+  private let trustStatus: TrustStatus
 
 }
 
 #Preview {
   Group {
     ActorHeaderView(name: "Test", trustStatus: .verified, image: Image(systemName: "square.fill"))
-    ActorHeaderView(name: "Test", trustStatus: .verified)
+    ActorHeaderView(name: "Test", trustStatus: .verified, image: nil)
   }
 }

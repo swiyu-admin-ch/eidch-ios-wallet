@@ -63,9 +63,8 @@ public struct DefaultInformationContentView: View {
         }
       }
     }
+    .accessibilityElement(children: .contain)
     .frame(maxWidth: .infinity)
-    .padding(.horizontal, .x6)
-    .padding(.bottom)
   }
 
   // MARK: Internal

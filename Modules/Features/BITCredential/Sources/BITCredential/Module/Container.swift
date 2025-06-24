@@ -34,7 +34,6 @@ extension Container {
   var ocaCredentialGenerator: Factory<OcaCredentialGeneratorProtocol> {
     self { OcaCredentialGenerator() }
   }
-
 }
 
 // MARK: - Credential detail
@@ -79,6 +78,10 @@ extension Container {
 
   public var fetchCredentialUseCase: Factory<FetchCredentialUseCaseProtocol> {
     self { FetchCredentialUseCase() }
+  }
+
+  public var getCredentialDisplayUseCase: Factory<GetCredentialDisplayUseCaseProtocol> {
+    self { GetCredentialDisplayUseCase() }
   }
 }
 

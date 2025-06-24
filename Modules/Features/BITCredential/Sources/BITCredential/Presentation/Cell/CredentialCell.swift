@@ -2,6 +2,7 @@ import BITCredentialShared
 import BITL10n
 import BITOpenID
 import BITTheming
+import Factory
 import SwiftUI
 
 // MARK: - CredentialCell
@@ -10,8 +11,8 @@ public struct CredentialCell: View {
 
   // MARK: Lifecycle
 
-  public init(_ credential: Credential, disclosureIndicator: DisclosureIndicator = .none) {
-    self.credential = credential
+  public init(_ viewModel: CredentialViewModel, disclosureIndicator: DisclosureIndicator = .none) {
+    self.viewModel = viewModel
     self.disclosureIndicator = disclosureIndicator
   }
 
@@ -22,22 +23,22 @@ public struct CredentialCell: View {
       HStack(alignment: .center) {
         HStack(alignment: alignment, spacing: .x3) {
           if sizeCategory <= .accessibilityLarge {
-            CredentialCard(credential)
+            CredentialCard(viewModel)
               .controlSize(.small)
           }
 
           VStack(alignment: .leading, spacing: 0) {
-            Text(credential.preferredDisplay?.name ?? L10n.tkCredentialFallbackTitle)
+            Text(viewModel.credentialDisplay?.name ?? L10n.tkCredentialFallbackTitle)
               .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
               .font(.custom.body)
-            if let summary = credential.preferredDisplay?.summary {
+            if let summary = viewModel.credentialDisplay?.summary {
               Text(summary)
                 .font(.custom.callout)
                 .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
             }
 
             HStack(spacing: .x3) {
-              if credential.environment == .demo {
+              if viewModel.environment == .demo {
                 Badge {
                   Text(L10n.tkCredentialStatusDemo)
                 }
@@ -48,11 +49,11 @@ public struct CredentialCell: View {
               }
 
               HStack(spacing: .x1) {
-                credential.statusImage
+                viewModel.statusImage
                   .aspectRatio(contentMode: .fit)
-                Text(credential.statusText)
+                Text(viewModel.statusText)
               }
-              .foregroundStyle(credential.statusColor)
+              .foregroundStyle(viewModel.statusColor)
             }
             .font(.custom.caption1)
             .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
@@ -86,7 +87,7 @@ public struct CredentialCell: View {
 
   private var disclosureIndicator: DisclosureIndicator
 
-  private let credential: Credential
+  private let viewModel: CredentialViewModel
   private let cellMinHeight: CGFloat = 96
 
 }

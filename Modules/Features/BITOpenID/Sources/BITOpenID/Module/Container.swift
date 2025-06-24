@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITCore
 import BITCrypto
 import BITJWT
 import Factory
@@ -41,8 +42,8 @@ extension Container {
     }
   }
 
-  public var trustedDids: Factory<[String]> {
-    self { [ self.trustRegistryDidIntProd() ] }
+  public var trustRegistryTrustedDids: Factory<[String]> {
+    self { [ self.trustRegistryDidIntProd(), self.trustRegistryDidProd() ] }
   }
 
   public var presentationFieldsValidator: Factory<PresentationFieldsValidatorProtocol> {
@@ -57,18 +58,10 @@ extension Container {
     self { VcSchemaService() }
   }
 
-  public var credentialDisplayLogoURIDecoder: Factory<CredentialDisplayLogoURIDecoderProtocol> {
-    self { CredentialDisplayLogoURIDecoder() }
-  }
-
   // MARK: Internal
 
   var credentialKeyPairGenerator: Factory<CredentialKeyPairGeneratorProtocol> {
     self { CredentialKeyPairGenerator() }
-  }
-
-  var sha256Hasher: Factory<Hashable> {
-    self { SHA256Hasher() }
   }
 
   var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
@@ -77,6 +70,10 @@ extension Container {
 
   var jsonSchemaValidator: Factory<JsonSchemaValidatorProtocol> {
     self { JsonSchemaValidator() }
+  }
+
+  var vcSdJwtSchemaValidator: Factory<VcSdJwtSchemaValidatorProtocol> {
+    self { VcSdJwtSchemaValidator() }
   }
 
   // MARK: Private
@@ -101,6 +98,9 @@ extension Container {
     self { "did:tdw:QmWrXWFEDenvoYWFXxSQGFCa6Pi22Cdsg2r6weGhY2ChiQ:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:2e246676-209a-4c21-aceb-721f8a90b212" }
   }
 
+  private var trustRegistryDidProd: Factory<String> {
+    self { "did:tdw:QmerEFUx69M5AB7oyoPQG6P17MbZQUHoe2Jxz9tXk7cSdf:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:02ee8aca-041f-4683-b878-8c6efa977292" }
+  }
 }
 
 // MARK: - AnyFetcher

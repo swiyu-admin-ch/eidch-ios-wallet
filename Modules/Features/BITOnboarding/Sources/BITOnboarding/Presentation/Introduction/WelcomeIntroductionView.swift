@@ -16,6 +16,10 @@ struct WelcomeIntroductionView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case welcomeIntroductionContent
+  }
+
   var body: some View {
     InformationView(
       image: Assets.shieldCross.swiftUIImage,
@@ -24,6 +28,7 @@ struct WelcomeIntroductionView: View {
           primary: L10n.tkOnboardingIntroductionStepSecurityPrimary,
           primaryAlt: L10n.tkOnboardingIntroductionStepSecurityScreenAlt,
           secondary: L10n.tkOnboardingIntroductionStepSecuritySecondary)
+          .accessibilityIdentifier(AccessibilityIdentifier.welcomeIntroductionContent.rawValue)
       },
       footer: {
         DefaultInformationFooterView(

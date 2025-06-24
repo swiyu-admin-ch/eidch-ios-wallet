@@ -1,3 +1,4 @@
+import BITCore
 import BITJWT
 import BITSdJWT
 import Factory
@@ -18,11 +19,7 @@ struct TokenStatusListDecoder: TokenStatusListDecoderProtocol {
     guard let listData = Data(base64URLEncoded: statusList.list) else {
       throw DecoderError.invalidStatusJWT
     }
-
-    let nsData = listData.dropFirst(2) as NSData // first two header bytes are not used
-
-    let decompressedData = try nsData.decompressed(using: .zlib) as Data
-    return try tokenStatusListByteDecoder.decode(decompressedData, bits: statusList.bits, index: index)
+    return try tokenStatusListByteDecoder.decode(listData.decompressed(), bits: statusList.bits, index: index)
   }
 
   // MARK: Private

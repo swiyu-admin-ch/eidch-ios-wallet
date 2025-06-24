@@ -10,8 +10,8 @@ public struct CredentialStatusBadge: View {
 
   // MARK: Lifecycle
 
-  public init(credential: Credential) {
-    self.credential = credential
+  public init(_ viewModel: CredentialViewModel) {
+    self.viewModel = viewModel
   }
 
   // MARK: Public
@@ -19,18 +19,21 @@ public struct CredentialStatusBadge: View {
   public var body: some View {
     VStack {
       Badge {
-        Label(title: {
-          Text(credential.statusText)
-        }, icon: {
-          if !sizeCategory.isAccessibilityCategory {
-            credential.statusImage
-              .resizable()
-              .scaledToFit()
-              .frame(width: Defaults.imageWidth, height: Defaults.imageHeight)
-          }
-        }) }
-        .accessibilityLabel(credential.statusTextAlt)
-        .badgeStyle(AnyBadgeStyle(style: credential.statusBadgeStyle))
+        Label(
+          title: {
+            Text(viewModel.statusText)
+          },
+          icon: {
+            if !sizeCategory.isAccessibilityCategory {
+              viewModel.statusImage
+                .resizable()
+                .scaledToFit()
+                .frame(width: Defaults.imageWidth, height: Defaults.imageHeight)
+            }
+          })
+      }
+      .accessibilityLabel(viewModel.statusTextAlt)
+      .badgeStyle(AnyBadgeStyle(style: viewModel.statusBadgeStyle))
     }
   }
 
@@ -43,14 +46,14 @@ public struct CredentialStatusBadge: View {
 
   @Environment(\.sizeCategory) private var sizeCategory
 
-  private var credential: Credential
+  private let viewModel: CredentialViewModel
 
 }
 
 #if DEBUG
 #Preview {
   VStack {
-    CredentialStatusBadge(credential: .Mock.sample)
+    CredentialStatusBadge(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
   }.background(.blue)
 }
 #endif

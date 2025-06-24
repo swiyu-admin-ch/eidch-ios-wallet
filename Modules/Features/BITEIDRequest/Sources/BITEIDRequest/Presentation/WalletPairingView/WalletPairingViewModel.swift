@@ -9,7 +9,11 @@ class WalletPairingViewModel {
   // MARK: Internal
 
   func primaryAction() {
-    router.close()
+    guard let identityType = router.context.identityType else {
+      return router.documentSelection()
+    }
+
+    return router.close()
   }
 
   func close() {

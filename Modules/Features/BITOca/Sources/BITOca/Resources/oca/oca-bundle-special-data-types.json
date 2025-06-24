@@ -1,0 +1,53 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IA3xagEuuWXIcezq4t5DQY7NXWj4xTV8NAgn4OcxYtoB",
+      "attributes": {
+        "icon": "Text",
+        "regexAttribute": "Text",
+        "date": "DateTime",
+        "binaryIcon": "Binary"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "type": "extend/overlays/data_source/1.0",
+      "capture_base": "IA3xagEuuWXIcezq4t5DQY7NXWj4xTV8NAgn4OcxYtoB",
+      "format": "vc+sd-jwt",
+      "attribute_sources": {
+        "icon": "$.icon",
+        "regexAttribute": "$.regexAttribute",
+        "date": "$.date",
+        "binaryIcon": "$.binaryIcon"
+      }
+    },
+    {
+      "capture_base": "IA3xagEuuWXIcezq4t5DQY7NXWj4xTV8NAgn4OcxYtoB",
+      "type": "spec/overlays/character_encoding/1.0",
+      "default_character_encoding": "utf-8",
+      "attribute_character_encoding": {
+        "binaryIcon": "Base64"
+      }
+    },
+    {
+      "capture_base": "IA3xagEuuWXIcezq4t5DQY7NXWj4xTV8NAgn4OcxYtoB",
+      "type": "spec/overlays/format/1.0",
+      "attribute_formats": {
+        "regexAttribute": "[A-Z0-9]{9}",
+        "date": "YYYY-MM-DD",
+        "binaryIcon": "image/png"
+      }
+    },
+    {
+      "capture_base": "IA3xagEuuWXIcezq4t5DQY7NXWj4xTV8NAgn4OcxYtoB",
+      "type": "spec/overlays/standard/1.0",
+      "attr_standards": {
+        "icon": "urn:ietf:rfc:2397",
+        "regexAttribute": "ReGex",
+        "date": "urn:iso:std:iso:8601"
+      }
+    },
+  ]
+}

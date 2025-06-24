@@ -28,18 +28,6 @@ struct CameraPermissionView: View {
       footer: {
         DefaultInformationFooterView(primaryButtonLabel: viewModel.buttonText, primaryButtonAction: viewModel.buttonAction)
       })
-      .toolbar { toolbarContent() }
-  }
-
-  // MARK: Private
-
-  @ToolbarContentBuilder
-  private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
-        Assets.close.swiftUIImage
-      })
-      .accessibilitySortPriority(10)
-    }
+      .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 }

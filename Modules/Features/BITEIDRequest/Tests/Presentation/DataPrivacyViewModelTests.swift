@@ -20,7 +20,7 @@ class DataPrivacyViewModelTests: XCTestCase {
   @MainActor
   func testPrimaryAction() {
     viewModel.primaryAction()
-    XCTAssertTrue(router.legalRepresentantCalled)
+    XCTAssertTrue(router.attestationCalled)
   }
 
   @MainActor
@@ -31,9 +31,9 @@ class DataPrivacyViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
+  // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
   private var router: MockEIDRequestRouter!
   private var viewModel: DataPrivacyViewModel!
-  // swiftlint:enable all
+  // swiftlint:enable implicitly_unwrapped_optional force_unwrapping
 
 }

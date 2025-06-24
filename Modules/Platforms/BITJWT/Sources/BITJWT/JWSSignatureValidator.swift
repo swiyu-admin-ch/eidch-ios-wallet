@@ -2,9 +2,11 @@ import BITCrypto
 import Factory
 import Foundation
 import JOSESwift
+import Spyable
 
 // MARK: - JWSSignatureValidatorProtocol
 
+@Spyable
 public protocol JWSSignatureValidatorProtocol {
   func validate(_ jws: JWSValidatable, did: String) async throws -> Bool
 }
@@ -31,7 +33,7 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
 
-  private func getJwks(from did: String, keyIdentifier: String?) async throws -> [PublicKeyInfo.JWK] {
+  private func getJwks(from did: String, keyIdentifier: String?) async throws -> [BITCrypto.JWK] {
     do {
       return try await didResolverHelper.getJWKS(from: did, keyIdentifier: keyIdentifier)
     } catch DidResolverHelperError.didDocumentDeactivated {
@@ -41,7 +43,7 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
     }
   }
 
-  private func validateJwtSignature(for jws: JWSValidatable, jwk: PublicKeyInfo.JWK) -> Bool {
+  private func validateJwtSignature(for jws: JWSValidatable, jwk: BITCrypto.JWK) -> Bool {
     do {
       guard let verifier = try createVerifier(for: jwk, algorithm: jws.header.algorithm) else { return false }
       let jws = try JOSESwift.JWS(compactSerialization: jws.rawJWS)
@@ -52,7 +54,7 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
     }
   }
 
-  private func createVerifier(for jwk: PublicKeyInfo.JWK, algorithm: JWTAlgorithm) throws -> Verifier? {
+  private func createVerifier(for jwk: BITCrypto.JWK, algorithm: JWTAlgorithm) throws -> Verifier? {
     guard let secKey = try ECPublicKey.getSecKey(curve: jwk.crv, x: jwk.x, y: jwk.y) else { return nil }
     let signatureAlgorithm = try SignatureAlgorithm(from: algorithm)
     return Verifier(verifyingAlgorithm: signatureAlgorithm, key: secKey)

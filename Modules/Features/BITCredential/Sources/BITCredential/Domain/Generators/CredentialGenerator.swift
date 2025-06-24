@@ -12,7 +12,7 @@ import Spyable
 
 @Spyable
 protocol CredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, keyPair: KeyPair?, ocaBundle: OcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> Credential
+  func generate(for anyCredential: AnyCredential, keyPair: KeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> Credential
 }
 
 // MARK: - CredentialGenerator
@@ -21,18 +21,21 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, keyPair: KeyPair?, ocaBundle: OcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> Credential {
+  func generate(for anyCredential: AnyCredential, keyPair: KeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> Credential {
     let id = UUID()
     let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialMetadata.display, credentialId: id)
+    let ocaBundle = rawOcaBundle.flatMap { try? ocaBundler.createOcaBundle($0) }
+    let rawCredentialData = RawCredentialData(rawOIDMetadata: metadataWrapper.rawData, rawOcaBundle: rawOcaBundle)
     return if let ocaBundle {
-      try ocaCredentialGenerator.generate(for: anyCredential, id: id, keyPair: keyPair, ocaBundle: ocaBundle, issuerDisplays: issuerDisplays)
+      try ocaCredentialGenerator.generate(for: anyCredential, id: id, keyPair: keyPair, ocaBundle: ocaBundle, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData)
     } else {
-      try metadataCredentialGenerator.generate(for: anyCredential, id: id, keyPair: keyPair, selectedCredential: metadataWrapper.selectedCredential, issuerDisplays: issuerDisplays)
+      try metadataCredentialGenerator.generate(for: anyCredential, id: id, keyPair: keyPair, selectedCredential: metadataWrapper.selectedCredential, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData)
     }
   }
 
   // MARK: Private
 
+  @Injected(\.ocaBundler) private var ocaBundler: OcaBundlerProtocol
   @Injected(\.ocaCredentialGenerator) private var ocaCredentialGenerator: OcaCredentialGeneratorProtocol
   @Injected(\.metadataCredentialGenerator) private var metadataCredentialGenerator: MetadataCredentialGeneratorProtocol
 
@@ -42,7 +45,7 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
         locale: display.locale,
         name: display.name,
         credentialId: credentialId,
-        image: display.logo?.uri.flatMap { Data(base64Encoded: $0) })
+        image: display.logo?.url?.dataURLData)
     } ?? []
   }
 }

@@ -40,8 +40,8 @@ public struct CompatibleCredentialView: View {
       .listRowSeparator(.hidden)
 
       Section {
-        CompatibleCredentialListView(credentials: viewModel.compatibleCredentials) { credential in
-          viewModel.didSelect(credential: credential)
+        CompatibleCredentialListView(viewModels: viewModel.credentialViewModels) { credentialViewModel in
+          viewModel.didSelect(credential: credentialViewModel.credential)
         }
       }
       .listSectionSeparator(.hidden, edges: .top)
@@ -50,6 +50,9 @@ public struct CompatibleCredentialView: View {
     .listStyle(.plain)
     .safeAreaInset(edge: .bottom) {
       footer()
+    }
+    .onColorSchemeChange { scheme in
+      viewModel.updateCredentialViewModels(with: scheme.rawValue)
     }
   }
 

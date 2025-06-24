@@ -64,3 +64,5 @@ packages:
     path: ../Modules/Features/BITEIDRequest
   BITOca:
     path: ../Modules/Features/BITOca
+  BITAppAttestation:
+    path: ../Modules/Features/BITAppAttestation

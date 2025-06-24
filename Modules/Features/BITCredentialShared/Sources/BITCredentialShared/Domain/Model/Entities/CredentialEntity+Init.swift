@@ -10,10 +10,10 @@ extension CredentialEntity {
     id = credential.id
     setValues(from: credential)
 
-    let sortedClaims = credential.claims.sorted(by: { $0.order < $1.order })
-    claims.insert(contentsOf: sortedClaims.map { CredentialClaimEntity(claim: $0) }, at: 0)
-    issuerDisplays.append(objectsIn: credential.issuerDisplays.map { CredentialIssuerDisplayEntity($0) })
-    displays.append(objectsIn: credential.displays.map { CredentialDisplayEntity(display: $0) })
+    clusters.append(objectsIn: credential.clusters.map(CredentialClaimClusterEntity.init))
+    issuerDisplays.append(objectsIn: credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init))
+    displays.append(objectsIn: credential.displays.map(CredentialDisplayEntity.init))
+    rawCredentialData = credential.rawCredentialData.flatMap(RawCredentialDataEntity.init)
   }
 
   // MARK: Public

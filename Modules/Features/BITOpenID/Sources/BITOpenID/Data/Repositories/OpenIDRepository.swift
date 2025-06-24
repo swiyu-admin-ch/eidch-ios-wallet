@@ -25,13 +25,11 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
 
   /// Retrieving Type Metadata from a registry given as the url parameter
   /// - Documentation: [SD-JWT-based Verifiable Credentials - Draft 06](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-06.html#name-from-a-registry)
-  func fetchTypeMetadata(from url: URL) async throws -> (TypeMetadata, Data) {
-    let response: Response = try await networkService.request(OpenIDEndpoint.typeMetadata(url: url))
-    let typeMetadata = try JSONDecoder().decode(TypeMetadata.self, from: response.data)
-    return (typeMetadata, response.data)
+  func fetchTypeMetadata(from url: URL) async throws -> NetworkResponse<TypeMetadata> {
+    try await networkService.request(OpenIDEndpoint.typeMetadata(url: url))
   }
 
-  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialMetadata {
+  func fetchMetadata(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata> {
     try await networkService.request(OpenIDEndpoint.metadata(fromIssuerUrl: issuerUrl))
   }
 
@@ -47,7 +45,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.accessToken(fromTokenUrl: url, preAuthorizedCode: preAuthorizedCode))
   }
 
-  func fetchCredential(from url: URL, credentialRequestBody: CredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse {
+  func fetchCredential(from url: URL, credentialRequestBody: VcSdJwtCredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse {
     try await networkService.request(OpenIDEndpoint.credential(url: url, body: credentialRequestBody, acccessToken: acccessToken.accessToken))
   }
 

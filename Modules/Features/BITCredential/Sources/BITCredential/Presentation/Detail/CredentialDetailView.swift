@@ -35,6 +35,9 @@ struct CredentialDetailView: View {
       .task {
         await viewModel.onAppear()
       }
+      .onColorSchemeChange { scheme in
+        viewModel.updateCredentialViewModel(with: scheme.rawValue)
+      }
   }
 
   // MARK: Private
@@ -64,8 +67,10 @@ extension CredentialDetailView {
     GeometryReader { geometry in
       ScrollView(showsIndicators: false) {
         VStack(spacing: .x10) {
-          credentialCard()
-            .frame(height: geometry.size.height * 0.8)
+          if let credentialViewModel = viewModel.credentialViewModel {
+            credentialCard(credentialViewModel)
+              .frame(height: geometry.size.height * 0.8)
+          }
 
           contentSection()
         }
@@ -89,8 +94,9 @@ extension CredentialDetailView {
 extension CredentialDetailView {
   private func landscapeLayout() -> some View {
     HStack {
-      credentialCard()
-
+      if let credentialViewModel = viewModel.credentialViewModel {
+        credentialCard(credentialViewModel)
+      }
       ScrollView(showsIndicators: false) {
         contentSection()
       }
@@ -136,9 +142,9 @@ extension CredentialDetailView {
       Divider()
 
       LazyVStack {
-        ClaimListView(viewModel.credentialBody.claims)
+        let clusterDisplayClaims = viewModel.credential.clusters.flatMap(\.claims)
+        ClaimListView(clusterDisplayClaims)
       }
-      .padding(.leading, .x6)
     }
   }
 
@@ -156,7 +162,7 @@ extension CredentialDetailView {
 
   @ViewBuilder
   private func issuerCell() -> some View {
-    if let issuer = viewModel.credential.preferredIssuerDisplay {
+    if let issuer = viewModel.credentialViewModel?.issuerDisplay {
       let image = if let image = issuer.image {
         Image(data: image) ?? Image(systemName: "circle.fill")
       } else {
@@ -198,8 +204,8 @@ extension CredentialDetailView {
     }
   }
 
-  private func credentialCard() -> some View {
-    CredentialCard(viewModel.credential) {
+  private func credentialCard(_ credentialViewModel: CredentialViewModel) -> some View {
+    CredentialCard(credentialViewModel) {
       HStack {
         menu()
 

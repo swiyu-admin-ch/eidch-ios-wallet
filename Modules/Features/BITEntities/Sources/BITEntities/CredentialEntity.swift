@@ -10,6 +10,7 @@ public class CredentialEntity: Object {
   @Persisted public var keyBindingIdentifier: UUID?
   @Persisted public var keyBindingAlgorithm: String?
   @Persisted public var payload: Data
+  @Persisted public var rawCredentialData: RawCredentialDataEntity?
   @Persisted public var format: String
   @Persisted public var issuer: String
   @Persisted public var validFrom: Date?
@@ -18,7 +19,7 @@ public class CredentialEntity: Object {
   @Persisted public var createdAt = Date()
   @Persisted public var updatedAt: Date?
 
-  @Persisted public var claims = List<CredentialClaimEntity>()
+  @Persisted public var clusters = List<CredentialClaimClusterEntity>()
   @Persisted public var issuerDisplays = List<CredentialIssuerDisplayEntity>()
   @Persisted public var displays = List<CredentialDisplayEntity>()
 

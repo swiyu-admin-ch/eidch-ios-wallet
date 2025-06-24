@@ -8,10 +8,6 @@ extension Container {
     self { IntroductionViewModel(router: $0) }
   }
 
-  var checkCardIntroductionViewModel: ParameterFactory<EIDRequestInternalRoutes, CheckCardIntroductionViewModel> {
-    self { CheckCardIntroductionViewModel(router: $0) }
-  }
-
   var dataPrivacyViewModel: ParameterFactory<EIDRequestInternalRoutes, DataPrivacyViewModel> {
     self { DataPrivacyViewModel(router: $0) }
   }
@@ -32,6 +28,14 @@ extension Container {
     self { WalletPairingViewModel(router: $0) }
   }
 
+  var avWelcomeViewModel: ParameterFactory<EIDRequestInternalRoutes, AVWelcomeViewModel> {
+    self { AVWelcomeViewModel(router: $0) }
+  }
+
+  var avIdentityCheckViewModel: ParameterFactory<EIDRequestInternalRoutes, AVIdentityCheckViewModel> {
+    self { AVIdentityCheckViewModel(router: $0) }
+  }
+
   var legalRepresentantViewModel: ParameterFactory<EIDRequestInternalRoutes, LegalRepresentantViewModel> {
     self { LegalRepresentantViewModel(router: $0) }
   }
@@ -42,6 +46,30 @@ extension Container {
 
   var legalRepresentantQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantQRCodeViewModel> {
     self { LegalRepresentantQRCodeViewModel(router: $0, caseId: $1) }
+  }
+
+  var legalRepresentantConsentStateViewModel: ParameterFactory<(EIDRequestInternalRoutes, RequestCaseViewState), LegalRepresentantConsentStateViewModel> {
+    self { LegalRepresentantConsentStateViewModel(router: $0, state: $1) }
+  }
+
+  var documentSelectionViewModel: ParameterFactory<EIDRequestInternalRoutes, DocumentSelectionViewModel> {
+    self { DocumentSelectionViewModel(router: $0) }
+  }
+
+  var attestationViewModel: ParameterFactory<EIDRequestInternalRoutes, AttestationViewModel> {
+    self { AttestationViewModel(router: $0) }
+  }
+
+  var clientAttestationErrorViewModel: ParameterFactory<EIDRequestInternalRoutes, ClientAttestationErrorViewModel> {
+    self { ClientAttestationErrorViewModel(router: $0) }
+  }
+
+  var keyAttestationErrorViewModel: ParameterFactory<EIDRequestInternalRoutes, KeyAttestationErrorViewModel> {
+    self { KeyAttestationErrorViewModel(router: $0) }
+  }
+
+  var attestationErrorViewModel: ParameterFactory<(EIDRequestInternalRoutes, AttestationErrorDelegate), AttestationErrorViewModel> {
+    self { AttestationErrorViewModel(router: $0, delegate: $1) }
   }
 
 }
@@ -56,7 +84,7 @@ extension Container {
 
   public var sidUrl: Factory<URL> {
     self {
-      guard let url = URL(string: "https://eid.admin.ch") else {
+      guard let url = URL(string: "https://www.sid.admin.ch/sid-web/") else {
         fatalError("No valid URL for SID url")
       }
       return url
@@ -115,12 +143,15 @@ extension Container {
     self { [.readyForOnlineSession, .inQueue] }
   }
 
-  var legalRepresentantRepository: Factory<LegalRepresentantRepositoryProcotol> {
-    self { LegalRepresentantRepository() }
-      .scope(.shared)
+  var eIDRequestContext: Factory<EIDRequestContext> {
+    self { EIDRequestContext() }
   }
 
   var getLegalRepresentantVerificationQRCodeUseCase: Factory<GetLegalRepresentantVerificationQRCodeUseCaseProtocol> {
     self { GetLegalRepresentantVerificationQRCodeUseCase() }
+  }
+
+  var validateAttestationsUseCase: Factory<ValidateAttestationsUseCaseProtocol> {
+    self { ValidateAttestationsUseCase() }
   }
 }

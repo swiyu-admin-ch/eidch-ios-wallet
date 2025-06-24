@@ -100,8 +100,8 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       throw FetchAnyVerifiableCredentialError.selectedCredentialNotFound
     }
 
-    let metadata = try await fetchMetadataUseCase.execute(from: issuerUrl)
-    return try CredentialMetadataWrapper(selectedCredentialSupportedId: selectedCredentialId, credentialMetadata: metadata)
+    let response = try await fetchMetadataUseCase.execute(from: issuerUrl)
+    return try CredentialMetadataWrapper(selectedCredentialSupportedId: selectedCredentialId, credentialMetadata: response.object, rawData: response.data)
   }
 
   private func fetchAccessToken(considering accessToken: AccessToken?, tokenEndpoint: URL, credentialOffer: CredentialOffer) async throws -> AccessToken {

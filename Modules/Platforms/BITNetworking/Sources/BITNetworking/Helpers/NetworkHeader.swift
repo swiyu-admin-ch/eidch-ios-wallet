@@ -9,6 +9,7 @@ public enum NetworkHeader {
   case statusList
   case did
   case vcSchema
+  case keyAttestation(clientAttestation: String, clientAttestationPop: String)
 
   // MARK: Private
 
@@ -16,6 +17,8 @@ public enum NetworkHeader {
   private static let keyAccept = "accept"
   private static let keyAuthorization = "authorization"
   private static let keyContentType = "Content-Type"
+  private static let keyClientAttestation = "OAuth-Client-Attestation"
+  private static let keyClientAttestationPoP = "OAuth-Client-Attestation-PoP"
 
   // Values
   private static let valueBearer = "BEARER"
@@ -49,6 +52,10 @@ extension NetworkHeader {
       ]
     case .vcSchema: [
         Self.keyAccept: [Self.valueApplicationJson, Self.valueApplicationVcSchema, Self.valueApplicationVcSchemaInstance].joined(separator: ", "),
+      ]
+    case .keyAttestation(let clientAttestation, let clientAttestationPop): [
+        Self.keyClientAttestation: clientAttestation,
+        Self.keyClientAttestationPoP: clientAttestationPop,
       ]
     }
   }

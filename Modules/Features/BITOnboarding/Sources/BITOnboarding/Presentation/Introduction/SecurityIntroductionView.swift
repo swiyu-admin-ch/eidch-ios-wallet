@@ -16,6 +16,10 @@ struct SecurityIntroductionView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case securityIntroductionContent
+  }
+
   var body: some View {
     InformationView(
       image: Assets.shieldPerson.swiftUIImage,
@@ -26,6 +30,7 @@ struct SecurityIntroductionView: View {
           secondary: L10n.tkOnboardingIntroductionStepYourDataSecondary,
           tertiary: L10n.tkOnboardingIntroductionStepYourDataTertiaryLinkText,
           tertiaryAction: viewModel.secondaryAction)
+          .accessibilityIdentifier(AccessibilityIdentifier.securityIntroductionContent.rawValue)
       },
       footer: {
         DefaultInformationFooterView(

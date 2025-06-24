@@ -12,7 +12,7 @@ class CredentialOfferWrongDataScreen: Screen {
   init(app: XCUIApplication) {
     self.app = app
     closeButton = app.buttons[CredentialOfferWrongDataView.AccessibilityIdentifier.closeButton.rawValue]
-    image = app.images[InformationView<DefaultInformationContentView, DefaultInformationFooterView, Image>.AccessibilityIdentifier.image.rawValue]
+    image = app.images[InformationView<DefaultInformationContentView, DefaultInformationFooterView>.AccessibilityIdentifier.image.rawValue]
     primaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.primaryText.rawValue]
   }
 
@@ -24,7 +24,7 @@ class CredentialOfferWrongDataScreen: Screen {
   let primaryText: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(image.waitForExistence(timeout: 5))
+    XCTAssert(image.waitForExistence(timeout: .defaultTimeout))
   }
 
 }

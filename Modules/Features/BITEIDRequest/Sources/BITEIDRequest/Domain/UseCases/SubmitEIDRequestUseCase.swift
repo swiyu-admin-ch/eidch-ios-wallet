@@ -1,10 +1,12 @@
+import BITAppAttestation
 import Factory
+import Foundation
 import Spyable
 
 
 @Spyable
 protocol SubmitEIDRequestUseCaseProtocol {
-  func execute(_ mrz: [String]) async throws -> (requestCase: EIDRequestCase, status: EIDRequestStatus?)
+  func execute(mrz: [String], hasLegalRepresentant: Bool) async throws -> EIDRequestCase
 }
 
 
@@ -12,11 +14,12 @@ struct SubmitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(_ mrz: [String]) async throws -> (requestCase: EIDRequestCase, status: EIDRequestStatus?) {
-    let hasLegalRepresentant = legalRepresentantRepository.get()
+  func execute(mrz: [String], hasLegalRepresentant: Bool) async throws -> EIDRequestCase {
     let payload = EIDRequestPayload(mrz: mrz, hasLegalRepresentant: hasLegalRepresentant)
 
-    let response = try await remoteEIDRequestRepository.submitRequest(with: payload)
+    let challenge = try await remoteEIDRequestRepository.fetchChallenge()
+    let request = try await generateClientAttestedRequestUseCase.execute(for: payload, challenge: challenge, audience: sidUrl.absoluteString)
+    let response = try await remoteEIDRequestRepository.submitRequest(request)
 
     var eIDRequestCase = EIDRequestCase(
       id: response.caseId,
@@ -26,19 +29,18 @@ struct SubmitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocol {
       firstName: response.firstName)
 
     guard let status = try? await remoteEIDRequestRepository.fetchRequestStatus(for: eIDRequestCase.id) else {
-      return (eIDRequestCase, nil)
+      return eIDRequestCase
     }
 
     eIDRequestCase.state = EIDRequestState(status: status)
 
-    let updatedRequestCase = try await localEIDRequestRepository.create(eIDRequestCase: eIDRequestCase)
-
-    return (updatedRequestCase, status)
+    return try await localEIDRequestRepository.create(eIDRequestCase: eIDRequestCase)
   }
 
   // MARK: Private
 
+  @Injected(\.sidUrl) private var sidUrl: URL
   @Injected(\.eIDRequestRepository) private var remoteEIDRequestRepository: EIDRequestRepositoryProtocol
   @Injected(\.localEIDRequestRepository) private var localEIDRequestRepository: LocalEIDRequestRepositoryProtocol
-  @Injected(\.legalRepresentantRepository) private var legalRepresentantRepository: LegalRepresentantRepositoryProcotol
+  @Injected(\.generateClientAttestedRequestUseCase) private var generateClientAttestedRequestUseCase: GenerateClientAttestedRequestUseCaseProtocol
 }

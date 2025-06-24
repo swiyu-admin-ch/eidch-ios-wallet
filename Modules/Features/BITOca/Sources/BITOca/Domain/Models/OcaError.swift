@@ -9,4 +9,7 @@ public enum OcaError: Error {
   case invalidOverlayCaptureBaseDigest
   case invalidOverlayAttributeKey
   case invalidOverlayLanguageCode
+  case invalidJsonPath
+  case invalidOverlayDataURI
+  case invalidClusterOrderingKey
 }

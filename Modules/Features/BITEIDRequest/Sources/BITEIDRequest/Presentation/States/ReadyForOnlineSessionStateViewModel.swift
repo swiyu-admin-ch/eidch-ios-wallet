@@ -1,3 +1,4 @@
+import BITL10n
 import Foundation
 
 public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel {
@@ -22,7 +23,36 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
     onlineSessionStartTimeoutAt.longDateFormat
   }
 
-  func primaryAction() {
-    delegate?.didStartAutoVerification()
+  var formattedDateAndTime: String {
+    onlineSessionStartTimeoutAt.formatted(
+      .dateTime
+        .day(.defaultDigits)
+        .month(.wide)
+        .year()
+        .hour(.defaultDigits(amPM: .wide))
+        .minute()
+        .locale(.current)
+    )
   }
+
+  var primaryText: String {
+    isLegalRepresentantConsentVerified ? L10n.tkGetEidNotificationEidReadyPrimary(fullName) : L10n.tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVPrimary
+  }
+
+  var secondaryText: String {
+    isLegalRepresentantConsentVerified ? L10n.tkGetEidNotificationEidReadySecondary(formattedDate) : L10n.tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVSecondary(formattedDateAndTime)
+  }
+
+  var buttonText: String {
+    isLegalRepresentantConsentVerified ? L10n.tkGetEidNotificationEidReadyGreenButton : L10n.tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVButton
+  }
+
+  func primaryAction() {
+    if isLegalRepresentantConsentVerified {
+      delegate?.didStartAutoVerification()
+    } else {
+      delegate?.didTapObtainConsent(caseId: requestCaseId)
+    }
+  }
+
 }

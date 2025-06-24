@@ -17,4 +17,6 @@ public protocol LAContextProtocol {
 
 // MARK: - LAContext + LAContextProtocol
 
+/// Extends LocalAuthentication `LAContext` to conform to the managed `LAContextProtocol`
+/// in order to enable dependency injection and facilitate unit testing.
 extension LAContext: LAContextProtocol {}

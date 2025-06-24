@@ -1,0 +1,77 @@
+{
+  "${'$'}schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "additionalItems": true,
+    "required": ["properties", "required"],
+    "required": {
+      "type": "array",
+      "allOf": [
+        { "contains": { "const": "vct" } },
+        { "contains": { "const": "iss" } }
+      ]
+    },
+    "properties": {
+      "type": "object",
+      "required": [ "iss", "vct", "nbf", "exp", "cnf", "status", "sub", "iat" ],
+      "properties": {
+        "vct": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "string" }
+          }
+        },
+        "iss": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "string" }
+          }
+        },
+        "nbf": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "number" }
+          }
+        },
+        "exp": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "number" }
+          }
+        },
+        "cnf": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "object" }
+          }
+        },
+        "status": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "object" }
+          }
+        },
+        "sub": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "string" }
+          }
+        },
+        "iat": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "number" }
+          }
+        }
+      }
+    }
+  }
+}

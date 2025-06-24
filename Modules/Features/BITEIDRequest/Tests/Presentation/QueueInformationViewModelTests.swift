@@ -1,3 +1,4 @@
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import XCTest
 @testable import BITEIDRequest
 
@@ -8,23 +9,26 @@ class QueueInformationViewModelTests: XCTestCase {
 
   override func setUp() {
     router = MockEIDRequestRouter()
-    viewModel = QueueInformationViewModel(router: router, onlineSessionStartDate: Date())
   }
 
   func testInitialState() {
-    XCTAssertNotNil(viewModel.expectedOnlineSessionStart)
+    viewModel = QueueInformationViewModel(router: router, onlineSessionStartDate: mockDate)
+
+    XCTAssertEqual(viewModel.expectedOnlineSessionStart, mockDate.longDateFormat)
   }
 
   func testPrimaryAction() {
+    viewModel = QueueInformationViewModel(router: router, onlineSessionStartDate: mockDate)
     viewModel.primaryAction()
+
     XCTAssertTrue(router.closeCalled)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
+  private let mockDate = Date()
   private var router: MockEIDRequestRouter!
   private var viewModel: QueueInformationViewModel!
-  // swiftlint:enable all
-
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

@@ -16,6 +16,10 @@ struct CredentialIntroductionView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case credentialIntroductionContent
+  }
+
   var body: some View {
     InformationView(
       image: Assets.eId.swiftUIImage,
@@ -24,6 +28,7 @@ struct CredentialIntroductionView: View {
         DefaultInformationContentView(
           primary: L10n.tkOnboardingIntroductionStepNeverForgetPrimary,
           secondary: L10n.tkOnboardingIntroductionStepNeverForgetSecondary)
+          .accessibilityIdentifier(AccessibilityIdentifier.credentialIntroductionContent.rawValue)
       },
       footer: {
         DefaultInformationFooterView(

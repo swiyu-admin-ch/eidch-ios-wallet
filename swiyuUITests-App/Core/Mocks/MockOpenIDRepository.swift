@@ -1,6 +1,7 @@
 import BITCredentialShared
 import BITCrypto
 import BITJWT
+import BITNetworking
 import BITOpenID
 import BITSdJWT
 import Foundation
@@ -12,12 +13,12 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     TypeMetadata.Mock.vcSchemaData
   }
 
-  func fetchTypeMetadata(from url: URL) async throws -> (TypeMetadata, Data) {
-    (TypeMetadata.Mock.sample, TypeMetadata.Mock.sampleData)
+  func fetchTypeMetadata(from url: URL) async throws -> NetworkResponse<TypeMetadata> {
+    NetworkResponse(object: TypeMetadata.Mock.sample, data: TypeMetadata.Mock.sampleData)
   }
 
-  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialMetadata {
-    CredentialMetadata.Mock.sample
+  func fetchMetadata(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata> {
+    NetworkResponse(object: CredentialMetadata.Mock.sample, data: CredentialMetadata.Mock.sampleData)
   }
 
   func fetchOpenIdConfiguration(from issuerURL: URL) async throws -> OpenIdConfiguration {
@@ -32,7 +33,7 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     AccessToken.Mock.sample
   }
 
-  func fetchCredential(from url: URL, credentialRequestBody: CredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse {
+  func fetchCredential(from url: URL, credentialRequestBody: VcSdJwtCredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse {
     CredentialResponse.Mock.sample
   }
 
@@ -55,6 +56,7 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
 extension CredentialMetadata {
   struct Mock {
     static let sample: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-ui-mocks")
+    static let sampleData: Data = Mocker.getData(fromFile: "credential-metadata-ui-mocks") ?? Data()
   }
 }
 

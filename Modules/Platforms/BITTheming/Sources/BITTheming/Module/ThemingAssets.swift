@@ -113,6 +113,7 @@ public enum ThemingAssets {
     public static let chrome = ColorAsset(name: "Materials/Chrome")
   }
 
+  public static let close = ImageAsset(name: "Close")
   public static let noInternet = ImageAsset(name: "NoInternet")
   public static let backDark = ImageAsset(name: "back-dark")
   public static let back = ImageAsset(name: "back")

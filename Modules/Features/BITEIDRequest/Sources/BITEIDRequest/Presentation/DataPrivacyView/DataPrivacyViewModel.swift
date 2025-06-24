@@ -13,7 +13,7 @@ class DataPrivacyViewModel {
   // MARK: Internal
 
   func primaryAction() {
-    router.legalRepresentant()
+    router.attestation()
   }
 
   func close() {

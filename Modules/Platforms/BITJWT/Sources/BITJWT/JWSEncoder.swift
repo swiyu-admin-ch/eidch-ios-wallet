@@ -6,6 +6,7 @@ import JOSESwift
 
 public protocol JWSEncoderProtocol {
   func encode(_ value: some JWTPayload & Encodable, using keyPair: KeyPair) throws -> Data
+  func encode<T>(_ value: T, keyPair: KeyPair) throws -> JWS<T> where T: JWTPayload & Encodable
 }
 
 // MARK: - JWSEncoderError
@@ -14,6 +15,7 @@ public enum JWSEncoderError: Error {
   case algorithmNotFound
   case wrongKeyType
   case cannotCreateJwk
+  case invalidEncoding
 }
 
 // MARK: - JWSEncoder
@@ -48,6 +50,31 @@ public struct JWSEncoder: JWSEncoderProtocol {
     return jws.compactSerializedData
   }
 
+  public func encode<T>(_ value: T, keyPair: KeyPair) throws -> JWS<T> where T: JWTPayload & Encodable {
+    let data = try encode(value, using: keyPair)
+
+    guard
+      let rawJWS = String(data: data, encoding: .utf8),
+      let rawPayload = try? JSONEncoder().encode(value),
+      let strRawPayload = String(data: rawPayload, encoding: .utf8),
+      let algorithm = JWTAlgorithm(rawValue: keyPair.algorithm),
+      let publicKey = keyPair.publicKey
+    else {
+      throw JWSEncoderError.invalidEncoding
+    }
+
+    let jwk: BITCrypto.JWK? = switch keyEncodingStrategy {
+    case .jwk: try JWK(from: publicKey)
+    case .none: nil
+    }
+
+    return JWS(
+      payload: value,
+      rawJWS: rawJWS,
+      rawPayload: strRawPayload,
+      header: JWSHeader(algorithm: algorithm, type: value.type, jwk: jwk))
+  }
+
   // MARK: Private
 
   private func parseAlgorithm(_ algorithm: String) throws -> SignatureAlgorithm {
@@ -69,7 +96,7 @@ public struct JWSEncoder: JWSEncoderProtocol {
     return try JOSESwift.JWSHeader(parameters: parameters)
   }
 
-  private func createJwk(keyPair: KeyPair) throws -> JWK {
+  private func createJwk(keyPair: KeyPair) throws -> JOSESwift.JWK {
     guard let publicKey = keyPair.publicKey, let jwk = try? ECPublicKey(publicKey: publicKey) else {
       throw JWSEncoderError.cannotCreateJwk
     }

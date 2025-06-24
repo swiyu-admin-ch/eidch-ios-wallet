@@ -14,6 +14,7 @@ class HomeRouterMock: HomeRouterRoutes {
   var didCallBetaId = false
   var didCallEIDRequest = false
   var didCallAutoVerification = false
+  var didCallObtainConsentArgument: String?
 
   func deeplink(url: URL, animated: Bool) -> Bool {
     didCallDeeplink = true
@@ -50,6 +51,10 @@ class HomeRouterMock: HomeRouterRoutes {
 
   func autoVerification() {
     didCallAutoVerification = true
+  }
+
+  func obtainConsent(caseId: String) {
+    didCallObtainConsentArgument = caseId
   }
 
 }

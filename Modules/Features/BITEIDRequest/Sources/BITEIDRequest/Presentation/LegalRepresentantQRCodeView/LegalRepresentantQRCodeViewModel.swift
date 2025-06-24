@@ -25,7 +25,19 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
     state == .loading || state == .error
   }
 
-  func finish() {
+  func finish() async {
+    do {
+      let requestCase = try await updateEIDRequestCaseStatusUseCase.execute(for: caseId)
+      let viewState = try RequestCaseViewState(requestCase)
+
+      if case .unknown = viewState {
+        return router.close()
+      }
+
+      router.legalRepresentantConsentState(viewState)
+    } catch {
+      router.close()
+    }
   }
 
   func getVerificationQRCode() async {
@@ -44,5 +56,6 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
   private let caseId: String
   private let router: EIDRequestInternalRoutes
 
+  @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
   @Injected(\.getLegalRepresentantVerificationQRCodeUseCase) private var getLegalRepresentantVerificationQRCodeUseCase: GetLegalRepresentantVerificationQRCodeUseCaseProtocol
 }

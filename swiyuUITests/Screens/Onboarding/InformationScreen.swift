@@ -9,17 +9,12 @@ class InformationScreen: Screen {
 
   init(app: XCUIApplication) {
     self.app = app
-    primaryButton = app.buttons[InformationView<DefaultInformationContentView, DefaultInformationFooterView, Image>.AccessibilityIdentifier.footer.rawValue]
+    primaryButton = app.buttons[DefaultInformationFooterView.AccessibilityIdentifier.primaryButton.rawValue]
     secondaryButton = app.buttons[DefaultInformationFooterView.AccessibilityIdentifier.secondaryButton.rawValue]
-    image = app.images[InformationView<DefaultInformationContentView, DefaultInformationFooterView, Image>.AccessibilityIdentifier.image.rawValue]
-    if XCUIDevice.shared.orientation.isLandscape {
-      primaryText = app.staticTexts[InformationView<DefaultInformationContentView, DefaultInformationFooterView, Image>.AccessibilityIdentifier.content.rawValue]
-      secondaryText = app.staticTexts[InformationView<DefaultInformationContentView, DefaultInformationFooterView, Image>.AccessibilityIdentifier.content.rawValue]
-    }
-    else {
-      primaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.primaryText.rawValue]
-      secondaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.secondaryText.rawValue]
-    }
+    image = app.images[InformationView<DefaultInformationContentView, DefaultInformationFooterView>.AccessibilityIdentifier.image.rawValue]
+    primaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.primaryText.rawValue]
+    secondaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.secondaryText.rawValue]
+    tertiaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.tertiaryText.rawValue]
   }
 
   // MARK: Internal
@@ -30,14 +25,10 @@ class InformationScreen: Screen {
   let image: XCUIElement
   let primaryText: XCUIElement
   let secondaryText: XCUIElement
-
-  func getImagelabel() -> String {
-    app.descendants(matching: .image).matching(identifier: InformationView<DefaultInformationContentView, DefaultInformationFooterView, Image>.AccessibilityIdentifier.image.rawValue).allElementsBoundByIndex[1].label
-  }
+  let tertiaryText: XCUIElement
 
   func assertDisplayed() {
-    XCTAssertTrue(image.waitForExistence(timeout: 5))
-    XCTAssertTrue(primaryText.exists)
+    XCTAssertTrue(primaryText.waitForExistence(timeout: .defaultTimeout))
   }
 
 }

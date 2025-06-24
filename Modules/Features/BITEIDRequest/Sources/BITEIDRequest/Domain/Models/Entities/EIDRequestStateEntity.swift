@@ -10,6 +10,7 @@ extension EIDRequestStateEntity {
     lastPolledAt = eIDRequestState.lastPolledAt
     onlineSessionStartOpenAt = eIDRequestState.onlineSessionStartOpenAt
     onlineSessionStartTimeoutAt = eIDRequestState.onlineSessionStartTimeoutAt
+    legalRepresentantConsent = LegalRepresentantConsentEntity(eIDRequestState.legalRepresentantConsent)
   }
 
 }

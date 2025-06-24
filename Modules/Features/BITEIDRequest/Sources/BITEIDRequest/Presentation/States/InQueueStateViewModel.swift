@@ -4,14 +4,14 @@ public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle
 
-  init(requestCase: EIDRequestCase) throws {
+  override init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     guard let onlineSessionStartOpenAt = requestCase.state?.onlineSessionStartOpenAt else {
       throw RequestCaseViewStateError.invalidState
     }
 
     self.onlineSessionStartOpenAt = onlineSessionStartOpenAt
 
-    try super.init(requestCase: requestCase)
+    try super.init(requestCase: requestCase, delegate: delegate)
   }
 
   // MARK: Internal
@@ -21,4 +21,9 @@ public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
   var formattedDate: String {
     onlineSessionStartOpenAt.longDateFormat
   }
+
+  func primaryAction() {
+    delegate?.didTapObtainConsent(caseId: requestCaseId)
+  }
+
 }

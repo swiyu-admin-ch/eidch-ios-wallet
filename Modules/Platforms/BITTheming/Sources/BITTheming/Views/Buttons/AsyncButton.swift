@@ -10,12 +10,10 @@ public struct AsyncButton<Label: View>: View {
   public init(
     action: @escaping () async -> Void,
     actionOptions: Set<ActionOption> = Set(ActionOption.allCases),
-    phase: Binding<AsyncButtonPhase> = .constant(.none),
     @ViewBuilder label: @escaping () -> Label)
   {
     self.action = action
     self.actionOptions = actionOptions
-    _phase = phase
     self.label = label
   }
 
@@ -28,51 +26,31 @@ public struct AsyncButton<Label: View>: View {
           isDisabled = true
         }
 
+        if actionOptions.contains(.showProgressView) {
+          showProgressView = true
+        }
+
         Task {
-          var progressViewTask: Task<Void, Error>?
-
-          if actionOptions.contains(.showProgressView) {
-            progressViewTask = Task {
-              try await Task.sleep(nanoseconds: 150_000_000)
-              phase = .loading
-            }
-          }
-
           await action()
-          progressViewTask?.cancel()
-
-          showProgressView = false
-
-          if phase != .error {
-            phase = .done
-          }
-
-          try await Task.sleep(nanoseconds: 1_500_000_000)
-          phase = .none
           isDisabled = false
+          showProgressView = false
         }
       },
       label: {
-        VStack {
-          switch phase {
-          case .done:
-            Image(systemName: "checkmark.circle")
-          case .error:
-            Image(systemName: "xmark.circle")
-          case .loading:
+        HStack {
+          if showProgressView {
             ProgressView()
-          case .none:
-            label()
+              .controlSize(.regular)
           }
+
+          label()
         }
+        .frame(maxWidth: .infinity)
       })
-      .animation(.default, value: phase)
       .disabled(isDisabled)
   }
 
   // MARK: Internal
-
-  @Binding var phase: AsyncButtonPhase
 
   var action: () async -> Void
   var actionOptions = Set(ActionOption.allCases)
@@ -94,13 +72,4 @@ extension AsyncButton {
     case showProgressView
     case handleError
   }
-}
-
-// MARK: - AsyncButtonPhase
-
-public enum AsyncButtonPhase: Equatable {
-  case none
-  case loading
-  case done
-  case error
 }

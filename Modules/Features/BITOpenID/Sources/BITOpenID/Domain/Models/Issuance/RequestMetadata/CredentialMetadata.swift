@@ -14,7 +14,7 @@ public struct CredentialMetadata: Decodable {
     self.credentialEndpoint = credentialEndpoint
     self.credentialConfigurationsSupported = credentialConfigurationsSupported
     self.display = display
-    preferredDisplay = display?.findDisplayWithFallback() as? CredentialMetadataDisplay
+    preferredDisplay = display?.findDisplayWithFallback()
   }
 
   public init(from decoder: Decoder) throws {
@@ -150,22 +150,18 @@ extension CredentialMetadata {
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       altText = try container.decodeIfPresent(String.self, forKey: .altText)
-      if let url = try container.decodeIfPresent(URL.self, forKey: .uri) {
-        uri = CredentialDisplayLogoURIDecoder().decode(url)
-      } else {
-        uri = nil
-      }
+      url = try container.decodeIfPresent(URL.self, forKey: .url)
     }
 
     // MARK: Public
 
     public let altText: String?
-    public let uri: URI?
+    public let url: URL?
 
     // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
-      case uri
+      case url = "uri"
       case altText = "alt_text"
     }
   }

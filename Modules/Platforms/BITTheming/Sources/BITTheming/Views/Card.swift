@@ -38,6 +38,9 @@ public struct Card<Content>: View where Content: View {
     .frame(maxWidth: .infinity, minHeight: minHeightCard, idealHeight: idealHeightCard, maxHeight: maxHeightCard)
     .background(background.view)
     .cornerRadius(.x9)
+    .if(sizeCategory.isAccessibilityCategory && orientation.isPortrait || orientation.isFlat) {
+      $0.frame(maxHeight: 150)
+    }
   }
 
   // MARK: Internal
@@ -46,6 +49,8 @@ public struct Card<Content>: View where Content: View {
   @Environment(\.sizeCategory) var sizeCategory
 
   // MARK: Private
+
+  @Orientation private var orientation
 
   private let content: Content?
   private let image: Image?

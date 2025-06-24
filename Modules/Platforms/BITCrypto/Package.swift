@@ -18,6 +18,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCore"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/krzyzanowskim/CryptoSwift", exact: "1.8.4"),
+    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "2.4.0"),
   ],
   targets: [
     .target(
@@ -27,6 +28,7 @@ let package = Package(
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "CryptoSwift", package: "CryptoSwift"),
+        .product(name: "JOSESwift", package: "JOSESwift"),
       ],
       resources: [.process("Resources")],
       swiftSettings: [

@@ -18,7 +18,7 @@ class PresentationRequestReviewScreen: Screen {
   let declineButton: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(acceptButton.waitForExistence(timeout: 5))
+    XCTAssert(acceptButton.waitForExistence(timeout: .defaultTimeout))
     XCTAssert(declineButton.exists)
   }
 }

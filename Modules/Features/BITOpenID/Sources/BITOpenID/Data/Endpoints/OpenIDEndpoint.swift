@@ -8,7 +8,7 @@ enum OpenIDEndpoint {
   case vcSchema(url: URL)
   case typeMetadata(url: URL)
   case metadata(fromIssuerUrl: URL)
-  case credential(url: URL, body: CredentialRequestBody, acccessToken: String)
+  case credential(url: URL, body: VcSdJwtCredentialRequestBody, acccessToken: String)
   case accessToken(fromTokenUrl: URL, preAuthorizedCode: String)
   case openIdConfiguration(issuerURL: URL)
   case status(url: URL)

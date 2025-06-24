@@ -15,6 +15,10 @@ struct PinCodeInformationView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case pinCodeInformationContent
+  }
+
   @StateObject var viewModel: PinCodeInformationViewModel
 
   var body: some View {
@@ -25,6 +29,7 @@ struct PinCodeInformationView: View {
         DefaultInformationContentView(
           primary: viewModel.primaryText,
           secondary: viewModel.secondaryText)
+          .accessibilityIdentifier(AccessibilityIdentifier.pinCodeInformationContent.rawValue)
       },
       footer: {
         DefaultInformationFooterView(

@@ -79,8 +79,6 @@ extension QueueInformationView {
       }
     }
     .frame(maxWidth: .infinity)
-    .padding(.horizontal, .x6)
-    .padding(.bottom)
   }
 }
 

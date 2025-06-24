@@ -9,7 +9,7 @@ class AutoVerificationModule {
 
   init(router: EIDRequestRouter = Container.shared.eIDRequestRouter()) {
     self.router = router
-    let viewController = UINavigationController(rootViewController: HideBackButtonHostingController(rootView: WalletPairingView(router: router)))
+    let viewController = UIHostingController(rootView: AVWelcomeView(router: router))
     router.viewController = viewController
     self.viewController = viewController
   }

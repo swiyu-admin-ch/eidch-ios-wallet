@@ -35,7 +35,6 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.count, 1)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.first, keyMock)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.jsonSchema, vcSdJwtJsonSchemaMock)
-    XCTAssertEqual(ocaBundlerSpy.createOcaBundleReceivedData, vcSdJwtOcaBundleMock)
   }
 
   func testExecute_vcSdJwtNilVcSchemaAndNilOca_returnsNil() async throws {
@@ -110,23 +109,19 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
   private var anyCredentialSpy = AnyCredentialSpy()
   private var fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForAnyCredentialUseCaseProtocolSpy()
   private var jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
-  private var ocaBundlerSpy = OcaBundlerProtocolSpy()
   private var dispatcherMock: [CredentialFormat: FetchVcMetadataForAnyCredentialUseCaseProtocolSpy]!
   private let vcSdJwtOcaBundleMock = "vcSdJwtOcaBundle".data(using: .utf8)!
   private let vcSdJwtJsonSchemaMock = "vcSdJwtJsonSchema".data(using: .utf8)!
-  private let ocaBundleMock: OcaBundle = .Mock.simpleSample
   private let keyMock = "testKey"
 
   private func registerMocks() {
     anyCredentialSpy = AnyCredentialSpy()
     fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForAnyCredentialUseCaseProtocolSpy()
     jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
-    ocaBundlerSpy = OcaBundlerProtocolSpy()
     dispatcherMock = [.vcSdJwt: fetchVcMetadataForVcSdJwtUseCaseSpy]
 
     Container.shared.fetchVcMetadataForAnyCredentialDispatcher.register { self.dispatcherMock }
     Container.shared.jsonSchemaValidator.register { self.jsonSchemaValidatorSpy }
-    Container.shared.ocaBundler.register { self.ocaBundlerSpy }
   }
 
   private func success(format: CredentialFormat) {
@@ -137,7 +132,6 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
       anyCredentialSpy.getClaimsDictionaryReturnValue = [keyMock: "testValue"]
       fetchVcMetadataForVcSdJwtUseCaseSpy.executeForReturnValue = (vcSdJwtJsonSchemaMock, vcSdJwtOcaBundleMock)
       jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = true
-      ocaBundlerSpy.createOcaBundleReturnValue = ocaBundleMock
     }
   }
 }

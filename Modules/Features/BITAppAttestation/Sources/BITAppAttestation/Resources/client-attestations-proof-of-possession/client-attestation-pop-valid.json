@@ -1,0 +1,9 @@
+{
+  "iss": "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6IjE4d0hMZUlnVzl3Vk42VkQxVHhncHF5MkxzellrTWY2SjhualZBaWJ2aE0iLCJ5IjoiLVY0ZFM0VWFMTWdQXzRmWTRqOGlyN2NsMVRYbEZkQWdjeDU1bzdUa2NTQSJ9",
+  "nbf": 1300815780,
+  "exp": 4902903692,
+  "iat": 1747230798,
+  "jti": "376F9D4F-89D4-45F0-BFC5-86C6BE82E144",
+  "nonce": "AYjcyMzY3ZDhiNmJkNTZ",
+  "aud": "did:tdw:example.com"
+}

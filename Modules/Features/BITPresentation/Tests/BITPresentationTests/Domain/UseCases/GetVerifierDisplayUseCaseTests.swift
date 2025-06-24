@@ -17,12 +17,9 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
     Container.shared.reset()
 
     verifierMock = Self.createVerifier()
-    logoUriDecoderSpy = CredentialDisplayLogoURIDecoderProtocolSpy()
 
     Container.shared.preferredUserLanguageCodes.register { self.preferredUserLanguageCodes }
-    Container.shared.credentialDisplayLogoURIDecoder.register { self.logoUriDecoderSpy }
 
-    logoUriDecoderSpy.decodeFromReturnValue = Self.logoDataMock
     preferredUserLanguageCodes = ["en", "de"]
 
     useCase = GetVerifierDisplayUseCase()
@@ -33,8 +30,7 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .unverified)
     XCTAssertEqual(verifierDisplay?.name, Self.clientNameEN)
-    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
-    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
   }
 
   func testExecute_trustStatementInPreferredLanguage_returnsNameFromTrustStatement() {
@@ -42,8 +38,7 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
     XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameEN)
-    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
-    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
   }
 
   func testExecute_trustStatementInDefaultLanguage_returnsNameFromTrustStatement() {
@@ -54,8 +49,7 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
     XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameEN)
-    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
-    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
   }
 
   func testExecute_trustStatementWithPreferredLanguage_returnsNameFromTrustStatement() {
@@ -68,8 +62,7 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
     XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameIT)
-    XCTAssertEqual(logoUriDecoderSpy.decodeFromReceivedString, Self.logoUriEN)
-    XCTAssertEqual(verifierDisplay?.logo, Self.logoDataMock)
+    XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
   }
 
   func testExecute_trustStatementNotMatchingLanguage_returnsNameFromKey() {
@@ -90,9 +83,10 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
 
   private static var clientNameEN = "EN clientName"
   private static var clientNameIT = "IT clientName"
-  private static var logoUriEN = "EN logoUri"
-  private static var logoUriIT = "IT logoUri"
-  private static var logoDataMock = "logoData".data(using: .utf8)!
+  private static var logoStringEN = "enLogo"
+  private static var logoStringIT = "itLogo"
+  private static var logoUriEN = URL(string: "data:,\(logoStringEN)")!
+  private static var logoUriIT = URL(string: "data:,\(logoStringIT)")!
 
   private static let trustStatementNameEN = "EN orgName"
   private static let trustStatementNameIT = "IT orgName"
@@ -101,7 +95,6 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
   private let trustStatementMock = TrustStatementPayload.Mock.validSample
 
   private var preferredUserLanguageCodes: [UserLanguageCode] = []
-  private var logoUriDecoderSpy = CredentialDisplayLogoURIDecoderProtocolSpy()
 
   private var useCase: GetVerifierDisplayUseCase!
 

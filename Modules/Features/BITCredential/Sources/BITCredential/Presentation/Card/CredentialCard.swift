@@ -11,8 +11,8 @@ public struct CredentialCard<Header: View>: View {
 
   // MARK: Lifecycle
 
-  public init(_ credential: Credential, @ViewBuilder header: () -> Header? = { EmptyView() }) {
-    self.credential = credential
+  public init(_ viewModel: CredentialViewModel, @ViewBuilder header: () -> Header? = { EmptyView() }) {
+    self.viewModel = viewModel
     self.header = header()
   }
 
@@ -32,7 +32,7 @@ public struct CredentialCard<Header: View>: View {
         }
       }
       .overlay {
-        if credential.environment == .demo {
+        if viewModel.environment == .demo {
           (controlSize < .regular ? Assets.credentialDemoPatternSmall.swiftUIImage : Assets.credentialDemoPattern.swiftUIImage)
             .opacity(0.5)
             .clipped()
@@ -56,7 +56,8 @@ public struct CredentialCard<Header: View>: View {
   @Environment(\.controlSize) private var controlSize
   @State private var size = CGSize.zero
 
-  private let credential: Credential
+  private let viewModel: CredentialViewModel
+
   private let header: Header?
 
   private let secondaryTextOpacity = 0.7
@@ -67,7 +68,7 @@ public struct CredentialCard<Header: View>: View {
   }
 
   private var backgroundColor: Color? {
-    guard let hexColor = credential.preferredDisplay?.backgroundColor else { return nil }
+    guard let hexColor = viewModel.credentialDisplay?.backgroundColor else { return nil }
     return Color(hex: hexColor)
   }
 
@@ -87,9 +88,9 @@ public struct CredentialCard<Header: View>: View {
   }
 
   @ViewBuilder
-  private func image(credential: Credential) -> some View {
-    if !sizeCategory.isAccessibilityCategory || controlSize < .large {
-      (Image(data: credential.preferredDisplay?.logoBase64 ?? Data()) ?? Image(systemName: "square.filled"))
+  private func image() -> some View {
+    if let data = viewModel.credentialDisplay?.logoBase64, !sizeCategory.isAccessibilityCategory || controlSize < .large {
+      Image(data: data)?
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
@@ -114,19 +115,19 @@ public struct CredentialCard<Header: View>: View {
 
       HStack {
         Spacer()
-        image(credential: credential)
+        image()
       }
 
       Spacer()
 
       VStack(alignment: .leading) {
-        Text(credential.preferredDisplay?.name ?? defaultText)
+        Text(viewModel.credentialDisplay?.name ?? defaultText)
           .font(.mono.headline)
           .fixedSize(horizontal: false, vertical: true)
           .frame(maxWidth: .infinity, alignment: .leading)
           .multilineTextAlignment(.leading)
 
-        if let summary = credential.preferredDisplay?.summary {
+        if let summary = viewModel.credentialDisplay?.summary {
           Text(summary)
             .font(.mono.headline)
             .fixedSize(horizontal: false, vertical: true)
@@ -148,13 +149,13 @@ public struct CredentialCard<Header: View>: View {
 
       HStack(alignment: .top) {
         VStack(alignment: .leading) {
-          Text(credential.preferredDisplay?.name ?? defaultText)
+          Text(viewModel.credentialDisplay?.name ?? defaultText)
             .font(.mono.headline)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
 
-          if let summary = credential.preferredDisplay?.summary {
+          if let summary = viewModel.credentialDisplay?.summary {
             Text(summary)
               .font(.mono.headline)
               .fixedSize(horizontal: false, vertical: true)
@@ -166,7 +167,7 @@ public struct CredentialCard<Header: View>: View {
 
         Spacer(minLength: .x6)
 
-        image(credential: credential)
+        image()
       }
 
       Spacer()
@@ -186,7 +187,7 @@ public struct CredentialCard<Header: View>: View {
 
   @ViewBuilder
   private func contentMini() -> some View {
-    image(credential: credential)
+    image()
   }
 
   @ViewBuilder
@@ -212,7 +213,7 @@ public struct CredentialCard<Header: View>: View {
 
   @ViewBuilder
   private func badges() -> some View {
-    if credential.environment == .demo {
+    if viewModel.environment == .demo {
       Badge {
         Text(L10n.tkCredentialStatusDemo)
       }
@@ -221,7 +222,7 @@ public struct CredentialCard<Header: View>: View {
       .accessibilityLabel(L10n.tkCredentialStatusDemoAlt)
     }
 
-    CredentialStatusBadge(credential: credential)
+    CredentialStatusBadge(viewModel)
   }
 
 }
@@ -299,16 +300,16 @@ extension CredentialCard {
 #Preview {
   ScrollView {
     VStack {
-      CredentialCard(.Mock.sample)
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
         .controlSize(.mini)
 
-      CredentialCard(.Mock.sample)
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
         .controlSize(.small)
 
-      CredentialCard(.Mock.sample)
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
         .controlSize(.regular)
 
-      CredentialCard(.Mock.sample)
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
         .controlSize(.large)
     }
   }

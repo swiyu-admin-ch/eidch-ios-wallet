@@ -26,6 +26,10 @@ public struct SdJWTClaim: Equatable {
   public let key: String
   public var value: CodableValue?
   public let disclosure: String
+
+  public var jsonPath: String {
+    "$.\(key)"
+  }
 }
 
 extension SdJWTClaim {

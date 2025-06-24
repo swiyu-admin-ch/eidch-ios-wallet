@@ -23,8 +23,14 @@ struct TypeDecodedOverlay: Decodable {
 
   private static func decodeOverlay(type: OverlaySpecType?, decoder: Decoder) throws -> (any Overlay)? {
     switch type {
-    case .label1_0: try LabelOverlay1x0(from: decoder)
+    case .branding1_1: try BrandingOverlay1x1(from: decoder)
+    case .characterEncoding1_0: try CharacterEncodingOverlay1x0(from: decoder)
     case .dataSource1_0: try DataSourceOverlay1x0(from: decoder)
+    case .format1_0: try FormatOverlay1x0(from: decoder)
+    case .label1_0: try LabelOverlay1x0(from: decoder)
+    case .meta1_0: try MetaOverlay1x0(from: decoder)
+    case .order1_0: try OrderOverlay1x0(from: decoder)
+    case .standard1_0: try StandardOverlay1x0(from: decoder)
     default: nil
     }
   }

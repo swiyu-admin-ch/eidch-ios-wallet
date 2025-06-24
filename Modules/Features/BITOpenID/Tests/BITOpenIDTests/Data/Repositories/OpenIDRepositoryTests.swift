@@ -29,9 +29,11 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   func testFetchTypeMetadataSuccess() async throws {
     let expectedTypeMetadata = TypeMetadata.Mock.sampleStandard
-    mockResponse(code: 200, data: TypeMetadata.Mock.sampleStandardData)
+    let dataMock = TypeMetadata.Mock.sampleStandardData
+    mockResponse(code: 200, data: dataMock)
 
-    let (typeMetadata, _) = try await repository.fetchTypeMetadata(from: mockUrl)
+    let response = try await repository.fetchTypeMetadata(from: mockUrl)
+    let typeMetadata = response.object
 
     XCTAssertEqual(expectedTypeMetadata.displays, typeMetadata.displays)
     XCTAssertEqual(expectedTypeMetadata.vct, typeMetadata.vct)
@@ -42,19 +44,23 @@ final class OpenIDRepositoryTests: XCTestCase {
     XCTAssertEqual(expectedTypeMetadata.schemaUrl, typeMetadata.schemaUrl)
     XCTAssertEqual(expectedTypeMetadata.schemaIntegrity, typeMetadata.schemaIntegrity)
     XCTAssertEqual(expectedTypeMetadata.schema, typeMetadata.schema)
+    XCTAssertEqual(dataMock, response.data)
   }
 
   func testFetchMetadataSuccess() async throws {
     let expectedMetadata = CredentialMetadata.Mock.sample
-    mockResponse(code: 200, data: CredentialMetadata.Mock.sampleData)
+    let dataMock = CredentialMetadata.Mock.sampleData
+    mockResponse(code: 200, data: dataMock)
 
-    let metadata = try await repository.fetchMetadata(from: mockUrl)
+    let response = try await repository.fetchMetadata(from: mockUrl)
+    let metadata = response.object
 
     XCTAssertEqual(expectedMetadata.credentialEndpoint, metadata.credentialEndpoint)
     XCTAssertEqual(expectedMetadata.credentialIssuer, metadata.credentialIssuer)
     XCTAssertEqual(expectedMetadata.credentialConfigurationsSupported.count, metadata.credentialConfigurationsSupported.count)
     XCTAssertEqual(expectedMetadata.display?.count, metadata.display?.count)
     XCTAssertEqual(expectedMetadata.preferredDisplay, metadata.preferredDisplay)
+    XCTAssertEqual(dataMock, response.data)
   }
 
   func testFetchMetadataNetworkError() async throws {
@@ -155,7 +161,7 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   func testFetchCredential_success() async throws {
     let accessToken = AccessToken.Mock.sample
-    let credentialRequestBody = CredentialRequestBody.Mock.sample
+    let credentialRequestBody = VcSdJwtCredentialRequestBody.Mock.sample
 
     mockResponse(code: 200, data: CredentialResponse.Mock.sampleData)
 
@@ -168,7 +174,7 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   func testFetchCredential_failure() async throws {
     let accessToken = AccessToken.Mock.sample
-    let credentialRequestBody = CredentialRequestBody.Mock.sample
+    let credentialRequestBody = VcSdJwtCredentialRequestBody.Mock.sample
     mockResponse(code: 500)
 
     do {

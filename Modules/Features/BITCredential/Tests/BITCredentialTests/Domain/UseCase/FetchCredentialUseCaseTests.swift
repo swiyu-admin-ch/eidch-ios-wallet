@@ -37,8 +37,8 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     _ = try await useCase.execute(from: offer)
 
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromCallsCount, 1)
-    XCTAssertEqual(fetchVcMetadataUseCase.executeForCallsCount, 0)
-    XCTAssertEqual(credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperCallsCount, 1)
+    XCTAssertEqual(fetchVcMetadataUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperCallsCount, 1)
     XCTAssertEqual(credentialRepository.createCredentialCallsCount, 1)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
     XCTAssertEqual(fetchTrustStatementUseCase.executeIssuerCallsCount, 1)
@@ -48,12 +48,12 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     let _ = try await useCase.execute(from: offer)
 
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromReceivedOffer, offer)
-//    XCTAssertEqual(fetchVcMetadataUseCase.executeForReceivedAnyCredential?.raw, anyCredential.raw)
+    XCTAssertEqual(fetchVcMetadataUseCase.executeForReceivedAnyCredential?.raw, anyCredential.raw)
 
-    XCTAssertEqual(credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperReceivedArguments?.anyCredential.raw, anyCredential.raw)
-    XCTAssertEqual(credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperReceivedArguments?.keyPair, keyPair)
-    XCTAssertNil(credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperReceivedArguments?.ocaBundle)
-    XCTAssertEqual(credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperReceivedArguments?.metadataWrapper.selectedCredential.claims, metadataWrapper.selectedCredential.claims)
+    XCTAssertEqual(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.anyCredential.raw, anyCredential.raw)
+    XCTAssertEqual(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.keyPair, keyPair)
+    XCTAssertNotNil(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
+    XCTAssertEqual(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.metadataWrapper.selectedCredential.claims, metadataWrapper.selectedCredential.claims)
 
     XCTAssertEqual(credentialRepository.createCredentialReceivedCredential, generatedCredential)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
@@ -66,7 +66,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     let (resultCredential, trustStatement) = try await useCase.execute(from: offer)
 
     XCTAssertEqual(credentialRepository.createCredentialReceivedCredential, generatedCredential)
-    XCTAssertNil(credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperReceivedArguments?.ocaBundle)
+    XCTAssertNil(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
     XCTAssertEqual(resultCredential, updatedCredential)
     XCTAssertEqual(trustStatement, TrustStatementPayload.Mock.validSample)
@@ -83,19 +83,20 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     }
   }
 
-//  func testExecute_fetchVcMetadataFailure_throwsError() async throws {
-//    fetchVcMetadataUseCase.executeForThrowableError = TestingError.error
-//
-//    do {
-//      _ = try await useCase.execute(from: offer)
-//      XCTFail("Expected a TestingError.error instead")
-//    } catch {
-//      XCTAssertEqual(error as? TestingError, .error)
-//    }
-//  }
+  func testExecute_fetchVcMetadataFailure_throwsError() async throws {
+    useCase = FetchCredentialUseCase()
+    fetchVcMetadataUseCase.executeForThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(from: offer)
+      XCTFail("Expected a TestingError.error instead")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
 
   func testExecute_credentialGeneratorFailure_throwsError() async throws {
-    credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperThrowableError = TestingError.error
+    credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(from: offer)
@@ -163,7 +164,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   private let metadataWrapper: CredentialMetadataWrapper = .Mock.sample
   private let anyCredential: AnyCredential = MockAnyCredential()
   private let offer: CredentialOffer = .Mock.sample
-  private let ocaBundleMock: OcaBundle = .Mock.simpleSample
+  private let rawOcaBundleMock = "rawOcaBundle".data(using: .utf8)!
 
   private func registerMocks() {
     fetchAnyVerifiableCredentialUseCase = FetchAnyVerifiableCredentialUseCaseProtocolSpy()
@@ -183,8 +184,8 @@ final class FetchCredentialUseCaseTests: XCTestCase {
 
   private func success() {
     fetchAnyVerifiableCredentialUseCase.executeFromReturnValue = (metadataWrapper, anyCredential, keyPair)
-    fetchVcMetadataUseCase.executeForReturnValue = ocaBundleMock
-    credentialGenerator.generateForKeyPairOcaBundleMetadataWrapperReturnValue = generatedCredential
+    fetchVcMetadataUseCase.executeForReturnValue = rawOcaBundleMock
+    credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReturnValue = generatedCredential
     credentialRepository.createCredentialReturnValue = repositoryCredential
     checkAndUpdateCredentialStatusUseCase.executeForReturnValue = updatedCredential
     fetchTrustStatementUseCase.executeIssuerReturnValue = TrustStatementPayload.Mock.validSample

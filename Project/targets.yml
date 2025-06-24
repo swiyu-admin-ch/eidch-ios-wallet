@@ -340,6 +340,7 @@ targets:
       - package: BITAnyCredentialFormat
       - package: BITEIDRequest
       - package: BITOca
+      - package: BITAppAttestation
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh
@@ -525,6 +526,7 @@ targets:
       - package: BITOpenID
       - package: BITAnyCredentialFormat
       - package: BITEIDRequest
+      - package: BITAppAttestation
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh

@@ -56,6 +56,5 @@ let package = Package(
       dependencies: [
         "BITHome",
         .product(name: "BITTestingCore", package: "BITCore"),
-        .product(name: "BITCredentialMocks", package: "BITCredential"),
       ]),
   ])

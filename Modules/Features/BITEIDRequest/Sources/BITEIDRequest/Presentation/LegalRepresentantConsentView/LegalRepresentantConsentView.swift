@@ -27,7 +27,7 @@ struct LegalRepresentantConsentView: View {
       footer: {
         viewFooter()
       })
-      .toolbar { toolbarContent() }
+      .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 
   // MARK: Private
@@ -53,7 +53,6 @@ extension LegalRepresentantConsentView {
     .buttonStyle(.bezeledLight)
     .controlSize(.large)
     .accessibilityIdentifier(AccessibilityIdentifier.obtainConsentButton.rawValue)
-    .accessibilityLabel(L10n.tkGetEidGuardianSelectionButtonObtainConsent)
 
     Button(action: viewModel.continueAsParent) {
       Text(L10n.tkGetEidGuardianSelectionButtonContinueAsGuardian)
@@ -64,16 +63,6 @@ extension LegalRepresentantConsentView {
     .buttonStyle(.bezeledLight)
     .controlSize(.large)
     .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)
-    .accessibilityLabel(L10n.tkGetEidGuardianSelectionButtonContinueAsGuardian)
-  }
-
-  @ToolbarContentBuilder
-  private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
-        Assets.close.swiftUIImage
-      })
-    }
   }
 }
 

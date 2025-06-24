@@ -1,0 +1,18 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+    }
+  ],
+  "overlays": [
+    {
+      "type": "spec/overlays/label/1.0",
+      "capture_base": "IFGp2Z7bUcN2ZBywYXO5poVj3koUUdHGrN0Fn0yKGaJG",
+      "language": "de-CH",
+      "attribute_labels": {
+        "lastName": "lastName de-CH",
+        "isOver18": "isOver18 de-CH"
+      }
+    }
+  ]
+}

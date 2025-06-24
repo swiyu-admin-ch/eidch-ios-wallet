@@ -42,7 +42,8 @@ struct TypeMetadataService: TypeMetadataServiceProtocol {
       return nil
     }
 
-    let (typeMetadata, data) = try await repository.fetchTypeMetadata(from: url)
+    let response = try await repository.fetchTypeMetadata(from: url)
+    let typeMetadata = response.object
 
     guard vc.vct == typeMetadata.vct else {
       throw TypeMetadataServiceError.vctMismatch
@@ -53,7 +54,7 @@ struct TypeMetadataService: TypeMetadataServiceProtocol {
     }
 
     do {
-      guard try sriValidator.validate(data, with: vctIntegrity) else {
+      guard try sriValidator.validate(response.data, with: vctIntegrity) else {
         throw TypeMetadataServiceError.typeMetadataInvalidIntegrity
       }
       return typeMetadata

@@ -37,13 +37,14 @@ public struct KeyManager: KeyManagerProtocol {
     userQuery.mergeWith(defaultQuery)
 
     var error: Unmanaged<CFError>?
+
     guard let privateKey = SecKeyCreateRandomKey(userQuery as CFDictionary, &error) else {
       if let keyGenError = error?.takeRetainedValue() {
-        throw VaultError.keyGenerationError(reason: "Key generation failed with error: \(keyGenError)")
+        let diagnostic = DiagnosticErrorHelper.diagnostic(for: userQuery, error: keyGenError)
+        throw VaultError.keyGenerationError(reason: diagnostic)
       }
       throw VaultError.keyGenerationError(reason: "Unknown error during key generation.")
     }
-
     return privateKey
   }
 
@@ -103,4 +104,5 @@ public struct KeyManager: KeyManagerProtocol {
     }
     return publicKey
   }
+
 }

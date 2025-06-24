@@ -11,6 +11,7 @@ class CredentialOfferScreen: Screen {
   init(app: XCUIApplication) {
     self.app = app
     acceptButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.acceptButton.rawValue]
+    _ = acceptButton.waitForExistence(timeout: .defaultTimeout)
     declineButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.declineButton.rawValue]
     card = app.images[CredentialOfferView.AccessibilityIdentifier.card.rawValue]
     issuer = app.staticTexts[ActorHeaderView.AccessibilityIdentifier.title.rawValue]
@@ -47,7 +48,7 @@ class CredentialOfferScreen: Screen {
   let offerLastName: XCUIElement
 
   func assertDisplayed() {
-    XCTAssert(issuer.waitForExistence(timeout: 5))
+    XCTAssert(issuer.exists)
   }
 
   func assertIssuerDisplayed() {

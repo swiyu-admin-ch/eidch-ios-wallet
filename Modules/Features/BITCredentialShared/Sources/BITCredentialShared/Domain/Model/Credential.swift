@@ -26,13 +26,14 @@ public struct Credential: Identifiable, Codable {
     keyBindingIdentifier: UUID? = nil,
     keyBindingAlgorithm: String? = nil,
     payload: CredentialPayload,
+    rawCredentialData: RawCredentialData? = nil,
     format: String,
     issuer: String,
     validFrom: Date? = nil,
     validUntil: Date? = nil,
     createdAt: Date = Date(),
     updatedAt: Date? = nil,
-    claims: [CredentialClaim] = [],
+    clusters: [CredentialClaimCluster] = [],
     issuerDisplays: [CredentialIssuerDisplay] = [],
     displays: [CredentialDisplay] = [])
   {
@@ -41,13 +42,14 @@ public struct Credential: Identifiable, Codable {
     self.keyBindingIdentifier = keyBindingIdentifier
     self.keyBindingAlgorithm = keyBindingAlgorithm
     self.payload = payload
+    self.rawCredentialData = rawCredentialData
     self.format = format
     self.issuer = issuer
     self.validFrom = validFrom
     self.validUntil = validUntil
     self.createdAt = createdAt
     self.updatedAt = updatedAt
-    self.claims = claims
+    self.clusters = clusters
     self.issuerDisplays = issuerDisplays
     self.displays = displays
 
@@ -55,9 +57,6 @@ public struct Credential: Identifiable, Codable {
     if let regex = try? Regex(demoCredentialPattern), !issuer.matches(of: regex).isEmpty {
       environment = .demo
     }
-
-    preferredDisplay = displays.findDisplayWithFallback() as? CredentialDisplay
-    preferredIssuerDisplay = issuerDisplays.findDisplayWithFallback() as? CredentialIssuerDisplay
   }
 
   public init(from decoder: Decoder) throws {
@@ -68,21 +67,22 @@ public struct Credential: Identifiable, Codable {
       keyBindingIdentifier: container.decodeIfPresent(UUID.self, forKey: .keyBindingIdentifier),
       keyBindingAlgorithm: container.decodeIfPresent(String.self, forKey: .keyBindingAlgorithm),
       payload: container.decode(Data.self, forKey: .payload),
+      rawCredentialData: container.decodeIfPresent(RawCredentialData.self, forKey: .rawCredentialData),
       format: container.decode(String.self, forKey: .format),
       issuer: container.decode(String.self, forKey: .issuer),
       validFrom: container.decodeIfPresent(Date.self, forKey: .validFrom),
       validUntil: container.decodeIfPresent(Date.self, forKey: .validUntil),
       createdAt: container.decode(Date.self, forKey: .createdAt),
       updatedAt: container.decodeIfPresent(Date.self, forKey: .updatedAt),
-      claims: container.decode([CredentialClaim].self, forKey: .claims),
+      clusters: container.decode([CredentialClaimCluster].self, forKey: .clusters),
       issuerDisplays: container.decode([CredentialIssuerDisplay].self, forKey: .issuerDisplays),
       displays: container.decode([CredentialDisplay].self, forKey: .displays))
   }
 
   public init(_ entity: CredentialEntity) {
-    let claims = Array(entity.claims.map({ CredentialClaim($0) }))
-    let issuerDisplays = Array(entity.issuerDisplays.map({ CredentialIssuerDisplay($0) }))
-    let displays = Array(entity.displays.map({ CredentialDisplay($0) }))
+    let clusters = Array(entity.clusters.map(CredentialClaimCluster.init))
+    let issuerDisplays = Array(entity.issuerDisplays.map(CredentialIssuerDisplay.init))
+    let displays = Array(entity.displays.map(CredentialDisplay.init))
 
     self.init(
       id: entity.id,
@@ -90,13 +90,14 @@ public struct Credential: Identifiable, Codable {
       keyBindingIdentifier: entity.keyBindingIdentifier,
       keyBindingAlgorithm: entity.keyBindingAlgorithm,
       payload: entity.payload,
+      rawCredentialData: entity.rawCredentialData.flatMap(RawCredentialData.init),
       format: entity.format,
       issuer: entity.issuer,
       validFrom: entity.validFrom,
       validUntil: entity.validUntil,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
-      claims: claims,
+      clusters: clusters,
       issuerDisplays: issuerDisplays,
       displays: displays)
   }
@@ -108,6 +109,7 @@ public struct Credential: Identifiable, Codable {
   public var keyBindingIdentifier: UUID? = nil
   public var keyBindingAlgorithm: String? = nil
   public var payload: CredentialPayload
+  public var rawCredentialData: RawCredentialData? = nil
   public var format: String
   public var issuer: String
 
@@ -116,12 +118,10 @@ public struct Credential: Identifiable, Codable {
   public var createdAt = Date()
   public var updatedAt: Date? = nil
 
-  public var claims: [CredentialClaim] = []
+  public var clusters: [CredentialClaimCluster] = []
   public var issuerDisplays: [CredentialIssuerDisplay] = []
   public var displays: [CredentialDisplay] = []
 
-  public var preferredDisplay: CredentialDisplay?
-  public var preferredIssuerDisplay: CredentialIssuerDisplay?
   public var environment: CredentialEnvironment? = .none
 
   // MARK: Private
@@ -132,17 +132,16 @@ public struct Credential: Identifiable, Codable {
     case keyBindingIdentifier
     case keyBindingAlgorithm
     case payload
+    case rawCredentialData
     case format
     case issuer
     case validFrom
     case validUntil
     case createdAt
     case updatedAt
-    case claims
+    case clusters
     case issuerDisplays
     case displays
-    case preferredDisplay
-    case preferredIssuerDisplay
   }
 
   @Injected(\.demoCredentialPattern) private var demoCredentialPattern: String
@@ -158,14 +157,15 @@ extension Credential: Equatable {
       lhs.keyBindingIdentifier == rhs.keyBindingIdentifier &&
       lhs.keyBindingAlgorithm == rhs.keyBindingAlgorithm &&
       lhs.payload == rhs.payload &&
+      lhs.rawCredentialData == rhs.rawCredentialData &&
       lhs.format == rhs.format &&
       lhs.issuer == rhs.issuer &&
       lhs.validFrom == rhs.validFrom &&
       lhs.validUntil == rhs.validUntil &&
       lhs.createdAt == rhs.createdAt &&
       lhs.updatedAt == rhs.updatedAt &&
-      lhs.claims.map({ claimLhs in rhs.claims.contains(where: { $0 == claimLhs }) }).allSatisfy({ $0 }) &&
-      lhs.issuerDisplays.map({ issuerLhs in rhs.issuerDisplays.contains(where: { $0 == issuerLhs }) }).allSatisfy({ $0 }) &&
-      lhs.displays.map({ displayLhs in rhs.displays.contains(where: { $0 == displayLhs }) }).allSatisfy({ $0 })
+      lhs.clusters.allSatisfy(rhs.clusters.contains) && rhs.clusters.allSatisfy(lhs.clusters.contains) &&
+      lhs.issuerDisplays.allSatisfy(rhs.issuerDisplays.contains) && rhs.issuerDisplays.allSatisfy(lhs.issuerDisplays.contains) &&
+      lhs.displays.allSatisfy(rhs.displays.contains) && rhs.displays.allSatisfy(lhs.displays.contains)
   }
 }

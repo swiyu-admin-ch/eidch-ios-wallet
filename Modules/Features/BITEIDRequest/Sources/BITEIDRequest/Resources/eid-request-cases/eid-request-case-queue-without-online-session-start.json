@@ -10,5 +10,6 @@
     "state": "IN_QUEUING",
     "lastPolledAt": "2024-07-16T19:20:30+01:00",
     "onlineSessionStartTimeoutAt": "2024-07-16T19:20:30+01:00",
+    "legalRepresentantConsent": "VERIFIED"
   }
 }

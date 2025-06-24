@@ -1,28 +1,32 @@
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
 import Factory
 import XCTest
+@testable import BITCredential
+@testable import BITCredentialShared
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITTestingCore
 
+@MainActor
 class PresentationRequestReviewViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
   override func setUp() {
     context = .Mock.vcSdJwtSample
+    credentialMock = context.selectedCredentials[context.selectedCredentials.first!.key]!.credential
 
     Container.shared.reset()
     Container.shared.submitPresentationUseCase.register { self.submitPresentationUseCase }
     Container.shared.denyPresentationUseCase.register { self.denyPresentationUseCase }
     Container.shared.getVerifierDisplayUseCase.register { self.getVerifierDisplayUseCase }
+    Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCase }
 
     router = MockPresentationRouter()
 
     viewModel = PresentationRequestReviewViewModel(context: context, router: router)
   }
 
-  @MainActor
   func testInitialStateWithoutVerifierDisplay_withoutTrustStatement() {
     getVerifierDisplayUseCase.executeForTrustStatementReturnValue = mockUnTrustedVerifierDisplay
     viewModel = PresentationRequestReviewViewModel(context: context, router: router)
@@ -33,7 +37,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
   }
 
-  @MainActor
   func testInitialStateWithoutVerifierDisplay_withTrustStatement() {
     getVerifierDisplayUseCase.executeForTrustStatementReturnValue = mockTrustedVerifierDisplay
     viewModel = PresentationRequestReviewViewModel(context: context, router: router)
@@ -44,7 +47,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
   }
 
-  @MainActor
   func testSubmitPresentation_Success_NavigateToSuccess() async throws {
     await viewModel.submit()
 
@@ -55,7 +57,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
-  @MainActor
   func testSubmitPresentation_ErrorThrown_ErrorState() async throws {
     submitPresentationUseCase.executeContextThrowableError = TestingError.error
 
@@ -68,7 +69,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
-  @MainActor
   func testSubmitPresentation_CredentialInvalid_ErrorState() async throws {
     submitPresentationUseCase.executeContextThrowableError = PresentationError.invalidCredential
 
@@ -81,7 +81,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
-  @MainActor
   func testSubmitPresentation_ProcessClosed_PresentationCancelledState() async throws {
     submitPresentationUseCase.executeContextThrowableError = PresentationError.processClosed
 
@@ -94,7 +93,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
-  @MainActor
   func testDeny() async throws {
     await viewModel.deny()
     try await viewModel.denyTask?.value
@@ -106,7 +104,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
   }
 
-  @MainActor
   func testDeny_withError() async throws {
     denyPresentationUseCase.executeRequestObjectErrorThrowableError = TestingError.error
 
@@ -120,16 +117,37 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
   }
 
+  func testUpdateCredentialViewModel_light_setsViewModel() {
+    getCredentialDisplayUseCase.executeForColorSchemeReturnValue = .Mock.lightEnglish
+
+    viewModel.updateCredentialViewModel(with: themeMock)
+
+    XCTAssertEqual(viewModel.credentialViewModel?.credentialDisplay, .Mock.lightEnglish)
+    XCTAssertEqual(viewModel.credentialViewModel?.credential, credentialMock)
+  }
+
+  func testUpdateCredentialViewModel_argumentsPassed() {
+    getCredentialDisplayUseCase.executeForColorSchemeReturnValue = .Mock.lightEnglish
+
+    viewModel.updateCredentialViewModel(with: themeMock)
+
+    XCTAssertEqual(getCredentialDisplayUseCase.executeForColorSchemeReceivedArguments?.colorScheme, themeMock)
+    XCTAssertEqual(getCredentialDisplayUseCase.executeForColorSchemeReceivedArguments?.displays, credentialMock.displays)
+  }
+
   // MARK: Private
 
-  // swiftlint:disable all
   private var viewModel: PresentationRequestReviewViewModel!
   private var context: PresentationRequestContext!
+  private var credentialMock: Credential!
   private var submitPresentationUseCase = SubmitPresentationUseCaseProtocolSpy()
   private var denyPresentationUseCase = DenyPresentationUseCaseProtocolSpy()
   private var getVerifierDisplayUseCase = GetVerifierDisplayUseCaseProtocolSpy()
+  private var getCredentialDisplayUseCase = GetCredentialDisplayUseCaseProtocolSpy()
   private var router = MockPresentationRouter()
   private var mockTrustedVerifierDisplay = VerifierDisplay(name: "name", logo: Data(), trustStatus: .verified)
   private var mockUnTrustedVerifierDisplay = VerifierDisplay(name: "name", logo: Data(), trustStatus: .unverified)
-  // swiftlint:enable all
+  private let themeMock = "light"
 }
+
+// swiftlint:enable all
