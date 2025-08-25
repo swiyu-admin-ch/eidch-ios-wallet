@@ -6,6 +6,7 @@ import XCTest
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
+@testable import BITVault
 
 final class AnyVpTokenGeneratorTests: XCTestCase {
 
@@ -13,8 +14,6 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-
-    mockKeyPair = KeyPair(identifier: mockIdentifier, algorithm: mockAlgorithm, privateKey: mockPrivateKey)
 
     sha256HasherSpy = HashableSpy()
     jwsEncoderMock = JWSEncoderMock()
@@ -44,16 +43,11 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
   private static let mockJwtString = "jwtString"
   private static let mockJwtData = mockJwtString.data(using: .utf8)!
 
-  private let mockPrivateKey: SecKey = SecKeyTestsHelper.createPrivateKey()
-  private let mockIdentifier = UUID()
-  private let mockAlgorithm = "ES256"
-  private let mockReason = "mockReason"
-
   private var jwsEncoderMock: JWSEncoderMock<KeyBindingPayload>!
   private var generator: AnyVpTokenGenerator!
   private var sha256HasherSpy = HashableSpy()
   private var mockCredential = VcSdJwtPayload.Mock.sample
-  private var mockKeyPair: KeyPair!
+  private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   private func asserts(_ vpToken: VpToken, nbOfDisclosures: Int, hasKeyBinding: Bool) {
     XCTAssertFalse(vpToken.isEmpty)

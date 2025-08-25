@@ -1,25 +1,32 @@
 import Factory
 import Foundation
+import Spyable
 
-// MARK: - CheckCameraError
+// MARK: - CheckInvitationTypeError
 
-enum CheckCameraError: Error {
+enum CheckInvitationTypeError: Error {
   case wrongScheme
+}
+
+// MARK: - CheckInvitationTypeUseCaseProtocol
+
+@Spyable
+public protocol CheckInvitationTypeUseCaseProtocol {
+  func execute(url: URL) throws -> InvitationType
 }
 
 // MARK: - CheckInvitationTypeUseCase
 
-public struct CheckInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol {
-  public init() {}
+struct CheckInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol {
 
-  public func execute(url: URL) async throws -> InvitationType {
-    guard let scheme = url.scheme else { throw CheckCameraError.wrongScheme }
+  func execute(url: URL) throws -> InvitationType {
+    guard let scheme = url.scheme else { throw CheckInvitationTypeError.wrongScheme }
     return if InvitationType.credentialOffer.schemes.contains(scheme) {
       .credentialOffer
     } else if InvitationType.presentation.schemes.contains(scheme) {
       .presentation
     } else {
-      throw CheckCameraError.wrongScheme
+      throw CheckInvitationTypeError.wrongScheme
     }
   }
 }

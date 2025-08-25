@@ -100,6 +100,17 @@ final class CredentialViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.credentialDisplay?.summary, "Name: Fritz Test")
   }
 
+  func testResolveTemplate_withNullClaim_returnsSummaryWithFallback() {
+    let credentialDisplay = CredentialDisplay(locale: "en", summary: "Name: {{$.firstName}}")
+    let claim = CredentialClaim(key: "firstName", value: nil)
+    let cluster = CredentialClaimCluster(claims: [claim])
+    let credential = Credential(payload: Data(), format: "format", issuer: "issuer", clusters: [cluster])
+
+    let viewModel = CredentialViewModel(credential: credential, credentialDisplay: credentialDisplay)
+
+    XCTAssertEqual(viewModel.credentialDisplay?.summary, "Name: –")
+  }
+
   func testResolveTemplate_withNoTemplate_returnsSummaryAsIs() {
     let credentialDisplay = CredentialDisplay(locale: "en", summary: "summary")
 

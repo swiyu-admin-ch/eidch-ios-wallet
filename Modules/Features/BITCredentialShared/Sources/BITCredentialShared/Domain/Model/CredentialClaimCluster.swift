@@ -2,9 +2,16 @@ import BITCore
 import BITEntities
 import Foundation
 
+// MARK: - ClusterItem
+
+public protocol ClusterItem {
+  var id: UUID { get }
+  var order: Int { get }
+}
+
 // MARK: - CredentialClaimCluster
 
-public struct CredentialClaimCluster: Codable {
+public struct CredentialClaimCluster: Codable, ClusterItem {
 
   // MARK: Lifecycle
 
@@ -20,23 +27,29 @@ public struct CredentialClaimCluster: Codable {
     self.claims = claims
     self.childClusters = childClusters
     self.displays = displays
+    preferredDisplay = displays.findDisplayWithFallback()
   }
 
   public init(_ entity: CredentialClaimClusterEntity) {
-    id = entity.id
-    order = Int(entity.order)
-    claims = Array(entity.claims.map(CredentialClaim.init))
-    childClusters = Array(entity.childClusters.map(CredentialClaimCluster.init))
-    displays = Array(entity.displays.map(ClusterDisplay.init))
+    let claims = Array(entity.claims.map(CredentialClaim.init))
+    let childClusters = Array(entity.childClusters.map(CredentialClaimCluster.init))
+    let displays = Array(entity.displays.map(ClusterDisplay.init))
+    self.init(
+      id: entity.id,
+      order: Int(entity.order),
+      claims: claims,
+      childClusters: childClusters,
+      displays: displays)
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    id = try container.decode(UUID.self, forKey: .id)
-    order = try container.decode(Int.self, forKey: .order)
-    claims = try container.decode([CredentialClaim].self, forKey: .claims)
-    childClusters = try container.decode([CredentialClaimCluster].self, forKey: .childClusters)
-    displays = try container.decode([ClusterDisplay].self, forKey: .displays)
+    let id = try container.decode(UUID.self, forKey: .id)
+    let order = try container.decode(Int.self, forKey: .order)
+    let claims = try container.decode([CredentialClaim].self, forKey: .claims)
+    let childClusters = try container.decode([CredentialClaimCluster].self, forKey: .childClusters)
+    let displays = try container.decode([ClusterDisplay].self, forKey: .displays)
+    self.init(id: id, order: order, claims: claims, childClusters: childClusters, displays: displays)
   }
 
   // MARK: Public
@@ -46,6 +59,12 @@ public struct CredentialClaimCluster: Codable {
   public var claims: [CredentialClaim]
   public var childClusters: [CredentialClaimCluster]
   public var displays: [ClusterDisplay]
+  public var preferredDisplay: ClusterDisplay?
+
+  public var items: [ClusterItem] {
+    let items: [ClusterItem] = claims + childClusters
+    return items.sorted { $0.order < $1.order }
+  }
 
   // MARK: Internal
 

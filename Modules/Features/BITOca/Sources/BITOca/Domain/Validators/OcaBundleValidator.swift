@@ -64,6 +64,7 @@ public struct OcaBundleValidator: OcaBundleValidatorProtocol {
           throw OcaError.invalidOverlayLanguageCode
         }
       }
+      try overlay.validate(with: captureBases, overlays: overlays)
     }
   }
 }

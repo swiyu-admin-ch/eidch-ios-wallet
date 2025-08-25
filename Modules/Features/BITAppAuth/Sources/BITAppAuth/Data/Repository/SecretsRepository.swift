@@ -18,11 +18,8 @@ private enum SecretsKey {
   static let authenticationServiceKey = "ch.admin.foitt.federal-wallet.authentication"
 
   static let saltAppPinIdentifierKey = "saltAppPinIdentifierKey"
-  static let pepperAppPinIdentifierKey = "pepperAppPinIdentifierKey"
   static let pepperInitialVectorIdentifierKey = "pepperInitialVectorIdentifierKey"
   static let lockedWalletUptime = "lockedWalletUptime"
-  static let clientAttestationIdentifierKey = "clientAttestationIdentifierKey"
-  static let keyAttestationIdentifierKey = "keyAttestationIdentifierKey"
 }
 
 // MARK: - SecretConfiguration
@@ -38,11 +35,8 @@ struct SecretsRepository {
   // MARK: Private
 
   @Injected(\.secretManager) private var secretManager: SecretManagerProtocol
-  @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
+  @Injected(\.appPepperKeyRepository) private var appPepperKeyRepository: AppPepperKeyRepositoryProtocol
   @Injected(\.processInfoService) private var processInfoService: ProcessInfoServiceProtocol
-  @Injected(\.vaultOptions) private var vaultOptions: VaultOption
-  @Injected(\.vaultAlgorithm) private var vaultAlgorithm: VaultAlgorithm
-
 }
 
 // MARK: LockWalletRepositoryProtocol
@@ -115,24 +109,11 @@ extension SecretsRepository: UniquePassphraseRepositoryProtocol {
 extension SecretsRepository: PepperRepositoryProtocol {
 
   func createPepperKey() throws -> SecKey {
-    try keyManager.deleteKeyPair(withIdentifier: SecretsKey.pepperAppPinIdentifierKey, algorithm: vaultAlgorithm)
-
-    let query = try QueryBuilder()
-      .setAccessControlFlags([.privateKeyUsage])
-      .setProtection(SecretConfiguration.protection)
-      .build()
-
-    return try keyManager.generateKeyPair(
-      withIdentifier: SecretsKey.pepperAppPinIdentifierKey,
-      algorithm: vaultAlgorithm,
-      options: vaultOptions,
-      query: query)
+    try appPepperKeyRepository.create().privateKey
   }
 
   func getPepperKey() throws -> SecKey {
-    try keyManager.getPrivateKey(
-      withIdentifier: SecretsKey.pepperAppPinIdentifierKey,
-      algorithm: vaultAlgorithm)
+    try appPepperKeyRepository.get().privateKey
   }
 
   func setPepperInitialVector(_ initialVector: Data) throws {
@@ -181,35 +162,5 @@ extension SecretsRepository: SaltRepositoryProtocol {
     }
 
     return data
-  }
-}
-
-// MARK: AppAttestationKeyRepositoryProtocol
-
-extension SecretsRepository: AppAttestationKeyRepositoryProtocol {
-  func getAttestionKey(for attestKey: AppAttestationKey) throws -> SecKey {
-    let keyIdentifier = switch attestKey {
-    case .clientAttestation: SecretsKey.clientAttestationIdentifierKey
-    case .keyAttestation: SecretsKey.keyAttestationIdentifierKey
-    }
-
-    return try keyManager.getPrivateKey(withIdentifier: keyIdentifier, algorithm: vaultAlgorithm, query: nil)
-  }
-
-  func createAttestationKey(for attestKey: AppAttestationKey, with context: any LAContextProtocol) throws -> SecKey {
-    let keyIdentifier = switch attestKey {
-    case .clientAttestation: SecretsKey.clientAttestationIdentifierKey
-    case .keyAttestation: SecretsKey.keyAttestationIdentifierKey
-    }
-
-    try keyManager.deleteKeyPair(withIdentifier: keyIdentifier, algorithm: vaultAlgorithm)
-
-    let query = try QueryBuilder()
-      .setAccessControlFlags([.privateKeyUsage])
-      .setProtection(SecretConfiguration.protection)
-      .setContext(context)
-      .build()
-
-    return try keyManager.generateKeyPair(withIdentifier: keyIdentifier, algorithm: vaultAlgorithm, options: vaultOptions, query: query)
   }
 }

@@ -82,6 +82,10 @@ extension NetworkContainer {
     self { nil }
   }
 
+  public var urlSession: Factory<URLSessionProtocol> {
+    self { URLSession.shared }
+  }
+
   // MARK: Private
 
   private var sessionConfiguration: Factory<URLSessionConfiguration> {

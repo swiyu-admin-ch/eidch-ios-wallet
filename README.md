@@ -40,9 +40,9 @@ Once in Xcode:
 - Be aware that it's more appropriate to run on real devices rather than in Simulator because of several restrictions and KeyChain usage
 - Finally, just build & run in Xcode with `command + R`
 
-## Known Issues
+## Missing Features and Known Issues
 
-The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. There may still be minor bugs or security vulnerabilities in the test system. We will publish them in the near future as [‘KnownIssues’](https://github.com/swiyu-admin-ch/eidch-ios-wallet/issues?q=is%3Aissue%20state%3Aopen%20type%3AKnownIssue) in this repository.
+The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. The [feature roadmap](https://github.com/orgs/swiyu-admin-ch/projects/1/views/7) shows the current discrepancies between Public Beta and the targeted productive Trust Infrastructure. There may still be minor bugs or security vulnerabilities in the test system. These are marked as [‘KnownIssues’](https://github.com/swiyu-admin-ch/eidch-ios-wallet/issues) in each repository.
 
 ## Contributions and feedback
 

@@ -1,18 +1,17 @@
 import BITAnyCredentialFormat
-import BITCore
 import BITEntities
 import Foundation
 
 // MARK: - CredentialClaim
 
-public struct CredentialClaim: Codable {
+public struct CredentialClaim: Codable, ClusterItem {
 
   // MARK: Lifecycle
 
   public init(
     id: UUID = UUID(),
     key: String,
-    value: String,
+    value: String?,
     valueType: String = "string",
     valueDisplayInfo: String? = nil,
     order: Int = 0,
@@ -32,7 +31,7 @@ public struct CredentialClaim: Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let id = try container.decode(UUID.self, forKey: .id)
     let key = try container.decode(String.self, forKey: .key)
-    let value = try container.decode(String.self, forKey: .value)
+    let value = try container.decodeIfPresent(String.self, forKey: .value)
     let valueType = try container.decode(String.self, forKey: .valueType)
     let valueDisplayInfo = try container.decodeIfPresent(String.self, forKey: .valueDisplayInfo)
     let order = try container.decode(Int.self, forKey: .order)
@@ -64,7 +63,7 @@ public struct CredentialClaim: Codable {
 
   public var id: UUID
   public var key: String
-  public var value: String
+  public var value: String?
   public var valueType: String
   public var valueDisplayInfo: String?
   public var order: Int
@@ -82,19 +81,6 @@ public struct CredentialClaim: Codable {
     case order
     case displays
   }
-
-}
-
-extension CredentialClaim {
-
-  public var type: ValueType? {
-    ValueType(rawValue: valueType)
-  }
-
-  public var imageData: Data? {
-    (type?.isImage ?? false) ? Data(base64Encoded: value) : nil
-  }
-
 }
 
 // MARK: Equatable

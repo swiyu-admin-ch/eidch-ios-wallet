@@ -49,7 +49,7 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
 
   func primaryAction() {
     if isLegalRepresentantConsentVerified {
-      delegate?.didStartAutoVerification()
+      delegate?.didStartAutoVerification(caseId: requestCaseId)
     } else {
       delegate?.didTapObtainConsent(caseId: requestCaseId)
     }

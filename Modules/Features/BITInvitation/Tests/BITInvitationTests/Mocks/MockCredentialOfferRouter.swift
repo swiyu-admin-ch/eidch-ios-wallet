@@ -6,21 +6,17 @@ import Foundation
 
 final class MockCredentialOfferRouter: ClosableRoutesMock, CredentialOfferRoutes, CredentialOfferInternalRoutes {
 
-  // MARK: Public
-
-  public func credentialOffer(credential: Credential, trustStatement: TrustStatement?) {
-    credentialOfferCalled = true
-    credentialOfferCredential = credential
-    self.trustStatement = trustStatement
-  }
-
-  // MARK: Internal
-
   private(set) var credentialOfferCalled = false
   private(set) var credentialOfferCredential: Credential?
   private(set) var trustStatement: TrustStatement?
   private(set) var wrongDataCalled = false
   private(set) var externalLinkCalled = false
+
+  func credentialOffer(credential: Credential, trustStatement: TrustStatement?) {
+    credentialOfferCalled = true
+    credentialOfferCredential = credential
+    self.trustStatement = trustStatement
+  }
 
   func wrongData() {
     wrongDataCalled = true

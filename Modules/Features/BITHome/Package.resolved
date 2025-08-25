@@ -1,0 +1,230 @@
+{
+  "originHash" : "8cf0665e756d2a5815d3bf37d9dab63a398002cf0b12f7860faf675dbae14f6c",
+  "pins" : [
+    {
+      "identity" : "alamofire",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Alamofire/Alamofire.git",
+      "state" : {
+        "revision" : "513364f870f6bfc468f9d2ff0a95caccc10044c5",
+        "version" : "5.10.2"
+      }
+    },
+    {
+      "identity" : "anycodable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Flight-School/AnyCodable",
+      "state" : {
+        "revision" : "862808b2070cd908cb04f9aafe7de83d35f81b05",
+        "version" : "0.6.7"
+      }
+    },
+    {
+      "identity" : "chronometer",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/KittyMac/Chronometer.git",
+      "state" : {
+        "revision" : "99d4f4137837a28e1e294eb69ac66ad53c0934d3",
+        "version" : "0.1.14"
+      }
+    },
+    {
+      "identity" : "cryptoswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/krzyzanowskim/CryptoSwift",
+      "state" : {
+        "revision" : "729e01bc9b9dab466ac85f21fb9ee2bc1c61b258",
+        "version" : "1.8.4"
+      }
+    },
+    {
+      "identity" : "didresolver-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiyu-admin-ch/didresolver-swift.git",
+      "state" : {
+        "revision" : "2c324e97849523392be341282b666fe56856d0dd",
+        "version" : "2.0.0"
+      }
+    },
+    {
+      "identity" : "factory",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hmlongco/Factory",
+      "state" : {
+        "revision" : "061b3afe0358a0da7ce568f8272c847910be3dd7",
+        "version" : "2.2.0"
+      }
+    },
+    {
+      "identity" : "hitch",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/KittyMac/Hitch.git",
+      "state" : {
+        "revision" : "d6c147a1d70992db39a141cb5bf9cf8fbb776250",
+        "version" : "0.4.148"
+      }
+    },
+    {
+      "identity" : "joseswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/airsidemobile/JOSESwift.git",
+      "state" : {
+        "revision" : "10ed3b6736def7c26eb87135466b1cb46ea7e37f",
+        "version" : "2.4.0"
+      }
+    },
+    {
+      "identity" : "jsonschema-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiyu-admin-ch/jsonschema-swift.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "cebc8693b3840552f1943786cbaabac0e853ac1b"
+      }
+    },
+    {
+      "identity" : "lottie-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/airbnb/lottie-ios",
+      "state" : {
+        "revision" : "047aa81b77adcbf583a966dfef620d17650cc656",
+        "version" : "4.5.1"
+      }
+    },
+    {
+      "identity" : "moya",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Moya/Moya.git",
+      "state" : {
+        "revision" : "c263811c1f3dbf002be9bd83107f7cdc38992b26",
+        "version" : "15.0.3"
+      }
+    },
+    {
+      "identity" : "pera_av-wrapper-private_ios",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:admin-ch-ssi/PERA_av-wrapper-private_ios.git",
+      "state" : {
+        "revision" : "dbb7608820dbdb76490ad7707456c2d545b4b746"
+      }
+    },
+    {
+      "identity" : "popupview",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/exyte/PopupView",
+      "state" : {
+        "revision" : "d619317dbb98fe071d11be36c2525d3c213ad8e4",
+        "version" : "3.1.4"
+      }
+    },
+    {
+      "identity" : "reactiveswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ReactiveCocoa/ReactiveSwift.git",
+      "state" : {
+        "revision" : "c43bae3dac73fdd3cb906bd5a1914686ca71ed3c",
+        "version" : "6.7.0"
+      }
+    },
+    {
+      "identity" : "realm-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/realm/realm-core.git",
+      "state" : {
+        "revision" : "cccb3ca9e26ec452a29f2f0d4050d1e38b8a3d43",
+        "version" : "14.14.0"
+      }
+    },
+    {
+      "identity" : "realm-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/realm/realm-swift",
+      "state" : {
+        "revision" : "8cb364a6a63695df296f05b53f7c3f3b1dda6af3",
+        "version" : "10.54.3"
+      }
+    },
+    {
+      "identity" : "rxswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ReactiveX/RxSwift.git",
+      "state" : {
+        "revision" : "5dd1907d64f0d36f158f61a466bab75067224893",
+        "version" : "6.9.0"
+      }
+    },
+    {
+      "identity" : "sextant",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/KittyMac/Sextant.git",
+      "state" : {
+        "revision" : "b2141d4a693e2a768720534009cb621252be39a0",
+        "version" : "0.4.33"
+      }
+    },
+    {
+      "identity" : "spanker",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/KittyMac/Spanker.git",
+      "state" : {
+        "revision" : "820f96e9e5836e2ac9808c1b706727b876fa3d9b",
+        "version" : "0.2.51"
+      }
+    },
+    {
+      "identity" : "swift-mobile-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Dynatrace/swift-mobile-sdk.git",
+      "state" : {
+        "revision" : "7a385bea9404365b056be299f9107714e052632d",
+        "version" : "8.309.1"
+      }
+    },
+    {
+      "identity" : "swift-spyable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Matejkob/swift-spyable",
+      "state" : {
+        "revision" : "f6b90c803e1f4c989ede0a75e8e456fd41dcf27f",
+        "version" : "0.8.0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "0687f71944021d616d34d922343dcef086855920",
+        "version" : "600.0.1"
+      }
+    },
+    {
+      "identity" : "swiftui-introspect",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/siteline/swiftui-introspect",
+      "state" : {
+        "revision" : "807f73ce09a9b9723f12385e592b4e0aaebd3336",
+        "version" : "1.3.0"
+      }
+    },
+    {
+      "identity" : "swiftui-refresher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gh123man/SwiftUI-Refresher",
+      "state" : {
+        "revision" : "5a24079e69e5ca62974ea0dbf4d8ef13ceedaad3",
+        "version" : "1.1.9"
+      }
+    },
+    {
+      "identity" : "swiftui-renderlock",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gh123man/SwiftUI-RenderLock",
+      "state" : {
+        "revision" : "11ca0d472dad0053cb8b29701ea3f108b9aa2304",
+        "version" : "1.0.2"
+      }
+    }
+  ],
+  "version" : 3
+}

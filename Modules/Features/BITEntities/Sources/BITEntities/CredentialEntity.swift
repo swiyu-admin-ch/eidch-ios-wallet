@@ -7,8 +7,7 @@ public class CredentialEntity: Object {
 
   @Persisted(primaryKey: true) public var id: UUID
   @Persisted public var status: String
-  @Persisted public var keyBindingIdentifier: UUID?
-  @Persisted public var keyBindingAlgorithm: String?
+  @Persisted public var keyBinding: CredentialKeyBindingEntity?
   @Persisted public var payload: Data
   @Persisted public var rawCredentialData: RawCredentialDataEntity?
   @Persisted public var format: String

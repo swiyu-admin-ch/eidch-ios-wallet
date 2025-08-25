@@ -22,7 +22,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   }
 
   func testExecute_argumentsPassed() {
-    let _ = useCase.execute()
+    _ = useCase.execute()
 
     XCTAssertEqual(policyValidatorSpy.validatePolicyContextReceivedArguments?.policy, .deviceOwnerAuthenticationWithBiometrics)
   }

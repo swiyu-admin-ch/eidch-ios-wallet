@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
-@testable import BITCrypto
 @testable import BITTestingCore
+@testable import BITVault
 
 extension FetchCredentialContext {
 
@@ -11,8 +11,8 @@ extension FetchCredentialContext {
 
     static let sample = make(format: "some-format")
     static let sampleVcSdJwt = make(format: "vc+sd-jwt")
-    static let sampleVcSdJwtWithoutHolderBinding = make(format: "vc+sd-jwt", noHolderBinding: true)
-    static let sampleVcInvalid = make(format: "invalid_vc", invalid: true)
+    static let sampleVcSdJwtWithoutHolderBinding = make(format: "vc+sd-jwt", holderBindingContext: nil)
+    static let sampleVcSdJwtWithoutKeyAttestation = make(format: "vc+sd-jwt", holderBindingContext: HolderBindingContext.Mock.softwareKey)
 
     // MARK: Private
 
@@ -22,18 +22,22 @@ extension FetchCredentialContext {
 
     // swiftlint:enable all
 
-    private static func make(format: String, invalid: Bool = false, noHolderBinding: Bool = false) -> FetchCredentialContext {
+    private static func make(
+      format: String,
+      invalid: Bool = false,
+      holderBindingContext: HolderBindingContext? = .Mock.attestedHardwareKey)
+      -> FetchCredentialContext
+    {
       guard let mockCredentialsSupported: any CredentialMetadata.AnyCredentialConfigurationSupported = CredentialMetadata.Mock.sample.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
         fatalError("Mock of CredentialMetadata doesn't contain valid credentialConfigurationSupported")
       }
-      let keyPair = noHolderBinding ? nil : KeyPair(identifier: UUID(), algorithm: invalid ? "POKE" : "ES512", privateKey: SecKeyTestsHelper.createPrivateKey())
 
       return FetchCredentialContext(
         format: format,
         selectedCredential: mockCredentialsSupported,
         credentialOffers: ["credential-offer"],
         credentialIssuer: "credential-issuer",
-        keyPair: keyPair,
+        holderBindingContext: holderBindingContext,
         accessToken: AccessToken(cNonce: "cNonce", accessToken: "access-token"),
         credentialEndpoint: mockEndpointsUrl)
     }

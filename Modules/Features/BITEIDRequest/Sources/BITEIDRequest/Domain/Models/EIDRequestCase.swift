@@ -7,11 +7,12 @@ public struct EIDRequestCase: Decodable, Identifiable {
 
   // MARK: Lifecycle
 
-  init(id: String, createdAt: Date = Date(), rawMRZ: [String], documentNumber: String, lastName: String, firstName: String, state: EIDRequestState? = nil) {
+  init(id: String, createdAt: Date = Date(), rawMRZ: [String], documentNumber: String, selectedDocumentType: IdentityType = .identityCard, lastName: String, firstName: String, state: EIDRequestState? = nil, files: [EIDRequestCaseFile] = []) {
     self.id = id
     self.createdAt = createdAt
     self.rawMRZ = rawMRZ.joined(separator: Self.mrzSeparator)
     self.documentNumber = documentNumber
+    self.selectedDocumentType = selectedDocumentType
     self.lastName = lastName
     self.firstName = firstName
     self.state = state
@@ -27,6 +28,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
       createdAt: entity.createdAt,
       rawMRZ: mrz,
       documentNumber: entity.documentNumber,
+      selectedDocumentType: IdentityType(rawValue: entity.selectedDocumentType) ?? .identityCard,
       lastName: entity.lastName,
       firstName: entity.firstName,
       state: entity.state.map(EIDRequestState.init))
@@ -37,6 +39,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
     id = try container.decode(String.self, forKey: .id)
     rawMRZ = try container.decode(String.self, forKey: .rawMRZ)
     documentNumber = try container.decode(String.self, forKey: .documentNumber)
+    selectedDocumentType = try container.decode(IdentityType.self, forKey: .selectedDocumentType)
     lastName = try container.decode(String.self, forKey: .lastName)
     firstName = try container.decode(String.self, forKey: .firstName)
     createdAt = try container.decode(Date.self, forKey: .createdAt)
@@ -54,6 +57,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
     case id = "caseId"
     case rawMRZ
     case documentNumber
+    case selectedDocumentType
     case lastName
     case firstName
     case createdAt
@@ -62,6 +66,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
 
   let rawMRZ: String
   let documentNumber: String
+  let selectedDocumentType: IdentityType
   let lastName: String
   let firstName: String
   let createdAt: Date

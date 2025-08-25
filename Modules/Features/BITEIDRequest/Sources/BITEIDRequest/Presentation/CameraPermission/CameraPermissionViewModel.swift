@@ -13,7 +13,7 @@ class CameraPermissionViewModel: ObservableObject {
     cameraPermissionStatus = initialState
 
     if cameraPermissionStatus == .authorized {
-      openMRZScanner()
+      openScanDocument()
     }
   }
 
@@ -62,7 +62,7 @@ class CameraPermissionViewModel: ObservableObject {
     cameraPermissionStatus = status ? .authorized : .denied
 
     if status {
-      openMRZScanner()
+      openScanDocument()
     }
   }
 
@@ -79,8 +79,8 @@ class CameraPermissionViewModel: ObservableObject {
   private var router: EIDRequestInternalRoutes
   @Published private var cameraPermissionStatus: AVAuthorizationStatus
 
-  private func openMRZScanner() {
-    router.mrzScanner()
+  private func openScanDocument() {
+    router.scanDocument()
   }
 
 }

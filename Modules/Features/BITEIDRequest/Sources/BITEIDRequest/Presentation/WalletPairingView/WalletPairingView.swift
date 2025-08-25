@@ -3,6 +3,8 @@ import BITTheming
 import Factory
 import SwiftUI
 
+// MARK: - WalletPairingView
+
 struct WalletPairingView: View {
 
   // MARK: Lifecycle
@@ -23,19 +25,44 @@ struct WalletPairingView: View {
           secondary: L10n.tkGetEidWalletPairing1Body,
           tertiary: L10n.tkGetEidWalletPairing1SmallBody)
       },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkGetEidWalletPairing1PrimaryButton,
-          primaryButtonAction: viewModel.primaryAction,
-          secondaryButtonLabel: L10n.tkGetEidWalletPairing1SecondaryButton,
-          secondaryButtonDisabled: true)
-      })
+      footer: footer)
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
+      .navigationBarBackButtonHidden(true)
   }
 
   // MARK: Private
 
   private var viewModel: WalletPairingViewModel
+}
+
+extension WalletPairingView {
+
+  @ViewBuilder
+  private func footer() -> some View {
+    VStack {
+      AsyncButton(
+        action: { await viewModel.primaryAction() },
+        actionOptions: [.showProgressView],
+        label: {
+          Text(L10n.tkGetEidWalletPairing1PrimaryButton)
+            .multilineTextAlignment(.center)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity)
+        })
+        .buttonStyle(.filledPrimary)
+        .controlSize(.large)
+
+      Button(action: viewModel.close) {
+        Text(L10n.tkGetEidWalletPairing1SecondaryButton)
+          .multilineTextAlignment(.center)
+          .lineLimit(1)
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.bezeledLight)
+      .controlSize(.large)
+      .disabled(true)
+    }
+  }
 }
 
 #Preview {

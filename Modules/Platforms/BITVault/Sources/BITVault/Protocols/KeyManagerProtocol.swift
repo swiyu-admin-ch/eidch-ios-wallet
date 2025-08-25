@@ -6,16 +6,15 @@ import Spyable
 @Spyable
 public protocol KeyManagerProtocol {
   @discardableResult
-  func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOption, query: Query?) throws -> SecKey
+  func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOptions, query: Query?) throws -> VaultKeyPair
+  func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> VaultKeyPair
   func deleteKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws
-  func getPrivateKey(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> SecKey
-  func getPublicKey(for privateKey: SecKey) throws -> SecKey
-  func getPublicKey(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> SecKey
+  func getExternalRepresentation(of privateKey: SecKey) throws -> (rawPublicKey: Data, rawPrivateKey: Data)
 }
 
 extension KeyManagerProtocol {
 
-  public func getPrivateKey(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws -> SecKey {
-    try getPrivateKey(withIdentifier: identifier, algorithm: algorithm, query: nil)
+  public func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws -> VaultKeyPair {
+    try getKeyPair(withIdentifier: identifier, algorithm: algorithm, query: nil)
   }
 }

@@ -162,9 +162,9 @@
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:Modules\/Features\/BITAppVersion",
-        "identifier" : "BITAppVersionTests",
-        "name" : "BITAppVersionTests"
+        "containerPath" : "container:Modules\/Features\/BITAppInfo",
+        "identifier" : "BITAppInfoTests",
+        "name" : "BITAppInfoTests"
       }
     },
     {

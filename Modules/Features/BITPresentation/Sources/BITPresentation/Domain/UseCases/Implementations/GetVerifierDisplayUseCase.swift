@@ -33,7 +33,7 @@ struct GetVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol {
 
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 
-  private func getDisplayForClaim(_ claim: [String: Any], with key: String, in dictionary: [String: Any]) -> String? {
+  private func getDisplayForClaim(_ claim: [String: Any], with key: String, in dictionary: [String: Any?]) -> String? {
     for preferredLanguageCode in preferredUserLanguageCodes {
       if let entry = claim.first(where: { $0.key.starts(with: "\(preferredLanguageCode)") }) {
         return entry.value as? String

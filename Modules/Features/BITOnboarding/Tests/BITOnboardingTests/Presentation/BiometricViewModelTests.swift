@@ -33,7 +33,7 @@ final class BiometricViewModelTests: XCTestCase {
     Container.shared.allowBiometricUsageUseCase.register { self.allowBiometricUsageUseCase }
     Container.shared.internalLAContext.register { self.internalLAContext }
 
-    viewModel = BiometricViewModel(router: router)
+    viewModel = BiometricsViewModel(router: router)
   }
 
   @MainActor
@@ -85,7 +85,7 @@ final class BiometricViewModelTests: XCTestCase {
   // MARK: Private
 
   // swiftlint:disable all
-  private var viewModel: BiometricViewModel!
+  private var viewModel: BiometricsViewModel!
   private var context: OnboardingContext!
   private var internalLAContext: LAContextProtocolSpy!
   private var router: MockOnboardingInternalRoutes!

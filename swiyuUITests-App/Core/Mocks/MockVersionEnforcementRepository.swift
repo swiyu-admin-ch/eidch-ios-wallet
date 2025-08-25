@@ -1,4 +1,4 @@
-import BITAppVersion
+import BITAppInfo
 import Foundation
 
 // MARK: - MockVersionEnforcementRepository

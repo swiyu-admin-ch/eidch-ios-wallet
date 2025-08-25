@@ -7,8 +7,10 @@ class AutoVerificationModule {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestRouter = Container.shared.eIDRequestRouter()) {
+  init(caseId: String, router: EIDRequestRouter = Container.shared.eIDRequestRouter()) {
     self.router = router
+    self.router.context.caseId = caseId
+
     let viewController = UIHostingController(rootView: AVWelcomeView(router: router))
     router.viewController = viewController
     self.viewController = viewController

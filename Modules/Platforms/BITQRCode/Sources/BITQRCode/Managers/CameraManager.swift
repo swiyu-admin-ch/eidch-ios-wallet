@@ -49,9 +49,9 @@ public class CameraManager: NSObject, ObservableObject {
   // MARK: Internal
 
   enum Constant {
-    public static let videoOutputSettings: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_32BGRA)]
+    static let videoOutputSettings: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_32BGRA)]
 
-    public static let metadataScannerType: [AVMetadataObject.ObjectType] = [.qr]
+    static let metadataScannerType: [AVMetadataObject.ObjectType] = [.qr]
   }
 
   var videoDeviceInput: AVCaptureDeviceInput?
@@ -110,9 +110,10 @@ protocol QROutputDelegate: AnyObject {
 
 class CameraQRCodeOutput: NSObject, AVCaptureMetadataOutputObjectsDelegate {
 
-  // MARK: Public
+  var isEnabled = true
+  weak var delegate: QROutputDelegate?
 
-  public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+  func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
     guard
       isEnabled,
       let metadataObject = metadataObjects.first,
@@ -125,11 +126,6 @@ class CameraQRCodeOutput: NSObject, AVCaptureMetadataOutputObjectsDelegate {
       delegate?.didCapture(object)
     }
   }
-
-  // MARK: Internal
-
-  var isEnabled = true
-  weak var delegate: QROutputDelegate?
 
 }
 

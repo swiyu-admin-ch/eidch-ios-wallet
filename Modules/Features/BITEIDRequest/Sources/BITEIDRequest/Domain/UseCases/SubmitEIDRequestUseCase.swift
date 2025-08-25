@@ -5,8 +5,8 @@ import Spyable
 
 
 @Spyable
-protocol SubmitEIDRequestUseCaseProtocol {
-  func execute(mrz: [String], hasLegalRepresentant: Bool) async throws -> EIDRequestCase
+public protocol SubmitEIDRequestUseCaseProtocol {
+  func execute(scanDocumentOutput: ScanDocumentOutput, hasLegalRepresentant: Bool) async throws -> EIDRequestCase
 }
 
 
@@ -14,33 +14,33 @@ struct SubmitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(mrz: [String], hasLegalRepresentant: Bool) async throws -> EIDRequestCase {
-    let payload = EIDRequestPayload(mrz: mrz, hasLegalRepresentant: hasLegalRepresentant)
-
-    let challenge = try await remoteEIDRequestRepository.fetchChallenge()
-    let request = try await generateClientAttestedRequestUseCase.execute(for: payload, challenge: challenge, audience: sidUrl.absoluteString)
-    let response = try await remoteEIDRequestRepository.submitRequest(request)
+  func execute(scanDocumentOutput: ScanDocumentOutput, hasLegalRepresentant: Bool) async throws -> EIDRequestCase {
+    let payload = EIDRequestPayload(mrz: scanDocumentOutput.mrz.values, hasLegalRepresentant: hasLegalRepresentant)
+    let response = try await eIDRequestRepository.submitRequest(with: payload)
 
     var eIDRequestCase = EIDRequestCase(
       id: response.caseId,
       rawMRZ: payload.mrz,
       documentNumber: response.identityNumber,
+      selectedDocumentType: scanDocumentOutput.identityType,
       lastName: response.lastName,
       firstName: response.firstName)
 
-    guard let status = try? await remoteEIDRequestRepository.fetchRequestStatus(for: eIDRequestCase.id) else {
+    guard let status = try? await eIDRequestRepository.fetchRequestStatus(for: eIDRequestCase.id) else {
       return eIDRequestCase
     }
 
     eIDRequestCase.state = EIDRequestState(status: status)
 
-    return try await localEIDRequestRepository.create(eIDRequestCase: eIDRequestCase)
+    let savedRequestCase = try await eIDRequestCaseRepository.create(eIDRequestCase: eIDRequestCase)
+    try await eIDRequestCaseRepository.save(files: scanDocumentOutput.files, forRequestCaseId: savedRequestCase.id)
+
+    return savedRequestCase
   }
 
   // MARK: Private
 
-  @Injected(\.sidUrl) private var sidUrl: URL
-  @Injected(\.eIDRequestRepository) private var remoteEIDRequestRepository: EIDRequestRepositoryProtocol
-  @Injected(\.localEIDRequestRepository) private var localEIDRequestRepository: LocalEIDRequestRepositoryProtocol
-  @Injected(\.generateClientAttestedRequestUseCase) private var generateClientAttestedRequestUseCase: GenerateClientAttestedRequestUseCaseProtocol
+  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
+
 }

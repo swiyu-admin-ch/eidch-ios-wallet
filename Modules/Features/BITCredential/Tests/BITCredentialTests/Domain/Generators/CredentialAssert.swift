@@ -9,8 +9,9 @@ import XCTest
 
 struct ExpectedClaim {
   let key: String
-  let value: String
+  let value: String?
   let valueType: ValueType
+  let valueDisplayInfo: String?
   let order: Int16
   let locales: [String]
 }

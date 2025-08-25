@@ -63,6 +63,28 @@ final class SdJWSDecoderTests: XCTestCase {
     assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: expectedPayload)
   }
 
+  func testDecode_flatWithNullClaims() throws {
+    let data = TestSdJWTPayload.Mock.flatJwtWithNullClaims
+    mockJwsDecoder(sdJwtData: data, rawPayload: TestSdJWTPayload.Mock.flatJwtWithNullClaimsPayload)
+
+    let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
+
+    let expectedPayload = TestSdJWTPayload()
+    XCTAssertEqual(sdJWT.payload, expectedPayload)
+    XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
+
+    XCTAssertEqual(sdJWT.rawPayload.count, 2)
+    XCTAssertTrue(sdJWT.rawPayload.keys.contains(TestSdJWTPayload.CodingKeys.testValue1.rawValue))
+    XCTAssertTrue(sdJWT.rawPayload.keys.contains(TestSdJWTPayload.CodingKeys.testValue2.rawValue))
+    XCTAssertNil(sdJWT.rawPayload[TestSdJWTPayload.CodingKeys.testValue1.rawValue] as? String)
+    XCTAssertNil(sdJWT.rawPayload[TestSdJWTPayload.CodingKeys.testValue2.rawValue] as? String)
+
+    let claims = sdJWT.disclosableClaims
+    XCTAssertEqual(claims.count, 1)
+    XCTAssertEqual(claims[0].key, Self.key1)
+    XCTAssertNil(claims[0].value)
+  }
+
   func testDecode_flatUsingSha384() throws {
     let data = TestSdJWTPayload.Mock.flatJwtUsingSha384
     mockJwsDecoder(sdJwtData: data)
@@ -298,7 +320,7 @@ private struct TestDatePayload: JWTPayload & Codable & Equatable {
 
 extension TestSdJWTPayload {
 
-  fileprivate func assertIn(_ dictionary: [String: Any]) {
+  fileprivate func assertIn(_ dictionary: [String: Any?]) {
     XCTAssertEqual(dictionary[TestSdJWTPayload.CodingKeys.testValue1.rawValue] as? String, testValue1)
     XCTAssertEqual(dictionary[TestSdJWTPayload.CodingKeys.testValue2.rawValue] as? String, testValue2)
     XCTAssertEqual(dictionary[TestSdJWTPayload.CodingKeys.testValue3.rawValue] as? String, testValue3)

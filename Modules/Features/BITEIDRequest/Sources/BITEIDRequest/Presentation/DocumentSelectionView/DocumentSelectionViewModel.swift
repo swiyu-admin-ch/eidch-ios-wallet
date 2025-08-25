@@ -18,10 +18,14 @@ class DocumentSelectionViewModel: ObservableObject {
 
     switch cameraPermission {
     case .authorized:
-      router.mrzScanner()
+      router.scanDocument()
     default:
       router.cameraPermission()
     }
+  }
+
+  func mrzMockData() {
+    router.mrzMockData()
   }
 
   func close() {

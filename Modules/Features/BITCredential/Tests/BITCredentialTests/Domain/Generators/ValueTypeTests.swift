@@ -76,7 +76,7 @@ final class ValueTypeTests: XCTestCase {
 
     let result = ValueType(attributeMock)
 
-    XCTAssertEqual(result, .string)
+    XCTAssertEqual(result, .dateTime)
   }
 
   func testInit_numeric_returnsString() throws {
@@ -84,7 +84,7 @@ final class ValueTypeTests: XCTestCase {
 
     let result = ValueType(attributeMock)
 
-    XCTAssertEqual(result, .string)
+    XCTAssertEqual(result, .numeric)
   }
 
   func testInit_reference_returnsString() throws {

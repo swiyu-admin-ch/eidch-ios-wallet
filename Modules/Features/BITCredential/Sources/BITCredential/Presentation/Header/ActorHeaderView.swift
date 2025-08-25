@@ -8,14 +8,10 @@ public struct ActorHeaderView: View {
 
   // MARK: Lifecycle
 
-  public init(name: String, trustStatus: TrustStatus, image: Image?) {
+  public init(name: String, trustStatus: TrustStatus, imageData: Data? = nil) {
     self.name = name
     self.trustStatus = trustStatus
-    self.image = image
-  }
-
-  public init(name: String, trustStatus: TrustStatus, imageData: Data) {
-    self.init(name: name, trustStatus: trustStatus, image: Image(data: imageData))
+    self.imageData = imageData
   }
 
   // MARK: Public
@@ -25,7 +21,7 @@ public struct ActorHeaderView: View {
       HStack(alignment: .top, spacing: .x4) {
 
         if !sizeCategory.isAccessibilityCategory {
-          (image ?? Assets.unknownIcon.swiftUIImage)
+          (imageData.flatMap(Image.init) ?? Assets.unknownIcon.swiftUIImage)
             .renderingMode(.template)
             .resizable()
             .aspectRatio(contentMode: .fit)
@@ -36,6 +32,7 @@ public struct ActorHeaderView: View {
             .background(ThemingAssets.Background.secondary.swiftUIColor)
             .clipShape(Circle())
             .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
+            .accessibilityHidden(true)
         }
 
         VStack(alignment: .leading, spacing: 0) {
@@ -43,34 +40,31 @@ public struct ActorHeaderView: View {
             .lineSpacing(Self.lineSpacing)
             .font(.custom.title3Emphasized)
             .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-            .accessibilityLabel(name)
-            .accessibilityIdentifier(AccessibilityIdentifier.title.rawValue)
+            .accessibilityAddTraits(.isHeader)
 
           HStack(alignment: .center, spacing: .x1) {
             if !sizeCategory.isAccessibilityCategory {
               trustStatus.icon
+                .accessibilityHidden(true)
             }
             Text(trustStatus.description)
               .font(.custom.body)
               .foregroundStyle(trustStatus.color)
-              .accessibilityLabel(trustStatus.description)
               .padding(.top, 2)
-              .accessibilityIdentifier(AccessibilityIdentifier.verifiedStatus.rawValue)
           }
         }
 
         Spacer()
       }
     }
-    .accessibilityElement(children: .combine)
-    .accessibilityAddTraits(.isHeader)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
-    case title
-    case verifiedStatus
+    case content
     case image
   }
 
@@ -82,15 +76,12 @@ public struct ActorHeaderView: View {
   private static let imageMaxSize: CGFloat = 24
   private static let lineSpacing: CGFloat = -10
 
-  private let image: Image?
+  private let imageData: Data?
   private let name: String
   private let trustStatus: TrustStatus
 
 }
 
 #Preview {
-  Group {
-    ActorHeaderView(name: "Test", trustStatus: .verified, image: Image(systemName: "square.fill"))
-    ActorHeaderView(name: "Test", trustStatus: .verified, image: nil)
-  }
+  ActorHeaderView(name: "Test", trustStatus: .verified)
 }

@@ -8,6 +8,7 @@ public struct OverlayBundleAttribute: Equatable {
     attributeType: AttributeType,
     characterEncoding: CharacterEncoding? = nil,
     dataSources: [DataSourceFormat: JsonPath] = [:],
+    entryMapping: [Locale: [EntryCode: String]] = [:],
     format: String? = nil,
     labels: [Locale: String] = [:],
     order: Int? = nil,
@@ -18,6 +19,7 @@ public struct OverlayBundleAttribute: Equatable {
     self.attributeType = attributeType
     self.characterEncoding = characterEncoding
     self.dataSources = dataSources
+    self.entryMapping = entryMapping
     self.format = format
     self.labels = labels
     self.order = order
@@ -31,6 +33,7 @@ public struct OverlayBundleAttribute: Equatable {
   public let attributeType: AttributeType
   public let characterEncoding: CharacterEncoding?
   public let dataSources: [DataSourceFormat: JsonPath]
+  public let entryMapping: [Locale: [EntryCode: String]]
   public let format: String?
   public let labels: [Locale: String]
   public let order: Int?

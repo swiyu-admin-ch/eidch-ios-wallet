@@ -49,11 +49,10 @@ public struct PresentationRequestBodyGenerator: PresentationRequestBodyGenerator
     let query = try QueryBuilder()
       .setContext(context)
       .build()
-    var keyPair: KeyPair? = nil
-    if let identifier = credential.keyBindingIdentifier, let algorithm = credential.keyBindingAlgorithm, let vaultAlgorithm = VaultAlgorithm(rawValue: algorithm) {
+    var keyPair: VaultKeyPair? = nil
+    if let identifier = credential.keyBinding?.id, let algorithm = credential.keyBinding?.algorithm, let vaultAlgorithm = VaultAlgorithm(rawValue: algorithm) {
       do {
-        let privateKey = try keyManager.getPrivateKey(withIdentifier: identifier.uuidString, algorithm: vaultAlgorithm, query: query)
-        keyPair = KeyPair(identifier: identifier, algorithm: algorithm, privateKey: privateKey)
+        keyPair = try keyManager.getKeyPair(withIdentifier: identifier.uuidString, algorithm: vaultAlgorithm, query: query)
       } catch {
         analytics.log(error)
         throw error

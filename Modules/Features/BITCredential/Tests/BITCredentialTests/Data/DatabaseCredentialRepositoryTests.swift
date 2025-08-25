@@ -40,7 +40,7 @@ final class DatabaseCredentialRepositoryTests: XCTestCase {
     XCTAssertEqual(credential, savedCredential)
     try await repository.delete(credential.id)
     do {
-      let _ = try await repository.get(id: credential.id)
+      _ = try await repository.get(id: credential.id)
       XCTFail("Expecting CredentialRepositoryError.notFound error")
     } catch {
       XCTAssertEqual(error as? CredentialRepositoryError, .notFound)

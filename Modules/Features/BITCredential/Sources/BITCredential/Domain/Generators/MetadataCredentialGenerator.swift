@@ -11,7 +11,7 @@ import Spyable
 
 @Spyable
 protocol MetadataCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, id: UUID, keyPair: KeyPair?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential
 }
 
 // MARK: - MetadataCredentialGenerator
@@ -20,7 +20,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, id: UUID, keyPair: KeyPair?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential {
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential {
     guard let payload = anyCredential.raw.data(using: .utf8) else {
       throw CredentialError.invalidPayload
     }
@@ -30,8 +30,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     return Credential(
       id: id,
       status: .unknown,
-      keyBindingIdentifier: keyPair?.identifier,
-      keyBindingAlgorithm: keyPair?.algorithm,
+      keyBinding: keyBinding,
       payload: payload,
       rawCredentialData: rawCredentialData,
       format: anyCredential.format,
@@ -48,22 +47,19 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
   // MARK: Private
 
   private func createCluster(from anyClaims: [AnyClaim], selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported) -> CredentialClaimCluster {
-    let claims: [CredentialClaim] = anyClaims.compactMap { anyClaim in
+    let claims = anyClaims.map { anyClaim in
       let metadataClaim = selectedCredential.claims.first(where: { "$." + $0.key == anyClaim.key })
-      guard let credentialClaim = createClaim(from: anyClaim, metadataClaim: metadataClaim) else { return nil }
-      return credentialClaim
+      return createClaim(from: anyClaim, metadataClaim: metadataClaim)
     }
     return CredentialClaimCluster(claims: claims)
   }
 
-  private func createClaim(from anyClaim: AnyClaim, metadataClaim: CredentialMetadata.Claim?) -> CredentialClaim? {
-    guard let value = anyClaim.value?.rawValue else { return nil }
-    let order = metadataClaim?.order ?? Int(Int16.max)
-    return CredentialClaim(
+  private func createClaim(from anyClaim: AnyClaim, metadataClaim: CredentialMetadata.Claim?) -> CredentialClaim {
+    CredentialClaim(
       key: anyClaim.key.replacing("$.", with: ""),
-      value: value,
+      value: anyClaim.value?.rawValue,
       valueType: metadataClaim?.valueType?.rawValue ?? ValueType.string.rawValue,
-      order: order,
+      order: metadataClaim?.order ?? Int(Int16.max),
       displays: createClaimDisplays(from: metadataClaim))
   }
 

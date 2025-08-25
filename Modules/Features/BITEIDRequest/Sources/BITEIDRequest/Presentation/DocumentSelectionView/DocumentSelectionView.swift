@@ -28,6 +28,9 @@ struct DocumentSelectionView: View {
         DocumentSelectionCell(image: Assets.bPermit.swiftUIImage, name: L10n.tkEidRequestDocumentSelectionResidentPermit) {
           viewModel.didSelect(.foreignerPermit)
         }
+
+        Spacer()
+          .frame(height: 0)
       } header: {
         VStack(alignment: .leading, spacing: .x6) {
           Text(L10n.tkEidRequestDocumentSelectionPrimary)
@@ -44,7 +47,12 @@ struct DocumentSelectionView: View {
         .textCase(.none)
         .padding(.bottom, .x6)
       }
-      .listSectionSeparator(.hidden, edges: .bottom)
+
+      Section {
+        DocumentSelectionCell(image: Image(systemName: "person.text.rectangle"), name: "Mock MRZ data") {
+          viewModel.mrzMockData()
+        }
+      }
     }
     .scrollContentBackground(.hidden)
     .listStyle(.grouped)

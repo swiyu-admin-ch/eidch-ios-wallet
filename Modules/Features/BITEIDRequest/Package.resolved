@@ -1,5 +1,5 @@
 {
-  "originHash" : "cd80cf5e9626e661786ddf1344a5ac7b201ca4354a01ddd21fe20fd05d7ac2d9",
+  "originHash" : "34e8459ea51f95095e4369e2367edcbd9dfeed74d2e6e88f02dcca0ee1438288",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -78,8 +78,7 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:admin-ch-ssi/PERA_av-wrapper-private_ios.git",
       "state" : {
-        "branch" : "develop",
-        "revision" : "de252b6c3a4ebc49d63775b3aae9670801c3b96c"
+        "revision" : "02f2c7104bbed15f048970850df926738a8e3812"
       }
     },
     {

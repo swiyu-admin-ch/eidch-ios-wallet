@@ -30,11 +30,14 @@ public struct LoginView: View {
           focus = .input
         }
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
+    case content = "loginContent"
     case loginButton
     case pinField
   }
@@ -221,7 +224,6 @@ extension LoginView {
         secureField()
 
         loginButton()
-          .buttonStyle(.filledPrimary)
 
         if viewModel.isBiometricAuthenticationAvailable {
           biometricButton()
@@ -271,9 +273,7 @@ extension LoginView {
       Spacer()
 
       loginButton()
-        .accessibilityIdentifier(AccessibilityIdentifier.loginButton.rawValue)
         .accessibilitySortPriority(600)
-        .accessibilityFocused($focus, equals: .loginButton)
     }
     .padding(.horizontal, .x6)
     .padding(.vertical, .x2)

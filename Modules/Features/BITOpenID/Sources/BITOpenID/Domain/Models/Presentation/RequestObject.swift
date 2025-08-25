@@ -89,7 +89,7 @@ public struct ClientMetadata: Codable, Equatable {
   }
 
   public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
+    let container = try decoder.container(keyedBy: DynamicCodingKey.self)
     clientName = try LocalizedDisplay<String>(from: container, withBaseKey: "client_name")
     logoUri = try LocalizedDisplay<URL>(from: container, withBaseKey: "logo_uri")
   }
@@ -98,21 +98,6 @@ public struct ClientMetadata: Codable, Equatable {
 
   public let clientName: LocalizedDisplay<String>?
   public let logoUri: LocalizedDisplay<URL>?
-
-  // MARK: Internal
-
-  struct DynamicCodingKeys: CodingKey {
-    var stringValue: String
-    var intValue: Int? { nil }
-
-    init?(stringValue: String) {
-      self.stringValue = stringValue
-    }
-
-    init?(intValue: Int) {
-      nil
-    }
-  }
 }
 
 // MARK: ClientMetadata.LocalizedDisplay
@@ -131,7 +116,7 @@ extension ClientMetadata {
       self.values = values
     }
 
-    init?(from container: KeyedDecodingContainer<DynamicCodingKeys>, withBaseKey baseKey: String) throws {
+    init?(from container: KeyedDecodingContainer<DynamicCodingKey>, withBaseKey baseKey: String) throws {
       for key in container.allKeys where key.stringValue.hasPrefix(baseKey) {
         let language = key.stringValue.components(separatedBy: ClientMetadata.separator).dropFirst().joined(separator: ClientMetadata.separator)
         if let value = try? container.decode(T.self, forKey: key) {

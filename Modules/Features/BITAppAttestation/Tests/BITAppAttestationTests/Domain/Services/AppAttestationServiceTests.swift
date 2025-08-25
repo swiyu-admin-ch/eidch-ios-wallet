@@ -11,6 +11,7 @@ final class AppAttestationServiceTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    Container.shared.reset()
     registerMocks()
     service = AppAttestationService()
     createSuccessState()
@@ -74,15 +75,15 @@ final class AppAttestationServiceTests: XCTestCase {
   // MARK: - generateAppAssertion
 
   func testGenerateAppAssertion_parameters_success() async throws {
-    let mockClientDataData = try JSONEncoder().encode(mockClientDataObject)
+    let mockClientDataData = try JSONEncoder(outputFormatting: [.sortedKeys]).encode(mockClientDataObject)
     let result = try await service.generateAppAssertion(for: mockKeyIdentifier, with: mockClientDataObject)
 
     XCTAssertEqual(result, mockAppAssertion)
 
     XCTAssertEqual(deviceCheckAppAttestService.generateAssertionClientDataHashReceivedArguments?.keyId, mockKeyIdentifier)
     XCTAssertEqual(deviceCheckAppAttestService.generateAssertionClientDataHashReceivedArguments?.clientDataHash, mockClientHash)
-    XCTAssertEqual(sha256Hasher.hashReceivedData?.base64EncodedString(), mockClientData.base64EncodedString())
-    XCTAssertEqual(jsonCanonicalizer.canonicalizeDataReceivedData?.base64EncodedString(), mockClientDataData.base64EncodedString())
+    XCTAssertEqual(jsonCanonicalizer.canonicalizeDataReceivedData, mockClientDataData)
+    XCTAssertEqual(sha256Hasher.hashReceivedData, mockClientData)
   }
 
   func testGenerateAppAssertion_count_success() async throws {

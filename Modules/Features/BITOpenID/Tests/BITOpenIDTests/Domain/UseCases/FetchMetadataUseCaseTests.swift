@@ -1,6 +1,5 @@
 import Spyable
 import XCTest
-@testable import BITNetworking
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -11,36 +10,30 @@ final class FetchMetadataUseCaseTests: XCTestCase {
   override func setUp() {
     spyRepository = OpenIDRepositoryProtocolSpy()
     useCase = FetchMetadataUseCase(repository: spyRepository)
+    success()
   }
 
-  func testFetchMetadataHappyPath() async throws {
-    let mockMetadata = CredentialMetadata.Mock.sample
-    let mockMetadataData = CredentialMetadata.Mock.sampleData
-    guard let mockUrl = URL(string: "http://mock.url") else { fatalError("url generation") }
-    spyRepository.fetchMetadataFromReturnValue = NetworkResponse(object: mockMetadata, data: mockMetadataData)
+  func testExecute_success() async throws {
+    let metadataWrapper = try await useCase.execute(for: offerMock)
 
-    let response = try await useCase.execute(from: mockUrl)
-    let metadata = response.object
-
-    XCTAssertEqual(mockMetadata.credentialEndpoint, metadata.credentialEndpoint)
-    XCTAssertEqual(mockMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, metadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
-    XCTAssertEqual(mockMetadataData, response.data)
-    XCTAssertTrue(spyRepository.fetchMetadataFromCalled)
-    XCTAssertEqual(1, spyRepository.fetchMetadataFromCallsCount)
-    XCTAssertEqual(mockUrl, spyRepository.fetchMetadataFromReceivedInvocations.first)
+    XCTAssertEqual(mockMetadata.credentialEndpoint, metadataWrapper.credentialMetadata.credentialEndpoint)
+    XCTAssertEqual(mockMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, metadataWrapper.credentialMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
+    XCTAssertEqual(metadataWrapper.rawData, mockMetadataData)
+    XCTAssertEqual(spyRepository.fetchMetadataFromCallsCount, 1)
+    XCTAssertEqual(spyRepository.fetchMetadataFromReceivedIssuerUrl, URL(string: offerMock.issuer))
   }
 
-  func testFetchMetadataFailurePath() async throws {
+  func testExecute_repositoryThrows_throws() async throws {
     guard let mockUrl = URL(string: "http://mock.url") else { fatalError("url generation") }
     spyRepository.fetchMetadataFromThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(from: mockUrl)
+      _ = try await useCase.execute(for: offerMock)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
       XCTAssertTrue(spyRepository.fetchMetadataFromCalled)
-      XCTAssertEqual(1, spyRepository.fetchMetadataFromCallsCount)
-      XCTAssertEqual(mockUrl, spyRepository.fetchMetadataFromReceivedInvocations.first)
+      XCTAssertEqual(spyRepository.fetchMetadataFromCallsCount, 1)
+      XCTAssertEqual(spyRepository.fetchMetadataFromReceivedIssuerUrl, URL(string: offerMock.issuer))
     } catch {
       XCTFail("Not the error expected")
     }
@@ -48,7 +41,16 @@ final class FetchMetadataUseCaseTests: XCTestCase {
 
   // MARK: Private
 
+  private let offerMock = CredentialOffer.Mock.sample
+  private let mockMetadata = CredentialMetadata.Mock.sample
+  private let mockMetadataData = CredentialMetadata.Mock.sampleData
+
   private var spyRepository = OpenIDRepositoryProtocolSpy()
   private var useCase = FetchMetadataUseCase()
+
+  private func success() {
+    guard let mockUrl = URL(string: "http://mock.url") else { fatalError("url generation") }
+    spyRepository.fetchMetadataFromReturnValue = CredentialMetadataResponse(metadata: mockMetadata, raw: mockMetadataData)
+  }
 
 }

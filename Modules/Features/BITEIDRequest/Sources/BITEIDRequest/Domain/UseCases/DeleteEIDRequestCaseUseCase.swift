@@ -10,8 +10,8 @@ public protocol DeleteEIDRequestCaseUseCaseProtocol {
 
 struct DeleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocol {
   func execute(_ id: String) async throws {
-    try await repository.delete(id)
+    try await eIDRequestCaseRepository.delete(id)
   }
 
-  @Injected(\.localEIDRequestRepository) private var repository: LocalEIDRequestRepositoryProtocol
+  @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
 }

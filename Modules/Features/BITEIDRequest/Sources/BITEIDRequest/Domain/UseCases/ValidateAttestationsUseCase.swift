@@ -1,4 +1,5 @@
 import BITAppAttestation
+import BITLocalAuthentication
 import Factory
 import Spyable
 
@@ -17,7 +18,7 @@ struct ValidateAttestationsUseCase: ValidateAttestationsUseCaseProtocol {
 
   func execute(clientAttestation: ClientAttestation, keyAttestation: KeyAttestation) async throws {
     let requestBody = ValidateAttestationsRequestBody(clientAttestation: clientAttestation.rawJWS, keyAttestation: keyAttestation.rawJWS)
-    return try await eIDRequestRepository.validateAttestations(requestBody)
+    try await eIDRequestRepository.validateAttestations(requestBody)
   }
 
   // MARK: Private

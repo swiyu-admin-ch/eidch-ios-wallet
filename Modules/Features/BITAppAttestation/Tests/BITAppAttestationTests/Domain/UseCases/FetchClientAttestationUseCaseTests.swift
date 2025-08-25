@@ -2,11 +2,10 @@
 import Factory
 import XCTest
 @testable import BITAppAttestation
-@testable import BITAppAuth
-@testable import BITCrypto
 @testable import BITJWT
 @testable import BITLocalAuthentication
 @testable import BITTestingCore
+@testable import BITVault
 
 final class FetchClientAttestationUseCaseTests: XCTestCase {
 
@@ -39,13 +38,31 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
     _ = try await useCase.execute(context)
 
     XCTAssertEqual(appAttestationRepository.fetchChallengeCallsCount, 1)
-    XCTAssertEqual(appAttestationKeyRepository.createAttestationKeyForWithCallsCount, 1)
+    XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 1)
 
     XCTAssertEqual(appAttestationService.generateAttestedKeyWithCallsCount, 1)
     XCTAssertEqual(appAttestationService.generateAppAssertionForWithCallsCount, 1)
 
     XCTAssertEqual(clientAttestationValidator.validateCallsCount, 1)
     XCTAssertEqual(clientAttestationRepository.createCallsCount, 1)
+  }
+
+  func testExecute_cached_returnsCached() async throws {
+    clientAttestationRepository.getThrowableError = nil
+    clientAttestationRepository.getReturnValue = mockClientAttestation
+
+    let attestation = try await useCase.execute(context)
+
+    XCTAssertEqual(attestation, mockClientAttestation)
+
+    XCTAssertFalse(appAttestationRepository.fetchChallengeCalled)
+    XCTAssertFalse(appAttestationKeyRepository.createForWithCalled)
+
+    XCTAssertFalse(appAttestationService.generateAttestedKeyWithCalled)
+    XCTAssertFalse(appAttestationService.generateAppAssertionForWithCalled)
+
+    XCTAssertFalse(clientAttestationValidator.validateCalled)
+    XCTAssertFalse(clientAttestationRepository.createCalled)
   }
 
   func testExecute_fetchChallengeFails_throws() async throws {
@@ -71,7 +88,7 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
   }
 
   func testExecute_createClientAttestationKeyFails_throws() async throws {
-    appAttestationKeyRepository.createAttestationKeyForWithThrowableError = TestingError.error
+    appAttestationKeyRepository.createForWithThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(context)
@@ -136,21 +153,22 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
   private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!
 
   private let mockAppAssertion = Data()
-  private let mockSecKey = SecKeyTestsHelper.createPrivateKey()
   private let mockAttestedKey = AppAttestedKey.Mock.sample
   private let mockChallengeResponse = AttestationChallenge.Response.Mock.sample
   private let mockClientDataObject = ClientDataObject.Mock.sample
   private let mockClientAttestationResponse = ClientAttestationResponse.Mock.sample
   private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   private func createSuccessState() {
     appAttestationRepository.fetchChallengeReturnValue = mockChallengeResponse.challenge
     appAttestationRepository.fetchClientAttestationReturnValue = mockClientAttestation
     appAttestationService.generateAttestedKeyWithReturnValue = mockAttestedKey
     appAttestationService.generateAppAssertionForWithReturnValue = mockAppAssertion
-    appAttestationKeyRepository.createAttestationKeyForWithReturnValue = mockSecKey
+    appAttestationKeyRepository.createForWithReturnValue = mockKeyPair
     clientAttestationValidator.validateReturnValue = true
     clientAttestationRepository.createReturnValue = mockClientAttestation
+    clientAttestationRepository.getThrowableError = ClientAttestationRepositoryError.notFound
   }
 
   private func registerMocks() {

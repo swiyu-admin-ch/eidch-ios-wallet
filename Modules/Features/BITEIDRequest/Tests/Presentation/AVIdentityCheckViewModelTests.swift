@@ -13,7 +13,7 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
   func testPrimaryAction() {
     viewModel.primaryAction()
-    XCTAssertTrue(router.walletPairingCalled)
+    XCTAssertTrue(router.recordDocumentCalled)
   }
 
   func testClose() {

@@ -29,7 +29,7 @@ let package = Package(
     .package(path: "../../Features/BITPresentation"),
     .package(path: "../../Features/BITOpenID"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
-    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.0.2 available
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [

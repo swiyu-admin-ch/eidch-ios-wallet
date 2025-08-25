@@ -12,7 +12,7 @@ public class CameraModule {
 
   public init(router: InvitationRouter = Container.shared.invitationRouter()) {
     self.router = router
-    let viewController = CameraHostingController(rootView: CameraView(router: router))
+    let viewController = UIHostingController(rootView: CameraView(router: router))
     router.viewController = viewController
     self.viewController = viewController
   }

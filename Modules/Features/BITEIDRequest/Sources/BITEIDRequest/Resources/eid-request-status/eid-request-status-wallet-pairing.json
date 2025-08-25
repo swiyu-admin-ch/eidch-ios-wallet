@@ -1,0 +1,8 @@
+{
+  "state": "IN_TARGET_WALLET_PAIRING",
+  "queueInformation": null,
+  "legalRepresentant": {
+    "verified": false,
+    "verificationLink": "https://test.ch"
+  }
+}

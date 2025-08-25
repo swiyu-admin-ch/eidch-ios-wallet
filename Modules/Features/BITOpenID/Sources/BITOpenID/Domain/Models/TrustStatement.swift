@@ -39,3 +39,20 @@ public struct TrustStatementPayload: JWTPayload, Codable, Equatable {
     case issuedAt = "iat"
   }
 }
+
+extension TrustStatement {
+
+  public var localizedIssuer: [String: Any] {
+    let orgName = rawPayload["orgName"] as? [String: Any] ?? [:]
+    let logoUri = rawPayload["logoUri"] as? [String: Any] ?? [:]
+
+    let locales = Set(orgName.keys).union(logoUri.keys)
+
+    return locales.reduce(into: [String: Any]()) { dict, locale in
+      dict[locale] = [
+        "name": orgName[locale] as? String as Any,
+        "logo": logoUri[locale] as? URL as Any,
+      ]
+    }
+  }
+}

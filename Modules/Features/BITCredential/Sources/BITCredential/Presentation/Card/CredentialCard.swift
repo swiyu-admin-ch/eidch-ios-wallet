@@ -2,7 +2,6 @@ import BITCore
 import BITCredentialShared
 import BITL10n
 import BITTheming
-import SDWebImageSwiftUI
 import SwiftUI
 
 // MARK: - CredentialCard
@@ -29,6 +28,7 @@ public struct CredentialCard<Header: View>: View {
       .overlay {
         if backgroundColor == nil {
           fallbackBackground()
+            .accessibilityHidden(true)
         }
       }
       .overlay {
@@ -36,6 +36,7 @@ public struct CredentialCard<Header: View>: View {
           (controlSize < .regular ? Assets.credentialDemoPatternSmall.swiftUIImage : Assets.credentialDemoPattern.swiftUIImage)
             .opacity(0.5)
             .clipped()
+            .accessibilityHidden(true)
         }
       }
       content()
@@ -96,6 +97,7 @@ public struct CredentialCard<Header: View>: View {
         .aspectRatio(contentMode: .fit)
         .frame(maxWidth: imageMaxWidth, maxHeight: imageMaxHeight, alignment: controlSize > .small ? .topTrailing : .center)
         .colorMultiply(cardColorScheme.standardColor())
+        .accessibility(hidden: true)
     }
   }
 
@@ -154,6 +156,7 @@ public struct CredentialCard<Header: View>: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
+            .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
           if let summary = viewModel.credentialDisplay?.summary {
             Text(summary)
@@ -162,6 +165,7 @@ public struct CredentialCard<Header: View>: View {
               .frame(maxWidth: .infinity, alignment: .leading)
               .multilineTextAlignment(.leading)
               .opacity(secondaryTextOpacity)
+              .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
           }
         }
 
@@ -181,6 +185,7 @@ public struct CredentialCard<Header: View>: View {
           badges()
         }
       }
+      .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     }
     .padding(.x5)
   }

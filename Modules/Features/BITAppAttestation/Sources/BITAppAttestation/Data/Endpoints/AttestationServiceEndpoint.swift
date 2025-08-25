@@ -8,7 +8,7 @@ import Moya
 enum AttestationServiceEndpoint {
   case challenge
   case clientAttestation(ClientAttestationRequestBody)
-  case keyAttestation(ClientAttestedRequest)
+  case keyAttestation(KeyAttestationRequestBody)
 }
 
 // MARK: TargetType
@@ -43,14 +43,9 @@ extension AttestationServiceEndpoint: TargetType {
     switch self {
     case .challenge:
       .requestPlain
-    case .clientAttestation(let requestBody):
-      .requestParameters(
-        parameters: requestBody.asDictionary(),
-        encoding: JSONEncoding.default)
-    case .keyAttestation(let request):
-      .requestParameters(
-        parameters: request.body.asDictionary(),
-        encoding: JSONEncoding.default)
+    case .clientAttestation(let requestBody as Encodable),
+         .keyAttestation(let requestBody as Encodable):
+      .requestJSONEncodable(requestBody)
     }
   }
 
@@ -59,9 +54,8 @@ extension AttestationServiceEndpoint: TargetType {
     case .challenge,
          .clientAttestation:
       NetworkHeader.standard.raw
-
-    case .keyAttestation(let request):
-      NetworkHeader.keyAttestation(clientAttestation: request.header.clientAttestation, clientAttestationPop: request.header.clientAttestationPoP).raw
+    case .keyAttestation:
+      nil // Handle by ClientAttestationPlugin
     }
   }
 }

@@ -11,7 +11,7 @@ final class OcaBundlerIntegrationTests: XCTestCase {
   func testCreateOcaBundle_validSimple_createsValid() throws {
     let ocaBundle = try OcaBundler().createOcaBundle(OcaBundle.Mock.simpleSampleData)
     XCTAssertEqual(ocaBundle.captureBases.count, 1)
-    XCTAssertEqual(ocaBundle.overlays.count, 9)
+    XCTAssertEqual(ocaBundle.overlays.count, 13)
   }
 
   func testCreateOcaBundle_validElfa_createsValid() throws {

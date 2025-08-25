@@ -4,24 +4,22 @@ import Foundation
 // MARK: - MockKeyManager
 
 struct MockKeyManager: KeyManagerProtocol {
-  func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOption, query: Query?) throws -> SecKey {
-    SecKeyTestsHelper.createPrivateKey(size: algorithm.size)
+  func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOptions, query: Query?) throws -> VaultKeyPair {
+    let privateKey = SecKeyTestsHelper.createPrivateKey(size: algorithm.size)
+    return VaultKeyPair(identifier: identifier, privateKey: privateKey, algorithm: algorithm, options: options)
+  }
+
+  func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> VaultKeyPair {
+    let privateKey = SecKeyTestsHelper.createPrivateKey(size: algorithm.size)
+    return VaultKeyPair(identifier: identifier, privateKey: privateKey, algorithm: algorithm)
   }
 
   func deleteKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws {
 
   }
 
-  func getPublicKey(for privateKey: SecKey) throws -> SecKey {
-    SecKeyTestsHelper.createPrivateKey()
-  }
-
-  func getPublicKey(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> SecKey {
-    SecKeyTestsHelper.createPrivateKey(size: algorithm.size)
-  }
-
-  func getPrivateKey(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> SecKey {
-    SecKeyTestsHelper.createPrivateKey(size: algorithm.size)
+  func getExternalRepresentation(of privateKey: SecKey) throws -> (rawPublicKey: Data, rawPrivateKey: Data) {
+    (Data(), Data())
   }
 }
 

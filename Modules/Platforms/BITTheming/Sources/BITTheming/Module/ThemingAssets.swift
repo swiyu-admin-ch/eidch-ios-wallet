@@ -38,6 +38,7 @@ public enum ThemingAssets {
 
   public enum Background {
     public static let fallback = ColorAsset(name: "Background/Fallback")
+    public static let groupedRow = ColorAsset(name: "Background/GroupedRow")
     public static let primary = ColorAsset(name: "Background/Primary")
     public static let secondary = ColorAsset(name: "Background/Secondary")
     public static let system = ColorAsset(name: "Background/System")
@@ -115,12 +116,15 @@ public enum ThemingAssets {
 
   public static let close = ImageAsset(name: "Close")
   public static let noInternet = ImageAsset(name: "NoInternet")
-  public static let backDark = ImageAsset(name: "back-dark")
-  public static let back = ImageAsset(name: "back")
+  public static let backIndicatorBackgroundDark = ImageAsset(name: "back-indicator-background-dark")
+  public static let backIndicatorBackground = ImageAsset(name: "back-indicator-background")
+  public static let backIndicatorDark = ImageAsset(name: "back-indicator-dark")
+  public static let backIndicator = ImageAsset(name: "back-indicator")
   public static let elipsis = ImageAsset(name: "elipsis")
   public static let federalOfficeLogo = ImageAsset(name: "federal-office-logo")
   public static let inAppLogo = ImageAsset(name: "in-app-logo")
   public static let xmark = ImageAsset(name: "xmark")
+  public static let navigationAccent = ColorAsset(name: "navigationAccent")
   public static let accentColor = ColorAsset(name: "AccentColor")
   public static let background = ColorAsset(name: "Background")
   public static let gray = ColorAsset(name: "Gray")

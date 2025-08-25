@@ -48,6 +48,7 @@ extension InvitationError {
            .selectedCredentialNotFound,
            .typeMetadataInvalidIntegrity,
            .unsupportedAlgorithm,
+           .unsupportedKeyStorage,
            .vctMismatch:
         return .invalidQRCode
       }

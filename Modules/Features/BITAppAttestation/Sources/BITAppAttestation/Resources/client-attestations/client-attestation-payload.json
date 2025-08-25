@@ -4,7 +4,7 @@
   "nbf": 1300815780,
   "exp": 4902903692,
   "iat": 1747230798,
-  "wallet_name": "swiyu",
+  "wallet_name": "ch.mock.identifier",
   "cnf": {
     "jwk": {
       "kty": "EC",

@@ -31,8 +31,8 @@ extension Container {
     self { PrivacyPermissionViewModel(router: $0) }
   }
 
-  var biometricViewModel: ParameterFactory<OnboardingInternalRoutes, BiometricViewModel> {
-    self { BiometricViewModel(router: $0) }
+  var biometricsViewModel: ParameterFactory<OnboardingInternalRoutes, BiometricsViewModel> {
+    self { BiometricsViewModel(router: $0) }
   }
 
   var setupViewModel: ParameterFactory<OnboardingInternalRoutes, SetupViewModel> {

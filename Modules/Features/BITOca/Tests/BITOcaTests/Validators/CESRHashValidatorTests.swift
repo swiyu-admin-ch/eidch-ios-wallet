@@ -31,7 +31,7 @@ final class CESRHashValidatorTests: XCTestCase {
   }
 
   func testValidate_withValidOCAJson_CallCount() {
-    let _ = validator.validate(jsonString: OCACaptureBaseMocks.validInput01)
+    _ = validator.validate(jsonString: OCACaptureBaseMocks.validInput01)
 
     XCTAssertEqual(mockJsonCanonicalizer.canonicalizeJsonStringCallsCount, 1)
   }

@@ -29,7 +29,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
   func testExecute_vcSdJwt_argumentsPassed() async throws {
     success(format: .vcSdJwt)
 
-    let _ = try await useCase.execute(for: anyCredentialSpy)
+    _ = try await useCase.execute(for: anyCredentialSpy)
 
     XCTAssertEqual(fetchVcMetadataForVcSdJwtUseCaseSpy.executeForReceivedAnyCredential?.raw, anyCredentialSpy.raw)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.count, 1)

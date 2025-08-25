@@ -3,24 +3,29 @@ import XCTest
 @testable import BITEIDRequest
 @testable import BITTestingCore
 
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
+
 final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
-    repository = LocalEIDRequestRepositoryProtocolSpy()
-    remoteRepository = EIDRequestRepositoryProtocolSpy()
+    super.setUp()
+    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
 
-    Container.shared.localEIDRequestRepository.register { self.repository }
-    Container.shared.eIDRequestRepository.register { self.remoteRepository }
+    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
+    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
 
+    registerMocks()
     useCase = UpdateEIDRequestCaseStatusUseCase()
+    createSuccessState()
   }
 
   func testExecute_MultipleRequestsOrdering_Succes() async throws {
     Container.shared.requestCasePriorityOrder.register { [.readyForOnlineSession, .inQueue] }
     var fetchCount = 0
-    remoteRepository.fetchRequestStatusForClosure = { _ in
+    eIDRequestRepository.fetchRequestStatusForClosure = { _ in
       if fetchCount == 1 {
         return EIDRequestStatus.Mock.readyForAVSample
       }
@@ -30,7 +35,7 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
     }
 
     var updateCount = 0
-    repository.updateClosure = { _ in
+    eIDRequestCaseRepository.updateClosure = { _ in
       if updateCount == 1 {
         return .Mock.sampleAVReady
       }
@@ -40,7 +45,7 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
     }
 
     var getCount = 0
-    repository.getIdClosure = { _ in
+    eIDRequestCaseRepository.getIdClosure = { _ in
       if getCount == 1 {
         return .Mock.sampleAVReady
       }
@@ -60,24 +65,25 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
     XCTAssertEqual(updateRequestCases.count, mockEIDRequestCases.count)
   }
 
-  func testExecuteSucces() async throws {
-    let mockEIDRequestCase: EIDRequestCase = .Mock.sampleAVReady
-    let mockStatus = EIDRequestStatus.Mock.readyForAVSample
-
-    remoteRepository.fetchRequestStatusForReturnValue = mockStatus
-    repository.updateReturnValue = mockEIDRequestCase
-    repository.getIdReturnValue = mockEIDRequestCase
-
+  func testExecute_assertParameters_success() async throws {
     let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
 
     XCTAssertEqual(result.state, mockEIDRequestCase.state)
-    XCTAssertEqual(remoteRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
-    XCTAssertEqual(repository.updateReceivedEIDRequestCase?.state?.state, mockStatus.state)
-    XCTAssertEqual(repository.getIdReceivedId, mockEIDRequestCaseInQueue.id)
+    XCTAssertEqual(eIDRequestRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
+    XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.state?.state, mockStatus.state)
+    XCTAssertEqual(eIDRequestCaseRepository.getIdReceivedId, mockEIDRequestCaseInQueue.id)
+  }
+
+  func testExecute_assertCount_success() async throws {
+    _ = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
+
+    XCTAssertEqual(eIDRequestRepository.fetchRequestStatusForCallsCount, 1)
+    XCTAssertEqual(eIDRequestCaseRepository.updateCallsCount, 1)
+    XCTAssertEqual(eIDRequestCaseRepository.getIdCallsCount, 1)
   }
 
   func testExecute_getRequestCaseThrowsError_throwsError() async throws {
-    repository.getIdThrowableError = TestingError.error
+    eIDRequestCaseRepository.getIdThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
@@ -86,38 +92,48 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecuteWithFetchStatusError() async throws {
-    repository.getIdReturnValue = mockEIDRequestCaseInQueue
-    remoteRepository.fetchRequestStatusForThrowableError = TestingError.error
+  func testExecute_fetchStatusFails_throwsError() async throws {
+    eIDRequestRepository.fetchRequestStatusForThrowableError = TestingError.error
 
-    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
+    let result = try await useCase.execute(for: mockEIDRequestCase.id)
 
-    XCTAssertEqual(remoteRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
-    XCTAssertEqual(mockEIDRequestCaseInQueue, result)
+    XCTAssertEqual(mockEIDRequestCase, result)
   }
 
-  func testExecuteWithUpdateRequestCaseError() async throws {
-    let mockStatus = EIDRequestStatus.Mock.readyForAVSample
+  func testExecute_updateRequestCaseFails_throwsError() async throws {
+    eIDRequestCaseRepository.updateThrowableError = TestingError.error
 
-    repository.getIdReturnValue = mockEIDRequestCaseInQueue
-    remoteRepository.fetchRequestStatusForReturnValue = mockStatus
-    repository.updateThrowableError = TestingError.error
+    let result = try await useCase.execute(for: mockEIDRequestCase.id)
 
-    let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
-
-    XCTAssertEqual(remoteRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
-    XCTAssertEqual(repository.updateReceivedEIDRequestCase?.state?.state, mockStatus.state)
-    XCTAssertEqual(mockEIDRequestCaseInQueue, result)
+    XCTAssertEqual(mockEIDRequestCase, result)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
   private var useCase: UpdateEIDRequestCaseStatusUseCase!
+
+  private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocolSpy!
+  private var eIDRequestRepository: EIDRequestRepositoryProtocolSpy!
+
+  private let mockStatus = EIDRequestStatus.Mock.readyForAVSample
   private let mockEIDRequestCaseInQueue: EIDRequestCase = .Mock.sampleInQueue
-  private var repository: LocalEIDRequestRepositoryProtocolSpy!
-  private var remoteRepository: EIDRequestRepositoryProtocolSpy!
+  private let mockEIDRequestCase: EIDRequestCase = .Mock.sampleAVReady
   private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleWithoutState]
-  // swiftlint:enable all
+
+  private func registerMocks() {
+    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
+
+    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
+    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
+  }
+
+  private func createSuccessState() {
+    eIDRequestCaseRepository.updateReturnValue = mockEIDRequestCase
+    eIDRequestCaseRepository.getIdReturnValue = mockEIDRequestCase
+    eIDRequestRepository.fetchRequestStatusForReturnValue = mockStatus
+  }
 
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping force_try

@@ -1,8 +1,11 @@
 import Alamofire
 import BITAnalytics
+import BITCredentialShared
 import BITDataStore
+import BITEntities
 import BITTheming
 import Factory
+import RealmSwift
 import UIKit
 
 // MARK: - AppDelegate
@@ -48,6 +51,16 @@ extension AppDelegate {
     if ProcessInfo().arguments.contains("-enable-onboarding") {
       UserDefaults.standard.set(true, forKey: "rootOnboardingIsEnabled")
     }
+    // swiftlint: disable force_try
+    if ProcessInfo().arguments.contains("-pre-fill-database") {
+      let configuration = Container.shared.realmDataStoreConfiguration()
+      let realm = try! Realm(configuration: configuration)
+      try! realm.write {
+        realm.deleteAll()
+        realm.add(CredentialEntity(credential: Credential.Mock.sampleVC))
+      }
+    }
+    // swiftlint: enable force_try
   }
 }
 

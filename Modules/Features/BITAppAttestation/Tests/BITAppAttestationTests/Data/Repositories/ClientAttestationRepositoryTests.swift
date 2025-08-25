@@ -9,6 +9,7 @@ final class ClientAttestationRepositoryTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    Container.shared.reset()
     Container.shared.realmDataStoreConfiguration.register { Realm.Configuration(inMemoryIdentifier: "inMemory") }
     repository = ClientAttestationRepository()
   }
@@ -20,14 +21,14 @@ final class ClientAttestationRepositoryTests: XCTestCase {
 
   func testGetClientAttestation_success() async throws {
     let result = try await repository.create(mockClientAttestation)
-    let clientAttestation = try await repository.getClientAttestation()
+    let clientAttestation = try await repository.get()
 
     XCTAssertEqual(result, clientAttestation)
   }
 
   func testGetClientAttestation_noClientAttestation_throwsError() async throws {
     do {
-      _ = try await repository.getClientAttestation()
+      _ = try await repository.get()
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? ClientAttestationRepositoryError, .notFound)

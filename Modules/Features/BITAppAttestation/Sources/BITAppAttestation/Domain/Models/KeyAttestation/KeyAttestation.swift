@@ -1,5 +1,6 @@
 import BITCrypto
 import BITJWT
+import BITVault
 import Foundation
 
 // MARK: - KeyAttestation
@@ -28,6 +29,6 @@ public struct KeyAttestationPayload: JWTPayload, Codable, Equatable {
   let expiredAt: Date
   let issuer: String
   let issuedAt: Date
-  let keyStorage: [KeyAttestationKeyStorage]
+  let keyStorage: [KeyStorageSecurityLevel]
   let attestedKeys: [JWK]
 }

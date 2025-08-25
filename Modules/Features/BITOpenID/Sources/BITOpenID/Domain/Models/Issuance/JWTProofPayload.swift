@@ -4,15 +4,15 @@ import Foundation
 
 // MARK: - JWTProofPayload
 
-public struct JWTProofPayload: JWTPayload, Codable, Equatable {
+struct JWTProofPayload: JWTPayload, Codable, Equatable {
 
-  public let type: String? = "openid4vci-proof+jwt"
+  let type: String? = "openid4vci-proof+jwt"
 
-  public let audience: String
-  public let nonce: String?
-  public let issuedAt: UInt64?
+  let audience: String
+  let nonce: String?
+  let issuedAt: UInt64?
 
-  public init(audience: String, nonce: String? = nil, issuedAt: UInt64? = nil) {
+  init(audience: String, nonce: String? = nil, issuedAt: UInt64? = nil) {
     self.audience = audience
     self.nonce = nonce
     self.issuedAt = issuedAt
@@ -22,5 +22,13 @@ public struct JWTProofPayload: JWTPayload, Codable, Equatable {
     case audience = "aud"
     case nonce
     case issuedAt = "iat"
+  }
+}
+
+// MARK: JWTProofPayload.AdditionalHeaderParameter
+
+extension JWTProofPayload {
+  enum AdditionalHeaderParameter: String {
+    case keyAttestation = "key_attestation"
   }
 }

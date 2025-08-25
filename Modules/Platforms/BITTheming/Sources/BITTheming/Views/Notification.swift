@@ -93,7 +93,7 @@ public struct Notification: View {
           }
         }
       }
-      .padding(sizeCategory.isAccessibilityCategory ? .x3 : .x6)
+      .padding(sizeCategory.isAccessibilityCategory ? .x2 : .x4)
       .accessibilityElement(children: .combine)
 
       Spacer()

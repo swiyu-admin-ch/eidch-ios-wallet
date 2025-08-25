@@ -58,15 +58,11 @@ extension Container {
     self { VcSchemaService() }
   }
 
-  // MARK: Internal
-
-  var credentialKeyPairGenerator: Factory<CredentialKeyPairGeneratorProtocol> {
-    self { CredentialKeyPairGenerator() }
-  }
-
-  var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
+  public var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
     self { [.ES256] }
   }
+
+  // MARK: Internal
 
   var jsonSchemaValidator: Factory<JsonSchemaValidatorProtocol> {
     self { JsonSchemaValidator() }

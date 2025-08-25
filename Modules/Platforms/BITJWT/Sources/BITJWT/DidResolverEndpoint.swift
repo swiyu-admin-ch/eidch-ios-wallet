@@ -11,6 +11,9 @@ enum DidResolverEndpoint {
 // MARK: TargetType
 
 extension DidResolverEndpoint: TargetType {
+
+  // MARK: Internal
+
   var baseURL: URL {
     switch self {
     case .didLog(let url): url
@@ -39,9 +42,12 @@ extension DidResolverEndpoint: TargetType {
 
   var headers: [String: String]? {
     switch self {
-    case .didLog:
-      NetworkHeader.did.raw
+    case .didLog: [ Self.keyContentType: Self.valueApplicationJsonLines ]
     }
   }
 
+  // MARK: Private
+
+  private static let keyContentType = "Content-Type"
+  private static let valueApplicationJsonLines = "application/jsonl+json"
 }

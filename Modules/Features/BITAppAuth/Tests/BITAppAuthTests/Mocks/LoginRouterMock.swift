@@ -1,5 +1,5 @@
 import BITAppAuth
-import BITAppVersion
+import BITAppInfo
 import Foundation
 @testable import BITNavigationTestCore
 

@@ -5,26 +5,19 @@ import XCTest
 @testable import BITInvitation
 @testable import BITTheming
 
-class CredentialOfferWrongDataScreen: Screen {
+struct CredentialOfferWrongDataScreen: Screen {
 
-  // MARK: Lifecycle
-
-  init(app: XCUIApplication) {
-    self.app = app
-    closeButton = app.buttons[CredentialOfferWrongDataView.AccessibilityIdentifier.closeButton.rawValue]
-    image = app.images[InformationView<DefaultInformationContentView, DefaultInformationFooterView>.AccessibilityIdentifier.image.rawValue]
-    primaryText = app.staticTexts[DefaultInformationContentView.AccessibilityIdentifier.primaryText.rawValue]
-  }
+  let app: XCUIApplication
 
   // MARK: Internal
 
-  let app: XCUIApplication
-  let closeButton: XCUIElement
-  let image: XCUIElement
-  let primaryText: XCUIElement
-
-  func assertDisplayed() {
-    XCTAssert(image.waitForExistence(timeout: .defaultTimeout))
+  func assertCredentialOfferWrongDataScreen() -> CredentialOfferWrongDataScreen {
+    app.assertElementDisplayed(CredentialOfferWrongDataView.AccessibilityIdentifier.content.rawValue)
+    return self
   }
 
+  func tapClose() -> CredentialOfferScreen {
+    app.tap(CredentialOfferWrongDataView.AccessibilityIdentifier.closeButton.rawValue)
+    return CredentialOfferScreen(app: app)
+  }
 }

@@ -1,4 +1,5 @@
 {
+  "originHash" : "b63c2364f14fdba67c20f8e5ba0cd360e5055ec8e073e646b1922f0fff16c633",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -21,10 +22,10 @@
     {
       "identity" : "cryptoswift",
       "kind" : "remoteSourceControl",
-      "location" : "git@github.com:krzyzanowskim/CryptoSwift.git",
+      "location" : "https://github.com/krzyzanowskim/CryptoSwift",
       "state" : {
-        "revision" : "678d442c6f7828def400a70ae15968aef67ef52d",
-        "version" : "1.8.3"
+        "revision" : "729e01bc9b9dab466ac85f21fb9ee2bc1c61b258",
+        "version" : "1.8.4"
       }
     },
     {
@@ -86,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Dynatrace/swift-mobile-sdk.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "f2a30a9a52fef2a52d3439b2f51ca0b627f12670"
+        "revision" : "7a385bea9404365b056be299f9107714e052632d",
+        "version" : "8.309.1"
       }
     },
     {
@@ -109,5 +110,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

@@ -21,28 +21,26 @@ final class PepperRepositoryTests: XCTestCase {
   }
 
   func testCreatePepperKey() throws {
-    let mockSecKey: SecKey = SecKeyTestsHelper.createPrivateKey()
-    keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReturnValue = mockSecKey
+    keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReturnValue = mockKeyPair
     let secKey = try repository.createPepperKey()
-    XCTAssertEqual(mockSecKey, secKey)
+    XCTAssertEqual(mockKeyPair.privateKey, secKey)
     XCTAssertTrue(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
-    XCTAssertEqual(vaultAlgorithm, keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm)
+    XCTAssertEqual(mockKeyPair.algorithm, keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm)
     XCTAssertTrue(keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryCalled)
-    XCTAssertEqual(vaultAlgorithm, keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.algorithm)
+    XCTAssertEqual(mockKeyPair.algorithm, keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.algorithm)
     XCTAssertEqual([.secureEnclavePermanently], keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.options)
     XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier, keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.identifier)
   }
 
   func testGetPepperKey() throws {
-    let mockSecKey: SecKey = SecKeyTestsHelper.createPrivateKey()
-    keyManagerSpy.getPrivateKeyWithIdentifierAlgorithmQueryReturnValue = mockSecKey
+    keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryReturnValue = mockKeyPair
     let secKey = try repository.getPepperKey()
-    XCTAssertEqual(mockSecKey, secKey)
-    XCTAssertTrue(keyManagerSpy.getPrivateKeyWithIdentifierAlgorithmQueryCalled)
-    XCTAssertEqual(vaultAlgorithm, keyManagerSpy.getPrivateKeyWithIdentifierAlgorithmQueryReceivedArguments?.algorithm)
+    XCTAssertEqual(mockKeyPair.privateKey, secKey)
+    XCTAssertTrue(keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryCalled)
+    XCTAssertEqual(mockKeyPair.algorithm, keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.algorithm)
   }
 
-  func testGetPeppeInitialVector() throws {
+  func testGetPepperInitialVector() throws {
     let mockData = Data()
     secretManagerSpy.dataForKeyQueryReturnValue = mockData
     let data = try repository.getPepperInitialVector()
@@ -63,7 +61,7 @@ final class PepperRepositoryTests: XCTestCase {
 
   // MARK: Private
 
-  private let vaultAlgorithm = VaultAlgorithm.eciesEncryptionStandardVariableIVX963SHA256AESGCM
+  private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   // swiftlint:disable all
   private var secretManagerSpy: SecretManagerProtocolSpy!

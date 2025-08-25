@@ -124,10 +124,10 @@ public struct SecureTextField: UIViewRepresentable {
 
   @Environment(\.secureTextFieldAccessibilityIdentifier) private var accessibilityIdentifier: String?
 
-  private var prompt: String? = nil
+  private var prompt: String?
   private var onSubmit: () -> Void
   private let tintColor: UIColor
-  private var textColor: UIColor? = nil
+  private var textColor: UIColor?
 
   private func textField(context: Context) -> UITextField {
     let textField = UITextField()

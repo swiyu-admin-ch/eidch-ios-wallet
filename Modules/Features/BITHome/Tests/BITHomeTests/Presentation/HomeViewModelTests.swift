@@ -349,15 +349,15 @@ final class HomeViewModelTests: XCTestCase {
   }
 
   func testDidStartAutoVerification() {
-    viewModel.didStartAutoVerification()
+    viewModel.didStartAutoVerification(caseId: mockCaseId)
 
-    XCTAssertTrue(mockRouter.didCallAutoVerification)
+    XCTAssertEqual(mockRouter.didCallAutoVerificationArgument, mockCaseId)
   }
 
   func testDidTapObtainConsent() {
-    viewModel.didTapObtainConsent(caseId: "caseId")
+    viewModel.didTapObtainConsent(caseId: mockCaseId)
 
-    XCTAssertEqual(mockRouter.didCallObtainConsentArgument, "caseId")
+    XCTAssertEqual(mockRouter.didCallObtainConsentArgument, mockCaseId)
   }
 
   func testUpdateCredentialViewModels_light_setsViewModel() async {
@@ -397,6 +397,7 @@ final class HomeViewModelTests: XCTestCase {
   // MARK: Private
 
   // swiftlint:disable all
+  private let mockCaseId = "caseId"
   private let mockCrendentials = Credential.Mock.array
   private let themeMock = "light"
   private var getCredentialListUseCase: GetCredentialListUseCaseProtocolSpy!

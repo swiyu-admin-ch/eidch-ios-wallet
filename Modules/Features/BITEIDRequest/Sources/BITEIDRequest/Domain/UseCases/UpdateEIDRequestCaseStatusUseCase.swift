@@ -34,10 +34,10 @@ struct UpdateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProto
   }
 
   func execute(for requestCaseId: String) async throws -> EIDRequestCase {
-    let requestCase = try await localEIDRequestRepository.get(id: requestCaseId)
+    let requestCase = try await eIDRequestCaseRepository.get(id: requestCaseId)
 
     do {
-      let status = try await checkStatus(for: requestCaseId)
+      let status = try await eIDRequestRepository.fetchRequestStatus(for: requestCaseId)
       return try await updateRequestCase(requestCase, with: status)
     } catch {
       return requestCase
@@ -47,17 +47,13 @@ struct UpdateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProto
   // MARK: Private
 
   @Injected(\.requestCasePriorityOrder) private var requestCasePriorityOrder: [EIDRequestStatus.State]
-  @Injected(\.eIDRequestRepository) private var remoteEIDRequestRepository: EIDRequestRepositoryProtocol
-  @Injected(\.localEIDRequestRepository) private var localEIDRequestRepository: LocalEIDRequestRepositoryProtocol
-
-  private func checkStatus(for requestCaseId: String) async throws -> EIDRequestStatus {
-    try await remoteEIDRequestRepository.fetchRequestStatus(for: requestCaseId)
-  }
+  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
 
   private func updateRequestCase(_ requestCase: EIDRequestCase, with status: EIDRequestStatus) async throws -> EIDRequestCase {
     var requestCaseCopy = requestCase
     requestCaseCopy.state = EIDRequestState(status: status)
 
-    return try await localEIDRequestRepository.update(requestCaseCopy)
+    return try await eIDRequestCaseRepository.update(requestCaseCopy)
   }
 }

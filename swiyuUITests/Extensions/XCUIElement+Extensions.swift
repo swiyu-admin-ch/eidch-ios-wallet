@@ -1,21 +1,24 @@
 import XCTest
 
 extension XCUIElement {
-  func forceTapElement() {
-    if isHittable {
-      tap()
-    } else {
-      // sometimes the view is hidden by another element (e.g. keyboard), so let's try to tap it by its coordinates
-      let coordinate: XCUICoordinate = coordinate(withNormalizedOffset: CGVector.zero)
-      coordinate.tap()
-    }
+
+  enum ScrollDirection {
+    case up
+    case down
   }
 
-  func scrollDownToElement(app: XCUIApplication, maxScolls: Int = 10) {
+  func scrollToElement(_ element: XCUIElement, direction: ScrollDirection = .down, maxScrolls: Int = 10, velocity: XCUIGestureVelocity = .default) {
     var count = 0
-    while !isHittable && count < maxScolls {
-      app.swipeUp()
+    while !element.isHittable && count < maxScrolls {
+      switch direction {
+      case .up:
+        swipeDown(velocity: velocity)
+      case .down:
+        swipeUp(velocity: velocity)
+      }
       count += 1
     }
+    XCTAssertTrue(count < maxScrolls, "Failed to scroll to element: \(element)")
   }
+
 }

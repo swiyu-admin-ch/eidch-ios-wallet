@@ -17,7 +17,7 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.0.2 available
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITCrypto"),
@@ -26,7 +26,7 @@ let package = Package(
     .package(path: "../../Platforms/BITLocalAuthentication"),
     .package(path: "../../Platforms/BITNavigation"),
     .package(path: "../../Platforms/BITDataStore"),
-    .package(path: "../BITAppVersion"),
+    .package(path: "../BITAppInfo"),
   ],
   targets: [
     .target(
@@ -43,7 +43,7 @@ let package = Package(
         .product(name: "BITLocalAuthentication", package: "BITLocalAuthentication"),
         .product(name: "BITNavigation", package: "BITNavigation"),
         .product(name: "BITDataStore", package: "BITDataStore"),
-        .product(name: "BITAppVersion", package: "BITAppVersion"),
+        .product(name: "BITAppInfo", package: "BITAppInfo"),
       ],
       resources: [.process("Resources")],
       swiftSettings: [
@@ -55,7 +55,7 @@ let package = Package(
         "BITAppAuth",
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITNavigationTestCore", package: "BITNavigation"),
-        .product(name: "BITAppVersion", package: "BITAppVersion"),
+        .product(name: "BITAppInfo", package: "BITAppInfo"),
         .product(name: "BITNavigation", package: "BITNavigation"),
       ],
       swiftSettings: [

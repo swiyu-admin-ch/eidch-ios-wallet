@@ -1,19 +1,18 @@
 {
   "images" : [
     {
-      "filename" : "Icon Button.png",
-      "idiom" : "universal",
-      "scale" : "1x"
+      "filename" : "flash-on.svg",
+      "idiom" : "universal"
     },
     {
-      "filename" : "Icon Button2.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "Icon Button3.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "flash-on-dark.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

@@ -1,3 +1,4 @@
+import BITCore
 import BITCrypto
 import BITJsonCanonicalizer
 import DeviceCheck
@@ -57,7 +58,7 @@ struct AppAttestationService: AppAttestationServiceProtocol {
       throw AppAttestationServiceError.unsupportedDevice
     }
 
-    let clientData = try JSONEncoder().encode(clientDataObject)
+    let clientData = try JSONEncoder(outputFormatting: [.sortedKeys]).encode(clientDataObject)
     let canonicalizedClientData = try jsonCanonicalizer.canonicalize(data: clientData)
     let clientDataHash = sha256Hasher.hash(canonicalizedClientData)
 

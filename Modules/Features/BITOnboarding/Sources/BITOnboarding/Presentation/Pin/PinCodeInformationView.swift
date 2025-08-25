@@ -16,7 +16,7 @@ struct PinCodeInformationView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
-    case pinCodeInformationContent
+    case content = "pinCodeInformationContent"
   }
 
   @StateObject var viewModel: PinCodeInformationViewModel
@@ -29,7 +29,6 @@ struct PinCodeInformationView: View {
         DefaultInformationContentView(
           primary: viewModel.primaryText,
           secondary: viewModel.secondaryText)
-          .accessibilityIdentifier(AccessibilityIdentifier.pinCodeInformationContent.rawValue)
       },
       footer: {
         DefaultInformationFooterView(
@@ -39,5 +38,7 @@ struct PinCodeInformationView: View {
       .onAppear {
         viewModel.onAppear()
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 }

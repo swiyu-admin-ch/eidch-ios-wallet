@@ -6,13 +6,9 @@ import Foundation
 
 struct TokenStatusListByteDecoder: TokenStatusListByteDecoderProtocol {
 
-  // MARK: Public
-
-  public enum DecoderError: Error {
+  enum DecoderError: Error {
     case indexOutOfBounds
   }
-
-  // MARK: Internal
 
   func decode(_ statusList: Data, bits: Int, index: Int) throws -> StatusCode {
     let entryIndex = index * bits / 8

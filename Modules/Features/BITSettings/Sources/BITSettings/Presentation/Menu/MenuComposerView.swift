@@ -1,5 +1,5 @@
 import BITAppAuth
-import BITAppVersion
+import BITAppInfo
 import BITCore
 import BITL10n
 import BITTheming

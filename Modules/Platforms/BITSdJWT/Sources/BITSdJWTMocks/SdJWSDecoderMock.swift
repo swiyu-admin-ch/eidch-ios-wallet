@@ -13,9 +13,9 @@ enum SdJWSDecoderMockError: Error {
 
 class SdJWSDecoderMock<U: Codable & Equatable>: SdJWSDecoderProtocol {
 
-  var decodeReturnValue: SdJWS<U>? = nil
-  var receivedInput: String? = nil
-  var throwingError: Error? = nil
+  var decodeReturnValue: SdJWS<U>?
+  var receivedInput: String?
+  var throwingError: Error?
 
   func decode<T: JWTPayload & Decodable>(_ type: T.Type, from data: Data) throws -> SdJWS<T> {
     if let throwingError {

@@ -9,7 +9,7 @@ import RealmSwift
 extension Container: AutoRegistering {
   public func autoRegister() {
     baseRegistryDomainPattern.register { #"^did:tdw:(.+)"# }
-    vaultOptions.register { .none }
+    pepperKeyVaultOptions.register { .none }
     delayAfterAcceptingCredential.register { 0 }
     loadingDelay.register { 0 }
 

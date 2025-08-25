@@ -75,9 +75,9 @@ final class OcaBundleTests: XCTestCase {
     let ocaBundle = OcaBundle.Mock.simpleSample
 
     XCTAssertEqual(ocaBundle.captureBases.count, 1)
-    XCTAssertEqual(ocaBundle.captureBases.first?.attributes.count, 3)
-    XCTAssertEqual(ocaBundle.captureBases.first?.digest, "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV")
-    XCTAssertEqual(ocaBundle.overlays.count, 9)
+    XCTAssertEqual(ocaBundle.captureBases.first?.attributes.count, 4)
+    XCTAssertEqual(ocaBundle.captureBases.first?.digest, "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4")
+    XCTAssertEqual(ocaBundle.overlays.count, 13)
   }
 
   func testDecode_nested() throws {

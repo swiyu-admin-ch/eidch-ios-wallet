@@ -39,10 +39,15 @@ targets:
 
         CFBundleURLTypes:
             - CFBundleTypeRole: Editor
-              CFBundleURLName: openid-credential-offer
-              CFBundleURLSchemes: 
+              CFBundleURLName: credential-offer
+              CFBundleURLSchemes:
                 - openid-credential-offer
                 - swiyu
+            - CFBundleTypeRole: Editor
+              CFBundleURLName: presentation
+              CFBundleURLSchemes:
+                - openid4vp
+                - swiyu-verify
 
         UILaunchStoryboardName:
           LaunchScreen.storyboard
@@ -90,6 +95,8 @@ targets:
         # DTX Lifecycle
         DTXInstrumentLifecycleMonitoring: false
         DTXInstrumentFrameworks: false
+
+        AVBeamAppID: $(PXL_APP_ID)
 
     settings:
       base:
@@ -171,6 +178,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_DEV}
           DYNATRACE_DEBUG_LEVEL: "OFF"
           DYNATRACE_USER_OPT_IN: true
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu.dev
 
         Ref (debug):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-REF
@@ -193,6 +201,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_REF}
           DYNATRACE_DEBUG_LEVEL: "OFF"
           DYNATRACE_USER_OPT_IN: false
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu.ref
 
         Abn (debug):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-ABN
@@ -215,6 +224,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_PROD}
           DYNATRACE_DEBUG_LEVEL: "OFF"
           DYNATRACE_USER_OPT_IN: false
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu.abn
 
         Prod (debug):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -237,6 +247,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_PROD}
           DYNATRACE_DEBUG_LEVEL: "OFF"
           DYNATRACE_USER_OPT_IN: false
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu
 
         Dev (release):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-DEV
@@ -255,6 +266,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_DEV}
           DYNATRACE_DEBUG_LEVEL: "OFF"
           DYNATRACE_USER_OPT_IN: true
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu.dev
 
         Ref (release):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-REF
@@ -273,6 +285,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_REF}
           DYNATRACE_DEBUG_LEVEL: "WARNING"
           DYNATRACE_USER_OPT_IN: true
+          PXL_APP_ID: SZ3M2Z456W.ch.admin.bit.swiyu.ref
 
         Abn (release):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-ABN
@@ -291,6 +304,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_ABN}
           DYNATRACE_DEBUG_LEVEL: "WARNING"
           DYNATRACE_USER_OPT_IN: true
+          PXL_APP_ID: SZ3M2Z456W.ch.admin.bit.swiyu.abn
 
         Prod (release):
           PRODUCT_NAME: "swiyu"
@@ -310,6 +324,7 @@ targets:
           DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_PROD}
           DYNATRACE_DEBUG_LEVEL: "OFF"
           DYNATRACE_USER_OPT_IN: true
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu
 
     dependencies:
       - package: Factory
@@ -322,7 +337,7 @@ targets:
       - package: BITNetworking
       - package: BITDataStore
       - package: BITSettings
-      - package: BITAppVersion
+      - package: BITAppInfo
       - package: BITTheming
       - package: BITOnboarding
       - package: BITInvitation
@@ -365,6 +380,12 @@ targets:
         name: Swift packages list
         outputFiles:
           - "/tmp/swiyuDummyOutputFileSwiftPackagesList.txt"
+
+    postCompileScripts:
+      - path: ../Scripts/settings_bundle.sh
+        name: Settings bundle
+        outputFiles:
+          - "/tmp/swiyuDummyOutputFileSettingsBundle.txt"
 
   swiyuUITests-App:
     type: application
@@ -509,7 +530,7 @@ targets:
       - package: BITNetworking
       - package: BITDataStore
       - package: BITSettings
-      - package: BITAppVersion
+      - package: BITAppInfo
       - package: BITTheming
       - package: BITOnboarding
       - package: BITInvitation
@@ -551,6 +572,12 @@ targets:
         name: Swift packages list
         outputFiles:
           - "/tmp/swiyuUITests-AppDummyOutputFileSwiftPackagesList.txt"
+    
+    postCompileScripts:
+      - path: ../Scripts/settings_bundle.sh
+        name: Settings bundle
+        outputFiles:
+          - "/tmp/swiyuUITests-AppDummyOutputFileSettingsBundle.txt"
 
   swiyuTests:
     type: bundle.unit-test
@@ -584,7 +611,7 @@ targets:
       - package: BITNetworking
       - package: BITDataStore
       - package: BITSettings
-      - package: BITAppVersion
+      - package: BITAppInfo
       - package: BITTheming
       - package: BITOnboarding
       - package: BITInvitation

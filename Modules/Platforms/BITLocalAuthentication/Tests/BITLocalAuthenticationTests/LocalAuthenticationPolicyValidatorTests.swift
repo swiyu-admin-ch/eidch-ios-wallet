@@ -15,7 +15,7 @@ final class LocalAuthenticationPolicyValidatorTests: XCTestCase {
     let policy = LocalAuthenticationPolicy.deviceOwnerAuthenticationWithBiometrics
     contextSpy.canEvaluatePolicyErrorReturnValue = true
 
-    let _ = try validator.validatePolicy(policy, context: contextSpy)
+    _ = try validator.validatePolicy(policy, context: contextSpy)
     XCTAssertEqual(policy, contextSpy.canEvaluatePolicyErrorReceivedArguments?.policy)
   }
 

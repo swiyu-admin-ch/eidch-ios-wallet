@@ -11,7 +11,6 @@ import RealmSwift
 @testable import BITJWT
 @testable import BITNetworking
 @testable import BITOpenID
-@testable import BITVault
 
 enum Argument: String, CaseIterable {
   case disableDevicePin = "-disable-device-pin"
@@ -31,7 +30,7 @@ extension Container: AutoRegistering {
     }
 
     if ProcessInfo().arguments.contains(Argument.disableSecureEnclave.rawValue) {
-      vaultOptions.register { .savePermanently }
+      pepperKeyVaultOptions.register { .savePermanently }
     }
 
     if ProcessInfo().arguments.contains(Argument.disableUserInactivityTimeout.rawValue) {

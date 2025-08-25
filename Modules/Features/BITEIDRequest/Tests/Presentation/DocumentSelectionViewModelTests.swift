@@ -22,7 +22,7 @@ class DocumentSelectionViewModelTests: XCTestCase {
     viewModel = DocumentSelectionViewModel(router: router, cameraPermission: .authorized)
     viewModel.didSelect(.identityCard)
 
-    XCTAssertTrue(router.mrzScannerCalled)
+    XCTAssertTrue(router.scanDocumentCalled)
     XCTAssertEqual(router.context.identityType, .identityCard)
   }
 

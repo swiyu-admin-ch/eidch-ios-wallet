@@ -1,9 +1,10 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import XCTest
 @testable import BITEIDRequest
 @testable import BITQRCode
 @testable import BITTestingCore
+
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
 final class GetLegalRepresentantVerificationQRCodeUseCaseTests: XCTestCase {
 
@@ -12,14 +13,8 @@ final class GetLegalRepresentantVerificationQRCodeUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    repository = EIDRequestRepositoryProtocolSpy()
-    qrCodeGenerator = QRCodeGeneratorProtocolSpy()
-
-    Container.shared.eIDRequestRepository.register { self.repository }
-    Container.shared.qrCodeGenerator.register { self.qrCodeGenerator }
-
+    registerMocks()
     useCase = GetLegalRepresentantVerificationQRCodeUseCase()
-
     setupSuccessState()
   }
 
@@ -63,13 +58,23 @@ final class GetLegalRepresentantVerificationQRCodeUseCaseTests: XCTestCase {
 
   private let mockCaseId = "caseId"
   private let mockLegalRepresentantVerification = LegalRepresentantVerificationResponse.Mock.sample
+
   private var useCase: GetLegalRepresentantVerificationQRCodeUseCase!
+
   private var qrCodeGenerator: QRCodeGeneratorProtocolSpy!
   private var repository: EIDRequestRepositoryProtocolSpy!
 
   private func setupSuccessState() {
     repository.fetchLegalRepresentantVerificationForReturnValue = mockLegalRepresentantVerification
     qrCodeGenerator.generateFromCorrectionLevelScaleReturnValue = Data()
+  }
+
+  private func registerMocks() {
+    repository = EIDRequestRepositoryProtocolSpy()
+    qrCodeGenerator = QRCodeGeneratorProtocolSpy()
+
+    Container.shared.eIDRequestRepository.register { self.repository }
+    Container.shared.qrCodeGenerator.register { self.qrCodeGenerator }
   }
 
 }

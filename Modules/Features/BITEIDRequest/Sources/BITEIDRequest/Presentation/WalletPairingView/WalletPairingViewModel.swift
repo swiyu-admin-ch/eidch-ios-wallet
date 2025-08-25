@@ -1,3 +1,5 @@
+import Factory
+
 class WalletPairingViewModel {
 
   // MARK: Lifecycle
@@ -8,12 +10,17 @@ class WalletPairingViewModel {
 
   // MARK: Internal
 
-  func primaryAction() {
-    guard let identityType = router.context.identityType else {
-      return router.documentSelection()
-    }
+  @MainActor
+  func primaryAction() async {
+    do {
+      guard let caseId = router.context.caseId else {
+        throw EIDRequestError.missingCaseId
+      }
 
-    return router.close()
+      try await startOnlineSessionUseCase.execute(for: caseId)
+      router.avIdentityCheck()
+    } catch {
+    }
   }
 
   func close() {
@@ -23,4 +30,6 @@ class WalletPairingViewModel {
   // MARK: Private
 
   private let router: EIDRequestInternalRoutes
+
+  @Injected(\.startOnlineSessionUseCase) private var startOnlineSessionUseCase: StartOnlineSessionUseCaseProtocol
 }

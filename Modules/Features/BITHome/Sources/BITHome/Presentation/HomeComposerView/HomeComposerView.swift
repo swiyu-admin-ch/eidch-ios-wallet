@@ -22,8 +22,17 @@ struct HomeComposerView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
+    case content = "homeContent"
     case scanButton
     case menuButton
+    case credential
+  }
+
+  enum AccessibilityPriority: Double {
+    case x1 = 100
+    case x2 = 80
+    case x3 = 50
+    case x4 = 30
   }
 
   var body: some View {
@@ -47,6 +56,8 @@ struct HomeComposerView: View {
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModels(with: scheme.rawValue)
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
 
     NavigationLink(destination: PrivacyView(), isActive: $viewModel.isSecurityPresented) {
       EmptyView()
@@ -69,8 +80,9 @@ struct HomeComposerView: View {
 
   @StateObject private var viewModel: HomeViewModel
   @Environment(\.sizeCategory) private var sizeCategory
-  @AccessibilityFocusState
-  private var focus: FocusableElement?
+  @AccessibilityFocusState private var focus: FocusableElement?
+
+  @Injected(\.isEIDRequestFeatureEnabled) private var isEIDRequestFeatureEnabled: Bool
 
   private let router: HomeRouterRoutes
 
@@ -129,14 +141,14 @@ extension HomeComposerView {
     ViewThatFits(in: .vertical) {
       VStack {
         Spacer()
-        CredentialsEmptyStateView(betaIdAction: viewModel.openBetaId, eIDRequestAction: viewModel.openEIDRequest)
+        credentialEmptyStateView()
           .frame(maxWidth: .infinity)
           .padding(.horizontal, .x6)
         Spacer()
       }
 
       ScrollView {
-        CredentialsEmptyStateView(betaIdAction: viewModel.openBetaId, eIDRequestAction: viewModel.openEIDRequest)
+        credentialEmptyStateView()
           .frame(maxWidth: .infinity)
           .padding(.horizontal, .x6)
       }
@@ -238,7 +250,54 @@ extension HomeComposerView {
     ForEach(viewModel.credentialViewModels) { credentialViewModel in
       Button(action: { viewModel.openDetail(for: credentialViewModel.credential) }, label: {
         CredentialCell(credentialViewModel)
+          .accessibilityElement(children: .contain)
+          .accessibilityIdentifier(AccessibilityIdentifier.credential.rawValue)
       })
+    }
+  }
+
+  @ViewBuilder
+  private func credentialEmptyStateView() -> some View {
+    VStack(alignment: .center, spacing: .x1) {
+      if !sizeCategory.isAccessibilityCategory {
+        HomeAssets.emptyWalletIcon.swiftUIImage
+          .padding(.bottom, .x6)
+          .accessibilityHidden(true)
+      }
+
+      Text(L10n.tkGetBetaIdFirstUseTitle)
+        .multilineTextAlignment(.center)
+        .font(.custom.title3)
+        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .accessibilityLabel(L10n.tkGetBetaIdFirstUseTitle)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+
+      Text(L10n.tkGetBetaIdFirstUseBody)
+        .multilineTextAlignment(.center)
+        .font(.custom.body)
+        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        .accessibilityLabel(L10n.tkGetBetaIdFirstUseBody)
+        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
+
+      if isEIDRequestFeatureEnabled {
+        Button(action: viewModel.openEIDRequest, label: {
+          Label(L10n.tkMenuHomeListOrderEid, systemImage: "arrow.forward")
+        })
+        .buttonStyle(.filledSecondary)
+        .controlSize(.large)
+        .accessibilityLabel(L10n.tkMenuHomeListOrderEid)
+        .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
+        .padding(.top, .x6)
+      }
+
+      Button(action: viewModel.openBetaId, label: {
+        Label(title: { Text(L10n.tkGlobalGetbetaidPrimarybutton) }, icon: { Image(systemName: "arrow.forward") })
+      })
+      .buttonStyle(.filledSecondary)
+      .controlSize(.large)
+      .accessibilityLabel(L10n.tkGlobalGetbetaidPrimarybutton)
+      .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
+      .padding(.top, .x4)
     }
   }
 }

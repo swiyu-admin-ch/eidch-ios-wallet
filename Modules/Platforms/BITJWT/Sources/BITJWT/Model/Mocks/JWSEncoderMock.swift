@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITCrypto
+@testable import BITVault
 
 // MARK: - JWSEncoderMockError
 
@@ -14,23 +14,25 @@ enum JWSEncoderMockError: Error {
 
 class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
 
-  var encodeUsingReturnValue: Data? = nil
-  var receivedKeyPair: KeyPair? = nil
-  var receivedValue: U? = nil
-  var encodeUsingThrowableError: Error? = nil
-  var encodeReturnValue: JWS<U>? = nil
+  var encodeUsingReturnValue: Data?
+  var receivedKeyPair: VaultKeyPair?
+  var receivedValue: U?
+  var receivedAdditionalHeaderParameters: [String: Any] = [:]
+  var encodeUsingThrowableError: Error?
+  var encodeReturnValue: JWS<U>?
 
-  func encode(_ value: some JWTPayload & Encodable, using keyPair: KeyPair) throws -> Data {
+  func encode(_ value: some JWTPayload & Encodable, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data {
     if let encodeUsingThrowableError {
       throw encodeUsingThrowableError
     }
     receivedKeyPair = keyPair
     receivedValue = value as? U
+    receivedAdditionalHeaderParameters = additionalHeaderParameters
     guard let data = encodeUsingReturnValue else { throw JWSEncoderMockError.noReturnValue }
     return data
   }
 
-  func encode<T>(_ value: T, keyPair: KeyPair) throws -> JWS<T> where T: JWTPayload, T: Decodable, T: Encodable, T: Equatable {
+  func encode<T>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> where T: JWTPayload, T: Decodable, T: Encodable, T: Equatable {
     if let encodeUsingThrowableError {
       throw encodeUsingThrowableError
     }

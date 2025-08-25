@@ -20,12 +20,11 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withKeyPair_returnsCredential() throws {
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyPair: keyPairMock, selectedCredential: selectedCredentialMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: keyBindingMock, selectedCredential: selectedCredentialMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     XCTAssertEqual(credential.id, idMock)
     XCTAssertEqual(credential.status, .unknown)
-    XCTAssertEqual(credential.keyBindingIdentifier, Self.keyPairIdentifier)
-    XCTAssertEqual(credential.keyBindingAlgorithm, Self.keyPairAlgorithm)
+    XCTAssertEqual(credential.keyBinding, keyBindingMock)
     XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
     XCTAssertEqual(credential.rawCredentialData, rawCredentialDataMock)
     XCTAssertEqual(credential.format, formatMock)
@@ -42,12 +41,11 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutKeyPair_returnsCredential() throws {
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyPair: nil, selectedCredential: selectedCredentialMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, selectedCredential: selectedCredentialMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     XCTAssertEqual(credential.id, idMock)
     XCTAssertEqual(credential.status, .unknown)
-    XCTAssertNil(credential.keyBindingIdentifier)
-    XCTAssertNil(credential.keyBindingAlgorithm)
+    XCTAssertNil(credential.keyBinding)
     XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
     XCTAssertEqual(credential.rawCredentialData, rawCredentialDataMock)
     XCTAssertEqual(credential.format, formatMock)
@@ -65,7 +63,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   func testGenerate_withoutClaimsOrder_returnsCredentialWithMaxOrder() throws {
     let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutOrder.credentialConfigurationsSupported.first!.value
 
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyPair: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     let claims = credential.clusters.first?.claims ?? []
     assertClaims(claims, isOrderMaxValue: true)
@@ -74,7 +72,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   func testGenerate_withoutValueType_returnsCredentialWithStringValue() throws {
     let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutValueType.credentialConfigurationsSupported.first!.value
 
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyPair: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     let claims = credential.clusters.first?.claims ?? []
     assertClaims(claims, valueType: ValueType.string)
@@ -83,7 +81,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   func testGenerate_withoutClaimDisplay_returnsCredentialClaimWithoutDisplay() throws {
     let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first!.value
 
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyPair: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     let claims = credential.clusters.first?.claims ?? []
     for claim in claims {
@@ -94,16 +92,13 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   func testGenerate_withoutCredentialDisplay_returnsCredentialWithoutCredentialDisplays() throws {
     let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first!.value
 
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyPair: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, selectedCredential: selectedCredential, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     XCTAssertTrue(credential.displays.isEmpty)
   }
 
   // MARK: Private
 
-  private static let mockPrivateKey: SecKey = SecKeyTestsHelper.createPrivateKey()
-  private static let keyPairIdentifier = UUID()
-  private static let keyPairAlgorithm = "ES512"
   private static let credentialNameMock = "credentialName"
 
   private let formatMock = "vc+sd-jwt"
@@ -115,12 +110,13 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   private let idMock = UUID()
   private let issuerDisplaysMock = [CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)]
   private let rawCredentialDataMock = RawCredentialData()
+  private let keyBindingMock = CredentialKeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
 
-  private var keyPairMock = KeyPair(identifier: keyPairIdentifier, algorithm: keyPairAlgorithm, privateKey: mockPrivateKey)
   private var anyCredentialSpy = AnyCredentialSpy()
-  private var firstClaim = AnyClaimSpy()
-  private var secondClaim = AnyClaimSpy()
-  private var thirdClaim = AnyClaimSpy()
+  private var claim1 = AnyClaimSpy()
+  private var claim2 = AnyClaimSpy()
+  private var claim3 = AnyClaimSpy()
+  private var claim4 = AnyClaimSpy()
 
   private var generator = MetadataCredentialGenerator()
 
@@ -132,41 +128,55 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
     anyCredentialSpy.validUntil = validUntilMock
     anyCredentialSpy.raw = rawPayloadMock
 
-    firstClaim = AnyClaimSpy()
-    firstClaim.key = "$.lastName"
-    firstClaim.value = .string("lastName")
+    claim1 = AnyClaimSpy()
+    claim1.key = "$.lastName"
+    claim1.value = .string("lastName")
 
-    secondClaim = AnyClaimSpy()
-    secondClaim.key = "$.isOver18"
-    secondClaim.value = .bool(true)
+    claim2 = AnyClaimSpy()
+    claim2.key = "$.isOver18"
+    claim2.value = .bool(true)
 
-    thirdClaim = AnyClaimSpy()
-    thirdClaim.key = "$.height"
-    thirdClaim.value = .int(165)
+    claim3 = AnyClaimSpy()
+    claim3.key = "$.height"
+    claim3.value = .int(165)
 
-    anyCredentialSpy.claims = [firstClaim, secondClaim, thirdClaim]
+    claim4 = AnyClaimSpy()
+    claim4.key = "$.nullableClaim"
+    claim4.value = nil
+
+    anyCredentialSpy.claims = [claim1, claim2, claim3, claim4]
   }
 
   private func assertClaims(_ claims: [CredentialClaim], isOrderMaxValue: Bool = false, valueType: ValueType? = nil) {
     let locales = ["de-CH", "en-US"]
     let expectedClaims = [
       ExpectedClaim(
-        key: firstClaim.key,
-        value: firstClaim.value!.rawValue,
+        key: claim1.key,
+        value: claim1.value?.rawValue,
         valueType: valueType != nil ? valueType! : .string,
+        valueDisplayInfo: nil,
         order: isOrderMaxValue ? Int16.max : 1,
         locales: locales),
       ExpectedClaim(
-        key: secondClaim.key,
-        value: secondClaim.value!.rawValue,
+        key: claim2.key,
+        value: claim2.value?.rawValue,
         valueType: valueType != nil ? valueType! : .boolean,
+        valueDisplayInfo: nil,
         order: isOrderMaxValue ? Int16.max : 0,
         locales: locales),
       ExpectedClaim(
-        key: thirdClaim.key,
-        value: thirdClaim.value!.rawValue,
+        key: claim3.key,
+        value: claim3.value?.rawValue,
         valueType: valueType != nil ? valueType! : .string,
+        valueDisplayInfo: nil,
         order: isOrderMaxValue ? Int16.max : 2,
+        locales: locales),
+      ExpectedClaim(
+        key: claim4.key,
+        value: claim4.value?.rawValue,
+        valueType: valueType != nil ? valueType! : .string,
+        valueDisplayInfo: nil,
+        order: isOrderMaxValue ? Int16.max : 3,
         locales: locales),
     ]
     assertClaimsEqual(claims, expectedClaims: expectedClaims)

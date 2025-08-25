@@ -6,7 +6,7 @@ struct PepperService: PepperServiceProtocol {
 
   // MARK: Lifecycle
 
-  public init(
+  init(
     pepperKeyInitialVectorLength: Int = Container.shared.pepperKeyInitialVectorLength(),
     pepperRepository: PepperRepositoryProtocol = Container.shared.pepperRepository())
   {

@@ -10,7 +10,9 @@ extension CredentialEntity {
     id = credential.id
     setValues(from: credential)
 
-    clusters.append(objectsIn: credential.clusters.map(CredentialClaimClusterEntity.init))
+    let sortedClusters = credential.clusters.sorted(by: { $0.order < $1.order })
+    clusters.insert(contentsOf: sortedClusters.map(CredentialClaimClusterEntity.init), at: 0)
+    keyBinding = credential.keyBinding.flatMap(CredentialKeyBindingEntity.init)
     issuerDisplays.append(objectsIn: credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init))
     displays.append(objectsIn: credential.displays.map(CredentialDisplayEntity.init))
     rawCredentialData = credential.rawCredentialData.flatMap(RawCredentialDataEntity.init)
@@ -20,8 +22,6 @@ extension CredentialEntity {
 
   public func setValues(from credential: Credential) {
     status = credential.status.rawValue
-    keyBindingIdentifier = credential.keyBindingIdentifier
-    keyBindingAlgorithm = credential.keyBindingAlgorithm
     payload = credential.payload
     format = credential.format
     issuer = credential.issuer

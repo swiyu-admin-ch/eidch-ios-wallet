@@ -20,6 +20,7 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
     ocaBundle.captureBases.flatMap { base in
       let encodingByAttribute = getEncodingForAttributes(for: base, ocaBundle: ocaBundle)
       let dataSourcesByAttribute = getDataSourcesForAttributes(for: base, ocaBundle: ocaBundle)
+      let entryMappingByAttribute = getEntryMappingForAttributes(for: base, ocaBundle: ocaBundle)
       let formatByAttribute = getFormatForAttributes(for: base, ocaBundle: ocaBundle)
       let labelsByAttribute = getLabelsForAttributes(for: base, ocaBundle: ocaBundle)
       let orderByAttribute = getOrderForAttributes(for: base, ocaBundle: ocaBundle)
@@ -31,6 +32,7 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
           attributeType: attribute.value,
           characterEncoding: encodingByAttribute[attribute.key],
           dataSources: dataSourcesByAttribute[attribute.key] ?? [:],
+          entryMapping: entryMappingByAttribute[attribute.key] ?? [:],
           format: formatByAttribute[attribute.key],
           labels: labelsByAttribute[attribute.key] ?? [:],
           order: orderByAttribute[attribute.key],
@@ -69,6 +71,21 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
       analytics.log(AnalyticsEvent.duplicateInDataSourceOverlays)
     }
     return dataSources
+  }
+
+  private func getEntryMappingForAttributes(for base: any CaptureBase, ocaBundle: OcaBundle) -> [AttributeKey: [Locale: [EntryCode: String]]] {
+    let overlays = ocaBundle.getLatestOverlaysOfType(overlayType: .entry, digest: base.digest)
+      .compactMap { $0 as? any EntryOverlay }
+    let attributes = base.attributes.map(\.key)
+    let entries = attributes.compactGroupWith { attribute in
+      overlays.compactGroup(keySelector: \.language, valueTransform: { overlay in
+        overlay.attributeEntries[attribute]
+      })
+    }
+    if entries.first(where: { overlays.count > $0.value.count }) != nil {
+      analytics.log(AnalyticsEvent.duplicateInEntryOverlays)
+    }
+    return entries
   }
 
   private func getFormatForAttributes(for base: any CaptureBase, ocaBundle: OcaBundle) -> [AttributeKey: String] {
@@ -132,6 +149,7 @@ extension OverlayBundleAttributesGenerator {
   enum AnalyticsEvent: AnalyticsEventProtocol {
     case duplicateInCharacterEncodingOverlays
     case duplicateInDataSourceOverlays
+    case duplicateInEntryOverlays
     case duplicateInFormatOverlays
     case duplicateInLabelOverlays
     case duplicateInOrderOverlays

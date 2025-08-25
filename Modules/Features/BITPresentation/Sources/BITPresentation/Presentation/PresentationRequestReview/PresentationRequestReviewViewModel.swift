@@ -53,7 +53,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
     startDelayedLoadingMessageTask()
     do {
       try await submitPresentationUseCase.execute(context: context)
-      router.presentationResultState(with: .success(claims: credential.requestedClaims), context: context)
+      router.presentationResultState(with: .success(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)
     } catch {
       handleSubmitError(error)
     }
@@ -99,7 +99,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
     if let presentationError = error as? PresentationError {
       switch presentationError {
       case .invalidCredential:
-        router.presentationResultState(with: .invalidCredential(claims: credential.requestedClaims), context: context)
+        router.presentationResultState(with: .invalidCredential(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)
       case .processClosed:
         router.presentationResultState(with: .cancelled, context: context)
       default:

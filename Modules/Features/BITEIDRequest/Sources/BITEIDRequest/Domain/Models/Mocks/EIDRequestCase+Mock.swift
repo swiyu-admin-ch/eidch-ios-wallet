@@ -13,6 +13,8 @@ extension EIDRequestCase: Mockable {
     static let sampleAVReadyNotVerified: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-not-verified", bundle: Bundle.module)
     static let sampleAVReadyNoOnlineSessionTimeout: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-without-online-session-timeout", bundle: Bundle.module)
     static let sampleWithoutState: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-without-state", bundle: Bundle.module)
+
+    static let validSamples: [EIDRequestCase] = [sampleInQueue, sampleAVReady, sampleWithoutState, sampleAVReadyNotVerified, sampleInQueueNotVerified]
   }
 }
 #endif

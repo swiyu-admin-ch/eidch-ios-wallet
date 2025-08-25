@@ -6,6 +6,7 @@ import XCTest
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
+@testable import BITVault
 
 // swiftlint: disable force_unwrapping implicitly_unwrapped_optional
 
@@ -16,8 +17,6 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-
-    mockKeyPair = KeyPair(identifier: mockIdentifier, algorithm: mockAlgorithm, privateKey: mockPrivateKey)
 
     sha256HasherSpy = HashableSpy()
     jwsEncoderMock = JWSEncoderMock()
@@ -82,16 +81,12 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   private static let mockJwtString = "jwtString"
   private static let mockJwtData = mockJwtString.data(using: .utf8)!
 
-  private let mockPrivateKey: SecKey = SecKeyTestsHelper.createPrivateKey()
-  private let mockIdentifier = UUID()
-  private let mockAlgorithm = "ES256"
-  private let mockReason = "mockReason"
+  private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   private var jwsEncoderMock: JWSEncoderMock<KeyBindingPayload>!
   private var generator: VcSdJwtVpTokenGenerator!
   private var sha256HasherSpy = HashableSpy()
   private var mockCredential = VcSdJwtPayload.Mock.sample
-  private var mockKeyPair: KeyPair!
 
   private func asserts(_ vpToken: VpToken, nbOfDisclosures: Int, hasKeyBinding: Bool) {
     XCTAssertFalse(vpToken.isEmpty)

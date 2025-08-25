@@ -13,14 +13,17 @@ public struct EncryptionManager: EncryptionManagerProtocol {
   // MARK: Public
 
   public func encrypt(data: Data, withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> Data {
-    let key = try keyManager.getPublicKey(withIdentifier: identifier, algorithm: algorithm, query: query)
+    let keyPair = try keyManager.getKeyPair(withIdentifier: identifier, algorithm: algorithm, query: query)
+    guard let publicKey = keyPair.publicKey else {
+      throw VaultError.publicKeyRetrievalError
+    }
 
-    if !SecKeyIsAlgorithmSupported(key, .encrypt, algorithm.encryptionAlgorithm) {
+    if !SecKeyIsAlgorithmSupported(publicKey, .encrypt, algorithm.encryptionAlgorithm) {
       throw VaultError.algorithmNotSupported
     }
 
     var error: Unmanaged<CFError>?
-    guard let encryptedData = SecKeyCreateEncryptedData(key, algorithm.encryptionAlgorithm, data as CFData, &error) else {
+    guard let encryptedData = SecKeyCreateEncryptedData(publicKey, algorithm.encryptionAlgorithm, data as CFData, &error) else {
       let errorDescription = (error?.takeRetainedValue() as Error?)?.localizedDescription ?? "Unknown error"
       throw VaultError.encryptionError(errorDescription)
     }
@@ -29,14 +32,14 @@ public struct EncryptionManager: EncryptionManagerProtocol {
   }
 
   public func decrypt(data: Data, withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> Data {
-    let key = try keyManager.getPrivateKey(withIdentifier: identifier, algorithm: algorithm, query: query)
+    let keyPair = try keyManager.getKeyPair(withIdentifier: identifier, algorithm: algorithm, query: query)
 
-    if !SecKeyIsAlgorithmSupported(key, .decrypt, algorithm.encryptionAlgorithm) {
+    if !SecKeyIsAlgorithmSupported(keyPair.privateKey, .decrypt, algorithm.encryptionAlgorithm) {
       throw VaultError.algorithmNotSupported
     }
 
     var error: Unmanaged<CFError>?
-    guard let decryptedData = SecKeyCreateDecryptedData(key, algorithm.encryptionAlgorithm, data as CFData, &error) else {
+    guard let decryptedData = SecKeyCreateDecryptedData(keyPair.privateKey, algorithm.encryptionAlgorithm, data as CFData, &error) else {
       let errorDescription = (error?.takeRetainedValue() as Error?)?.localizedDescription ?? "Unknown error"
       throw VaultError.decryptionError(errorDescription)
     }

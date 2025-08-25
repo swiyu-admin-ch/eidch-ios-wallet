@@ -54,6 +54,7 @@ extension LegalRepresentantQRCodeView {
     VStack(spacing: .x6) {
       VStack {
         Assets.emergency.swiftUIImage
+          .accessibilityHidden(true)
         Text(L10n.tkGetEidGuardianConsentQrError)
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
           .font(.custom.body)

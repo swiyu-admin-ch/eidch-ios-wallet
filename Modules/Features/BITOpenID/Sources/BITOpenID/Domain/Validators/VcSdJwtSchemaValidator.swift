@@ -6,7 +6,7 @@ import Spyable
 
 @Spyable
 public protocol VcSdJwtSchemaValidatorProtocol {
-  func validate(_ claims: [String: Any], schema: Data) throws -> Bool
+  func validate(_ claims: [String: Any?], schema: Data) throws -> Bool
 }
 
 // MARK: - VcSdJwtSchemaValidator
@@ -15,7 +15,7 @@ public struct VcSdJwtSchemaValidator: VcSdJwtSchemaValidatorProtocol {
 
   // MARK: Public
 
-  public func validate(_ claims: [String: Any], schema: Data) throws -> Bool {
+  public func validate(_ claims: [String: Any?], schema: Data) throws -> Bool {
     guard try conformsTo202012MetaSchema(schema) && conformsToVcSdJwtSchema(schema) else {
       return false
     }

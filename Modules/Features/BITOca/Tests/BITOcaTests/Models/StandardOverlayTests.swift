@@ -8,24 +8,34 @@ final class StandardOverlayTests: XCTestCase {
 
   func testDecode_dataURLStart_returnsOverlayWithDataURL() throws {
     for urn in Self.validDataURLURNs {
-      let jsonData = createJson(for: [Self.attributeMock: urn])
-
-      guard let overlay = try? JSONDecoder().decode(StandardOverlay1x0.self, from: jsonData) else {
-        return XCTFail("Failed to decode: \(String(data: jsonData, encoding: .utf8)!)")
-      }
+      let overlay = createOverlay(for: [Self.attributeMock: urn])
 
       XCTAssertEqual(overlay.attributeStandards.count, 1)
       XCTAssertEqual(overlay.attributeStandards[Self.attributeMock], .dataURLScheme)
     }
   }
 
-  func testDecode_unknownURN_returnsOverlayWithUnknown() throws {
-    let unknownURN = "urn:ietf:rfc:XXXX"
-    let jsonData = createJson(for: [Self.attributeMock: unknownURN])
+  func testDecode_Iso8601Start_returnsOverlayWithdateTimeIso8601() throws {
+    for urn in Self.validDateTimeIso8601URNs {
+      let overlay = createOverlay(for: [Self.attributeMock: urn])
 
-    guard let overlay = try? JSONDecoder().decode(StandardOverlay1x0.self, from: jsonData) else {
-      return XCTFail("Failed to decode: \(String(data: jsonData, encoding: .utf8)!)")
+      XCTAssertEqual(overlay.attributeStandards.count, 1)
+      XCTAssertEqual(overlay.attributeStandards[Self.attributeMock], .dateTimeIso8601)
     }
+  }
+
+  func testDecode_unixEpochStart_returnsOverlayWithdateTimeUnixEpoch() throws {
+    for urn in Self.validDateTimeUnixEpochURNs {
+      let overlay = createOverlay(for: [Self.attributeMock: urn])
+
+      XCTAssertEqual(overlay.attributeStandards.count, 1)
+      XCTAssertEqual(overlay.attributeStandards[Self.attributeMock], .dateTimeUnixEpoch)
+    }
+  }
+
+  func testDecode_unknownURN_returnsOverlayWithUnknown() {
+    let unknownURN = "urn:ietf:rfc:XXXX"
+    let overlay = createOverlay(for: [Self.attributeMock: unknownURN])
 
     XCTAssertEqual(overlay.attributeStandards.count, 1)
     XCTAssertEqual(overlay.attributeStandards[Self.attributeMock], .unknown(rawString: unknownURN))
@@ -42,11 +52,26 @@ final class StandardOverlayTests: XCTestCase {
     "urn:ietf:rfc:2397?+test",
     "urn:ietf:rfc:2397?+test?=test#test",
   ]
+  private static let validDateTimeIso8601URNs = [
+    "urn:iso:std:iso:8601",
+    "urn:iso:std:iso:8601:-1:en",
+    "urn:iso:std:iso:8601?+test?=test#test",
+  ]
+  private static let validDateTimeUnixEpochURNs = [
+    "urn:iso:std:iso-iec:9945",
+    "urn:iso:std:iso-iec-ieee:9945",
+    "urn:iso:std:iso-iec:9945:-1:en",
+    "urn:iso:std:iso-iec-ieee:9945:-1:en",
+    "urn:iso:std:iso-iec:9945?+test?=test#test",
+    "urn:iso:std:iso-iec-ieee:9945?+test?=test#test",
+  ]
 
-  private func createJson(for attributes: [String: String]) -> Data {
+  private func createOverlay(for attributes: [String: String]) -> StandardOverlay1x0 {
     let attributesData = try! JSONSerialization.data(withJSONObject: attributes)
     let attributesString = String(data: attributesData, encoding: .utf8)!
-    return "{\"capture_base\": \"captureBase\",\"type\": \"spec/overlays/standard/1.0\", \"attr_standards\": \(attributesString)}".data(using: .utf8)!
+    let jsonData = "{\"capture_base\": \"captureBase\",\"type\": \"spec/overlays/standard/1.0\", \"attr_standards\": \(attributesString)}".data(using: .utf8)!
+
+    return try! JSONDecoder().decode(StandardOverlay1x0.self, from: jsonData)
   }
 }
 

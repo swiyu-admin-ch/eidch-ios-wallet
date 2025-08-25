@@ -13,7 +13,7 @@ extension InvitationType {
     case .credentialOffer:
       ["openid-credential-offer", "swiyu"]
     case .presentation:
-      ["https"]
+      ["https", "openid4vp", "swiyu-verify"]
     }
   }
 }

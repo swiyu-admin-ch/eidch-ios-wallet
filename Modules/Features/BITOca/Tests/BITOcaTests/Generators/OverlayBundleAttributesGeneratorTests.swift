@@ -71,6 +71,20 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     XCTAssertTrue(otherAttribute.dataSources.isEmpty)
   }
 
+  func testGenerate_entries_returnsAttributeWithEntries() throws {
+    let code = "code"
+    let entries = ["en": [code: "entry_en"], "de": [code: "entry_de"]]
+    let overlays = createEntryOverlays(for: entries, code: code)
+    let ocaBundle = try OcaBundle(captureBases: [rootCaptureBaseMock], overlays: overlays)
+
+    let attributes = generator.generate(from: ocaBundle)
+
+    let attribute = attributes.first { $0.name == Self.attributeMock }!
+    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    XCTAssertEqual(attribute.entryMapping, entries)
+    XCTAssertTrue(otherAttribute.entryMapping.isEmpty)
+  }
+
   func testGenerate_format_returnsAttributeWithFormat() throws {
     let overlay = FormatOverlay1x0(captureBaseDigest: Self.rootCaptureBaseDigest, attributeFormats: [Self.attributeMock: "format"])
     let ocaBundle = try OcaBundle(captureBases: [rootCaptureBaseMock], overlays: [overlay])
@@ -154,6 +168,14 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     dataSources.map { format, jsonPath in
       DataSourceOverlay1x0(captureBaseDigest: Self.rootCaptureBaseDigest, format: format, attributeSources: [Self.attributeMock: jsonPath])
     }
+  }
+
+  private func createEntryOverlays(for entries: [BITOca.Locale: [EntryCode: String]], code: String) -> [any Overlay] {
+    let entryCodeOverlay = EntryCodeOverlay1x0(captureBaseDigest: Self.rootCaptureBaseDigest, attributeEntryCodes: [Self.attributeMock: [code]])
+    let overlays = entries.map { locale, entryMap in
+      EntryOverlay1x0(captureBaseDigest: Self.rootCaptureBaseDigest, language: locale, attributeEntries: [Self.attributeMock: entryMap])
+    }
+    return overlays + [entryCodeOverlay]
   }
 
   private func createLabelOverlays(for labels: [String: String]) -> [LabelOverlay1x0] {

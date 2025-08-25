@@ -1,5 +1,6 @@
 import BITCore
 import BITJWT
+import BITVault
 import Foundation
 import OSLog
 
@@ -67,11 +68,18 @@ extension CredentialMetadata {
       }
     }
 
+    public var keyAttestationRequirements: KeyAttestationRequirements? {
+      switch self {
+      case .jwt(let type): type.keyAttestationRequirements
+      }
+    }
+
     // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
       case jwt
     }
+
   }
 
   public protocol ProofTypeProcotol: Decodable {
@@ -91,16 +99,26 @@ extension CredentialMetadata {
         throw AnyCredentialConfigurationSupportedError.invalidProofType
       }
       supportedAlgorithms = algorithms
+      keyAttestationRequirements = try container.decodeIfPresent(KeyAttestationRequirements.self, forKey: .keyAttestationRequirements)
     }
 
     // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
       case supportedAlgorithms = "proof_signing_alg_values_supported"
+      case keyAttestationRequirements = "key_attestations_required"
     }
 
     let supportedAlgorithms: [JWTAlgorithm]
+    let keyAttestationRequirements: KeyAttestationRequirements?
+  }
 
+  public struct KeyAttestationRequirements: Decodable, Equatable {
+    enum CodingKeys: String, CodingKey {
+      case keyStorage = "key_storage"
+    }
+
+    public let keyStorage: [KeyStorageSecurityLevel]
   }
 
   public enum CryptographicBindingMethod: String {
@@ -181,11 +199,11 @@ extension CredentialMetadata {
     // MARK: Lifecycle
 
     init(from decoder: Decoder) throws {
-      let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
+      let container = try decoder.container(keyedBy: DynamicCodingKey.self)
       var tempArray = [Claim]()
 
       for key in container.allKeys {
-        guard let key = DynamicCodingKeys(stringValue: key.stringValue) else { continue }
+        guard let key = DynamicCodingKey(stringValue: key.stringValue) else { continue }
         let decodedObject = try container.decode(Claim.self, forKey: key)
         tempArray.append(decodedObject)
       }
@@ -196,21 +214,6 @@ extension CredentialMetadata {
     // MARK: Internal
 
     var claims: [Claim]
-
-    // MARK: Private
-
-    private struct DynamicCodingKeys: CodingKey {
-      var intValue: Int?
-
-      init?(intValue: Int) {
-        nil
-      }
-
-      var stringValue: String
-      init?(stringValue: String) {
-        self.stringValue = stringValue
-      }
-    }
   }
 }
 

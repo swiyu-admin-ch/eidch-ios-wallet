@@ -29,12 +29,19 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.typeMetadata(url: url))
   }
 
-  func fetchMetadata(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata> {
-    try await networkService.request(OpenIDEndpoint.metadata(fromIssuerUrl: issuerUrl))
+  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialMetadataResponse {
+    let response: NetworkResponse<CredentialMetadata> = try await networkService.request(OpenIDEndpoint.metadata(fromIssuerUrl: issuerUrl))
+    return CredentialMetadataResponse(metadata: response.object, raw: response.data)
   }
 
   func fetchOpenIdConfiguration(from issuerURL: URL) async throws -> OpenIdConfiguration {
-    try await networkService.request(OpenIDEndpoint.openIdConfiguration(issuerURL: issuerURL))
+    do {
+      return try await networkService.request(OpenIDEndpoint.openIdConfiguration(issuerURL: issuerURL))
+    } catch let error as NetworkError where error.status == .notFound {
+      return try await networkService.request(OpenIDEndpoint.fallbackOpenIdConfiguration(issuerUrl: issuerURL))
+    } catch {
+      throw error
+    }
   }
 
   func fetchIssuerPublicKeyInfo(from jwksUrl: URL) async throws -> PublicKeyInfo {

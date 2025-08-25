@@ -53,7 +53,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.state, .loading)
     XCTAssertFalse(viewModel.showLoadingMessage)
     XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
-    XCTAssertEqual(router.calledPresentationResultState, .success(claims: viewModel.credential.requestedClaims))
+    XCTAssertEqual(router.calledPresentationResultState, .success(claims: viewModel.credential.requestedClusteredClaims.flatMap(\.claims)))
     XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }
 
@@ -76,7 +76,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .result)
     XCTAssertFalse(viewModel.showLoadingMessage)
-    XCTAssertEqual(router.calledPresentationResultState, .invalidCredential(claims: viewModel.credential.requestedClaims))
+    XCTAssertEqual(router.calledPresentationResultState, .invalidCredential(claims: viewModel.credential.requestedClusteredClaims.flatMap(\.claims)))
     XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
     XCTAssertFalse(denyPresentationUseCase.executeRequestObjectErrorCalled)
   }

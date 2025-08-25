@@ -19,7 +19,7 @@ final class HasDevicePinUseCaseTests: XCTestCase {
   func testExecute_argumentsArePassed() {
     policyValidatorSpy.validatePolicyContextReturnValue = true
 
-    let _ = useCase.execute()
+    _ = useCase.execute()
 
     XCTAssertEqual(policyValidatorSpy.validatePolicyContextReceivedArguments?.policy, .deviceOwnerAuthentication)
   }

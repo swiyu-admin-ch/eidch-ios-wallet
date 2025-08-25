@@ -4,57 +4,103 @@ import XCTest
 @testable import BITInvitation
 @testable import BITTheming
 
-class CredentialOfferScreen: Screen {
-
-  // MARK: Lifecycle
-
-  init(app: XCUIApplication) {
-    self.app = app
-    acceptButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.acceptButton.rawValue]
-    _ = acceptButton.waitForExistence(timeout: .defaultTimeout)
-    declineButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.declineButton.rawValue]
-    card = app.images[CredentialOfferView.AccessibilityIdentifier.card.rawValue]
-    issuer = app.staticTexts[ActorHeaderView.AccessibilityIdentifier.title.rawValue]
-    issuerImage = app.images[ActorHeaderView.AccessibilityIdentifier.image.rawValue]
-    verifiedStatus = app.staticTexts[ActorHeaderView.AccessibilityIdentifier.verifiedStatus.rawValue]
-    confirmDeclineButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.confirmDeclineButton.rawValue]
-    cancelDeclineButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.cancelDeclineButton.rawValue]
-    offerPhoto = app.images["Photo"]
-    offerDob = app.staticTexts["Date of birth"]
-    offerFirstName = app.staticTexts["First name"]
-    offerLastName = app.staticTexts["Last name"]
-    wrongDataButton = app.buttons[IconKeyValueCell.AccessibilityIdentifier.button.rawValue]
-    bottomAcceptButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.bottomAcceptButton.rawValue]
-    bottomDeclineButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.bottomDeclineButton.rawValue]
-  }
+struct CredentialOfferScreen: Screen {
 
   // MARK: Internal
 
   let app: XCUIApplication
-  let acceptButton: XCUIElement
-  let declineButton: XCUIElement
-  let card: XCUIElement
-  let issuer: XCUIElement
-  let verifiedStatus: XCUIElement
-  let issuerImage: XCUIElement
-  let confirmDeclineButton: XCUIElement
-  let cancelDeclineButton: XCUIElement
-  let offerPhoto: XCUIElement
-  let wrongDataButton: XCUIElement
-  let bottomAcceptButton: XCUIElement
-  let bottomDeclineButton: XCUIElement
-  let offerDob: XCUIElement
-  let offerFirstName: XCUIElement
-  let offerLastName: XCUIElement
 
-  func assertDisplayed() {
-    XCTAssert(issuer.exists)
+  @discardableResult
+  func assertCredentialOfferScreen() -> CredentialOfferScreen {
+    app.assertElementDisplayed(CredentialOfferView.AccessibilityIdentifier.content.rawValue)
+    return self
   }
 
-  func assertIssuerDisplayed() {
-    XCTAssertTrue(issuer.exists)
+  @discardableResult
+  func assertIssuerHeaderDisplayed() -> CredentialOfferScreen {
+    let actorHeaderView = app.otherElements[ActorHeaderView.AccessibilityIdentifier.content.rawValue]
+    let issuerImage = app.images[ActorHeaderView.AccessibilityIdentifier.image.rawValue]
+
+    XCTAssertTrue(actorHeaderView.waitForExistence(timeout: .defaultTimeout))
     XCTAssertTrue(issuerImage.exists)
-    XCTAssertTrue(verifiedStatus.exists)
+    return self
   }
 
+  @discardableResult
+  func assertCredentialCardDisplayed() -> CredentialOfferScreen {
+    app.assertElementDisplayed(CredentialOfferView.AccessibilityIdentifier.card.rawValue)
+    return self
+  }
+
+  @discardableResult
+  func assertClaimsListDisplayed() -> CredentialOfferScreen {
+    app.assertElementDisplayed(CredentialOfferView.AccessibilityIdentifier.claimsList.rawValue)
+    return self
+  }
+
+  @discardableResult
+  func assertConfirmDeclineDisplayed() -> CredentialOfferScreen {
+    app.assertElementDisplayed(CredentialOfferView.AccessibilityIdentifier.confirmDeclineContent.rawValue)
+    return self
+  }
+
+  func tapAccept() -> HomeScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.acceptButton.rawValue)
+    return HomeScreen(app: app)
+  }
+
+  func scrollToAccept() -> CredentialOfferScreen {
+    let acceptButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.acceptButton.rawValue]
+    scrollToElement(acceptButton, direction: .up)
+    return self
+  }
+
+  func tapDecline() -> CredentialOfferScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.declineButton.rawValue)
+    return self
+  }
+
+  func scrollToWrongData() -> CredentialOfferScreen {
+    let button = app.buttons[CredentialOfferView.AccessibilityIdentifier.wrongData.rawValue]
+    scrollToElement(button)
+    return self
+  }
+
+  func tapWrongData() -> CredentialOfferWrongDataScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.wrongData.rawValue)
+    return CredentialOfferWrongDataScreen(app: app)
+  }
+
+  func scrollToBottomDecline() -> CredentialOfferScreen {
+    let button = app.buttons[CredentialOfferView.AccessibilityIdentifier.bottomDeclineButton.rawValue]
+    scrollToElement(button)
+    return self
+  }
+
+  func tapBottomAccept() -> HomeScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.bottomAcceptButton.rawValue)
+    return HomeScreen(app: app)
+  }
+
+  func tapBottomDecline() -> CredentialOfferScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.bottomDeclineButton.rawValue)
+    return self
+  }
+
+  func tapConfirmDecline() -> HomeScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.confirmDeclineButton.rawValue)
+    return HomeScreen(app: app)
+  }
+
+  func tapCancelDecline() -> CredentialOfferScreen {
+    app.tap(CredentialOfferView.AccessibilityIdentifier.cancelDeclineButton.rawValue)
+    return self
+  }
+
+  // MARK: Private
+
+  private func scrollToElement(_ element: XCUIElement, direction: XCUIElement.ScrollDirection = .down) {
+    let scrollView = app.scrollViews.element(boundBy: 0)
+    scrollView.scrollToElement(element, direction: direction, velocity: .fast)
+  }
 }

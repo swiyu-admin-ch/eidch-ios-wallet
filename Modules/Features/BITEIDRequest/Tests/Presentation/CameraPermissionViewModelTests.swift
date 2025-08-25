@@ -12,7 +12,7 @@ final class CameraPermissionViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.primary.isEmpty)
     XCTAssertFalse(viewModel.secondary.isEmpty)
     XCTAssertFalse(viewModel.buttonText.isEmpty)
-    XCTAssertFalse(mockRouter.mrzScannerCalled)
+    XCTAssertFalse(mockRouter.scanDocumentCalled)
   }
 
   @MainActor
@@ -21,14 +21,14 @@ final class CameraPermissionViewModelTests: XCTestCase {
 
     await viewModel.allowCamera()
 
-    XCTAssertTrue(mockRouter.mrzScannerCalled)
+    XCTAssertTrue(mockRouter.scanDocumentCalled)
   }
 
   @MainActor
   func testInitShortcut() async {
     let viewModel = CameraPermissionViewModel(initialState: .denied, router: mockRouter)
 
-    XCTAssertFalse(mockRouter.mrzScannerCalled)
+    XCTAssertFalse(mockRouter.scanDocumentCalled)
     XCTAssertFalse(viewModel.primary.isEmpty)
     XCTAssertFalse(viewModel.secondary.isEmpty)
     XCTAssertFalse(viewModel.buttonText.isEmpty)
@@ -40,7 +40,7 @@ final class CameraPermissionViewModelTests: XCTestCase {
 
     viewModel.buttonAction()
 
-    XCTAssertTrue(mockRouter.mrzScannerCalled)
+    XCTAssertTrue(mockRouter.scanDocumentCalled)
   }
 
   @MainActor
@@ -62,7 +62,7 @@ final class CameraPermissionViewModelTests: XCTestCase {
     await viewModel.allowCamera()
 
     await fulfillment(of: [expectationPresented, expectationFinished], timeout: 2)
-    XCTAssertTrue(mockRouter.mrzScannerCalled)
+    XCTAssertTrue(mockRouter.scanDocumentCalled)
   }
 
   @MainActor

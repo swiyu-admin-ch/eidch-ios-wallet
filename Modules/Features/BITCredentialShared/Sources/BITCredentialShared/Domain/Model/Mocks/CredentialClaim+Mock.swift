@@ -5,7 +5,9 @@ import Foundation
 extension CredentialClaim {
 
   struct Mock {
-    static var array: [CredentialClaim] = [CredentialClaim(key: "key1", value: "value1"), CredentialClaim(key: "key2", value: "value2")]
+    static var noDisplays = CredentialClaim(key: "key1", value: "value1")
+    static var withDisplays = CredentialClaim(key: "key2", value: "value2", displays: CredentialClaimDisplay.Mock.array)
+    static var array: [CredentialClaim] = [noDisplays, withDisplays]
   }
 
 }

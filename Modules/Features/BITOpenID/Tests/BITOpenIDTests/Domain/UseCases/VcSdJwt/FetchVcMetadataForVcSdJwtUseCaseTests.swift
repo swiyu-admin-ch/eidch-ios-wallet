@@ -32,7 +32,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   }
 
   func testExecute_success_argumentsPassed() async throws {
-    let _ = try await useCase.execute(for: vcSdJwtMock)
+    _ = try await useCase.execute(for: vcSdJwtMock)
 
     XCTAssertEqual(typeMetadataServiceSpy.fetchReceivedVc, vcSdJwtMock.payload)
     XCTAssertEqual(vcSchemaServiceSpy.fetchForReceivedTypeMetadata, typeMetadataMock)

@@ -6,7 +6,7 @@ struct SaltService: SaltServiceProtocol {
 
   // MARK: Lifecycle
 
-  public init(
+  init(
     appPinSaltLength: Int = Container.shared.appPinSaltLength(),
     saltRepository: SaltRepositoryProtocol = Container.shared.saltRepository())
   {
@@ -14,9 +14,9 @@ struct SaltService: SaltServiceProtocol {
     self.saltRepository = saltRepository
   }
 
-  // MARK: Public
+  // MARK: Internal
 
-  public func generateSalt() throws -> Data {
+  func generateSalt() throws -> Data {
     let saltData = try Data.random(length: appPinSaltLength)
     try saltRepository.setPinSalt(saltData)
     return saltData

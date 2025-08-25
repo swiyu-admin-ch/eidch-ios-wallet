@@ -17,13 +17,7 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   // MARK: Internal
 
   func execute(for context: FetchCredentialContext) async throws -> AnyCredential {
-    var proof: VcSdJwtCredentialRequestBody.Proof? = nil
-    if let keyPair = context.keyPair {
-      let payload = JWTProofPayload(audience: context.credentialIssuer, nonce: context.accessToken.cNonce, issuedAt: UInt64(context.createdAt.timeIntervalSince1970))
-      let jwtData = try jwsEncoder.encode(payload, using: keyPair)
-      guard let rawJws = String(data: jwtData, encoding: .utf8) else { throw FetchVcSdJwtCredentialUseCaseError.invalidRawJWS }
-      proof = VcSdJwtCredentialRequestBody.Proof(jwt: rawJws)
-    }
+    let proof = try createProof(using: context)
 
     let credentialBody = VcSdJwtCredentialRequestBody(
       format: context.format,
@@ -60,5 +54,24 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
   @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
+
+  private func createProof(using context: FetchCredentialContext) throws -> VcSdJwtCredentialRequestBody.Proof? {
+    guard let holderBindingContext = context.holderBindingContext else { return nil }
+
+    let payload = JWTProofPayload(
+      audience: context.credentialIssuer,
+      nonce: context.accessToken.cNonce,
+      issuedAt: UInt64(context.createdAt.timeIntervalSince1970))
+    let additionalHeaderParameters: [String: Any] = holderBindingContext.keyAttestationJWS
+      .map { [JWTProofPayload.AdditionalHeaderParameter.keyAttestation.rawValue: $0] } ?? [:]
+    let jwtData = try jwsEncoder.encode(
+      payload,
+      using: holderBindingContext.keyPair,
+      additionalHeaderParameters: additionalHeaderParameters)
+
+    guard let rawJws = String(data: jwtData, encoding: .utf8) else { throw FetchVcSdJwtCredentialUseCaseError.invalidRawJWS }
+
+    return VcSdJwtCredentialRequestBody.Proof(jwt: rawJws)
+  }
 
 }

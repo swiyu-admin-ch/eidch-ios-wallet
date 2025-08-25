@@ -74,6 +74,6 @@ struct ToggleMenuCell: View {
   @Environment(\.menuCellDivider) private var hasDivider: Bool
 
   private var text: String
-  private var subtitle: String? = nil
+  private var subtitle: String?
   private var onTap: (() -> Void)?
 }

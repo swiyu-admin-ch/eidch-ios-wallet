@@ -20,15 +20,29 @@ public struct CompatibleCredential: Identifiable {
 
   public let id: UUID
 
-  public var requestedClaims: [CredentialClaim] {
-    let clusterDisplayClaims = credential.clusters.flatMap(\.claims)
-    return clusterDisplayClaims.filter { claim in requestedFields.contains { $0.key == claim.key } }
+  public var requestedClusteredClaims: [CredentialClaimCluster] {
+    credential.clusters.compactMap {
+      filterClusterClaims($0, requestedFields: requestedFields)
+    }
   }
 
   // MARK: Internal
 
   let credential: Credential
   let requestedFields: [PresentationField]
+
+  // MARK: Private
+
+  private func filterClusterClaims(_ cluster: CredentialClaimCluster, requestedFields: [PresentationField]) -> CredentialClaimCluster? {
+    let requestedClaims = cluster.claims.filter { claim in
+      requestedFields.contains { $0.key == claim.key }
+    }
+    let requestedChildClusters = cluster.childClusters.compactMap { childCluster in
+      filterClusterClaims(childCluster, requestedFields: requestedFields)
+    }
+    guard !requestedClaims.isEmpty || !requestedChildClusters.isEmpty else { return nil }
+    return CredentialClaimCluster(id: cluster.id, order: cluster.order, claims: requestedClaims, childClusters: requestedChildClusters, displays: cluster.displays)
+  }
 
 }
 

@@ -50,7 +50,7 @@ final class OpenIDEndpointTests: XCTestCase {
 
   func testOpenIdConfiguration() throws {
     let baseUrl = "https://example.com"
-    let expectedEndpoint = ".well-known/openid-configuration"
+    let expectedEndpoint = ".well-known/oauth-authorization-server"
 
     guard let url = URL(string: baseUrl) else {
       XCTFail("Error while trying to build URL")

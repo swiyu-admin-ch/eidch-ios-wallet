@@ -10,45 +10,44 @@ public struct KeyManager: KeyManagerProtocol {
 
   // MARK: Public
 
-  public func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOption, query: Query?) throws -> SecKey {
+  public func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOptions, query: Query?) throws -> VaultKeyPair {
     guard let dataIdentifier = identifier.data(using: .utf8) else {
       throw VaultError.identifierCannotBeCasted
     }
 
+    var privateKeyAttributes: [String: Any] = [
+      kSecAttrIsPermanent as String: options.contains(.savePermanently),
+      kSecAttrApplicationTag as String: dataIdentifier,
+    ]
+
     var defaultQuery: [String: Any] = [
       kSecAttrKeyType as String: algorithm.keyType,
       kSecAttrKeySizeInBits as String: algorithm.size,
-      kSecPrivateKeyAttrs as String: [
-        kSecAttrIsPermanent as String: options.contains(.savePermanently),
-        kSecAttrApplicationTag as String: dataIdentifier,
-      ],
+      kSecPrivateKeyAttrs as String: privateKeyAttributes,
     ]
 
     if options.contains(.secureEnclave) && algorithm.canBeUsedForSecureEnclave {
       defaultQuery[kSecAttrTokenID as String] = kSecAttrTokenIDSecureEnclave
-
-      var privateKeyAttributes = defaultQuery[kSecPrivateKeyAttrs as String] as? [String: Any]
-      privateKeyAttributes?[kSecAttrAccessControl as String] = try SecAccessControl.create()
-
+      privateKeyAttributes[kSecAttrAccessControl as String] = try SecAccessControl.create()
       defaultQuery[kSecPrivateKeyAttrs as String] = privateKeyAttributes
     }
 
-    var userQuery = query ?? defaultQuery
-    userQuery.mergeWith(defaultQuery)
+    var finalQuery = query ?? defaultQuery
+    finalQuery.mergeWith(defaultQuery)
 
     var error: Unmanaged<CFError>?
-
-    guard let privateKey = SecKeyCreateRandomKey(userQuery as CFDictionary, &error) else {
+    guard let privateKey = SecKeyCreateRandomKey(finalQuery as CFDictionary, &error) else {
       if let keyGenError = error?.takeRetainedValue() {
-        let diagnostic = DiagnosticErrorHelper.diagnostic(for: userQuery, error: keyGenError)
+        let diagnostic = DiagnosticErrorHelper.diagnostic(for: finalQuery, error: keyGenError)
         throw VaultError.keyGenerationError(reason: diagnostic)
       }
       throw VaultError.keyGenerationError(reason: "Unknown error during key generation.")
     }
-    return privateKey
+
+    return VaultKeyPair(identifier: identifier, privateKey: privateKey, algorithm: algorithm, options: options)
   }
 
-  public func getPrivateKey(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> SecKey {
+  public func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> VaultKeyPair {
     guard let dataIdentifier = identifier.data(using: .utf8) else {
       throw VaultError.identifierCannotBeCasted
     }
@@ -60,11 +59,11 @@ public struct KeyManager: KeyManagerProtocol {
       kSecReturnRef as String: true,
     ]
 
-    var userQuery = query ?? defaultQuery
-    userQuery.mergeWith(defaultQuery)
+    var finalQuery = query ?? defaultQuery
+    finalQuery.mergeWith(defaultQuery)
 
     var item: CFTypeRef?
-    let status = SecItemCopyMatching(userQuery as CFDictionary, &item)
+    let status = SecItemCopyMatching(finalQuery as CFDictionary, &item)
 
     guard status == errSecSuccess, item != nil else {
       throw VaultError.keyRetrievalError
@@ -72,8 +71,9 @@ public struct KeyManager: KeyManagerProtocol {
 
     // swiftlint:disable force_cast
     // Force cast disabled because we have to cast it this way at this point. a guard doesn't work unfortunately...
-    return item as! SecKey
+    let privateKey = item as! SecKey
     // swiftlint: enable force_cast
+    return VaultKeyPair(identifier: identifier, privateKey: privateKey, algorithm: algorithm)
   }
 
   public func deleteKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws {
@@ -93,16 +93,19 @@ public struct KeyManager: KeyManagerProtocol {
     }
   }
 
-  public func getPublicKey(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> SecKey {
-    let privateKey = try getPrivateKey(withIdentifier: identifier, algorithm: algorithm, query: query)
-    return try getPublicKey(for: privateKey)
-  }
-
-  public func getPublicKey(for privateKey: SecKey) throws -> SecKey {
+  public func getExternalRepresentation(of privateKey: SecKey) throws -> (rawPublicKey: Data, rawPrivateKey: Data) {
+    var error: Unmanaged<CFError>?
     guard let publicKey = SecKeyCopyPublicKey(privateKey) else {
       throw VaultError.publicKeyRetrievalError
     }
-    return publicKey
-  }
 
+    guard let rawPublicKey = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
+      throw VaultError.keyRetrievalError
+    }
+
+    guard let rawPrivateKey = SecKeyCopyExternalRepresentation(privateKey, &error) as Data? else {
+      throw VaultError.keyRetrievalError
+    }
+    return (rawPublicKey, rawPrivateKey)
+  }
 }

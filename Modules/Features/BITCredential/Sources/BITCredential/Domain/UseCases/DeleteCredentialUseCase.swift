@@ -16,7 +16,7 @@ public struct DeleteCredentialUseCase: DeleteCredentialUseCaseProtocol {
   // MARK: Public
 
   public func execute(_ credential: Credential) async throws {
-    if let keyAlgorithm = credential.keyBindingAlgorithm, let keyId = credential.keyBindingIdentifier, let algorithm = VaultAlgorithm(rawValue: keyAlgorithm) {
+    if let keyAlgorithm = credential.keyBinding?.algorithm, let keyId = credential.keyBinding?.id, let algorithm = VaultAlgorithm(rawValue: keyAlgorithm) {
       try? keyManager.deleteKeyPair(withIdentifier: keyId.uuidString, algorithm: algorithm)
     }
 

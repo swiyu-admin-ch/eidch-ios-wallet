@@ -17,6 +17,15 @@ struct CredentialDetailView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case content = "credentialDetailContent"
+    case closeButton
+    case menuButton
+    case deleteButton
+    case wrongDataButton
+    case card
+  }
+
   var body: some View {
     content()
       .alert(isPresented: $viewModel.isDeleteCredentialAlertPresented) {
@@ -30,6 +39,7 @@ struct CredentialDetailView: View {
           }),
           secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
       }
+      .background(ThemingAssets.Background.secondary.swiftUIColor)
       .navigationBarHidden(true)
       .navigationBarBackButtonHidden()
       .task {
@@ -38,6 +48,8 @@ struct CredentialDetailView: View {
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModel(with: scheme.rawValue)
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private
@@ -66,7 +78,7 @@ extension CredentialDetailView {
   private func portraitLayout() -> some View {
     GeometryReader { geometry in
       ScrollView(showsIndicators: false) {
-        VStack(spacing: .x10) {
+        VStack(spacing: .x6) {
           if let credentialViewModel = viewModel.credentialViewModel {
             credentialCard(credentialViewModel)
               .frame(height: geometry.size.height * 0.8)
@@ -114,93 +126,41 @@ extension CredentialDetailView {
   private static let imageSize: CGFloat = 18
 
   @ViewBuilder
-  private func contentSection () -> some View {
-    VStack(alignment: .leading, spacing: .x5) {
-      claimsSection()
-
+  private func contentSection() -> some View {
+    VStack(alignment: .leading, spacing: .x6) {
+      ClaimClusterList(viewModel.credential.clusters)
       issuerSection()
-        .padding(.top, .x4)
-
       wrongDataSection()
-        .padding(.top, .x4)
-    }
-    .accessibilityElement(children: .contain)
-    .accessibilityLabel(L10n.tkReceiveCredentialOfferContentSectionPrimary)
-    .accessibilitySortPriority(10)
-  }
-
-  @ViewBuilder
-  private func claimsSection() -> some View {
-    VStack(alignment: .leading) {
-      Text(L10n.tkDisplaydeleteDisplaycredential1Title2)
-        .font(.custom.body)
-        .padding(.top, .x4)
-        .padding(.leading, .x6)
-        .accessibilityLabel(L10n.tkDisplaydeleteDisplaycredential1Title2)
-        .accessibilitySortPriority(100)
-
-      Divider()
-
-      LazyVStack {
-        let clusterDisplayClaims = viewModel.credential.clusters.flatMap(\.claims)
-        ClaimListView(clusterDisplayClaims)
-      }
     }
   }
 
   @ViewBuilder
   private func issuerSection() -> some View {
-    VStack(alignment: .leading) {
-      Text(L10n.tkDisplaydeleteDisplaycredential1Title5)
-        .font(.custom.body)
-        .padding(.leading, .x6)
-        .accessibilitySortPriority(80)
-      Divider()
-      issuerCell()
-    }
-  }
-
-  @ViewBuilder
-  private func issuerCell() -> some View {
     if let issuer = viewModel.credentialViewModel?.issuerDisplay {
-      let image = if let image = issuer.image {
-        Image(data: image) ?? Image(systemName: "circle.fill")
-      } else {
-        Image(systemName: "circle.fill")
-      }
-
-      HStack(alignment: .center, spacing: .x4) {
-        if !dynamicTypeSize.isAccessibilitySize {
-          image
-            .renderingMode(.template)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: Self.imageSize, height: Self.imageSize)
-            .foregroundColor(.white)
-            .colorMultiply(colorScheme.standardColor())
-            .padding(.x2)
-            .background(ThemingAssets.Background.secondary.swiftUIColor)
-            .clipShape(Circle())
-            .accessibilityHidden(true)
-        }
-
-        HStack(spacing: .x2) {
+      SectionView(title: L10n.tkDisplaydeleteDisplaycredential1Title5) {
+        HStack(alignment: .center, spacing: .x3) {
+          if !dynamicTypeSize.isAccessibilitySize {
+            (issuer.image.flatMap(Image.init) ?? Assets.unknownIcon.swiftUIImage)
+              .renderingMode(.template)
+              .resizable()
+              .aspectRatio(contentMode: .fit)
+              .frame(width: Self.imageSize, height: Self.imageSize)
+              .foregroundColor(.white)
+              .colorMultiply(colorScheme.standardColor())
+              .padding(.x2)
+              .background(ThemingAssets.Background.secondary.swiftUIColor)
+              .clipShape(Circle())
+              .accessibilityHidden(true)
+          }
           Text(issuer.name ?? L10n.tkErrorNotregisteredTitle)
             .font(.custom.body)
             .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
             .accessibilityLabel(issuer.name ?? L10n.tkErrorNotregisteredTitle)
             .multilineTextAlignment(.leading)
         }
-        .padding(.trailing, .x6)
-
-        Spacer()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, .x6)
       }
-      .padding(.leading, .x6)
-      .padding(.bottom, -2)
-
-      let leadingPadding = dynamicTypeSize < .accessibility3 ? Self.imageSize + .x4 * 2 + .x6 : .x4 + .x6
-      Divider()
-        .padding(.leading, leadingPadding)
     }
   }
 
@@ -219,10 +179,13 @@ extension CredentialDetailView {
             .clipShape(.circle)
         })
         .accessibilityLabel(L10n.tkGlobalCloseelfaAlt)
-        .accessibilitySortPriority(50)
+        .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
+        .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
       }
       .padding(.top, self.topSafeAreaHeight)
     }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
     .controlSize(.large)
   }
 
@@ -234,6 +197,7 @@ extension CredentialDetailView {
           Label(title: { Text(L10n.tkGlobalWrongdata) }, icon: { Assets.warning.swiftUIImage })
         })
         .accessibilityLabel(L10n.tkGlobalWrongdata)
+        .accessibilityIdentifier(AccessibilityIdentifier.wrongDataButton.rawValue)
       }
 
       Button(role: .destructive, action: {
@@ -242,6 +206,7 @@ extension CredentialDetailView {
         Label(L10n.tkDisplaydeleteCredentialmenuPrimarybutton, systemImage: "trash")
       })
       .accessibilityLabel(L10n.tkDisplaydeleteCredentialmenuPrimarybutton)
+      .accessibilityIdentifier(AccessibilityIdentifier.deleteButton.rawValue)
     } label: {
       ThemingAssets.elipsis.swiftUIImage
         .colorMultiply(ThemingAssets.Brand.Core.black.swiftUIColor)
@@ -249,22 +214,21 @@ extension CredentialDetailView {
         .background(.ultraThickMaterial.opacity(0.70))
         .clipShape(.circle)
     }
-    .accessibilitySortPriority(75)
+    .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
     .accessibilityLabel(L10n.tkGlobalMoreoptionsAlt)
+    .accessibilityIdentifier(AccessibilityIdentifier.menuButton.rawValue)
   }
 
   @ViewBuilder
   private func wrongDataSection() -> some View {
-    VStack(alignment: .leading) {
-      Divider()
-      IconKeyValueCell(
-        key: "",
-        value: L10n.tkReceiveIncorrectdataTitle,
+    SectionView {
+      IconCell(
         image: Assets.warning.swiftUIImage,
-        disclosureIndicator: Image(systemName: "chevron.right"),
+        text: L10n.tkReceiveIncorrectdataTitle,
+        disclosureIndicator: .navigation,
         onTap: viewModel.openWrongdata)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        .padding(.leading, .x6)
+        .padding(.horizontal, .x6)
     }
   }
 }

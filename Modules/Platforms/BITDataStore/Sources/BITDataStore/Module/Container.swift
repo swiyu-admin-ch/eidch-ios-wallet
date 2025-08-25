@@ -19,10 +19,13 @@ extension Container {
 
   public var realmDataStoreConfiguration: Factory<Realm.Configuration> {
     self {
+      // Database scheme v4.1
+      let schemaVersion: UInt64 = 9
+
       let config = Realm.Configuration(
-        schemaVersion: 5, // Database scheme v3.7
+        schemaVersion: schemaVersion,
         migrationBlock: { migration, oldVersion in
-          self.migrationService().migrate(from: oldVersion, migration: migration)
+          self.migrationService().migrate(from: oldVersion, to: schemaVersion, migration: migration)
         })
       Realm.Configuration.defaultConfiguration = config
       return config

@@ -31,7 +31,6 @@ enum Assets {
   static let credential = ImageAsset(name: "credential")
   static let noWifi = ImageAsset(name: "no-wifi")
   static let qrcode = ImageAsset(name: "qrcode")
-  static let questionmarkCircle = ImageAsset(name: "questionmark.circle")
   static let questionmarkSquare = ImageAsset(name: "questionmark.square")
   static let xmarkCircle = ImageAsset(name: "xmark-circle")
 }

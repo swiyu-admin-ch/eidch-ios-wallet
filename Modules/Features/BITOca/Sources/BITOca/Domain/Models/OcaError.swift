@@ -7,9 +7,9 @@ public enum OcaError: Error {
   case invalidCaptureBaseReferenceAttribute
   case captureBaseCycleError
   case invalidOverlayCaptureBaseDigest
-  case invalidOverlayAttributeKey
   case invalidOverlayLanguageCode
   case invalidJsonPath
   case invalidOverlayDataURI
   case invalidClusterOrderingKey
+  case invalidEntryOverlay
 }

@@ -8,7 +8,7 @@ import Spyable
 public protocol OpenIDRepositoryProtocol {
   func fetchVcSchemaData(from url: URL) async throws -> VcSchema
   func fetchTypeMetadata(from url: URL) async throws -> NetworkResponse<TypeMetadata>
-  func fetchMetadata(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata>
+  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialMetadataResponse
   func fetchOpenIdConfiguration(from issuerURL: URL) async throws -> OpenIdConfiguration
   func fetchIssuerPublicKeyInfo(from jwksUrl: URL) async throws -> PublicKeyInfo
   func fetchAccessToken(from url: URL, preAuthorizedCode: String) async throws -> AccessToken

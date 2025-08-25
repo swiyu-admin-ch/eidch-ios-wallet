@@ -13,6 +13,7 @@ enum PlistFiles {
 
   // MARK: Internal
 
+  static let avBeamAppID: String = _document["AVBeamAppID"]
   static let cfBundleDevelopmentRegion: String = _document["CFBundleDevelopmentRegion"]
   static let cfBundleDisplayName: String = _document["CFBundleDisplayName"]
   static let cfBundleExecutable: String = _document["CFBundleExecutable"]

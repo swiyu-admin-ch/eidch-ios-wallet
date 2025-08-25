@@ -4,9 +4,11 @@ import Foundation
 
 public enum ValueType: String, Codable {
   case boolean
-  case string
+  case dateTime
   case imagePng = "image/png"
   case imageJpg = "image/jpeg"
+  case numeric
+  case string
 }
 
 extension ValueType {

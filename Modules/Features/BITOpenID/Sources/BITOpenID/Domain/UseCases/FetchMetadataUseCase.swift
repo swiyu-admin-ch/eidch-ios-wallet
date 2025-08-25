@@ -1,4 +1,3 @@
-import BITNetworking
 import Factory
 import Foundation
 import Spyable
@@ -7,20 +6,43 @@ import Spyable
 
 @Spyable
 public protocol FetchMetadataUseCaseProtocol {
-  func execute(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata>
+  func execute(for offer: CredentialOffer) async throws -> CredentialMetadataWrapper
 }
 
 // MARK: - FetchMetadataUseCase
 
 struct FetchMetadataUseCase: FetchMetadataUseCaseProtocol {
 
+  // MARK: Lifecycle
+
   init(repository: OpenIDRepositoryProtocol = Container.shared.openIDRepository()) {
     self.repository = repository
   }
 
+  // MARK: Internal
+
+  func execute(for offer: CredentialOffer) async throws -> CredentialMetadataWrapper {
+    let issuerUrl = try getIssuerUrl(from: offer)
+    let respone = try await repository.fetchMetadata(from: issuerUrl)
+    return try await createWrapper(from: respone, offer: offer)
+  }
+
+  // MARK: Private
+
   private let repository: OpenIDRepositoryProtocol
 
-  func execute(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata> {
-    try await repository.fetchMetadata(from: issuerUrl)
+  private func createWrapper(from response: CredentialMetadataResponse, offer: CredentialOffer) async throws -> CredentialMetadataWrapper {
+    guard let selectedCredentialId = offer.credentialConfigurationIds.first else {
+      throw FetchAnyVerifiableCredentialError.selectedCredentialNotFound
+    }
+
+    return try CredentialMetadataWrapper(selectedCredentialSupportedId: selectedCredentialId, credentialMetadata: response.metadata, rawData: response.raw)
+  }
+
+  private func getIssuerUrl(from offer: CredentialOffer) throws -> URL {
+    guard let issuerUrl = URL(string: offer.issuer) else {
+      throw FetchAnyVerifiableCredentialError.unknownIssuer
+    }
+    return issuerUrl
   }
 }

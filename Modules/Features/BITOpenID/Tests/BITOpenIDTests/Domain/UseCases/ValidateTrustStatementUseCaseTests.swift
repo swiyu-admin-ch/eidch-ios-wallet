@@ -1,3 +1,5 @@
+// swiftlint:disable implicitly_unwrapped_optional
+
 import Factory
 import XCTest
 @testable import BITCrypto
@@ -12,121 +14,119 @@ final class ValidateTrustStatementUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-
-    jwsSignatureValidator = JWSSignatureValidatorMock()
-
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidator }
-    Container.shared.trustRegistryRepository.register { self.trustRegistryRepository }
-    Container.shared.tokenStatusListValidator.register { self.tokenStatusListValidator }
-
-    trustRegistryRepository.getTrustedDidsReturnValue = trustedDids
+    registerMocks()
     useCase = ValidateTrustStatementUseCase()
+    createSuccessState()
   }
 
-  func testValidateTrustStatement() async throws {
-    jwsSignatureValidator.validateJwsDidReturnValue = true
-    tokenStatusListValidator.validateIssuerReturnValue = .valid
-
-    let result = await useCase.execute(trustStatementMock)
+  func testExecute_valid_returnsTrue() async throws {
+    let result = await useCase.execute(trustStatementMock, for: subjectMock)
 
     XCTAssertTrue(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedJws?.rawJWS, trustStatementMock.rawJWS)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedDid, trustStatementMock.payload.issuer)
-    XCTAssertEqual(tokenStatusListValidator.validateIssuerReceivedArguments?.anyStatus.type, trustStatementMock.payload.statusList.type)
   }
 
-  func testValidateNotTrustedStatement() async throws {
-    trustRegistryRepository.getTrustedDidsReturnValue = []
-    jwsSignatureValidator.validateJwsDidReturnValue = true
+  func testExecute_valid_argumentsPassed() async throws {
+    _ = await useCase.execute(trustStatementMock, for: subjectMock)
 
-    let result = await useCase.execute(trustStatementMock)
+    XCTAssertEqual(trustRegistryRepositorySpy.getTrustedDidsCallsCount, 1)
 
-    XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedJws?.rawJWS, trustStatementMock.rawJWS)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedDid, trustStatementMock.payload.issuer)
+
+    XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerCallsCount, 1)
+    XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.anyStatus.type, trustStatementMock.payload.statusList.type)
+    XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.issuer, trustStatementMock.payload.issuer)
   }
 
-  func testValidateNoSubject() async throws {
-    let result = await useCase.execute(TrustStatementPayload.Mock.noSubject)
+  func testExecute_notTrustedDid_returnsFalse() async throws {
+    trustRegistryRepositorySpy.getTrustedDidsReturnValue = ["other"]
+
+    let result = await useCase.execute(trustStatementMock, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
   }
 
-  func testValidateWrongAlgorithm() async throws {
-    let result = await useCase.execute(TrustStatementPayload.Mock.wrongAlgorithm)
+  func testExecute_wrongSubject_returnsFalse() async throws {
+    let result = await useCase.execute(TrustStatementPayload.Mock.wrongSubject, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
   }
 
-  func testValidateNotYetValidJWT() async throws {
-    jwsSignatureValidator.validateJwsDidReturnValue = true
-    tokenStatusListValidator.validateIssuerReturnValue = .valid
-    let result = await useCase.execute(TrustStatementPayload.Mock.notYetValid)
+  func testExecute_wrongAlgorithm_returnsFalse() async throws {
+    let result = await useCase.execute(TrustStatementPayload.Mock.wrongAlgorithm, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
   }
 
-  func testValidateExpiredJWT() async throws {
-    jwsSignatureValidator.validateJwsDidReturnValue = true
-    tokenStatusListValidator.validateIssuerReturnValue = .valid
-    let result = await useCase.execute(TrustStatementPayload.Mock.expired)
+  func testExecute_notYetValid_returnsFalse() async throws {
+    let result = await useCase.execute(TrustStatementPayload.Mock.notYetValid, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
   }
 
-  func testValidateNotValidSignatureTrustStatement() async throws {
-    jwsSignatureValidator.validateJwsDidReturnValue = false
-
-    let result = await useCase.execute(trustStatementMock)
+  func testExecute_expired_returnsFalse() async throws {
+    let result = await useCase.execute(TrustStatementPayload.Mock.expired, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedJws?.rawJWS, trustStatementMock.rawJWS)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedDid, trustStatementMock.payload.issuer)
   }
 
-  func testValidateValidatorThrowsTrustStatement() async throws {
-    jwsSignatureValidator.validateJwsDidThrowableError = TestingError.error
+  func testExecute_invalidJWSSignature_returnsFalse() async throws {
+    jwsSignatureValidatorMock.validateJwsDidReturnValue = false
 
-    let result = await useCase.execute(trustStatementMock)
+    let result = await useCase.execute(trustStatementMock, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedJws?.rawJWS, trustStatementMock.rawJWS)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedDid, trustStatementMock.payload.issuer)
   }
 
-  func testValidateTrustStatementWithNotValidStatus() async throws {
-    jwsSignatureValidator.validateJwsDidReturnValue = true
-    tokenStatusListValidator.validateIssuerReturnValue = .revoked
+  func testExecute_jwsSignatureValidatorError_returnsFalse() async throws {
+    jwsSignatureValidatorMock.validateJwsDidThrowableError = TestingError.error
 
-    let result = await useCase.execute(trustStatementMock)
+    let result = await useCase.execute(trustStatementMock, for: subjectMock)
 
     XCTAssertFalse(result)
-    XCTAssertTrue(trustRegistryRepository.getTrustedDidsCalled)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedJws?.rawJWS, trustStatementMock.rawJWS)
-    XCTAssertEqual(jwsSignatureValidator.validateJwsDidReceivedDid, trustStatementMock.payload.issuer)
-    XCTAssertEqual(tokenStatusListValidator.validateIssuerReceivedArguments?.issuer, trustStatementMock.payload.issuer)
-    XCTAssertEqual(tokenStatusListValidator.validateIssuerReceivedArguments?.anyStatus.type, trustStatementMock.payload.statusList.type)
+  }
+
+  func testExecute_notValidStatus_returnsFalse() async throws {
+    for status in [VcStatus.revoked, VcStatus.suspended, VcStatus.unknown, VcStatus.unsupported] {
+      tokenStatusListValidatorSpy.validateIssuerReturnValue = status
+
+      let result = await useCase.execute(trustStatementMock, for: subjectMock)
+
+      XCTAssertFalse(result, "Status: \(status)")
+    }
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var jwsSignatureValidator = JWSSignatureValidatorMock()
-  private var useCase: ValidateTrustStatementUseCase!
-  private var trustRegistryRepository = TrustRegistryRepositoryProtocolSpy()
-  private var tokenStatusListValidator = AnyStatusCheckValidatorProtocolSpy()
   private let trustStatementMock: TrustStatement = TrustStatementPayload.Mock.validSample
-  // swiftlint:enable all
+  private let subjectMock = "subject"
+
+  private var trustRegistryRepositorySpy: TrustRegistryRepositoryProtocolSpy!
+  private var jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+  private var tokenStatusListValidatorSpy: AnyStatusCheckValidatorProtocolSpy!
+
+  private var useCase: ValidateTrustStatementUseCase!
 
   private let trustedDids: [String] = [
     "did:tdw:another-example",
     TrustStatementPayload.Mock.validSamplePayload.issuer,
   ]
 
+  private func registerMocks() {
+    trustRegistryRepositorySpy = TrustRegistryRepositoryProtocolSpy()
+    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+    tokenStatusListValidatorSpy = AnyStatusCheckValidatorProtocolSpy()
+
+    Container.shared.trustRegistryRepository.register { self.trustRegistryRepositorySpy }
+    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
+    Container.shared.tokenStatusListValidator.register { self.tokenStatusListValidatorSpy }
+  }
+
+  private func createSuccessState() {
+    trustRegistryRepositorySpy.getTrustedDidsReturnValue = trustedDids
+    jwsSignatureValidatorMock.validateJwsDidReturnValue = true
+    tokenStatusListValidatorSpy.validateIssuerReturnValue = .valid
+  }
 }
+
+// swiftlint:enable all

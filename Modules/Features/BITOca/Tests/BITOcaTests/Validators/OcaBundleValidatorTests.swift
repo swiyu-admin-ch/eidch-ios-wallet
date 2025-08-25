@@ -130,6 +130,13 @@ final class OcaBundleValidatorTests: XCTestCase {
     }
   }
 
+  func testValidate_invalidOverlay_throwsError() throws {
+    let overlay = EntryOverlay1x0(captureBaseDigest: Self.digestMock, language: Self.languageMock, attributeEntries: [:])
+    XCTAssertThrowsError(try validator.validate([emptyCaptureBaseMock], [overlay])) { error in
+      XCTAssertEqual(error as? OcaError, .invalidEntryOverlay)
+    }
+  }
+
   // MARK: Private
 
   private static let digestMock = "digest"

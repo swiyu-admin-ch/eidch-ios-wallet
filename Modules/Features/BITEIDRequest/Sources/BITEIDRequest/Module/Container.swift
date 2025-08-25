@@ -1,3 +1,4 @@
+import BITAVWrapper
 import Factory
 import Foundation
 
@@ -16,8 +17,20 @@ extension Container {
     self { CameraPermissionViewModel(router: $0) }
   }
 
-  var mrzScannerViewModel: ParameterFactory<EIDRequestInternalRoutes, MRZScannerViewModel> {
-    self { MRZScannerViewModel(router: $0) }
+  var scanDocumentViewModel: ParameterFactory<EIDRequestInternalRoutes, ScanDocumentViewModel> {
+    self { ScanDocumentViewModel(router: $0) }
+  }
+
+  var scanDocumentSubmitViewModel: ParameterFactory<(ScanDocumentOutput, EIDRequestInternalRoutes), ScanDocumentSubmitViewModel> {
+    self { ScanDocumentSubmitViewModel(scanDocumentOutput: $0, router: $1) }
+  }
+
+  var recordDocumentViewModel: ParameterFactory<EIDRequestInternalRoutes, RecordDocumentViewModel> {
+    self { RecordDocumentViewModel(router: $0) }
+  }
+
+  var recordSelfieViewModel: ParameterFactory<EIDRequestInternalRoutes, RecordSelfieViewModel> {
+    self { RecordSelfieViewModel(router: $0) }
   }
 
   var queueInformationViewModel: ParameterFactory<(EIDRequestInternalRoutes, Date), QueueInformationViewModel> {
@@ -56,8 +69,14 @@ extension Container {
     self { DocumentSelectionViewModel(router: $0) }
   }
 
-  var attestationViewModel: ParameterFactory<EIDRequestInternalRoutes, AttestationViewModel> {
-    self { AttestationViewModel(router: $0) }
+  var validateAttestationsViewModel: ParameterFactory<EIDRequestInternalRoutes, ValidateAttestationsViewModelProtocol> {
+    self {
+      #if targetEnvironment(simulator)
+      MockValidateAttestationsViewModel(router: $0)
+      #else
+      ValidateAttestationsViewModel(router: $0)
+      #endif
+    }
   }
 
   var clientAttestationErrorViewModel: ParameterFactory<EIDRequestInternalRoutes, ClientAttestationErrorViewModel> {
@@ -68,15 +87,37 @@ extension Container {
     self { KeyAttestationErrorViewModel(router: $0) }
   }
 
-  var attestationErrorViewModel: ParameterFactory<(EIDRequestInternalRoutes, AttestationErrorDelegate), AttestationErrorViewModel> {
-    self { AttestationErrorViewModel(router: $0, delegate: $1) }
+  var validateAttestationsErrorViewModel: ParameterFactory<(EIDRequestInternalRoutes, ValidateAttestationsErrorDelegate, Error), ValidateAttestationsErrorViewModel> {
+    self { ValidateAttestationsErrorViewModel(router: $0, delegate: $1, error: $2) }
+  }
+
+  var avIntroSelfieVideoViewModel: ParameterFactory<EIDRequestInternalRoutes, AVIntroSelfieVideoViewModel> {
+    self { AVIntroSelfieVideoViewModel(router: $0) }
   }
 
 }
 
 extension Container {
+  public var avBeam: Factory<AVBeamProtocol> {
+    self { AVBeam() }.singleton
+  }
+
+  public var avBeamAppID: Factory<String> {
+    self { "2NG6YF3PM2.ch.admin.foitt.swiyu" }
+  }
+}
+
+extension Container {
 
   // MARK: Public
+
+  public var recordDocumentTimeout: Factory<TimeInterval> {
+    self { 10 }
+  }
+
+  public var recordSelfieTimeout: Factory<TimeInterval> {
+    self { 10 }
+  }
 
   public var isEIDRequestFeatureEnabled: Factory<Bool> {
     self { false }
@@ -111,7 +152,27 @@ extension Container {
     self { DeleteEIDRequestCaseUseCase() }
   }
 
+  public var submitEIDRequestUseCase: Factory<SubmitEIDRequestUseCaseProtocol> {
+    self { SubmitEIDRequestUseCase() }
+  }
+
+  public var saveEIDRequestFilesUseCase: Factory<SaveEIDRequestFilesUseCaseProtocol> {
+    self { SaveEIDRequestFilesUseCase() }
+  }
+
   // MARK: Internal
+
+  var fetchAttestationsUseCase: Factory<FetchAttestationsUseCaseProtocol> {
+    self { FetchAttestationsUseCase() }
+  }
+
+  var fetchEIDRequestCaseUseCase: Factory<FetchEIDRequestCaseUseCaseProtocol> {
+    self { FetchEIDRequestCaseUseCase() }
+  }
+
+  var deleteEIDRequestCaseFileUseCase: Factory<DeleteEIDRequestCaseFileUseCaseProtocol> {
+    self { DeleteEIDRequestCaseFileUseCase() }
+  }
 
   var eIDRequestResponseDecoder: Factory<JSONDecoder> {
     self {
@@ -131,12 +192,8 @@ extension Container {
     self { EIDRequestRepository() }
   }
 
-  var localEIDRequestRepository: Factory<LocalEIDRequestRepositoryProtocol> {
-    self { DatabaseEIDRequestRepository() }
-  }
-
-  var submitEIDRequestUseCase: Factory<SubmitEIDRequestUseCaseProtocol> {
-    self { SubmitEIDRequestUseCase() }
+  var eIDRequestCaseRepository: Factory<EIDRequestCaseRepositoryProtocol> {
+    self { EIDRequestCaseRepository() }
   }
 
   var requestCasePriorityOrder: Factory<[EIDRequestStatus.State]> {
@@ -153,5 +210,9 @@ extension Container {
 
   var validateAttestationsUseCase: Factory<ValidateAttestationsUseCaseProtocol> {
     self { ValidateAttestationsUseCase() }
+  }
+
+  var startOnlineSessionUseCase: Factory<StartOnlineSessionUseCaseProtocol> {
+    self { StartOnlineSessionUseCase() }
   }
 }

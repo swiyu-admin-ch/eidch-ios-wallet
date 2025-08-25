@@ -2,26 +2,47 @@ import Foundation
 import XCTest
 @testable import BITHome
 
-class HomeScreen: Screen {
-
-  // MARK: Lifecycle
-
-  init(app: XCUIApplication) {
-    self.app = app
-    scanButton = app.buttons[HomeComposerView.AccessibilityIdentifier.scanButton.rawValue]
-    _ = scanButton.waitForExistence(timeout: .defaultTimeout)
-    menuButton = app.buttons[HomeComposerView.AccessibilityIdentifier.menuButton.rawValue]
-  }
-
-  // MARK: Internal
+struct HomeScreen: Screen {
 
   let app: XCUIApplication
-  let scanButton: XCUIElement
-  let menuButton: XCUIElement
 
-  func assertDisplayed() {
-    XCTAssert(scanButton.exists)
-    XCTAssert(menuButton.exists)
+  static func navigateToAfterLaunchingApp(_ app: XCUIApplication) -> HomeScreen {
+    LoginScreen.navigateToAfterLaunchingApp(app)
+      .typePin()
+      .tapLogin()
+      .assertHomeScreen()
+  }
+
+  @discardableResult
+  func assertHomeScreen() -> HomeScreen {
+    app.assertElementDisplayed(HomeComposerView.AccessibilityIdentifier.content.rawValue)
+    return self
+  }
+
+  @discardableResult
+  func assertCredentialsCountEquals(_ count: Int) -> HomeScreen {
+    XCTAssertEqual(getCredentialsCount(), count)
+    return self
+  }
+
+  func getCredentialsCount() -> Int {
+    app.buttons.matching(identifier: HomeComposerView.AccessibilityIdentifier.credential.rawValue).count
+  }
+
+  func tapScanForCredentialOffer() -> CredentialOfferScreen {
+    app.tap(HomeComposerView.AccessibilityIdentifier.scanButton.rawValue)
+    return CredentialOfferScreen(app: app)
+  }
+
+  func tapScanForPresentation() -> PresentationRequestReviewScreen {
+    app.tap(HomeComposerView.AccessibilityIdentifier.scanButton.rawValue)
+    return PresentationRequestReviewScreen(app: app)
+  }
+
+  func tapCredential(index: Int) -> CredentialDetailScreen {
+    let credentialButton = app.buttons.matching(identifier: HomeComposerView.AccessibilityIdentifier.credential.rawValue).element(boundBy: index)
+    credentialButton.tap()
+    return CredentialDetailScreen(app: app)
   }
 
 }

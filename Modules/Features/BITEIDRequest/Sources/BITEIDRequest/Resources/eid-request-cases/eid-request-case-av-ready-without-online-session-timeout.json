@@ -2,6 +2,7 @@
   "caseId": "46320f91-a8b2-4ccc-974a-2b1d22172349",
   "rawMRZ": "ID<<<I7G<<<<<<3<<<<<<<<<<<<<<<;1001015X3012316<<<<<<<<<<<<<<0;MINDERJAEHRIGE<<ANNETTE<<<<<<<",
   "documentNumber": "A123456789",
+  "selectedDocumentType": "SWISS_IDK",
   "firstName": "John",
   "lastName": "Do",
   "createdAt": "1997-07-06T19:20:30+01:00",

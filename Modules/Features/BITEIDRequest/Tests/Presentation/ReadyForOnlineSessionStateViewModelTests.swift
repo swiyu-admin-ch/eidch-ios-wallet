@@ -34,7 +34,7 @@ class ReadyForOnlineSessionStateViewModelTests: XCTestCase {
 
     viewModel.primaryAction()
 
-    XCTAssertTrue(delegate.didStartAutoVerificationCalled)
+    XCTAssertEqual(delegate.didStartAutoVerificationCaseIdReceivedCaseId, mockEidRequestCase.id)
   }
 
   // MARK: Private

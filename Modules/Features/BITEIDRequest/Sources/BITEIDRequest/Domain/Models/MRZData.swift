@@ -1,4 +1,3 @@
-#warning("TODO: Delete this file once real MRZ implementation is ready.")
 import Foundation
 
 // MARK: - MRZData
@@ -7,10 +6,12 @@ struct MRZData: Decodable, Identifiable {
   var id = UUID()
   let displayName: String
   let payload: EIDRequestPayload
+  let identityType: IdentityType?
 
   enum CodingKeys: CodingKey {
     case displayName
     case payload
+    case identityType
   }
 }
 

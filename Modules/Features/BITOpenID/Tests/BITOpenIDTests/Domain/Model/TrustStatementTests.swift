@@ -26,6 +26,14 @@ final class TrustStatementTests: XCTestCase {
     XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1742453211))
   }
 
+  func testDecode_localizedIssuer() throws {
+    let trustStatement = TrustStatementPayload.Mock.validSample
+
+    XCTAssertNotNil(trustStatement.localizedIssuer["en"])
+    XCTAssertNotNil(trustStatement.localizedIssuer["de-CH"])
+    XCTAssertEqual(trustStatement.localizedIssuer.keys.count, 2)
+  }
+
   // MARK: Private
 
   private var decoder = SdJWSDecoder()

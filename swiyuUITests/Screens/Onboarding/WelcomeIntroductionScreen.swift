@@ -1,31 +1,26 @@
 import Foundation
 import XCTest
 @testable import BITOnboarding
+@testable import BITTheming
 
-class WelcomeIntroductionScreen: InformationScreen {
+struct WelcomeIntroductionScreen: Screen {
 
-  // MARK: Lifecycle
+  let app: XCUIApplication
 
-  override init(app: XCUIApplication) {
-    content = app.descendants(matching: .any)[WelcomeIntroductionView.AccessibilityIdentifier.welcomeIntroductionContent.rawValue]
-    _ = content.waitForExistence(timeout: .defaultTimeout)
-    super.init(app: app)
+  static func navigateToAfterLaunchingApp(_ app: XCUIApplication) -> WelcomeIntroductionScreen {
+    WelcomeIntroductionScreen(app: app)
+      .assertWelcomeIntroductionScreen()
   }
 
-  // MARK: Internal
-
-  let content: XCUIElement
-
-  override func assertDisplayed() {
-    XCTAssertTrue(content.waitForExistence(timeout: .defaultTimeout))
-    XCTAssertTrue(secondaryText.exists)
-    super.assertDisplayed()
+  @discardableResult
+  func assertWelcomeIntroductionScreen() -> WelcomeIntroductionScreen {
+    app.assertElementDisplayed(WelcomeIntroductionView.AccessibilityIdentifier.content.rawValue)
+    return self
   }
 
-  static func createAndNavigateFromAppStart(app: XCUIApplication) -> WelcomeIntroductionScreen {
-    let currentScreen = WelcomeIntroductionScreen(app: app)
-    currentScreen.assertDisplayed()
-    return currentScreen
+  func tapStart() -> SecurityIntroductionScreen {
+    app.tap(DefaultInformationFooterView.AccessibilityIdentifier.primaryButton.rawValue)
+    return SecurityIntroductionScreen(app: app)
   }
 
 }

@@ -1,5 +1,6 @@
 import BITJsonCanonicalizer
 import BITJWT
+import BITVault
 import DeviceCheck
 import Factory
 import Foundation
@@ -21,8 +22,6 @@ extension Container {
     self { [] }
   }
 
-  // MARK: - UseCases
-
   public var fetchClientAttestationUseCase: Factory<FetchClientAttestationUseCaseProtocol> {
     self { FetchClientAttestationUseCase() }
   }
@@ -31,21 +30,31 @@ extension Container {
     self { FetchKeyAttestationUseCase() }
   }
 
-  public var generateClientAttestedRequestUseCase: Factory<GenerateClientAttestedRequestUseCaseProtocol> {
-    self { GenerateClientAttestedRequestUseCase() }
+  public var clientAttestationRepository: Factory<ClientAttestationRepositoryProtocol> {
+    self { ClientAttestationRepository() }
   }
 
-  public var appAttestationRepository: Factory<AppAttestationRepositoryProtocol> {
-    self { AppAttestationRepository() }
+  public var proofOfPossessionGenerator: Factory<ProofOfPossessionGeneratorProtocol> {
+    self { ProofOfPossessionGenerator() }
+  }
+
+  public var appAttestationKeyRepository: Factory<AppAttestationKeyRepositoryProtocol> {
+    self { AppAttestationKeyRepository() }
   }
 
   // MARK: Internal
 
+  var keyAttestationValidator: Factory<KeyAttestationValidatorProtocol> {
+    self { KeyAttestationValidator() }
+  }
+
+  var appAttestationRepository: Factory<AppAttestationRepositoryProtocol> {
+    self { AppAttestationRepository() }
+  }
+
   var jsonCanonicalizer: Factory<JsonCanonicalizerProtocol> {
     self { JsonCanonicalizer() }
   }
-
-  // MARK: - Services
 
   var appAttestationService: Factory<AppAttestationServiceProtocol> {
     self { AppAttestationService() }
@@ -55,24 +64,16 @@ extension Container {
     self { DCAppAttestService.shared }
   }
 
-  var generateProofOfPossessionUseCase: Factory<GenerateProofOfPossessionUseCaseProtocol> {
-    self { GenerateProofOfPossessionUseCase() }
-  }
-
-  // MARK: - Repositories
-
-  var clientAttestationRepository: Factory<ClientAttestationRepositoryProtocol> {
-    self { ClientAttestationRepository() }
-  }
-
-  // MARK: - Validators
-
   var clientAttestationValidator: Factory<ClientAttestationValidatorProtocol> {
     self { ClientAttestationValidator() }
   }
 
-  var keyAttestationValidator: Factory<KeyAttestationValidatorProtocol> {
-    self { KeyAttestationValidator() }
+  var attestationKeyAlgorithm: Factory<VaultAlgorithm> {
+    self { .eciesEncryptionStandardVariableIVX963SHA256AESGCM }
+  }
+
+  var attestationKeyVaultOptions: Factory<VaultOptions> {
+    self { .secureEnclavePermanently }
   }
 
 }

@@ -2,6 +2,8 @@ public enum OverlayType {
   case branding
   case characterEncoding
   case dataSource
+  case entry
+  case entryCode
   case format
   case label
   case meta
@@ -18,6 +20,10 @@ public enum OverlayType {
       [.characterEncoding1_0]
     case .dataSource:
       [.dataSource1_0]
+    case .entry:
+      [.entry1_0]
+    case .entryCode:
+      [.entryCode1_0]
     case .format:
       [.format1_0]
     case .label:

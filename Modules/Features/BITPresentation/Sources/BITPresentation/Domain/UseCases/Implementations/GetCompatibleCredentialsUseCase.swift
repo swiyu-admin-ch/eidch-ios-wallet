@@ -90,7 +90,7 @@ extension Credential {
       || !matchingFormats.compactMap { f in f.keyBindingAlgorithm }
       .flatMap { $0 }
       .filter {
-        self.keyBindingAlgorithm?.caseInsensitiveCompare($0) == .orderedSame
+        self.keyBinding?.algorithm.caseInsensitiveCompare($0) == .orderedSame
       }.isEmpty
   }
 }

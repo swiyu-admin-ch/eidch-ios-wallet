@@ -14,5 +14,9 @@
     "en": "EN orgName",
     "de-CH": "de-CH orgName"
   },
+  "logoUri": {
+    "en": "en logoUri",
+    "de-CH": "de-CH logoUri"
+  },
   "sub": "subject"
 }

@@ -17,6 +17,7 @@ struct PrivacyPermissionView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
+    case content = "privacyPermissionContent"
     case primaryText
     case secondaryText
     case privacyLink
@@ -68,6 +69,8 @@ extension PrivacyPermissionView {
       .accessibilityLabel(L10n.tkOnboardingAnalyticsTertiaryLinkText)
     }
     .frame(maxWidth: .infinity)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   @ViewBuilder

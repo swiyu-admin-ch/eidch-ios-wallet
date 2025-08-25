@@ -38,7 +38,8 @@ final class FetchTrustStatementUseCaseTests: XCTestCase {
     XCTAssertEqual(trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain, Self.issuerDomain)
     XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.url.absoluteString, "https://\(Self.registryDomain)")
     XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReceivedArguments?.issuerDid, issuerMock)
-    XCTAssertEqual(validateTrustStatementUseCaseSpy.executeReceivedTrustStatement, trustStatement)
+    XCTAssertEqual(validateTrustStatementUseCaseSpy.executeForReceivedArguments?.trustStatement, trustStatement)
+    XCTAssertEqual(validateTrustStatementUseCaseSpy.executeForReceivedArguments?.subject, issuerMock)
   }
 
   func testExecute_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
@@ -48,7 +49,7 @@ final class FetchTrustStatementUseCaseTests: XCTestCase {
       trustStatementMock,
     ]
     var count = 0
-    validateTrustStatementUseCaseSpy.executeClosure = { _ in
+    validateTrustStatementUseCaseSpy.executeForClosure = { _, _ in
       if count == 0 {
         count += 1
         return false
@@ -112,7 +113,7 @@ final class FetchTrustStatementUseCaseTests: XCTestCase {
   }
 
   func testExecute_invalidTrustStatement_returnsNil() async throws {
-    validateTrustStatementUseCaseSpy.executeReturnValue = false
+    validateTrustStatementUseCaseSpy.executeForReturnValue = false
 
     let trustStatement = try await useCase.execute(issuer: issuerMock)
 
@@ -142,7 +143,7 @@ final class FetchTrustStatementUseCaseTests: XCTestCase {
   private func success() {
     trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = Self.registryDomain
     openIDRepositorySpy.fetchTrustStatementsFromIssuerDidReturnValue = [ trustStatementMock ]
-    validateTrustStatementUseCaseSpy.executeReturnValue = true
+    validateTrustStatementUseCaseSpy.executeForReturnValue = true
   }
 
   // swiftlint:enable force_unwrapping implicitly_unwrapped_optional

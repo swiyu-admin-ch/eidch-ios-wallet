@@ -1,4 +1,3 @@
-import BITCrypto
 import BITNetworking
 import Factory
 import Foundation
@@ -15,6 +14,7 @@ import XCTest
 @testable import BITPresentation
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
+@testable import BITVault
 
 // MARK: - CameraViewModelTests
 
@@ -353,7 +353,7 @@ final class CameraViewModelTests: XCTestCase {
 
   @MainActor
   func testCheckInvitationTypeFailed_wrongScheme() async throws {
-    checkInvitationTypeUseCase.executeUrlThrowableError = CheckCameraError.wrongScheme
+    checkInvitationTypeUseCase.executeUrlThrowableError = CheckInvitationTypeError.wrongScheme
 
     await viewModel.setMetadataUrl(url)
 
@@ -431,7 +431,7 @@ final class CameraViewModelTests: XCTestCase {
   private var router = InvitationRouterMock()
 
   private var viewModel: CameraViewModel!
-  private var mockCredentialWithKeyBinding: (AnyCredential, KeyPair?)!
+  private var mockCredentialWithKeyBinding: (AnyCredential, VaultKeyPair?)!
   private let url = URL(string: "openid-credential-offer://url")!
   private let scannerDelay: UInt64 = 0
 

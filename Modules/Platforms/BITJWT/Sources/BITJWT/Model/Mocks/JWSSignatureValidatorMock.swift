@@ -5,10 +5,10 @@ public class JWSSignatureValidatorMock: JWSSignatureValidatorProtocol {
 
   public var validateJwsDidReturnValue = false
 
-  public var validateJwsDidReceivedJws: JWSValidatable? = nil
-  public var validateJwsDidReceivedDid: String? = nil
+  public var validateJwsDidReceivedJws: JWSValidatable?
+  public var validateJwsDidReceivedDid: String?
 
-  public var validateJwsDidThrowableError: Error? = nil
+  public var validateJwsDidThrowableError: Error?
 
   public func validate(_ jws: JWSValidatable, did: String) async throws -> Bool {
     validateJwsDidReceivedJws = jws

@@ -19,4 +19,8 @@ extension Container {
   public var preferredUserLocales: Factory<[UserLocale]> {
     self { Locale.preferredLanguages }
   }
+
+  public var userTimeZone: Factory<TimeZone> {
+    self { TimeZone.current }
+  }
 }

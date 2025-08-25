@@ -8,9 +8,9 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    repository = LocalEIDRequestRepositoryProtocolSpy()
+    repository = EIDRequestCaseRepositoryProtocolSpy()
 
-    Container.shared.localEIDRequestRepository.register { self.repository }
+    Container.shared.eIDRequestCaseRepository.register { self.repository }
 
     useCase = GetEIDRequestCaseListUseCase()
   }
@@ -63,7 +63,7 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
     .Mock.sampleWithoutState,
     .Mock.sampleCancelled,
   ]
-  private var repository: LocalEIDRequestRepositoryProtocolSpy!
+  private var repository: EIDRequestCaseRepositoryProtocolSpy!
   // swiftlint:enable all
 
 }

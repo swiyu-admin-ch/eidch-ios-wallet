@@ -1,3 +1,4 @@
+import BITAVWrapper
 import BITNavigation
 import BITTheming
 import SwiftUI
@@ -5,7 +6,7 @@ import SwiftUI
 
 public protocol EIDRequestRoutes {
   func eIDRequest()
-  func autoVerification()
+  func autoVerification(caseId: String)
   func obtainConsent(caseId: String)
 }
 
@@ -16,7 +17,9 @@ protocol EIDRequestInternalRoutes: ClosableRoutes, ExternalRoutes {
 
   func dataPrivacy()
   func cameraPermission()
-  func mrzScanner()
+  func scanDocument()
+  func mrzMockData()
+  func scanDocumentSubmit(_ scanDocumentOutput: ScanDocumentOutput)
   func queueInformation(_ onlineSessionStartDate: Date)
   func legalRepresentant()
   func legalRepresentantConsent(caseId: String)
@@ -28,7 +31,10 @@ protocol EIDRequestInternalRoutes: ClosableRoutes, ExternalRoutes {
   func avIdentityCheck()
   func clientAttestationError()
   func keyAttestationError()
-  func attestationError(delegate: AttestationErrorDelegate)
+  func validateAttestationsError(delegate: ValidateAttestationsErrorDelegate, error: Error)
+  func avIntroSelfieVideo()
+  func recordDocument()
+  func recordSelfie()
 }
 
 extension EIDRequestInternalRoutes where Self: RouterProtocol {
@@ -43,8 +49,18 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func mrzScanner() {
-    let viewController = HideBackButtonHostingController(rootView: MRZScannerView(router: self))
+  func mrzMockData() {
+    let viewController = UIHostingController(rootView: MRZMockDataView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func scanDocument() {
+    let viewController = HideBackButtonHostingController(rootView: ScanDocumentView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func scanDocumentSubmit(_ scanDocumentOutput: ScanDocumentOutput) {
+    let viewController = HideBackButtonHostingController(rootView: ScanDocumentSubmitView(scanDocumentOutput, router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
@@ -54,7 +70,7 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
   }
 
   func legalRepresentant() {
-    let viewController = UIHostingController(rootView: LegalRepresentantView(router: self))
+    let viewController = HideBackButtonHostingController(rootView: LegalRepresentantView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
@@ -79,17 +95,17 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
   }
 
   func attestation() {
-    let viewController = UIHostingController(rootView: AttestationView(router: self))
+    let viewController = HideBackButtonHostingController(rootView: ValidateAttestationsView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
   func walletPairing() {
-    let viewController = UIHostingController(rootView: WalletPairingView(router: self))
+    let viewController = HideBackButtonHostingController(rootView: WalletPairingView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
   func avIdentityCheck() {
-    let viewController = UIHostingController(rootView: AVIdentityCheckView(router: self))
+    let viewController = HideBackButtonHostingController(rootView: AVIdentityCheckView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
@@ -103,8 +119,23 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func attestationError(delegate: AttestationErrorDelegate) {
-    let viewController = HideBackButtonHostingController(rootView: AttestationErrorView(router: self, delegate: delegate))
+  func validateAttestationsError(delegate: ValidateAttestationsErrorDelegate, error: Error) {
+    let viewController = HideBackButtonHostingController(rootView: ValidateAttestationsErrorView(router: self, delegate: delegate, error: error))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func avIntroSelfieVideo() {
+    let viewController = HideBackButtonHostingController(rootView: AVIntroSelfieVideoView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func recordDocument() {
+    let viewController = HideBackButtonHostingController(rootView: RecordDocumentView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func recordSelfie() {
+    let viewController = HideBackButtonHostingController(rootView: RecordSelfieView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 }
@@ -121,8 +152,8 @@ extension EIDRequestRoutes where Self: RouterProtocol {
     open(viewController, on: self.viewController, as: style)
   }
 
-  public func autoVerification() {
-    let module = AutoVerificationModule()
+  public func autoVerification(caseId: String) {
+    let module = AutoVerificationModule(caseId: caseId)
     let viewController = module.viewController
     let style = NavigationPushOpeningStyle()
 

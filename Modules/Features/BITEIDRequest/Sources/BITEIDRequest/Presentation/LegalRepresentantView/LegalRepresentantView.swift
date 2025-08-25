@@ -27,6 +27,7 @@ struct LegalRepresentantView: View {
       footer: {
         viewFooter()
       })
+      .navigationBarBackButtonHidden()
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 

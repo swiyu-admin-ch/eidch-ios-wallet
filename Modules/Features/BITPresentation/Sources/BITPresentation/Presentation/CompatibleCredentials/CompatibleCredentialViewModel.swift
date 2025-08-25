@@ -27,7 +27,7 @@ public class CompatibleCredentialViewModel: ObservableObject {
 
   @Published var credentialViewModels: [CredentialViewModel] = []
 
-  var verifierDisplay: VerifierDisplay? = nil
+  var verifierDisplay: VerifierDisplay?
 
   func didSelect(credential: Credential) {
     guard let compatibleCredential = compatibleCredentials.first(where: { $0.id == credential.id }) else { return }

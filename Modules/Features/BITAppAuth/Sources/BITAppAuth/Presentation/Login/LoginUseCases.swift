@@ -1,4 +1,4 @@
-import BITAppVersion
+import BITAppInfo
 import Spyable
 
 // MARK: - LoginUseCasesProtocol

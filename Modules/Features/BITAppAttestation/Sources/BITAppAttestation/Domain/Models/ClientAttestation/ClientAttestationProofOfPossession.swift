@@ -6,11 +6,11 @@ import Foundation
 /// Client Attestation Proof of Possession (PoP) JWT
 ///
 /// https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-05
-typealias ClientAttestationProofOfPossession = JWS<ClientAttestationProofOfPossessionPayload>
+public typealias ClientAttestationProofOfPossession = JWS<ClientAttestationProofOfPossessionPayload>
 
 // MARK: - ClientAttestationProofOfPossessionPayload
 
-struct ClientAttestationProofOfPossessionPayload: JWTPayload, Codable, Equatable {
+public struct ClientAttestationProofOfPossessionPayload: JWTPayload, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -25,6 +25,10 @@ struct ClientAttestationProofOfPossessionPayload: JWTPayload, Codable, Equatable
     self.activatedAt = activatedAt
   }
 
+  // MARK: Public
+
+  public let type: String? = "oauth-client-attestation-pop+jwt"
+
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
@@ -38,7 +42,6 @@ struct ClientAttestationProofOfPossessionPayload: JWTPayload, Codable, Equatable
     case audience = "aud"
   }
 
-  let type: String? = "oauth-client-attestation-pop+jwt"
   let expiredAt: Date
   let issuer: String
   let jwtIdentifier: String

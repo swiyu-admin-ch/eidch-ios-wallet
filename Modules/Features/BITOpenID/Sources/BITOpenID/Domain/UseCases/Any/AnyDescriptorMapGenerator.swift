@@ -7,7 +7,7 @@ struct AnyDescriptorMapGenerator: AnyDescriptorMapGeneratorProtocol {
 
   // MARK: Lifecycle
 
-  public init(anyDescriptorMapGeneratorDispatcher: [CredentialFormat: AnyDescriptorMapGeneratorProtocol] = Container.shared.anyDescriptorMapGeneratorDispatcher()) {
+  init(anyDescriptorMapGeneratorDispatcher: [CredentialFormat: AnyDescriptorMapGeneratorProtocol] = Container.shared.anyDescriptorMapGeneratorDispatcher()) {
     dispatcher = anyDescriptorMapGeneratorDispatcher
   }
 

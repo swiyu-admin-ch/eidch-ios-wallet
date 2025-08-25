@@ -22,7 +22,6 @@ public struct KeyValueCell: View {
         .font(.custom.body)
         .lineLimit(lineLimit)
         .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
-        .accessibilityLabel("\(L10n.cellValueAccessibilityLabel) \(value)")
         .accessibilityIdentifier(key)
     }
   }
@@ -52,12 +51,10 @@ public struct KeyValueCustomCell<Content: View>: View {
       Text(key)
         .font(.custom.caption1)
         .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
-        .accessibilityHidden(true)
       content
     }
     .padding(.vertical, .x2)
-    .accessibilityElement(children: .contain)
-    .accessibilityLabel(key)
+    .accessibilityElement(children: .combine)
   }
 
   // MARK: Private
@@ -107,8 +104,6 @@ public struct IconKeyValueCell: View {
               disclosureIndicator
                 .padding(.trailing, .x6)
             }
-
-            Divider()
           }
         }
       }).accessibilityIdentifier(AccessibilityIdentifier.button.rawValue)
@@ -143,5 +138,6 @@ public struct IconKeyValueCell: View {
         title: { Text("Label") },
         icon: { Image(systemName: "42.circle") })
     })
+    IconKeyValueCell(key: "Label", value: "Icon", image: Image(systemName: "42.circle"), disclosureIndicator: Image(systemName: "chevron.right"))
   }
 }

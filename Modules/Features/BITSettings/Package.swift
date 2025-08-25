@@ -16,13 +16,13 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../BITAppAuth"),
-    .package(path: "../BITAppVersion"),
+    .package(path: "../BITAppInfo"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITAnalytics"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
-    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.0.2 available
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
   ],
   targets: [
     .target(
@@ -32,7 +32,7 @@ let package = Package(
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITTheming", package: "BITTheming"),
-        .product(name: "BITAppVersion", package: "BITAppVersion"),
+        .product(name: "BITAppInfo", package: "BITAppInfo"),
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "PopupView", package: "PopupView"),

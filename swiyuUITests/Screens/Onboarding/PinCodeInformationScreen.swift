@@ -1,35 +1,32 @@
 import Foundation
 import XCTest
 @testable import BITOnboarding
+@testable import BITTheming
 
-class PinCodeInformationScreen: InformationScreen {
+struct PinCodeInformationScreen: Screen {
 
-  // MARK: Lifecycle
+  let app: XCUIApplication
 
-  override init(app: XCUIApplication) {
-    content = app.descendants(matching: .any)[PinCodeInformationView.AccessibilityIdentifier.pinCodeInformationContent.rawValue]
-    _ = content.waitForExistence(timeout: .defaultTimeout)
-    backButton = app.navigationBars.buttons.element(boundBy: 0)
-    super.init(app: app)
+  static func navigateToAfterLaunchingApp(_ app: XCUIApplication) -> PinCodeInformationScreen {
+    PrivacyPermissionScreen.navigateToAfterLaunchingApp(app)
+      .tapAccept()
+      .assertPinCodeInformationScreen()
   }
 
-  // MARK: Internal
-
-  let backButton: XCUIElement
-  let content: XCUIElement
-
-  override func assertDisplayed() {
-    XCTAssertTrue(content.waitForExistence(timeout: .defaultTimeout))
-    XCTAssertTrue(secondaryText.exists)
-    super.assertDisplayed()
+  @discardableResult
+  func assertPinCodeInformationScreen() -> PinCodeInformationScreen {
+    app.assertElementDisplayed(PinCodeInformationView.AccessibilityIdentifier.content.rawValue)
+    return self
   }
 
-  static func createAndNavigateFromAppStart(app: XCUIApplication) -> PinCodeInformationScreen {
-    let credentialIntroduction = PrivacyPermissionScreen.createAndNavigateFromAppStart(app: app)
-    credentialIntroduction.acceptButton.tap()
-    let currentScreen = PinCodeInformationScreen(app: app)
-    currentScreen.assertDisplayed()
-    return currentScreen
+  func tapBack() -> PrivacyPermissionScreen {
+    app.tapNavigationBarBack()
+    return PrivacyPermissionScreen(app: app)
+  }
+
+  func tapEnterPassword() -> PinCodeScreen {
+    app.tap(DefaultInformationFooterView.AccessibilityIdentifier.primaryButton.rawValue)
+    return PinCodeScreen(app: app)
   }
 
 }

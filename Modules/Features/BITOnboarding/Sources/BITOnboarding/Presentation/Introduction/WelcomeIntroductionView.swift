@@ -17,7 +17,7 @@ struct WelcomeIntroductionView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
-    case welcomeIntroductionContent
+    case content = "welcomeIntroductionContent"
   }
 
   var body: some View {
@@ -28,13 +28,14 @@ struct WelcomeIntroductionView: View {
           primary: L10n.tkOnboardingIntroductionStepSecurityPrimary,
           primaryAlt: L10n.tkOnboardingIntroductionStepSecurityScreenAlt,
           secondary: L10n.tkOnboardingIntroductionStepSecuritySecondary)
-          .accessibilityIdentifier(AccessibilityIdentifier.welcomeIntroductionContent.rawValue)
       },
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkOnboardingIntroductionStepSecurityButtonPrimary,
           primaryButtonAction: viewModel.primaryAction)
       })
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private

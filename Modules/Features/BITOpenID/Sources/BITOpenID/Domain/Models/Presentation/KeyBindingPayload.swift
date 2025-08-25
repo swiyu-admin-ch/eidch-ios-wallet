@@ -6,16 +6,12 @@ struct KeyBindingPayload: JWTPayload, Codable, Equatable {
 
   // MARK: Lifecycle
 
-  init(sdHash: String, audience: String = UUID().uuidString, nonce: String? = nil, issuedAt: Double = Date().timeIntervalSince1970) {
+  init(sdHash: String, audience: String, nonce: String? = nil, issuedAt: Double = Date().timeIntervalSince1970) {
     self.sdHash = sdHash
     self.audience = audience
     self.nonce = nonce
     self.issuedAt = issuedAt
   }
-
-  // MARK: Public
-
-  public let type: String? = "kb+jwt"
 
   // MARK: Internal
 
@@ -25,6 +21,8 @@ struct KeyBindingPayload: JWTPayload, Codable, Equatable {
     case issuedAt = "iat"
     case sdHash = "sd_hash"
   }
+
+  let type: String? = "kb+jwt"
 
   // MARK: Private
 

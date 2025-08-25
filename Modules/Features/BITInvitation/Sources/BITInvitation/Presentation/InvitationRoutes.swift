@@ -28,7 +28,8 @@ extension InvitationRoutes where Self: RouterProtocol {
     guard let route = try? deeplinkManager.dispatchFirst(url) else { return false }
 
     switch route {
-    case .credential:
+    case .credentialOffer,
+         .presentation:
       let module = DeeplinkModule(url: url)
       let style = ModalOpeningStyle(animatedWhenPresenting: animated, modalPresentationStyle: .fullScreen)
       module.router.current = style

@@ -30,7 +30,7 @@ public struct OtherMockAnyCredential: AnyCredential {
     nil
   }
 
-  public func getClaimsDictionary(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> [String: Any] {
+  public func getClaimsDictionary(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> [String: Any?] {
     [:]
   }
 }

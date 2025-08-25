@@ -7,21 +7,13 @@ import SwiftUI
 
 extension Container {
 
-  public var vaultAccessControlFlags: Factory<SecAccessControlCreateFlags> {
-    self { [.privateKeyUsage, .applicationPassword] }
+  var holderBindingContextGenerator: Factory<HolderBindingContextGeneratorProtocol> {
+    self { HolderBindingContextGenerator() }
   }
 
-}
-
-extension Container {
-
-  // MARK: Public
-
-  public var vaultProtection: Factory<CFString> {
-    self { kSecAttrAccessibleWhenUnlockedThisDeviceOnly }
+  var overlayAttributeDateParser: Factory<OverlayAttributeDateParserProtocol> {
+    self { OverlayAttributeDateParser() }
   }
-
-  // MARK: Internal
 
   var credentialGenerator: Factory<CredentialGeneratorProtocol> {
     self { CredentialGenerator() }
@@ -33,6 +25,14 @@ extension Container {
 
   var ocaCredentialGenerator: Factory<OcaCredentialGeneratorProtocol> {
     self { OcaCredentialGenerator() }
+  }
+
+  var ocaClaimGenerator: Factory<OcaClaimGeneratorProtocol> {
+    self { OcaClaimGenerator() }
+  }
+
+  var credentialKeyRepository: Factory<CredentialKeyRepositoryProtocol> {
+    self { CredentialKeyRepository() }
   }
 }
 

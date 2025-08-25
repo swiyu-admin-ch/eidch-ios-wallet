@@ -4,92 +4,70 @@ import XCTest
 
 // MARK: - ReceiveTests
 
-final class ReceiveLandscapeTests: XCTestCase {
+final class ReceiveLandscapeTests: UITestCase {
 
-  var app = XCUIApplication()
-
-  override func setUp() {
-    super.setUp()
-    app = XCUIApplication()
-    app.launchArguments.append("-disable-onboarding")
-    XCUIDevice.shared.orientation = .landscapeRight
-    app.launch()
-    XCTAssertTrue(XCUIDevice.shared.orientation.isLandscape)
+  override var arguments: [String] {
+    ["-disable-onboarding", "-pre-fill-database"]
   }
 
-  override func tearDownWithError() throws {
-    let screenshot = XCUIScreen.main.screenshot()
-    let attachment = XCTAttachment(screenshot: screenshot)
-    add(attachment)
+  override var orientation: UIDeviceOrientation {
+    .landscapeRight
   }
 
   func testBasicNavigationLandscape() {
-    let receiveTests = ReceiveTests()
-    receiveTests.testBottomAcceptButton()
+    HomeScreen.navigateToAfterLaunchingApp(app)
+      .tapScanForCredentialOffer()
+      .assertCredentialOfferScreen()
+      .assertIssuerHeaderDisplayed()
+      .assertCredentialCardDisplayed()
+      .assertClaimsListDisplayed()
+      .scrollToWrongData()
+      .tapWrongData()
+      .assertCredentialOfferWrongDataScreen()
+      .tapClose()
+      .assertCredentialOfferScreen()
+      .tapAccept()
+      .assertHomeScreen()
+  }
+
+  func testAcceptOfferLandscape() throws {
+    let homeScreen = HomeScreen.navigateToAfterLaunchingApp(app)
+    let credentialsCount = homeScreen.getCredentialsCount()
+    homeScreen
+      .tapScanForCredentialOffer()
+      .assertCredentialOfferScreen()
+      .tapAccept()
+      .assertHomeScreen()
+      .assertCredentialsCountEquals(credentialsCount + 1)
   }
 
   func testDeclineOfferLandscape() throws {
-    throw XCTSkip("Skipping this test until mocking strategy is reworked.")
-    let receiveTests = ReceiveTests()
-    try receiveTests.testBottomDeclineButton()
-  }
-
-  func testCancelDeclineOfferLandscape() {
-    let loginScreen = LoginScreen(app: app)
-    loginScreen.login()
-
-    let homeScreen = HomeScreen(app: app)
-    homeScreen.assertDisplayed()
-    homeScreen.scanButton.tap()
-
-    let credentialOfferScreen = CredentialOfferScreen(app: app)
-    credentialOfferScreen.assertDisplayed()
-    credentialOfferScreen.bottomDeclineButton.tap()
-    XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
-    credentialOfferScreen.cancelDeclineButton.tap()
-    credentialOfferScreen.assertDisplayed()
-    credentialOfferScreen.bottomAcceptButton.tap()
-    homeScreen.assertDisplayed()
+    let homeScreen = HomeScreen.navigateToAfterLaunchingApp(app)
+    let credentialsCount = homeScreen.getCredentialsCount()
+    homeScreen
+      .tapScanForCredentialOffer()
+      .assertCredentialOfferScreen()
+      .tapDecline()
+      .assertConfirmDeclineDisplayed()
+      .assertIssuerHeaderDisplayed()
+      .tapConfirmDecline()
+      .assertHomeScreen()
+      .assertCredentialsCountEquals(credentialsCount)
   }
 
   func testCancelDeclineOfferMultipleTimesLandscape() {
-    let loginScreen = LoginScreen(app: app)
-    loginScreen.login()
-
-    let homeScreen = HomeScreen(app: app)
-    homeScreen.assertDisplayed()
-    homeScreen.scanButton.tap()
-
-    let credentialOfferScreen = CredentialOfferScreen(app: app)
-    credentialOfferScreen.assertDisplayed()
-    for _ in 1...10 {
-      credentialOfferScreen.bottomDeclineButton.tap()
-      XCTAssert(credentialOfferScreen.confirmDeclineButton.waitForExistence(timeout: .defaultTimeout))
-      credentialOfferScreen.cancelDeclineButton.tap()
-      credentialOfferScreen.assertDisplayed()
+    let credentialOfferScreen = HomeScreen.navigateToAfterLaunchingApp(app)
+      .tapScanForCredentialOffer()
+      .assertCredentialOfferScreen()
+    for _ in 1...5 {
+      credentialOfferScreen
+        .tapDecline()
+        .assertConfirmDeclineDisplayed()
+        .tapCancelDecline()
+        .assertCredentialOfferScreen()
     }
-    credentialOfferScreen.bottomAcceptButton.tap()
-    homeScreen.assertDisplayed()
+    credentialOfferScreen
+      .tapAccept()
+      .assertHomeScreen()
   }
-
-  func testCheckIssuerInformationLandscape() {
-    let receiveTests = ReceiveTests()
-    receiveTests.testCheckIssuerInformation()
-  }
-
-  func testCheckCredentialCardLandscape() {
-    let receiveTests = ReceiveTests()
-    receiveTests.testCheckCredentialCard()
-  }
-
-  func testCredentialHasDetailsLandscape() {
-    let receiveTests = ReceiveTests()
-    receiveTests.testCredentialHasDetails()
-  }
-
-  func testWrongDataButtonLandscape() {
-    let receiveTests = ReceiveTests()
-    receiveTests.testWrongDataButton()
-  }
-
 }

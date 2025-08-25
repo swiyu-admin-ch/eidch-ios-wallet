@@ -16,6 +16,7 @@ extension CredentialClaimDisplayEntity {
   func setValues(from display: CredentialClaimDisplay) {
     locale = display.locale ?? .defaultLocaleIdentifier
     name = display.name
+    value = display.value
   }
 
 }

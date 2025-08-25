@@ -9,6 +9,7 @@ extension EIDRequestStatus: Mockable {
 
     static let inQueueSample: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-queue", bundle: Bundle.module)
     static let readyForAVSample: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-ready", bundle: Bundle.module)
+    static let inWalletPairingSample: EIDRequestStatus = Mocker.decode(fromFile: "eid-request-status-wallet-pairing", bundle: Bundle.module)
     static let sampleData: Data = Mocker.getData(fromFile: "eid-request-status-queue", bundle: Bundle.module) ?? Data()
   }
 }

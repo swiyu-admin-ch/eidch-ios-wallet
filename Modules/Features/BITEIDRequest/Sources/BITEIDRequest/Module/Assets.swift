@@ -22,6 +22,13 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 enum Assets {
+  enum Camera {
+    static let idBack = ImageAsset(name: "Camera/id-back")
+    static let idFront = ImageAsset(name: "Camera/id-front")
+    static let passportBack = ImageAsset(name: "Camera/passport-back")
+    static let passportFront = ImageAsset(name: "Camera/passport-front")
+  }
+
   static let bPermit = ImageAsset(name: "B Permit")
   static let camera = ImageAsset(name: "Camera")
   static let card = ImageAsset(name: "Card")
@@ -35,6 +42,8 @@ enum Assets {
   static let idCheck = ImageAsset(name: "IDCheck")
   static let passport = ImageAsset(name: "Passport")
   static let person = ImageAsset(name: "Person")
+  static let selfieOverlay = ImageAsset(name: "Selfie Overlay")
+  static let selfie = ImageAsset(name: "Selfie")
   static let shield = ImageAsset(name: "Shield")
   static let swissIDCard = ImageAsset(name: "Swiss ID Card")
   static let timer = ImageAsset(name: "Timer")

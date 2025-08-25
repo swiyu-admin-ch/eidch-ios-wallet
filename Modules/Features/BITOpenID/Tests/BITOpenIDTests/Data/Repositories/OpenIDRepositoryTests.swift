@@ -53,14 +53,14 @@ final class OpenIDRepositoryTests: XCTestCase {
     mockResponse(code: 200, data: dataMock)
 
     let response = try await repository.fetchMetadata(from: mockUrl)
-    let metadata = response.object
+    let metadata = response.metadata
 
     XCTAssertEqual(expectedMetadata.credentialEndpoint, metadata.credentialEndpoint)
     XCTAssertEqual(expectedMetadata.credentialIssuer, metadata.credentialIssuer)
     XCTAssertEqual(expectedMetadata.credentialConfigurationsSupported.count, metadata.credentialConfigurationsSupported.count)
     XCTAssertEqual(expectedMetadata.display?.count, metadata.display?.count)
     XCTAssertEqual(expectedMetadata.preferredDisplay, metadata.preferredDisplay)
-    XCTAssertEqual(dataMock, response.data)
+    XCTAssertEqual(dataMock, response.raw)
   }
 
   func testFetchMetadataNetworkError() async throws {

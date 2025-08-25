@@ -32,11 +32,9 @@ class SplashScreenModule {
     self.viewController = viewController
   }
 
-  // MARK: Public
-
-  public let viewController: UIViewController
-
   // MARK: Internal
+
+  let viewController: UIViewController
 
   let router: RootRouter
 

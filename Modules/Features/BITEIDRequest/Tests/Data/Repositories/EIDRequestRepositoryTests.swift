@@ -1,8 +1,11 @@
-import Moya
+import Factory
 import XCTest
 @testable import BITAppAttestation
 @testable import BITEIDRequest
 @testable import BITNetworking
+@testable import BITTestingCore
+
+// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 
 // MARK: - OpenIDCredentialRepository
 
@@ -11,7 +14,9 @@ final class EIDRequestRepositoryTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    registerMocks()
     repository = EIDRequestRepository()
+    createSuccessState()
 
     NetworkContainer.shared.reset()
     NetworkContainer.shared.stubClosure.register {
@@ -19,18 +24,32 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
-  // MARK: - Metadata
+  // MARK: - Fetch status
 
-  func testGetRequestStatus() async throws {
+  func testFetchRequestStatus_success() async throws {
     let expectedStatus = EIDRequestStatus.Mock.inQueueSample
     mockResponse(code: 200, data: EIDRequestStatus.Mock.sampleData)
 
     let status = try await repository.fetchRequestStatus(for: mockeIDRequestResponse.caseId)
 
     XCTAssertEqual(expectedStatus, status)
+    XCTAssertEqual(clientAttestationRepository.getCallsCount, 1)
   }
 
-  func testSubmitRequest() async throws {
+  func testFetchRequestStatus_getClientAttestationFails_throwsError() async throws {
+    clientAttestationRepository.getThrowableError = TestingError.error
+
+    do {
+      _ = try await repository.fetchRequestStatus(for: mockeIDRequestResponse.caseId)
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  // MARK: - Submit request
+
+  func testSubmitRequest_success() async throws {
     let expectedResponse = EIDRequestResponse.Mock.sample
 
     guard let mockeIDRequestPayload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
@@ -39,34 +58,55 @@ final class EIDRequestRepositoryTests: XCTestCase {
 
     mockResponse(code: 200, data: EIDRequestResponse.Mock.sampleData)
 
-    let response = try await repository.submitRequest(
-      ClientAttestedRequest(
-        body: mockeIDRequestPayload,
-        header: ClientAttestedRequest.Header(clientAttestation: "clientAttestation", clientAttestationPoP: "clientAttestationPoP"))
-    )
+    let response = try await repository.submitRequest(with: mockeIDRequestPayload)
 
     XCTAssertEqual(expectedResponse, response)
+    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.body as? EIDRequestPayload, mockeIDRequestPayload)
+    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.audience, strURL.absoluteString)
+    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.challengeEndpoint, URL(target: EIDRequestEndpoint.challenge))
   }
 
-  func testFetchLegalRepresentantVerification() async throws {
+  func testSubmitRequest_generateProofOfPossessionsFails_throwsError() async throws {
+    proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
+
+    guard let mockeIDRequestPayload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
+      fatalError("Failed to create mock EIDRequestPayload")
+    }
+
+    do {
+      _ = try await repository.submitRequest(with: mockeIDRequestPayload)
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  // MARK: - Fetch legal representant verification
+
+  func testFetchLegalRepresentantVerification_success() async throws {
     let expected = LegalRepresentantVerificationResponse.Mock.sample
     mockResponse(code: 200, data: LegalRepresentantVerificationResponse.Mock.sampleData)
 
     let response = try await repository.fetchLegalRepresentantVerification(for: "caseId")
 
     XCTAssertEqual(expected, response)
+    XCTAssertEqual(clientAttestationRepository.getCallsCount, 1)
   }
 
-  func testFetchChallenge_success() async throws {
-    let expectedResponse = AttestationChallenge.Response.Mock.sample.challenge
-    mockResponse(code: 200, data: AttestationChallenge.Response.Mock.sampleData)
+  func testFetchLegalRepresentantVerification_getClientAttestationFails_throwsError() async throws {
+    clientAttestationRepository.getThrowableError = TestingError.error
 
-    let response = try await repository.fetchChallenge()
-
-    XCTAssertEqual(response, expectedResponse)
+    do {
+      _ = try await repository.fetchLegalRepresentantVerification(for: "caseId")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
   }
 
-  func testExecute_validateAttestationsClientAttestationInvalid_throwsInvalidClientAttestationError() async throws {
+  // MARK: - Validate attestations
+
+  func testValidateAttestations_clientAttestationInvalid_throwsInvalidClientAttestationError() async throws {
     try mockResponse(code: 422, data: JSONEncoder().encode(ValidateAttestationsErrorResponse.Mock.clientAttestationSample))
 
     do {
@@ -77,7 +117,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
-  func testExecute_validateAttestationsKeyAttestationInvalid_throwsInvalidKeyAttestationError() async throws {
+  func testValidateAttestations_keyAttestationInvalid_throwsInvalidKeyAttestationError() async throws {
     try mockResponse(code: 422, data: JSONEncoder().encode(ValidateAttestationsErrorResponse.Mock.keyAttestationSample))
 
     do {
@@ -88,7 +128,18 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
-  func testExecute_validateAttestationsFails_throwsUnknownError() async throws {
+  func testValidateAttestations_insufficientKeyStorageResistance_throwsInsufficientKeyStorageResistanceError() async throws {
+    try mockResponse(code: 422, data: JSONEncoder().encode(ValidateAttestationsErrorResponse.Mock.insuffisanceResistanceSample))
+
+    do {
+      try await repository.validateAttestations(mockValidateAttestationsRequestBody)
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? EIDRequestRepository.Error, .insufficientKeyStorageResistance)
+    }
+  }
+
+  func testValidateAttestationsFails_throwsUnknownError() async throws {
     mockResponse(code: 400)
 
     do {
@@ -99,12 +150,40 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
+  // MARK: - Start online session
+
+  func testStartOnlineSession_success() async throws {
+    mockResponse(code: 200)
+
+    try await repository.startOnlineSession(caseId: "caseId")
+
+    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointCallsCount, 1)
+  }
+
+  func testStartOnlineSession_generateProofOfPossessionsFails_throwsError() async throws {
+    proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
+
+    do {
+      _ = try await repository.startOnlineSession(caseId: "caseId")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointCallsCount, 1)
+    }
+  }
+
   // MARK: Private
 
-  private let strURL = "some://url"
+  private let strURL = URL(string: "some://url")!
   private var repository = EIDRequestRepository()
   private let mockeIDRequestResponse: EIDRequestResponse = .Mock.sample
   private let mockValidateAttestationsRequestBody: ValidateAttestationsRequestBody = .Mock.sample
+
+  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
+
+  private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!
+  private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocolSpy!
 
   private func mockResponse(code: Int, data: Data = Data()) {
     NetworkContainer.shared.endpointClosure.register {
@@ -112,4 +191,20 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
+  private func createSuccessState() {
+    clientAttestationRepository.getReturnValue = mockClientAttestation
+    proofOfPossessionGenerator.generateForAudienceChallengeEndpointReturnValue = (mockClientAttestation, mockClientAttestationProofOfPossession)
+  }
+
+  private func registerMocks() {
+    clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
+    proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
+
+    Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
+    Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGenerator }
+    Container.shared.sidUrl.register { self.strURL }
+  }
+
 }
+
+// swiftlint: enable implicitly_unwrapped_optional force_unwrapping

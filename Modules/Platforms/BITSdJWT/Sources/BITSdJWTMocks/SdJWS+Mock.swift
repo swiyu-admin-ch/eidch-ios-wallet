@@ -8,7 +8,7 @@ struct TestSdJWTPayload: JWTPayload, Codable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(
+  init(
     testValue1: String? = nil,
     testValue2: String? = nil,
     testValue3: String? = nil)
@@ -48,6 +48,8 @@ extension TestSdJWTPayload: Mockable {
     static let flatJwtWithIsoDateData: Data = getData(fromFile: "sd-jwt-flat-with-iso-date", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let flatJwtWithIsoDatePayload: String = getString(fromFile: "sd-jwt-flat-with-iso-date-payload", ofType: "json", bundle: Bundle.module)
     static let flatJwtWithKeyBindingData: Data = getData(fromFile: "sd-jwt-flat-with-keybinding", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let flatJwtWithNullClaims: Data = getData(fromFile: "sd-jwt-flat-with-null-claims", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let flatJwtWithNullClaimsPayload: String = getString(fromFile: "sd-jwt-flat-with-null-claims-payload", ofType: "json", bundle: Bundle.module)
     static let flatJwtUsingSha384: Data = getData(fromFile: "sd-jwt-flat-using-sha-384", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let flatJwtUsingSha512: Data = getData(fromFile: "sd-jwt-flat-using-sha-512", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let undisclosedJwtData: Data = getData(fromFile: "sd-jwt-undisclosed", ofType: "txt", bundle: Bundle.module) ?? Data()

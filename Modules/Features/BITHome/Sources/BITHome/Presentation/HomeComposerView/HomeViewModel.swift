@@ -251,8 +251,8 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
     }
   }
 
-  func didStartAutoVerification() {
-    router.autoVerification()
+  func didStartAutoVerification(caseId: String) {
+    router.autoVerification(caseId: caseId)
   }
 
   func didUpdateRequestCaseState() {

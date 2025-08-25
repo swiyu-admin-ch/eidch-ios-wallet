@@ -1,6 +1,14 @@
 import BITJWT
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - ValidateTrustStatementUseCaseProtocol
+
+@Spyable
+public protocol ValidateTrustStatementUseCaseProtocol {
+  func execute(_ trustStatement: TrustStatement, for subject: String) async -> Bool
+}
 
 // MARK: - ValidateTrustStatementUseCase
 
@@ -8,12 +16,12 @@ struct ValidateTrustStatementUseCase: ValidateTrustStatementUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(_ trustStatement: TrustStatement) async -> Bool {
+  func execute(_ trustStatement: TrustStatement, for subject: String) async -> Bool {
     do {
       let issuer = trustStatement.payload.issuer
       guard
         isDidTrusted(issuer),
-        trustStatement.payload.subject != nil,
+        trustStatement.payload.subject == subject,
         trustStatement.payload.expiredAt >= now,
         trustStatement.payload.activatedAt <= now.addingTimeInterval(dateBuffer),
         trustStatement.header.algorithm == JWTAlgorithm.ES256

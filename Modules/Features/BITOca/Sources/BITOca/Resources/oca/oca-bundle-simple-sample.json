@@ -2,65 +2,76 @@
   "capture_bases": [
     {
       "type": "spec/capture_base/1.0",
-      "digest": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "digest": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "attributes": {
         "lastName": "Text",
         "isOver18": "Boolean",
-        "height": "Numeric"
+        "height": "Numeric",
+        "dateOfBirth": "DateTime"
       }
     }
   ],
   "overlays": [
     {
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "type": "spec/overlays/character_encoding/1.0",
       "default_character_encoding": "utf-8"
     },
     {
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
+      "type": "spec/overlays/standard/1.0",
+      "attr_standards": {
+        "dateOfBirth": "urn:iso:std:iso:8601"
+      }
+    },
+    {
       "type": "extend/overlays/data_source/1.0",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "format": "vc+sd-jwt",
       "attribute_sources": {
         "lastName": "$.lastName",
         "isOver18": "$.isOver18",
-        "height": "$.height"
+        "height": "$.height",
+        "dateOfBirth": "$.dateOfBirth"
       }
     },
     {
       "type": "spec/overlays/label/1.0",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "language": "de-CH",
       "attribute_labels": {
         "lastName": "lastName de-CH",
         "isOver18": "isOver18 de-CH",
-        "height": "height de-CH"
+        "height": "height de-CH",
+        "dateOfBirth": "dateOfBirth de-CH"
       }
     },
     {
       "type": "spec/overlays/label/1.0",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "language": "en-US",
       "attribute_labels": {
         "lastName": "lastName en-US",
         "isOver18": "isOver18 en-US",
-        "height": "height en-US"
+        "height": "height en-US",
+        "dateOfBirth": "dateOfBirth en-US"
       }
     },
     {
       "type": "spec/overlays/meta/1.0",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "language": "de-CH",
       "name": "credential de-CH"
     },
     {
       "type": "spec/overlays/meta/1.0",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "language": "en-US",
       "name": "credential en-US"
     },
     {
       "type": "aries/overlays/branding/1.1",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "language": "de-CH",
       "theme": "light",
       "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAACPSURBVHgB7ZbbCYAwDEVvxEHcREdzlI7gCHUDN9AtfEJM0S9BUWwrSA5cWujHgdA2oWFcWhAyxKGjYVpYNpaZawSEiHJZCjhhP84lAuMczpUgMir8Tii32PBGiRdoSVWoQhX+UJjiOfnJf9pIV68QQFjsOWIkXoVGYi/OO9zgtlDKZeEBfRbeiT4IU+xRfwVePD+H6WV/zQAAAABJRU5ErkJggg==",
@@ -69,7 +80,7 @@
     },
     {
       "type": "aries/overlays/branding/1.1",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "language": "en-US",
       "theme": "light",
       "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAACPSURBVHgB7ZbbCYAwDEVvxEHcREdzlI7gCHUDN9AtfEJM0S9BUWwrSA5cWujHgdA2oWFcWhAyxKGjYVpYNpaZawSEiHJZCjhhP84lAuMczpUgMir8Tii32PBGiRdoSVWoQhX+UJjiOfnJf9pIV68QQFjsOWIkXoVGYi/OO9zgtlDKZeEBfRbeiT4IU+xRfwVePD+H6WV/zQAAAABJRU5ErkJggg==",
@@ -78,11 +89,41 @@
     },
     {
       "type": "extend/overlays/order/1.0",
-      "capture_base": "ICsJn_lrL5c1T7pDCEvvrHje0-3uZv9-IQ9Ky2inX-nV",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
       "attribute_orders": {
         "isOver18": 2,
         "height": 3,
-        "lastName": 1
+        "lastName": 1,
+        "dateOfBirth": 4
+      }
+    },
+    {
+      "type": "spec/overlays/entry_code/1.0",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
+      "attribute_entry_codes": {
+        "isOver18": ["true", "false"]
+      }
+    },
+    {
+      "type": "spec/overlays/entry/1.0",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
+      "language": "de-CH",
+      "attribute_entries": {
+        "isOver18": {
+          "true": "true de-CH",
+          "false": "false de-CH"
+        }
+      }
+    },
+    {
+      "type": "spec/overlays/entry/1.0",
+      "capture_base": "IFlDhTMXHu24X5NAIsryr9w078J691eWNi_PG6B9uYt4",
+      "language": "en-US",
+      "attribute_entries": {
+        "isOver18": {
+          "true": "true en-US",
+          "false": "false en-US"
+        }
       }
     }
   ]

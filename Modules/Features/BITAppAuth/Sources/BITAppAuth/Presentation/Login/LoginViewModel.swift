@@ -1,4 +1,4 @@
-import BITAppVersion
+import BITAppInfo
 import BITCore
 import BITL10n
 import Combine
@@ -12,33 +12,9 @@ public class LoginViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  public init(
-    router: LoginRouterRoutes,
-    pinCode: String = "",
-    state: ViewState = ViewState.loginBiometrics,
-    useCases: LoginUseCasesProtocol = Container.shared.loginUseCases(),
-    awaitTimeOnAppear: UInt64 = Container.shared.awaitTimeBeforeBiometrics(),
-    pinCodeErrorAnimationDuration: CGFloat = Container.shared.pinCodeErrorAnimationDuration(),
-    pinCodeObserverDelay: CGFloat = Container.shared.pinCodeObserverDelay(),
-    attemptsLimit: Int = Container.shared.attemptsLimit(),
-    lockDelay: TimeInterval = Container.shared.lockDelay(),
-    loadingDelay: UInt64 = Container.shared.loadingDelay(),
-    pinCodeSize: Int = Container.shared.pinCodeSize(),
-    versionEnforcementTimeout: UInt64 = Container.shared.versionEnforcementLoginTimeout())
-  {
+  public init(router: LoginRouterRoutes, state: ViewState = ViewState.loginBiometrics) {
     self.router = router
-    self.pinCode = pinCode
     self.state = state
-    self.useCases = useCases
-    self.versionEnforcementTimeout = versionEnforcementTimeout
-
-    self.awaitTimeOnAppear = awaitTimeOnAppear
-    self.pinCodeErrorAnimationDuration = pinCodeErrorAnimationDuration
-    self.pinCodeObserverDelay = pinCodeObserverDelay
-    self.attemptsLimit = attemptsLimit
-    self.lockDelay = lockDelay
-    self.loadingDelay = loadingDelay
-    self.pinCodeSize = pinCodeSize
 
     updateBiometricContext()
     configureObservers()
@@ -62,7 +38,7 @@ public class LoginViewModel: ObservableObject {
   @Published var isBiometricAuthenticationAvailable = false
   @Published var isBiometricTriggered = false
   @Published var biometricType = BiometricType.faceID
-  @Published var pinCode: PinCode
+  @Published var pinCode: PinCode = ""
   @Published var pinCodeState = PinCodeState.normal
   @Published var biometricAttempts = 0
   @Published var attempts = 0
@@ -70,7 +46,7 @@ public class LoginViewModel: ObservableObject {
 
   @Published var state: ViewState
 
-  let attemptsLimit: Int
+  @Injected(\.attemptsLimit) var attemptsLimit: Int
 
   var inputFieldMessage: String {
     "\(pinCodeState == .error ? L10n.tkLoginPasswordfailedNotification : "") \(L10n.tkLoginPasswordfailedIosSubtitle(attemptsLeft))"
@@ -112,19 +88,18 @@ public class LoginViewModel: ObservableObject {
 
   // MARK: Private
 
-  private let awaitTimeOnAppear: UInt64
-  private let pinCodeErrorAnimationDuration: CGFloat
-  private let pinCodeObserverDelay: CGFloat
-  private let pinCodeSize: Int
-  private let lockDelay: TimeInterval
-  private let loadingDelay: UInt64
+  @Injected(\.loginUseCases) private var useCases: LoginUseCasesProtocol
+  @Injected(\.awaitTimeBeforeBiometrics) private var awaitTimeOnAppear: UInt64
+  @Injected(\.pinCodeErrorAnimationDuration) private var pinCodeErrorAnimationDuration: CGFloat
+  @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
+  @Injected(\.lockDelay) private var lockDelay: TimeInterval
+  @Injected(\.loadingDelay) private var loadingDelay: UInt64
+  @Injected(\.pinCodeSize) private var pinCodeSize: Int
+  @Injected(\.versionEnforcementLoginTimeout) private var versionEnforcementTimeout: UInt64
 
   private var timer: Timer?
-
   private let router: LoginRouterRoutes
-  private let versionEnforcementTimeout: UInt64
 
-  private let useCases: LoginUseCasesProtocol
   private var bag = Set<AnyCancellable>()
 
   private func configureObservers() {
@@ -204,6 +179,11 @@ extension LoginViewModel {
     guard timer == nil else { return }
 
     countdown = useCases.getLockedWalletTimeLeftUseCase.execute()
+
+    if let countdown, countdown <= 0 {
+      state = .loginPassword
+      unlockApp()
+    }
 
     timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
       Task { @MainActor [weak self] in

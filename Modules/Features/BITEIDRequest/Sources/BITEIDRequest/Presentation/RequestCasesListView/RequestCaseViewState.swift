@@ -7,14 +7,14 @@ import SwiftUI
 @Spyable
 public protocol RequestCaseViewStateDelegate: AnyObject {
   func didDeleteRequestCase()
-  func didStartAutoVerification()
+  func didStartAutoVerification(caseId: String)
   func didUpdateRequestCaseState()
   func didTapObtainConsent(caseId: String)
 }
 
 extension RequestCaseViewStateDelegate {
   func didDeleteRequestCase() { }
-  func didStartAutoVerification() { }
+  func didStartAutoVerification(caseId: String) { }
   func didUpdateRequestCaseState() { }
   func didTapObtainConsent(caseId: String) { }
 }

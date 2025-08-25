@@ -3,6 +3,8 @@ import BITAnalytics
 import BITAppAuth
 import BITCredential
 import BITDataStore
+import BITEIDRequest
+import BITLocalAuthentication
 import BITNetworking
 import BITTheming
 import Factory
@@ -28,7 +30,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     configureAnalyticsIfAllowed()
 
     setupAdditionalConfigurationsIfNeeded()
+    registerDefaultEnvironmentValues()
     registerEnvironmentValues()
+
+    #if targetEnvironment (simulator)
+    registerSimluatorEnvironmentValues()
+    #endif
 
     return true
   }
@@ -58,6 +65,14 @@ extension AppDelegate {
 
 extension AppDelegate {
 
+  // MARK: Internal
+
+  func registerDefaultEnvironmentValues() {
+    Container.shared.avBeamAppID.register { PlistFiles.avBeamAppID }
+  }
+
+  // MARK: Private
+
   private func configureKeychain() {
     guard UserDefaults.standard.bool(forKey: "rootOnboardingIsEnabled") else { return }
     try? Container.shared.resetLoginAttemptCounterUseCase().execute()
@@ -69,6 +84,7 @@ extension AppDelegate {
       "rootOnboardingIsEnabled": true,
       "isBiometricUsageAllowed": false,
       "eIDRequestAfterOnboardingEnabled": true,
+      "isTranslationSwitchEnabled": false,
     ])
   }
 
@@ -88,4 +104,11 @@ extension AppDelegate {
       analytics.register(provider)
     }
   }
+
+  #if targetEnvironment (simulator)
+  private func registerSimluatorEnvironmentValues() {
+    Container.shared.submitEIDRequestUseCase.register { MockSubmitEIDRequestUseCase () }
+    Container.shared.internalContext.register { FakeLAContext() }
+  }
+  #endif
 }

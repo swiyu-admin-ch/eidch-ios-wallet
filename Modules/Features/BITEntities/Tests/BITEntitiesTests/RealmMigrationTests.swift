@@ -6,25 +6,57 @@ import XCTest
 @testable import BITDataStore
 @testable import BITEntities
 
+// MARK: - RealmMigrationTests
+
 final class RealmMigrationTests: XCTestCase {
 
   // MARK: Internal
 
-  func testMigrate_migrate4To5_createsClusterAndAppendsClaims() throws {
-    let copiedFile = try copyToSimulator(Realm.Mock.migrationTo5URL)
+  func testMigrate() throws {
+    let cases: [MigrationTestCase] = [
+      MigrationTestCase(from: 4, to: 5, fileURL: Realm.Mock.version4Snapshot) { realm in
+        self.testMigrate_toVersion5_createsClusterAndAppendsClaims(realm)
+      },
+      MigrationTestCase(from: 5, to: 6, fileURL: Realm.Mock.version5Snapshot) { realm in
+        self.testMigrate_toVersion6_createsCredentialKeyBindingForExistingKeyBinding(realm)
+      },
+      MigrationTestCase(from: 4, to: 6, fileURL: Realm.Mock.version4Snapshot) { realm in
+        self.testMigrate_toVersion5_createsClusterAndAppendsClaims(realm)
+        self.testMigrate_toVersion6_createsCredentialKeyBindingForExistingKeyBinding(realm)
+      },
+    ]
 
-    let realm = try migrateRealm(fileURL: copiedFile, fromSchemaVersion: 4, toSchemaVersion: 5)
+    for testCase in cases {
+      try XCTContext.runActivity(named: "migration from \(testCase.from) to \(testCase.to)") { _ in
+        let copiedFile = try copyToSimulator(testCase.fileURL)
+        let realm = try migrateRealm(fileURL: copiedFile, fromSchemaVersion: testCase.from, toSchemaVersion: testCase.to)
+        try testCase.validate(realm)
+      }
+    }
+  }
 
-    let credentials = realm.objects(CredentialEntity.self)
+  func testMigrate_toVersion5_createsClusterAndAppendsClaims(_ realm: Realm) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
     XCTAssertEqual(credentials.count, 3)
 
-    let betaID = credentials.first { $0.id.uuidString.lowercased() == "1924abdf-c72a-475c-8f43-02e5d9012f71" }!
-    let eLFA = credentials.first { $0.id.uuidString.lowercased() == "bbca1163-dc86-4c6c-9de0-0c4bd670090f" }!
-    let uetlibergELFA = credentials.first { $0.id.uuidString.lowercased() == "fea5fc07-d64b-4539-89e9-18e03b71e5dd" }!
+    // beatID
+    assertCredentialClusters(credentials["1924abdf-c72a-475c-8f43-02e5d9012f71"]!, numberOfLanguages: 5, numberOfClaims: 23)
+    // eLFA
+    assertCredentialClusters(credentials["bbca1163-dc86-4c6c-9de0-0c4bd670090f"]!, numberOfLanguages: 5, numberOfClaims: 17, numberOfIssuerDisplays: 2)
+    // uetlibergELFA
+    assertCredentialClusters(credentials["fea5fc07-d64b-4539-89e9-18e03b71e5dd"]!, numberOfLanguages: 4, numberOfClaims: 16, numberOfIssuerDisplays: 2, numberOfCredentialDisplays: 2)
+  }
 
-    assertCredential(betaID, numberOfLanguages: 5, numberOfClaims: 23)
-    assertCredential(eLFA, numberOfLanguages: 5, numberOfClaims: 17, numberOfIssuerDisplays: 2)
-    assertCredential(uetlibergELFA, numberOfLanguages: 4, numberOfClaims: 16, numberOfIssuerDisplays: 2, numberOfCredentialDisplays: 2)
+  func testMigrate_toVersion6_createsCredentialKeyBindingForExistingKeyBinding(_ realm: Realm) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
+    XCTAssertEqual(credentials.count, 3)
+
+    // betaID
+    assertKeyBinding(credentials["1924abdf-c72a-475c-8f43-02e5d9012f71"])
+    // eLFA
+    assertKeyBinding(credentials["bbca1163-dc86-4c6c-9de0-0c4bd670090f"])
+    // uetliberg (no key binding)
+    XCTAssertNil(credentials["fea5fc07-d64b-4539-89e9-18e03b71e5dd"]?.keyBinding)
   }
 
   // MARK: Private
@@ -42,9 +74,15 @@ final class RealmMigrationTests: XCTestCase {
   }
 
   private func migrateRealm(fileURL: URL, fromSchemaVersion: UInt64, toSchemaVersion: UInt64) throws -> Realm {
+
     XCTAssertEqual(try schemaVersionAtURL(fileURL), fromSchemaVersion)
 
-    var configuration = Container.shared.realmDataStoreConfiguration.resolve()
+    var configuration = Realm.Configuration(
+      schemaVersion: toSchemaVersion,
+      migrationBlock: { migration, oldVersion in
+        Container.shared.migrationService.resolve().migrate(from: oldVersion, to: toSchemaVersion, migration: migration)
+      })
+
     configuration.fileURL = fileURL
     let realm = try Realm(configuration: configuration)
 
@@ -53,7 +91,7 @@ final class RealmMigrationTests: XCTestCase {
     return realm
   }
 
-  private func assertCredential(_ credential: CredentialEntity, numberOfLanguages: Int, numberOfClaims: Int, numberOfIssuerDisplays: Int? = nil, numberOfCredentialDisplays: Int? = nil) {
+  private func assertCredentialClusters(_ credential: CredentialEntity, numberOfLanguages: Int, numberOfClaims: Int, numberOfIssuerDisplays: Int? = nil, numberOfCredentialDisplays: Int? = nil) {
     XCTAssertNotNil(credential.rawCredentialData)
     XCTAssertEqual(credential.issuerDisplays.count, numberOfIssuerDisplays ?? numberOfLanguages)
     XCTAssertEqual(credential.displays.count, numberOfCredentialDisplays ?? numberOfLanguages)
@@ -66,6 +104,29 @@ final class RealmMigrationTests: XCTestCase {
       XCTAssertEqual(claim.displays.count, numberOfLanguages)
     }
   }
+
+  private func assertKeyBinding(_ credential: CredentialEntity?) {
+    guard let credential else { return }
+    XCTAssertNotNil(credential.keyBinding)
+    XCTAssertEqual(credential.keyBinding?.bindingType, "hardware")
+    XCTAssertNil(credential.keyBinding?.publicKey)
+    XCTAssertNil(credential.keyBinding?.privateKey)
+  }
+}
+
+// MARK: - MigrationTestCase
+
+fileprivate struct MigrationTestCase {
+  let from: UInt64
+  let to: UInt64
+  let fileURL: URL
+  let validate: (Realm) throws -> Void
 }
 
 // swiftlint:enable all
+
+extension [CredentialEntity] {
+  fileprivate subscript (id: String) -> Element? {
+    first(where: { $0.id.uuidString.lowercased() == id })
+  }
+}

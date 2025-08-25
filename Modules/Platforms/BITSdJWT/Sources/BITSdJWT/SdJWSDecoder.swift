@@ -106,7 +106,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     let jws: JWS<T> = try jwsDecoder.decode(T.self, from: jwtData)
     guard
       let jwtPayloadData = jws.rawPayload.data(using: .utf8),
-      let payloadJson = try JSONSerialization.jsonObject(with: jwtPayloadData) as? [String: Any],
+      let payloadJson = try JSONSerialization.jsonObject(with: jwtPayloadData) as? [String: Any?],
       let rawJWS = String(data: jwtData, encoding: .utf8)
     else { throw SdJWSDecoderError.invalidJWTPayload }
     if strictPayloadDecoding {
@@ -118,11 +118,10 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     let decoder = JSONDecoder(dateDecodingStrategy: dateDecodingStrategy)
     let payloadData = try JSONSerialization.data(withJSONObject: resolvedPayload)
     let payload = try decoder.decode(T.self, from: payloadData)
-    guard let rawPayload = String(data: payloadData, encoding: .utf8) else { throw SdJWSDecoderError.invalidJWTPayload }
     return SdJWS(payload: payload, rawPayload: resolvedPayload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: claims)
   }
 
-  private func decodeClaims(from payload: [String: Any], rawDisclosures: String) throws -> [SdJWTClaim] {
+  private func decodeClaims(from payload: [String: Any?], rawDisclosures: String) throws -> [SdJWTClaim] {
     let algorithm = try findAlgorithm(in: payload)
     guard let digests = payload[JsonKey.sd.rawValue] as? [SdJwtDigest], digests.areUnique else {
       throw SdJWSDecoderError.invalidDigests
@@ -134,7 +133,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
       }
   }
 
-  private func findAlgorithm(in payload: [String: Any], defaultAlgorithm: StringDigest.Algorithm = .sha256) throws -> StringDigest.Algorithm {
+  private func findAlgorithm(in payload: [String: Any?], defaultAlgorithm: StringDigest.Algorithm = .sha256) throws -> StringDigest.Algorithm {
     guard
       let stringAlgorithm = payload[JsonKey.sdAlgorithm.rawValue] as? String
     else { return defaultAlgorithm }
@@ -164,13 +163,13 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   }
 
   /// Resolve payload by replacing digests with actual claim value. Only supports flat hierarchy so far (for more info see: https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html#name-example-flat-sd-jwt)
-  private func resolvePayload(from payload: [String: Any], claims: [SdJWTClaim]) throws -> [String: Any] {
+  private func resolvePayload(from payload: [String: Any?], claims: [SdJWTClaim]) throws -> [String: Any?] {
     var resolvedPayload = payload
     for claim in claims {
       guard resolvedPayload[claim.key] == nil else {
         throw SdJWSDecoderError.claimAlreadyExists
       }
-      resolvedPayload[claim.key] = claim.value?.convertToAny()
+      resolvedPayload.updateValue(claim.value?.convertToAny(), forKey: claim.key)
     }
     resolvedPayload.removeValue(forKey: JsonKey.sd.rawValue)
     resolvedPayload.removeValue(forKey: JsonKey.sdAlgorithm.rawValue)

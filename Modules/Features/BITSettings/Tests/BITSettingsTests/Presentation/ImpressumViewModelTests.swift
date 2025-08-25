@@ -1,5 +1,5 @@
 import XCTest
-@testable import BITAppVersion
+@testable import BITAppInfo
 @testable import BITSettings
 @testable import BITTestingCore
 

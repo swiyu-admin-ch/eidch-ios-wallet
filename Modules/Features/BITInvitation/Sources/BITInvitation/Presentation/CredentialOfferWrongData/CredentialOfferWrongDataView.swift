@@ -16,6 +16,7 @@ struct CredentialOfferWrongDataView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
+    case content = "credentialOfferWrongDataContent"
     case closeButton
   }
 
@@ -30,6 +31,8 @@ struct CredentialOfferWrongDataView: View {
       })
       .toolbar(content: toolbarContent)
       .ignoresSafeArea(edges: .bottom)
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private
@@ -41,7 +44,9 @@ struct CredentialOfferWrongDataView: View {
     ToolbarItem(placement: .topBarLeading) {
       Button(action: viewModel.close, label: {
         Assets.close.swiftUIImage
-      }).accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
+      })
+      .accessibilityLabel(L10n.tkGlobalClose)
+      .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
     }
   }
 }

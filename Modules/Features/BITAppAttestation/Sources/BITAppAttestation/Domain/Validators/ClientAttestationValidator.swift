@@ -1,4 +1,4 @@
-import BITAppAuth
+import BITAppInfo
 import BITCrypto
 import BITJsonCanonicalizer
 import BITJWT
@@ -32,7 +32,7 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
       guard
         attestationServiceTrustedDids.contains(clientAttestation.payload.issuer),
         hasValidSubject(clientAttestation),
-        clientAttestation.payload.walletName == Self.supportedWalletName,
+        hasValidWalletName(clientAttestation),
         clientAttestation.payload.activatedAt <= now,
         hasValidBindingKey(clientAttestation.payload.bindingKey.jwk),
         clientAttestation.payload.expiredAt >= now
@@ -50,7 +50,6 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
 
   private static let didJwk = "did:jwk:"
   private static let kidSeparator: Character = "#"
-  private static let supportedWalletName = "swiyu"
 
   private let clientAttestationSupportedAlgorithms: [JWTAlgorithm] = [.ES256]
 
@@ -58,6 +57,7 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
   @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
+  @Injected(\.appIdentifierRepository) private var appIdentifierRepository: AppIdentifierRepositoryProtocol
 
   private var now: Date {
     Date()
@@ -65,8 +65,7 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
 
   private func hasValidBindingKey(_ jwk: JWK) -> Bool {
     do {
-      let bindingKey = try appAttestationKeyRepository.getAttestionKey(for: .clientAttestation)
-      let keyPair = KeyPair(privateKey: bindingKey)
+      let keyPair = try appAttestationKeyRepository.get(for: .client)
 
       guard
         let publicKey = keyPair.publicKey,
@@ -105,6 +104,14 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
     let didJwk = Self.didJwk + jwkBase64
 
     return subject == didJwk
+  }
+
+  private func hasValidWalletName(_ clientAttestation: ClientAttestation) -> Bool {
+    guard let appIdentifier = try? appIdentifierRepository.get() else {
+      return false
+    }
+
+    return clientAttestation.payload.walletName == appIdentifier
   }
 }
 

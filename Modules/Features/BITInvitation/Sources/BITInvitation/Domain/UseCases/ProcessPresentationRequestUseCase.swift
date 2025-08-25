@@ -16,10 +16,13 @@ protocol ProcessPresentationRequestUseCaseProtocol {
 
 enum PresentationError: Error {
   case invalidPresentationRequest
+  case invalidQueryParameters
+  case invalidRequestUri
+  case invalidClientId
 }
 
 extension PresentationError {
-  public static func ~= (lhs: Self, rhs: Error) -> Bool {
+  static func ~= (lhs: Self, rhs: Error) -> Bool {
     guard let selfError = rhs as? Self else { return false }
     return selfError == lhs
   }
@@ -47,9 +50,44 @@ struct ProcessPresentationRequestUseCase: ProcessPresentationRequestUseCaseProto
   @Injected(\.getCompatibleCredentialsUseCase) private var getCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol
 
   private func fetchAndValidateRequestObject(from url: URL) async throws -> RequestObject {
-    let requestObject = try await fetchRequestObjectUseCase.execute(url)
-    try await validate(requestObject: requestObject)
+    let requestURL: URL
+    var clientId: String? = nil
+    if url.scheme == "https" {
+      requestURL = url
+    } else {
+      guard let parameters = url.queryParameters else { throw PresentationError.invalidQueryParameters }
+      requestURL = try parseRequestURL(from: parameters)
+      clientId = try parseClientId(from: parameters)
+    }
+    let requestObject = try await fetchRequestObjectUseCase.execute(requestURL)
+    try await validate(requestObject: requestObject, clientId: clientId)
     return requestObject
+  }
+
+  private func parseRequestURL(from parameters: [String: String]) throws -> URL {
+    guard
+      let requestUriString = parameters["request_uri"]?.removingPercentEncoding,
+      let requestUri = URL(string: requestUriString)
+    else { throw PresentationError.invalidRequestUri }
+    return requestUri
+  }
+
+  private func parseClientId(from parameters: [String: String]) throws -> String {
+    guard let clientId = parameters["client_id"]?.removingPercentEncoding else {
+      throw PresentationError.invalidClientId
+    }
+    return clientId
+  }
+
+  private func validate(requestObject: RequestObject, clientId: String?) async throws {
+    if let clientId, clientId != requestObject.clientId {
+      try await denyPresentationUseCase.execute(requestObject: requestObject, error: .invalidRequest)
+      throw PresentationError.invalidClientId
+    }
+    guard await validateRequestObjectUseCase.execute(requestObject) else {
+      try await denyPresentationUseCase.execute(requestObject: requestObject, error: .invalidRequest)
+      throw FetchRequestObjectError.invalid
+    }
   }
 
   private func createPresentationContext(with requestObject: RequestObject) async throws -> PresentationRequestContext {
@@ -78,13 +116,6 @@ struct ProcessPresentationRequestUseCase: ProcessPresentationRequestUseCaseProto
 
     context.selectedCredentials[id] = credential
     return context
-  }
-
-  private func validate(requestObject: RequestObject) async throws {
-    guard await validateRequestObjectUseCase.execute(requestObject) else {
-      try await denyPresentationUseCase.execute(requestObject: requestObject, error: .invalidRequest)
-      throw FetchRequestObjectError.invalid
-    }
   }
 
 }

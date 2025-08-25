@@ -23,6 +23,8 @@ struct AVIdentityCheckView: View {
           primaryButtonLabel: L10n.tkEidRequestAutoVerificationIdentityCheckButton,
           primaryButtonAction: viewModel.primaryAction)
       })
+      .navigationBarBackButtonHidden(true)
+      .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 
   // MARK: Private
@@ -71,8 +73,7 @@ struct AVIdentityCheckView: View {
           .accessibilityIdentifier(AccessibilityIdentifier.tertiaryText.rawValue)
       }
     }
-    .frame(maxWidth: .infinity)
-    .padding(.horizontal, .x6)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .padding(.bottom)
   }
 }

@@ -6,31 +6,35 @@ public struct CredentialClaimDisplay: Codable, Hashable, Equatable, DisplayLocal
 
   // MARK: Lifecycle
 
-  public init(id: UUID = UUID(), locale: String? = nil, name: String) {
+  public init(id: UUID = UUID(), locale: String? = nil, name: String? = nil, value: String? = nil) {
     self.id = id
     self.locale = locale
     self.name = name
+    self.value = value
   }
 
   public init(_ entity: CredentialClaimDisplayEntity) {
     self.init(
       id: entity.id,
       locale: entity.locale,
-      name: entity.name)
+      name: entity.name,
+      value: entity.value)
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     id = try container.decode(UUID.self, forKey: .id)
     locale = try container.decode(String.self, forKey: .locale)
-    name = try container.decode(String.self, forKey: .name)
+    name = try container.decodeIfPresent(String.self, forKey: .name)
+    value = try container.decodeIfPresent(String.self, forKey: .value)
   }
 
   // MARK: Public
 
   public var id: UUID
   public var locale: UserLocale?
-  public var name: String
+  public var name: String?
+  public var value: String?
 
   // MARK: Internal
 
@@ -38,6 +42,7 @@ public struct CredentialClaimDisplay: Codable, Hashable, Equatable, DisplayLocal
     case id
     case locale
     case name
+    case value
   }
 
 }

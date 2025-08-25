@@ -9,7 +9,7 @@ class AVIdentityCheckViewModel {
   // MARK: Internal
 
   func primaryAction() {
-    router.walletPairing()
+    router.recordDocument()
   }
 
   func close() {

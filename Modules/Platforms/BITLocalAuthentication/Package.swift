@@ -23,15 +23,9 @@ let package = Package(
       dependencies: [
         .product(name: "Spyable", package: "swift-spyable"),
       ]),
-    .target(
-      name: "BITLocalAuthenticationMocks",
-      dependencies: [
-        "BITLocalAuthentication",
-      ]),
     .testTarget(
       name: "BITLocalAuthenticationTests",
       dependencies: [
         "BITLocalAuthentication",
-        "BITLocalAuthenticationMocks",
       ]),
   ])

@@ -3,7 +3,7 @@ import Foundation
 extension SecAccessControl {
 
   static let defaultProtection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-  static let defaultAccesControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage, .applicationPassword]
+  static let defaultAccesControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
 
   static func create(accessControlFlags: SecAccessControlCreateFlags = SecAccessControl.defaultAccesControlFlags, protection: CFString = SecAccessControl.defaultProtection) throws -> SecAccessControl {
     var accessControlError: Unmanaged<CFError>?

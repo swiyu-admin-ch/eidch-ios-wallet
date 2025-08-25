@@ -1,6 +1,7 @@
 [
     {
         "displayName": "UNDERAGE I7A (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -13,6 +14,7 @@
     },
     {
         "displayName": "UNDERAGE I7G (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": true,
             "email": null,
@@ -25,6 +27,7 @@
     },
     {
         "displayName": "UNDERAGE I7C (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -37,6 +40,7 @@
     },
     {
         "displayName": "UNDERAGE I7D (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -49,6 +53,7 @@
     },
     {
         "displayName": "UNDERAGE I7E (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": true,
             "email": null,
@@ -61,6 +66,7 @@
     },
     {
         "displayName": "UNDERAGE I7F (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -73,6 +79,7 @@
     },
     {
         "displayName": "UNDERAGE I7G (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -85,6 +92,7 @@
     },
     {
         "displayName": "UNDERAGE P7B (PASSPORT)",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -96,6 +104,7 @@
     },
     {
         "displayName": "UNDERAGE A (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -108,6 +117,7 @@
     },
     {
         "displayName": "UNDERAGE B (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -120,6 +130,7 @@
     },
     {
         "displayName": "UNDERAGE C (FOREIGN) DEAD",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -132,6 +143,7 @@
     },
     {
         "displayName": "UNDERAGE D (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -144,6 +156,7 @@
     },
     {
         "displayName": "ADULT A (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -156,6 +169,7 @@
     },
     {
         "displayName": "ADULT B (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -168,6 +182,7 @@
     },
     {
         "displayName": "ADULT C (FOREIGN) DEAD",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -180,6 +195,7 @@
     },
     {
         "displayName": "ADULT D (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -192,6 +208,7 @@
     },
     {
         "displayName": "ADULT A (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -204,6 +221,7 @@
     },
     {
         "displayName": "ADULT C (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -216,6 +234,7 @@
     },
     {
         "displayName": "ADULT D (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -228,6 +247,7 @@
     },
     {
         "displayName": "ADULT B (PASSPORT)",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -239,6 +259,7 @@
     },
     {
         "displayName": "ADULT2 (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -251,6 +272,7 @@
     },
     {
         "displayName": "ADULT2 (PASSPORT)",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -262,6 +284,7 @@
     },
     {
         "displayName": "ADULT3 (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -274,6 +297,7 @@
     },
     {
         "displayName": "ADULT3 (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -286,6 +310,7 @@
     },
     {
         "displayName": "ADULT4 (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -298,6 +323,7 @@
     },
     {
         "displayName": "ADULT4 (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -310,6 +336,7 @@
     },
     {
         "displayName": "ADULT5 (FOREIGN) DEAD",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -322,6 +349,7 @@
     },
     {
         "displayName": "ADULT5 (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -334,6 +362,7 @@
     },
     {
         "displayName": "ADULT6 (PASSPORT) DEAD",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -345,6 +374,7 @@
     },
     {
         "displayName": "MUSTERMANN (FOREIGN)",
+        "identityType": "FOREIGNER_PERMIT",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -357,6 +387,7 @@
     },
     {
         "displayName": "MUSTERMANN (PASSPORT)",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -368,6 +399,7 @@
     },
     {
         "displayName": "BEVORMUNDET (PASSPORT)",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": true,
             "email": null,
@@ -379,6 +411,7 @@
     },
     {
         "displayName": "LORENZ (ID CARD)",
+        "identityType": "SWISS_IDK",
         "payload": {
             "legalRepresentant": false,
             "email": null,
@@ -391,6 +424,7 @@
     },
     {
         "displayName": "INFOSTAR (PASSPORT)",
+        "identityType": "SWISS_PASS",
         "payload": {
             "legalRepresentant": false,
             "email": null,

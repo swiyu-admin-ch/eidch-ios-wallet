@@ -1,5 +1,6 @@
 import BITAppAuth
 import BITCore
+import BITTheming
 import Factory
 import Foundation
 import UIKit

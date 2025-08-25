@@ -57,7 +57,7 @@ struct FetchTrustStatementUseCase: FetchTrustStatementUseCaseProtocol {
         $0.payload.vct == Self.trustStatementMetadataV1Key
       }
 
-    for trustStatement in v1TrustStatements where await validateTrustStatementUseCase.execute(trustStatement) {
+    for trustStatement in v1TrustStatements where await validateTrustStatementUseCase.execute(trustStatement, for: issuer) {
       return trustStatement
     }
 

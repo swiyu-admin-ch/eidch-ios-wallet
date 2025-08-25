@@ -5,3 +5,4 @@ strings:
       output: Sources/BITL10n/Strings.swift
       params:
         publicAccess: true
+        lookupFunction: TranslationHelper.localizeString

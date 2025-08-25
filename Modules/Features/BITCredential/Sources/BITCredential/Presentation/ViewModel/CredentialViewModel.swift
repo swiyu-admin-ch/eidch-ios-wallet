@@ -121,7 +121,7 @@ extension CredentialDisplay {
 
     copy.summary = summary?.replacing(Self.regex) { match in
       guard let claim = claims.first(where: { match.1 == "$.\($0.key)" }) else { return "" }
-      return claim.value
+      return claim.value ?? "–"
     }
     return copy
   }

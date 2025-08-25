@@ -1,3 +1,5 @@
+// swiftlint:disable force_unwrapping
+
 import BITCore
 import Spyable
 import XCTest
@@ -7,55 +9,36 @@ final class CheckInvitationTypeUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
-  func testCheckInvitationType_Presentation_Success() async throws {
-    let strURL = "https://bit.com"
-    guard let validPresentationInvitationURL = URL(string: strURL) else {
-      fatalError("url generation")
-    }
-
-    let expectedInvitationType = InvitationType.presentation
-    let invitationType = try await useCase.execute(url: validPresentationInvitationURL)
-
-    XCTAssertEqual(expectedInvitationType, invitationType)
+  override func setUp() {
+    super.setUp()
+    useCase = CheckInvitationTypeUseCase()
   }
 
-  func testCheckInvitationType_OpenIDCredential_Success() async throws {
-    let strURL = "openid-credential-offer://bit.com"
-    guard let validCredentialInvitationURL = URL(string: strURL) else {
-      fatalError("url generation")
+  func testExecute_presentation_returnsPresentationType() throws {
+    for url in ["openid4vp://bit.com", "swiyu-verify://bit.com"] {
+      let invitationURL = URL(string: url)!
+
+      let invitationType = try useCase.execute(url: invitationURL)
+
+      XCTAssertEqual(invitationType, InvitationType.presentation)
     }
-
-    let expectedInvitationType = InvitationType.credentialOffer
-    let invitationType = try await useCase.execute(url: validCredentialInvitationURL)
-
-    XCTAssertEqual(expectedInvitationType, invitationType)
   }
 
-  func testCheckInvitationType_SwiyuCredential_Success() async throws {
-    let strURL = "swiyu://bit.com"
-    guard let validCredentialInvitationURL = URL(string: strURL) else {
-      fatalError("url generation")
+  func testExecute_credentialOffer_returnsCredentialOfferType() throws {
+    for url in ["openid-credential-offer://bit.com", "swiyu://bit.com"] {
+      let invitationURL = URL(string: url)!
+
+      let invitationType = try useCase.execute(url: invitationURL)
+
+      XCTAssertEqual(invitationType, InvitationType.credentialOffer)
     }
-
-    let expectedInvitationType = InvitationType.credentialOffer
-    let invitationType = try await useCase.execute(url: validCredentialInvitationURL)
-
-    XCTAssertEqual(expectedInvitationType, invitationType)
   }
 
-  func testCheckInvitationType_Failure() async throws {
-    let strURL = "test://bit.com"
-    guard let invalidInvitationURL = URL(string: strURL) else {
-      fatalError("url generation")
-    }
+  func testExecute_wrongScheme_throwsWrongSchemeError() throws {
+    let invitationURL = URL(string: "test://bit.com")!
 
-    do {
-      _ = try await useCase.execute(url: invalidInvitationURL)
-      XCTFail("Should have thrown an exception")
-    } catch is CheckCameraError {
-      // Expected exception, nothing to check
-    } catch {
-      XCTFail("Not the expected exception")
+    XCTAssertThrowsError(try useCase.execute(url: invitationURL)) { error in
+      XCTAssertEqual(error as? CheckInvitationTypeError, .wrongScheme)
     }
   }
 
@@ -63,3 +46,5 @@ final class CheckInvitationTypeUseCaseTests: XCTestCase {
 
   private var useCase = CheckInvitationTypeUseCase()
 }
+
+// swiftlint:enable all

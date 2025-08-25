@@ -1,7 +1,7 @@
-import BITAppAuth
 import BITCrypto
 import BITJWT
 import BITLocalAuthentication
+import BITVault
 import Factory
 import Spyable
 
@@ -9,7 +9,7 @@ import Spyable
 
 @Spyable
 public protocol FetchKeyAttestationUseCaseProtocol {
-  func execute(_ context: LAContextProtocol) async throws -> KeyAttestation
+  func execute(for keyPair: VaultKeyPair, _ context: LAContextProtocol) async throws -> KeyAttestation
 }
 
 // MARK: - FetchKeyAttestationUseCase
@@ -18,15 +18,12 @@ struct FetchKeyAttestationUseCase: FetchKeyAttestationUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(_ context: LAContextProtocol) async throws -> KeyAttestation {
-    let challenge = try await appAttestationRepository.fetchChallenge()
-    let requestBody = try createRequestBody(context: context)
-    let clientAttestation = try await clientAttestationRepository.getClientAttestation()
+  func execute(for keyPair: VaultKeyPair, _ context: LAContextProtocol) async throws -> KeyAttestation {
+    let clientAttestation = try await fetchClientAttestationUseCase.execute(context)
+    let requestBody = try createRequestBody(keyPair: keyPair)
+    let keyAttestation = try await appAttestationRepository.fetchKeyAttestation(body: requestBody, clientAttestation: clientAttestation)
 
-    let request = try await generateClientAttestedRequestUseCase.execute(for: requestBody, challenge: challenge, audience: clientAttestation.payload.issuer)
-    let keyAttestation = try await appAttestationRepository.fetchKeyAttestation(with: request)
-
-    guard await keyAttestationValidator.validate(keyAttestation) else {
+    guard await keyAttestationValidator.validate(keyPair: keyPair, with: keyAttestation) else {
       throw FetchKeyAttestationUseCase.Error.invalidKeyAttestation
     }
 
@@ -37,14 +34,9 @@ struct FetchKeyAttestationUseCase: FetchKeyAttestationUseCaseProtocol {
 
   @Injected(\.keyAttestationValidator) private var keyAttestationValidator: KeyAttestationValidatorProtocol
   @Injected(\.appAttestationRepository) private var appAttestationRepository: AppAttestationRepositoryProtocol
-  @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
-  @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
-  @Injected(\.generateClientAttestedRequestUseCase) private var generateClientAttestedRequestUseCase: GenerateClientAttestedRequestUseCaseProtocol
+  @Injected(\.fetchClientAttestationUseCase) private var fetchClientAttestationUseCase: FetchClientAttestationUseCaseProtocol
 
-  private func createRequestBody(context: LAContextProtocol) throws -> KeyAttestationRequestBody {
-    let privateKey = try appAttestationKeyRepository.createAttestationKey(for: .keyAttestation, with: context)
-    let keyPair = KeyPair(privateKey: privateKey)
-
+  private func createRequestBody(keyPair: VaultKeyPair) throws -> KeyAttestationRequestBody {
     guard
       let publicKey = keyPair.publicKey,
       let jwk = try? JWK(from: publicKey)

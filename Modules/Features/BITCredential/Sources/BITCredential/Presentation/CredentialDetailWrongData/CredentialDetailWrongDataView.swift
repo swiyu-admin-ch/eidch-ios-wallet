@@ -15,6 +15,11 @@ struct CredentialDetailWrongDataView: View {
 
   // MARK: Internal
 
+  enum AccessibilityIdentifier: String {
+    case content = "credentialDetailWrongDataContent"
+    case closeButton = "credentialDetailWrongDataCloseButton"
+  }
+
   var body: some View {
     InformationView(
       image: Assets.xmarkCircle.swiftUIImage,
@@ -27,6 +32,8 @@ struct CredentialDetailWrongDataView: View {
       .navigationTitle(L10n.tkDisplaydeleteWrongdataNavigationTitle)
       .toolbar(content: toolbarContent)
       .ignoresSafeArea(edges: .bottom)
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private
@@ -39,6 +46,8 @@ struct CredentialDetailWrongDataView: View {
       Button(action: viewModel.close, label: {
         Assets.closeAlt.swiftUIImage
       })
+      .accessibilityLabel(L10n.tkGlobalClose)
+      .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
     }
   }
 }

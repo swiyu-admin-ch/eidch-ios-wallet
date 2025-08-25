@@ -13,10 +13,10 @@ struct JWSDecoderMock<U: Codable & Equatable>: JWSDecoderProtocol {
 
   // MARK: Internal
 
-  var payload: U? = nil
-  var rawPayload: String? = nil
-  var expectedInput: String? = nil
-  var throwingError: Error? = nil
+  var payload: U?
+  var rawPayload: String?
+  var expectedInput: String?
+  var throwingError: Error?
 
   func decode<T: JWTPayload & Decodable>(_ type: T.Type, from data: Data) throws -> JWS<T> {
     if let throwingError {

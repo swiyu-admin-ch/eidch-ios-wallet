@@ -2,32 +2,30 @@ import Foundation
 import XCTest
 @testable import BITAppAuth
 
-class LoginScreen: Screen {
-
-  // MARK: Lifecycle
-
-  init(app: XCUIApplication) {
-    self.app = app
-    loginButton = app.buttons[LoginView.AccessibilityIdentifier.loginButton.rawValue]
-    _ = loginButton.waitForExistence(timeout: .defaultTimeout)
-    pinField = app.secureTextFields[LoginView.AccessibilityIdentifier.pinField.rawValue]
-  }
-
-  // MARK: Internal
+struct LoginScreen: Screen {
 
   let app: XCUIApplication
-  let loginButton: XCUIElement
-  let pinField: XCUIElement
 
-  func assertDisplayed() {
-    XCTAssert(loginButton.exists)
-    XCTAssert(pinField.exists)
+  static func navigateToAfterLaunchingApp(_ app: XCUIApplication) -> LoginScreen {
+    LoginScreen(app: app)
+      .assertLoginScreen()
   }
 
-  func login () {
-    assertDisplayed()
-    pinField.typeText("000000")
-    loginButton.tap()
+  @discardableResult
+  func assertLoginScreen() -> LoginScreen {
+    app.assertElementDisplayed(LoginView.AccessibilityIdentifier.content.rawValue)
+    return self
+  }
+
+  func typePin(_ pin: String = "000000") -> LoginScreen {
+    let pinField = app.secureTextFields[LoginView.AccessibilityIdentifier.pinField.rawValue]
+    pinField.typeText(pin)
+    return self
+  }
+
+  func tapLogin() -> HomeScreen {
+    app.tap(LoginView.AccessibilityIdentifier.loginButton.rawValue)
+    return HomeScreen(app: app)
   }
 
 }

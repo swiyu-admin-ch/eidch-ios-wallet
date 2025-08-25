@@ -42,8 +42,8 @@ packages:
     path: ../Modules/Features/BITAppAuth
   BITSettings:
     path: ../Modules/Features/BITSettings
-  BITAppVersion:
-    path: ../Modules/Features/BITAppVersion
+  BITAppInfo:
+    path: ../Modules/Features/BITAppInfo
   BITOnboarding:
     path: ../Modules/Features/BITOnboarding
   BITInvitation:

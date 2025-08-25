@@ -100,7 +100,7 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   // MARK: Private
 
   private let router: CredentialOfferInternalRoutes
-  private var trustStatement: TrustStatement? = nil
+  private var trustStatement: TrustStatement?
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @Injected(\.getCredentialIssuerDisplayUseCase) private var getCredentialIssuerDisplayUseCase: GetCredentialIssuerDisplayUseCaseProtocol

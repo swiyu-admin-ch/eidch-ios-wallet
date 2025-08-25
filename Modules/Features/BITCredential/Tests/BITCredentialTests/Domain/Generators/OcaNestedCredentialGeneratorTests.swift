@@ -25,7 +25,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   func testGenerate_nestedWithClaimsOnRoot_returnsCredentialWithOneCluster() throws {
     let anyCredential = createNestedAnyCredential()
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyPair: keyPairMock, ocaBundle: OcaBundle.Mock.nested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.nested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 1)
@@ -37,7 +37,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     let anyCredential = createNestedAnyCredential()
     let additionalClaim = createTextClaim(jsonPath: "$.other_path", value: "other_value")
     anyCredential.claims.insert(additionalClaim, at: 1)
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyPair: keyPairMock, ocaBundle: OcaBundle.Mock.nested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.nested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 2)
@@ -53,7 +53,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   func testGenerate_nestedWithoutClaimsOnRoot_returnsCredentialWithClusters() throws {
     let anyCredential = createSimpleNestedCredential()
 
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyPair: keyPairMock, ocaBundle: OcaBundle.Mock.simpleNested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.simpleNested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 3)
@@ -65,7 +65,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     let additionalClaim = createTextClaim(jsonPath: "$.other_path", value: "other_value")
     anyCredential.claims.insert(additionalClaim, at: 1)
 
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyPair: keyPairMock, ocaBundle: OcaBundle.Mock.simpleNested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.simpleNested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 4)
@@ -79,10 +79,6 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   // MARK: Private
 
-  private static let mockPrivateKey: SecKey = SecKeyTestsHelper.createPrivateKey()
-  private static let keyPairIdentifier = UUID()
-  private static let keyPairAlgorithm = "ES512"
-  private static let credentialNameMock = "credentialName"
   private static let captureBase1Claim1KeyMock = "capture_base_1_claim_1"
   private static let captureBase2Claim1KeyMock = "capture_base_2.claim_1"
   private static let captureBase3Claim1KeyMock = "capture_base_3.claim_1"
@@ -99,8 +95,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   private let idMock = UUID()
   private let issuerDisplaysMock = [CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)]
   private let rawCredentialDataMock = RawCredentialData()
-
-  private var keyPairMock = KeyPair(identifier: keyPairIdentifier, algorithm: keyPairAlgorithm, privateKey: mockPrivateKey)
+  private let keyBindingMock = CredentialKeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
 
   private var captureBaseDisplayGeneratorSpy = CaptureBaseDisplayGeneratorProtocolSpy()
 
@@ -167,8 +162,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   private func assertBasicCredential(_ credential: Credential) {
     XCTAssertEqual(credential.id, idMock)
     XCTAssertEqual(credential.status, .unknown)
-    XCTAssertEqual(credential.keyBindingIdentifier, Self.keyPairIdentifier)
-    XCTAssertEqual(credential.keyBindingAlgorithm, Self.keyPairAlgorithm)
+    XCTAssertEqual(credential.keyBinding, keyBindingMock)
     XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
     XCTAssertEqual(credential.rawCredentialData, rawCredentialDataMock)
     XCTAssertEqual(credential.format, formatMock)

@@ -39,11 +39,14 @@ public struct PresentationRequestReviewView: View {
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModel(with: scheme.rawValue)
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
+    case content = "presentationRequestReviewContent"
     case acceptButton
     case denyButton
   }
@@ -89,28 +92,34 @@ extension PresentationRequestReviewView {
 
   @ViewBuilder
   private func portraitResultView(_ credential: CompatibleCredential) -> some View {
-    VStack(alignment: .leading) {
+    VStack(alignment: .leading, spacing: 0) {
       actorHeader()
         .padding(.horizontal, .x6)
         .padding(.top, .x3)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
       subtitle()
-        .padding(.vertical, .x4)
+        .padding(.top, .x8)
+        .padding(.bottom, .x3)
         .padding(.horizontal, .x6)
+        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
 
       if let credentialViewModel = viewModel.credentialViewModel {
         CredentialBox(credentialViewModel, compression: compression)
+          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       }
 
       claimsList(credential)
-        .padding(.top, .x2)
+        .padding(.top, .x4)
+        .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
       Spacer() // Pushes buttons down if VStack is not filling screen
     }
     .applyScrollViewIfNeeded()
     .safeAreaInset(edge: .bottom) {
       footerButtons()
         .background(ThemingAssets.Materials.chrome.swiftUIColor)
-        .accessibilitySortPriority(-1)
+        .accessibilitySortPriority(AccessibilityPriority.x4.rawValue) // not fully working for now...
+        .accessibilityElement(children: .contain)
     }
   }
 
@@ -118,37 +127,40 @@ extension PresentationRequestReviewView {
   private func landscapeResultView(_ credential: CompatibleCredential) -> some View {
     HStack(spacing: .x5) {
       credentialBoxWithSubtitle(credential.credential)
-        .accessibilitySortPriority(1)
-      VStack(alignment: .leading) {
+        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
+      VStack(alignment: .leading, spacing: 0) {
         actorHeader()
-          .padding(.bottom, .x3)
+          .padding(.bottom, .x2)
+          .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
         claimsList(credential)
-        Spacer() // Pushes buttons down if VStack is not filling screen
+          .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
       }
       .padding(.top, .x4)
       .applyScrollViewIfNeeded()
       .safeAreaInset(edge: .bottom) {
         footerButtons()
           .background(ThemingAssets.Materials.chrome.swiftUIColor)
-          .accessibilitySortPriority(-1)
+          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue) // not fully working for now...
       }
     }
+    .accessibilityElement(children: .contain)
   }
 
   @ViewBuilder
   private func claimsList(_ compatibleCredential: CompatibleCredential) -> some View {
-    VStack(alignment: .leading) {
-      Text(L10n.tkPresentReviewClaimsSectionPrimary(compatibleCredential.requestedClaims.count))
-        .font(.custom.body)
+    VStack(alignment: .leading, spacing: 0) {
+      Text(L10n.tkPresentReviewClaimsSectionPrimary(compatibleCredential.requestedClusteredClaims.flatMap(\.claims).count))
+        .font(.custom.subheadline)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .padding(.horizontal, .x6)
-        .accessibilityAddTraits(.isHeader)
-
-      Divider()
-
-      LazyVStack {
-        ClaimListView(compatibleCredential.requestedClaims)
+        .padding(.vertical, .x3)
+      VStack {
+        ClaimClusterList(compatibleCredential.requestedClusteredClaims)
+        Spacer() // Pushes buttons down if VStack is not filling screen
       }
+      .padding(.vertical, .x4)
+      .background(ThemingAssets.Background.secondary.swiftUIColor)
+      .cornerRadius(.CornerRadius.xl)
     }
   }
 
@@ -165,10 +177,12 @@ extension PresentationRequestReviewView {
             .frame(maxWidth: .infinity)
             .minimumScaleFactor(0.5)
             .lineLimit(1)
+            .accessibilityLabel(L10n.tkPresentReviewSecondaryButtonAlt)
         }
         .buttonStyle(.filledPrimary)
         .controlSize(.large)
         .accessibilityIdentifier(AccessibilityIdentifier.denyButton.rawValue)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
         Button { Task { await viewModel.submit() } } label: {
           Label(L10n.tkPresentReviewPrimaryButton, systemImage: "checkmark")
@@ -179,10 +193,12 @@ extension PresentationRequestReviewView {
             .frame(maxWidth: .infinity)
             .minimumScaleFactor(0.5)
             .lineLimit(1)
+            .accessibilityLabel(L10n.tkPresentReviewPrimaryButtonAlt)
         }
         .buttonStyle(.filledSecondary)
         .controlSize(.large)
         .accessibilityIdentifier(AccessibilityIdentifier.acceptButton.rawValue)
+        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
       }
     }
   }
@@ -269,9 +285,8 @@ extension PresentationRequestReviewView {
   @ViewBuilder
   private func subtitle() -> some View {
     Text(L10n.tkPresentReviewCredentialSectionPrimary)
-      .font(.custom.title3)
-      .foregroundStyle(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
-      .accessibilityAddTraits(.isHeader)
+      .font(.custom.subheadline)
+      .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
       .accessibilityFocused($focus, equals: .subtitle)
   }
 

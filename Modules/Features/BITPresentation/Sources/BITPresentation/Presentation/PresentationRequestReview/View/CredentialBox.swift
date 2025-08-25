@@ -28,9 +28,10 @@ struct CredentialBox: View {
     }
     .padding(.vertical, orientation.isLandscape ? .x6 : compression.isCompressed ? .x8 : .x12)
     .padding(.horizontal, orientation.isLandscape ? .x6 : .x12)
-    .background(Color(uiColor: .secondarySystemBackground))
-    .clipShape(.rect(cornerRadius: .x5))
+    .background(ThemingAssets.Background.secondary.swiftUIColor)
+    .clipShape(.rect(cornerRadius: .CornerRadius.xl))
     .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    .accessibilityElement(children: .combine)
   }
 
   // MARK: Private

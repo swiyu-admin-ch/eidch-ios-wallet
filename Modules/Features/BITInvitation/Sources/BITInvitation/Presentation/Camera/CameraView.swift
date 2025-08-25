@@ -92,7 +92,6 @@ struct CameraView: View {
       .navigationBarBackButtonHidden()
       .toolbar { toolbarContent() }
       .accessibilityElement(children: .contain)
-      .environment(\.colorScheme, .light)
   }
 
   // MARK: Private
@@ -114,11 +113,8 @@ struct CameraView: View {
 
   @ViewBuilder
   private func content() -> some View {
-    ZStack(alignment: .bottom) {
-      ThemingAssets.Brand.Core.navyBlue.swiftUIColor
-      scannerView()
-    }
-    .ignoresSafeArea(edges: orientation.isLandscape ? [.leading, .trailing] : [])
+    scannerView()
+      .ignoresSafeArea(edges: orientation.isLandscape ? [.horizontal] : [])
   }
 
 }
@@ -130,7 +126,7 @@ extension CameraView {
   private func scannerView() -> some View {
     CameraPreview(session: viewModel.session, object: viewModel.cameraManager.capturedObject, viewModel.didMoveFocusArea(to:))
       .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-      .padding(.top, .x5)
+      .padding(.top, .x2)
       .ignoresSafeArea(edges: [.bottom])
       .accessibilityLabel(L10n.tkQrscannerScanningTitle)
       .accessibilityElement(children: .contain)
@@ -141,20 +137,21 @@ extension CameraView {
   @ViewBuilder
   private func progressView() -> some View {
     ProgressViewLabelBadge(
-      text: L10n.cameraQrcodeScannerLoader,
+      text: L10n.tkGlobalPleasewait,
       background: ThemingAssets.Background.tertiary.swiftUIColor,
-      foreground: ThemingAssets.Label.primary.swiftUIColor)
+      foreground: ThemingAssets.Label.primary.swiftUIColor,
+      accessibilityLabel: L10n.tkQrscannerProcessingAlt)
       .accessibilityFocused($focus, equals: .loadingTip)
   }
 
   @ViewBuilder
   private func torchTipView() -> some View {
-    LabelBadge(text: L10n.cameraQrcodeLight, backgroundColor: ThemingAssets.Brand.Bright.navyBlue.swiftUIColor, image: "sun.min")
+    LabelBadge(text: L10n.tkQrscannerLightonTitle, backgroundColor: ThemingAssets.Brand.Bright.navyBlue.swiftUIColor, image: "sun.min")
   }
 
   @ViewBuilder
   private func helpTipView() -> some View {
-    tipView(primary: L10n.cameraQrcodeScannerPrimary, secondary: L10n.cameraQrcodeScannerSecondary, icon: Assets.qrcode.swiftUIImage, close: viewModel.closeTipView)
+    tipView(primary: L10n.tkQrscannerScanningTitle, secondary: L10n.tkQrscannerScanningBody, icon: Assets.qrcode.swiftUIImage, close: viewModel.closeTipView)
       .frame(maxWidth: orientation.isPortrait ? .infinity : Constants.tipViewMaxWidth)
       .padding(.horizontal, orientation.isPortrait ? .x3 : .x1)
   }
@@ -194,8 +191,7 @@ extension CameraView {
 
     ToolbarItem(placement: .topBarTrailing) {
       Button(action: viewModel.close, label: {
-        Assets.close.swiftUIImage
-          .environment(\.colorScheme, .dark)
+        ThemingAssets.close.swiftUIImage
       })
       .accessibilitySortPriority(10)
       .accessibilityFocused($focus, equals: .close)

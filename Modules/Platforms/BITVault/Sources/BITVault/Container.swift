@@ -3,16 +3,8 @@ import Foundation
 
 extension Container {
 
-  public var vaultOptions: Factory<VaultOption> {
-    self { [.secureEnclavePermanently] }
-  }
-
-  public var vaultAccessControlFlags: Factory<SecAccessControlCreateFlags> {
-    self { [.privateKeyUsage, .applicationPassword] }
-  }
-
-  public var vaultProtection: Factory<CFString> {
-    self { kSecAttrAccessibleWhenUnlockedThisDeviceOnly }
+  public var supportedKeyStorageSecurityLevel: Factory<[KeyStorageSecurityLevel]> {
+    self { [.iso18045EnhancedBasic, .iso18045High] }
   }
 
   public var keyManager: Factory<KeyManagerProtocol> {

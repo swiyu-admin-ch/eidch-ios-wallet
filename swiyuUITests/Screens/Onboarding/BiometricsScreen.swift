@@ -3,31 +3,27 @@ import XCTest
 @testable import BITOnboarding
 @testable import BITTheming
 
-class BiometricsScreen: Screen {
-
-  // MARK: Lifecycle
-
-  init(app: XCUIApplication) {
-    self.app = app
-    skipButton = app.buttons[DefaultInformationFooterView.AccessibilityIdentifier.secondaryButton.rawValue]
-    _ = skipButton.waitForExistence(timeout: .defaultTimeout)
-    settingsButton = app.buttons[DefaultInformationFooterView.AccessibilityIdentifier.primaryButton.rawValue]
-    backButton = app.navigationBars.buttons.element(boundBy: 0)
-    primaryText = app.staticTexts[BiometricView.AccessibilityIdentifier.primaryText.rawValue]
-    secondaryText = app.staticTexts[BiometricView.AccessibilityIdentifier.secondaryText.rawValue]
-  }
-
-  // MARK: Internal
+struct BiometricsScreen: Screen {
 
   let app: XCUIApplication
-  let skipButton: XCUIElement
-  let settingsButton: XCUIElement
-  let backButton: XCUIElement
-  let primaryText: XCUIElement
-  let secondaryText: XCUIElement
 
-  func assertDisplayed() {
-    XCTAssertTrue(primaryText.exists)
+  static func navigateToAfterLaunchingApp(_ app: XCUIApplication) -> BiometricsScreen {
+    let pin = "123456"
+    return PinCodeConfirmationScreen.navigateToAfterLaunchingApp(app, pin: pin)
+      .typePin(pin)
+      .tapContinue()
+      .assertBiometricsScreen()
+  }
+
+  @discardableResult
+  func assertBiometricsScreen() -> BiometricsScreen {
+    app.assertElementDisplayed(BiometricsView.AccessibilityIdentifier.content.rawValue)
+    return self
+  }
+
+  func tapBack() -> PinCodeInformationScreen {
+    app.tapNavigationBarBack()
+    return PinCodeInformationScreen(app: app)
   }
 
 }

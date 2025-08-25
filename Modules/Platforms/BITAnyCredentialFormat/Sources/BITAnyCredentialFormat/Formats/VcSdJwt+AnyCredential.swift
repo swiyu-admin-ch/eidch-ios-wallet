@@ -29,7 +29,7 @@ extension VcSdJwt: AnyCredential {
     payload.expiredAt
   }
 
-  public func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any] {
+  public func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any?] {
     switch claimSet {
     case .all:
       rawPayload

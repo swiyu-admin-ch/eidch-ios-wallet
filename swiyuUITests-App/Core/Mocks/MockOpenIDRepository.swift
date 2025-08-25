@@ -17,8 +17,8 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     NetworkResponse(object: TypeMetadata.Mock.sample, data: TypeMetadata.Mock.sampleData)
   }
 
-  func fetchMetadata(from issuerUrl: URL) async throws -> NetworkResponse<CredentialMetadata> {
-    NetworkResponse(object: CredentialMetadata.Mock.sample, data: CredentialMetadata.Mock.sampleData)
+  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialMetadataResponse {
+    CredentialMetadataResponse(metadata: CredentialMetadata.Mock.sample, raw: CredentialMetadata.Mock.sampleData)
   }
 
   func fetchOpenIdConfiguration(from issuerURL: URL) async throws -> OpenIdConfiguration {
@@ -137,6 +137,6 @@ extension RequestObject {
 
 extension Credential {
   enum Mock {
-    public static let sampleVC: Credential = Mocker.decode(fromFile: "credential-database-sample")
+    static let sampleVC: Credential = Mocker.decode(fromFile: "credential-database-sample")
   }
 }

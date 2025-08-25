@@ -23,7 +23,6 @@ let package = Package(
     .package(path: "../../Platforms/BITNetworking"),
     .package(path: "../../Platforms/BITAnyCredentialFormat"),
     .package(path: "../../Platforms/BITAnalytics"),
-    .package(path: "../BITAppAuth"),
     .package(path: "../BITOca"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
@@ -34,7 +33,6 @@ let package = Package(
     .target(
       name: "BITOpenID",
       dependencies: [
-        .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITVault", package: "BITVault"),
         .product(name: "BITSdJWT", package: "BITSdJWT"),

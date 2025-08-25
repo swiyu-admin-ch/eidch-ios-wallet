@@ -1,24 +1,20 @@
 import XCTest
 @testable import BITPresentation
 
-class PresentationRequestReviewScreen: Screen {
+struct PresentationRequestReviewScreen: Screen {
 
-  // MARK: Lifecycle
-
-  init(app: XCUIApplication) {
-    self.app = app
-    acceptButton = app.buttons[PresentationRequestReviewView.AccessibilityIdentifier.acceptButton.rawValue]
-    declineButton = app.buttons[PresentationRequestReviewView.AccessibilityIdentifier.denyButton.rawValue]
-  }
+  let app: XCUIApplication
 
   // MARK: Internal
 
-  let app: XCUIApplication
-  let acceptButton: XCUIElement
-  let declineButton: XCUIElement
+  @discardableResult
+  func assertPresentationRequestReviewScreen() -> PresentationRequestReviewScreen {
+    app.assertElementDisplayed(PresentationRequestReviewView.AccessibilityIdentifier.content.rawValue)
+    return self
+  }
 
-  func assertDisplayed() {
-    XCTAssert(acceptButton.waitForExistence(timeout: .defaultTimeout))
-    XCTAssert(declineButton.exists)
+  func tapAccept() -> PresentationRequestResultStateScreen {
+    app.tap(PresentationRequestReviewView.AccessibilityIdentifier.acceptButton.rawValue)
+    return PresentationRequestResultStateScreen(app: app)
   }
 }

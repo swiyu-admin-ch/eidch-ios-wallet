@@ -1,19 +1,18 @@
 {
   "images" : [
     {
-      "filename" : "light@1x.png",
-      "idiom" : "universal",
-      "scale" : "1x"
+      "filename" : "flash-off.svg",
+      "idiom" : "universal"
     },
     {
-      "filename" : "light@2x.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "light@3x.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "flash-off-dark.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

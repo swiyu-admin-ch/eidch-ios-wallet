@@ -22,7 +22,7 @@ let package = Package(
     .package(path: "../../Platforms/BITSettings"),
     .package(path: "../BITAppAuth"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.0.2 available
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
   ],
   targets: [
     .target(

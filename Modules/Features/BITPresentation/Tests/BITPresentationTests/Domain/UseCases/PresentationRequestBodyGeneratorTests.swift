@@ -31,7 +31,7 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
   func testCreatePresentationRequestBody_WithKeyBinding_ReturnsBody() async throws {
     let body = try generator.generate(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)
 
-    assertArguments(assertKeyBinding: true)
+    assertArguments(assertKeyPair: true)
 
     XCTAssertEqual(body.vpToken, Self.mockVpToken)
     XCTAssertEqual(body.presentationSubmission.definitionId, mockRequestObject.presentationDefinition.id)
@@ -42,7 +42,7 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
   func testCreatePresentationRequestBody_WithoutKeyBinding_ReturnsBody() throws {
     let body = try generator.generate(for: CompatibleCredential.Mock.BITWithoutKeyBinding, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)
 
-    assertArguments(assertKeyBinding: false)
+    assertArguments(assertKeyPair: false)
 
     XCTAssertEqual(body.vpToken, Self.mockVpToken)
     XCTAssertEqual(body.presentationSubmission.definitionId, mockRequestObject.presentationDefinition.id)
@@ -61,11 +61,11 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
   }
 
   func testCreatePresentationRequestBody_GetPrivateKeyThrows_ThrowsError() throws {
-    spyKeyManager.getPrivateKeyWithIdentifierAlgorithmQueryThrowableError = TestingError.error
+    spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryThrowableError = TestingError.error
 
     XCTAssertThrowsError(try generator.generate(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertTrue(spyKeyManager.getPrivateKeyWithIdentifierAlgorithmQueryCalled)
+      XCTAssertTrue(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryCalled)
       XCTAssertEqual(analyticsProvider.logCounter, 1)
     }
   }
@@ -105,9 +105,9 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
 
   private var mockCredential = Credential.Mock.sample
   private var mockAnyCredential = AnyCredentialSpy()
-  private let mockPrivateKey: SecKey = SecKeyTestsHelper.createPrivateKey()
   private var mockDescriptorMaps = [PresentationRequestBody.DescriptorMap(id: "id", format: "format", path: "path")]
   private var mockRequestObject = RequestObject.Mock.VcSdJwt.sample
+  private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   // swiftlint:disable all
   private var mockInputDescriptor: InputDescriptor!
@@ -147,20 +147,20 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
 
   private func success() {
     spyCreateAnyCredentialUseCase.executeFromFormatReturnValue = mockAnyCredential
-    spyKeyManager.getPrivateKeyWithIdentifierAlgorithmQueryReturnValue = mockPrivateKey
+    spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReturnValue = mockKeyPair
     spyVpTokenGenerator.generateRequestObjectCredentialKeyPairFieldsReturnValue = Self.mockVpToken
     spyAnyDescriptorMapGenerator.generateUsingVcFormatReturnValue = mockDescriptorMaps
   }
 
-  private func assertArguments(assertKeyBinding: Bool) {
+  private func assertArguments(assertKeyPair: Bool) {
     XCTAssertEqual(spyCreateAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, mockCredential.payload)
     XCTAssertEqual(spyCreateAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, mockCredential.format)
 
-    if assertKeyBinding {
-      XCTAssertEqual(spyKeyManager.getPrivateKeyWithIdentifierAlgorithmQueryReceivedArguments?.identifier, mockCredential.keyBindingIdentifier?.uuidString)
-      XCTAssertEqual(spyKeyManager.getPrivateKeyWithIdentifierAlgorithmQueryReceivedArguments?.algorithm.rawValue, mockCredential.keyBindingAlgorithm)
+    if assertKeyPair {
+      XCTAssertEqual(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.identifier, mockCredential.keyBinding?.id.uuidString)
+      XCTAssertEqual(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.algorithm.rawValue, mockCredential.keyBinding?.algorithm)
     } else {
-      XCTAssertFalse(spyKeyManager.getPrivateKeyWithIdentifierAlgorithmQueryCalled)
+      XCTAssertFalse(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryCalled)
     }
 
     guard let tokenGeneratorArguments = spyVpTokenGenerator.generateRequestObjectCredentialKeyPairFieldsReceivedArguments else {
@@ -168,10 +168,8 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
       return
     }
     XCTAssertEqual(tokenGeneratorArguments.requestObject, mockRequestObject)
-    if assertKeyBinding {
-      XCTAssertEqual(tokenGeneratorArguments.keyPair?.identifier, mockCredential.keyBindingIdentifier)
-      XCTAssertEqual(tokenGeneratorArguments.keyPair?.algorithm, mockCredential.keyBindingAlgorithm)
-      XCTAssertEqual(tokenGeneratorArguments.keyPair?.privateKey, mockPrivateKey)
+    if assertKeyPair {
+      XCTAssertEqual(tokenGeneratorArguments.keyPair, mockKeyPair)
     } else {
       XCTAssertNil(tokenGeneratorArguments.keyPair)
     }

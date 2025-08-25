@@ -18,6 +18,8 @@ struct PresentationRequestResultStateView: View {
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
+    case content = "presentationRequestResultStateContent"
+    case successContent
     case closeButton
   }
 
@@ -38,6 +40,8 @@ struct PresentationRequestResultStateView: View {
     .onAppear(perform: {
       isAccessibilityTitleFocused = true
     })
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private
@@ -106,6 +110,7 @@ struct PresentationRequestResultStateView: View {
     .background(ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
     .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
     .clipShape(.rect(cornerRadius: .CornerRadius.xs))
+    .accessibilityIdentifier(AccessibilityIdentifier.successContent.rawValue)
   }
 
   @ViewBuilder

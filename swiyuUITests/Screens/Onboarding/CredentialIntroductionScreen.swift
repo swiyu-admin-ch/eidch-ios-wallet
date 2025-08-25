@@ -1,35 +1,32 @@
 import Foundation
 import XCTest
 @testable import BITOnboarding
+@testable import BITTheming
 
-class CredentialIntroductionScreen: InformationScreen {
+struct CredentialIntroductionScreen: Screen {
 
-  // MARK: Lifecycle
+  let app: XCUIApplication
 
-  override init(app: XCUIApplication) {
-    content = app.descendants(matching: .any)[CredentialIntroductionView.AccessibilityIdentifier.credentialIntroductionContent.rawValue]
-    _ = content.waitForExistence(timeout: .defaultTimeout)
-    backButton = app.navigationBars.buttons.element(boundBy: 0)
-    super.init(app: app)
+  static func navigateToAfterLaunchingApp(_ app: XCUIApplication) -> CredentialIntroductionScreen {
+    SecurityIntroductionScreen.navigateToAfterLaunchingApp(app)
+      .tapContinue()
+      .assertCredentialIntroductionScreen()
   }
 
-  // MARK: Internal
-
-  let backButton: XCUIElement
-  let content: XCUIElement
-
-  override func assertDisplayed() {
-    XCTAssertTrue(content.waitForExistence(timeout: .defaultTimeout))
-    XCTAssertTrue(secondaryText.exists)
-    super.assertDisplayed()
+  @discardableResult
+  func assertCredentialIntroductionScreen() -> CredentialIntroductionScreen {
+    app.assertElementDisplayed(CredentialIntroductionView.AccessibilityIdentifier.content.rawValue)
+    return self
   }
 
-  static func createAndNavigateFromAppStart(app: XCUIApplication) -> CredentialIntroductionScreen {
-    let securityIntroduction = SecurityIntroductionScreen.createAndNavigateFromAppStart(app: app)
-    securityIntroduction.primaryButton.tap()
-    let currentScreen = CredentialIntroductionScreen(app: app)
-    currentScreen.assertDisplayed()
-    return currentScreen
+  func tapBack() -> SecurityIntroductionScreen {
+    app.tapNavigationBarBack()
+    return SecurityIntroductionScreen(app: app)
+  }
+
+  func tapContinue() -> PrivacyPermissionScreen {
+    app.tap(DefaultInformationFooterView.AccessibilityIdentifier.primaryButton.rawValue)
+    return PrivacyPermissionScreen(app: app)
   }
 
 }

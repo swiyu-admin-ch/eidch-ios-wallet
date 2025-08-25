@@ -9,9 +9,9 @@ final class DeleteEIDRequestCaseUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    repository = LocalEIDRequestRepositoryProtocolSpy()
+    repository = EIDRequestCaseRepositoryProtocolSpy()
 
-    Container.shared.localEIDRequestRepository.register { self.repository }
+    Container.shared.eIDRequestCaseRepository.register { self.repository }
 
     useCase = DeleteEIDRequestCaseUseCase()
   }
@@ -37,7 +37,7 @@ final class DeleteEIDRequestCaseUseCaseTests: XCTestCase {
 
   private var useCase: DeleteEIDRequestCaseUseCase!
   private let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
-  private var repository: LocalEIDRequestRepositoryProtocolSpy!
+  private var repository: EIDRequestCaseRepositoryProtocolSpy!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional

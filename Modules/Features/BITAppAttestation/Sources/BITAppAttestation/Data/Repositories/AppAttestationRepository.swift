@@ -8,10 +8,10 @@ import Spyable
 // MARK: - AppAttestationRepositoryProtocol
 
 @Spyable
-public protocol AppAttestationRepositoryProtocol {
+protocol AppAttestationRepositoryProtocol {
   func fetchChallenge() async throws -> AttestationChallenge
   func fetchClientAttestation(_ requestBody: ClientAttestationRequestBody) async throws -> ClientAttestation
-  func fetchKeyAttestation(with request: ClientAttestedRequest) async throws -> KeyAttestation
+  func fetchKeyAttestation(body: KeyAttestationRequestBody, clientAttestation: ClientAttestation) async throws -> KeyAttestation
 }
 
 // MARK: - AppAttestationRepository
@@ -32,15 +32,26 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
     return try jwsDecoder.decode(ClientAttestationPayload.self, from: clientAttestationResponse.clientAttestation.data(using: .utf8) ?? Data())
   }
 
-  func fetchKeyAttestation(with request: ClientAttestedRequest) async throws -> KeyAttestation {
-    let response = try await networkService.request(AttestationServiceEndpoint.keyAttestation(request))
-    let keyAttestationResponse = try JSONDecoder().decode(KeyAttestationResponse.self, from: response.data)
+  func fetchKeyAttestation(body: KeyAttestationRequestBody, clientAttestation: ClientAttestation) async throws -> KeyAttestation {
+    let (_, proofOfPossession) = try await proofOfPossessionGenerator.generate(
+      for: body,
+      audience: clientAttestation.payload.issuer,
+      challengeEndpoint: URL(target: AttestationServiceEndpoint.challenge))
 
-    return try jwsDecoder.decode(KeyAttestationPayload.self, from: keyAttestationResponse.keyAttestation.data(using: .utf8) ?? Data())
+    let result: (keyAttestationResponse: KeyAttestationResponse, _) = try await networkService.request(
+      AttestationServiceEndpoint.keyAttestation(body),
+      plugins: [
+        ClientAttestationPlugin(
+          clientAttestation: clientAttestation.rawJWS,
+          proofOfPossession: proofOfPossession.rawJWS),
+      ])
+
+    return try jwsDecoder.decode(KeyAttestationPayload.self, from: result.keyAttestationResponse.keyAttestation.data(using: .utf8) ?? Data())
   }
 
   // MARK: Private
 
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
+  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
 }

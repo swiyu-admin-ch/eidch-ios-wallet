@@ -85,7 +85,7 @@ extension OnboardingInternalRoutes where Self: RouterProtocol {
   }
 
   func biometrics() {
-    let viewController = UIHostingController(rootView: BiometricView(router: self))
+    let viewController = UIHostingController(rootView: BiometricsView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
 
     // Remove the PinCode screens from the navigation stack when getting into the biometric flow

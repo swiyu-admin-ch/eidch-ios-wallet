@@ -12,7 +12,7 @@ import Spyable
 
 @Spyable
 protocol OcaCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, id: UUID, keyPair: KeyPair?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential
 }
 
 // MARK: - OcaCredentialGenerator
@@ -21,7 +21,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, id: UUID, keyPair: KeyPair?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential {
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential {
     guard let payload = anyCredential.raw.data(using: .utf8) else {
       throw CredentialError.invalidPayload
     }
@@ -33,8 +33,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
     return Credential(
       id: id,
       status: .unknown,
-      keyBindingIdentifier: keyPair?.identifier,
-      keyBindingAlgorithm: keyPair?.algorithm,
+      keyBinding: keyBinding,
       payload: payload,
       rawCredentialData: rawCredentialData,
       format: anyCredential.format,
@@ -51,6 +50,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
   // MARK: Private
 
   @Injected(\.captureBaseDisplayGenerator) private var captureBaseDisplayGenerator: CaptureBaseDisplayGeneratorProtocol
+  @Injected(\.ocaClaimGenerator) private var ocaClaimGenerator: OcaClaimGeneratorProtocol
 
   private func createClusters(from claims: [any AnyClaim], ocaBundle: OcaBundle) -> [CredentialClaimCluster] {
     let rootCluster = createCluster(for: ocaBundle.rootCaptureBaseDigest, claims: claims, ocaBundle: ocaBundle)
@@ -59,7 +59,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
     let claimsWithoutOca = claims.filter {
       guard let jsonPath = (try? JsonPath(rawString: $0.key)) else { return true }
       return ocaBundle.getAttributeForJsonPath(jsonPath: jsonPath) == nil
-    }.compactMap { createClaim(from: $0, ocaAttribute: nil) }
+    }.compactMap(CredentialClaim.init)
 
     if claimsWithoutOca.isEmpty {
       return clusters
@@ -96,36 +96,8 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
         return attribute.dataSources.values.contains(jsonPath)
       }
       guard let anyClaim else { return nil }
-      return createClaim(from: anyClaim, ocaAttribute: attribute)
+      return ocaClaimGenerator.generate(for: anyClaim, ocaAttribute: attribute)
     }
-  }
-
-  private func createClaim(from anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute?) -> CredentialClaim? {
-    guard var value = anyClaim.value?.rawValue else { return nil }
-    var valueType: ValueType?
-    if ocaAttribute?.standard == .dataURLScheme {
-      let url = URL(string: value)
-      if
-        let dataString = url?.dataURLDataString,
-        let mediaType = url?.mediaType,
-        let type = ValueType(rawValue: mediaType)
-      {
-        value = dataString
-        valueType = type
-      }
-    }
-    return CredentialClaim(
-      key: anyClaim.key.replacing("$.", with: ""),
-      value: value,
-      valueType: valueType?.rawValue ?? ValueType(ocaAttribute).rawValue,
-      order: ocaAttribute?.order ?? Int(Int16.max),
-      displays: createClaimDisplays(from: ocaAttribute))
-  }
-
-  private func createClaimDisplays(from ocaAttribute: OverlayBundleAttribute?) -> [CredentialClaimDisplay] {
-    ocaAttribute?.labels.map { locale, label in
-      CredentialClaimDisplay(locale: locale, name: label)
-    } ?? []
   }
 
   private func createCredentialDisplays(from displays: [CaptureBaseDisplay], credentialId: UUID) -> [CredentialDisplay] {
@@ -143,50 +115,21 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
 
 }
 
-extension ValueType {
-
-  // MARK: Lifecycle
-
-  init(_ attribute: OverlayBundleAttribute? ) {
-    guard let attribute else {
-      self = .string
-      return
-    }
-    self = switch attribute.attributeType {
-    case .text:
-      .string
-    case .boolean:
-      .boolean
-    case .binary:
-      Self.getValueTypeForBinaryAttribute(attribute)
-    case .array,
-         .dateTime,
-         .numeric,
-         .reference:
-      .string
-    }
-  }
-
-  // MARK: Private
-
-  private static func getValueTypeForBinaryAttribute(_ attribute: OverlayBundleAttribute) -> ValueType {
-    guard attribute.characterEncoding == .base64 else { return .string }
-    return switch attribute.format {
-    case ValueType.imagePng.rawValue:
-      .imagePng
-    case ValueType.imageJpg.rawValue:
-      .imageJpg
-    default:
-      .string
-    }
-  }
-}
-
 extension AttributeType {
   fileprivate var isReferenceType: Bool {
     if case .reference = self {
       return true
     }
     return false
+  }
+}
+
+extension CredentialClaim {
+
+  fileprivate init(_ anyClaim: AnyClaim) {
+    self.init(
+      key: anyClaim.key.replacing("$.", with: ""),
+      value: anyClaim.value?.rawValue,
+      order: Int(Int16.max))
   }
 }

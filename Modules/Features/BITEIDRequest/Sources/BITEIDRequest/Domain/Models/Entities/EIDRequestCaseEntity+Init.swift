@@ -21,6 +21,7 @@ extension EIDRequestCaseEntity {
     }
 
     documentNumber = eIDRequestCase.documentNumber
+    selectedDocumentType = eIDRequestCase.selectedDocumentType.rawValue
     firstName = eIDRequestCase.firstName
     lastName = eIDRequestCase.lastName
     createdAt = eIDRequestCase.createdAt

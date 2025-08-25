@@ -23,8 +23,7 @@ public struct Credential: Identifiable, Codable {
   public init(
     id: UUID = UUID(),
     status: CredentialStatus = .unknown,
-    keyBindingIdentifier: UUID? = nil,
-    keyBindingAlgorithm: String? = nil,
+    keyBinding: CredentialKeyBinding? = nil,
     payload: CredentialPayload,
     rawCredentialData: RawCredentialData? = nil,
     format: String,
@@ -39,8 +38,7 @@ public struct Credential: Identifiable, Codable {
   {
     self.id = id
     self.status = status
-    self.keyBindingIdentifier = keyBindingIdentifier
-    self.keyBindingAlgorithm = keyBindingAlgorithm
+    self.keyBinding = keyBinding
     self.payload = payload
     self.rawCredentialData = rawCredentialData
     self.format = format
@@ -64,8 +62,7 @@ public struct Credential: Identifiable, Codable {
     try self.init(
       id: container.decode(UUID.self, forKey: .id),
       status: container.decode(CredentialStatus.self, forKey: .status),
-      keyBindingIdentifier: container.decodeIfPresent(UUID.self, forKey: .keyBindingIdentifier),
-      keyBindingAlgorithm: container.decodeIfPresent(String.self, forKey: .keyBindingAlgorithm),
+      keyBinding: container.decodeIfPresent(CredentialKeyBinding.self, forKey: .keyBinding),
       payload: container.decode(Data.self, forKey: .payload),
       rawCredentialData: container.decodeIfPresent(RawCredentialData.self, forKey: .rawCredentialData),
       format: container.decode(String.self, forKey: .format),
@@ -87,8 +84,7 @@ public struct Credential: Identifiable, Codable {
     self.init(
       id: entity.id,
       status: CredentialStatus(rawValue: entity.status) ?? .unknown,
-      keyBindingIdentifier: entity.keyBindingIdentifier,
-      keyBindingAlgorithm: entity.keyBindingAlgorithm,
+      keyBinding: entity.keyBinding.flatMap(CredentialKeyBinding.init),
       payload: entity.payload,
       rawCredentialData: entity.rawCredentialData.flatMap(RawCredentialData.init),
       format: entity.format,
@@ -106,8 +102,7 @@ public struct Credential: Identifiable, Codable {
 
   public var id = UUID()
   public var status = CredentialStatus.unknown
-  public var keyBindingIdentifier: UUID? = nil
-  public var keyBindingAlgorithm: String? = nil
+  public var keyBinding: CredentialKeyBinding? = nil
   public var payload: CredentialPayload
   public var rawCredentialData: RawCredentialData? = nil
   public var format: String
@@ -129,8 +124,7 @@ public struct Credential: Identifiable, Codable {
   private enum CodingKeys: CodingKey {
     case id
     case status
-    case keyBindingIdentifier
-    case keyBindingAlgorithm
+    case keyBinding
     case payload
     case rawCredentialData
     case format
@@ -154,8 +148,7 @@ extension Credential: Equatable {
   public static func == (lhs: Credential, rhs: Credential) -> Bool {
     lhs.id == rhs.id &&
       lhs.status == rhs.status &&
-      lhs.keyBindingIdentifier == rhs.keyBindingIdentifier &&
-      lhs.keyBindingAlgorithm == rhs.keyBindingAlgorithm &&
+      lhs.keyBinding == rhs.keyBinding &&
       lhs.payload == rhs.payload &&
       lhs.rawCredentialData == rhs.rawCredentialData &&
       lhs.format == rhs.format &&

@@ -10,7 +10,7 @@
          "translations":{
 
          },
-         "messageKey":"global.error.msg.InvalidClientAttestation",
+         "messageKey":"global.error.msg.InvalidKeyAttestation",
          "params":{
 
          }

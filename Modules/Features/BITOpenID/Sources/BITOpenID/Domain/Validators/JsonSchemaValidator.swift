@@ -13,7 +13,7 @@ struct JsonSchemaValidator: JsonSchemaValidatorProtocol {
     return try Validator(schema: schemaString).isValid(instance: jsonInstanceString)
   }
 
-  func validate(dictionary: [String: Any], with jsonSchema: Data) throws -> Bool {
+  func validate(dictionary: [String: Any?], with jsonSchema: Data) throws -> Bool {
     let jsonData = try JSONSerialization.data(withJSONObject: dictionary)
     guard
       let jsonString = String(data: jsonData, encoding: .utf8),
@@ -48,5 +48,5 @@ public protocol JsonSchemaValidatorProtocol {
   ///
   /// - Returns: `true` if the JSON object is valid according to the schema;
   ///             otherwise `false`.
-  func validate(dictionary: [String: Any], with jsonSchema: Data) throws -> Bool
+  func validate(dictionary: [String: Any?], with jsonSchema: Data) throws -> Bool
 }

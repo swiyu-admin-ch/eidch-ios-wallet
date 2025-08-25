@@ -71,7 +71,7 @@ class CameraViewModel: ObservableObject, Vibrating {
       invitationURL = url
 
       try? await Task.sleep(nanoseconds: scannerDelay)
-      let invitationType = try await checkInvitationTypeUseCase.execute(url: url)
+      let invitationType = try checkInvitationTypeUseCase.execute(url: url)
 
       switch invitationType {
       case .credentialOffer:
@@ -148,7 +148,7 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   private func handleError(_ error: Error) {
     vibrate(.error)
-    if error as? CheckCameraError != .wrongScheme {
+    if error as? CheckInvitationTypeError != .wrongScheme {
       analytics.log(error)
     }
 

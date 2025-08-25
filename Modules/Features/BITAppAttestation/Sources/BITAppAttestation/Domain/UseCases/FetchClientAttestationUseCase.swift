@@ -1,7 +1,7 @@
-import BITAppAuth
 import BITCrypto
 import BITJWT
 import BITLocalAuthentication
+import BITVault
 import Factory
 import Foundation
 import Spyable
@@ -21,11 +21,12 @@ struct FetchClientAttestationUseCase: FetchClientAttestationUseCaseProtocol {
   // MARK: Internal
 
   func execute(_ context: LAContextProtocol) async throws -> ClientAttestation {
+    if let cached = try? await clientAttestationRepository.get() { return cached }
     let challenge = try await appAttestationRepository.fetchChallenge()
     let appAttestedKey = try await appAttestationService.generateAttestedKey(with: challenge)
-    let bindingKey = try appAttestationKeyRepository.createAttestationKey(for: .clientAttestation, with: context)
+    let keyPair = try appAttestationKeyRepository.create(for: .client, with: context)
 
-    let clientData = try createClientData(challenge: challenge, bindingKey: bindingKey)
+    let clientData = try createClientData(challenge: challenge, keyPair: keyPair)
     let appAssertion = try await appAttestationService.generateAppAssertion(for: appAttestedKey.identifier, with: clientData)
 
     let clientAttestationRequestBody = ClientAttestationRequestBody(
@@ -45,9 +46,7 @@ struct FetchClientAttestationUseCase: FetchClientAttestationUseCaseProtocol {
   @Injected(\.clientAttestationValidator) private var clientAttestationValidator: ClientAttestationValidatorProtocol
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
 
-  private func createClientData(challenge: AttestationChallenge, bindingKey: SecKey) throws -> ClientDataObject {
-    let keyPair = KeyPair(privateKey: bindingKey)
-
+  private func createClientData(challenge: AttestationChallenge, keyPair: VaultKeyPair) throws -> ClientDataObject {
     guard let publicKey = keyPair.publicKey, let jwk = try? JWK(from: publicKey) else {
       throw FetchClientAttestationUseCase.Error.invalidBindingKey
     }

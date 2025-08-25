@@ -20,7 +20,7 @@ final class VcSdJwtSchemaValidatorTests: XCTestCase {
   }
 
   func testValidate_argumentsPassed() throws {
-    let _ = try validator.validate(claims, schema: schemaCredential)
+    _ = try validator.validate(claims, schema: schemaCredential)
 
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.count, 2)
     XCTAssertTrue(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary["iss"] as? String == "test")

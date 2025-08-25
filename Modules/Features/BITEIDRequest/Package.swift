@@ -26,7 +26,8 @@ let package = Package(
     .package(path: "../../Platforms/BITQRCode"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", branch: "main"),
+    .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
+    .package(url: "git@github.com:admin-ch-ssi/PERA_av-wrapper-private_ios.git", revision: "02f2c7104bbed15f048970850df926738a8e3812"),
   ],
   targets: [
     .target(

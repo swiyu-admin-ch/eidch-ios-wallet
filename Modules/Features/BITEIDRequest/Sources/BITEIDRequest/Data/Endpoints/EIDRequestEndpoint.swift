@@ -1,4 +1,3 @@
-import BITAppAttestation
 import BITNetworking
 import Factory
 import Foundation
@@ -6,11 +5,12 @@ import Moya
 
 
 enum EIDRequestEndpoint {
-  case submit(request: ClientAttestedRequest)
+  case submit(EIDRequestPayload)
   case getStatus(caseId: String)
   case legalRepresentantVerification(caseId: String)
   case challenge
   case validateAttestations(ValidateAttestationsRequestBody)
+  case startOnlineSession(caseId: String)
 }
 
 // MARK: TargetType
@@ -32,6 +32,8 @@ extension EIDRequestEndpoint: TargetType {
       "api/rest/attestations/validate"
     case .challenge:
       "api/rest/eid/challenge"
+    case .startOnlineSession(let caseId):
+      "api/rest/eid/\(caseId)/start-online-session"
     }
   }
 
@@ -42,18 +44,20 @@ extension EIDRequestEndpoint: TargetType {
     case .challenge,
          .getStatus,
          .legalRepresentantVerification: .get
+    case .startOnlineSession:
+      .put
     }
   }
 
   var task: Moya.Task {
     switch self {
-    case .submit(let request):
-      .requestParameters(parameters: request.body.asDictionary(), encoding: JSONEncoding.default)
-    case .validateAttestations(let body):
-      .requestParameters(parameters: body.asDictionary(), encoding: JSONEncoding.default)
+    case .submit(let body as Codable),
+         .validateAttestations(let body as Codable):
+      .requestJSONEncodable(body)
     case .challenge,
          .getStatus,
-         .legalRepresentantVerification:
+         .legalRepresentantVerification,
+         .startOnlineSession:
       .requestPlain
     }
   }
@@ -61,12 +65,13 @@ extension EIDRequestEndpoint: TargetType {
   var headers: [String: String]? {
     switch self {
     case .challenge,
-         .getStatus,
-         .legalRepresentantVerification,
          .validateAttestations:
       NetworkHeader.standard.raw
-    case .submit(let request):
-      NetworkHeader.keyAttestation(clientAttestation: request.header.clientAttestation, clientAttestationPop: request.header.clientAttestationPoP).raw
+    case .getStatus,
+         .legalRepresentantVerification,
+         .startOnlineSession,
+         .submit:
+      nil // Handle by ClientAttestationPlugin
     }
   }
 }

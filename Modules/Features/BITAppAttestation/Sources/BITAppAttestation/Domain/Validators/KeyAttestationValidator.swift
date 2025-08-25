@@ -1,6 +1,6 @@
-import BITAppAuth
 import BITCrypto
 import BITJWT
+import BITVault
 import Factory
 import Foundation
 import Spyable
@@ -9,7 +9,7 @@ import Spyable
 
 @Spyable
 protocol KeyAttestationValidatorProtocol {
-  func validate(_ keyAttestation: KeyAttestation) async -> Bool
+  func validate(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool
 }
 
 // MARK: - KeyAttestationValidator
@@ -18,7 +18,7 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
 
   // MARK: Internal
 
-  func validate(_ keyAttestation: KeyAttestation) async -> Bool {
+  func validate(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool {
     do {
       guard
         keyAttestation.header.algorithm == .ES256,
@@ -32,8 +32,8 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
         attestationServiceTrustedDids.contains(keyAttestation.payload.issuer),
         keyAttestation.payload.issuedAt <= now,
         keyAttestation.payload.expiredAt >= now,
-        Self.supportedKeyStorages.contains(keyAttestation.payload.keyStorage),
-        try hasValidAttestedKey(keyAttestation.payload.attestedKeys)
+        supportedKeyStorageSecurityLevel.contains(keyAttestation.payload.keyStorage),
+        try hasValidAttestedKey(keyPair, keyAttestation.payload.attestedKeys)
       else {
         throw ClientAttestationValidatorError.invalidPayload
       }
@@ -47,11 +47,10 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
   // MARK: Private
 
   private static let kidSeparator: Character = "#"
-  private static let supportedKeyStorages: [KeyAttestationKeyStorage] = [.iso18045EnhancedBasic, .iso18045High]
 
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
-  @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
+  @Injected(\.supportedKeyStorageSecurityLevel) private var supportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel]
 
   private var now: Date {
     Date()
@@ -65,10 +64,7 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
     return attestationServiceTrustedDids.contains(String(did))
   }
 
-  private func hasValidAttestedKey(_ jwks: [JWK]) throws -> Bool {
-    let privateKey = try appAttestationKeyRepository.getAttestionKey(for: .keyAttestation)
-    let keyPair = KeyPair(privateKey: privateKey)
-
+  private func hasValidAttestedKey(_ keyPair: VaultKeyPair, _ jwks: [JWK]) throws -> Bool {
     guard let publicKey = keyPair.publicKey, let jwk = try? JWK(from: publicKey) else {
       throw KeyAttestationValidatorError.invalidPublicKey
     }

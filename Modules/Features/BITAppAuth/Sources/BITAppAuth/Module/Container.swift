@@ -123,12 +123,21 @@ extension Container {
     self { UserSession() }.singleton
   }
 
-  // MARK: Internal
-
-  var internalContext: Factory<LAContextProtocol> {
-    // LAContext should be a singleton since having too many of them, can lead to an error
-    self { LAContext() }.singleton
+  public var internalContext: Factory<LAContextProtocol> {
+    self {
+      #if targetEnvironment (simulator)
+      FakeLAContext()
+      #else
+      LAContext()
+      #endif
+    }.singleton // LAContext should be a singleton since having too many of them, can lead to an error
   }
+
+  public var pepperKeyVaultOptions: Factory<VaultOptions> {
+    self { .secureEnclavePermanently }
+  }
+
+  // MARK: Internal
 
   var authCredentialType: Factory<LACredentialType> {
     self { .applicationPassword }
@@ -161,8 +170,12 @@ extension Container {
     self { .ecdhKeyExchangeStandardX963SHA256 }
   }
 
-  var vaultAlgorithm: Factory<VaultAlgorithm> {
+  var pepperKeyAlgorithm: Factory<VaultAlgorithm> {
     self { .eciesEncryptionStandardVariableIVX963SHA256AESGCM }
+  }
+
+  var appPepperKeyRepository: Factory<AppPepperKeyRepositoryProtocol> {
+    self { AppPepperKeyRepository() }
   }
 }
 
@@ -174,10 +187,6 @@ extension Container {
 
   public var biometricRepository: Factory<BiometricRepositoryProtocol> {
     self { UserDefaultBiometricRepository() }
-  }
-
-  public var appAttestationKeyRepository: Factory<AppAttestationKeyRepositoryProtocol> {
-    self { self.secretsRepository() }
   }
 
   // MARK: Internal

@@ -9,7 +9,7 @@ class PrivacyViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  public init(
+  init(
     hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocol = Container.shared.hasBiometricAuthUseCase(),
     isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocol = Container.shared.isBiometricUsageAllowedUseCase(),
     updateAnalyticStatusUseCase: UpdateAnalyticStatusUseCaseProtocol = Container.shared.updateAnalyticsStatusUseCase(),
@@ -84,7 +84,7 @@ class PrivacyViewModel: ObservableObject {
 
 extension PrivacyViewModel: ChangePinCodeDelegate {
 
-  public func didChangePinCode() {
+  func didChangePinCode() {
     toastMessage = L10n.tkChangepasswordSuccessfulNotification
     isToastPresented = true
   }

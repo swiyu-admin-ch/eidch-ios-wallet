@@ -20,7 +20,7 @@ class PinCodeViewModel: ObservableObject, Vibrating {
 
   // MARK: Internal
 
-  var error: Error? = nil
+  var error: Error?
   @Published var isErrorPresented = false
   @Published var inputFieldMessage: String = L10n.tkOnboardingPasswordInputSubtitle
 

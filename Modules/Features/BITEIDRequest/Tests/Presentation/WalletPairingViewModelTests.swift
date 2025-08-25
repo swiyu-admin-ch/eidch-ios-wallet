@@ -2,6 +2,7 @@
 import Factory
 import XCTest
 @testable import BITEIDRequest
+@testable import BITTestingCore
 
 class WalletPairingViewModelTests: XCTestCase {
 
@@ -9,21 +10,32 @@ class WalletPairingViewModelTests: XCTestCase {
 
   override func setUp() {
     router = MockEIDRequestRouter()
-    router.context.identityType = .identityCard
+    router.context.caseId = "caseId"
 
+    registerMocks()
     viewModel = WalletPairingViewModel(router: router)
   }
 
-  func testPrimaryAction_withIdentityType_closeRouter() {
-    viewModel.primaryAction()
-    XCTAssertTrue(router.closeCalled)
+  func testPrimaryAction_success() async {
+    await viewModel.primaryAction()
+
+    XCTAssertTrue(router.avIdentityCheckCalled)
+    XCTAssertEqual(startOnlineSessionUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(startOnlineSessionUseCase.executeForReceivedCaseId, router.context.caseId)
   }
 
-  func testPrimaryAction_IdentityTypeIsNil_routeToDocumentSelection() {
-    router.context.identityType = nil
+  func testPrimaryAction_missingCaseId_routeToError() async {
+    router.context.caseId = nil
 
-    viewModel.primaryAction()
-    XCTAssertTrue(router.documentSelectionCalled)
+    await viewModel.primaryAction()
+
+  }
+
+  func testPrimaryAction_startOnlineSessionThrowsError_routeToError() async {
+    startOnlineSessionUseCase.executeForThrowableError = TestingError.error
+
+    await viewModel.primaryAction()
+
   }
 
   func testClose() {
@@ -35,6 +47,13 @@ class WalletPairingViewModelTests: XCTestCase {
 
   private var router: MockEIDRequestRouter!
   private var viewModel: WalletPairingViewModel!
+  private var startOnlineSessionUseCase: StartOnlineSessionUseCaseProtocolSpy!
+
+  private func registerMocks() {
+    startOnlineSessionUseCase = StartOnlineSessionUseCaseProtocolSpy()
+
+    Container.shared.startOnlineSessionUseCase.register { self.startOnlineSessionUseCase }
+  }
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping force_try

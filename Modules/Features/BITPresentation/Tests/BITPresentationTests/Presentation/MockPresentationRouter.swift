@@ -8,7 +8,7 @@ class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes {
   var didCallCompatibleCredentials = false
   var didCallNextCompatibleCredentials = false
   var didCallPresentationReview = false
-  var calledPresentationResultState: PresentationRequestResultState? = nil
+  var calledPresentationResultState: PresentationRequestResultState?
 
   func presentationRequest(using context: BITPresentation.PresentationRequestContext) throws {
     didCallPresentationRequest = true

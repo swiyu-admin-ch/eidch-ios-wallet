@@ -6,8 +6,8 @@ import Spyable
 // MARK: - ClientAttestationRepositoryProtocol
 
 @Spyable
-protocol ClientAttestationRepositoryProtocol {
-  func getClientAttestation() async throws -> ClientAttestation
+public protocol ClientAttestationRepositoryProtocol {
+  func get() async throws -> ClientAttestation
   func create(_ clientAttestation: ClientAttestation) async throws -> ClientAttestation
 }
 
@@ -23,7 +23,7 @@ struct ClientAttestationRepository: ClientAttestationRepositoryProtocol {
     return try ClientAttestation(entity)
   }
 
-  func getClientAttestation() async throws -> ClientAttestation {
+  func get() async throws -> ClientAttestation {
     guard
       let entity = try database.get(ClientAttestationEntity.self)
         .sorted(by: \.createdAt)

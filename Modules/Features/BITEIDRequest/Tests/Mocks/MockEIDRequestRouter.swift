@@ -9,7 +9,9 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
   var popNumberCalled = false
   var popToRootCalled = false
   var dismissCalled = false
-  var mrzScannerCalled = false
+  var scanDocumentCalled = false
+  var scanDocumentSubmitCalled = false
+  var mrzMockDataCalled = false
   var externalLinkCalled = false
   var settingsCalled = false
   var dataPrivacyCalled = false
@@ -25,7 +27,10 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
   var avIdentityCheckCalled = false
   var clientAttestationErrorCalled = false
   var keyAttestationErrorCalled = false
-  var attestationErrorCalled = false
+  var attestationError: Error?
+  var avIntroSelfieVideoCalled = false
+  var recordDocumentCalled = false
+  var recordSelfieCalled = false
   var context = EIDRequestContext()
 
   func avIdentityCheck() {
@@ -44,8 +49,8 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
     keyAttestationErrorCalled = true
   }
 
-  func attestationError(delegate: any AttestationErrorDelegate) {
-    attestationErrorCalled = true
+  func validateAttestationsError(delegate: any ValidateAttestationsErrorDelegate, error: Error) {
+    attestationError = error
   }
 
   func dataPrivacy() {
@@ -84,8 +89,16 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
     closeCalled = true
   }
 
-  func mrzScanner() {
-    mrzScannerCalled = true
+  func scanDocument() {
+    scanDocumentCalled = true
+  }
+
+  func scanDocumentSubmit(_ scanDocumentOutput: ScanDocumentOutput) {
+    scanDocumentCalled = true
+  }
+
+  func mrzMockData() {
+    mrzMockDataCalled = true
   }
 
   func openExternalLink(url: URL) {
@@ -118,5 +131,17 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
 
   func attestation() {
     attestationCalled = true
+  }
+
+  func avIntroSelfieVideo() {
+    avIntroSelfieVideoCalled = true
+  }
+
+  func recordDocument() {
+    recordDocumentCalled = true
+  }
+
+  func recordSelfie() {
+    recordSelfieCalled = true
   }
 }
