@@ -137,6 +137,15 @@ final class SdJWSDecoderTests: XCTestCase {
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
   }
 
+  func testDecode_URLUnsafeRawRepresentable() throws {
+    let data = TestSdJWTPayload.Mock.jwtWithSpecialCharacterClaims
+    mockJwsDecoder(sdJwtData: data, rawPayload: TestSdJWTPayload.Mock.jwtWithSpecialCharacterClaimsPayload)
+
+    let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
+
+    XCTAssertEqual(sdJWT.disclosableClaims.count, 1)
+  }
+
   func testDecode_invalidSdJwt_throwsError() throws {
     let data = "HEADER.PAYLOAD.SIGNATURE".data(using: .utf8)!
     XCTAssertThrowsError(try decoder.decode(TestSdJWTPayload.self, from: data)) { error in

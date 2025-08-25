@@ -144,8 +144,9 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   }
 
   private func decodeClaim(from disclosure: String, digests: [SdJwtDigest], algorithm: StringDigest.Algorithm) throws -> SdJWTClaim {
+    // sd-jwt disclosures are formatted URL unsafe. Which caused issues when the content has special Characters such as é,è or ï...
     guard
-      let rawDisclosableClaim = disclosure.base64Decoded,
+      let rawDisclosableClaim = disclosure.base64EncodedURLSafe.base64Decoded,
       let disclosableClaim = try rawDisclosableClaim.toJsonObject() as? [Any],
       disclosableClaim.count == 3,
       let key = disclosableClaim[1] as? String

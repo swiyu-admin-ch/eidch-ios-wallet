@@ -48,6 +48,8 @@ extension TestSdJWTPayload: Mockable {
     static let flatJwtWithIsoDateData: Data = getData(fromFile: "sd-jwt-flat-with-iso-date", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let flatJwtWithIsoDatePayload: String = getString(fromFile: "sd-jwt-flat-with-iso-date-payload", ofType: "json", bundle: Bundle.module)
     static let flatJwtWithKeyBindingData: Data = getData(fromFile: "sd-jwt-flat-with-keybinding", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let jwtWithSpecialCharacterClaims: Data = getData(fromFile: "sd-jwt-with-special-character-claims", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let jwtWithSpecialCharacterClaimsPayload: String = getString(fromFile: "sd-jwt-with-special-character-claims-payload", ofType: "json", bundle: Bundle.module)
     static let flatJwtWithNullClaims: Data = getData(fromFile: "sd-jwt-flat-with-null-claims", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let flatJwtWithNullClaimsPayload: String = getString(fromFile: "sd-jwt-flat-with-null-claims-payload", ofType: "json", bundle: Bundle.module)
     static let flatJwtUsingSha384: Data = getData(fromFile: "sd-jwt-flat-using-sha-384", ofType: "txt", bundle: Bundle.module) ?? Data()
