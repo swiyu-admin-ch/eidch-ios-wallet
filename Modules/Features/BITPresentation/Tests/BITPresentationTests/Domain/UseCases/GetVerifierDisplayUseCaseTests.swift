@@ -16,11 +16,8 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    verifierMock = Self.createVerifier()
-
-    Container.shared.preferredUserLanguageCodes.register { self.preferredUserLanguageCodes }
-
     preferredUserLanguageCodes = ["en", "de"]
+    Container.shared.preferredUserLanguageCodes.register { self.preferredUserLanguageCodes }
 
     useCase = GetVerifierDisplayUseCase()
   }
@@ -41,42 +38,15 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
     XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
   }
 
-  func testExecute_trustStatementInDefaultLanguage_returnsNameFromTrustStatement() {
-    preferredUserLanguageCodes = []
-    useCase = GetVerifierDisplayUseCase()
-
-    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: trustStatementMock)
-
-    XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameEN)
-    XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
-  }
-
-  func testExecute_trustStatementWithPreferredLanguage_returnsNameFromTrustStatement() {
-    verifierMock = Self.createVerifier(multipleLanguages: true)
-    let italianSample = TrustStatementPayload.Mock.validSampleItalian
-    preferredUserLanguageCodes = []
-    useCase = GetVerifierDisplayUseCase()
-
-    let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: italianSample)
-
-    XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(verifierDisplay?.name, Self.trustStatementNameIT)
-    XCTAssertEqual(verifierDisplay?.logo, Self.logoStringEN.data(using: .utf8))
-  }
-
   func testExecute_trustStatementNotMatchingLanguage_returnsNameFromKey() {
     preferredUserLanguageCodes = []
-    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.italian.rawValue
     useCase = GetVerifierDisplayUseCase()
 
     let verifierDisplay = useCase.execute(for: verifierMock, trustStatement: trustStatementMock)
 
     XCTAssertEqual(verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(verifierDisplay?.name, "orgName")
+    XCTAssertEqual(verifierDisplay?.name, "entityName")
     XCTAssertNil(verifierDisplay?.logo)
-
-    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.english.rawValue
   }
 
   // MARK: Private
@@ -88,8 +58,8 @@ final class GetVerifierDisplayUseCaseTests: XCTestCase {
   private static var logoUriEN = URL(string: "data:,\(logoStringEN)")!
   private static var logoUriIT = URL(string: "data:,\(logoStringIT)")!
 
-  private static let trustStatementNameEN = "EN orgName"
-  private static let trustStatementNameIT = "IT orgName"
+  private static let trustStatementNameEN = "EN entityName"
+  private static let trustStatementNameIT = "IT entityName"
 
   private var verifierMock = createVerifier()
   private let trustStatementMock = TrustStatementPayload.Mock.validSample

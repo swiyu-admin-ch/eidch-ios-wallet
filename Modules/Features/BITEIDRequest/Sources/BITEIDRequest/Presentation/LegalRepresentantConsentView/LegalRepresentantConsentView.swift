@@ -27,6 +27,7 @@ struct LegalRepresentantConsentView: View {
       footer: {
         viewFooter()
       })
+      .navigationBarBackButtonHidden(true)
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
 

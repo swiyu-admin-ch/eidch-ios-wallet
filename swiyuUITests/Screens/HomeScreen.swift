@@ -15,7 +15,7 @@ struct HomeScreen: Screen {
 
   @discardableResult
   func assertHomeScreen() -> HomeScreen {
-    app.assertElementDisplayed(HomeComposerView.AccessibilityIdentifier.content.rawValue)
+    app.assertElementDisplayed(HomeView.AccessibilityIdentifier.content.rawValue)
     return self
   }
 
@@ -26,21 +26,21 @@ struct HomeScreen: Screen {
   }
 
   func getCredentialsCount() -> Int {
-    app.buttons.matching(identifier: HomeComposerView.AccessibilityIdentifier.credential.rawValue).count
+    app.buttons.matching(identifier: HomeView.AccessibilityIdentifier.credential.rawValue).count
   }
 
   func tapScanForCredentialOffer() -> CredentialOfferScreen {
-    app.tap(HomeComposerView.AccessibilityIdentifier.scanButton.rawValue)
+    app.tap(HomeView.AccessibilityIdentifier.scanButton.rawValue)
     return CredentialOfferScreen(app: app)
   }
 
   func tapScanForPresentation() -> PresentationRequestReviewScreen {
-    app.tap(HomeComposerView.AccessibilityIdentifier.scanButton.rawValue)
+    app.tap(HomeView.AccessibilityIdentifier.scanButton.rawValue)
     return PresentationRequestReviewScreen(app: app)
   }
 
   func tapCredential(index: Int) -> CredentialDetailScreen {
-    let credentialButton = app.buttons.matching(identifier: HomeComposerView.AccessibilityIdentifier.credential.rawValue).element(boundBy: index)
+    let credentialButton = app.buttons.matching(identifier: HomeView.AccessibilityIdentifier.credential.rawValue).element(boundBy: index)
     credentialButton.tap()
     return CredentialDetailScreen(app: app)
   }

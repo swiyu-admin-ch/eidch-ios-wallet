@@ -38,8 +38,8 @@ public struct JWSDecoder: JWSDecoderProtocol {
     if let type = payload.type, header.type != type { throw JWSDecoderError.invalidType }
     return JWS(
       payload: payload,
-      rawJWS: jws.compactSerializedString,
       rawPayload: rawPayload,
+      rawJWS: jws.compactSerializedString,
       header: header)
   }
 

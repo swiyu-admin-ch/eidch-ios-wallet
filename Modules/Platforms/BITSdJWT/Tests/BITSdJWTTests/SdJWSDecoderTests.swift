@@ -27,14 +27,18 @@ final class SdJWSDecoderTests: XCTestCase {
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
-    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
-    XCTAssertEqual(sdJWT.payload, expectedPayload)
-    let payload = sdJWT.rawPayload
-    XCTAssertEqual(payload.count, 4)
-    expectedPayload.assertIn(payload)
-    XCTAssertEqual(payload["test_key_4"] as? String, "test_value_4")
+    let expectedResolvedPayload = TestSdJWTPayload.Mock.samplePayload
+    XCTAssertEqual(sdJWT.payload, Self.jwsPayloadMock)
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedResolvedPayload)
+    XCTAssertEqual(sdJWT.rawPayload, TestSdJWTPayload.Mock.flatJwtPayload)
+    let payload = sdJWT.resolvedPayloadDictionary
+    XCTAssertEqual(payload.count, 3)
+    expectedResolvedPayload.assertIn(payload)
+
+    XCTAssertEqual(sdJWT.header, headerMock)
+    XCTAssertEqual(sdJWT.rawSdJWS, String(data: data, encoding: .utf8))
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
-    assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: expectedPayload)
+    assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: disclosedPayloadMock)
   }
 
   func testDecode_flatWithIsoDate() throws {
@@ -48,7 +52,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     let sdJWT = try decoder.decode(TestDatePayload.self, from: data)
 
-    XCTAssertEqual(sdJWT.payload, TestDatePayload(date: Date(timeIntervalSinceReferenceDate: 0)))
+    XCTAssertEqual(sdJWT.resolvedPayload, TestDatePayload(date: Date(timeIntervalSinceReferenceDate: 0)))
   }
 
   func testDecode_flatWithKeyBinding() throws {
@@ -58,26 +62,33 @@ final class SdJWSDecoderTests: XCTestCase {
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
     let expectedPayload = TestSdJWTPayload.Mock.samplePayload
-    XCTAssertEqual(sdJWT.payload, expectedPayload)
+    XCTAssertEqual(sdJWT.payload, Self.jwsPayloadMock)
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedPayload)
+    XCTAssertEqual(sdJWT.header, headerMock)
+    XCTAssertEqual(sdJWT.rawSdJWS, String(data: data, encoding: .utf8))
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
-    assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: expectedPayload)
+    assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: disclosedPayloadMock)
   }
 
   func testDecode_flatWithNullClaims() throws {
     let data = TestSdJWTPayload.Mock.flatJwtWithNullClaims
-    mockJwsDecoder(sdJwtData: data, rawPayload: TestSdJWTPayload.Mock.flatJwtWithNullClaimsPayload)
+    let expectedPayload = TestSdJWTPayload()
+    mockJwsDecoder(sdJwtData: data, payload: expectedPayload, rawPayload: TestSdJWTPayload.Mock.flatJwtWithNullClaimsPayload)
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
-    let expectedPayload = TestSdJWTPayload()
     XCTAssertEqual(sdJWT.payload, expectedPayload)
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedPayload)
+    XCTAssertEqual(sdJWT.header, headerMock)
+    XCTAssertEqual(sdJWT.rawSdJWS, String(data: data, encoding: .utf8))
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
 
-    XCTAssertEqual(sdJWT.rawPayload.count, 2)
-    XCTAssertTrue(sdJWT.rawPayload.keys.contains(TestSdJWTPayload.CodingKeys.testValue1.rawValue))
-    XCTAssertTrue(sdJWT.rawPayload.keys.contains(TestSdJWTPayload.CodingKeys.testValue2.rawValue))
-    XCTAssertNil(sdJWT.rawPayload[TestSdJWTPayload.CodingKeys.testValue1.rawValue] as? String)
-    XCTAssertNil(sdJWT.rawPayload[TestSdJWTPayload.CodingKeys.testValue2.rawValue] as? String)
+    let payload = sdJWT.resolvedPayloadDictionary
+    XCTAssertEqual(payload.count, 2)
+    XCTAssertTrue(payload.keys.contains(TestSdJWTPayload.CodingKeys.testValue1.rawValue))
+    XCTAssertTrue(payload.keys.contains(TestSdJWTPayload.CodingKeys.testValue2.rawValue))
+    XCTAssertNil(payload[TestSdJWTPayload.CodingKeys.testValue1.rawValue] as? String)
+    XCTAssertNil(payload[TestSdJWTPayload.CodingKeys.testValue2.rawValue] as? String)
 
     let claims = sdJWT.disclosableClaims
     XCTAssertEqual(claims.count, 1)
@@ -87,59 +98,74 @@ final class SdJWSDecoderTests: XCTestCase {
 
   func testDecode_flatUsingSha384() throws {
     let data = TestSdJWTPayload.Mock.flatJwtUsingSha384
-    mockJwsDecoder(sdJwtData: data)
+    mockJwsDecoder(sdJwtData: data, payload: TestSdJWTPayload(), rawPayload: TestSdJWTPayload.Mock.flatJwtUsingSha384Payload)
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
-    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
-    XCTAssertEqual(sdJWT.payload, expectedPayload)
+    let expectedPayload = TestSdJWTPayload(testValue1: "test_value_1")
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedPayload)
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
-    assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: expectedPayload)
+
+    XCTAssertEqual(sdJWT.disclosableClaims.count, 1)
+    let claim = sdJWT.disclosableClaims[0]
+    XCTAssertEqual(claim.key, Self.key1)
+    XCTAssertEqual(claim.value?.rawValue, "test_value_1")
+    XCTAssertEqual(claim.disclosure, TestSdJWTPayload.Mock.disclosure1)
+    XCTAssertEqual(claim.digest, "ouLWzsH--wYNXVB1qPDj3-MLkmI0JwbNvmuzz1RHMzcF4ut5P03wauYCqtEbynou")
   }
 
   func testDecode_flatUsingSha512() throws {
     let data = TestSdJWTPayload.Mock.flatJwtUsingSha512
-    mockJwsDecoder(sdJwtData: data)
+    mockJwsDecoder(sdJwtData: data, payload: TestSdJWTPayload(), rawPayload: TestSdJWTPayload.Mock.flatJwtUsingSha512Payload)
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
-    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
-    XCTAssertEqual(sdJWT.payload, expectedPayload)
+    let expectedPayload = TestSdJWTPayload(testValue1: "test_value_1")
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedPayload)
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
-    assertFlatClaims(sdJWT.disclosableClaims, expectedPayload: expectedPayload)
+
+    XCTAssertEqual(sdJWT.disclosableClaims.count, 1)
+    let claim = sdJWT.disclosableClaims[0]
+    XCTAssertEqual(claim.key, Self.key1)
+    XCTAssertEqual(claim.value?.rawValue, "test_value_1")
+    XCTAssertEqual(claim.disclosure, TestSdJWTPayload.Mock.disclosure1)
+    XCTAssertEqual(claim.digest, "h-hqZBKqJLOcSrDjjYz8vj34x9cLrEg3DDv7dkFs3CP0OgtmU-cpkInCOaa4TSAOozys4LUouw-jPmNK-3KzlQ")
   }
 
   func testDecode_undisclosed() throws {
     let data = TestSdJWTPayload.Mock.undisclosedJwtData
-    mockJwsDecoder(sdJwtData: data, rawPayload: TestSdJWTPayload.Mock.undisclosedJwtPayload)
+    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
+    mockJwsDecoder(sdJwtData: data, payload: expectedPayload, rawPayload: TestSdJWTPayload.Mock.undisclosedJwtPayload)
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
-    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
     XCTAssertEqual(sdJWT.payload, expectedPayload)
-    let payload = sdJWT.rawPayload
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedPayload)
+    let payload = sdJWT.resolvedPayloadDictionary
     XCTAssertEqual(payload.count, 3)
     expectedPayload.assertIn(payload)
 
+    XCTAssertEqual(sdJWT.header, headerMock)
     XCTAssertTrue(sdJWT.disclosableClaims.isEmpty)
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
   }
 
   func testDecode_undisclosedWithKeyBinding() throws {
     let data = TestSdJWTPayload.Mock.undisclosedJwtWithKeyBindingData
-    mockJwsDecoder(sdJwtData: data)
+    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
+    mockJwsDecoder(sdJwtData: data, payload: expectedPayload, rawPayload: TestSdJWTPayload.Mock.undisclosedJwtPayload)
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
-    let expectedPayload = TestSdJWTPayload.Mock.samplePayload
     XCTAssertEqual(sdJWT.payload, expectedPayload)
+    XCTAssertEqual(sdJWT.resolvedPayload, expectedPayload)
     XCTAssertTrue(sdJWT.disclosableClaims.isEmpty)
     XCTAssertEqual(sdJWT.rawJWS, data.parseJWS())
   }
 
   func testDecode_URLUnsafeRawRepresentable() throws {
     let data = TestSdJWTPayload.Mock.jwtWithSpecialCharacterClaims
-    mockJwsDecoder(sdJwtData: data, rawPayload: TestSdJWTPayload.Mock.jwtWithSpecialCharacterClaimsPayload)
+    mockJwsDecoder(sdJwtData: data, payload: TestSdJWTPayload(), rawPayload: TestSdJWTPayload.Mock.jwtWithSpecialCharacterClaimsPayload)
 
     let sdJWT = try decoder.decode(TestSdJWTPayload.self, from: data)
 
@@ -267,11 +293,16 @@ final class SdJWSDecoderTests: XCTestCase {
   private static let key1 = "test_key_1"
   private static let key2 = "test_key_2"
   private static let key3 = "test_key_3"
+  private static let jwsPayloadMock = TestSdJWTPayload(testValue3: "test_value_3")
+
+  private let disclosedPayloadMock = TestSdJWTPayload(testValue1: "test_value_1", testValue2: "test_value_2")
+  private let headerMock = JWSHeader(algorithm: .ES256, keyIdentifier: "keyIdentifier")
 
   private var decoder = SdJWSDecoder()
 
-  private func mockJwsDecoder(sdJwtData: Data? = nil, rawPayload: String = TestSdJWTPayload.Mock.flatJwtPayload, throwingError: Error? = nil) {
-    var decoderMock = JWSDecoderMock(payload: TestSdJWTPayload.Mock.samplePayload, rawPayload: rawPayload)
+  private func mockJwsDecoder(sdJwtData: Data? = nil, payload: TestSdJWTPayload = jwsPayloadMock, rawPayload: String = TestSdJWTPayload.Mock.flatJwtPayload, throwingError: Error? = nil) {
+    var decoderMock = JWSDecoderMock(payload: payload, rawPayload: rawPayload)
+    decoderMock.header = headerMock
     if let data = sdJwtData {
       decoderMock.expectedInput = data.parseJWS()
     }
@@ -281,20 +312,30 @@ final class SdJWSDecoderTests: XCTestCase {
   }
 
   private func assertFlatClaims(_ claims: [SdJWTClaim], expectedPayload: TestSdJWTPayload) {
-    XCTAssertEqual(claims[0].key, Self.key1)
-    XCTAssertEqual(claims[0].value?.rawValue, expectedPayload.testValue1)
-    XCTAssertEqual(claims[0].disclosure, TestSdJWTPayload.Mock.disclosure1)
-    XCTAssertEqual(claims[0].digest, TestSdJWTPayload.Mock.digest1)
-
-    XCTAssertEqual(claims[1].key, Self.key2)
-    XCTAssertEqual(claims[1].value?.rawValue, expectedPayload.testValue2)
-    XCTAssertEqual(claims[1].disclosure, TestSdJWTPayload.Mock.disclosure2)
-    XCTAssertEqual(claims[1].digest, TestSdJWTPayload.Mock.digest2)
-
-    XCTAssertEqual(claims[2].key, Self.key3)
-    XCTAssertEqual(claims[2].value?.rawValue, expectedPayload.testValue3)
-    XCTAssertEqual(claims[2].disclosure, TestSdJWTPayload.Mock.disclosure3)
-    XCTAssertEqual(claims[2].digest, TestSdJWTPayload.Mock.digest3)
+    if let testValue1 = expectedPayload.testValue1 {
+      let claim = claims.first { $0.key == Self.key1 }!
+      XCTAssertEqual(claim.value?.rawValue, testValue1)
+      XCTAssertEqual(claim.disclosure, TestSdJWTPayload.Mock.disclosure1)
+      XCTAssertEqual(claim.digest, TestSdJWTPayload.Mock.digest1)
+    } else {
+      XCTAssertNil(claims.first { $0.key == Self.key1 })
+    }
+    if let testValue2 = expectedPayload.testValue2 {
+      let claim = claims.first { $0.key == Self.key2 }!
+      XCTAssertEqual(claim.value?.rawValue, testValue2)
+      XCTAssertEqual(claim.disclosure, TestSdJWTPayload.Mock.disclosure2)
+      XCTAssertEqual(claim.digest, TestSdJWTPayload.Mock.digest2)
+    } else {
+      XCTAssertNil(claims.first { $0.key == Self.key2 })
+    }
+    if let testValue3 = expectedPayload.testValue3 {
+      let claim = claims.first { $0.key == Self.key3 }!
+      XCTAssertEqual(claim.value?.rawValue, testValue3)
+      XCTAssertEqual(claim.disclosure, TestSdJWTPayload.Mock.disclosure3)
+      XCTAssertEqual(claim.digest, TestSdJWTPayload.Mock.digest3)
+    } else {
+      XCTAssertNil(claims.first { $0.key == Self.key3 })
+    }
   }
 
   private func createInvalidDisclosureSdJwt(disclosure: String) -> String {

@@ -5,15 +5,16 @@ import Foundation
 
 // swiftlint: disable force_try
 
-extension JWTRequestObject: Mockable {
+extension JWTRequestObjectPayload: Mockable {
   struct Mock {
     private static let jwsHeader = JWSHeader(algorithm: JWTAlgorithm.ES256)
     static let sample: JWTRequestObject = createObject(header: jwsHeader)
+    static let sampleData: Data = getData(fromFile: "jwt-request-object-sample", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let samplePayload: JWTRequestObjectPayload = decode(fromFile: "jwt-request-object-payload-sample", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let unsupportedAlgorithm: JWTRequestObject = createObject(header: JWSHeader(algorithm: JWTAlgorithm.ES384))
 
     private static func createObject(header: JWSHeader) -> JWTRequestObject {
-      let jws = JWS(payload: RequestObject.Mock.VcSdJwt.sample, rawJWS: "rawJWS", rawPayload: "{\"iss\":\"issuer\"}", header: header)
-      return try! JWTRequestObject(from: jws)
+      JWS(payload: samplePayload, rawPayload: "{\"iss\":\"issuer\"}", rawJWS: "rawJWS", header: header)
     }
   }
 }

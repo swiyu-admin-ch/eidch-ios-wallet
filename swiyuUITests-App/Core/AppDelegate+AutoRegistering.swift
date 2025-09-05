@@ -29,7 +29,7 @@ extension Container: AutoRegistering {
     userSession.register { MockUserSession() }
     keyManager.register { MockKeyManager() }
 
-    presentationRepository.register { MockPresentationRepository() }
+    presentationRequestRepository.register { MockPresentationRequestRepository() }
     checkInvitationTypeUseCase.register { MockCheckInvitationTypeUseCase() }
   }
 

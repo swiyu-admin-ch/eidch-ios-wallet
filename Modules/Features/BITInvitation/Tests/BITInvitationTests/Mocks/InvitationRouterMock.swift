@@ -12,7 +12,7 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
   var didCallDeeplink = false
   var didCallInvitation = false
   var didCallCamera = false
-  var didCallSettings = false
+  var didCallExternalSettings = false
   var didCallExternalLinkComplete = false
   var didCallCompatibleCredentials = false
   var didCallPresentationReview = false
@@ -32,8 +32,8 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
     didCallPresentationResultState = true
   }
 
-  func settings() {
-    didCallSettings = true
+  func externalSettings() {
+    didCallExternalSettings = true
   }
 
   func camera(openingStyle: any OpeningStyle) {

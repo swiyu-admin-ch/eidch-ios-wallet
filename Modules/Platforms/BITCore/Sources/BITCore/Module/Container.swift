@@ -12,7 +12,7 @@ extension Container {
       self.preferredUserLocales().compactMap {
         guard let sequence = $0.split(separator: "-").first else { return nil }
         return String(sequence)
-      }
+      } + [UserLanguageCode.defaultAppLanguageCode]
     }
   }
 

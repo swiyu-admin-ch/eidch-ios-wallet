@@ -43,7 +43,6 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
 
   let credential: Credential
 
-  @Published var issuerDisplay: CredentialIssuerDisplay?
   @Published var credentialViewModel: CredentialViewModel?
 
   var issuerTrustStatus: TrustStatus {
@@ -88,13 +87,6 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   func updateCredentialViewModel(with colorScheme: String) {
     let display = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
     credentialViewModel = CredentialViewModel(credential: credential, credentialDisplay: display)
-
-    guard let trustStatement else {
-      issuerDisplay = credentialViewModel?.issuerDisplay
-      return
-    }
-
-    issuerDisplay = getCredentialIssuerDisplayUseCase.execute(for: credential.id, trustStatement: trustStatement, fallbackDisplay: credentialViewModel?.issuerDisplay)
   }
 
   // MARK: Private
@@ -103,7 +95,5 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   private var trustStatement: TrustStatement?
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
-  @Injected(\.getCredentialIssuerDisplayUseCase) private var getCredentialIssuerDisplayUseCase: GetCredentialIssuerDisplayUseCaseProtocol
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
-
 }

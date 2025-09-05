@@ -5,6 +5,10 @@ extension Container {
 
   // MARK: Public
 
+  public var jwsValidator: Factory<JWSValidatorProtocol> {
+    self { JWSValidator() }
+  }
+
   public var jwsSignatureValidator: Factory<JWSSignatureValidatorProtocol> {
     self { JWSSignatureValidator() }
   }
@@ -25,6 +29,10 @@ extension Container {
 
   var didResolverRepository: Factory<DidResolverRepositoryProtocol> {
     self { DidResolverRepository() }
+  }
+
+  var currentDate: Factory<Date> {
+    self { Date() }
   }
 
 }

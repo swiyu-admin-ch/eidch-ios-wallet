@@ -1,4 +1,5 @@
 import BITAppAttestation
+import BITEIDRequestShared
 import BITNetworking
 import Factory
 import Foundation
@@ -12,6 +13,9 @@ protocol EIDRequestRepositoryProtocol {
   func fetchLegalRepresentantVerification(for requestCaseId: String) async throws -> LegalRepresentantVerificationResponse
   func validateAttestations(_ requestBody: ValidateAttestationsRequestBody) async throws
   func startOnlineSession(caseId: String) async throws
+  func pairWallet(caseId: String) async throws -> WalletPairingResponse
+  func startAutoVerification(caseId: String, autoVerificationType: AutoVerificationType) async throws -> AutoVerificationResponse
+  func getPairingState(caseId: String, pairingId: String) async throws -> WalletPairingState
 }
 
 
@@ -46,7 +50,7 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
     do {
       try await networkService.request(EIDRequestEndpoint.validateAttestations(requestBody))
     } catch let error as NetworkError where error.status == .unprocessableEntity {
-      throw try parseError(error)
+      try parseError(error)
     } catch {
       throw Error.unknownError
     }
@@ -55,7 +59,29 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
   func startOnlineSession(caseId: String) async throws {
     let clientAttestationPlugin = try await generateClientAttestationPlugin(for: EIDRequestEmptyBody())
 
-    try await networkService.request(EIDRequestEndpoint.startOnlineSession(caseId: caseId), plugins: [clientAttestationPlugin])
+    do {
+      try await networkService.request(EIDRequestEndpoint.startOnlineSession(caseId: caseId), plugins: [clientAttestationPlugin])
+    } catch let error as NetworkError {
+      try parseError(error)
+    }
+  }
+
+  func pairWallet(caseId: String) async throws -> WalletPairingResponse {
+    let clientAttestationPlugin = try await generateClientAttestationPlugin(for: EIDRequestEmptyBody())
+
+    return try await networkService.request(EIDRequestEndpoint.pairWallet(caseId: caseId), plugins: [clientAttestationPlugin])
+  }
+
+  func startAutoVerification(caseId: String, autoVerificationType: AutoVerificationType) async throws -> AutoVerificationResponse {
+    let clientAttestationPlugin = try await generateClientAttestationPlugin(for: EIDRequestEmptyBody())
+
+    return try await networkService.request(EIDRequestEndpoint.startAutoVerification(caseId, autoVerificationType), plugins: [clientAttestationPlugin])
+  }
+
+  func getPairingState(caseId: String, pairingId: String) async throws -> WalletPairingState {
+    let clientAttestationPlugin = try await generateClientAttestationPlugin(for: EIDRequestEmptyBody())
+    let response: WalletPairingStateResponse = try await networkService.request(EIDRequestEndpoint.pairingState(caseId: caseId, pairingId: pairingId), plugins: [clientAttestationPlugin])
+    return response.state
   }
 
   // MARK: Private
@@ -66,18 +92,19 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
   @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
 
-  private func parseError(_ error: NetworkError) throws -> Swift.Error {
-    let validationErrorResponse = try JSONDecoder().decode(ValidateAttestationsErrorResponse.self, from: error.response?.data ?? Data())
+  private func parseError(_ error: NetworkError) throws {
+    let errorResponse = try JSONDecoder().decode(EIDRequestErrorResponse.self, from: error.response?.data ?? Data())
 
-    guard let validationError = validationErrorResponse.errors.first, let code = validationError.code else {
-      return error
+    guard let eIDRequestError = errorResponse.errors.first, let code = eIDRequestError.code else {
+      throw error
     }
 
-    return switch code {
+    throw switch code {
     case .invalidClientAttestation: Error.invalidClientAttestation
     case .invalidKeyAttestation: Error.invalidKeyAttestation
     case .insufficientKeyStorageResistance: Error.insufficientKeyStorageResistance
-    case .noResourcesFounded: Error.unknownError
+    case .invalidState: Error.invalidState
+    case .resourcesNotFound: Error.unknownError
     }
   }
 
@@ -98,6 +125,7 @@ extension EIDRequestRepository {
     case invalidKeyAttestation
     case insufficientKeyStorageResistance
     case unknownError
+    case invalidState
   }
 }
 

@@ -28,18 +28,18 @@ public enum L10n {
   public static var biometricSetupReason: String { L10n.tr("Localizable", "biometricSetup_reason", fallback: "You can still log in with your pin, if biometrics are not working") }
   /// TouchID
   public static var biometricSetupTouchidText: String { L10n.tr("Localizable", "biometricSetup_touchid_text", fallback: "TouchID") }
-  /// MISSING: Fortfahren
-  public static var cameraPermissionContinueButton: String { L10n.tr("Localizable", "cameraPermission_continue_button", fallback: "MISSING: Fortfahren") }
+  /// Continue
+  public static var cameraPermissionContinueButton: String { L10n.tr("Localizable", "cameraPermission_continue_button", fallback: "Continue") }
   /// It seems you denied the access to the camera
   public static var cameraPermissionDeniedPrimary: String { L10n.tr("Localizable", "cameraPermission_denied_primary", fallback: "It seems you denied the access to the camera") }
   /// To be able to scan QRCodes, your camera permission is required
   public static var cameraPermissionDeniedSecondary: String { L10n.tr("Localizable", "cameraPermission_denied_secondary", fallback: "To be able to scan QRCodes, your camera permission is required") }
   /// Open Settings
   public static var cameraPermissionDeniedSettingsButton: String { L10n.tr("Localizable", "cameraPermission_denied_settingsButton", fallback: "Open Settings") }
-  /// MISSING: Kamerazugriff
-  public static var cameraPermissionPrimary: String { L10n.tr("Localizable", "cameraPermission_primary", fallback: "MISSING: Kamerazugriff") }
-  /// MISSING: Erlauben Sie den Zugriff auf die Kamera für das Scannen von QR-Codes um Ausweise zu empfangen oder eine Überprüfung durchzuführen.
-  public static var cameraPermissionSecondary: String { L10n.tr("Localizable", "cameraPermission_secondary", fallback: "MISSING: Erlauben Sie den Zugriff auf die Kamera für das Scannen von QR-Codes um Ausweise zu empfangen oder eine Überprüfung durchzuführen.") }
+  /// Camera access
+  public static var cameraPermissionPrimary: String { L10n.tr("Localizable", "cameraPermission_primary", fallback: "Camera access") }
+  /// Allow camera access to scan QR codes in order to receive credentials or complete a verification.
+  public static var cameraPermissionSecondary: String { L10n.tr("Localizable", "cameraPermission_secondary", fallback: "Allow camera access to scan QR codes in order to receive credentials or complete a verification.") }
   /// Value:
   public static var cellValueAccessibilityLabel: String { L10n.tr("Localizable", "cell_value_accessibility_label", fallback: "Value:") }
   /// Refuse
@@ -80,53 +80,10 @@ public enum L10n {
   public static var globalErrorNoDevicePinMessage: String { L10n.tr("Localizable", "global_error_no_device_pin_message", fallback: "Please define a smartphone passcode so that you can use the app.") }
   /// Missing smartphone code
   public static var globalErrorNoDevicePinTitle: String { L10n.tr("Localizable", "global_error_no_device_pin_title", fallback: "Missing smartphone code") }
-  /// App Version
-  public static var impressumAppVersion: String { L10n.tr("Localizable", "impressum_app_version", fallback: "App Version") }
-  /// Build number
-  public static var impressumBuildNumber: String { L10n.tr("Localizable", "impressum_build_number", fallback: "Build number") }
-  /// The authors assume no liability whatsoever with regard to the reliability and completeness of the information. References and links to third-party websites are outside our area of responsibility.
-  public static var impressumDisclaimerText: String { L10n.tr("Localizable", "impressum_disclaimer_text", fallback: "The authors assume no liability whatsoever with regard to the reliability and completeness of the information. References and links to third-party websites are outside our area of responsibility.") }
-  /// Disclaimer
-  public static var impressumDisclaimerTitle: String { L10n.tr("Localizable", "impressum_disclaimer_title", fallback: "Disclaimer") }
-  /// https://www.github.com/swiyu-admin-ch
-  public static var impressumGithubLink: String { L10n.tr("Localizable", "impressum_github_link", fallback: "https://www.github.com/swiyu-admin-ch") }
-  /// www.github.com/swiyu-admin-ch
-  public static var impressumGithubLinkText: String { L10n.tr("Localizable", "impressum_github_link_text", fallback: "www.github.com/swiyu-admin-ch") }
-  /// The swiyu app is open source. Its source code can be viewed on GitHub.
-  public static var impressumHeaderText: String { L10n.tr("Localizable", "impressum_header_text", fallback: "The swiyu app is open source. Its source code can be viewed on GitHub.") }
-  /// https://www.eid.admin.ch/en/swiyu-terms-e
-  public static var impressumLegalsLink: String { L10n.tr("Localizable", "impressum_legals_link", fallback: "https://www.eid.admin.ch/en/swiyu-terms-e") }
-  /// Terms of use
-  public static var impressumLegalsLinkText: String { L10n.tr("Localizable", "impressum_legals_link_text", fallback: "Terms of use") }
-  /// Legals
-  public static var impressumLegalsTitle: String { L10n.tr("Localizable", "impressum_legals_title", fallback: "Legals") }
-  /// Publisher, implementation and operation
-  public static var impressumManagerTitle: String { L10n.tr("Localizable", "impressum_manager_title", fallback: "Publisher, implementation and operation") }
-  /// https://www.bit.admin.ch/en
-  public static var impressumMoreInformationLink: String { L10n.tr("Localizable", "impressum_more_information_link", fallback: "https://www.bit.admin.ch/en") }
-  /// www.bit.admin.ch
-  public static var impressumMoreInformationLinkText: String { L10n.tr("Localizable", "impressum_more_information_link_text", fallback: "www.bit.admin.ch") }
-  /// More information
-  public static var impressumMoreInformationTitle: String { L10n.tr("Localizable", "impressum_more_information_title", fallback: "More information") }
-  /// Publication details
-  public static var impressumTitle: String { L10n.tr("Localizable", "impressum_title", fallback: "Publication details") }
   /// Our app do not allow jailbroken devices to be used. To prevent potential security leaks, we recommend you to unjailbreak your device.
   public static var jailbreakText: String { L10n.tr("Localizable", "jailbreak_text", fallback: "Our app do not allow jailbroken devices to be used. To prevent potential security leaks, we recommend you to unjailbreak your device.") }
   /// We detected a jailbreak on your system
   public static var jailbreakTitle: String { L10n.tr("Localizable", "jailbreak_title", fallback: "We detected a jailbreak on your system") }
-  /// The app currently uses no libraries
-  public static var licencesEmptyState: String { L10n.tr("Localizable", "licences_empty_state", fallback: "The app currently uses no libraries") }
-  /// https://www.eid.admin.ch/en/help-publicbeta-e
-  public static var licencesMoreInformationLink: String { L10n.tr("Localizable", "licences_more_information_link", fallback: "https://www.eid.admin.ch/en/help-publicbeta-e") }
-  /// More information
-  public static var licencesMoreInformationText: String { L10n.tr("Localizable", "licences_more_information_text", fallback: "More information") }
-  /// -
-  public static var licencesNoVersion: String { L10n.tr("Localizable", "licences_no_version", fallback: "-") }
-  /// Below is the list of software licenses used by this app.
-  /// The licenses follow the BIT guidelines for compliance with privacy and the latest security standards. With this list we want to ensure transparency towards the users.
-  public static var licencesText: String { L10n.tr("Localizable", "licences_text", fallback: "Below is the list of software licenses used by this app.\nThe licenses follow the BIT guidelines for compliance with privacy and the latest security standards. With this list we want to ensure transparency towards the users.") }
-  /// Licences
-  public static var licencesTitle: String { L10n.tr("Localizable", "licences_title", fallback: "Licences") }
   /// Continue
   public static var onboardingContinue: String { L10n.tr("Localizable", "onboarding_continue", fallback: "Continue") }
   /// Start tour
@@ -187,44 +144,6 @@ public enum L10n {
   public static var presentationSelectCredentialSubtitle: String { L10n.tr("Localizable", "presentation_select_credential_subtitle", fallback: "Please select the correct credential below and click on it.") }
   /// Which credential must be presented?
   public static var presentationSelectCredentialTitle: String { L10n.tr("Localizable", "presentation_select_credential_title", fallback: "Which credential must be presented?") }
-  /// Analysis & Improvements
-  public static var securitySettingsAnalysisTitle: String { L10n.tr("Localizable", "securitySettings_analysisTitle", fallback: "Analysis & Improvements") }
-  /// Biometrics
-  public static var securitySettingsBiometrics: String { L10n.tr("Localizable", "securitySettings_biometrics", fallback: "Biometrics") }
-  /// Change password
-  public static var securitySettingsChangePin: String { L10n.tr("Localizable", "securitySettings_changePin", fallback: "Change password") }
-  /// More information
-  public static var securitySettingsDataAnalysis: String { L10n.tr("Localizable", "securitySettings_dataAnalysis", fallback: "More information") }
-  /// Privacy statement
-  public static var securitySettingsDataProtection: String { L10n.tr("Localizable", "securitySettings_dataProtection", fallback: "Privacy statement") }
-  /// https://www.eid.admin.ch/en/swiyu-privacy-e
-  public static var securitySettingsDataProtectionLink: String { L10n.tr("Localizable", "securitySettings_dataProtectionLink", fallback: "https://www.eid.admin.ch/en/swiyu-privacy-e") }
-  /// Login & Security
-  public static var securitySettingsLoginTitle: String { L10n.tr("Localizable", "securitySettings_loginTitle", fallback: "Login & Security") }
-  /// Share anonymised error reports
-  public static var securitySettingsShareAnalysis: String { L10n.tr("Localizable", "securitySettings_shareAnalysis", fallback: "Share anonymised error reports") }
-  /// Help improve the swiyu app by anonymously sharing error reports and crashes – making it even better.
-  public static var securitySettingsShareAnalysisText: String { L10n.tr("Localizable", "securitySettings_shareAnalysis_text", fallback: "Help improve the swiyu app by anonymously sharing error reports and crashes – making it even better.") }
-  /// Data protection and security
-  public static var securitySettingsTitle: String { L10n.tr("Localizable", "securitySettings_title", fallback: "Data protection and security") }
-  /// Contact
-  public static var settingsContact: String { L10n.tr("Localizable", "settings_contact", fallback: "Contact") }
-  /// https://forms.eid.admin.ch
-  public static var settingsContactLink: String { L10n.tr("Localizable", "settings_contactLink", fallback: "https://forms.eid.admin.ch") }
-  /// Help
-  public static var settingsHelp: String { L10n.tr("Localizable", "settings_help", fallback: "Help") }
-  /// https://www.eid.admin.ch/en/help-publicbeta-e
-  public static var settingsHelpLink: String { L10n.tr("Localizable", "settings_helpLink", fallback: "https://www.eid.admin.ch/en/help-publicbeta-e") }
-  /// Publication details
-  public static var settingsImpressum: String { L10n.tr("Localizable", "settings_impressum", fallback: "Publication details") }
-  /// Language
-  public static var settingsLanguage: String { L10n.tr("Localizable", "settings_language", fallback: "Language") }
-  /// Licences
-  public static var settingsLicences: String { L10n.tr("Localizable", "settings_licences", fallback: "Licences") }
-  /// Data protection and security
-  public static var settingsSecurity: String { L10n.tr("Localizable", "settings_security", fallback: "Data protection and security") }
-  /// Settings
-  public static var settingsTitle: String { L10n.tr("Localizable", "settings_title", fallback: "Settings") }
   /// Your settings will be applied, which can take up to 30 seconds.
   public static var storageSetupText: String { L10n.tr("Localizable", "storageSetup_text", fallback: "Your settings will be applied, which can take up to 30 seconds.") }
   /// Applying settings
@@ -289,20 +208,6 @@ public enum L10n {
   public static var tkDisplaydeleteCredentialdeleteTitle: String { L10n.tr("Localizable", "tk_displaydelete_credentialdelete_title", fallback: "Delete credential?") }
   /// Delete credential
   public static var tkDisplaydeleteCredentialmenuPrimarybutton: String { L10n.tr("Localizable", "tk_displaydelete_credentialmenu_primarybutton", fallback: "Delete credential") }
-  /// Back to top
-  public static var tkDisplaydeleteDisplaycredential1Hiddenlink1Text: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_hiddenlink1_text", fallback: "Back to top") }
-  /// Go to personal details
-  public static var tkDisplaydeleteDisplaycredential1Hiddenlink2Text: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_hiddenlink2_text", fallback: "Go to personal details") }
-  /// Entire history
-  public static var tkDisplaydeleteDisplaycredential1Smallbody: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_smallbody", fallback: "Entire history") }
-  /// History
-  public static var tkDisplaydeleteDisplaycredential1Title1: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_title1", fallback: "History") }
-  /// Details
-  public static var tkDisplaydeleteDisplaycredential1Title2: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_title2", fallback: "Details") }
-  /// Additions
-  public static var tkDisplaydeleteDisplaycredential1Title3: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_title3", fallback: "Additions") }
-  /// Validity
-  public static var tkDisplaydeleteDisplaycredential1Title4: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_title4", fallback: "Validity") }
   /// Issued by
   public static var tkDisplaydeleteDisplaycredential1Title5: String { L10n.tr("Localizable", "tk_displaydelete_displaycredential1_title5", fallback: "Issued by") }
   /// Once issued, a credential cannot be changed.
@@ -314,20 +219,20 @@ public enum L10n {
   public static var tkDisplaydeleteWrongdataNavigationTitle: String { L10n.tr("Localizable", "tk_displaydelete_wrongdata_navigation_title", fallback: "Found any incorrect data?") }
   /// Report incorrect details
   public static var tkDisplaydeleteWrongdataTitle: String { L10n.tr("Localizable", "tk_displaydelete_wrongdata_title", fallback: "Report incorrect details") }
-  /// Continue (deepl)
-  public static var tkEidRequestAttestationButtonPrimary: String { L10n.tr("Localizable", "tk_eidRequest_attestation_button_primary", fallback: "Continue (deepl)") }
-  /// One moment - Verifying compatibility (deepl)
-  public static var tkEidRequestAttestationPrimary: String { L10n.tr("Localizable", "tk_eidRequest_attestation_primary", fallback: "One moment - Verifying compatibility (deepl)") }
-  /// We’re checking if your device meets the safety and performance requirements. (deepl)
-  public static var tkEidRequestAttestationSecondary: String { L10n.tr("Localizable", "tk_eidRequest_attestation_secondary", fallback: "We’re checking if your device meets the safety and performance requirements. (deepl)") }
-  /// Etwas ist schiefgelaufen.
-  public static var tkEidRequestAttestationUnknownErrorPrimary: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_primary", fallback: "Etwas ist schiefgelaufen.") }
-  /// Wiederholen
-  public static var tkEidRequestAttestationUnknownErrorPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_primary_button", fallback: "Wiederholen") }
-  /// Bitte versuchen Sie es erneut.
-  public static var tkEidRequestAttestationUnknownErrorSecondary: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_secondary", fallback: "Bitte versuchen Sie es erneut.") }
-  /// Abbrechen
-  public static var tkEidRequestAttestationUnknownErrorSecondaryButton: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_secondary_button", fallback: "Abbrechen") }
+  /// Continue
+  public static var tkEidRequestAttestationButtonPrimary: String { L10n.tr("Localizable", "tk_eidRequest_attestation_button_primary", fallback: "Continue") }
+  /// Just a moment - Verifying compatibility
+  public static var tkEidRequestAttestationPrimary: String { L10n.tr("Localizable", "tk_eidRequest_attestation_primary", fallback: "Just a moment - Verifying compatibility") }
+  /// We’re checking if your device meets the safety and performance requirements.
+  public static var tkEidRequestAttestationSecondary: String { L10n.tr("Localizable", "tk_eidRequest_attestation_secondary", fallback: "We’re checking if your device meets the safety and performance requirements.") }
+  /// Something went wrong.
+  public static var tkEidRequestAttestationUnknownErrorPrimary: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_primary", fallback: "Something went wrong.") }
+  /// Try again
+  public static var tkEidRequestAttestationUnknownErrorPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_primary_button", fallback: "Try again") }
+  /// Please try again.
+  public static var tkEidRequestAttestationUnknownErrorSecondary: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_secondary", fallback: "Please try again.") }
+  /// Cancel
+  public static var tkEidRequestAttestationUnknownErrorSecondaryButton: String { L10n.tr("Localizable", "tk_eidRequest_attestationUnknownError_secondary_button", fallback: "Cancel") }
   /// Start
   public static var tkEidRequestAutoVerificationIdentityCheckButton: String { L10n.tr("Localizable", "tk_eidRequest_autoVerificationIdentityCheck_button", fallback: "Start") }
   /// Verification of your identity
@@ -370,14 +275,14 @@ public enum L10n {
   public static var tkEidRequestClientAttestationServiceErrorTitle: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestation_service_error_title", fallback: "Something went wrong in the preparation of the e-ID request") }
   /// https://www.eid.admin.ch/
   public static var tkEidRequestClientAttestationErrorHelpLink: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_help_link", fallback: "https://www.eid.admin.ch/") }
-  /// Diese Wallet-App wird nicht unterstützt
-  public static var tkEidRequestClientAttestationErrorPrimary: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_primary", fallback: "Diese Wallet-App wird nicht unterstützt") }
-  /// swiyu App herunterladen
-  public static var tkEidRequestClientAttestationErrorPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_primary_button", fallback: "swiyu App herunterladen") }
-  /// Bitte verwenden Sie die offizielle swiyu App oder eine andere Wallet-App, die kompatibel ist.
-  public static var tkEidRequestClientAttestationErrorSecondary: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_secondary", fallback: "Bitte verwenden Sie die offizielle swiyu App oder eine andere Wallet-App, die kompatibel ist.") }
-  /// Schliessen
-  public static var tkEidRequestClientAttestationErrorSecondaryButton: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_secondary_button", fallback: "Schliessen") }
+  /// This wallet app is not supported.
+  public static var tkEidRequestClientAttestationErrorPrimary: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_primary", fallback: "This wallet app is not supported.") }
+  /// Get the swiyu App
+  public static var tkEidRequestClientAttestationErrorPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_primary_button", fallback: "Get the swiyu App") }
+  /// Please use the official swiyu app or another compatible wallet app.
+  public static var tkEidRequestClientAttestationErrorSecondary: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_secondary", fallback: "Please use the official swiyu app or another compatible wallet app.") }
+  /// Close
+  public static var tkEidRequestClientAttestationErrorSecondaryButton: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_secondary_button", fallback: "Close") }
   /// Hilfe & FAQ
   public static var tkEidRequestClientAttestationErrorTertiary: String { L10n.tr("Localizable", "tk_eidRequest_clientAttestationError_tertiary", fallback: "Hilfe & FAQ") }
   /// Swiss ID Card
@@ -392,12 +297,12 @@ public enum L10n {
   public static var tkEidRequestDocumentSelectionSecondary: String { L10n.tr("Localizable", "tk_eidRequest_documentSelection_secondary", fallback: "Select one of the listed documents to proof your eligibility. Only original and valid documents will be accepted.") }
   /// https://www.eid.admin.ch/
   public static var tkEidRequestKeyAttestationErrorHelpLink: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_help_link", fallback: "https://www.eid.admin.ch/") }
-  /// Dieses Gerät wird leider nicht unterstützt
-  public static var tkEidRequestKeyAttestationErrorPrimary: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_primary", fallback: "Dieses Gerät wird leider nicht unterstützt") }
-  /// Schliessen
-  public static var tkEidRequestKeyAttestationErrorPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_primary_button", fallback: "Schliessen") }
-  /// Zur Sicherheit müssen bestimmte technische Voraussetzungen erfüllt sein. Mit diesem Gerät ist das leider nicht möglich.
-  public static var tkEidRequestKeyAttestationErrorSecondary: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_secondary", fallback: "Zur Sicherheit müssen bestimmte technische Voraussetzungen erfüllt sein. Mit diesem Gerät ist das leider nicht möglich.") }
+  /// Unfortunately, this device is not supported.
+  public static var tkEidRequestKeyAttestationErrorPrimary: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_primary", fallback: "Unfortunately, this device is not supported.") }
+  /// Close
+  public static var tkEidRequestKeyAttestationErrorPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_primary_button", fallback: "Close") }
+  /// For security reasons, certain technical requirements must be met. Unfortunately, this is not possible with this device.
+  public static var tkEidRequestKeyAttestationErrorSecondary: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_secondary", fallback: "For security reasons, certain technical requirements must be met. Unfortunately, this is not possible with this device.") }
   /// Hilfe & FAQ
   public static var tkEidRequestKeyAttestationErrorTertiary: String { L10n.tr("Localizable", "tk_eidRequest_keyAttestationError_tertiary", fallback: "Hilfe & FAQ") }
   /// Scan the front side of your document
@@ -412,6 +317,18 @@ public enum L10n {
   public static var tkEidRequestMrzScannerRecto: String { L10n.tr("Localizable", "tk_eidRequest_mrzScanner_recto", fallback: "Recto") }
   /// Verso
   public static var tkEidRequestMrzScannerVerso: String { L10n.tr("Localizable", "tk_eidRequest_mrzScanner_verso", fallback: "Verso") }
+  /// https://www.bit.admin.ch/en
+  public static var tkEidRequestNfcScanHelpLink: String { L10n.tr("Localizable", "tk_eidRequest_nfcScan_helpLink", fallback: "https://www.bit.admin.ch/en") }
+  /// Read Passport via NFC
+  public static var tkEidRequestNfcScanPrimary: String { L10n.tr("Localizable", "tk_eidRequest_nfcScan_primary", fallback: "Read Passport via NFC") }
+  /// Start NFC scan
+  public static var tkEidRequestNfcScanPrimaryButton: String { L10n.tr("Localizable", "tk_eidRequest_nfcScan_primaryButton", fallback: "Start NFC scan") }
+  /// In the next step, your smartphone will read the NFC chip in your passport. Place your passport flat against the back of your phone and keep it still until the scan is complete.
+  ///
+  /// If the chip is not detected, slowly adjust the position of your passport and try again
+  public static var tkEidRequestNfcScanSecondary: String { L10n.tr("Localizable", "tk_eidRequest_nfcScan_secondary", fallback: "In the next step, your smartphone will read the NFC chip in your passport. Place your passport flat against the back of your phone and keep it still until the scan is complete.\n\nIf the chip is not detected, slowly adjust the position of your passport and try again") }
+  /// See tips
+  public static var tkEidRequestNfcScanTertiary: String { L10n.tr("Localizable", "tk_eidRequest_nfcScan_tertiary", fallback: "See tips") }
   /// Scan the front side of your document
   public static var tkEidRequestRecordDocumentNotificationRectoPrimary: String { L10n.tr("Localizable", "tk_eidRequest_recordDocument_notification_recto_primary", fallback: "Scan the front side of your document") }
   /// Place your document on a flat surface and position the front side in the frame. Make sure you have enough light.
@@ -432,6 +349,26 @@ public enum L10n {
   public static var tkEidRequestRecordSelfieTitle: String { L10n.tr("Localizable", "tk_eidRequest_recordSelfie_title", fallback: "Record Selfie") }
   /// Initializing Environment...
   public static var tkEidRequestSdkInitializationPrimary: String { L10n.tr("Localizable", "tk_eidRequest_sdk_initialization_primary", fallback: "Initializing Environment...") }
+  /// Add another device
+  public static var tkEidRequestWalletPairingAdditionalDeviceButtonPrimary: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_additionalDevice_button_primary", fallback: "Add another device") }
+  /// You have reached the maximum number of devices that can be added.
+  public static var tkEidRequestWalletPairingAdditionalDeviceSectionFooter: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_additionalDevice_sectionFooter", fallback: "You have reached the maximum number of devices that can be added.") }
+  /// Additonal devices
+  public static var tkEidRequestWalletPairingAdditionalDeviceSectionTitle: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_additionalDevice_sectionTitle", fallback: "Additonal devices") }
+  /// Continue with verification
+  public static var tkEidRequestWalletPairingButtonPrimary: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_button_primary", fallback: "Continue with verification") }
+  /// Add this device
+  public static var tkEidRequestWalletPairingCurrentDeviceButtonPrimary: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_currentDevice_button_primary", fallback: "Add this device") }
+  /// Fetching device...
+  public static var tkEidRequestWalletPairingCurrentDeviceLoadingTitle: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_currentDevice_loadingTitle", fallback: "Fetching device...") }
+  /// This device
+  public static var tkEidRequestWalletPairingCurrentDeviceSectionTitle: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_currentDevice_sectionTitle", fallback: "This device") }
+  /// Wallet paired successfully
+  public static var tkEidRequestWalletPairingNotificationSuccess: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_notification_success", fallback: "Wallet paired successfully") }
+  /// Choose where you want to receive your e-ID
+  public static var tkEidRequestWalletPairingPrimary: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_primary", fallback: "Choose where you want to receive your e-ID") }
+  /// Set up your e-ID on this or additional devices. You won’t be able to change this later.
+  public static var tkEidRequestWalletPairingSecondary: String { L10n.tr("Localizable", "tk_eidRequest_walletPairing_secondary", fallback: "Set up your e-ID on this or additional devices. You won’t be able to change this later.") }
   /// Please try again.
   public static var tkErrorConnectionproblemBody: String { L10n.tr("Localizable", "tk_error_connectionproblem_body", fallback: "Please try again.") }
   /// Connection problems
@@ -525,8 +462,8 @@ public enum L10n {
   public static var tkGetEidGuardianConsentButtonShare: String { L10n.tr("Localizable", "tk_getEid_guardianConsent_button_share", fallback: "Share QR-Code") }
   /// Scan QR Code
   public static var tkGetEidGuardianConsentPrimary: String { L10n.tr("Localizable", "tk_getEid_guardianConsent_primary", fallback: "Scan QR Code") }
-  /// QR Code. Elternteil oder Beistand diesen Code scannen lassen oder teilen (deepl)
-  public static var tkGetEidGuardianConsentQrAlt: String { L10n.tr("Localizable", "tk_getEid_guardianConsent_qr_alt", fallback: "QR Code. Elternteil oder Beistand diesen Code scannen lassen oder teilen (deepl)") }
+  /// QR Code. Have a parent or guardian scan or share this code.
+  public static var tkGetEidGuardianConsentQrAlt: String { L10n.tr("Localizable", "tk_getEid_guardianConsent_qr_alt", fallback: "QR Code. Have a parent or guardian scan or share this code.") }
   /// Try again
   public static var tkGetEidGuardianConsentQrButtonRetry: String { L10n.tr("Localizable", "tk_getEid_guardianConsent_qr_button_retry", fallback: "Try again") }
   /// An error occurred while generating the QR code.
@@ -549,8 +486,6 @@ public enum L10n {
   public static var tkGetEidGuardianshipPrimary: String { L10n.tr("Localizable", "tk_getEid_guardianship_primary", fallback: "Are you under comprehensive guardianship?") }
   /// Comprehensive guardianship means that another person (not your parents) makes all important decisions for you.
   public static var tkGetEidGuardianshipSecondary: String { L10n.tr("Localizable", "tk_getEid_guardianship_secondary", fallback: "Comprehensive guardianship means that another person (not your parents) makes all important decisions for you.") }
-  /// e-ID bestellen (deepl)
-  public static var tkGetEidHomePrimaryButton: String { L10n.tr("Localizable", "tk_getEid_home_primaryButton", fallback: "e-ID bestellen (deepl)") }
   /// First your identity document will be checked. Then your identity will be verified.
   /// It takes about 5 minutes.
   public static var tkGetEidIntroBody: String { L10n.tr("Localizable", "tk_getEid_intro_body", fallback: "First your identity document will be checked. Then your identity will be verified.\nIt takes about 5 minutes.") }
@@ -594,8 +529,16 @@ public enum L10n {
   public static var tkGetEidLegalRepresentantPendingConsentReadyForAVSecondarySuffix: String { L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_readyForAV_secondary_suffix", fallback: ", otherwise your order will be canceled.\n\nYour parents’ or legal guardian’s consent is still missing. You need to obtain the consent first in order to proceed.") }
   /// Start
   public static var tkGetEidLegalRepresentantPendingConsentStartButton: String { L10n.tr("Localizable", "tk_getEid_legalRepresentantPendingConsent_start_button", fallback: "Start") }
+  /// Your identity is being carefully verified. This may take several business days. Once we are done, you will receive a notification.
+  public static var tkGetEidNotificationAgentReviewSecondary: String { L10n.tr("Localizable", "tk_getEid_notification_agentReview_secondary", fallback: "Your identity is being carefully verified. This may take several business days. Once we are done, you will receive a notification.") }
   /// Close button
   public static var tkGetEidNotificationCloseButton: String { L10n.tr("Localizable", "tk_getEid_notification_close_button", fallback: "Close button") }
+  /// https://www.eid.admin.ch/en
+  public static var tkGetEidNotificationDeclinedFaqLink: String { L10n.tr("Localizable", "tk_getEid_notification_declined_faqLink", fallback: "https://www.eid.admin.ch/en") }
+  /// Go to FAQ
+  public static var tkGetEidNotificationDeclinedPrimaryButton: String { L10n.tr("Localizable", "tk_getEid_notification_declined_primaryButton", fallback: "Go to FAQ") }
+  /// In the FAQ you will find common errors and helpful tips. Afterwards, you can apply for an e-ID again.
+  public static var tkGetEidNotificationDeclinedSecondary: String { L10n.tr("Localizable", "tk_getEid_notification_declined_secondary", fallback: "In the FAQ you will find common errors and helpful tips. Afterwards, you can apply for an e-ID again.") }
   /// You did not fully complete the ordering process. Please restart it to receive your e-ID.
   public static var tkGetEidNotificationEidExpiredSecondary: String { L10n.tr("Localizable", "tk_getEid_notification_eidExpired_secondary", fallback: "You did not fully complete the ordering process. Please restart it to receive your e-ID.") }
   /// Start identification
@@ -623,12 +566,12 @@ public enum L10n {
   /// In Queue for Processing
   public static var tkGetEidQueuingTitle: String { L10n.tr("Localizable", "tk_getEid_queuing_title", fallback: "In Queue for Processing") }
   /// Please have your ID ready and point the camera at the area with the code line.
-  /// Allow access to the camera so that the scan can be carried out. (deepl)
-  public static var tkGetEidStartScanBody: String { L10n.tr("Localizable", "tk_getEid_startScan_body", fallback: "Please have your ID ready and point the camera at the area with the code line.\nAllow access to the camera so that the scan can be carried out. (deepl)") }
-  /// Where can I find the number range? (deepl)
-  public static var tkGetEidStartScanLinkText: String { L10n.tr("Localizable", "tk_getEid_startScan_linkText", fallback: "Where can I find the number range? (deepl)") }
-  /// Scan number range (deepl)
-  public static var tkGetEidStartScanTitle: String { L10n.tr("Localizable", "tk_getEid_startScan_title", fallback: "Scan number range (deepl)") }
+  /// Allow access to the camera so that the scan can be carried out.
+  public static var tkGetEidStartScanBody: String { L10n.tr("Localizable", "tk_getEid_startScan_body", fallback: "Please have your ID ready and point the camera at the area with the code line.\nAllow access to the camera so that the scan can be carried out.") }
+  /// Where can I find the number range?
+  public static var tkGetEidStartScanLinkText: String { L10n.tr("Localizable", "tk_getEid_startScan_linkText", fallback: "Where can I find the number range?") }
+  /// Scan number range
+  public static var tkGetEidStartScanTitle: String { L10n.tr("Localizable", "tk_getEid_startScan_title", fallback: "Scan number range") }
   /// Get your devices and set up your e-ID on this or additional devices.
   ///
   /// You won't be able to add other devices once you continue.
@@ -637,9 +580,9 @@ public enum L10n {
   public static var tkGetEidWalletPairing1PrimaryButton: String { L10n.tr("Localizable", "tk_getEid_walletPairing1_primaryButton", fallback: "No, just this one") }
   /// Yes, add other devices
   public static var tkGetEidWalletPairing1SecondaryButton: String { L10n.tr("Localizable", "tk_getEid_walletPairing1_secondaryButton", fallback: "Yes, add other devices") }
-  /// Hinweis
-  /// Aus Sicherheitsgründen können Sie dies nur jetzt festlegen. Nachträglich ist es nicht mehr möglich, Ihre e-ID auf weiteren Geräten zu speichern. (deepl)
-  public static var tkGetEidWalletPairing1SmallBody: String { L10n.tr("Localizable", "tk_getEid_walletPairing1_smallBody", fallback: "Hinweis\nAus Sicherheitsgründen können Sie dies nur jetzt festlegen. Nachträglich ist es nicht mehr möglich, Ihre e-ID auf weiteren Geräten zu speichern. (deepl)") }
+  /// Note
+  /// For security reasons, you can only set this up now. It will not be possible to save your e-ID on additional devices later.
+  public static var tkGetEidWalletPairing1SmallBody: String { L10n.tr("Localizable", "tk_getEid_walletPairing1_smallBody", fallback: "Note\nFor security reasons, you can only set this up now. It will not be possible to save your e-ID on additional devices later.") }
   /// Would you like to use your e-ID on multiple devices?
   public static var tkGetEidWalletPairing1Title: String { L10n.tr("Localizable", "tk_getEid_walletPairing1_title", fallback: "Would you like to use your e-ID on multiple devices?") }
   /// Add
@@ -688,8 +631,8 @@ public enum L10n {
   public static var tkGlobalLogoAlt: String { L10n.tr("Localizable", "tk_global_logo_alt", fallback: "Logo") }
   /// More options
   public static var tkGlobalMoreoptionsAlt: String { L10n.tr("Localizable", "tk_global_moreoptions_alt", fallback: "More options") }
-  /// ...
-  public static var tkGlobalMoreoptionsSecondarybutton: String { L10n.tr("Localizable", "tk_global_moreoptions_secondarybutton", fallback: "...") }
+  /// …
+  public static var tkGlobalMoreoptionsSecondarybutton: String { L10n.tr("Localizable", "tk_global_moreoptions_secondarybutton", fallback: "…") }
   /// New password
   public static var tkGlobalNewpassword: String { L10n.tr("Localizable", "tk_global_newpassword", fallback: "New password") }
   /// No thanks
@@ -776,111 +719,14 @@ public enum L10n {
   public static var tkLoginSpinnerAlt: String { L10n.tr("Localizable", "tk_login_spinner_alt", fallback: "Login successful. Please wait.") }
   /// The swiyu app is locked
   public static var tkLoginVariantBody: String { L10n.tr("Localizable", "tk_login_variant_body", fallback: "The swiyu app is locked") }
-  /// App crashes
-  public static var tkMenuDiagnosticDataAppCrash: String { L10n.tr("Localizable", "tk_menu_diagnosticData_appCrash", fallback: "App crashes") }
-  /// When sharing diagnostic data, the swiyu app occasionally sends anonymous, non-personal information. This data helps us to continuously improve the app and fix errors more quickly. It cannot be traced back to you personally.
-  ///
-  /// Information transmitted anonymously includes:
-  ///
-  public static var tkMenuDiagnosticDataBody: String { L10n.tr("Localizable", "tk_menu_diagnosticData_body", fallback: "When sharing diagnostic data, the swiyu app occasionally sends anonymous, non-personal information. This data helps us to continuously improve the app and fix errors more quickly. It cannot be traced back to you personally.\n\nInformation transmitted anonymously includes:\n") }
-  /// Communication error
-  public static var tkMenuDiagnosticDataCommunicationError: String { L10n.tr("Localizable", "tk_menu_diagnosticData_communicationError", fallback: "Communication error") }
-  /// Communication errors
-  public static var tkMenuDiagnosticDataGeneralError: String { L10n.tr("Localizable", "tk_menu_diagnosticData_generalError", fallback: "Communication errors") }
-  /// Diagnostic data
-  public static var tkMenuDiagnosticDataTitle: String { L10n.tr("Localizable", "tk_menu_diagnosticData_title", fallback: "Diagnostic data") }
   /// Create Beta-ID
   public static var tkMenuHomeListAdd: String { L10n.tr("Localizable", "tk_menu_homeList_add", fallback: "Create Beta-ID") }
   /// Help & Contact
   public static var tkMenuHomeListHelp: String { L10n.tr("Localizable", "tk_menu_homeList_help", fallback: "Help & Contact") }
-  /// e-ID bestellen (deepl)
-  public static var tkMenuHomeListOrderEid: String { L10n.tr("Localizable", "tk_Menu_HomeList_OrderEid", fallback: "e-ID bestellen (deepl)") }
-  /// Settings (deepl)
-  public static var tkMenuHomeListSettings: String { L10n.tr("Localizable", "tk_menu_homeList_settings", fallback: "Settings (deepl)") }
-  /// www.bit.admin.ch
-  public static var tkMenuImprintAdminLinkText: String { L10n.tr("Localizable", "tk_menu_imprint_admin_link_text", fallback: "www.bit.admin.ch") }
-  /// https://www.bit.admin.ch/en
-  public static var tkMenuImprintAdminLinkValue: String { L10n.tr("Localizable", "tk_menu_imprint_admin_link_value", fallback: "https://www.bit.admin.ch/en") }
-  /// App Version (deepl)
-  public static var tkMenuImprintAppVersion: String { L10n.tr("Localizable", "tk_menu_imprint_appVersion", fallback: "App Version (deepl)") }
-  /// Build Nummer
-  public static var tkMenuImprintBuildNummer: String { L10n.tr("Localizable", "tk_menu_imprint_buildNummer", fallback: "Build Nummer") }
-  /// Federal Department of Finance FDF
-  /// Federal Office of Information Technology, Systems and Telecommunication FOITT
-  public static var tkMenuImprintDepartmentNote: String { L10n.tr("Localizable", "tk_menu_imprint_department_note", fallback: "Federal Department of Finance FDF\nFederal Office of Information Technology, Systems and Telecommunication FOITT") }
-  /// The authors accept no liability for the reliability and completeness of the information. We are not responsible for references and links to third-party websites.
-  public static var tkMenuImprintDisclaimerNote: String { L10n.tr("Localizable", "tk_menu_imprint_disclaimer_note", fallback: "The authors accept no liability for the reliability and completeness of the information. We are not responsible for references and links to third-party websites.") }
-  /// www.github.com/admin-ch
-  public static var tkMenuImprintGithubLinkText: String { L10n.tr("Localizable", "tk_menu_imprint_github_link_text", fallback: "www.github.com/admin-ch") }
-  /// https://github.com/e-id-admin
-  public static var tkMenuImprintGithubLinkValue: String { L10n.tr("Localizable", "tk_menu_imprint_github_link_value", fallback: "https://github.com/e-id-admin") }
-  /// The swiyu app is open source. Its source code can be viewed on GitHub.
-  public static var tkMenuImprintNote: String { L10n.tr("Localizable", "tk_menu_imprint_note", fallback: "The swiyu app is open source. Its source code can be viewed on GitHub.") }
-  /// Disclaimer
-  public static var tkMenuImprintSubtitleDisclaimer: String { L10n.tr("Localizable", "tk_menu_imprint_subtitle_disclaimer", fallback: "Disclaimer") }
-  /// Legal aspects
-  public static var tkMenuImprintSubtitleLegal: String { L10n.tr("Localizable", "tk_menu_imprint_subtitle_legal", fallback: "Legal aspects") }
-  /// Issuer, implementation and operation
-  public static var tkMenuImprintSubtitlePublisher: String { L10n.tr("Localizable", "tk_menu_imprint_subtitle_publisher", fallback: "Issuer, implementation and operation") }
-  /// Terms of use
-  public static var tkMenuImprintTermsOfUseLinkText: String { L10n.tr("Localizable", "tk_menu_imprint_termsOfUse_link_text", fallback: "Terms of use") }
-  /// https://www.eid.admin.ch/en/swiyu-terms-e
-  public static var tkMenuImprintTermsOfUseLinkValue: String { L10n.tr("Localizable", "tk_menu_imprint_termsOfUse_link_value", fallback: "https://www.eid.admin.ch/en/swiyu-terms-e") }
-  /// Legal notice
-  public static var tkMenuImprintTitle: String { L10n.tr("Localizable", "tk_menu_imprint_title", fallback: "Legal notice") }
-  /// Language
-  public static var tkMenuLanguageTitle: String { L10n.tr("Localizable", "tk_menu_language_title", fallback: "Language") }
-  /// Here you will find an overview of the software licences used by the swiyu app.
-  /// The licences comply with the FOITT privacy guidelines and the latest security standards. We would like to create transparency for our users with this list.
-  public static var tkMenuLicencesBody: String { L10n.tr("Localizable", "tk_menu_licences_body", fallback: "Here you will find an overview of the software licences used by the swiyu app.\nThe licences comply with the FOITT privacy guidelines and the latest security standards. We would like to create transparency for our users with this list.") }
-  /// Further information (deepl)
-  public static var tkMenuLicencesLinkText: String { L10n.tr("Localizable", "tk_menu_licences_link_text", fallback: "Further information (deepl)") }
-  /// Licences
-  public static var tkMenuLicencesTitle: String { L10n.tr("Localizable", "tk_menu_licences_title", fallback: "Licences") }
-  /// Biometric unlocking has been enabled.
-  public static var tkMenuSecurityPrivacyAndroidStatusActivating: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_android_status_activating", fallback: "Biometric unlocking has been enabled.") }
-  /// diagnostic data (deepl)
-  public static var tkMenuSecurityPrivacyDataProtectionDiagnosticData: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_diagnosticData", fallback: "diagnostic data (deepl)") }
-  /// Privacy Statement
-  public static var tkMenuSecurityPrivacyDataProtectionPrivacyPolicy: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_privacyPolicy", fallback: "Privacy Statement") }
-  /// Share diagnostic data
-  public static var tkMenuSecurityPrivacyDataProtectionShareData: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_shareData", fallback: "Share diagnostic data") }
-  /// Help us make the swiyu app even better by anonymously sharing error messages and crashes.
-  public static var tkMenuSecurityPrivacyDataProtectionShareDataBody: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_dataProtection_shareData_body", fallback: "Help us make the swiyu app even better by anonymously sharing error messages and crashes.") }
-  /// Change password (deepl)
-  public static var tkMenuSecurityPrivacySecurityChangePassword: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_security_changePassword", fallback: "Change password (deepl)") }
-  /// Password successfully changed
-  public static var tkMenuSecurityPrivacyStatusPasswordChangeSuccessful: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_status_passwordChangeSuccessful", fallback: "Password successfully changed") }
-  /// Data protection and privacy
-  public static var tkMenuSecurityPrivacySubtitleDataProtection: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_subtitle_dataProtection", fallback: "Data protection and privacy") }
-  /// Security
-  public static var tkMenuSecurityPrivacySubtitleSecurity: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_subtitle_security", fallback: "Security") }
-  /// Security and data protection (deepl)
-  public static var tkMenuSecurityPrivacyTitle: String { L10n.tr("Localizable", "tk_menu_securityPrivacy_title", fallback: "Security and data protection (deepl)") }
-  /// General
-  public static var tkMenuSettingSubtitleGeneral: String { L10n.tr("Localizable", "tk_menu_setting_subtitle_general", fallback: "General") }
-  /// Settings (deepl)
-  public static var tkMenuSettingTitle: String { L10n.tr("Localizable", "tk_menu_setting_title", fallback: "Settings (deepl)") }
-  /// Give feedback
-  public static var tkMenuSettingWalletFeedback: String { L10n.tr("Localizable", "tk_menu_setting_wallet_feedback", fallback: "Give feedback") }
-  /// https://findmind.ch/c/feedback_public_beta_en
-  public static var tkMenuSettingWalletFeedbackLinkValue: String { L10n.tr("Localizable", "tk_menu_setting_wallet_feedback_link_value", fallback: "https://findmind.ch/c/feedback_public_beta_en") }
-  /// Help & Contact (deepl)
-  public static var tkMenuSettingWalletHelp: String { L10n.tr("Localizable", "tk_menu_setting_wallet_help", fallback: "Help & Contact (deepl)") }
-  /// Legal notice
-  public static var tkMenuSettingWalletImprint: String { L10n.tr("Localizable", "tk_menu_setting_wallet_imprint", fallback: "Legal notice") }
-  /// Language
-  public static var tkMenuSettingWalletLanguage: String { L10n.tr("Localizable", "tk_menu_setting_wallet_language", fallback: "Language") }
-  /// German
-  public static var tkMenuSettingWalletLanguageChoiceDe: String { L10n.tr("Localizable", "tk_menu_setting_wallet_languageChoiceDe", fallback: "German") }
-  /// Licences
-  public static var tkMenuSettingWalletLicences: String { L10n.tr("Localizable", "tk_menu_setting_wallet_licences", fallback: "Licences") }
-  /// Security and data protection
-  public static var tkMenuSettingWalletSecurity: String { L10n.tr("Localizable", "tk_menu_setting_wallet_security", fallback: "Security and data protection") }
-  /// Share feedback
-  public static var tkMenuSetupMenuFeedback: String { L10n.tr("Localizable", "tk_menu_setup_menu_feedback", fallback: "Share feedback") }
-  /// Wallet
-  public static var tkMenuSetupSubtitleWallet: String { L10n.tr("Localizable", "tk_menu_setup_subtitle_wallet", fallback: "Wallet") }
+  /// order e-ID
+  public static var tkMenuHomeListOrderEid: String { L10n.tr("Localizable", "tk_menu_homeList_orderEid", fallback: "order e-ID") }
+  /// Settings
+  public static var tkMenuHomeListSettings: String { L10n.tr("Localizable", "tk_menu_homeList_settings", fallback: "Settings") }
   /// Allow
   public static var tkOnboardingAnalyticsButtonPrimary: String { L10n.tr("Localizable", "tk_onboarding_analytics_button_primary", fallback: "Allow") }
   /// Do not allow
@@ -1118,6 +964,102 @@ public enum L10n {
   public static var tkReceiveScanningAlt: String { L10n.tr("Localizable", "tk_receive_scanning_alt", fallback: "Camera searching for QR code") }
   /// No QR code found. Try to reposition the camera.
   public static var tkReceiveScanningNotfoundAlt: String { L10n.tr("Localizable", "tk_receive_scanning_notfound_alt", fallback: "No QR code found. Try to reposition the camera.") }
+  /// App crashes
+  public static var tkSettingsDiagnosticDataAppCrash: String { L10n.tr("Localizable", "tk_settings_diagnosticData_appCrash", fallback: "App crashes") }
+  /// When sharing diagnostic data, the swiyu app occasionally sends anonymous, non-personal information. This data helps us to continuously improve the app and fix errors more quickly. It cannot be traced back to you personally.
+  ///
+  /// Information transmitted anonymously includes:
+  ///
+  public static var tkSettingsDiagnosticDataBody: String { L10n.tr("Localizable", "tk_settings_diagnosticData_body", fallback: "When sharing diagnostic data, the swiyu app occasionally sends anonymous, non-personal information. This data helps us to continuously improve the app and fix errors more quickly. It cannot be traced back to you personally.\n\nInformation transmitted anonymously includes:\n") }
+  /// Communication error
+  public static var tkSettingsDiagnosticDataCommunicationError: String { L10n.tr("Localizable", "tk_settings_diagnosticData_communicationError", fallback: "Communication error") }
+  /// Communication errors
+  public static var tkSettingsDiagnosticDataGeneralError: String { L10n.tr("Localizable", "tk_settings_diagnosticData_generalError", fallback: "Communication errors") }
+  /// Diagnostic data
+  public static var tkSettingsDiagnosticDataTitle: String { L10n.tr("Localizable", "tk_settings_diagnosticData_title", fallback: "Diagnostic data") }
+  /// Give feedback
+  public static var tkSettingsGeneralFeedbackLinkText: String { L10n.tr("Localizable", "tk_settings_general_feedback_link_text", fallback: "Give feedback") }
+  /// https://findmind.ch/c/feedback_public_beta_en
+  public static var tkSettingsGeneralFeedbackLinkValue: String { L10n.tr("Localizable", "tk_settings_general_feedback_link_value", fallback: "https://findmind.ch/c/feedback_public_beta_en") }
+  /// Help & Contact
+  public static var tkSettingsGeneralHelpLinkText: String { L10n.tr("Localizable", "tk_settings_general_help_link_text", fallback: "Help & Contact") }
+  /// https://www.eid.admin.ch/en/hilfe-e
+  public static var tkSettingsGeneralHelpLinkValue: String { L10n.tr("Localizable", "tk_settings_general_help_link_value", fallback: "https://www.eid.admin.ch/en/hilfe-e") }
+  /// Legal notice
+  public static var tkSettingsGeneralImprint: String { L10n.tr("Localizable", "tk_settings_general_imprint", fallback: "Legal notice") }
+  /// Licences
+  public static var tkSettingsGeneralLicences: String { L10n.tr("Localizable", "tk_settings_general_licences", fallback: "Licences") }
+  /// General
+  public static var tkSettingsGeneralSectionTitle: String { L10n.tr("Localizable", "tk_settings_general_sectionTitle", fallback: "General") }
+  /// App Version
+  public static var tkSettingsImprintAppInformationAppVersion: String { L10n.tr("Localizable", "tk_settings_imprint_appInformation_appVersion", fallback: "App Version") }
+  /// The swiyu app is open source. Its source code can be viewed on GitHub.
+  public static var tkSettingsImprintAppInformationBody: String { L10n.tr("Localizable", "tk_settings_imprint_appInformation_body", fallback: "The swiyu app is open source. Its source code can be viewed on GitHub.") }
+  /// Build Number
+  public static var tkSettingsImprintAppInformationBuildNumber: String { L10n.tr("Localizable", "tk_settings_imprint_appInformation_buildNumber", fallback: "Build Number") }
+  /// www.github.com/swiyu-admin-ch
+  public static var tkSettingsImprintAppInformationGithubLinkText: String { L10n.tr("Localizable", "tk_settings_imprint_appInformation_github_link_text", fallback: "www.github.com/swiyu-admin-ch") }
+  /// https://github.com/swiyu-admin-ch
+  public static var tkSettingsImprintAppInformationGithubLinkValue: String { L10n.tr("Localizable", "tk_settings_imprint_appInformation_github_link_value", fallback: "https://github.com/swiyu-admin-ch") }
+  /// Disclaimer
+  public static var tkSettingsImprintLegalDisclaimerPrimary: String { L10n.tr("Localizable", "tk_settings_imprint_legal_disclaimer_primary", fallback: "Disclaimer") }
+  /// The authors accept no liability for the reliability and completeness of the information. We are not responsible for references and links to third-party websites.
+  public static var tkSettingsImprintLegalDisclaimerSecondary: String { L10n.tr("Localizable", "tk_settings_imprint_legal_disclaimer_secondary", fallback: "The authors accept no liability for the reliability and completeness of the information. We are not responsible for references and links to third-party websites.") }
+  /// Legal aspects
+  public static var tkSettingsImprintLegalSectionTitle: String { L10n.tr("Localizable", "tk_settings_imprint_legal_sectionTitle", fallback: "Legal aspects") }
+  /// Terms of use
+  public static var tkSettingsImprintLegalTermsOfUseLinkText: String { L10n.tr("Localizable", "tk_settings_imprint_legal_termsOfUse_link_text", fallback: "Terms of use") }
+  /// https://www.eid.admin.ch/en/swiyu-terms-e
+  public static var tkSettingsImprintLegalTermsOfUseLinkValue: String { L10n.tr("Localizable", "tk_settings_imprint_legal_termsOfUse_link_value", fallback: "https://www.eid.admin.ch/en/swiyu-terms-e") }
+  /// www.bit.admin.ch
+  public static var tkSettingsImprintPublisherLinkText: String { L10n.tr("Localizable", "tk_settings_imprint_publisher_link_text", fallback: "www.bit.admin.ch") }
+  /// https://www.bit.admin.ch/en
+  public static var tkSettingsImprintPublisherLinkValue: String { L10n.tr("Localizable", "tk_settings_imprint_publisher_link_value", fallback: "https://www.bit.admin.ch/en") }
+  /// Issuer, implementation and operation
+  public static var tkSettingsImprintPublisherSectionTitle: String { L10n.tr("Localizable", "tk_settings_imprint_publisher_sectionTitle", fallback: "Issuer, implementation and operation") }
+  /// Legal notice
+  public static var tkSettingsImprintTitle: String { L10n.tr("Localizable", "tk_settings_imprint_title", fallback: "Legal notice") }
+  /// Here you will find an overview of the software licences used by the swiyu app.
+  /// The licences comply with the FOITT privacy guidelines and the latest security standards. We would like to create transparency for our users with this list.
+  public static var tkSettingsLicencesBody: String { L10n.tr("Localizable", "tk_settings_licences_body", fallback: "Here you will find an overview of the software licences used by the swiyu app.\nThe licences comply with the FOITT privacy guidelines and the latest security standards. We would like to create transparency for our users with this list.") }
+  /// The app currently does not use any external libraries.
+  public static var tkSettingsLicencesEmptyState: String { L10n.tr("Localizable", "tk_settings_licences_emptyState", fallback: "The app currently does not use any external libraries.") }
+  /// Further information
+  public static var tkSettingsLicencesLinkText: String { L10n.tr("Localizable", "tk_settings_licences_link_text", fallback: "Further information") }
+  /// https://www.eid.admin.ch/en/help-publicbeta-e
+  public static var tkSettingsLicencesLinkValue: String { L10n.tr("Localizable", "tk_settings_licences_link_value", fallback: "https://www.eid.admin.ch/en/help-publicbeta-e") }
+  /// -
+  public static var tkSettingsLicencesNoVersion: String { L10n.tr("Localizable", "tk_settings_licences_noVersion", fallback: "-") }
+  /// Licences
+  public static var tkSettingsLicencesTitle: String { L10n.tr("Localizable", "tk_settings_licences_title", fallback: "Licences") }
+  /// diagnostic data
+  public static var tkSettingsSecurityPrivacyDataProtectionDiagnosticData: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_diagnosticData", fallback: "diagnostic data") }
+  /// Privacy Statement
+  public static var tkSettingsSecurityPrivacyDataProtectionPrivacyPolicyLinkText: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_text", fallback: "Privacy Statement") }
+  /// https://www.eid.admin.ch/en/swiyu-privacy-e
+  public static var tkSettingsSecurityPrivacyDataProtectionPrivacyPolicyLinkValue: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_value", fallback: "https://www.eid.admin.ch/en/swiyu-privacy-e") }
+  /// Data protection and privacy
+  public static var tkSettingsSecurityPrivacyDataProtectionSectionTitle: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_sectionTitle", fallback: "Data protection and privacy") }
+  /// Share diagnostic data
+  public static var tkSettingsSecurityPrivacyDataProtectionShareDataPrimary: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_shareData_primary", fallback: "Share diagnostic data") }
+  /// Help us make the swiyu app even better by anonymously sharing error messages and crashes.
+  public static var tkSettingsSecurityPrivacyDataProtectionShareDataSecondary: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_shareData_secondary", fallback: "Help us make the swiyu app even better by anonymously sharing error messages and crashes.") }
+  /// Change password
+  public static var tkSettingsSecurityPrivacySecurityChangePassword: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_security_changePassword", fallback: "Change password") }
+  /// Security
+  public static var tkSettingsSecurityPrivacySecuritySectionTitle: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_security_sectionTitle", fallback: "Security") }
+  /// Password successfully changed
+  public static var tkSettingsSecurityPrivacyStatusPasswordChangeSuccessful: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_status_passwordChangeSuccessful", fallback: "Password successfully changed") }
+  /// Security and data protection
+  public static var tkSettingsSecurityPrivacyTitle: String { L10n.tr("Localizable", "tk_settings_securityPrivacy_title", fallback: "Security and data protection") }
+  /// Settings
+  public static var tkSettingsTitle: String { L10n.tr("Localizable", "tk_settings_title", fallback: "Settings") }
+  /// Language
+  public static var tkSettingsWalletLanguage: String { L10n.tr("Localizable", "tk_settings_wallet_language", fallback: "Language") }
+  /// Wallet
+  public static var tkSettingsWalletSectionTitle: String { L10n.tr("Localizable", "tk_settings_wallet_sectionTitle", fallback: "Wallet") }
+  /// Security and data protection
+  public static var tkSettingsWalletSecurityPrivacy: String { L10n.tr("Localizable", "tk_settings_wallet_securityPrivacy", fallback: "Security and data protection") }
   /// Please define a smartphone passcode so that you can use the app.
   public static var tkUnsafedeviceUnsafeBody: String { L10n.tr("Localizable", "tk_unsafedevice_unsafe_body", fallback: "Please define a smartphone passcode so that you can use the app.") }
   /// Go to settings
@@ -1126,6 +1068,16 @@ public enum L10n {
   public static var tkUnsafedeviceUnsafeSmallbody: String { L10n.tr("Localizable", "tk_unsafedevice_unsafe_smallbody", fallback: " ") }
   /// Missing smartphone code
   public static var tkUnsafedeviceUnsafeTitle: String { L10n.tr("Localizable", "tk_unsafedevice_unsafe_title", fallback: "Missing smartphone code") }
+  /// Fetching devices...
+  public static var tkWalletPairingDevicePairingQRCodeFetchDeviceBody: String { L10n.tr("Localizable", "tk_walletPairing_devicePairingQRCode_fetchDevice_body", fallback: "Fetching devices...") }
+  /// An error occurred while loading the QR code.
+  public static var tkWalletPairingDevicePairingQRCodeFetchErrorBody: String { L10n.tr("Localizable", "tk_walletPairing_devicePairingQRCode_fetchError_body", fallback: "An error occurred while loading the QR code.") }
+  /// Try again
+  public static var tkWalletPairingDevicePairingQRCodeFetchErrorButton: String { L10n.tr("Localizable", "tk_walletPairing_devicePairingQRCode_fetchError_button", fallback: "Try again") }
+  /// Scan QR Code
+  public static var tkWalletPairingDevicePairingQRCodePrimary: String { L10n.tr("Localizable", "tk_walletPairing_devicePairingQRCode_primary", fallback: "Scan QR Code") }
+  /// Open the wallet app on the device you want to add and scan the one-time QR code. When scanning is done, continue on this device and wait until this screen gets updated.
+  public static var tkWalletPairingDevicePairingQRCodeSecondary: String { L10n.tr("Localizable", "tk_walletPairing_devicePairingQRCode_secondary", fallback: "Open the wallet app on the device you want to add and scan the one-time QR code. When scanning is done, continue on this device and wait until this screen gets updated.") }
   /// Update app
   public static var versionEnforcementButton: String { L10n.tr("Localizable", "version_enforcement_button", fallback: "Update app") }
 
@@ -1160,8 +1112,8 @@ public enum L10n {
   }
 
   /// The password is incorrect. You have %@ attempts remaining.
-  public static func tkChangepasswordError1IosNote2(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_changepassword_error1_ios_note2", String(describing: p1), fallback: "The password is incorrect. You have %@ attempts remaining.")
+  public static func tkChangepasswordError1Note2(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_changepassword_error1_note2", String(describing: p1), fallback: "The password is incorrect. You have %@ attempts remaining.")
   }
 
   /// Valid in %@ days
@@ -1174,29 +1126,44 @@ public enum L10n {
     L10n.tr("Localizable", "tk_credential_status_notValidYet_alt", String(describing: p1), fallback: "Credential valid in %@ days")
   }
 
+  /// %@ devices added
+  public static func tkEidRequestWalletPairingAdditionalDeviceCounter(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_eidRequest_walletPairing_additionalDevice_counter", String(describing: p1), fallback: "%@ devices added")
+  }
+
+  /// Identity verification of %@ is in progress.
+  public static func tkGetEidNotificationAgentReviewPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_agentReview_primary", String(describing: p1), fallback: "Identity verification of %@ is in progress.")
+  }
+
+  /// The identity verification of %@ was not successful.
+  public static func tkGetEidNotificationDeclinedPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_getEid_notification_declined_primary", String(describing: p1), fallback: "The identity verification of %@ was not successful.")
+  }
+
   /// e-ID Order for %@ expired
   public static func tkGetEidNotificationEidExpiredPrimary(_ p1: Any) -> String {
     L10n.tr("Localizable", "tk_getEid_notification_eidExpired_primary", String(describing: p1), fallback: "e-ID Order for %@ expired")
   }
 
-  /// e-ID for %@ in progress (deepl)
+  /// e-ID for %@ in progress
   public static func tkGetEidNotificationEidProgressPrimary(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_primary", String(describing: p1), fallback: "e-ID for %@ in progress (deepl)")
+    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_primary", String(describing: p1), fallback: "e-ID for %@ in progress")
   }
 
-  /// Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.  (deepl)
+  /// Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.
   public static func tkGetEidNotificationEidProgressSecondary(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_secondary", String(describing: p1), fallback: "Your e-ID will probably be ready on %@. We will notify you as soon as it is ready.  (deepl)")
+    L10n.tr("Localizable", "tk_getEid_notification_eidProgress_secondary", String(describing: p1), fallback: "Your e-ID will probably be ready on %@. We will notify you as soon as it is ready. ")
   }
 
-  /// e-ID ready for %@ (deepl)
+  /// e-ID ready for %@
   public static func tkGetEidNotificationEidReadyPrimary(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidReady_primary", String(describing: p1), fallback: "e-ID ready for %@ (deepl)")
+    L10n.tr("Localizable", "tk_getEid_notification_eidReady_primary", String(describing: p1), fallback: "e-ID ready for %@")
   }
 
-  /// Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)
+  /// Your e-ID is ready. Please start the identification process by %@ at the latest.
   public static func tkGetEidNotificationEidReadySecondary(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_getEid_notification_eidReady_secondary", String(describing: p1), fallback: "Your e-ID is ready. Please start the identification process by %@ at the latest. (deepl)")
+    L10n.tr("Localizable", "tk_getEid_notification_eidReady_secondary", String(describing: p1), fallback: "Your e-ID is ready. Please start the identification process by %@ at the latest.")
   }
 
   /// e-ID status for %@ unknown
@@ -1254,46 +1221,6 @@ public enum L10n {
   /// You have %@ attempt(s) remaining
   public static func tkLoginPasswordfailedIosSubtitle(_ p1: Any) -> String {
     L10n.tr("Localizable", "tk_login_passwordfailed_ios_subtitle", String(describing: p1), fallback: "You have %@ attempt(s) remaining")
-  }
-
-  /// Enter your swiyu password to activate %@. (deepl)
-  public static func tkMenuActivatingBiometricsIosBody(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_activatingBiometrics_ios_body", String(describing: p1), fallback: "Enter your swiyu password to activate %@. (deepl)")
-  }
-
-  /// Unlock with %@
-  public static func tkMenuActivatingBiometricsIosTitle(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_activatingBiometrics_ios_title", String(describing: p1), fallback: "Unlock with %@")
-  }
-
-  /// Enter your swiyu password to disable %@. (deepl)
-  public static func tkMenuDeactivatingBiometricsIosNote(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_deactivatingBiometrics_ios_note", String(describing: p1), fallback: "Enter your swiyu password to disable %@. (deepl)")
-  }
-
-  /// Deactivate %@
-  public static func tkMenuDeactivatingBiometricsIosTitle(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_deactivatingBiometrics_ios_title", String(describing: p1), fallback: "Deactivate %@")
-  }
-
-  /// %@ successfully activated
-  public static func tkMenuSecurityPrivacyIosStatusActivating(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_securityPrivacy_ios_status_activating", String(describing: p1), fallback: "%@ successfully activated")
-  }
-
-  /// %@ successfully disabled
-  public static func tkMenuSecurityPrivacyIosStatusDeactivating(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_securityPrivacy_ios_status_deactivating", String(describing: p1), fallback: "%@ successfully disabled")
-  }
-
-  /// %@ is not enabled on this device. Go to the device settings to enable biometrics.
-  public static func tkMenuSecurityPrivacyMenuIosUnlockBody(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_securityPrivacy_menu_ios_unlock_body", String(describing: p1), fallback: "%@ is not enabled on this device. Go to the device settings to enable biometrics.")
-  }
-
-  /// Unlock with %@
-  public static func tkMenuSecurityPrivacySecurityIosUnlock(_ p1: Any) -> String {
-    L10n.tr("Localizable", "tk_menu_securityPrivacy_security_ios_unlock", String(describing: p1), fallback: "Unlock with %@")
   }
 
   /// %@
@@ -1354,6 +1281,46 @@ public enum L10n {
   /// wants to issue %@ credential
   public static func tkReceiveApprovalIosSubtitle(_ p1: Any) -> String {
     L10n.tr("Localizable", "tk_receive_approval_ios_subtitle", String(describing: p1), fallback: "wants to issue %@ credential")
+  }
+
+  /// Deactivate %@
+  public static func tkSettingsSecurityPrivacyBiometricsDisablePrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_biometrics_disable_primary", String(describing: p1), fallback: "Deactivate %@")
+  }
+
+  /// Enter your swiyu password to disable %@.
+  public static func tkSettingsSecurityPrivacyBiometricsDisableSecondary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_biometrics_disable_secondary", String(describing: p1), fallback: "Enter your swiyu password to disable %@.")
+  }
+
+  /// Unlock with %@
+  public static func tkSettingsSecurityPrivacyBiometricsEnablePrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_biometrics_enable_primary", String(describing: p1), fallback: "Unlock with %@")
+  }
+
+  /// Enter your swiyu password to activate %@.
+  public static func tkSettingsSecurityPrivacyBiometricsEnableSecondary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_biometrics_enable_secondary", String(describing: p1), fallback: "Enter your swiyu password to activate %@.")
+  }
+
+  /// %@ is not enabled on this device. Go to the device settings to enable biometrics.
+  public static func tkSettingsSecurityPrivacyMenuUnlockBody(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_menu_unlock_body", String(describing: p1), fallback: "%@ is not enabled on this device. Go to the device settings to enable biometrics.")
+  }
+
+  /// Unlock with %@
+  public static func tkSettingsSecurityPrivacySecurityUnlock(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_security_unlock", String(describing: p1), fallback: "Unlock with %@")
+  }
+
+  /// %@ successfully disabled
+  public static func tkSettingsSecurityPrivacyStatusDisabled(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_status_disabled", String(describing: p1), fallback: "%@ successfully disabled")
+  }
+
+  /// %@ successfully activated
+  public static func tkSettingsSecurityPrivacyStatusEnabled(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_status_enabled", String(describing: p1), fallback: "%@ successfully activated")
   }
 
 }

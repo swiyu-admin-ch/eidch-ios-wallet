@@ -18,11 +18,7 @@ struct AVIdentityCheckView: View {
       image: Assets.idCheck.swiftUIImage,
       backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
       content: { content() },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkEidRequestAutoVerificationIdentityCheckButton,
-          primaryButtonAction: viewModel.primaryAction)
-      })
+      footer: { footer() })
       .navigationBarBackButtonHidden(true)
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
   }
@@ -37,6 +33,20 @@ struct AVIdentityCheckView: View {
   }
 
   private var viewModel: AVIdentityCheckViewModel
+
+  @ViewBuilder
+  private func footer() -> some View {
+    AsyncButton(
+      action: { await viewModel.primaryAction() },
+      actionOptions: [.showProgressView],
+      label: {
+        Text(L10n.tkEidRequestAutoVerificationIdentityCheckButton)
+          .multilineTextAlignment(.center)
+          .lineLimit(1)
+      })
+      .buttonStyle(.filledPrimary)
+      .controlSize(.large)
+  }
 
   @ViewBuilder
   private func content() -> some View {

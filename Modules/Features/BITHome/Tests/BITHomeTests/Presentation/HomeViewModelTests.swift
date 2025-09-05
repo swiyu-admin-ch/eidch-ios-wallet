@@ -4,8 +4,11 @@ import XCTest
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITHome
 @testable import BITTestingCore
+
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
 
 @MainActor
 final class HomeViewModelTests: XCTestCase {
@@ -43,9 +46,6 @@ final class HomeViewModelTests: XCTestCase {
   }
 
   func testInitialValues() {
-    XCTAssertFalse(viewModel.isImpressumPresented)
-    XCTAssertFalse(viewModel.isSecurityPresented)
-    XCTAssertFalse(viewModel.isLicensesPresented)
     XCTAssertFalse(viewModel.isVerificationInstructionPresented)
     XCTAssertEqual(viewModel.state, .results)
     XCTAssertTrue(viewModel.requestCases.isEmpty)
@@ -201,37 +201,7 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallExternalLinkUrl)
   }
 
-  func testOpenContact() {
-    viewModel.openContact()
-
-    XCTAssertTrue(mockRouter.didCallExternalLinkUrl)
-  }
-
-  func testOpenFeedback() {
-    viewModel.openFeedback()
-
-    XCTAssertTrue(mockRouter.didCallExternalLinkUrl)
-  }
-
-  func testOpenImpressum() {
-    viewModel.openImpressum()
-
-    XCTAssertTrue(viewModel.isImpressumPresented)
-  }
-
-  func testOpenLicenses() {
-    viewModel.openLicenses()
-
-    XCTAssertTrue(viewModel.isLicensesPresented)
-  }
-
-  func testOpenSecurity() {
-    viewModel.openSecurity()
-
-    XCTAssertTrue(viewModel.isSecurityPresented)
-  }
-
-  func testOpenCredentialDetai() {
+  func testOpenCredentialDetail() {
     viewModel.openDetail(for: .Mock.sample)
 
     XCTAssertTrue(mockRouter.didCallOpenCredentialDetail)
@@ -360,6 +330,12 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(mockRouter.didCallObtainConsentArgument, mockCaseId)
   }
 
+  func testDidOpenExternalLink() {
+    viewModel.didOpenExternalLink(url: URL(string: "mock_url")!)
+
+    XCTAssertEqual(mockRouter.didCallExternalLinkUrl, true)
+  }
+
   func testUpdateCredentialViewModels_light_setsViewModel() async {
     let credentialMocks: [Credential] = [.Mock.diploma, .Mock.sample]
     getCredentialListUseCase.executeReturnValue = credentialMocks
@@ -396,7 +372,6 @@ final class HomeViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
   private let mockCaseId = "caseId"
   private let mockCrendentials = Credential.Mock.array
   private let themeMock = "light"
@@ -412,6 +387,6 @@ final class HomeViewModelTests: XCTestCase {
   private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocolSpy!
   private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
-  // swiftlint:enable all
-
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping force_try

@@ -10,11 +10,16 @@ public typealias KeyAttestation = JWS<KeyAttestationPayload>
 
 // MARK: - KeyAttestationPayload
 
-public struct KeyAttestationPayload: JWTPayload, Codable, Equatable {
+public struct KeyAttestationPayload: JWTValidityPayload, Codable, Equatable {
 
   // MARK: Public
 
   public let type: String? = "key-attestation+jwt"
+  public let expiredAt: Date?
+
+  public var activatedAt: Date? {
+    issuedAt // key attestation is valid from issuance date
+  }
 
   // MARK: Internal
 
@@ -26,7 +31,6 @@ public struct KeyAttestationPayload: JWTPayload, Codable, Equatable {
     case attestedKeys = "attested_keys"
   }
 
-  let expiredAt: Date
   let issuer: String
   let issuedAt: Date
   let keyStorage: [KeyStorageSecurityLevel]

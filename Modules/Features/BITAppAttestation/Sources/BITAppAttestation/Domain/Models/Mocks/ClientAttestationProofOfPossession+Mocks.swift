@@ -23,7 +23,7 @@ extension ClientAttestationProofOfPossession: Mockable {
       let header = JWSHeader(algorithm: algorithm, type: type)
 
       // swiftlint: enable force_cast force_try
-      return ClientAttestationProofOfPossession(payload: payload, rawJWS: "", rawPayload: "", header: header)
+      return ClientAttestationProofOfPossession(payload: payload, rawPayload: "", rawJWS: "", header: header)
       // swiftlint: disable force_cast force_try
     }
   }

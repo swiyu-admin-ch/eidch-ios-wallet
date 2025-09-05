@@ -27,8 +27,8 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   func testSubmitPresentation_Success_JustRuns() async throws {
     try await useCase.execute(context: context)
 
-    XCTAssertEqual(spyRepository.submitPresentationFromPresentationRequestBodyReceivedArguments?.url.absoluteString, context.requestObject.responseUri)
-    XCTAssertEqual(spyRepository.submitPresentationFromPresentationRequestBodyReceivedArguments?.presentationRequestBody, mockPresentationRequestBody)
+    XCTAssertEqual(spyRepository.submitFromPresentationRequestBodyReceivedArguments?.url, context.requestObject.responseUri)
+    XCTAssertEqual(spyRepository.submitFromPresentationRequestBodyReceivedArguments?.presentationRequestBody, mockPresentationRequestBody)
 
     XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
     XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
@@ -39,8 +39,8 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     do {
       try await useCase.execute(context: .Mock.vcSdJwtSampleWithoutInputDescriptors)
       XCTFail("Should have thrown an exception")
-    } catch SubmitPresentationError.inputDescriptorsNotFound {
-      XCTAssertFalse(spyRepository.submitPresentationFromPresentationRequestBodyCalled)
+    } catch BITPresentation.SubmitPresentationError.inputDescriptorsNotFound {
+      XCTAssertFalse(spyRepository.submitFromPresentationRequestBodyCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -52,8 +52,8 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
-    } catch SubmitPresentationError.inputDescriptorsNotFound {
-      XCTAssertFalse(spyRepository.submitPresentationFromPresentationRequestBodyCalled)
+    } catch BITPresentation.SubmitPresentationError.inputDescriptorsNotFound {
+      XCTAssertFalse(spyRepository.submitFromPresentationRequestBodyCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -73,13 +73,13 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   }
 
   func testSubmitPresentation_RepositoryThrows_ThrowsException() async throws {
-    spyRepository.submitPresentationFromPresentationRequestBodyThrowableError = TestingError.error
+    spyRepository.submitFromPresentationRequestBodyThrowableError = TestingError.error
 
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(spyRepository.submitPresentationFromPresentationRequestBodyCalled)
+      XCTAssertTrue(spyRepository.submitFromPresentationRequestBodyCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -94,16 +94,16 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   private var mockCompatibleCredential: CompatibleCredential!
   private var mockInputDescriptor: InputDescriptor!
   private var useCase: SubmitPresentationUseCase!
-  private var spyRepository: PresentationRepositoryProtocolSpy!
+  private var spyRepository: PresentationRequestRepositoryProtocolSpy!
   private var spyPresentationRequestBodyGenerator: PresentationRequestBodyGeneratorProtocolSpy!
 
   // swiftlint:enable all
 
   private func setupMocks() {
-    spyRepository = PresentationRepositoryProtocolSpy()
+    spyRepository = PresentationRequestRepositoryProtocolSpy()
     spyPresentationRequestBodyGenerator = PresentationRequestBodyGeneratorProtocolSpy()
 
-    Container.shared.presentationRepository.register { self.spyRepository }
+    Container.shared.presentationRequestRepository.register { self.spyRepository }
     Container.shared.presentationRequestBodyGenerator.register { self.spyPresentationRequestBodyGenerator }
 
     mockCompatibleCredential = .Mock.BIT

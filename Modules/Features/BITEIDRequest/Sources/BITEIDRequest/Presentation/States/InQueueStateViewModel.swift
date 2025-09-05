@@ -1,10 +1,11 @@
+import BITEIDRequestShared
 import Foundation
 
 public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle
 
-  override init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
+  init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     guard let onlineSessionStartOpenAt = requestCase.state?.onlineSessionStartOpenAt else {
       throw RequestCaseViewStateError.invalidState
     }

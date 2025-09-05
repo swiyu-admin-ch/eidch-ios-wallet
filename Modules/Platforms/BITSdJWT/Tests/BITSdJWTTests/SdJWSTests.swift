@@ -23,7 +23,7 @@ final class SdJWSTests: XCTestCase {
     let sdJwt = TestSdJWTPayload.Mock.flat
     let keys = [Self.key1, Self.key2, Self.key3]
 
-    let newSdJwt = try sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
     let expected = String(data: TestSdJWTPayload.Mock.flatJwtData, encoding: .utf8)!
     XCTAssertEqual(expected, newSdJwt)
@@ -31,11 +31,11 @@ final class SdJWSTests: XCTestCase {
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringSomeKeys_ReturnsJwtWithRequiredDisclosures() throws {
     let sdJwt = TestSdJWTPayload.Mock.flat
-    let keys = [Self.key1, Self.key3]
+    let keys = [Self.key2]
 
-    let newSdJwt = try sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
-    let expected = [sdJwt.rawJWS, TestSdJWTPayload.Mock.disclosure1, TestSdJWTPayload.Mock.disclosure3, ""].joined(separator: SdJWSDecoder.sdJWTSeparator)
+    let expected = [sdJwt.rawJWS, TestSdJWTPayload.Mock.disclosure2, ""].joined(separator: SdJWSDecoder.sdJWTSeparator)
     XCTAssertEqual(expected, newSdJwt)
   }
 
@@ -43,7 +43,7 @@ final class SdJWSTests: XCTestCase {
     let sdJwt = TestSdJWTPayload.Mock.flat
     let keys: [String] = []
 
-    let newSdJwt = try sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
     XCTAssertEqual(sdJwt.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
   }
@@ -52,7 +52,7 @@ final class SdJWSTests: XCTestCase {
     let sdJwt = TestSdJWTPayload.Mock.flat
     let keys: [String] = ["otherKey", "otherKey2"]
 
-    let newSdJwt = try sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
     XCTAssertEqual(sdJwt.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
   }

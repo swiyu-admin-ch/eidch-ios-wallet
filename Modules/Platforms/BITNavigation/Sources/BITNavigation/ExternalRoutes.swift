@@ -4,13 +4,13 @@ import UIKit
 // MARK: - ExternalRoutes
 
 public protocol ExternalRoutes {
-  func settings()
+  func externalSettings()
   func openExternalLink(url: URL)
   func openExternalLink(url: URL, onComplete: (() -> Void)?)
 }
 
 extension ExternalRoutes {
-  public func settings() {
+  public func externalSettings() {
     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
     UIApplication.shared.open(url, options: [:], completionHandler: nil)
   }

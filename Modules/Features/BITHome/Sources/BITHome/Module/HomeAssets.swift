@@ -25,6 +25,9 @@ enum HomeAssets {
   static let emptyWalletIcon = ImageAsset(name: "EmptyWalletIcon")
   static let menuButton = ImageAsset(name: "MenuButton")
   static let scannerButton = ImageAsset(name: "ScannerButton")
+  static let menuHelp = ImageAsset(name: "menuHelp")
+  static let menuID = ImageAsset(name: "menuID")
+  static let menuSettings = ImageAsset(name: "menuSettings")
 }
 
 // MARK: - ImageAsset

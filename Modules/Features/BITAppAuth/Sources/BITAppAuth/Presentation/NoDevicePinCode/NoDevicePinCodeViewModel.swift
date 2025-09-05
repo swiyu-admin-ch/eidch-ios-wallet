@@ -27,7 +27,7 @@ public class NoDevicePinCodeViewModel {
   // MARK: Internal
 
   func openSettings() {
-    router.settings()
+    router.externalSettings()
   }
 
   // MARK: Private

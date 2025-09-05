@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import BITCredentialShared
 import BITCrypto
 import BITJWT
@@ -33,19 +34,15 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     AccessToken.Mock.sample
   }
 
-  func fetchCredential(from url: URL, credentialRequestBody: VcSdJwtCredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse {
-    CredentialResponse.Mock.sample
+  func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult {
+    .deferred(transactionId: "transactionId", accessToken: "accessToken", endpoint: "endpoint")
   }
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
     try TokenStatusList.Mock.credentialStatusSample()
   }
 
-  func fetchRequestObject(from url: URL) async throws -> Data {
-    RequestObject.Mock.sampleData
-  }
-
-  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [TrustStatement] {
+  func fetchTrustStatements(from url: URL, for subjectDid: String) async throws -> [TrustStatement] {
     try TrustStatement.Mock.trustStatementValidSample()
   }
 
@@ -121,15 +118,6 @@ extension TrustStatement {
       let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(TrustStatementPayload.self, from: trustStatementData)
       return [trustStatement]
     }
-  }
-}
-
-// MARK: - RequestObject.Mock
-
-extension RequestObject {
-  enum Mock {
-    static let sample: RequestObject = Mocker.decode(fromFile: "request-object-multipass")
-    static let sampleData: Data = Mocker.getData(fromFile: "request-object-multipass") ?? Data()
   }
 }
 

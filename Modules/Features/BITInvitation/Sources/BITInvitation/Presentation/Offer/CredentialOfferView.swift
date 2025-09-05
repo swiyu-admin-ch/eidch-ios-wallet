@@ -203,8 +203,10 @@ extension CredentialOfferView {
 
   @ViewBuilder
   private func issuerHeader() -> some View {
-    ActorHeaderView(issuer: viewModel.issuerDisplay, trustStatus: viewModel.issuerTrustStatus)
-      .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+    if let credentialViewModel = viewModel.credentialViewModel {
+      ActorHeaderView(issuer: credentialViewModel.issuerDisplay, trustStatus: viewModel.issuerTrustStatus)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+    }
   }
 
   @ViewBuilder

@@ -66,7 +66,7 @@ class CameraPermissionViewModel: ObservableObject {
   }
 
   func openSettings() {
-    router.settings()
+    router.externalSettings()
   }
 
   func close() {

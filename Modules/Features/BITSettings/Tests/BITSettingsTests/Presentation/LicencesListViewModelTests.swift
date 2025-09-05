@@ -51,25 +51,6 @@ final class LicencesListViewModelTests: XCTestCase {
     XCTAssertEqual(fetchPackagesUseCase.executeCallsCount, 1)
   }
 
-  @MainActor
-  func test_selectDefaultElement() async {
-    await testFetchPackages_withResults()
-
-    XCTAssertEqual(viewModel.packages.first, PackageDependency.Mock.sample)
-    XCTAssertFalse(viewModel.isPackageDetailPresented)
-  }
-
-  @MainActor
-  func test_selectElement() async {
-    await test_selectDefaultElement()
-
-    guard let package = viewModel.packages.first else { return XCTFail("No package available...") }
-
-    await viewModel.send(event: .selectPackage(package))
-    XCTAssertEqual(package, PackageDependency.Mock.sample)
-    XCTAssertTrue(viewModel.isPackageDetailPresented)
-  }
-
   // MARK: Private
 
   // swiftlint:disable all

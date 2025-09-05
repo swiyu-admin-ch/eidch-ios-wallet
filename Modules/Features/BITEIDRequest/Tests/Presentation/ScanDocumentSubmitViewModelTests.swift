@@ -1,10 +1,11 @@
-@testable import BITEIDRequest
-@testable import BITTestingCore
-
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
 import Factory
 import Spyable
 import XCTest
+@testable import BITEIDRequest
+@testable import BITEIDRequestShared
+@testable import BITTestingCore
+
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
 
 @MainActor
 class ScanDocumentSubmitViewModelTests: XCTestCase {

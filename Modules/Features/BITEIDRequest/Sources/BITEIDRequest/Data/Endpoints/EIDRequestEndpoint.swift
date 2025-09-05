@@ -11,6 +11,9 @@ enum EIDRequestEndpoint {
   case challenge
   case validateAttestations(ValidateAttestationsRequestBody)
   case startOnlineSession(caseId: String)
+  case pairWallet(caseId: String)
+  case startAutoVerification(String, AutoVerificationType)
+  case pairingState(caseId: String, pairingId: String)
 }
 
 // MARK: TargetType
@@ -34,6 +37,12 @@ extension EIDRequestEndpoint: TargetType {
       "api/rest/eid/challenge"
     case .startOnlineSession(let caseId):
       "api/rest/eid/\(caseId)/start-online-session"
+    case .pairWallet(let caseId):
+      "api/rest/eid/\(caseId)/pair-wallet"
+    case .startAutoVerification(let caseId, let autoVerificationType):
+      "api/rest/eid/\(caseId)/start-auto-verification/\(autoVerificationType.rawValue)"
+    case .pairingState(let caseId, let pairingId):
+      "api/rest/eid/\(caseId)/pair-wallet/\(pairingId)/state"
     }
   }
 
@@ -43,8 +52,11 @@ extension EIDRequestEndpoint: TargetType {
          .validateAttestations: .post
     case .challenge,
          .getStatus,
-         .legalRepresentantVerification: .get
-    case .startOnlineSession:
+         .legalRepresentantVerification,
+         .pairingState: .get
+    case .pairWallet,
+         .startAutoVerification,
+         .startOnlineSession:
       .put
     }
   }
@@ -57,6 +69,9 @@ extension EIDRequestEndpoint: TargetType {
     case .challenge,
          .getStatus,
          .legalRepresentantVerification,
+         .pairingState,
+         .pairWallet,
+         .startAutoVerification,
          .startOnlineSession:
       .requestPlain
     }
@@ -69,6 +84,9 @@ extension EIDRequestEndpoint: TargetType {
       NetworkHeader.standard.raw
     case .getStatus,
          .legalRepresentantVerification,
+         .pairingState,
+         .pairWallet,
+         .startAutoVerification,
          .startOnlineSession,
          .submit:
       nil // Handle by ClientAttestationPlugin

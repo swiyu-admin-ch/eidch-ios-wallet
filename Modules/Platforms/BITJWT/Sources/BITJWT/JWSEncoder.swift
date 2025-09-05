@@ -77,8 +77,8 @@ public struct JWSEncoder: JWSEncoderProtocol {
 
     return JWS(
       payload: value,
-      rawJWS: rawJWS,
       rawPayload: strRawPayload,
+      rawJWS: rawJWS,
       header: JWSHeader(algorithm: algorithm, type: value.type, jwk: jwk))
   }
 

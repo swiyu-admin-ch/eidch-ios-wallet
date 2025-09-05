@@ -20,6 +20,7 @@ final class PinCodeManagerTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
+    Container.shared.reset()
     spyKeyDeriver = KeyDerivableSpy()
     spyEncrypter = EncryptableSpy()
     spyPepperRepository = PepperRepositoryProtocolSpy()

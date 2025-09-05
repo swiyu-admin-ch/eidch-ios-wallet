@@ -114,6 +114,7 @@ public enum ThemingAssets {
     public static let chrome = ColorAsset(name: "Materials/Chrome")
   }
 
+  public static let back = ImageAsset(name: "Back")
   public static let close = ImageAsset(name: "Close")
   public static let noInternet = ImageAsset(name: "NoInternet")
   public static let backIndicatorBackgroundDark = ImageAsset(name: "back-indicator-background-dark")

@@ -39,7 +39,8 @@ extension FetchCredentialContext {
         credentialIssuer: "credential-issuer",
         holderBindingContext: holderBindingContext,
         accessToken: AccessToken(cNonce: "cNonce", accessToken: "access-token"),
-        credentialEndpoint: mockEndpointsUrl)
+        credentialEndpoint: mockEndpointsUrl,
+        deferredCredentialEndpoint: URL(string: "mock_deferred_credential_endpoint"))
     }
   }
 }

@@ -2,6 +2,7 @@ import Factory
 import Foundation
 import XCTest
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 
 final class SaveEIDRequestFilesUseCaseTests: XCTestCase {
 

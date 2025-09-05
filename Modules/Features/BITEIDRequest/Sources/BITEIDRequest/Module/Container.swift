@@ -1,4 +1,5 @@
 import BITAVWrapper
+import BITEIDRequestShared
 import Factory
 import Foundation
 
@@ -41,6 +42,10 @@ extension Container {
     self { WalletPairingViewModel(router: $0) }
   }
 
+  var walletPairingListViewModel: ParameterFactory<EIDRequestInternalRoutes, WalletPairingListViewModel> {
+    self { WalletPairingListViewModel(router: $0) }
+  }
+
   var avWelcomeViewModel: ParameterFactory<EIDRequestInternalRoutes, AVWelcomeViewModel> {
     self { AVWelcomeViewModel(router: $0) }
   }
@@ -59,6 +64,10 @@ extension Container {
 
   var legalRepresentantQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantQRCodeViewModel> {
     self { LegalRepresentantQRCodeViewModel(router: $0, caseId: $1) }
+  }
+
+  var avDevicePairingQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, DevicePairingDelegate?), AVDevicePairingQRCodeViewModel> {
+    self { AVDevicePairingQRCodeViewModel(router: $0, delegate: $1) }
   }
 
   var legalRepresentantConsentStateViewModel: ParameterFactory<(EIDRequestInternalRoutes, RequestCaseViewState), LegalRepresentantConsentStateViewModel> {
@@ -93,6 +102,10 @@ extension Container {
 
   var avIntroSelfieVideoViewModel: ParameterFactory<EIDRequestInternalRoutes, AVIntroSelfieVideoViewModel> {
     self { AVIntroSelfieVideoViewModel(router: $0) }
+  }
+
+  var nfcScanViewModel: ParameterFactory<EIDRequestInternalRoutes, NFCScanViewModel> {
+    self { NFCScanViewModel(router: $0) }
   }
 
 }
@@ -215,4 +228,41 @@ extension Container {
   var startOnlineSessionUseCase: Factory<StartOnlineSessionUseCaseProtocol> {
     self { StartOnlineSessionUseCase() }
   }
+
+  var fetchWalletPairingOfferUseCase: Factory<FetchWalletPairingOfferUseCaseProtocol> {
+    self {
+      FetchWalletPairingOfferUseCase()
+    }
+  }
+
+  var pairWalletUseCase: Factory<PairWalletUseCaseProtocol> {
+    self { PairWalletUseCase() }
+  }
+
+  var fetchWalletPairingStateUseCase: Factory<FetchWalletPairingStateUseCaseProtocol> {
+    self {
+      FetchWalletPairingStateUseCase()
+    }
+  }
+
+  var fetchEIDRequestStatusUseCase: Factory<FetchEIDRequestStatusUseCaseProtocol> {
+    self { FetchEIDRequestStatusUseCase() }
+  }
+
+  var startAutoVerificationUseCase: Factory<StartAutoVerificationUseCaseProtocol> {
+    self { StartAutoVerificationUseCase() }
+  }
+
+  var walletPairingDateFormatter: Factory<DateFormatter> {
+    self { DateFormatter(format: "dd.MM.yyyy HH:mm") }
+  }
+}
+
+@MainActor
+extension Container {
+
+  var walletPairingPollingManager: Factory<WalletPairingPollingProtocol> {
+    self { WalletPairingPollingManager() }
+  }
+
 }

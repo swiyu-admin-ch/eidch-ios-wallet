@@ -1,4 +1,5 @@
 import BITAVWrapper
+import BITEIDRequestShared
 import Foundation
 
 // MARK: - ScanDocumentOutput
@@ -9,8 +10,7 @@ public struct ScanDocumentOutput: Equatable {
 
   public init(_ packageResult: AVBeamPackageResult, identityType: IdentityType) throws {
     mrz = try MRZ(from: packageResult)
-    packageResult.data.getExtractedData()
-    files = packageResult.files.map { EIDRequestCaseFile($0, category: .documentScan) }
+    files = packageResult.data.files.map { EIDRequestCaseFile($0, category: .documentScan) }
     self.identityType = identityType
   }
 

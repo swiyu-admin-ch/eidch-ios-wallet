@@ -35,7 +35,7 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
   var isBiometricEnabled = false
 
   var title: String {
-    isBiometricEnabled ? L10n.tkMenuDeactivatingBiometricsIosTitle(biometricType.text) : L10n.tkMenuActivatingBiometricsIosTitle(biometricType.text)
+    isBiometricEnabled ? L10n.tkSettingsSecurityPrivacyBiometricsDisablePrimary(biometricType.text) : L10n.tkSettingsSecurityPrivacyBiometricsEnablePrimary(biometricType.text)
   }
 
   var isSubmitEnabled: Bool {
@@ -74,7 +74,7 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
   }
 
   func openSettings() {
-    router.settings()
+    router.externalSettings()
   }
 
   // MARK: Private
@@ -117,7 +117,7 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
 
     var message: String? = nil
     if attemptLeft < attemptsLimit {
-      message = L10n.tkChangepasswordError1IosNote2(attemptLeft)
+      message = L10n.tkChangepasswordError1Note2(attemptLeft)
     }
 
     withAnimation {
@@ -136,7 +136,7 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
       return lockWallet()
     }
 
-    let message = L10n.tkChangepasswordError1IosNote2(attemptLeft)
+    let message = L10n.tkChangepasswordError1Note2(attemptLeft)
     withAnimation {
       vibrate()
       inputFieldMessage = message

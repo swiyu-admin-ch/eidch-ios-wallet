@@ -1,10 +1,10 @@
 import BITCore
 import BITNetworking
-import BITSdJWT
 import Factory
 import XCTest
 @testable import BITJWT
 @testable import BITOpenID
+@testable import BITSdJWT
 @testable import BITSdJWTMocks
 
 // MARK: - OpenIDRepository
@@ -159,30 +159,35 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   // MARK: - Credential
 
-  func testFetchCredential_success() async throws {
-    let accessToken = AccessToken.Mock.sample
-    let credentialRequestBody = VcSdJwtCredentialRequestBody.Mock.sample
+  func testFetchCredential_success_returnsCredential() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData)
 
-    mockResponse(code: 200, data: CredentialResponse.Mock.sampleData)
+    let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequestBody: credentialRequestBody)
 
-    let credentialResponse = try await repository.fetchCredential(from: mockUrl, credentialRequestBody: credentialRequestBody, acccessToken: accessToken)
-    XCTAssertEqual(credentialResponse.rawCredential, CredentialResponse.Mock.sample.rawCredential)
-    XCTAssertNil(credentialResponse.transactionId)
-    XCTAssertNil(credentialResponse.cNonce)
-    XCTAssertNil(credentialResponse.cNonceExpiresIn)
+    if case .credential(let credential) = result {
+      XCTAssertEqual(credential.raw, mockCredentialResponse.rawCredential)
+    }
   }
 
-  func testFetchCredential_failure() async throws {
-    let accessToken = AccessToken.Mock.sample
-    let credentialRequestBody = VcSdJwtCredentialRequestBody.Mock.sample
-    mockResponse(code: 500)
+  func testFetchCredential_success_returnsDeferredCredential() async throws {
+    mockResponse(code: 202, data: mockCredentialResponseDeferredData)
+
+    let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequestBody: credentialRequestBody)
+
+    if case .deferred(let transactionId, let accessToken, _) = result {
+      XCTAssertEqual(transactionId, mockCredentialResponseDeferred.transactionId)
+      XCTAssertEqual(accessToken, mockFetchCredentialContext.accessToken.accessToken)
+    }
+  }
+
+  func testFetchCredential_invalidCredentialResponseSuccessCode_throws() async throws {
+    mockResponse(code: 201, data: mockCredentialResponseDeferredData)
 
     do {
-      _ = try await repository.fetchCredential(from: mockUrl, credentialRequestBody: credentialRequestBody, acccessToken: accessToken)
+      _ = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequestBody: credentialRequestBody)
       XCTFail("Should have thrown an error")
     } catch {
-      guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
-      XCTAssertEqual(error.status, .internalServerError)
+      XCTAssertEqual(error as? OpenIdRepositoryError, .unsupportedCredentialStatusCode)
     }
   }
 
@@ -207,72 +212,38 @@ final class OpenIDRepositoryTests: XCTestCase {
     }
   }
 
-  // MARK: - RequestObject
-
-  func testFetchRequestObjectSuccess() async throws {
-    let expectedRequestObject = RequestObject.Mock.VcSdJwt.jsonSampleData
-    mockResponse(code: 200, data: expectedRequestObject)
-
-    let requestObject = try await repository.fetchRequestObject(from: mockUrl)
-
-    XCTAssertEqual(String(data: requestObject, encoding: .utf8), String(data: expectedRequestObject, encoding: .utf8))
-  }
-
-  func testFetchRequestObject_GoneError_ReturnsPresentationProcessClosedError() async throws {
-    mockResponse(code: 410)
-
-    do {
-      _ = try await repository.fetchRequestObject(from: mockUrl)
-      XCTFail("Should have thrown an error")
-    } catch {
-      guard let error = error as? OpenIdRepositoryError else { return XCTFail("Expected a OpenIdRepositoryError") }
-      XCTAssertEqual(error, .presentationProcessClosed)
-    }
-  }
-
-  func testFetchRequestObject_NotFoundError_ReturnsAuthorizationRequestObjectNotFoundError() async throws {
-    mockResponse(code: 404)
-
-    do {
-      _ = try await repository.fetchRequestObject(from: mockUrl)
-      XCTFail("Should have thrown an error")
-    } catch {
-      guard let error = error as? OpenIdRepositoryError else { return XCTFail("Expected a OpenIdRepositoryError") }
-      XCTAssertEqual(error, .authorizationRequestObjectNotFound)
-    }
-  }
-
-  func testFetchRequestObjectFailure() async throws {
-    mockResponse(code: 500)
-
-    do {
-      _ = try await repository.fetchRequestObject(from: mockUrl)
-      XCTFail("Should have thrown an error")
-    } catch {
-      guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
-      XCTAssertEqual(error.status, .internalServerError)
-    }
-  }
-
   // MARK: - Trust Statements
 
   func testTrustStatementsSuccess() async throws {
-    let expectedStatements = [ TrustStatementPayload.Mock.sdJwtSample, TrustStatementPayload.Mock.sdJwtSample]
+    let expectedStatements = [TrustStatementPayload.Mock.allFieldsRawSdJwt, TrustStatementPayload.Mock.allFieldsRawSdJwt]
     let mockStatementData = try JSONEncoder().encode(expectedStatements)
     mockResponse(code: 200, data: mockStatementData)
 
-    let trustStatements = try await repository.fetchTrustStatements(from: mockUrl, issuerDid: "did")
+    let trustStatements = try await repository.fetchTrustStatements(from: mockUrl, for: "did")
 
     XCTAssertEqual(trustStatements.count, 2)
-    XCTAssertEqual(trustStatements[0].payload, TrustStatementPayload.Mock.validSamplePayload)
-    XCTAssertEqual(trustStatements[1].payload, TrustStatementPayload.Mock.validSamplePayload)
+    XCTAssertEqual(trustStatements[0].payload, TrustStatementPayload.Mock.allFields.payload)
+    XCTAssertEqual(trustStatements[1].payload, TrustStatementPayload.Mock.allFields.payload)
+  }
+
+  func testTrustStatementsDecodingError() async throws {
+    let expectedStatements = ["invalidTrustStatement"]
+    let mockStatementData = try JSONEncoder().encode(expectedStatements)
+    mockResponse(code: 200, data: mockStatementData)
+
+    do {
+      _ = try await repository.fetchTrustStatements(from: mockUrl, for: "did")
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? SdJWSDecoderError, .invalidRawSdJwt)
+    }
   }
 
   func testTrustStatementsNetworkError() async throws {
     mockResponse(code: 500)
 
     do {
-      _ = try await repository.fetchTrustStatements(from: mockUrl, issuerDid: "did")
+      _ = try await repository.fetchTrustStatements(from: mockUrl, for: "did")
       XCTFail("Should have thrown an error")
     } catch {
       guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
@@ -307,6 +278,13 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   // swiftlint: disable all
   private let mockUrl = URL(string: "some://url")!
+  private let mockCredentialResponse = CredentialResponse.Mock.sample
+  private let mockCredentialResponseData = CredentialResponse.Mock.sampleData
+  private let mockCredentialResponseDeferred = CredentialResponse.Mock.sampleDeferred
+  private let mockCredentialResponseDeferredData = CredentialResponse.Mock.sampleDeferredData
+  private let mockFetchCredentialContext = FetchCredentialContext.Mock.sample
+  private let credentialRequestBody = VcSdJwtCredentialRequestBody.Mock.sample
+
   // swiftlint: enable all
   private var repository = OpenIDRepository()
 

@@ -1,10 +1,14 @@
+import BITEIDRequestShared
+import Foundation
+
 public class RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle
 
-  public init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
+  public init(requestCase: EIDRequestCase, id: String = UUID().uuidString, delegate: RequestCaseViewStateDelegate? = nil) throws {
     requestCaseId = requestCase.id
     fullName = "\(requestCase.firstName) \(requestCase.lastName)"
+    self.id = id
     self.delegate = delegate
 
     guard let consent = requestCase.state?.legalRepresentantConsent else {
@@ -21,6 +25,7 @@ public class RequestCaseStateBaseViewModel {
 
   // MARK: Internal
 
+  let id: String
   let fullName: String
   let requestCaseId: String
 

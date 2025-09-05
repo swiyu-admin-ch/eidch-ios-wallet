@@ -20,8 +20,10 @@ class LegalRepresentantConsentStateViewModel {
     switch state {
     case .inQueue: Assets.timer.swiftUIImage
     case .readyForOnlineSession: getReadyForAutoVerificationImage()
-    case .expired: Assets.closeCircle.swiftUIImage
-    case .unknown: Assets.closeCircle.swiftUIImage
+    case .agentReview,
+         .declined,
+         .expired,
+         .unknown: Assets.closeCircle.swiftUIImage
     }
   }
 
@@ -30,7 +32,9 @@ class LegalRepresentantConsentStateViewModel {
     case .inQueue: getInQueueStatePrimaryText()
     case .readyForOnlineSession: getReadyForAVStatePrimaryText()
     case .expired: L10n.tkGetEidLegalRepresentantPendingConsentExpiredPrimary
-    case .unknown: ""
+    case .agentReview,
+         .declined,
+         .unknown: ""
     }
   }
 
@@ -38,7 +42,9 @@ class LegalRepresentantConsentStateViewModel {
     switch state {
     case .inQueue: getInQueueStateSecondaryText()
     case .expired: L10n.tkGetEidLegalRepresentantPendingConsentExpiredSecondary
-    case .readyForOnlineSession,
+    case .agentReview,
+         .declined,
+         .readyForOnlineSession,
          .unknown: ""
     }
   }

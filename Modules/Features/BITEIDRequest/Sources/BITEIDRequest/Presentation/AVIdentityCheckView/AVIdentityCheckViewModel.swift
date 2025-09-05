@@ -1,3 +1,5 @@
+import Factory
+
 class AVIdentityCheckViewModel {
 
   // MARK: Lifecycle
@@ -8,8 +10,23 @@ class AVIdentityCheckViewModel {
 
   // MARK: Internal
 
-  func primaryAction() {
-    router.recordDocument()
+  @MainActor
+  func primaryAction() async {
+    do {
+      guard let caseId = router.context.caseId else {
+        throw EIDRequestError.missingCaseId
+      }
+
+      let response = try await startAutoVerificationUseCase.execute(for: caseId)
+
+      guard response.isNFCRequired else {
+        return router.recordDocument()
+      }
+
+      return router.nfcScan()
+    } catch {
+      #warning("TODO: Handle error case here when implemented")
+    }
   }
 
   func close() {
@@ -19,4 +36,6 @@ class AVIdentityCheckViewModel {
   // MARK: Private
 
   private let router: EIDRequestInternalRoutes
+
+  @Injected(\.startAutoVerificationUseCase) private var startAutoVerificationUseCase
 }

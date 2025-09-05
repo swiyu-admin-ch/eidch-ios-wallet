@@ -6,6 +6,7 @@ import UIKit
 import XCTest
 @testable import BITAVWrapper
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITTestingCore
 
 // MARK: - RecordSelfieViewModelTests

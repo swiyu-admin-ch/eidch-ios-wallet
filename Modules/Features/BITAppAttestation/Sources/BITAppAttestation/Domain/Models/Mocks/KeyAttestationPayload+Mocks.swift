@@ -12,9 +12,8 @@ extension KeyAttestationPayload: Mockable {
     static let samplePayload: KeyAttestationPayload = Mocker.decode(fromFile: "key-attestation-valid", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let sampleUnsupportedAlgorithm: KeyAttestation = encodePayload(fromFile: "key-attestation-valid", algorithm: .ES384)
     static let sampleInvalidKid: KeyAttestation = encodePayload(fromFile: "key-attestation-valid", kid: "did:tdw:mock.com#key-1")
+    static let sampleMissingExpiredAt: KeyAttestation = encodePayload(fromFile: "key-attestation-missing-expired-at")
     static let sampleNotTrusted: KeyAttestation = encodePayload(fromFile: "key-attestation-not-trusted")
-    static let sampleInvalidIssueAt: KeyAttestation = encodePayload(fromFile: "key-attestation-invalid-issue-at")
-    static let sampleExpired: KeyAttestation = encodePayload(fromFile: "key-attestation-expired")
     static let sampleUnsupportedKeyStorage: KeyAttestation = encodePayload(fromFile: "key-attestation-unsupported-key-storage")
     static let sampleInvalidAttestedKeys: KeyAttestation = encodePayload(fromFile: "key-attestation-invalid-attested-keys")
     static let sampleEmptyAttestedKeys: KeyAttestation = encodePayload(fromFile: "key-attestation-empty-attested-keys")
@@ -34,8 +33,8 @@ extension KeyAttestationPayload: Mockable {
       let header = JWSHeader(algorithm: algorithm, type: type, keyIdentifier: kid)
 
       // swiftlint: enable force_cast force_try
-      let payload = JWS(payload: keyAttestation, rawJWS: "", rawPayload: "", header: header)
-      return KeyAttestation(payload: payload.payload, rawJWS: payload.rawJWS, rawPayload: payload.rawPayload, header: header)
+      let payload = JWS(payload: keyAttestation, rawPayload: "", rawJWS: "", header: header)
+      return KeyAttestation(payload: payload.payload, rawPayload: payload.rawPayload, rawJWS: payload.rawJWS, header: header)
       // swiftlint: disable force_cast force_try
     }
   }

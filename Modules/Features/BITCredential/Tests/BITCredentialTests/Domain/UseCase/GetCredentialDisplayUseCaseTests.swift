@@ -39,14 +39,6 @@ final class GetCredentialDisplayUseCaseTests: XCTestCase {
     XCTAssertEqual(result?.name, "de-CH dark")
   }
 
-  func testExecute_notMatchingPreferredLanguages_fallsBackToDefaultAppLanguageWithoutTheme() {
-    mockPreferredLanguages(["it"])
-
-    let result = useCase.execute(for: credential.displays, colorScheme: "dark")
-
-    XCTAssertEqual(result?.name, "en-CH no theme")
-  }
-
   func testExecute_preferredWithoutTheme_returnsFirstOfPreferred() {
     mockPreferredLanguages(["fr"])
 
@@ -55,15 +47,12 @@ final class GetCredentialDisplayUseCaseTests: XCTestCase {
     XCTAssertEqual(result?.name, "fr-CH no theme")
   }
 
-  func testExecute_notMatchingPreferredOrDefaultLanguage_returnsFirstInTheme() {
+  func testExecute_notMatchingPreferredLanguage_returnsFirstInTheme() {
     mockPreferredLanguages([])
-    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.italian.rawValue
 
     let result = useCase.execute(for: credential.displays, colorScheme: "dark")
 
     XCTAssertEqual(result?.name, "de-CH dark")
-
-    UserLanguageCode.defaultAppLanguageCode = UserLocale.LanguageIdentifier.english.rawValue
   }
 
   // MARK: Private

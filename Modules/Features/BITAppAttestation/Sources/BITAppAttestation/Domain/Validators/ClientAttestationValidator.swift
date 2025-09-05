@@ -30,17 +30,17 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
       }
 
       guard
+        clientAttestation.payload.expiredAt != nil,
+        clientAttestation.payload.activatedAt != nil,
         attestationServiceTrustedDids.contains(clientAttestation.payload.issuer),
         hasValidSubject(clientAttestation),
         hasValidWalletName(clientAttestation),
-        clientAttestation.payload.activatedAt <= now,
-        hasValidBindingKey(clientAttestation.payload.bindingKey.jwk),
-        clientAttestation.payload.expiredAt >= now
+        hasValidBindingKey(clientAttestation.payload.bindingKey.jwk)
       else {
         throw ClientAttestationValidatorError.invalidPayload
       }
 
-      return try await jwsSignatureValidator.validate(clientAttestation, did: clientAttestation.payload.issuer)
+      return try await jwsValidator.validate(clientAttestation, issuerDid: clientAttestation.payload.issuer)
     } catch {
       return false
     }
@@ -55,7 +55,7 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
 
   @Injected(\.jsonCanonicalizer) private var jsonCanonicalizer: JsonCanonicalizerProtocol
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
-  @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
+  @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
   @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
   @Injected(\.appIdentifierRepository) private var appIdentifierRepository: AppIdentifierRepositoryProtocol
 

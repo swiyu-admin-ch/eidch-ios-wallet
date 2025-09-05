@@ -2,6 +2,7 @@
 import BITL10n
 import XCTest
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 
 @MainActor
 class LegalRepresentantConsentStateViewModelTests: XCTestCase {

@@ -1,9 +1,10 @@
-@testable import BITEIDRequest
-
-// swiftlint:disable implicitly_unwrapped_optional
 import Factory
 import RealmSwift
 import XCTest
+@testable import BITEIDRequest
+@testable import BITEIDRequestShared
+
+// swiftlint:disable implicitly_unwrapped_optional
 
 final class EIDRequestCaseRepositoryTests: XCTestCase {
 

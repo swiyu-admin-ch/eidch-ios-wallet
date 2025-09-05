@@ -92,4 +92,8 @@ extension Container {
   public var databaseCredentialRepository: Factory<CredentialRepositoryProtocol> {
     self { RealmCredentialRepository() }
   }
+
+  public var deferredCredentialRepository: Factory<DeferredCredentialRepositoryProtocol> {
+    self { DeferredCredentialRepository() }
+  }
 }

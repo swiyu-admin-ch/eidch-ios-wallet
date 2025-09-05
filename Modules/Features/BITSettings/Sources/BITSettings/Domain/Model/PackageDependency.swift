@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PackageDependency
 
-public struct PackageDependency: Codable, Identifiable, Equatable {
+public struct PackageDependency: Codable, Identifiable, Equatable, Hashable {
   public var id: UUID {
     UUID()
   }

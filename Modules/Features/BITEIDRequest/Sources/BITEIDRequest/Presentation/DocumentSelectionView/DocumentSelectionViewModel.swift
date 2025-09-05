@@ -1,4 +1,5 @@
 import AVFoundation
+import BITEIDRequestShared
 import SwiftUI
 
 class DocumentSelectionViewModel: ObservableObject {

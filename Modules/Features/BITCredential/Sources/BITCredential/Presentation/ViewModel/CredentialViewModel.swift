@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - CredentialViewModel
 
-public struct CredentialViewModel: Identifiable {
+public class CredentialViewModel: Identifiable {
 
   // MARK: Lifecycle
 

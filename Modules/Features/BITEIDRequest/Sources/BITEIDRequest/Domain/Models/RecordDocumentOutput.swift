@@ -1,4 +1,5 @@
 import BITAVWrapper
+import BITEIDRequestShared
 import Foundation
 
 public struct RecordDocumentOutput {

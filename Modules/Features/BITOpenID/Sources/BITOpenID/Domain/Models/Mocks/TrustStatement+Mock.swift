@@ -10,17 +10,16 @@ import Foundation
 extension TrustStatementPayload: Mockable {
   struct Mock {
 
-    static let allFieldsData: Data = getData(fromFile: "trust-statement-all-fields", ofType: "txt", bundle: Bundle.module) ?? Data()
+    // MARK: Internal
+
+    static let allFieldsRawSdJwt: String = getString(fromFile: "trust-statement-all-fields-sd-jwt", bundle: Bundle.module)
+    static let allFields: TrustStatement = encodePayload(fromFile: "trust-statement-all-fields")
 
     static let validSample: TrustStatement = encodePayload(fromFile: "trust-statement-valid-sample")
-    static let validSamplePayload: TrustStatementPayload = decode(fromFile: "trust-statement-valid-sample", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    static let invalidVct: TrustStatement = encodePayload(fromFile: "trust-statement-invalid-vct")
     static let wrongSubject: TrustStatement = encodePayload(fromFile: "trust-statement-wrong-subject")
     static let wrongAlgorithm: TrustStatement = encodePayload(fromFile: "trust-statement-valid-sample", jwtAlgorithm: JWTAlgorithm.ES384)
-    static let notYetValid: TrustStatement = encodePayload(fromFile: "trust-statement-not-yet-valid-sample")
-    static let expired: TrustStatement = encodePayload(fromFile: "trust-statement-expired-sample")
     static let validSampleItalian: TrustStatement = encodePayload(fromFile: "trust-statement-valid-sample-italian")
-    static let sampleWithoutNameOrLogo: TrustStatement = encodePayload(fromFile: "trust-statement-without-logo-name")
-    static let sdJwtSample: String = getString(fromFile: "trust-statement-sd-jwt", bundle: Bundle.module)
 
     static func encodePayload(fromFile filename: String, jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256, bundle: Bundle = Bundle.module) -> TrustStatement {
       let trustStatement: TrustStatementPayload = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
@@ -29,8 +28,11 @@ extension TrustStatementPayload: Mockable {
       return createSdJWSMock(from: trustStatement, rawPayload: payload, jwtAlgorithm: jwtAlgorithm)
     }
 
-    static func createSdJWSMock(from trustStatement: TrustStatementPayload, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> TrustStatement {
-      SdJWS(payload: trustStatement, rawPayload: rawPayload, header: JWSHeader(algorithm: jwtAlgorithm), raw: "raw", rawJWS: "rawJWS", disclosableClaims: [])
+    // MARK: Private
+
+    private static func createSdJWSMock(from trustStatement: TrustStatementPayload, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> TrustStatement {
+      let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
+      return TrustStatement(jws: jws, payload: trustStatement, resolvedPayload: rawPayload, rawSdJWS: "rawSdJWS", disclosableClaims: [])
     }
   }
 }

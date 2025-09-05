@@ -64,14 +64,14 @@ final class OpenIDEndpointTests: XCTestCase {
   func testTrustStatements() throws {
     let baseUrl = "https://example.com"
     let did = "did:example:1234"
-    let expectedEndpoint = "api/v1/truststatements/\(did)"
+    let expectedEndpoint = "api/v1/truststatements/identity/\(did)"
 
     guard let url = URL(string: baseUrl) else {
       XCTFail("Error while trying to build URL")
       return
     }
 
-    let endpoint = URL(target: OpenIDEndpoint.trustStatements(url: url, issuerDid: did))
+    let endpoint = URL(target: OpenIDEndpoint.trustStatements(url: url, subjectDid: did))
     XCTAssertEqual("\(baseUrl)/\(expectedEndpoint)", endpoint.absoluteString)
   }
 
@@ -110,18 +110,6 @@ final class OpenIDEndpointTests: XCTestCase {
     }
 
     let endpoint = URL(target: OpenIDEndpoint.publicKeyInfo(jwksUrl: url))
-    XCTAssertEqual("\(baseUrl)", endpoint.absoluteString)
-  }
-
-  func testRequestObject() throws {
-    let baseUrl = "https://example.com"
-
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
-
-    let endpoint = URL(target: OpenIDEndpoint.requestObject(url: url))
     XCTAssertEqual("\(baseUrl)", endpoint.absoluteString)
   }
 

@@ -41,22 +41,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.issuerTrustStatus, .unverified)
   }
 
-  func testUpdateCredentialViewModel_withoutTrustStatement_setsIssuerDisplayFromViewModel() {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: nil, router: router)
-
-    viewModel.updateCredentialViewModel(with: themeMock)
-
-    XCTAssertEqual(viewModel.issuerDisplay, viewModel.credentialViewModel?.issuerDisplay)
-  }
-
-  func testUpdateCredentialViewModel_withTrustStatement_setsIssuerDisplayFromUseCase() {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: trustStatementMock, router: router)
-
-    viewModel.updateCredentialViewModel(with: themeMock)
-
-    XCTAssertEqual(viewModel.issuerDisplay, issuerDisplaysMock)
-  }
-
   func testUpdateCredentialViewModel_light_setsViewModel() {
     viewModel.updateCredentialViewModel(with: themeMock)
 
@@ -69,9 +53,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, themeMock)
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, credentialMock.displays)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReceivedArguments?.credentialId, credentialMock.id)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReceivedArguments?.trustStatement, trustStatementMock)
-    XCTAssertEqual(getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReceivedArguments?.fallbackDisplay, viewModel.credentialViewModel?.issuerDisplay)
   }
 
   func testAccept_loadingStateThencloseCalled() async {
@@ -129,7 +110,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private var router: MockCredentialOfferRouter!
   private var delayAfterAcceptingCredential: UInt64 = 0
   private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
-  private var getCredentialIssuerDisplayUseCaseSpy = GetCredentialIssuerDisplayUseCaseProtocolSpy()
   private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
   // swiftlint:enable all
 
@@ -138,12 +118,11 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private func registerMocks() {
     Container.shared.delayAfterAcceptingCredential.register { self.delayAfterAcceptingCredential }
     Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCaseSpy }
-    Container.shared.getCredentialIssuerDisplayUseCase.register { self.getCredentialIssuerDisplayUseCaseSpy }
     Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
+    Container.shared.preferredUserLanguageCodes.register { ["de"] }
   }
 
   private func createSuccessState() {
-    getCredentialIssuerDisplayUseCaseSpy.executeForTrustStatementFallbackDisplayReturnValue = issuerDisplaysMock
     getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = .Mock.lightEnglish
   }
 

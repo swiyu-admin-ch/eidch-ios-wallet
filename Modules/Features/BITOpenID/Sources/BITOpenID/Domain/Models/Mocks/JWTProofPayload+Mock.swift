@@ -10,7 +10,7 @@ extension JWTProofPayload: Mockable {
     private static func encodePayload(fromFile filename: String) -> JWS<JWTProofPayload> {
       let header = JWSHeader(algorithm: JWTAlgorithm.ES256)
       let payload: JWTProofPayload = decode(fromFile: filename, bundle: Bundle.module)
-      return JWS(payload: payload, rawJWS: "rawJWS", rawPayload: "rawPayload", header: header)
+      return JWS(payload: payload, rawPayload: "rawPayload", rawJWS: "rawJWS", header: header)
     }
   }
 }

@@ -11,11 +11,13 @@ public typealias ClientAttestation = JWS<ClientAttestationPayload>
 
 // MARK: - ClientAttestationPayload
 
-public struct ClientAttestationPayload: JWTPayload, Codable, Equatable {
+public struct ClientAttestationPayload: JWTValidityPayload, Codable, Equatable {
 
   // MARK: Public
 
   public let type: String? = "oauth-client-attestation+jwt"
+  public let expiredAt: Date?
+  public let activatedAt: Date?
 
   // MARK: Internal
 
@@ -28,11 +30,9 @@ public struct ClientAttestationPayload: JWTPayload, Codable, Equatable {
     case walletName = "wallet_name"
   }
 
-  let expiredAt: Date
   let issuer: String
   let subject: String
   let bindingKey: BindingKey
-  let activatedAt: Date
   let walletName: String
 }
 
@@ -47,7 +47,7 @@ extension ClientAttestation {
 
     let payload = try JWSDecoder().decode(ClientAttestationPayload.self, from: data)
 
-    self.init(payload: payload.payload, rawJWS: entity.attestation, rawPayload: payload.rawPayload, header: payload.header)
+    self.init(payload: payload.payload, rawPayload: payload.rawPayload, rawJWS: entity.attestation, header: payload.header)
   }
 
   // MARK: Internal

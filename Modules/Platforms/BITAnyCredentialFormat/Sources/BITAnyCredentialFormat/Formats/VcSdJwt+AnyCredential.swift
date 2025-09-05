@@ -5,6 +5,10 @@ import Foundation
 
 extension VcSdJwt: AnyCredential {
 
+  public var raw: String {
+    rawSdJWS
+  }
+
   public var format: String {
     CredentialFormat.vcSdJwt.rawValue
   }
@@ -32,9 +36,9 @@ extension VcSdJwt: AnyCredential {
   public func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any?] {
     switch claimSet {
     case .all:
-      rawPayload
+      resolvedPayloadDictionary
     case .nonTechnical:
-      rawPayload.filter { !SdJWSDecoder.reservedClaimNames.contains($0.key) }
+      resolvedPayloadDictionary.filter { !SdJWSDecoder.reservedClaimNames.contains($0.key) }
     }
   }
 }

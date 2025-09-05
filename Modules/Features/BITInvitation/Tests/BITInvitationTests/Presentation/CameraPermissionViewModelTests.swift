@@ -51,7 +51,7 @@ final class CameraPermissionViewModelTests: XCTestCase {
 
     viewModel.buttonAction()
 
-    XCTAssertTrue(mockRouter.didCallSettings)
+    XCTAssertTrue(mockRouter.didCallExternalSettings)
   }
 
   @MainActor
@@ -73,7 +73,7 @@ final class CameraPermissionViewModelTests: XCTestCase {
 
     viewModel.openSettings()
 
-    XCTAssertTrue(mockRouter.didCallSettings)
+    XCTAssertTrue(mockRouter.didCallExternalSettings)
   }
 
   // MARK: Private

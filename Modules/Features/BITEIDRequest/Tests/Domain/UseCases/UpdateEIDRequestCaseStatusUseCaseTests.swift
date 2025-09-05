@@ -1,6 +1,7 @@
 import Factory
 import XCTest
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITTestingCore
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try

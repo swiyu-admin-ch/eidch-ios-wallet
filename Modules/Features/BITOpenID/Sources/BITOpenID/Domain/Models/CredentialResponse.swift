@@ -21,7 +21,7 @@ public struct CredentialResponse: Codable, Equatable {
   // MARK: Public
 
   /// The rawCredential without any treatment
-  public let rawCredential: String
+  public let rawCredential: String?
 
   /// Identifying a deferred issuance transaction
   public let transactionId: String?

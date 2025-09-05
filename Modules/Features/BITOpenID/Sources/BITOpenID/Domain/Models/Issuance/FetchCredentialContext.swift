@@ -1,6 +1,6 @@
 import Foundation
 
-class FetchCredentialContext {
+public class FetchCredentialContext {
 
   // MARK: Lifecycle
 
@@ -12,7 +12,8 @@ class FetchCredentialContext {
     holderBindingContext: HolderBindingContext?,
     accessToken: AccessToken,
     credentialEndpoint: URL,
-    createdAt: Date = .now)
+    createdAt: Date = .now,
+    deferredCredentialEndpoint: URL? = nil)
   {
     self.format = format
     self.selectedCredential = selectedCredential
@@ -22,6 +23,7 @@ class FetchCredentialContext {
     self.accessToken = accessToken
     self.credentialEndpoint = credentialEndpoint
     self.createdAt = createdAt
+    self.deferredCredentialEndpoint = deferredCredentialEndpoint
   }
 
   // MARK: Internal
@@ -34,4 +36,5 @@ class FetchCredentialContext {
   let createdAt: Date
   let accessToken: AccessToken
   let credentialEndpoint: URL
+  let deferredCredentialEndpoint: URL?
 }

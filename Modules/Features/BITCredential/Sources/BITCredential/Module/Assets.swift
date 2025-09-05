@@ -22,8 +22,6 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 enum Assets {
-  static let back = ImageAsset(name: "Back")
-  static let close = ImageAsset(name: "Close")
   static let closeAlt = ImageAsset(name: "CloseAlt")
   static let credentialDemoPattern = ImageAsset(name: "CredentialDemoPattern")
   static let credentialDemoPatternSmall = ImageAsset(name: "CredentialDemoPatternSmall")

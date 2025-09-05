@@ -1,4 +1,5 @@
 import BITL10n
+import BITTheming
 import SwiftUI
 
 public struct LicenceDetailView: View {
@@ -12,24 +13,27 @@ public struct LicenceDetailView: View {
   // MARK: Public
 
   public var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: .x6) {
-        Text(package.version ?? L10n.licencesNoVersion)
+    SettingsPage(title: package.name) {
+      VStack(alignment: .leading, spacing: .x4) {
+        Text(package.version ?? L10n.tkSettingsLicencesNoVersion)
+          .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
           .font(.custom.headline)
         if let licence = package.license {
           Text(licence)
+            .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
             .multilineTextAlignment(.leading)
+            .font(.custom.footnote)
         }
       }
-      .padding(.x4)
     }
-    .font(.custom.body)
-    .navigationTitle(package.name)
-    .navigationBackButtonDisplayMode(.minimal)
   }
 
   // MARK: Private
 
   private let package: PackageDependency
 
+}
+
+#Preview {
+  LicenceDetailView(package: PackageDependency(name: "Test", version: "1.0.0", license: "MIT"))
 }

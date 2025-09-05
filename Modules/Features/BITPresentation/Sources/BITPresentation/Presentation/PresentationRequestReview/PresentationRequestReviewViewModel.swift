@@ -1,6 +1,7 @@
 import BITAnalytics
 import BITCore
 import BITCredential
+import BITOpenID
 import Combine
 import Factory
 import Foundation
@@ -62,7 +63,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   func deny() async {
     denyTask = Task.detached(priority: .background) { [weak self] in
       guard let self else { return }
-      try? await denyPresentationUseCase.execute(requestObject: context.requestObject, error: .clientRejected)
+      try? await declinePresentationUseCase.execute(requestObject: context.requestObject)
     }
     router.presentationResultState(with: .deny, context: context)
   }
@@ -79,7 +80,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   private let router: PresentationRouterRoutes
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.submitPresentationUseCase) private var submitPresentationUseCase: SubmitPresentationUseCaseProtocol
-  @Injected(\.denyPresentationUseCase) private var denyPresentationUseCase: DenyPresentationUseCaseProtocol
+  @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
   @Injected(\.getVerifierDisplayUseCase) private var getVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
   @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
@@ -96,7 +97,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   private func handleSubmitError(_ error: Error) {
     showLoadingMessage = false
     analytics.log(error)
-    if let presentationError = error as? PresentationError {
+    if let presentationError = error as? SubmitPresentationError {
       switch presentationError {
       case .invalidCredential:
         router.presentationResultState(with: .invalidCredential(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)

@@ -31,7 +31,6 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
     case fetch
     case setPackages(_ packages: [PackageDependency])
     case setError(_ errror: Error)
-    case selectPackage(_ package: PackageDependency)
   }
 
   public override func reducer(_ state: inout State, _ event: Event) -> AnyPublisher<Event, Never>? {
@@ -47,7 +46,6 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
 
     case (.loading, .setPackages(let packages)):
       self.packages = packages
-      selectedPackage = packages.first
       state = self.packages.isEmpty ? .empty : .results
 
     case (_, .setError(let error)):
@@ -57,10 +55,6 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
 
     case (.error, _):
       packages = []
-
-    case (.results, .selectPackage(let package)):
-      selectedPackage = package
-      isPackageDetailPresented = true
 
     default:
       return super.reducer(&state, event)
@@ -72,8 +66,6 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
   // MARK: Internal
 
   @Published var packages: [PackageDependency] = []
-  @Published var selectedPackage: PackageDependency?
-  @Published var isPackageDetailPresented = false
 
   // MARK: Private
 

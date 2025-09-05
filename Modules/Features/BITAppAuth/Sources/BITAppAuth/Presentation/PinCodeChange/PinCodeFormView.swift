@@ -86,6 +86,7 @@ struct PinCodeFormView: View {
         footerView()
       }
     }
+    .background(ThemingAssets.Background.secondary.swiftUIColor)
   }
 
   @ViewBuilder
@@ -175,7 +176,7 @@ struct PinCodeFormView: View {
   private func inputFieldMessage(_ message: String) -> some View {
     Text(message)
       .font(.custom.footnote)
-      .foregroundStyle(ThemingAssets.Brand.Core.swissRed.swiftUIColor)
+      .foregroundStyle(inputFieldState == .error ? ThemingAssets.Brand.Core.swissRed.swiftUIColor : ThemingAssets.Label.primary.swiftUIColor)
       .multilineTextAlignment(.leading)
       .accessibilitySortPriority(700)
       .accessibilityFocused($focus, equals: .inputText)

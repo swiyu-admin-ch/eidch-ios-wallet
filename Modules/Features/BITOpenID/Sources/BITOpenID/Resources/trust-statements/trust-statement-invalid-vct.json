@@ -1,0 +1,19 @@
+{
+  "vct": "invalid",
+  "iss": "issuer",
+  "sub": "subject",
+  "iat": 1742453211,
+  "status": {
+    "status_list": {
+      "uri": "status_list_uri",
+      "idx": 30
+    }
+  },
+  "nbf": 1742453210,
+  "exp": 2209014000,
+  "entityName": {
+    "en": "EN entityName",
+    "de-CH": "de-CH entityName"
+  },
+  "isStateActor": false
+}

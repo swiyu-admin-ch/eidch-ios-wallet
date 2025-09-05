@@ -50,6 +50,9 @@ struct RecordDocumentView: View {
   private let animationDuration: TimeInterval = 0.4
   private let animatedScale: CGFloat = 0.95
   private let animatedRotationAngle: Double = 90
+  private let rotationAngleOpposite: Double = 180
+  private let rotationVisibilityRange: Range<Double> = 90..<270
+  private let defaultRotationAngle: Double = 0
 
   @ViewBuilder
   private func introductionPopupView(_ state: RecordDocumentViewModel.ScanningState) -> some View {
@@ -105,30 +108,47 @@ extension RecordDocumentView {
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
 
-      (currentDisplayState == .verso ? viewModel.overlayImage.back : viewModel.overlayImage.front)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .padding(.x4)
-        .scaleEffect(scale)
-        .rotation3DEffect(
-          .degrees(rotationAngle),
-          axis: (x: 0, y: 1, z: 0))
-        .onReceive(viewModel.$scanningState) { newState in
-          if newState != currentDisplayState {
-            withAnimation(.easeInOut(duration: animationDuration)) {
-              rotationAngle = animatedRotationAngle
-              scale = animatedScale
-            }
+      ZStack {
+        viewModel.overlayImage.front
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .padding(.x4)
+          .scaleEffect(scale)
+          .rotation3DEffect(
+            .degrees(rotationAngle),
+            axis: axis)
+          .opacity(rotationVisibilityRange.contains(rotationAngle) ? 0 : 1)
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-              currentDisplayState = newState
-              withAnimation(.easeInOut(duration: animationDuration)) {
-                rotationAngle = newState == .verso ? animatedRotationAngle * 2 : 0
-                scale = defaultScale
-              }
+        viewModel.overlayImage.back
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .padding(.x4)
+          .scaleEffect(scale)
+          .rotation3DEffect(
+            .degrees(rotationAngle + rotationAngleOpposite),
+            axis: axis)
+          .opacity(rotationVisibilityRange.contains(rotationAngle) ? 1 : 0)
+      }
+      .onReceive(viewModel.$scanningState) { newState in
+        if newState != currentDisplayState {
+          currentDisplayState = newState
+
+          withAnimation(.easeInOut(duration: animationDuration * 2)) {
+            if newState == .verso {
+              rotationAngle = rotationAngleOpposite
+            } else {
+              rotationAngle = defaultRotationAngle
+            }
+            scale = animatedScale
+          }
+
+          DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            withAnimation(.easeInOut(duration: animationDuration)) {
+              scale = defaultScale
             }
           }
         }
+      }
     }
     .task {
       await viewModel.startRecordDocument()

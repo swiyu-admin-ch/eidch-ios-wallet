@@ -1,4 +1,5 @@
 #if DEBUG
+import BITEIDRequestShared
 import Factory
 import Foundation
 

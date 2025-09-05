@@ -20,7 +20,7 @@ final class NoDevicePinCodeViewModelTests: XCTestCase {
   @MainActor
   func testOpenSettings() {
     viewModel.openSettings()
-    XCTAssertTrue(router.didCallAppSettings)
+    XCTAssertTrue(router.didCallExternalSettings)
   }
 
   // MARK: Private

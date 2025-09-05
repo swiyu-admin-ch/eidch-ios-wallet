@@ -7,40 +7,39 @@ import Foundation
 
 /// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html
 
-open class SdJWS<T: Codable & Equatable>: JWSValidatable, Equatable {
+open class SdJWS<T: Codable & Equatable>: JWS<T> {
 
   // MARK: Lifecycle
 
-  public init(payload: T, rawPayload: [String: Any?], header: JWSHeader, raw: String, rawJWS: String, disclosableClaims: [SdJWTClaim]) {
-    self.payload = payload
-    self.rawPayload = rawPayload
-    self.header = header
-    self.raw = raw
-    self.rawJWS = rawJWS
+  public init(
+    jws: JWS<T>,
+    payload: T,
+    resolvedPayload: [String: Any?],
+    rawSdJWS: String,
+    disclosableClaims: [SdJWTClaim])
+  {
+    self.resolvedPayload = payload
+    resolvedPayloadDictionary = resolvedPayload
+    self.rawSdJWS = rawSdJWS
     self.disclosableClaims = disclosableClaims
+    super.init(payload: jws.payload, rawPayload: jws.rawPayload, rawJWS: jws.rawJWS, header: jws.header)
   }
 
   // MARK: Public
 
-  /// The payload after resolving the digests using the disclosures that consists of registered, public and private claims that are known
-  public let payload: T
+  /// The payload after resolving the digests using the disclosures. This includes all JWT claims (registered, public & private) and disclosable claims.
+  public let resolvedPayload: T
 
-  /// The raw payload json after resolving the digests using the disclosures. This includes all JWT claims (registered, public & private) and disclosable claims.
-  public let rawPayload: [String: Any?]
-
-  /// The header of the JWS
-  public let header: JWSHeader
+  /// The payload as dictionary after resolving the digests using the disclosures. This includes all JWT claims (registered, public & private) and disclosable claims.
+  public let resolvedPayloadDictionary: [String: Any?]
 
   /// The raw string of the SdJWS
-  public let raw: String
-
-  /// The raw string of the JWS
-  public let rawJWS: String
+  public let rawSdJWS: String
 
   /// The decoded claims of the disclosures of the SD-JWT
   public let disclosableClaims: [SdJWTClaim]
 
-  public func createSelectiveDisclosure(for keys: [String]) throws -> String {
+  public func createSelectiveDisclosure(for keys: [String]) -> String {
     let disclosures = disclosableClaims.filter { keys.contains($0.key) }.map(\.disclosure)
     let rawDisclosures = disclosures.isEmpty ? "" : disclosures.joined(separator: SdJWSDecoder.sdJWTSeparator) + SdJWSDecoder.sdJWTSeparator
     return rawJWS + SdJWSDecoder.sdJWTSeparator + rawDisclosures
@@ -53,11 +52,10 @@ open class SdJWS<T: Codable & Equatable>: JWSValidatable, Equatable {
 extension SdJWS {
 
   public static func == (lhs: SdJWS, rhs: SdJWS) -> Bool {
-    lhs.payload == rhs.payload &&
-      lhs.rawPayload.keys == rhs.rawPayload.keys &&
-      lhs.header == rhs.header &&
-      lhs.rawJWS == rhs.rawJWS &&
-      lhs.raw == rhs.raw &&
+    lhs as JWS == rhs as JWS &&
+      lhs.resolvedPayload == rhs.resolvedPayload &&
+      lhs.resolvedPayloadDictionary.keys == rhs.resolvedPayloadDictionary.keys &&
+      lhs.rawSdJWS == rhs.rawSdJWS &&
       lhs.disclosableClaims == rhs.disclosableClaims
   }
 }

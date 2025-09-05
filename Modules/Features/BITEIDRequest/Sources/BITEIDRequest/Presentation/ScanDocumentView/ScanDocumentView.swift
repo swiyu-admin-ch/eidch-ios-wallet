@@ -43,7 +43,7 @@ struct ScanDocumentView: View {
 
   @StateObject private var viewModel: ScanDocumentViewModel
 
-  private let defaultScale = 0.0
+  private let defaultScale = 1.0
   private let axis: (x: CGFloat, y: CGFloat, z: CGFloat) = (x: 0, y: 1, z: 0)
   private let animationDuration: TimeInterval = 0.4
   private let animatedScale: CGFloat = 0.95
@@ -102,30 +102,47 @@ struct ScanDocumentView: View {
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
 
-      (currentDisplayState == .verso ? viewModel.overlayImage.back : viewModel.overlayImage.front)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .padding(.x4)
-        .scaleEffect(scale)
-        .rotation3DEffect(
-          .degrees(rotationAngle),
-          axis: axis)
-        .onReceive(viewModel.$scanningState) { newState in
-          if newState != currentDisplayState {
-            withAnimation(.easeInOut(duration: animationDuration)) {
-              rotationAngle = animatedRotationAngle
-              scale = animatedScale
-            }
+      ZStack {
+        viewModel.overlayImage.front
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .padding(.x4)
+          .scaleEffect(scale)
+          .rotation3DEffect(
+            .degrees(rotationAngle),
+            axis: axis)
+          .opacity(rotationAngle > 90 && rotationAngle < 270 ? 0 : 1)
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-              currentDisplayState = newState
-              withAnimation(.easeInOut(duration: animationDuration)) {
-                rotationAngle = newState == .verso ? animatedRotationAngle * 2 : 0
-                scale = defaultScale
-              }
+        viewModel.overlayImage.back
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .padding(.x4)
+          .scaleEffect(scale)
+          .rotation3DEffect(
+            .degrees(rotationAngle + 180),
+            axis: axis)
+          .opacity(rotationAngle > 90 && rotationAngle < 270 ? 1 : 0)
+      }
+      .onReceive(viewModel.$scanningState) { newState in
+        if newState != currentDisplayState {
+          currentDisplayState = newState
+
+          withAnimation(.easeInOut(duration: animationDuration * 2)) {
+            if newState == .verso {
+              rotationAngle = 180
+            } else {
+              rotationAngle = 0
+            }
+            scale = animatedScale
+          }
+
+          DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            withAnimation(.easeInOut(duration: animationDuration)) {
+              scale = defaultScale
             }
           }
         }
+      }
     }
     .task {
       let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)

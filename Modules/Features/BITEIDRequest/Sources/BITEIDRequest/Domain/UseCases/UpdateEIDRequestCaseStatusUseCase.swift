@@ -1,3 +1,4 @@
+import BITEIDRequestShared
 import Factory
 import Spyable
 

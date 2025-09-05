@@ -1,6 +1,7 @@
 import Factory
 import XCTest
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITTestingCore
 
 final class GetEIDRequestCaseListUseCaseTests: XCTestCase {

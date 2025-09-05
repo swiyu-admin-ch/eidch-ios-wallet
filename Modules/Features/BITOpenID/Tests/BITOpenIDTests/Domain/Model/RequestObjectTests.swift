@@ -12,7 +12,7 @@ final class RequestObjectTests: XCTestCase {
     let mockRequestObject = try JSONDecoder().decode(RequestObject.self, from: mockRequestObjectData)
 
     XCTAssertNotNil(mockRequestObject.presentationDefinition)
-    XCTAssertFalse(mockRequestObject.responseUri.isEmpty)
+    XCTAssertNotNil(mockRequestObject.responseUri)
     XCTAssertNotNil(mockRequestObject.clientMetadata)
     XCTAssertNotNil(mockRequestObject.clientMetadata?.clientName)
     XCTAssertNotNil(mockRequestObject.clientMetadata?.logoUri)
@@ -26,23 +26,6 @@ final class RequestObjectTests: XCTestCase {
     XCTAssertEqual(mockRequestObject.firstInputDescriptor, mockRequestObject.presentationDefinition.inputDescriptors.first)
     XCTAssertFalse(firstInputDescriptor.formats.isEmpty)
 
-    let preferredLanguages: [UserLanguageCode] = ["de", "en", "fr"]
-
-    let preferredClientName: String? = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
-      from: mockRequestObject.clientMetadata?.clientName,
-      considering: preferredLanguages)
-    let defaultClientName: String? = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
-      from: mockRequestObject.clientMetadata?.clientName,
-      considering: [])
-    let emptyDisplays: String? = ClientMetadata.LocalizedDisplay.getPreferredDisplay(
-      from: nil,
-      considering: [])
-
-    XCTAssertEqual(preferredClientName, "DE Verifier")
-    XCTAssertEqual(defaultClientName, "EN Verifier")
-    XCTAssertNil(emptyDisplays)
-    XCTAssertNotNil(mockRequestObject.clientMetadata?.clientName?.fallback())
-
     XCTAssertEqual(mockRequestObject.firstInputDescriptor?.formats.first?.vcAlgorithm?.first, "ES256")
     XCTAssertEqual(mockRequestObject.firstInputDescriptor?.formats.first?.keyBindingAlgorithm?.first, "ES256")
   }
@@ -52,7 +35,7 @@ final class RequestObjectTests: XCTestCase {
     let mockRequestObject = try JSONDecoder().decode(RequestObject.self, from: mockRequestObjectData)
 
     XCTAssertNotNil(mockRequestObject.presentationDefinition)
-    XCTAssertFalse(mockRequestObject.responseUri.isEmpty)
+    XCTAssertNotNil(mockRequestObject.responseUri)
     XCTAssertNotNil(mockRequestObject.clientMetadata)
     XCTAssertNil(mockRequestObject.clientMetadata?.clientName)
     XCTAssertNil(mockRequestObject.clientMetadata?.logoUri)
@@ -71,7 +54,7 @@ final class RequestObjectTests: XCTestCase {
     let mockRequestObject = try JSONDecoder().decode(RequestObject.self, from: mockRequestObjectData)
 
     XCTAssertNotNil(mockRequestObject.presentationDefinition)
-    XCTAssertFalse(mockRequestObject.responseUri.isEmpty)
+    XCTAssertNotNil(mockRequestObject.responseUri)
     XCTAssertNil(mockRequestObject.clientMetadata)
   }
 
@@ -89,6 +72,23 @@ final class RequestObjectTests: XCTestCase {
     XCTAssertThrowsError(try JSONDecoder().decode(RequestObject.self, from: data)) { error in
       XCTAssertEqual(error as? RequestObjectError, .invalidPayload)
     }
+  }
+
+  func testGetPreferredDisplay_multipleLanguages_returnsFirstValidLanguage() throws {
+    let requestObject = RequestObject.Mock.VcSdJwt.sample
+    let languages: [UserLanguageCode] = ["cz", "de", "en"]
+
+    let clientName = requestObject.clientMetadata?.clientName?.getPreferredDisplay(considering: languages)
+
+    XCTAssertEqual(clientName, "DE Verifier")
+  }
+
+  func testGetPreferredDisplay_noLanguages_returnsFallback() throws {
+    let requestObject = RequestObject.Mock.VcSdJwt.sample
+
+    let clientName = requestObject.clientMetadata?.clientName?.getPreferredDisplay(considering: [])
+
+    XCTAssertEqual(clientName, "Verifier")
   }
 
 }

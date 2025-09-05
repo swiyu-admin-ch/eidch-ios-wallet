@@ -10,7 +10,7 @@ public class HomeModule {
   // MARK: Lifecycle
 
   public init(router: Router<UIViewController> & HomeRouterRoutes = Container.shared.homeRouter()) {
-    let view = HomeComposerView(router: router)
+    let view = HomeView(router: router)
       .environment(\.font, .custom.body)
       .preferredColorScheme(.light)
     let viewController = HomeHostingController(rootView: view)

@@ -2,6 +2,7 @@ import Factory
 import XCTest
 @testable import BITAppAttestation
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITNetworking
 @testable import BITTestingCore
 
@@ -107,7 +108,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
   // MARK: - Validate attestations
 
   func testValidateAttestations_clientAttestationInvalid_throwsInvalidClientAttestationError() async throws {
-    try mockResponse(code: 422, data: JSONEncoder().encode(ValidateAttestationsErrorResponse.Mock.clientAttestationSample))
+    try mockResponse(code: 422, data: JSONEncoder().encode(EIDRequestErrorResponse.Mock.clientAttestationSample))
 
     do {
       try await repository.validateAttestations(mockValidateAttestationsRequestBody)
@@ -118,7 +119,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
   }
 
   func testValidateAttestations_keyAttestationInvalid_throwsInvalidKeyAttestationError() async throws {
-    try mockResponse(code: 422, data: JSONEncoder().encode(ValidateAttestationsErrorResponse.Mock.keyAttestationSample))
+    try mockResponse(code: 422, data: JSONEncoder().encode(EIDRequestErrorResponse.Mock.keyAttestationSample))
 
     do {
       try await repository.validateAttestations(mockValidateAttestationsRequestBody)
@@ -129,7 +130,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
   }
 
   func testValidateAttestations_insufficientKeyStorageResistance_throwsInsufficientKeyStorageResistanceError() async throws {
-    try mockResponse(code: 422, data: JSONEncoder().encode(ValidateAttestationsErrorResponse.Mock.insuffisanceResistanceSample))
+    try mockResponse(code: 422, data: JSONEncoder().encode(EIDRequestErrorResponse.Mock.insuffisanceResistanceSample))
 
     do {
       try await repository.validateAttestations(mockValidateAttestationsRequestBody)
@@ -169,6 +170,50 @@ final class EIDRequestRepositoryTests: XCTestCase {
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointCallsCount, 1)
+    }
+  }
+
+  // MARK: - Pair wallet
+
+  func testPairWallet_success() async throws {
+    mockResponse(code: 200, data: WalletPairingResponse.Mock.sampleData)
+
+    let result = try await repository.pairWallet(caseId: "caseId")
+
+    XCTAssertEqual(result, WalletPairingResponse.Mock.sample)
+    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointCallsCount, 1)
+  }
+
+  func testPairWallet_generateProofOfPossessionsFails_throwsError() async throws {
+    proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
+
+    do {
+      _ = try await repository.pairWallet(caseId: "caseId")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  // MARK: - Start auto verification
+
+  func testStartAutoVerification_success() async throws {
+    mockResponse(code: 200, data: AutoVerificationResponse.Mock.sampleData)
+
+    let result = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1)
+
+    XCTAssertEqual(result, AutoVerificationResponse.Mock.nfcSample)
+    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointCallsCount, 1)
+  }
+
+  func testPStartAutoVerification_generateProofOfPossessionsFails_throwsError() async throws {
+    proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
+
+    do {
+      _ = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1)
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 

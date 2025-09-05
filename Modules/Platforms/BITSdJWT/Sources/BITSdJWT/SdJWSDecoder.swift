@@ -106,8 +106,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     let jws: JWS<T> = try jwsDecoder.decode(T.self, from: jwtData)
     guard
       let jwtPayloadData = jws.rawPayload.data(using: .utf8),
-      let payloadJson = try JSONSerialization.jsonObject(with: jwtPayloadData) as? [String: Any?],
-      let rawJWS = String(data: jwtData, encoding: .utf8)
+      let payloadJson = try JSONSerialization.jsonObject(with: jwtPayloadData) as? [String: Any?]
     else { throw SdJWSDecoderError.invalidJWTPayload }
     if strictPayloadDecoding {
       guard payloadJson.keys.allSatisfy({ Self.reservedClaimNames.contains($0) }) else { throw SdJWSDecoderError.invalidJWTPayload }
@@ -118,7 +117,12 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     let decoder = JSONDecoder(dateDecodingStrategy: dateDecodingStrategy)
     let payloadData = try JSONSerialization.data(withJSONObject: resolvedPayload)
     let payload = try decoder.decode(T.self, from: payloadData)
-    return SdJWS(payload: payload, rawPayload: resolvedPayload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: claims)
+    return SdJWS(
+      jws: jws,
+      payload: payload,
+      resolvedPayload: resolvedPayload,
+      rawSdJWS: rawSdJWT,
+      disclosableClaims: claims)
   }
 
   private func decodeClaims(from payload: [String: Any?], rawDisclosures: String) throws -> [SdJWTClaim] {
@@ -144,8 +148,8 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   }
 
   private func decodeClaim(from disclosure: String, digests: [SdJwtDigest], algorithm: StringDigest.Algorithm) throws -> SdJWTClaim {
-    // sd-jwt disclosures are formatted URL unsafe. Which caused issues when the content has special Characters such as é,è or ï...
     guard
+      // sd-jwt disclosures are formatted URL unsafe
       let rawDisclosableClaim = disclosure.base64EncodedURLSafe.base64Decoded,
       let disclosableClaim = try rawDisclosableClaim.toJsonObject() as? [Any],
       disclosableClaim.count == 3,
@@ -181,11 +185,15 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   private func decodeUndisclosedSdJwt<T>(_ data: Data, rawSdJWT: String) throws -> SdJWS<T> where T: JWTPayload & Decodable {
     let jws = try jwsDecoder.decode(T.self, from: data)
     guard
-      let rawJWS = String(data: data, encoding: .utf8),
       let payloadData = jws.rawPayload.data(using: .utf8),
       let payload = try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
     else { throw SdJWSDecoderError.invalidJWTPayload }
-    return SdJWS(payload: jws.payload, rawPayload: payload, header: jws.header, raw: rawSdJWT, rawJWS: rawJWS, disclosableClaims: [])
+    return SdJWS(
+      jws: jws,
+      payload: jws.payload,
+      resolvedPayload: payload,
+      rawSdJWS: rawSdJWT,
+      disclosableClaims: [])
   }
 }
 

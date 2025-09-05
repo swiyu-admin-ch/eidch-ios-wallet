@@ -5,13 +5,7 @@ import BITSdJWT
 import Factory
 import Foundation
 import Moya
-
-// MARK: - OpenIdRepositoryError
-
-enum OpenIdRepositoryError: Error {
-  case presentationProcessClosed
-  case authorizationRequestObjectNotFound
-}
+import Spyable
 
 // MARK: - OpenIDRepository
 
@@ -52,8 +46,34 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.accessToken(fromTokenUrl: url, preAuthorizedCode: preAuthorizedCode))
   }
 
-  func fetchCredential(from url: URL, credentialRequestBody: VcSdJwtCredentialRequestBody, acccessToken: AccessToken) async throws -> CredentialResponse {
-    try await networkService.request(OpenIDEndpoint.credential(url: url, body: credentialRequestBody, acccessToken: acccessToken.accessToken))
+  func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult {
+    let result: (credentialResponse: CredentialResponse, response: Response) = try await networkService.request(
+      OpenIDEndpoint.credential(
+        url: context.credentialEndpoint,
+        body: credentialRequestBody,
+        acccessToken: context.accessToken.accessToken)
+    )
+
+    // A deferred credential is expected when http status code is 202 (see RFC 9110 §15.3.3)
+
+    var credential: FetchAnyCredentialResult
+
+    if result.response.statusCode == 202 {
+      credential = try getDeferredCredential(from: result.credentialResponse, context: context)
+    } else if result.response.statusCode == 200 {
+      #warning("Temporary fix until deployment of new image from OMNI / DONUM -> try getCredential(from: result.credentialResponse) instead")
+      do {
+        credential = try getCredential(from: result.credentialResponse)
+      } catch OpenIdRepositoryError.credentialResponseValidationFailed {
+        credential = try getDeferredCredential(from: result.credentialResponse, context: context)
+      } catch {
+        throw error
+      }
+    } else {
+      throw OpenIdRepositoryError.unsupportedCredentialStatusCode
+    }
+
+    return credential
   }
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
@@ -61,18 +81,8 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     return try jwsDecoder.decode(TokenStatusList.self, from: response.data)
   }
 
-  func fetchRequestObject(from url: URL) async throws -> Data {
-    do {
-      return try await networkService.request(OpenIDEndpoint.requestObject(url: url)).data
-    } catch let error as NetworkError where error.status == .gone {
-      throw OpenIdRepositoryError.presentationProcessClosed
-    } catch let error as NetworkError where error.status == .notFound {
-      throw OpenIdRepositoryError.authorizationRequestObjectNotFound
-    }
-  }
-
-  func fetchTrustStatements(from url: URL, issuerDid: String) async throws -> [TrustStatement] {
-    let statements: [String] = try await networkService.request(OpenIDEndpoint.trustStatements(url: url, issuerDid: issuerDid))
+  func fetchTrustStatements(from url: URL, for subjectDid: String) async throws -> [TrustStatement] {
+    let statements: [String] = try await networkService.request(OpenIDEndpoint.trustStatements(url: url, subjectDid: subjectDid))
     return try statements.map {
       let data = $0.data(using: .utf8) ?? Data()
       return try sdJwsDecoder.decode(TrustStatementPayload.self, from: data)
@@ -84,4 +94,36 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
+
+  private func getDeferredCredential(from credentialResponse: CredentialResponse, context: FetchCredentialContext) throws -> FetchAnyCredentialResult {
+    guard
+      let transactionId = credentialResponse.transactionId
+    else {
+      throw OpenIdRepositoryError.credentialResponseValidationFailed
+    }
+
+    #warning("TODO: Null check `deferredCredentialEndpoint` when implemented by Donum")
+    return .deferred(transactionId: transactionId, accessToken: context.accessToken.accessToken, endpoint: context.deferredCredentialEndpoint?.absoluteString ?? "")
+  }
+
+  private func getCredential(from credentialResponse: CredentialResponse) throws -> FetchAnyCredentialResult {
+    guard
+      let rawCredential = credentialResponse.rawCredential,
+      let credentialData = rawCredential.data(using: .utf8),
+      let vcSdJwt = try? sdJwsDecoder.decode(VcSdJwtPayload.self, from: credentialData)
+    else {
+      throw OpenIdRepositoryError.credentialResponseValidationFailed
+    }
+
+    return .credential(vcSdJwt)
+  }
+}
+
+// MARK: - OpenIdRepositoryError
+
+enum OpenIdRepositoryError: Error {
+  case presentationProcessClosed
+  case authorizationRequestObjectNotFound
+  case credentialResponseValidationFailed
+  case unsupportedCredentialStatusCode
 }

@@ -76,7 +76,7 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
   // MARK: Private
 
   // swiftlint:disable all
-  private static var contextMock = PresentationRequestContext.Mock.vcSdJwtJwtSample
+  private static var contextMock = PresentationRequestContext.Mock.vcSdJwtWithTrustStatementSample
   private static let inputDescriptorMock = contextMock.requestObject.presentationDefinition.inputDescriptors.first!
 
   private let themeMock = "light"

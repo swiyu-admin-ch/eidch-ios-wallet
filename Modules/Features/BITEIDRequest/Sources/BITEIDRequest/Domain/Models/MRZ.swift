@@ -5,7 +5,6 @@ import Foundation
 public enum MRZError: Error, LocalizedError {
   case malformed(reason: String)
   case invalidLineCount(actual: Int)
-  case missingPackageData
 
   public var errorDescription: String? {
     switch self {
@@ -13,8 +12,6 @@ public enum MRZError: Error, LocalizedError {
       "MRZ is malformed: \(reason)"
     case .invalidLineCount(let actual):
       "Invalid MRZ line count. Received \(actual)"
-    case .missingPackageData:
-      "Package data is missing or invalid"
     }
   }
 }

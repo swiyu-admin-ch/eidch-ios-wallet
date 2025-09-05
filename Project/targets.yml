@@ -14,6 +14,7 @@ targets:
     info:
       path: ../swiyu/Info.plist
       properties:
+        UIDesignRequiresCompatibility: true
         LSHasLocalizedDisplayName: true
         ITSAppUsesNonExemptEncryption: false
         CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
@@ -356,6 +357,7 @@ targets:
       - package: BITEIDRequest
       - package: BITOca
       - package: BITAppAttestation
+      - package: BITEIDRequestShared
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh
@@ -381,7 +383,7 @@ targets:
         outputFiles:
           - "/tmp/swiyuDummyOutputFileSwiftPackagesList.txt"
 
-    postCompileScripts:
+    postBuildScripts:
       - path: ../Scripts/settings_bundle.sh
         name: Settings bundle
         outputFiles:
@@ -548,6 +550,7 @@ targets:
       - package: BITAnyCredentialFormat
       - package: BITEIDRequest
       - package: BITAppAttestation
+      - package: BITEIDRequestShared
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh
@@ -573,7 +576,7 @@ targets:
         outputFiles:
           - "/tmp/swiyuUITests-AppDummyOutputFileSwiftPackagesList.txt"
     
-    postCompileScripts:
+    postBuildScripts:
       - path: ../Scripts/settings_bundle.sh
         name: Settings bundle
         outputFiles:

@@ -25,7 +25,7 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   override func setUp() {
     Container.shared.validateCredentialOfferInvitationUrlUseCase.register { self.validateCredentialOfferInvitationUrlUseCase }
-    Container.shared.processPresentationRequestUseCase.register { self.processPresentationRequestUseCase }
+    Container.shared.fetchPresentationRequestUseCase.register { self.fetchPresentationRequestUseCase }
     Container.shared.checkInvitationTypeUseCase.register { self.checkInvitationTypeUseCase }
     Container.shared.getCompatibleCredentialsUseCase.register { self.getCompatibleCredentialsUseCase }
     Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
@@ -62,7 +62,7 @@ final class CameraViewModelTests: XCTestCase {
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustStatementPayload.Mock.validSample)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustStatementPayload.Mock.validSample)
 
     await viewModel.setMetadataUrl(url)
 
@@ -76,8 +76,21 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
 
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
+  }
+
+  @MainActor
+  func testValidateCredentialOffer_deferredCredential_throwsError() async {
+    let mockCredentialOffer = CredentialOffer.Mock.sample
+
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
+    validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
+    fetchCredentialUseCase.executeFromReturnValue = .deferred(DeferredCredential.Mock.sample)
+
+    await viewModel.setMetadataUrl(url)
+
+    XCTAssertEqual(viewModel.error, .invalidQRCode)
   }
 
   @MainActor
@@ -90,7 +103,7 @@ final class CameraViewModelTests: XCTestCase {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
 
-    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustStatementPayload.Mock.validSample)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustStatementPayload.Mock.validSample)
 
     await viewModel.setMetadataUrl(url)
 
@@ -107,7 +120,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(1, fetchCredentialUseCase.executeFromCallsCount)
 
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -119,7 +132,7 @@ final class CameraViewModelTests: XCTestCase {
     getCredentialsCountUseCase.executeReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustStatementPayload.Mock.validSample)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustStatementPayload.Mock.validSample)
 
     viewModel = createViewModel(mode: .deeplink(url: url))
     await viewModel.onAppear()
@@ -132,7 +145,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(1, fetchCredentialUseCase.executeFromCallsCount)
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -159,7 +172,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -189,7 +202,7 @@ final class CameraViewModelTests: XCTestCase {
 
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -215,7 +228,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
     XCTAssertEqual(url, checkInvitationTypeUseCase.executeUrlReceivedUrl)
 
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -245,7 +258,7 @@ final class CameraViewModelTests: XCTestCase {
 
     XCTAssertTrue(fetchCredentialUseCase.executeFromCalled)
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 
@@ -256,7 +269,7 @@ final class CameraViewModelTests: XCTestCase {
     let bundle = PresentationRequestContext.Mock.vcSdJwtSample
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
-    processPresentationRequestUseCase.executeUrlReturnValue = bundle
+    fetchPresentationRequestUseCase.executeUrlReturnValue = bundle
 
     await viewModel.setMetadataUrl(url)
 
@@ -267,8 +280,8 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
-    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
-    XCTAssertEqual(1, processPresentationRequestUseCase.executeUrlCallsCount)
+    XCTAssertTrue(fetchPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertEqual(1, fetchPresentationRequestUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
   }
@@ -279,7 +292,7 @@ final class CameraViewModelTests: XCTestCase {
     context.inputDescriptorId = "test-id"
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
-    processPresentationRequestUseCase.executeUrlReturnValue = context
+    fetchPresentationRequestUseCase.executeUrlReturnValue = context
 
     await viewModel.setMetadataUrl(url)
 
@@ -291,8 +304,8 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
-    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
-    XCTAssertEqual(1, processPresentationRequestUseCase.executeUrlCallsCount)
+    XCTAssertTrue(fetchPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertEqual(1, fetchPresentationRequestUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
   }
@@ -300,7 +313,7 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testValidatePresentationFailure() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
-    processPresentationRequestUseCase.executeUrlThrowableError = TestingError.error
+    fetchPresentationRequestUseCase.executeUrlThrowableError = TestingError.error
 
     await viewModel.setMetadataUrl(url)
 
@@ -310,8 +323,8 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
 
-    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
-    XCTAssertEqual(1, processPresentationRequestUseCase.executeUrlCallsCount)
+    XCTAssertTrue(fetchPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertEqual(1, fetchPresentationRequestUseCase.executeUrlCallsCount)
 
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
     XCTAssertEqual(0, getCompatibleCredentialsUseCase.executeUsingCallsCount)
@@ -335,7 +348,7 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testSubmitPresentationFailed_networkError() async throws {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
-    processPresentationRequestUseCase.executeUrlThrowableError = NetworkError(status: .noConnection)
+    fetchPresentationRequestUseCase.executeUrlThrowableError = NetworkError(status: .noConnection)
 
     await viewModel.setMetadataUrl(url)
 
@@ -346,7 +359,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertTrue(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertTrue(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
     XCTAssertFalse(fetchCredentialUseCase.executeFromCalled)
   }
@@ -422,7 +435,7 @@ final class CameraViewModelTests: XCTestCase {
 
   // swiftlint: disable all
   private var validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
-  private var processPresentationRequestUseCase = ProcessPresentationRequestUseCaseProtocolSpy()
+  private var fetchPresentationRequestUseCase = FetchPresentationRequestUseCaseProtocolSpy()
   private var checkInvitationTypeUseCase = CheckInvitationTypeUseCaseProtocolSpy()
   private var getCompatibleCredentialsUseCase = GetCompatibleCredentialsUseCaseProtocolSpy()
   private var fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
@@ -466,7 +479,7 @@ extension CameraViewModelTests {
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
     XCTAssertTrue(validateCredentialOfferInvitationUrlUseCase.executeCalled)
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
-    XCTAssertFalse(processPresentationRequestUseCase.executeUrlCalled)
+    XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
   }
 }

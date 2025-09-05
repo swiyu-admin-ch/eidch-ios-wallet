@@ -34,14 +34,6 @@ extension Container {
 
 }
 
-// MARK: - Repository
-
-extension Container {
-  public var presentationRepository: Factory<PresentationRepositoryProtocol> {
-    self { PresentationRepository() }
-  }
-}
-
 // MARK: - UseCase
 
 extension Container {
@@ -50,10 +42,6 @@ extension Container {
 
   public var submitPresentationUseCase: Factory<SubmitPresentationUseCaseProtocol> {
     self { SubmitPresentationUseCase() }
-  }
-
-  public var denyPresentationUseCase: Factory<DenyPresentationUseCaseProtocol> {
-    self { DenyPresentationUseCase() }
   }
 
   public var getCompatibleCredentialsUseCase: Factory<GetCompatibleCredentialsUseCaseProtocol> {

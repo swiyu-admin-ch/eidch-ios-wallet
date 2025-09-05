@@ -11,8 +11,10 @@ import Foundation
 
 // MARK: - SubmitPresentationError
 
-enum SubmitPresentationError: Error {
-  case wrongSubmissionUrl
+enum SubmitPresentationError: Error { #warning("TODO: merge with BITOpenID.SubmitPresentationError as soon as this use case has been moved to BITOpenID module")
+  case presentationFailed
+  case processClosed
+  case invalidCredential
   case inputDescriptorsNotFound
 }
 
@@ -32,16 +34,20 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
       let selectedCredential = context.selectedCredentials[firstInputDescriptor.id] else { throw SubmitPresentationError.inputDescriptorsNotFound }
     let presentationRequestBody = try presentationRequestBodyGenerator.generate(for: selectedCredential, requestObject: context.requestObject, inputDescriptor: firstInputDescriptor)
 
-    guard let submissionURL = URL(string: context.requestObject.responseUri) else {
-      throw SubmitPresentationError.wrongSubmissionUrl
+    do {
+      try await repository.submit(from: context.requestObject.responseUri, presentationRequestBody: presentationRequestBody)
+    } catch BITOpenID.SubmitPresentationError.presentationFailed {
+      throw SubmitPresentationError.presentationFailed
+    } catch BITOpenID.SubmitPresentationError.processClosed {
+      throw SubmitPresentationError.processClosed
+    } catch BITOpenID.SubmitPresentationError.invalidCredential {
+      throw SubmitPresentationError.invalidCredential
     }
-
-    try await repository.submitPresentation(from: submissionURL, presentationRequestBody: presentationRequestBody)
   }
 
   // MARK: Private
 
-  @Injected(\.presentationRepository) private var repository: PresentationRepositoryProtocol
-  @Injected(\.presentationRequestBodyGenerator) private var presentationRequestBodyGenerator: PresentationRequestBodyGeneratorProtocol
+  @Injected(\.presentationRequestRepository) private var repository
+  @Injected(\.presentationRequestBodyGenerator) private var presentationRequestBodyGenerator
 
 }

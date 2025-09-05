@@ -18,7 +18,13 @@ public class PresentationRequestContext {
     self.requestObject = requestObject
     compatibleCredentialsRequestMap = requests
 
-    inputDescriptorId = getFirstCompatibleCredentialInputDescriptorID(from: requestObject, requests: requests)
+    if let id = requestObject.firstInputDescriptor?.id, let credentials = requests[id] {
+      if credentials.count > 1 {
+        inputDescriptorId = id // this triggers the credential selection for now
+      } else if credentials.count == 1, let credential = credentials.first {
+        selectedCredentials[id] = credential
+      }
+    }
   }
 
   // MARK: Public
@@ -29,23 +35,14 @@ public class PresentationRequestContext {
   public var compatibleCredentialsRequestMap: [InputDescriptorID: [CompatibleCredential]] = [:]
   public var selectedCredentials: [InputDescriptorID: CompatibleCredential] = [:]
 
-  // Used for now as first inputDescriptor which has various compatible credentials
   public var inputDescriptorId: InputDescriptorID?
 
   public var hasCompatibleCredentials: Bool {
-    inputDescriptorId != nil
-  }
-
-  public func getFirstCompatibleCredentialInputDescriptorID(from requestObject: RequestObject, requests: [InputDescriptorID: [CompatibleCredential]]) -> InputDescriptorID? {
-    let filteredRequestIDs = Set(requests.filter { $0.value.count > 1 }.keys)
-
-    if filteredRequestIDs.isEmpty {
-      return nil
+    if inputDescriptorId != nil {
+      return true
     }
-
-    return requestObject.presentationDefinition.inputDescriptors
-      .map(\.id)
-      .first { filteredRequestIDs.contains($0) }
+    guard let inputDescriptorId = requestObject.firstInputDescriptor?.id else { return false }
+    return selectedCredentials[inputDescriptorId] != nil
   }
 }
 
@@ -74,7 +71,7 @@ extension PresentationRequestContext {
 
   enum Mock {
     static let vcSdJwtSample = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: CompatibleCredential.Mock.array)
-    static let vcSdJwtJwtSample = PresentationRequestContext(requestObject: JWTRequestObject.Mock.sample, compatibleCredentials: CompatibleCredential.Mock.array, trustStatement: TrustStatementPayload.Mock.validSample)
+    static let vcSdJwtWithTrustStatementSample = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: CompatibleCredential.Mock.array, trustStatement: TrustStatementPayload.Mock.validSample)
     static let vcSdJwtSampleWithoutInputDescriptors = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sampleWithoutInputDescriptors, compatibleCredentials: CompatibleCredential.Mock.array)
     static let unsupportedResponseTypeVcSdJwtSample = PresentationRequestContext(requestObject: .Mock.VcSdJwt.unsupportedResponseTypeSample, compatibleCredentials: CompatibleCredential.Mock.array)
   }

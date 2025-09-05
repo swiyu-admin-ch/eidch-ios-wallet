@@ -27,7 +27,7 @@ public enum FetchAnyVerifiableCredentialError: Error {
 
 @Spyable
 public protocol FetchAnyVerifiableCredentialUseCaseProtocol {
-  func execute(from offer: CredentialOffer, metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> AnyCredential
+  func execute(from offer: CredentialOffer, metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> FetchAnyCredentialResult
 }
 
 // MARK: - FetchAnyVerifiableCredentialUseCase
@@ -36,7 +36,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
 
   // MARK: Internal
 
-  func execute(from offer: CredentialOffer, metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> AnyCredential {
+  func execute(from offer: CredentialOffer, metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> FetchAnyCredentialResult {
     let credentialEndpoint = try getCredentialEndpoint(from: metadataWrapper)
     let issuerUrl = try getIssuerUrl(from: offer)
     let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
@@ -49,21 +49,26 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       credentialIssuer: metadataWrapper.credentialMetadata.credentialIssuer,
       holderBindingContext: holderBindingContext,
       accessToken: accessToken,
-      credentialEndpoint: credentialEndpoint)
+      credentialEndpoint: credentialEndpoint,
+      deferredCredentialEndpoint: metadataWrapper.credentialMetadata.deferredCredentialEndpoint)
 
-    return try await fetchAnyCredentialUseCase.execute(for: context)
+    guard let credentialFormat = CredentialFormat(rawValue: context.format), let dispatcherFormat = dispatcher[credentialFormat] else {
+      throw CredentialFormatError.formatNotSupported
+    }
+
+    return try await dispatcherFormat.execute(for: context)
   }
 
   // MARK: Private
 
-  @Injected(\.fetchAnyCredentialUseCase) private var fetchAnyCredentialUseCase: FetchAnyCredentialUseCaseProtocol
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
+  @Injected(\.anyFetchCredentialDispatcher) private var dispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]
 
   private func getCredentialEndpoint(from metadata: CredentialMetadataWrapper) throws -> URL {
     guard
       let credentialEndpoint = URL(string: metadata.credentialMetadata.credentialEndpoint),
-      credentialEndpoint.isValidHttpUrl else
-    {
+      credentialEndpoint.isValidHttpUrl
+    else {
       throw FetchAnyVerifiableCredentialError.credentialEndpointCreationError
     }
 

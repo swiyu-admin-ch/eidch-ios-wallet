@@ -13,6 +13,10 @@ extension Container {
     self { OpenIDRepository() }
   }
 
+  public var presentationRequestRepository: Factory<PresentationRequestRepositoryProtocol> {
+    self { PresentationRequestRepository() }
+  }
+
   public var fetchMetadataUseCase: Factory<FetchMetadataUseCaseProtocol> {
     self { FetchMetadataUseCase() }
   }
@@ -21,16 +25,12 @@ extension Container {
     self { FetchAnyVerifiableCredentialUseCase() }
   }
 
-  public var fetchRequestObjectUseCase: Factory<FetchRequestObjectUseCaseProtocol> {
-    self { FetchRequestObjectUseCase() }
-  }
-
   public var dateBuffer: Factory<TimeInterval> {
     self { 15 }
   }
 
-  public var validateRequestObjectUseCase: Factory<ValidateRequestObjectUseCaseProtocol> {
-    self { ValidateRequestObjectUseCase() }
+  public var presentationRequestService: Factory<PresentationRequestServiceProtocol> {
+    self { PresentationRequestService() }
   }
 
   public var trustRegistryMapping: Factory<[String: String]> {
@@ -50,19 +50,47 @@ extension Container {
     self { PresentationFieldsValidator() }
   }
 
-  public var typeMetadataService: Factory<TypeMetadataServiceProtocol> {
-    self { TypeMetadataService() }
-  }
-
-  public var vcSchemaService: Factory<VcSchemaServiceProtocol> {
-    self { VcSchemaService() }
-  }
-
   public var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
     self { [.ES256] }
   }
 
+  public var validateCredentialOfferInvitationUrlUseCase: Factory<ValidateCredentialOfferInvitationUrlUseCaseProtocol> {
+    self { ValidateCredentialOfferInvitationUrlUseCase() }
+  }
+
+  public var checkInvitationTypeUseCase: Factory<CheckInvitationTypeUseCaseProtocol> {
+    self { CheckInvitationTypeUseCase() }
+  }
+
+  public var additionalPresentationSchemes: Factory<[String]> {
+    self { [] }
+  }
+
+  public var additionalCredentialOfferSchemes: Factory<[String]> {
+    self { [] }
+  }
+
+  public var declinePresentationUseCase: Factory<DeclinePresentationUseCaseProtocol> {
+    self { DeclinePresentationUseCase() }
+  }
+
   // MARK: Internal
+
+  var typeMetadataService: Factory<TypeMetadataServiceProtocol> {
+    self { TypeMetadataService() }
+  }
+
+  var vcSchemaService: Factory<VcSchemaServiceProtocol> {
+    self { VcSchemaService() }
+  }
+
+  var presentationRequestUrlParser: Factory<PresentationRequestUrlParserProtocol> {
+    self { PresentationRequestUrlParser() }
+  }
+
+  var requestObjectValidator: Factory<RequestObjectValidatorProtocol> {
+    self { RequestObjectValidator() }
+  }
 
   var jsonSchemaValidator: Factory<JsonSchemaValidatorProtocol> {
     self { JsonSchemaValidator() }
@@ -118,10 +146,6 @@ extension Container {
   }
 
   // MARK: Internal
-
-  var fetchAnyCredentialUseCase: Factory<FetchAnyCredentialUseCaseProtocol> {
-    self { FetchAnyCredentialUseCase() }
-  }
 
   var anyDescriptorMapGeneratorDispatcher: Factory<[CredentialFormat: AnyDescriptorMapGeneratorProtocol]> {
     self {
@@ -202,8 +226,8 @@ extension Container {
 
   // MARK: Public
 
-  public var fetchTrustStatementUseCase: Factory<FetchTrustStatementUseCaseProtocol> {
-    self { FetchTrustStatementUseCase() }
+  public var trustStatementService: Factory<TrustStatementServiceProtocol> {
+    self { TrustStatementService() }
   }
 
   public var baseRegistryDomainPattern: Factory<String> {
@@ -216,8 +240,8 @@ extension Container {
 
   // MARK: Internal
 
-  var validateTrustStatementUseCase: Factory<ValidateTrustStatementUseCaseProtocol> {
-    self { ValidateTrustStatementUseCase() }
+  var trustStatementValidator: Factory<TrustStatementValidatorProtocol> {
+    self { TrustStatementValidator() }
   }
 
 }

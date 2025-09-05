@@ -50,6 +50,7 @@ enum PlistFiles {
   static let nsFaceIDUsageDescription: String = _document["NSFaceIDUsageDescription"]
   static let uiApplicationSceneManifest: [String: Any] = _document["UIApplicationSceneManifest"]
   static let uiApplicationSupportsIndirectInputEvents: Bool = _document["UIApplicationSupportsIndirectInputEvents"]
+  static let uiDesignRequiresCompatibility: Bool = _document["UIDesignRequiresCompatibility"]
   static let uiLaunchScreen: [String: Any] = _document["UILaunchScreen"]
   static let uiLaunchStoryboardName: String = _document["UILaunchStoryboardName"]
   static let uiRequiredDeviceCapabilities: [String] = _document["UIRequiredDeviceCapabilities"]

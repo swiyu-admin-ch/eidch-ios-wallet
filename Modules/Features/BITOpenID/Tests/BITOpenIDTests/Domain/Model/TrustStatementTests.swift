@@ -1,3 +1,4 @@
+// swiftlint:disable force_unwrapping
 import XCTest
 @testable import BITJWT
 @testable import BITOpenID
@@ -9,32 +10,55 @@ final class TrustStatementTests: XCTestCase {
   // MARK: Internal
 
   func testDecode_allFields() throws {
-    let data = TrustStatementPayload.Mock.allFieldsData
+    let trustStatement = TrustStatementPayload.Mock.allFields
 
-    let sdJwt = try decoder.decode(TrustStatementPayload.self, from: data)
-    let payload = sdJwt.payload
+    let payload = trustStatement.payload
 
     let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 111, uri: "status_list_uri"))
 
-    XCTAssertEqual(sdJwt.header.type, "vc+sd-jwt")
+    XCTAssertEqual(payload.vct, "TrustStatementIdentityV1")
     XCTAssertEqual(payload.issuer, "issuer")
-    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1742453210))
-    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 2209014000))
-    XCTAssertEqual(payload.vct, "vc_type")
-    XCTAssertEqual(payload.statusList, expectedStatusList)
     XCTAssertEqual(payload.subject, "subject")
     XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1742453211))
+    XCTAssertEqual(payload.statusList, expectedStatusList)
+
+    XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1742453210))
+    XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 2209014000))
+
+    XCTAssertEqual(payload.entityNames.count, 2)
+    let deCHEntityName = payload.entityNames.first { $0.key == "de-CH" }!
+    XCTAssertEqual(deCHEntityName.value, "de-CH entityName")
+    let enEntityName = payload.entityNames.first { $0.key == "en" }!
+    XCTAssertEqual(enEntityName.value, "EN entityName")
+
+    XCTAssertEqual(payload.registryIds.count, 2)
+    let registryId1 = payload.registryIds.first { $0.type == "registryId1" }!
+    XCTAssertEqual(registryId1.value, "registryId1Value")
+    let registryId2 = payload.registryIds.first { $0.type == "registryId1" }!
+    XCTAssertEqual(registryId2.value, "registryId1Value")
+
+    XCTAssertEqual(payload.isStateActor, true)
   }
 
-  func testDecode_localizedIssuer() throws {
+  func testGetLocalizedEntityName_multipleLanguages_returnsFirstValidLanguage() throws {
     let trustStatement = TrustStatementPayload.Mock.validSample
 
-    XCTAssertNotNil(trustStatement.localizedIssuer["en"])
-    XCTAssertNotNil(trustStatement.localizedIssuer["de-CH"])
-    XCTAssertEqual(trustStatement.localizedIssuer.keys.count, 2)
+    let clientName = trustStatement.getLocalizedEntityName(considering: ["cz", "de", "en"])
+
+    XCTAssertEqual(clientName, "de-CH entityName")
+  }
+
+  func testGetLocalizedEntityName_noLanguages_returnsFirstValidLanguage() throws {
+    let trustStatement = TrustStatementPayload.Mock.validSample
+
+    let clientName = trustStatement.getLocalizedEntityName(considering: [])
+
+    XCTAssertEqual(clientName, "entityName")
   }
 
   // MARK: Private
 
   private var decoder = SdJWSDecoder()
 }
+
+// swiftlint:enable all

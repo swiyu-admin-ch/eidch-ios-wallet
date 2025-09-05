@@ -41,9 +41,9 @@ public struct AsyncButton<Label: View>: View {
           if showProgressView {
             ProgressView()
               .controlSize(.regular)
+          } else {
+            label()
           }
-
-          label()
         }
         .frame(maxWidth: .infinity)
       })

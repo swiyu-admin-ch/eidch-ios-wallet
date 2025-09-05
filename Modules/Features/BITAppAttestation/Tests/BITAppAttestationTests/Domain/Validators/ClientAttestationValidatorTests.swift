@@ -3,7 +3,6 @@ import Factory
 import JOSESwift
 import XCTest
 @testable import BITAppAttestation
-@testable import BITAppAuth
 @testable import BITAppInfo
 @testable import BITCore
 @testable import BITCrypto
@@ -27,7 +26,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
 
     XCTAssertTrue(result)
 
-    XCTAssertEqual(jwsSignatureValidator.validateDidReceivedArguments?.did, mockClientAttestation.payload.issuer)
+    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferReceivedDid, mockClientAttestation.payload.issuer)
     XCTAssertEqual(appAttestationKeyRepository.getForReceivedType, .client)
     XCTAssertTrue(appIdentifierRepository.getCalled)
   }
@@ -35,7 +34,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   func testValidate_count_success() async {
     _ = await validator.validate(mockClientAttestation)
 
-    XCTAssertEqual(jwsSignatureValidator.validateDidCallsCount, 1)
+    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.getForCallsCount, 1)
     XCTAssertEqual(appIdentifierRepository.getCallsCount, 1)
   }
@@ -46,14 +45,20 @@ final class ClientAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_expiredPayload_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleExpired)
+  func testValidate_notTrustedDid_returnsFalse() async {
+    let result = await validator.validate(ClientAttestationPayload.Mock.sampleNotTrusted)
 
     XCTAssertFalse(result)
   }
 
-  func testValidate_notTrustedDid_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleNotTrusted)
+  func testValidate_missingExpiredAt_returnsFalse() async {
+    let result = await validator.validate(ClientAttestationPayload.Mock.sampleMissingExpiredAt)
+
+    XCTAssertFalse(result)
+  }
+
+  func testValidate_missingActivatedAt_returnsFalse() async {
+    let result = await validator.validate(ClientAttestationPayload.Mock.sampleMissingActivatedAt)
 
     XCTAssertFalse(result)
   }
@@ -82,8 +87,8 @@ final class ClientAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsSignatureValidatorReturnsFalse_returnsFalse() async {
-    jwsSignatureValidator.validateDidReturnValue = false
+  func testValidate_jwsValidatorReturnsFalse_returnsFalse() async {
+    jwsValidator.validateIssuerDidActivationBufferReturnValue = false
 
     let result = await validator.validate(mockClientAttestation)
 
@@ -98,8 +103,8 @@ final class ClientAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsSignatureValidatorThrowsError_returnsFalse() async {
-    jwsSignatureValidator.validateDidThrowableError = TestingError.error
+  func testValidate_jwsValidatorThrowsError_returnsFalse() async {
+    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(mockClientAttestation)
 
@@ -113,13 +118,13 @@ final class ClientAttestationValidatorTests: XCTestCase {
   private var supportedAlgorithms: [JWTAlgorithm]!
   private var mockClientAttestation: ClientAttestation!
   private var validator: ClientAttestationValidator!
-  private var jwsSignatureValidator: JWSSignatureValidatorProtocolSpy!
+  private var jwsValidator: JWSValidatorMock<ClientAttestationPayload>!
   private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy!
   private var jsonCanonicalizer: JsonCanonicalizerProtocolSpy!
   private var appIdentifierRepository: AppIdentifierRepositoryProtocolSpy!
 
   private func createSuccessState() throws {
-    jwsSignatureValidator.validateDidReturnValue = true
+    jwsValidator.validateIssuerDidActivationBufferReturnValue = true
     let key = try ECPublicKey.getSecKey(curve: mockJWK.crv, x: mockJWK.x, y: mockJWK.y)!
     let keyPair = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
     appAttestationKeyRepository.getForReturnValue = keyPair
@@ -131,12 +136,12 @@ final class ClientAttestationValidatorTests: XCTestCase {
     mockClientAttestation = ClientAttestationPayload.Mock.sample
     trustedDids = [ "did:tdw:example.com" ]
     supportedAlgorithms = [ .ES256 ]
-    jwsSignatureValidator = JWSSignatureValidatorProtocolSpy()
+    jwsValidator = JWSValidatorMock()
     appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
     jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
     appIdentifierRepository = AppIdentifierRepositoryProtocolSpy()
 
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidator }
+    Container.shared.jwsValidator.register { self.jwsValidator }
     Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
     Container.shared.attestationServiceTrustedDids.register { self.trustedDids }
     Container.shared.jsonCanonicalizer.register { self.jsonCanonicalizer }

@@ -1,3 +1,5 @@
+// swiftlint:disable implicitly_unwrapped_optional
+import Factory
 import Foundation
 import XCTest
 @testable import BITCrypto
@@ -8,6 +10,12 @@ import XCTest
 final class VcSdJwtTests: XCTestCase {
 
   // MARK: Internal
+
+  override func setUp() {
+    super.setUp()
+    Container.shared.reset()
+    decoder = SdJWSDecoder()
+  }
 
   func testDecode_allFields() throws {
     let vcSdJwt = VcSdJwtPayload.Mock.allFieldsData
@@ -33,7 +41,7 @@ final class VcSdJwtTests: XCTestCase {
 
   // MARK: Private
 
-  private var decoder = SdJWSDecoder()
+  private var decoder: SdJWSDecoder!
 
   private func assertVcSdJwt(_ data: Data) throws {
     let vcSdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)

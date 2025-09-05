@@ -9,7 +9,7 @@ struct MockJWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   private var value: Bool
 
-  func validate(_ jws: JWSValidatable, did: String) async throws -> Bool {
+  func validate(_ jws: JWS<some Codable & Equatable>, issuerDid: String) async throws -> Bool {
     value
   }
 }

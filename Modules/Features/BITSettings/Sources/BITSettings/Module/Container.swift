@@ -1,15 +1,27 @@
 import Factory
 import Foundation
 
-@MainActor
 extension Container {
 
-  var licencesViewModel: Factory<LicencesListViewModel> {
-    self { LicencesListViewModel() }
+  // MARK: Public
+
+  public var settingsRouter: Factory<SettingsRouter> {
+    self { SettingsRouter() }
   }
 
-  var privacyViewModel: Factory<PrivacyViewModel> {
-    self { PrivacyViewModel() }
+  // MARK: Internal
+
+  var settingsViewModel: Factory<SettingsViewModel> {
+    self { SettingsViewModel() }
+  }
+
+  var securitySettingsViewModel: Factory<SecuritySettingsViewModel> {
+    self { SecuritySettingsViewModel() }
+  }
+
+  @MainActor
+  var licencesViewModel: Factory<LicencesListViewModel> {
+    self { LicencesListViewModel() }
   }
 }
 

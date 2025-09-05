@@ -93,7 +93,7 @@ public class ConfirmPinCodeViewModel: ObservableObject, Vibrating {
 
     withAnimation {
       inputFieldState = .error
-      inputFieldMessage = L10n.tkChangepasswordError1IosNote2(attemptLeft)
+      inputFieldMessage = L10n.tkChangepasswordError1Note2(attemptLeft)
     }
   }
 

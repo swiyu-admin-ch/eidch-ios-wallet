@@ -15,8 +15,7 @@ enum OpenIDEndpoint {
   case openIdConfiguration(issuerURL: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
-  case requestObject(url: URL)
-  case trustStatements(url: URL, issuerDid: String)
+  case trustStatements(url: URL, subjectDid: String)
 }
 
 // MARK: TargetType
@@ -33,7 +32,6 @@ extension OpenIDEndpoint: TargetType {
          .metadata(let baseUrl),
          .openIdConfiguration(let baseUrl),
          .publicKeyInfo(let baseUrl),
-         .requestObject(let baseUrl),
          .status(let baseUrl),
          .trustStatements(let baseUrl, _),
          .typeMetadata(let baseUrl),
@@ -51,11 +49,10 @@ extension OpenIDEndpoint: TargetType {
     case .openIdConfiguration:
       ".well-known/oauth-authorization-server"
     case .trustStatements(_, let did):
-      "api/v1/truststatements/\(did)"
+      "api/v1/truststatements/identity/\(did)"
     case .accessToken,
          .credential,
          .publicKeyInfo,
-         .requestObject,
          .status,
          .typeMetadata,
          .vcSchema:
@@ -69,7 +66,6 @@ extension OpenIDEndpoint: TargetType {
          .metadata,
          .openIdConfiguration,
          .publicKeyInfo,
-         .requestObject,
          .status,
          .trustStatements,
          .typeMetadata,
@@ -87,7 +83,6 @@ extension OpenIDEndpoint: TargetType {
          .metadata,
          .openIdConfiguration,
          .publicKeyInfo,
-         .requestObject,
          .status,
          .trustStatements,
          .typeMetadata,
@@ -114,7 +109,6 @@ extension OpenIDEndpoint: TargetType {
          .metadata,
          .openIdConfiguration,
          .publicKeyInfo,
-         .requestObject,
          .trustStatements,
          .typeMetadata:
       NetworkHeader.standard.raw

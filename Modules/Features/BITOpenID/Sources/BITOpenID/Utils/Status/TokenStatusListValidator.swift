@@ -35,7 +35,7 @@ struct TokenStatusListValidator: AnyStatusCheckValidatorProtocol {
 
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.tokenStatusListDecoder) private var tokenStatusListDecoder: TokenStatusListDecoderProtocol
-  @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
+  @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
 
   private func isValidStatusJws(_ jws: JWS<TokenStatusList>, issuer: String, statusListUri: String) async throws -> Bool {
     guard
@@ -44,11 +44,7 @@ struct TokenStatusListValidator: AnyStatusCheckValidatorProtocol {
     else {
       return false
     }
-    guard try await jwsSignatureValidator.validate(jws, did: issuer) else {
-      return false
-    }
-    guard let expiredAt = jws.payload.expiredAt else { return true }
-    return expiredAt > Date()
+    return try await jwsValidator.validate(jws, issuerDid: issuer)
   }
 }
 

@@ -4,7 +4,7 @@ import Foundation
 // MARK: - TokenStatusList
 
 /// This class contains all registered claims which are specified by https://www.ietf.org/archive/id/draft-ietf-oauth-status-list-03.html#name-status-list-token
-public struct TokenStatusList: JWTPayload, Codable, Equatable {
+public struct TokenStatusList: JWTValidityPayload, Codable, Equatable {
 
   // MARK: Lifecycle
 

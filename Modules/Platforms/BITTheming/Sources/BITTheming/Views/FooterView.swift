@@ -30,7 +30,7 @@ public struct FooterView<Content: View>: View {
       }
     }
     .padding(.vertical, .x4)
-    .padding(.horizontal, .x6)
+    .padding(.horizontal, .x4)
     .background(ThemingAssets.Materials.chrome.swiftUIColor)
   }
 

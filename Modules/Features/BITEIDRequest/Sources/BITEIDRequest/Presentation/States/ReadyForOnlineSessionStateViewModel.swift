@@ -1,3 +1,4 @@
+import BITEIDRequestShared
 import BITL10n
 import Foundation
 
@@ -5,7 +6,7 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
 
   // MARK: Lifecycle
 
-  override init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
+  init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     guard let onlineSessionStartTimeoutAt = requestCase.state?.onlineSessionStartTimeoutAt else {
       throw RequestCaseViewStateError.invalidState
     }

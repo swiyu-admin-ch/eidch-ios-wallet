@@ -1,4 +1,3 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import XCTest
 @testable import BITJWT
@@ -8,7 +7,7 @@ import XCTest
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
 
-// MARK: - FetchVcSdJwtCredentialUseCaseTests
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
 final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
@@ -23,18 +22,33 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_success_returnsVcSdJwt() async throws {
-    let credential = try await useCase.execute(for: fetchCredentialContextMock)
+    let result = try await useCase.execute(for: fetchCredentialContextMock)
 
-    XCTAssertEqual(credential.raw, vcSdJwtMock.raw)
-    XCTAssertEqual(credential as? SdJWS<VcSdJwtPayload>, vcSdJwtMock)
+    if case .credential(let credential) = result {
+      XCTAssertEqual(credential.raw, vcSdJwtMock.raw)
+      XCTAssertEqual(credential as? SdJWS<VcSdJwtPayload>, vcSdJwtMock)
+    }
+  }
+
+  func testExecute_success_returnsDeferredCredential() async throws {
+    repositorySpy.fetchCredentialWithCredentialRequestBodyReturnValue = .deferred(transactionId: mockTransactionId, accessToken: mockAccessToken, endpoint: mockDeferredCredentialEndpoint)
+
+    let result = try await useCase.execute(for: fetchCredentialContextMock)
+
+    if case .deferred(let transactionId, let accessToken, let endpoint) = result {
+      XCTAssertEqual(transactionId, mockTransactionId)
+      XCTAssertEqual(accessToken, mockAccessToken)
+      XCTAssertEqual(endpoint, mockDeferredCredentialEndpoint)
+      XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 0)
+    }
   }
 
   func testExecute_success_argumentsPassed() async throws {
     _ = try await useCase.execute(for: fetchCredentialContextMock)
 
-    if let fetchArguments = repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
-      XCTAssertEqual(fetchArguments.url, fetchCredentialContextMock.credentialEndpoint)
-      XCTAssertEqual(fetchArguments.acccessToken, fetchCredentialContextMock.accessToken)
+    if let fetchArguments = repositorySpy.fetchCredentialWithCredentialRequestBodyReceivedArguments {
+      XCTAssertEqual(fetchArguments.context.credentialEndpoint, fetchCredentialContextMock.credentialEndpoint)
+      XCTAssertEqual(fetchArguments.context.accessToken, fetchCredentialContextMock.accessToken)
       XCTAssertEqual(fetchArguments.credentialRequestBody.format, fetchCredentialContextMock.format)
       XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.proofType, "jwt")
       XCTAssertEqual(fetchArguments.credentialRequestBody.proof?.jwt, Self.jwtStringMock)
@@ -46,17 +60,19 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(jwsEncoderMock.receivedAdditionalHeaderParameters["key_attestation"] as? String, fetchCredentialContextMock.holderBindingContext?.keyAttestationJWS)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.audience, fetchCredentialContextMock.credentialIssuer)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.nonce, fetchCredentialContextMock.accessToken.cNonce)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt, vcSdJwtMock)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedDid, Self.issuerMock)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidReceivedJws as? VcSdJwt, vcSdJwtMock)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidReceivedDid, Self.issuerMock)
   }
 
   func testExecute_withoutHolderBinding_returnsVcSdJwt() async throws {
     let context = FetchCredentialContext.Mock.sampleVcSdJwtWithoutHolderBinding
 
-    let credential = try await useCase.execute(for: context)
+    let result = try await useCase.execute(for: context)
 
-    XCTAssertEqual(credential.raw, vcSdJwtMock.raw)
-    XCTAssertEqual(credential as? SdJWS<VcSdJwtPayload>, vcSdJwtMock)
+    if case .credential(let credential) = result {
+      XCTAssertEqual(credential.raw, vcSdJwtMock.raw)
+      XCTAssertEqual(credential as? SdJWS<VcSdJwtPayload>, vcSdJwtMock)
+    }
   }
 
   func testExecute_withoutHolderBinding_argumentsPassed() async throws {
@@ -64,9 +80,9 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
     _ = try await useCase.execute(for: context)
 
-    if let fetchArguments = repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenReceivedArguments {
-      XCTAssertEqual(fetchArguments.url, context.credentialEndpoint)
-      XCTAssertEqual(fetchArguments.acccessToken, context.accessToken)
+    if let fetchArguments = repositorySpy.fetchCredentialWithCredentialRequestBodyReceivedArguments {
+      XCTAssertEqual(fetchArguments.context.credentialEndpoint, context.credentialEndpoint)
+      XCTAssertEqual(fetchArguments.context.accessToken, context.accessToken)
       XCTAssertEqual(fetchArguments.credentialRequestBody.format, context.format)
       XCTAssertNil(fetchArguments.credentialRequestBody.proof)
       XCTAssertEqual(fetchArguments.credentialRequestBody.vct, context.selectedCredential.vct)
@@ -78,7 +94,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     XCTAssertTrue(jwsEncoderMock.receivedAdditionalHeaderParameters.isEmpty)
     XCTAssertNil(jwsEncoderMock.receivedValue?.audience)
     XCTAssertNil(jwsEncoderMock.receivedValue?.nonce)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateJwsDidReceivedJws as? VcSdJwt, vcSdJwtMock)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidReceivedJws as? VcSdJwt, vcSdJwtMock)
   }
 
   func testExecute_withHolderBindingWithoutKeyAttestation_jwsEncoderArgumentsPassed() async throws {
@@ -105,7 +121,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_fetchCredentialFailure_throwsError() async throws {
-    repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenThrowableError = TestingError.error
+    repositorySpy.fetchCredentialWithCredentialRequestBodyThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: fetchCredentialContextMock)
@@ -115,20 +131,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_credentialDecodingFailure_throwsError() async throws {
-    sdJwsDecoderMock.throwingError = TestingError.error
-    useCase = FetchVcSdJwtCredentialUseCase()
-
-    do {
-      _ = try await useCase.execute(for: fetchCredentialContextMock)
-      XCTFail("An error was expected")
-    } catch {
-      XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .validationFailed)
-    }
-  }
-
   func testExecute_validationReturnsFalse_throwsError() async throws {
-    jwsSignatureValidatorMock.validateJwsDidReturnValue = false
+    jwsSignatureValidatorMock.validateIssuerDidReturnValue = false
     useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
@@ -140,7 +144,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_validationFailure_throwsError() async throws {
-    jwsSignatureValidatorMock.validateJwsDidThrowableError = TestingError.error
+    jwsSignatureValidatorMock.validateIssuerDidThrowableError = TestingError.error
     useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
@@ -152,7 +156,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_cannotResolveDid_throwsErrors() async throws {
-    jwsSignatureValidatorMock.validateJwsDidThrowableError = JWSSignatureValidatorError.cannotResolveDid(TestingError.error)
+    jwsSignatureValidatorMock.validateIssuerDidThrowableError = JWSSignatureValidatorError.cannotResolveDid(TestingError.error)
     useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
@@ -173,29 +177,29 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   private let credentialResponseMock = CredentialResponse.Mock.sample
   private var fetchCredentialContextMock: FetchCredentialContext = .Mock.sampleVcSdJwt
 
+  private let mockAccessToken = "mock_access_token"
+  private let mockTransactionId = "mock_transaction_id"
+  private let mockDeferredCredentialEndpoint = "mock_deferred_credential_endpoint"
+
   private var useCase = FetchVcSdJwtCredentialUseCase()
   private var jwsEncoderMock = JWSEncoderMock<JWTProofPayload>()
   private var repositorySpy = OpenIDRepositoryProtocolSpy()
-  private var sdJwsDecoderMock = SdJWSDecoderMock<VcSdJwtPayload>()
-  private var jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+  private var jwsSignatureValidatorMock: JWSSignatureValidatorMock<VcSdJwtPayload>!
 
   private func registerMocks() {
     jwsEncoderMock = JWSEncoderMock()
     repositorySpy = OpenIDRepositoryProtocolSpy()
-    sdJwsDecoderMock = SdJWSDecoderMock()
     jwsSignatureValidatorMock = JWSSignatureValidatorMock()
 
     Container.shared.jwsEncoder.register { self.jwsEncoderMock }
     Container.shared.openIDRepository.register { self.repositorySpy }
-    Container.shared.sdJwsDecoder.register { self.sdJwsDecoderMock }
     Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
   }
 
   private func success() {
     jwsEncoderMock.encodeUsingReturnValue = Self.jwtDataMock
-    repositorySpy.fetchCredentialFromCredentialRequestBodyAcccessTokenReturnValue = credentialResponseMock
-    sdJwsDecoderMock.decodeReturnValue = vcSdJwtMock
-    jwsSignatureValidatorMock.validateJwsDidReturnValue = true
+    repositorySpy.fetchCredentialWithCredentialRequestBodyReturnValue = .credential(vcSdJwtMock)
+    jwsSignatureValidatorMock.validateIssuerDidReturnValue = true
   }
 }
 

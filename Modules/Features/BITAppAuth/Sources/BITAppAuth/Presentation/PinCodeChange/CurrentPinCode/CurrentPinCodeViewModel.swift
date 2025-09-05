@@ -5,7 +5,7 @@ import Factory
 import SwiftUI
 
 @MainActor
-class CurrentPinCodeViewModel: ObservableObject, Vibrating {
+public class CurrentPinCodeViewModel: ObservableObject, Vibrating {
 
   // MARK: Lifecycle
 
@@ -75,7 +75,7 @@ class CurrentPinCodeViewModel: ObservableObject, Vibrating {
 
     var message: String? = nil
     if attemptLeft < attemptsLimit {
-      message = L10n.tkChangepasswordError1IosNote2(attemptLeft)
+      message = L10n.tkChangepasswordError1Note2(attemptLeft)
     }
 
     withAnimation {
@@ -94,7 +94,7 @@ class CurrentPinCodeViewModel: ObservableObject, Vibrating {
       return lockWallet()
     }
 
-    let message = L10n.tkChangepasswordError1IosNote2(attemptLeft)
+    let message = L10n.tkChangepasswordError1Note2(attemptLeft)
     withAnimation {
       vibrate()
       inputFieldMessage = message

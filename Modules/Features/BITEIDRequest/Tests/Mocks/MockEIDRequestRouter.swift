@@ -24,21 +24,33 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
   var documentSelectionCalled = false
   var attestationCalled = false
   var walletPairingCalled = false
+  var walletPairingListCalled = false
   var avIdentityCheckCalled = false
   var clientAttestationErrorCalled = false
   var keyAttestationErrorCalled = false
   var attestationError: Error?
   var avIntroSelfieVideoCalled = false
   var recordDocumentCalled = false
+  var avDevicePairingQRCodeCalled = false
   var recordSelfieCalled = false
+  var nfcScanCalled = false
+
   var context = EIDRequestContext()
 
   func avIdentityCheck() {
     avIdentityCheckCalled = true
   }
 
+  func avDevicePairingQRCode(delegate: any DevicePairingDelegate) {
+    avDevicePairingQRCodeCalled = true
+  }
+
   func walletPairing() {
     walletPairingCalled = true
+  }
+
+  func walletPairingList() {
+    walletPairingListCalled = true
   }
 
   func clientAttestationError() {
@@ -105,7 +117,7 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
     externalLinkCalled = true
   }
 
-  func settings() {
+  func externalSettings() {
     settingsCalled = true
   }
 
@@ -141,7 +153,15 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
     recordDocumentCalled = true
   }
 
+  func avDevicePairingQRCode() {
+    avDevicePairingQRCodeCalled = true
+  }
+
   func recordSelfie() {
     recordSelfieCalled = true
+  }
+
+  func nfcScan() {
+    nfcScanCalled = true
   }
 }

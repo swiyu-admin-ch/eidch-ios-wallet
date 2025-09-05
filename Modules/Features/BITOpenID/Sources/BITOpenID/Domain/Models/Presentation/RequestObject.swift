@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - RequestObjectError
 
-enum RequestObjectError: Error {
+public enum RequestObjectError: Error {
   case invalidPayload
   case invalidInputDescriptorFormat
 }
@@ -13,11 +13,11 @@ enum RequestObjectError: Error {
 
 /// A srtructure representing OpenID Authorization Request
 /// https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
-public class RequestObject: JWTPayload, Codable {
+public class RequestObject: Codable {
 
   // MARK: Lifecycle
 
-  init(presentationDefinition: PresentationDefinition, nonce: String?, responseUri: String, clientMetadata: ClientMetadata?, responseType: String, clientId: String, clientIdScheme: String?, responseMode: String) {
+  init(presentationDefinition: PresentationDefinition, nonce: String?, responseUri: URL, clientMetadata: ClientMetadata?, responseType: String, clientId: String, clientIdScheme: String?, responseMode: String) {
     self.presentationDefinition = presentationDefinition
     self.nonce = nonce
     self.responseUri = responseUri
@@ -30,11 +30,9 @@ public class RequestObject: JWTPayload, Codable {
 
   // MARK: Public
 
-  public let type: String? = nil
-
   public let presentationDefinition: PresentationDefinition
   public let nonce: String?
-  public let responseUri: String
+  public let responseUri: URL
   public let clientMetadata: ClientMetadata?
   public let responseType: String
   public let clientId: String
@@ -43,6 +41,18 @@ public class RequestObject: JWTPayload, Codable {
 
   public var firstInputDescriptor: InputDescriptor? {
     presentationDefinition.inputDescriptors.first
+  }
+
+  public func isEqual(to other: RequestObject) -> Bool {
+    guard type(of: self) == type(of: other) else { return false }
+    return responseMode == other.responseMode &&
+      clientIdScheme == other.clientIdScheme &&
+      clientId == other.clientId &&
+      responseType == other.responseType &&
+      responseUri == other.responseUri &&
+      nonce == other.nonce &&
+      clientMetadata == other.clientMetadata &&
+      presentationDefinition == other.presentationDefinition
   }
 
   // MARK: Internal
@@ -64,14 +74,7 @@ public class RequestObject: JWTPayload, Codable {
 
 extension RequestObject: Equatable {
   public static func == (lhs: RequestObject, rhs: RequestObject) -> Bool {
-    lhs.responseMode == rhs.responseMode &&
-      lhs.clientIdScheme == rhs.clientIdScheme &&
-      lhs.clientId == rhs.clientId &&
-      lhs.responseType == rhs.responseType &&
-      lhs.responseUri == rhs.responseUri &&
-      lhs.nonce == rhs.nonce &&
-      lhs.clientMetadata == rhs.clientMetadata &&
-      lhs.presentationDefinition == rhs.presentationDefinition
+    lhs.isEqual(to: rhs)
   }
 }
 
@@ -131,38 +134,14 @@ extension ClientMetadata {
 
     // MARK: Public
 
-    /// A static helper method that retrieves the preferred display string from a set of localized displays,
-    /// prioritizing the user's preferred language codes.
+    /// Retrieves the preferred display from a set of localized displays, considering the given language codes in their order.
     ///
-    /// - Returns: The best matching display string based on the preferred languages, the app's default language, or a fallback if available. Returns `nil` if no display is found.
-    public static func getPreferredDisplay(from displays: LocalizedDisplay?, considering preferredUserLanguageCodes: [UserLanguageCode] ) -> T? {
-      guard let displays else {
-        return nil
-      }
-
-      for languageCode in preferredUserLanguageCodes {
-        if let display = displays.value(for: languageCode) {
-          return display
-        }
-      }
-
-      if let display = displays.value(for: UserLanguageCode.defaultAppLanguageCode) {
-        return display
-      }
-
-      if let display = displays.fallback() {
-        return display
-      }
-
-      return nil
-    }
-
-    public func value(for locale: String) -> T? {
-      values[locale]
-    }
-
-    public func fallback() -> T? {
-      values[""]
+    /// - Returns: The best matching display based on the given language codes or a fallback if available. Returns `nil` if no display is found.
+    public func getPreferredDisplay(considering languageCodes: [String] ) -> T? {
+      languageCodes
+        .lazy
+        .compactMap { values[$0] }
+        .first ?? values[""]
     }
 
     // MARK: Private

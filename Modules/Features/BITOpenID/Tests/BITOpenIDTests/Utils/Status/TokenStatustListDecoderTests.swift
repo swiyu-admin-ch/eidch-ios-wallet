@@ -43,7 +43,7 @@ final class TokenStatusListDecoderTests: XCTestCase {
   func testDecode_notBase64EncodedList_throwsError() async throws {
     let header = JWSHeader(algorithm: JWTAlgorithm.ES256)
     let payload = TokenStatusList(issuer: "issuer", subject: "subject", issuedAt: Date(), statusList: TokenStatusList.StatusList(bits: 0, list: "%"))
-    let jws: JWS<TokenStatusList> = JWS(payload: payload, rawJWS: "rawJWS", rawPayload: "rawPayload", header: header)
+    let jws: JWS<TokenStatusList> = JWS(payload: payload, rawPayload: "rawPayload", rawJWS: "rawJWS", header: header)
 
     XCTAssertThrowsError(try decoder.decode(jws, index: 0)) { error in
       XCTAssertEqual(error as? TokenStatusListDecoder.DecoderError, .invalidStatusJWT)

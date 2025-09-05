@@ -3,7 +3,7 @@ import Foundation
 // MARK: - JWTRegisteredPayload
 
 /// This class contains all registered claims which are specified by https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1
-public struct JWTRegisteredPayload: JWTPayload, Codable, Equatable {
+public struct JWTRegisteredPayload: JWTValidityPayload, Codable, Equatable {
 
   // MARK: Lifecycle
 

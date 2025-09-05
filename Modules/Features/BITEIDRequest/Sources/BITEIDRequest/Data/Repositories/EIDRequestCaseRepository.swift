@@ -1,4 +1,5 @@
 import BITDataStore
+import BITEIDRequestShared
 import BITEntities
 import Factory
 import Foundation
@@ -31,7 +32,7 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
   // MARK: Internal
 
   func create(eIDRequestCase: EIDRequestCase) async throws -> EIDRequestCase {
-    let entity = try EIDRequestCaseEntity(eIDRequestCase)
+    let entity = EIDRequestCaseEntity(eIDRequestCase)
     try database.save(entity)
     return try EIDRequestCase(entity)
   }
@@ -52,7 +53,7 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
     let entity = try getEntity(eIDRequestCase.id)
 
     try database.write({
-      try entity.setValues(from: eIDRequestCase)
+      entity.setValues(from: eIDRequestCase)
     })
 
     return try EIDRequestCase(entity)

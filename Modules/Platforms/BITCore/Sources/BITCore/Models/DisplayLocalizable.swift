@@ -28,7 +28,7 @@ extension Array where Element: DisplayLocalizable {
   public func findDisplaysWithFallback(
     preferredLanguageCodes: [UserLanguageCode] = Container.shared.preferredUserLanguageCodes()
   ) -> [Element] {
-    (preferredLanguageCodes + [UserLanguageCode.defaultAppLanguageCode])
+    preferredLanguageCodes
       .lazy
       .map { code in
         filter { display in

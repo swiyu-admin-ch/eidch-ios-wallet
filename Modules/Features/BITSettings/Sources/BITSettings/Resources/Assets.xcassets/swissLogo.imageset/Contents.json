@@ -1,0 +1,106 @@
+{
+  "images" : [
+    {
+      "filename" : "English_light.svg",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "English_dark.svg",
+      "idiom" : "universal"
+    },
+    {
+      "filename" : "French_light.svg",
+      "idiom" : "universal",
+      "locale" : "fr"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "French_dark.svg",
+      "idiom" : "universal",
+      "locale" : "fr"
+    },
+    {
+      "filename" : "German_light.svg",
+      "idiom" : "universal",
+      "locale" : "de"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "German_dark.svg",
+      "idiom" : "universal",
+      "locale" : "de"
+    },
+    {
+      "filename" : "Italian_light.svg",
+      "idiom" : "universal",
+      "locale" : "it"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Italian_dark.svg",
+      "idiom" : "universal",
+      "locale" : "it"
+    },
+    {
+      "filename" : "Rumantsch_light.svg",
+      "idiom" : "universal",
+      "locale" : "rm"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Rumantsch_dark.svg",
+      "idiom" : "universal",
+      "locale" : "rm"
+    },
+    {
+      "filename" : "English_light 1.svg",
+      "idiom" : "universal",
+      "locale" : "en"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "English_dark 1.svg",
+      "idiom" : "universal",
+      "locale" : "en"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+    "localizable" : true,
+    "preserves-vector-representation" : true
+  }
+}

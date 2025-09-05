@@ -98,7 +98,7 @@ class CameraViewModel: ObservableObject, Vibrating {
   @Injected(\.scannerDelay) private var scannerDelay: UInt64
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.fetchCredentialUseCase) private var fetchCredentialUseCase: FetchCredentialUseCaseProtocol
-  @Injected(\.processPresentationRequestUseCase) private var processPresentationRequestUseCase: ProcessPresentationRequestUseCaseProtocol
+  @Injected(\.fetchPresentationRequestUseCase) private var fetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol
   @Injected(\.getCredentialsCountUseCase) private var getCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol
   @Injected(\.checkInvitationTypeUseCase) private var checkInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol
   @Injected(\.validateCredentialOfferInvitationUrlUseCase) private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocol
@@ -117,7 +117,7 @@ class CameraViewModel: ObservableObject, Vibrating {
   }
 
   private func processPresentation(url: URL) async throws {
-    let context = try await processPresentationRequestUseCase.execute(url: url)
+    let context = try await fetchPresentationRequestUseCase.execute(url: url)
 
     isTorchEnabled = false
     cameraManager.stop()
@@ -133,7 +133,11 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   private func processCredentialOffer(url: URL) async throws {
     let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(url)
-    let (credential, trustStatement) = try await fetchCredentialUseCase.execute(from: credentialOffer)
+    let fetchCredentialResult = try await fetchCredentialUseCase.execute(from: credentialOffer)
+
+    guard case .credential(let credential, let trustStatement) = fetchCredentialResult else {
+      throw FetchCredentialUseCaseError.deferredCredentialNotSupported // Deferred credential are not supported yet in this flow
+    }
 
     isTorchEnabled = false
     cameraManager.stop()

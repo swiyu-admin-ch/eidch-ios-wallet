@@ -14,8 +14,6 @@ extension TokenStatusList: Mockable {
     static let sample: JWS<TokenStatusList> = decodeRawText(fromFile: "token-status-list")
     static let sampleData: Data = getData(fromFile: "token-status-list", ofType: "txt", bundle: Bundle.module) ?? Data()
 
-    static let expired: JWS<TokenStatusList> = decodeRawText(fromFile: "token-status-list-expired")
-
     // MARK: Private
 
     private static func decodeRawText(fromFile filename: String) -> JWS<TokenStatusList> {

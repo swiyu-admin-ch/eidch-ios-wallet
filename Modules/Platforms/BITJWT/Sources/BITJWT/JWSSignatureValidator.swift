@@ -2,13 +2,11 @@ import BITCrypto
 import Factory
 import Foundation
 import JOSESwift
-import Spyable
 
 // MARK: - JWSSignatureValidatorProtocol
 
-@Spyable
 public protocol JWSSignatureValidatorProtocol {
-  func validate(_ jws: JWSValidatable, did: String) async throws -> Bool
+  func validate(_ jws: JWS<some Codable & Equatable>, issuerDid: String) async throws -> Bool
 }
 
 // MARK: - JWSSignatureValidatorError
@@ -24,8 +22,8 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   // MARK: Public
 
-  public func validate(_ jws: JWSValidatable, did: String) async throws -> Bool {
-    let jwks = try await getJwks(from: did, keyIdentifier: jws.header.keyIdentifier)
+  public func validate(_ jws: JWS<some Codable & Equatable>, issuerDid: String) async throws -> Bool {
+    let jwks = try await getJwks(from: issuerDid, keyIdentifier: jws.header.keyIdentifier)
     return jwks.contains { validateJwtSignature(for: jws, jwk: $0) }
   }
 
@@ -43,7 +41,7 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
     }
   }
 
-  private func validateJwtSignature(for jws: JWSValidatable, jwk: BITCrypto.JWK) -> Bool {
+  private func validateJwtSignature(for jws: JWS<some Codable & Equatable>, jwk: BITCrypto.JWK) -> Bool {
     do {
       guard let verifier = try createVerifier(for: jwk, algorithm: jws.header.algorithm) else { return false }
       let jws = try JOSESwift.JWS(compactSerialization: jws.rawJWS)

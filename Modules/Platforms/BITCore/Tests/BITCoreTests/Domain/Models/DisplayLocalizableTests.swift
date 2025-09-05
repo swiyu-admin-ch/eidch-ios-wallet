@@ -26,26 +26,8 @@ final class DisplayLocalizableTests: XCTestCase {
     XCTAssertEqual(UserLocale.LocaleIdentifier.swissGerman.rawValue, display?.locale)
   }
 
-  /// Search a display NOT available in the preferred languages --> returns default language (EN)
-  func testFindDisplayWithFallback_WhenDisplayIsNotAvailableInPreferredLanguage_ReturnsFallbackLanguage() {
-    let displays = [
-      MockDisplay(locale: UserLocale.LocaleIdentifier.swissGerman.rawValue),
-      MockDisplay(locale: UserLocale.LocaleIdentifier.swissEnglish.rawValue),
-    ]
-
-    let preferredLanguageCodes = [
-      UserLanguageCode(UserLanguageCode.LanguageIdentifier.french.rawValue),
-      UserLanguageCode(UserLanguageCode.LanguageIdentifier.italian.rawValue),
-    ]
-
-    let display = displays.findDisplayWithFallback(preferredLanguageCodes: preferredLanguageCodes)
-
-    XCTAssertNotNil(display)
-    XCTAssertEqual(UserLocale.LocaleIdentifier.swissEnglish.rawValue, display?.locale)
-  }
-
-  /// Search a display NOT available in the preferred languages, NOT available in default language (EN) --> returns first
-  func testFindDisplayWithFallback_WhenDisplayIsNotAvailableInPreferredLanguageAndNotDefaultLanguage_ReturnsFirstLanguage() {
+  /// Search a display NOT available in the preferred languages --> returns first
+  func testFindDisplayWithFallback_WhenDisplayIsNotAvailableInPreferredLanguage_ReturnsFirstLanguage() {
     let displays = [
       MockDisplay(locale: UserLocale.LocaleIdentifier.swissFrench.rawValue),
       MockDisplay(locale: UserLocale.LocaleIdentifier.swissItalian.rawValue),
@@ -105,20 +87,6 @@ final class DisplayLocalizableTests: XCTestCase {
     let result = displays.findDisplaysWithFallback(preferredLanguageCodes: preferred)
 
     XCTAssertEqual(result.map(\.locale), [UserLocale.LocaleIdentifier.swissFrench.rawValue])
-  }
-
-  func testFindDisplaysWithFallback_NoPreferredButDefaultAppLanguageMatches() {
-    let displays = [
-      MockDisplay(locale: UserLocale.LocaleIdentifier.swissGerman.rawValue),
-      MockDisplay(locale: UserLocale.LocaleIdentifier.swissEnglish.rawValue),
-    ]
-    let preferred: [UserLanguageCode] = [
-      UserLanguageCode(UserLanguageCode.LanguageIdentifier.italian.rawValue),
-    ]
-
-    let result = displays.findDisplaysWithFallback(preferredLanguageCodes: preferred)
-
-    XCTAssertEqual(result.map(\.locale), [UserLocale.LocaleIdentifier.swissEnglish.rawValue])
   }
 
   func testFindDisplaysWithFallback_WhenNoMatches_ReturnsAllMatchingLocaleOfFirst() {

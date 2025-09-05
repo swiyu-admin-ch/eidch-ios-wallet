@@ -23,8 +23,8 @@ struct FetchMetadataUseCase: FetchMetadataUseCaseProtocol {
 
   func execute(for offer: CredentialOffer) async throws -> CredentialMetadataWrapper {
     let issuerUrl = try getIssuerUrl(from: offer)
-    let respone = try await repository.fetchMetadata(from: issuerUrl)
-    return try await createWrapper(from: respone, offer: offer)
+    let response = try await repository.fetchMetadata(from: issuerUrl)
+    return try await createWrapper(from: response, offer: offer)
   }
 
   // MARK: Private

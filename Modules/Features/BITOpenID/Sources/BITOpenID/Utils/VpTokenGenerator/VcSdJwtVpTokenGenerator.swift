@@ -15,7 +15,7 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
     guard let vcSdJwt = credential as? VcSdJwt else {
       throw AnyVpTokenGeneratorError.invalidFormat
     }
-    let sdJwt = try vcSdJwt.createSelectiveDisclosure(for: fields)
+    let sdJwt = vcSdJwt.createSelectiveDisclosure(for: fields)
 
     guard
       let key = keyPair,

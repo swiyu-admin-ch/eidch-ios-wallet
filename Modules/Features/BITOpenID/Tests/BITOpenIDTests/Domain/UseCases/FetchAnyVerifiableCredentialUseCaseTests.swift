@@ -8,7 +8,7 @@ import XCTest
 @testable import BITTestingCore
 @testable import BITVault
 
-// MARK: - FetchAnyVerifiableCredentialUseCaseTests
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
 final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
@@ -25,14 +25,17 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   func testExecute_validArguments_createsValidContextAndFetches() async throws {
     mockAnyCredential.raw = UUID().uuidString
 
-    let credential = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
+    let result = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
 
-    XCTAssertEqual(mockAnyCredential.raw, credential.raw)
+    if case .credential(let credential) = result {
+      XCTAssertEqual(mockAnyCredential.raw, credential.raw)
+    }
+
     XCTAssertTrue(repository.fetchOpenIdConfigurationFromCalled)
     XCTAssertTrue(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
     XCTAssertEqual(repository.fetchAccessTokenFromPreAuthorizedCodeReceivedArguments?.url, mockOpenIdConfiguration.tokenEndpoint)
 
-    guard let receivedContext = fetchAnyCredentialUseCase.executeForReceivedContext else {
+    guard let receivedContext = spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext else {
       XCTFail("receivedContext must not be nil")
       return
     }
@@ -47,7 +50,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(receivedContext.accessToken, mockAccessToken)
     XCTAssertEqual(receivedContext.credentialEndpoint.absoluteString, mockMetadataWrapper.credentialMetadata.credentialEndpoint)
 
-    XCTAssertTrue(fetchAnyCredentialUseCase.executeForCalled)
+    XCTAssertTrue(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
   }
 
   func testExecute_metadataInvalidEndpoint_throws() async throws {
@@ -89,9 +92,9 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     } catch FetchAnyVerifiableCredentialError.expiredInvitation {
       XCTAssertTrue(repository.fetchOpenIdConfigurationFromCalled)
       XCTAssertTrue(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
-      XCTAssertFalse(repository.fetchCredentialFromCredentialRequestBodyAcccessTokenCalled)
+      XCTAssertFalse(repository.fetchCredentialWithCredentialRequestBodyCalled)
       XCTAssertFalse(repository.fetchIssuerPublicKeyInfoFromCalled)
-      XCTAssertFalse(fetchAnyCredentialUseCase.executeForCalled)
+      XCTAssertFalse(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
     } catch {
       XCTFail("Not the expected error")
     }
@@ -107,21 +110,25 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private let mockCredentialOffer = CredentialOffer.Mock.sample
   private let mockAccessToken = AccessToken.Mock.sample
 
-  private var fetchAnyCredentialUseCase = FetchAnyCredentialUseCaseProtocolSpy()
   private var repository = OpenIDRepositoryProtocolSpy()
+
+  private let mockVcSdJwtCredential = AnyCredentialSpy()
+  private var mockDispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]!
+  private var spyFetchCredentialVcSdJwtUseCase: FetchAnyCredentialUseCaseProtocolSpy!
 
   private var useCase = FetchAnyVerifiableCredentialUseCase()
 
   private func registerMocks() {
     repository = OpenIDRepositoryProtocolSpy()
-    fetchAnyCredentialUseCase = FetchAnyCredentialUseCaseProtocolSpy()
+    spyFetchCredentialVcSdJwtUseCase = FetchAnyCredentialUseCaseProtocolSpy()
+    mockDispatcher = [.vcSdJwt: spyFetchCredentialVcSdJwtUseCase]
 
-    Container.shared.fetchAnyCredentialUseCase.register { self.fetchAnyCredentialUseCase }
+    Container.shared.anyFetchCredentialDispatcher.register { self.mockDispatcher }
     Container.shared.openIDRepository.register { self.repository }
   }
 
   private func success() {
-    fetchAnyCredentialUseCase.executeForReturnValue = mockAnyCredential
+    spyFetchCredentialVcSdJwtUseCase.executeForReturnValue = .credential(mockAnyCredential)
     repository.fetchOpenIdConfigurationFromReturnValue = mockOpenIdConfiguration
     repository.fetchAccessTokenFromPreAuthorizedCodeReturnValue = mockAccessToken
   }
@@ -134,13 +141,15 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
       XCTFail("Expected a `FetchAnyVerifiableCredentialError.credentialEndpointCreationError`")
     } catch FetchAnyVerifiableCredentialError.credentialEndpointCreationError {
       XCTAssertFalse(repository.fetchOpenIdConfigurationFromCalled)
-      XCTAssertFalse(repository.fetchCredentialFromCredentialRequestBodyAcccessTokenCalled)
+      XCTAssertFalse(repository.fetchCredentialWithCredentialRequestBodyCalled)
       XCTAssertFalse(repository.fetchIssuerPublicKeyInfoFromCalled)
       XCTAssertFalse(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
-      XCTAssertFalse(fetchAnyCredentialUseCase.executeForCalled)
+      XCTAssertFalse(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
     } catch {
       XCTFail("Expected a `FetchAnyVerifiableCredentialError.credentialEndpointCreationError` but got \(error.localizedDescription)")
     }
   }
 
 }
+
+// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

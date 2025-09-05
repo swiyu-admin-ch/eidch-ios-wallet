@@ -1,0 +1,6 @@
+{
+  "jwt": "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiZGlyIn0..SXWsmcRuJFoyQIfL.jr0z16pEfJK-cy60StvwLIg7rJuXgcT5iGvlMc2gr-LDQle0dqA",
+  "use_nfc": true,
+  "scan_document": true,
+  "record_document_video": true
+}

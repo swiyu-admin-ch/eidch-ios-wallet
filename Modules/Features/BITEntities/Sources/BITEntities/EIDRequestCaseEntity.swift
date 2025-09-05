@@ -13,5 +13,7 @@ public class EIDRequestCaseEntity: Object {
   @Persisted public var files = List<EIDRequestCaseFileEntity>()
 
   @Persisted public var createdAt: Date
+  @Persisted public var walletPairingId: String?
+  @Persisted public var deferredCredential: DeferredCredentialEntity?
 
 }

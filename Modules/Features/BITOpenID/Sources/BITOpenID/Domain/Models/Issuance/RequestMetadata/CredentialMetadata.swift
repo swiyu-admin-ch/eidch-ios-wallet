@@ -10,12 +10,19 @@ public struct CredentialMetadata: Decodable {
 
   // MARK: Lifecycle
 
-  init(credentialIssuer: String, credentialEndpoint: String, credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported], display: [CredentialMetadataDisplay]?) {
+  init(
+    credentialIssuer: String,
+    credentialEndpoint: String,
+    credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported],
+    display: [CredentialMetadataDisplay]?,
+    deferredCredentialEndpoint: URL? = nil)
+  {
     self.credentialIssuer = credentialIssuer
     self.credentialEndpoint = credentialEndpoint
     self.credentialConfigurationsSupported = credentialConfigurationsSupported
     self.display = display
     preferredDisplay = display?.findDisplayWithFallback()
+    self.deferredCredentialEndpoint = deferredCredentialEndpoint
   }
 
   public init(from decoder: Decoder) throws {
@@ -23,11 +30,12 @@ public struct CredentialMetadata: Decodable {
     let credentialIssuer = try container.decode(String.self, forKey: .credentialIssuer)
     let credentialEndpoint = try container.decode(String.self, forKey: .credentialEndpoint)
     let display = try container.decode([CredentialMetadataDisplay].self, forKey: .display)
+    let deferredCredentialEndpoint = try container.decodeIfPresent(URL.self, forKey: .deferredCredentialEndpoint)
 
     let decodedAnyCredentialConfigurationsSupported = try container.decode([String: CredentialConfigurationSupportedWrapper].self, forKey: .credentialConfigurationsSupported)
     let anyCredentialConfigurationsSupported = decodedAnyCredentialConfigurationsSupported.compactMapValues { $0.anyCredentialConfigurationSupported }
 
-    self.init(credentialIssuer: credentialIssuer, credentialEndpoint: credentialEndpoint, credentialConfigurationsSupported: anyCredentialConfigurationsSupported, display: display)
+    self.init(credentialIssuer: credentialIssuer, credentialEndpoint: credentialEndpoint, credentialConfigurationsSupported: anyCredentialConfigurationsSupported, display: display, deferredCredentialEndpoint: deferredCredentialEndpoint)
   }
 
   // MARK: Public
@@ -44,10 +52,12 @@ public struct CredentialMetadata: Decodable {
     case credentialConfigurationsSupported = "credential_configurations_supported"
     case display
     case preferredDisplay
+    case deferredCredentialEndpoint = "deferred_credential_endpoint"
   }
 
   let credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported]
   let preferredDisplay: CredentialMetadataDisplay?
+  let deferredCredentialEndpoint: URL?
 
 }
 
@@ -123,6 +133,7 @@ extension CredentialMetadata {
 
   public enum CryptographicBindingMethod: String {
     case didJwk = "did:jwk"
+    case jwk
   }
 
   public struct CredentialSupportedDisplay: Decodable, Equatable {

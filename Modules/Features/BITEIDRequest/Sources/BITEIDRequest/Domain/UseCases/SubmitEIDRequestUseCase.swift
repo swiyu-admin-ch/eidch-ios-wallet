@@ -1,4 +1,5 @@
 import BITAppAttestation
+import BITEIDRequestShared
 import Factory
 import Foundation
 import Spyable

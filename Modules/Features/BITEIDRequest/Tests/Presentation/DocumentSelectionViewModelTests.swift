@@ -2,6 +2,7 @@
 import Factory
 import XCTest
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 
 class DocumentSelectionViewModelTests: XCTestCase {
 

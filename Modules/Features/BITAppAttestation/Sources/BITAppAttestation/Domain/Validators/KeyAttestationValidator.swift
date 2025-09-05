@@ -29,16 +29,15 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
       }
 
       guard
+        keyAttestation.payload.expiredAt != nil,
         attestationServiceTrustedDids.contains(keyAttestation.payload.issuer),
-        keyAttestation.payload.issuedAt <= now,
-        keyAttestation.payload.expiredAt >= now,
         supportedKeyStorageSecurityLevel.contains(keyAttestation.payload.keyStorage),
         try hasValidAttestedKey(keyPair, keyAttestation.payload.attestedKeys)
       else {
         throw ClientAttestationValidatorError.invalidPayload
       }
 
-      return try await jwsSignatureValidator.validate(keyAttestation, did: keyAttestation.payload.issuer)
+      return try await jwsValidator.validate(keyAttestation, issuerDid: keyAttestation.payload.issuer)
     } catch {
       return false
     }
@@ -49,7 +48,7 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
   private static let kidSeparator: Character = "#"
 
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
-  @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
+  @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
   @Injected(\.supportedKeyStorageSecurityLevel) private var supportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel]
 
   private var now: Date {

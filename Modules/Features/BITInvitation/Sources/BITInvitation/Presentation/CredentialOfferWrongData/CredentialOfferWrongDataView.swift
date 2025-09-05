@@ -41,7 +41,7 @@ struct CredentialOfferWrongDataView: View {
 
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarLeading) {
+    ToolbarItem(placement: .topBarTrailing) {
       Button(action: viewModel.close, label: {
         Assets.close.swiftUIImage
       })

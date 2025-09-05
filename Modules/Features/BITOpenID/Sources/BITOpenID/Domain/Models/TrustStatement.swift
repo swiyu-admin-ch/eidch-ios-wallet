@@ -7,52 +7,71 @@ public typealias TrustStatement = SdJWS<TrustStatementPayload>
 
 // MARK: - TrustStatementPayload
 
-public struct TrustStatementPayload: JWTPayload, Codable, Equatable {
+public struct TrustStatementPayload: JWTValidityPayload, Codable, Equatable {
 
   // MARK: Public
 
   public let type: String? = "vc+sd-jwt"
 
-  public var issuer: String
+  public let vct: String
+  public let issuer: String
+  public let subject: String?
+  public let issuedAt: Date
+  public let statusList: VcSdJwtTokenStatusList
 
-  public var activatedAt: Date
+  public let activatedAt: Date?
+  public let expiredAt: Date?
 
-  public var expiredAt: Date
+  public let _entityNames: [String: String]?
+  public let _registryIds: [RegistryId]?
+  public let _isStateActor: Bool?
 
-  public var vct: String
+  public var entityNames: [String: String] {
+    _entityNames ?? [:]
+  }
 
-  public var statusList: VcSdJwtTokenStatusList
+  public var isStateActor: Bool {
+    _isStateActor ?? false
+  }
 
-  public var subject: String?
-
-  public var issuedAt: Date
+  public var registryIds: [RegistryId] {
+    _registryIds ?? []
+  }
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case issuer = "iss"
-    case activatedAt = "nbf"
-    case expiredAt = "exp"
     case vct
-    case statusList = "status"
+    case issuer = "iss"
     case subject = "sub"
     case issuedAt = "iat"
+    case statusList = "status"
+    case activatedAt = "nbf"
+    case expiredAt = "exp"
+    case _entityNames = "entityName"
+    case _registryIds = "registryIds"
+    case _isStateActor = "isStateActor"
+  }
+}
+
+// MARK: TrustStatementPayload.RegistryId
+
+extension TrustStatementPayload {
+  public struct RegistryId: Codable, Equatable {
+    public let type: String
+    public let value: String
   }
 }
 
 extension TrustStatement {
-
-  public var localizedIssuer: [String: Any] {
-    let orgName = rawPayload["orgName"] as? [String: Any] ?? [:]
-    let logoUri = rawPayload["logoUri"] as? [String: Any] ?? [:]
-
-    let locales = Set(orgName.keys).union(logoUri.keys)
-
-    return locales.reduce(into: [String: Any]()) { dict, locale in
-      dict[locale] = [
-        "name": orgName[locale] as? String as Any,
-        "logo": logoUri[locale] as? URL as Any,
-      ]
-    }
+  /// Gets the localized entity name considering the order of the given language codes
+  public func getLocalizedEntityName(considering languageCodes: [String]) -> String {
+    languageCodes
+      .lazy
+      .flatMap { code in
+        self.resolvedPayload.entityNames.filter { locale, _ in
+          locale.hasPrefix("\(code)")
+        }.values
+      }.first ?? TrustStatementPayload.CodingKeys._entityNames.rawValue
   }
 }

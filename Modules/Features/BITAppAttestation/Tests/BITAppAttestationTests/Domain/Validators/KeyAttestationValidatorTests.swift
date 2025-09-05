@@ -24,13 +24,13 @@ final class KeyAttestationValidatorTests: XCTestCase {
 
     XCTAssertTrue(result)
 
-    XCTAssertEqual(jwsSignatureValidator.validateDidReceivedArguments?.did, mockKeyAttestation.payload.issuer)
+    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferReceivedDid, mockKeyAttestation.payload.issuer)
   }
 
   func testValidate_count_success() async {
     _ = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
 
-    XCTAssertEqual(jwsSignatureValidator.validateDidCallsCount, 1)
+    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferCallsCount, 1)
   }
 
   func testValidate_unsupportedAlgorithm_returnsFalse() async {
@@ -51,14 +51,8 @@ final class KeyAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_invalidIssueAt_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationPayload.Mock.sampleInvalidIssueAt)
-
-    XCTAssertFalse(result)
-  }
-
-  func testValidate_expiredPayload_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationPayload.Mock.sampleExpired)
+  func testValidate_missingExpiredAt_returnsFalse() async {
+    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationPayload.Mock.sampleMissingExpiredAt)
 
     XCTAssertFalse(result)
   }
@@ -81,16 +75,16 @@ final class KeyAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsSignatureValidatorReturnsFalse_returnsFalse() async {
-    jwsSignatureValidator.validateDidReturnValue = false
+  func testValidate_jwsValidatorReturnsFalse_returnsFalse() async {
+    jwsValidator.validateIssuerDidActivationBufferReturnValue = false
 
     let result = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
 
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsSignatureValidatorThrowsError_returnsFalse() async {
-    jwsSignatureValidator.validateDidThrowableError = TestingError.error
+  func testValidate_jwsValidatorThrowsError_returnsFalse() async {
+    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
 
@@ -105,11 +99,11 @@ final class KeyAttestationValidatorTests: XCTestCase {
   private var mockKeyAttestation: KeyAttestation!
   private var mockKeyPair: VaultKeyPair!
   private var validator: KeyAttestationValidator!
-  private var jwsSignatureValidator: JWSSignatureValidatorProtocolSpy!
+  private var jwsValidator: JWSValidatorMock<KeyAttestationPayload>!
   private let mockSupportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel] = [.iso18045High]
 
   private func createSuccessState() throws {
-    jwsSignatureValidator.validateDidReturnValue = true
+    jwsValidator.validateIssuerDidActivationBufferReturnValue = true
     let key = try ECPublicKey.getSecKey(curve: mockJWK.crv, x: mockJWK.x, y: mockJWK.y)!
     let keyPair = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
     mockKeyPair = keyPair
@@ -119,9 +113,9 @@ final class KeyAttestationValidatorTests: XCTestCase {
     mockKeyAttestation = KeyAttestationPayload.Mock.sample
     trustedDids = [ "did:tdw:example.com" ]
     supportedAlgorithms = [ .ES256 ]
-    jwsSignatureValidator = JWSSignatureValidatorProtocolSpy()
+    jwsValidator = JWSValidatorMock()
 
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidator }
+    Container.shared.jwsValidator.register { self.jwsValidator }
     Container.shared.attestationServiceTrustedDids.register { self.trustedDids }
     Container.shared.supportedKeyStorageSecurityLevel.register { self.mockSupportedKeyStorageSecurityLevel }
   }

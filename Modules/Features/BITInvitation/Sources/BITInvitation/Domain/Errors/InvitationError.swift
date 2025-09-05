@@ -63,12 +63,14 @@ extension InvitationError {
       }
     }
 
-    if let fetchError = error as? FetchRequestObjectError {
+    if let fetchError = error as? FetchPresentationRequestUseCaseError {
       switch fetchError {
-      case .expired:
+      case .expiredRequest:
         return .expiredInvitation
-      case .invalid:
+      case .invalidRequest:
         return .invalidPresentationRequest
+      case .invalidUrl:
+        return .invalidQRCode
       }
     }
 

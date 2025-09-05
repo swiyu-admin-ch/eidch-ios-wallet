@@ -28,6 +28,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     configureKeychain()
     configureSslPinning()
     configureAnalyticsIfAllowed()
+    configureOpenIDSchemes()
 
     setupAdditionalConfigurationsIfNeeded()
     registerDefaultEnvironmentValues()
@@ -103,6 +104,11 @@ extension AppDelegate {
     for provider in providers {
       analytics.register(provider)
     }
+  }
+
+  private func configureOpenIDSchemes() {
+    Container.shared.additionalPresentationSchemes.register { [ "swiyu-verify" ] }
+    Container.shared.additionalCredentialOfferSchemes.register { [ "swiyu" ] }
   }
 
   #if targetEnvironment (simulator)

@@ -1,3 +1,4 @@
+import BITEIDRequestShared
 import Foundation
 
 struct EIDRequestResponse: Decodable, Equatable {

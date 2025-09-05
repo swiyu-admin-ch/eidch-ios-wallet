@@ -16,8 +16,8 @@ extension Container {
     self { CredentialOfferModule(credential: $0, trustStatement: $1) }
   }
 
-  var processPresentationRequestUseCase: Factory<ProcessPresentationRequestUseCaseProtocol> {
-    self { ProcessPresentationRequestUseCase() }
+  var fetchPresentationRequestUseCase: Factory<FetchPresentationRequestUseCaseProtocol> {
+    self { FetchPresentationRequestUseCase() }
   }
 
   // MARK: - Camera
@@ -50,14 +50,6 @@ extension Container {
     self { InvitationRouter() }
   }
 
-  public var validateCredentialOfferInvitationUrlUseCase: Factory<ValidateCredentialOfferInvitationUrlUseCaseProtocol> {
-    self { ValidateCredentialOfferInvitationUrlUseCase() }
-  }
-
-  public var checkInvitationTypeUseCase: Factory<CheckInvitationTypeUseCaseProtocol> {
-    self { CheckInvitationTypeUseCase() }
-  }
-
   public var delayAfterAcceptingCredential: Factory<UInt64> {
     self { 2_000_000_000 }
   }
@@ -79,9 +71,4 @@ extension Container {
   var getCredentialsCountUseCase: Factory<GetCredentialsCountUseCaseProtocol> {
     self { GetCredentialsCountUseCase() }
   }
-
-  var getCredentialIssuerDisplayUseCase: Factory<GetCredentialIssuerDisplayUseCaseProtocol> {
-    self { GetCredentialIssuerDisplayUseCase() }
-  }
-
 }

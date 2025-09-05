@@ -2,9 +2,9 @@ import BITAppAuth
 @testable import BITNavigationTestCore
 
 class NoDevicePinCodeRouterMock: ClosableRoutesMock, NoDevicePinCodeRouterRoutes {
-  var didCallAppSettings = false
+  var didCallExternalSettings = false
 
-  func settings() {
-    didCallAppSettings = true
+  func externalSettings() {
+    didCallExternalSettings = true
   }
 }

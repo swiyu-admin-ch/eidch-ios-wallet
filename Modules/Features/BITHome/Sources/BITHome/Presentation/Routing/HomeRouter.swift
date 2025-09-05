@@ -8,7 +8,7 @@ import UIKit
 
 // MARK: - HomeRouterRoutes
 
-public protocol HomeRouterRoutes: InvitationRoutes, ExternalRoutes, CredentialDetailRoutes, EIDRequestRoutes {}
+public protocol HomeRouterRoutes: InvitationRoutes, ExternalRoutes, CredentialDetailRoutes, EIDRequestRoutes, SettingsRoutes {}
 
 // MARK: - HomeRouter
 

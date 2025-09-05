@@ -53,9 +53,6 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
 
   @Published var requestCases: [RequestCaseViewState] = []
   @Published var credentialViewModels: [CredentialViewModel] = []
-  @Published var isImpressumPresented = false
-  @Published var isSecurityPresented = false
-  @Published var isLicensesPresented = false
   @Published var isVerificationInstructionPresented = false
 
   @Injected(\.isEIDRequestFeatureEnabled) var isEIDRequestFeatureEnabled: Bool
@@ -140,7 +137,7 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
 
   func fetchEIDRequestStatus() async {
     do {
-      requestCases = try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.id))
+      requestCases = try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.requestCaseId))
         .map { try RequestCaseViewState($0, delegate: self) }
     } catch {
       // Request cases list is not updated if error
@@ -203,30 +200,8 @@ extension HomeViewModel {
   }
 
   func openHelp() {
-    guard let url = URL(string: L10n.settingsHelpLink) else { return }
+    guard let url = URL(string: L10n.tkSettingsGeneralHelpLinkValue) else { return }
     router.openExternalLink(url: url)
-  }
-
-  func openContact() {
-    guard let url = URL(string: L10n.settingsContactLink) else { return }
-    router.openExternalLink(url: url)
-  }
-
-  func openFeedback() {
-    guard let url = URL(string: L10n.tkMenuSettingWalletFeedbackLinkValue) else { return }
-    router.openExternalLink(url: url)
-  }
-
-  func openImpressum() {
-    isImpressumPresented = true
-  }
-
-  func openLicenses() {
-    isLicensesPresented = true
-  }
-
-  func openSecurity() {
-    isSecurityPresented = true
   }
 
   func openDetail(for credential: Credential) {
@@ -263,5 +238,9 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 
   func didTapObtainConsent(caseId: String) {
     router.obtainConsent(caseId: caseId)
+  }
+
+  func didOpenExternalLink(url: URL) {
+    router.openExternalLink(url: url)
   }
 }
