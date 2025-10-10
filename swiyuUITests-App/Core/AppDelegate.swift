@@ -57,7 +57,7 @@ extension AppDelegate {
       let realm = try! Realm(configuration: configuration)
       try! realm.write {
         realm.deleteAll()
-        realm.add(CredentialEntity(credential: Credential.Mock.sampleVC))
+        realm.add(CredentialEntity(verifiableCredential: VerifiableCredential.Mock.sampleVC))
       }
     }
     // swiftlint: enable force_try

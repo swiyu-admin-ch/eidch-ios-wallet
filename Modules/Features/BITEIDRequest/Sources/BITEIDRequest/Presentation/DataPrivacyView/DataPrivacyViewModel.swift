@@ -21,7 +21,7 @@ class DataPrivacyViewModel {
   }
 
   func openHelp() {
-    guard let url = URL(string: L10n.tkGetEidDataPrivacyLinkValue) else {
+    guard let url = URL(string: L10n.tkEidRequestDataPrivacyLinkValue) else {
       return
     }
 

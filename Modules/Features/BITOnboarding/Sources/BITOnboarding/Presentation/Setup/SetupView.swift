@@ -15,6 +15,8 @@ extension AnimationSequence {
   ])
 }
 
+// MARK: - SetupView
+
 struct SetupView: View {
 
   // MARK: Lifecycle

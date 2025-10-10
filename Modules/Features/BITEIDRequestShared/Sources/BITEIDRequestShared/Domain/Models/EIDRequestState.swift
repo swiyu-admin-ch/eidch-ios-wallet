@@ -7,7 +7,7 @@ enum EIDRequestStateError: Error {
 }
 
 
-public struct EIDRequestState: Decodable {
+public struct EIDRequestState: Codable {
 
   // MARK: Lifecycle
 
@@ -36,7 +36,7 @@ public struct EIDRequestState: Decodable {
     self.legalRepresentantConsent = legalRepresentantConsent
   }
 
-  public init(_ entity: EIDRequestStateEntity) throws {
+  public init(_ entity: EIDRequestStateEntity) {
     let state = EIDRequestStatus.State(entity.state)
 
     self.init(

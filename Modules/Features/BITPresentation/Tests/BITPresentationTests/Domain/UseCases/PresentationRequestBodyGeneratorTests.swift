@@ -103,7 +103,7 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
 
   private static let mockVpToken = "vpToken"
 
-  private var mockCredential = Credential.Mock.sample
+  private var mockCredential = VerifiableCredential.Mock.sample
   private var mockAnyCredential = AnyCredentialSpy()
   private var mockDescriptorMaps = [PresentationRequestBody.DescriptorMap(id: "id", format: "format", path: "path")]
   private var mockRequestObject = RequestObject.Mock.VcSdJwt.sample

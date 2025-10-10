@@ -1,6 +1,5 @@
 import BITCrypto
-import DidResolverSources
-import DidResolverWrapper
+import DidResolver
 import Factory
 import Foundation
 import Spyable

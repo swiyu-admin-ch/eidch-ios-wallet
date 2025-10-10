@@ -1,0 +1,18 @@
+{
+  "iss": "issuer",
+  "nbf": 1729491478,
+  "exp": 2209014000,
+  "iat": 1729498679,
+  "status": {
+    "status_list": {
+      "idx": 6,
+      "uri": "status_list_uri"
+    }
+  },
+  "sub": "subject",
+  "orgName": {
+    "it-IT": "IT orgName"
+  },
+  "prefLang": "it-IT",
+  "vct": "TrustStatementMetadataV1"
+}

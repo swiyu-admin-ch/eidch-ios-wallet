@@ -37,9 +37,9 @@ open class Router<VC>: RouterProtocol where VC: UIViewController {
     current.pop(viewController)
   }
 
-  public func pop(number: Int) {
+  public func pop(count: Int) {
     guard let current, let viewController else { return }
-    current.pop(viewController, number: number)
+    current.pop(viewController, count: count)
   }
 
   public func popToRoot() {

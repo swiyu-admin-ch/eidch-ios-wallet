@@ -10,7 +10,7 @@ struct NFCScanView: View {
   // MARK: Lifecycle
 
   init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.nfcScanViewModel(router)
+    _viewModel = StateObject(wrappedValue: Container.shared.nfcScanViewModel(router))
   }
 
   // MARK: Internal
@@ -32,7 +32,7 @@ struct NFCScanView: View {
 
   // MARK: Private
 
-  private var viewModel: NFCScanViewModel
+  @StateObject private var viewModel: NFCScanViewModel
 
 }
 

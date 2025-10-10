@@ -53,7 +53,7 @@ public struct CredentialStatusBadge: View {
 #if DEBUG
 #Preview {
   VStack {
-    CredentialStatusBadge(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
+    CredentialStatusBadge(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
   }.background(.blue)
 }
 #endif

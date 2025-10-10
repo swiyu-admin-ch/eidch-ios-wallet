@@ -1,5 +1,6 @@
 import BITAVWrapper
 import BITNavigation
+import BITPresentation
 import BITTheming
 import SwiftUI
 
@@ -16,22 +17,26 @@ protocol EIDRequestInternalRoutes: ClosableRoutes, ExternalRoutes {
   var context: EIDRequestContext { get set }
 
   func dataPrivacy()
+  func attestation()
+  func legalRepresentant()
+  func documentSelection()
   func cameraPermission()
   func scanDocument()
   func mrzMockData()
   func scanDocumentSubmit(_ scanDocumentOutput: ScanDocumentOutput)
-  func queueInformation(_ onlineSessionStartDate: Date)
-  func legalRepresentant()
   func legalRepresentantConsent(caseId: String)
   func legalRepresentantQRCode(caseId: String)
+  func legalRepresentantVerification(caseId: String)
+  func legalRepresentantEIDRequest()
   func legalRepresentantConsentState(_ state: RequestCaseViewState)
-  func documentSelection()
-  func attestation()
+  func queueInformation(_ onlineSessionStartDate: Date)
+  func recordDocument()
 
+  // Errors
   func clientAttestationError()
   func keyAttestationError()
   func validateAttestationsError(delegate: ValidateAttestationsErrorDelegate, error: Error)
-  func recordDocument()
+  func eIDRequestError(error: Error, delegate: EIDRequestErrorDelegate)
 
   // Wallet Pairing
   func walletPairing()
@@ -41,6 +46,8 @@ protocol EIDRequestInternalRoutes: ClosableRoutes, ExternalRoutes {
   func avDevicePairingQRCode(delegate: DevicePairingDelegate)
   func recordSelfie()
   func nfcScan()
+
+  func submitEidRequest()
 }
 
 // MARK: - eID Request
@@ -52,13 +59,23 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func cameraPermission() {
-    let viewController = UIHostingController(rootView: CameraPermissionView(router: self))
+  func attestation() {
+    let viewController = HideBackButtonHostingController(rootView: ValidateAttestationsView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func mrzMockData() {
-    let viewController = UIHostingController(rootView: MRZMockDataView(router: self))
+  func legalRepresentant() {
+    let viewController = HideBackButtonHostingController(rootView: LegalRepresentantView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func documentSelection() {
+    let viewController = UIHostingController(rootView: DocumentSelectionView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func cameraPermission() {
+    let viewController = UIHostingController(rootView: CameraPermissionView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
@@ -67,18 +84,13 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
+  func mrzMockData() {
+    let viewController = UIHostingController(rootView: MRZMockDataView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
   func scanDocumentSubmit(_ scanDocumentOutput: ScanDocumentOutput) {
     let viewController = HideBackButtonHostingController(rootView: ScanDocumentSubmitView(scanDocumentOutput, router: self))
-    open(viewController, as: NavigationPushOpeningStyle())
-  }
-
-  func queueInformation(_ onlineSessionStartDate: Date) {
-    let viewController = HideBackButtonHostingController(rootView: QueueInformationView(router: self, onlineSessionStartDate: onlineSessionStartDate))
-    open(viewController, as: NavigationPushOpeningStyle())
-  }
-
-  func legalRepresentant() {
-    let viewController = HideBackButtonHostingController(rootView: LegalRepresentantView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
@@ -92,18 +104,28 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
+  func legalRepresentantVerification(caseId: String) {
+    let viewController = UIHostingController(rootView: LegalRepresentantVerificationView(caseId: caseId))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func legalRepresentantEIDRequest() {
+    let viewController = UIHostingController(rootView: IntroductionView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
   func legalRepresentantConsentState(_ state: RequestCaseViewState) {
     let viewController = UIHostingController(rootView: LegalRepresentantConsentStateView(router: self, state: state))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func documentSelection() {
-    let viewController = UIHostingController(rootView: DocumentSelectionView(router: self))
+  func queueInformation(_ onlineSessionStartDate: Date) {
+    let viewController = HideBackButtonHostingController(rootView: QueueInformationView(router: self, onlineSessionStartDate: onlineSessionStartDate))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func attestation() {
-    let viewController = HideBackButtonHostingController(rootView: ValidateAttestationsView(router: self))
+  func recordDocument() {
+    let viewController = HideBackButtonHostingController(rootView: RecordDocumentView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
@@ -122,8 +144,13 @@ extension EIDRequestInternalRoutes where Self: RouterProtocol {
     open(viewController, as: NavigationPushOpeningStyle())
   }
 
-  func recordDocument() {
-    let viewController = HideBackButtonHostingController(rootView: RecordDocumentView(router: self))
+  func eIDRequestError(error: Error, delegate: EIDRequestErrorDelegate) {
+    let viewController = UIHostingController(rootView: EIDRequestErrorView(delegate: delegate, error: error))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func submitEidRequest() {
+    let viewController = HideBackButtonHostingController(rootView: DebugSubmitEIDRequestView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 }

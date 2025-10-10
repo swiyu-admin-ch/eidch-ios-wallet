@@ -51,7 +51,7 @@ final class PresentationFieldsValidatorTests: XCTestCase {
 
   func testValidate_NoRequiredField_ReturnsEmptyList() throws {
     let anyCredential: AnyCredential = MockAnyCredential()
-    let mockFields: [Field] = []
+    let mockFields = [Field]()
 
     anyCredentialJsonGeneratorSpy.generateForReturnValue = Self.mockJson
 
@@ -96,7 +96,7 @@ final class PresentationFieldsValidatorTests: XCTestCase {
 
   func testValidate_AnyCredentialJsonGeneratorThrows_ReturnsEmptyList() throws {
     let anyCredential: AnyCredential = MockAnyCredential()
-    let mockFields: [Field] = []
+    let mockFields = [Field]()
 
     anyCredentialJsonGeneratorSpy.generateForThrowableError = TestingError.error
 

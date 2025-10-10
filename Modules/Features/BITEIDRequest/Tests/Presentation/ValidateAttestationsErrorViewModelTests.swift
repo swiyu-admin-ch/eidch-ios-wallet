@@ -22,8 +22,8 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
     viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: EIDRequestRepository.Error.insufficientKeyStorageResistance)
 
     XCTAssertFalse(viewModel.isRetryEnabled)
-    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestClientAttestationNotSupportedTitle)
-    XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestClientAttestationNotSupportedBody)
+    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestClientAttestationInsufficientKeyStorageTitle)
+    XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestClientAttestationInsufficientKeyStorageBody)
   }
 
   @MainActor

@@ -21,11 +21,16 @@ struct LegalRepresentantView: View {
       backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
       content: {
         DefaultInformationContentView(
-          primary: L10n.tkGetEidGuardianshipPrimary,
-          secondary: L10n.tkGetEidGuardianshipSecondary)
+          primary: L10n.tkEidRequestGuardianshipPrimary,
+          secondary: L10n.tkEidRequestGuardianshipSecondary)
       },
       footer: {
-        viewFooter()
+        DefaultInformationFooterView(
+          primaryButtonLabel: L10n.tkEidRequestGuardianshipButtonYes,
+          primaryButtonStyle: .secondary,
+          primaryButtonAction: { viewModel.action(true) },
+          secondaryButtonLabel: L10n.tkEidRequestGuardianshipButtonNo,
+          secondaryButtonAction: { viewModel.action(false) })
       })
       .navigationBarBackButtonHidden()
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
@@ -33,38 +38,7 @@ struct LegalRepresentantView: View {
 
   // MARK: Private
 
-  private enum AccessibilityIdentifier: String {
-    case yesButton
-    case noButton
-  }
-
   private var viewModel: LegalRepresentantViewModel
-}
-
-extension LegalRepresentantView {
-
-  @ViewBuilder
-  private func viewFooter() -> some View {
-    Button(action: { viewModel.action(true) }) {
-      Text(L10n.tkGetEidGuardianshipButtonYes)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-        .frame(maxWidth: .infinity)
-    }
-    .buttonStyle(.bezeledLight)
-    .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.yesButton.rawValue)
-
-    Button(action: { viewModel.action(false) }) {
-      Text(L10n.tkGetEidGuardianshipButtonNo)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-        .frame(maxWidth: .infinity)
-    }
-    .buttonStyle(.bezeledLight)
-    .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.noButton.rawValue)
-  }
 }
 
 #Preview {

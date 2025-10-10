@@ -4,43 +4,17 @@ import UIKit
 
 extension UINavigationBarAppearance {
 
+  // MARK: Public
+
   public static var login: UINavigationBarAppearance {
     let appearance = UINavigationBarAppearance()
-
     appearance.configureWithTransparentBackground()
-    appearance.backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-
     appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
     appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+    appearance.buttonAppearance = whiteBarButtonItemAppearance()
+    appearance.doneButtonAppearance = whiteBarButtonItemAppearance()
 
-    let barButtonItemAppearance = UIBarButtonItemAppearance(style: .plain)
-    barButtonItemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
-    barButtonItemAppearance.disabled.titleTextAttributes = [.foregroundColor: UIColor.white]
-    barButtonItemAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.white]
-    barButtonItemAppearance.focused.titleTextAttributes = [.foregroundColor: UIColor.white]
-
-    let backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-    backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.disabled.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.focused.titleTextAttributes = [.foregroundColor: UIColor.clear]
-
-    appearance.buttonAppearance = barButtonItemAppearance
-    appearance.backButtonAppearance = backButtonAppearance
-    appearance.doneButtonAppearance = barButtonItemAppearance
-
-    let backButtonImage = ThemingAssets.backIndicatorBackgroundDark.image
-    let insets = UIEdgeInsets(top: 0, left: -.x3, bottom: 1, right: 0)
-    let backImage = ThemingAssets.backIndicatorDark.image.withAlignmentRectInsets(insets)
-    backImage.accessibilityLabel = L10n.globalBack
-
-    appearance.backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-    appearance.setBackIndicatorImage(backImage, transitionMaskImage: backImage)
-
-    appearance.backButtonAppearance.normal.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.focused.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.highlighted.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.disabled.backgroundImage = backButtonImage
+    configureBackButton(appearance, isDark: true)
 
     UIBarButtonItem.appearance().tintColor = .white
 
@@ -48,40 +22,43 @@ extension UINavigationBarAppearance {
   }
 
   public static var `default`: UINavigationBarAppearance {
-    let backButtonImage = ThemingAssets.backIndicatorBackground.image
-    let insets = UIEdgeInsets(top: 0, left: -.x3, bottom: 1, right: 0)
-    let backImage = ThemingAssets.backIndicator.image.withAlignmentRectInsets(insets)
-    backImage.accessibilityLabel = L10n.globalBack
-
     let appearance = UINavigationBarAppearance()
     appearance.configureWithOpaqueBackground()
-
     appearance.shadowColor = .clear
+    appearance.buttonAppearance = defaultBarButtonItemAppearance()
+    appearance.doneButtonAppearance = defaultBarButtonItemAppearance()
 
-    appearance.backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-    appearance.setBackIndicatorImage(backImage, transitionMaskImage: backImage)
+    configureBackButton(appearance)
 
-    let barButtonItemAppearance = UIBarButtonItemAppearance(style: .plain)
-    barButtonItemAppearance.normal.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-    barButtonItemAppearance.disabled.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-    barButtonItemAppearance.highlighted.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-    barButtonItemAppearance.focused.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
+    UIBarButtonItem.appearance().tintColor = ThemingAssets.navigationAccent.color
 
-    let backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-    backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.disabled.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.focused.titleTextAttributes = [.foregroundColor: UIColor.clear]
+    return appearance
+  }
 
-    appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    appearance.buttonAppearance = barButtonItemAppearance
-    appearance.backButtonAppearance = backButtonAppearance
-    appearance.doneButtonAppearance = barButtonItemAppearance
+  public static var secondary: UINavigationBarAppearance {
+    let appearance = UINavigationBarAppearance()
+    appearance.configureWithOpaqueBackground()
+    appearance.backgroundColor = ThemingAssets.Background.secondary.color
+    appearance.shadowColor = .clear
+    appearance.buttonAppearance = defaultBarButtonItemAppearance()
+    appearance.doneButtonAppearance = defaultBarButtonItemAppearance()
 
-    appearance.backButtonAppearance.normal.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.focused.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.highlighted.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.disabled.backgroundImage = backButtonImage
+    configureBackButton(appearance)
+
+    UIBarButtonItem.appearance().tintColor = ThemingAssets.navigationAccent.color
+
+    return appearance
+  }
+
+  public static var secondaryScroll: UINavigationBarAppearance {
+    let appearance = UINavigationBarAppearance()
+    appearance.configureWithOpaqueBackground()
+    appearance.backgroundColor = ThemingAssets.Background.groupedRow.color
+    appearance.shadowColor = ThemingAssets.Label.secondary.color
+    appearance.buttonAppearance = defaultBarButtonItemAppearance()
+    appearance.doneButtonAppearance = defaultBarButtonItemAppearance()
+
+    configureBackButton(appearance)
 
     UIBarButtonItem.appearance().tintColor = ThemingAssets.navigationAccent.color
 
@@ -89,42 +66,61 @@ extension UINavigationBarAppearance {
   }
 
   public static var defaultTransparent: UINavigationBarAppearance {
-    let backButtonImage = ThemingAssets.backIndicatorBackground.image
-    let insets = UIEdgeInsets(top: 0, left: -.x3, bottom: 1, right: 0)
-    let backImage = ThemingAssets.backIndicator.image.withAlignmentRectInsets(insets)
-    backImage.accessibilityLabel = L10n.globalBack
-
     let appearance = UINavigationBarAppearance()
     appearance.configureWithTransparentBackground()
+    appearance.buttonAppearance = defaultBarButtonItemAppearance()
+    appearance.doneButtonAppearance = defaultBarButtonItemAppearance()
 
-    appearance.backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-    appearance.setBackIndicatorImage(backImage, transitionMaskImage: backImage)
-
-    let barButtonItemAppearance = UIBarButtonItemAppearance(style: .plain)
-    barButtonItemAppearance.normal.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-    barButtonItemAppearance.disabled.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-    barButtonItemAppearance.highlighted.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-    barButtonItemAppearance.focused.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
-
-    let backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
-    backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.disabled.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    backButtonAppearance.focused.titleTextAttributes = [.foregroundColor: UIColor.clear]
-
-    appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
-    appearance.buttonAppearance = barButtonItemAppearance
-    appearance.backButtonAppearance = backButtonAppearance
-    appearance.doneButtonAppearance = barButtonItemAppearance
-
-    appearance.backButtonAppearance.normal.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.focused.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.highlighted.backgroundImage = backButtonImage
-    appearance.backButtonAppearance.disabled.backgroundImage = backButtonImage
+    configureBackButton(appearance)
 
     UIBarButtonItem.appearance().tintColor = ThemingAssets.navigationAccent.color
 
     return appearance
   }
 
+  // MARK: Private
+
+  private static func defaultBarButtonItemAppearance() -> UIBarButtonItemAppearance {
+    let appearance = UIBarButtonItemAppearance(style: .plain)
+    appearance.normal.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
+    appearance.disabled.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
+    appearance.highlighted.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
+    appearance.focused.titleTextAttributes = [.foregroundColor: ThemingAssets.accentColor.color]
+    return appearance
+  }
+
+  private static func whiteBarButtonItemAppearance() -> UIBarButtonItemAppearance {
+    let appearance = UIBarButtonItemAppearance(style: .plain)
+    appearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
+    appearance.disabled.titleTextAttributes = [.foregroundColor: UIColor.white]
+    appearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.white]
+    appearance.focused.titleTextAttributes = [.foregroundColor: UIColor.white]
+    return appearance
+  }
+
+  private static func configureBackButton(_ appearance: UINavigationBarAppearance, isDark: Bool = false) {
+    // title
+    let backButtonAppearance = UIBarButtonItemAppearance(style: .plain)
+    backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
+    backButtonAppearance.disabled.titleTextAttributes = [.foregroundColor: UIColor.clear]
+    backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
+    backButtonAppearance.focused.titleTextAttributes = [.foregroundColor: UIColor.clear]
+    appearance.backButtonAppearance = backButtonAppearance
+
+    // image
+    let backButtonImage = isDark ?
+      ThemingAssets.backIndicatorBackgroundDark.image :
+      ThemingAssets.backIndicatorBackground.image
+    let insets = UIEdgeInsets(top: 0, left: -.x3, bottom: 1, right: 0)
+    let backImage = isDark ? ThemingAssets.backIndicatorDark.image : ThemingAssets.backIndicator.image
+    let insettedImage = backImage.withAlignmentRectInsets(insets)
+    insettedImage.accessibilityLabel = L10n.globalBack
+
+    appearance.setBackIndicatorImage(insettedImage, transitionMaskImage: insettedImage)
+    appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
+    appearance.backButtonAppearance.normal.backgroundImage = backButtonImage
+    appearance.backButtonAppearance.focused.backgroundImage = backButtonImage
+    appearance.backButtonAppearance.highlighted.backgroundImage = backButtonImage
+    appearance.backButtonAppearance.disabled.backgroundImage = backButtonImage
+  }
 }

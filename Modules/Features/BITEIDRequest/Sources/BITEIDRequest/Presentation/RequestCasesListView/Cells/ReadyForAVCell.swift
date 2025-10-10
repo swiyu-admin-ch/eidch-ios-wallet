@@ -27,7 +27,7 @@ struct ReadyForAVCell: View {
         }
 
         Button(viewModel.buttonText, action: viewModel.primaryAction)
-          .buttonStyle(.filledSecondary)
+          .buttonStyle(.tertiary)
           .controlSize(.regular)
           .padding(.top, .x2)
           .dynamicTypeSize(...DynamicTypeSize.accessibility2)
@@ -39,12 +39,6 @@ struct ReadyForAVCell: View {
   }
 
   // MARK: Private
-
-  private enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-  }
 
   @Environment(\.sizeCategory) private var sizeCategory
 

@@ -33,7 +33,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var initializeUsingCalled = false
   public var initializeUsingCallsCount = 0
   public var initializeUsingReceivedConfig: AVBeamInitConfig?
-  public var initializeUsingReceivedInvocations: [AVBeamInitConfig] = []
+  public var initializeUsingReceivedInvocations = [AVBeamInitConfig]()
   public var initializeUsingThrowableError: Error?
 
   public var shutdownCalled = false
@@ -42,7 +42,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var getGLViewCalled = false
   public var getGLViewCallsCount = 0
   public var getGLViewReceivedArguments: (width: Int, height: Int)?
-  public var getGLViewReceivedInvocations: [(width: Int, height: Int)] = []
+  public var getGLViewReceivedInvocations = [(width: Int, height: Int)]()
   public var getGLViewReturnValue = UIView()
 
   public var startCameraCalled = false
@@ -56,7 +56,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var startScanDocumentConfigCalled = false
   public var startScanDocumentConfigCallsCount = 0
   public var startScanDocumentConfigReceivedConfig: AVBeamScanDocumentConfig?
-  public var startScanDocumentConfigReceivedInvocations: [AVBeamScanDocumentConfig] = []
+  public var startScanDocumentConfigReceivedInvocations = [AVBeamScanDocumentConfig]()
   public var startScanDocumentConfigThrowableError: Error?
 
   public var stopScanDocumentCalled = false
@@ -65,7 +65,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var startRecordDocumentConfigCalled = false
   public var startRecordDocumentConfigCallsCount = 0
   public var startRecordDocumentConfigReceivedConfig: AVBeamRecordDocumentConfig?
-  public var startRecordDocumentConfigReceivedInvocations: [AVBeamRecordDocumentConfig] = []
+  public var startRecordDocumentConfigReceivedInvocations = [AVBeamRecordDocumentConfig]()
   public var startRecordDocumentConfigThrowableError: Error?
 
   public var stopRecordDocumentCalled = false
@@ -74,7 +74,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var startCaptureFaceConfigCalled = false
   public var startCaptureFaceConfigCallsCount = 0
   public var startCaptureFaceConfigReceivedConfig: AVBeamCaptureFaceConfig?
-  public var startCaptureFaceConfigReceivedInvocations: [AVBeamCaptureFaceConfig] = []
+  public var startCaptureFaceConfigReceivedInvocations = [AVBeamCaptureFaceConfig]()
   public var startCaptureFaceConfigThrowableError: Error?
 
   public var stopCaptureFaceCalled = false
@@ -83,7 +83,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var startNfcScanConfigCalled = false
   public var startNfcScanConfigCallsCount = 0
   public var startNfcScanConfigReceivedConfig: AVBeamScanNfcConfig?
-  public var startNfcScanConfigReceivedInvocations: [AVBeamScanNfcConfig] = []
+  public var startNfcScanConfigReceivedInvocations = [AVBeamScanNfcConfig]()
   public var startNfcScanConfigThrowableError: Error?
 
   public var stopNfcScanCalled = false

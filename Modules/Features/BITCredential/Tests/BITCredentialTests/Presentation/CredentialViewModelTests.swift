@@ -7,18 +7,18 @@ import XCTest
 final class CredentialViewModelTests: XCTestCase {
 
   func testInit_withValidStatus_setsCorrectValues() {
-    let viewModel = CredentialViewModel(credential: Credential.Mock.sample, credentialDisplay: nil)
+    let viewModel = CredentialViewModel(credential: VerifiableCredential.Mock.sample, credentialDisplay: nil)
 
     XCTAssertEqual(viewModel.environment, .none)
     XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusValid)
     XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusValidAlt)
     XCTAssertEqual(viewModel.statusImage, Assets.statusValid.swiftUIImage)
     XCTAssertEqual(viewModel.statusColor, ThemingAssets.Label.secondary.swiftUIColor)
-    XCTAssertEqual(viewModel.id, Credential.Mock.sample.id)
+    XCTAssertEqual(viewModel.id, VerifiableCredential.Mock.sample.id)
   }
 
   func testInit_withExpiredStatus_setsCorrectValues() {
-    var expiredCredential = Credential.Mock.sample
+    var expiredCredential = VerifiableCredential.Mock.sample
     expiredCredential.status = .expired
 
     let viewModel = CredentialViewModel(credential: expiredCredential, credentialDisplay: nil)
@@ -31,7 +31,7 @@ final class CredentialViewModelTests: XCTestCase {
   }
 
   func testInit_withUnknownStatus_setsCorrectValues() {
-    var unknownCredential = Credential.Mock.sample
+    var unknownCredential = VerifiableCredential.Mock.sample
     unknownCredential.status = .unknown
 
     let viewModel = CredentialViewModel(credential: unknownCredential, credentialDisplay: nil)
@@ -44,7 +44,7 @@ final class CredentialViewModelTests: XCTestCase {
   }
 
   func testInit_withNotYetValid_setsRelativeDayText() {
-    var notYetValidCredential = Credential.Mock.sample
+    var notYetValidCredential = VerifiableCredential.Mock.sample
     notYetValidCredential.status = .notYetValid
     notYetValidCredential.validFrom = Calendar.current.date(byAdding: .day, value: 3, to: Date())
 
@@ -55,7 +55,7 @@ final class CredentialViewModelTests: XCTestCase {
   }
 
   func testInit_withNotYetValidIn24Hours_setsSoonText() {
-    var notYetValidCredential = Credential.Mock.sample
+    var notYetValidCredential = VerifiableCredential.Mock.sample
     notYetValidCredential.status = .notYetValid
     notYetValidCredential.validFrom = Calendar.current.date(byAdding: .hour, value: 1, to: Date())
 
@@ -66,7 +66,7 @@ final class CredentialViewModelTests: XCTestCase {
   }
 
   func testInit_withNilValidFrom_fallsBackToUnknownText() {
-    var notYetValidCredential = Credential.Mock.sample
+    var notYetValidCredential = VerifiableCredential.Mock.sample
     notYetValidCredential.status = .notYetValid
     notYetValidCredential.validFrom = nil
 
@@ -79,7 +79,7 @@ final class CredentialViewModelTests: XCTestCase {
   func testResolveTemplate_withMissingClaim_keepsPlaceholderEmpty() {
     let credentialDisplay = CredentialDisplay(locale: "en", summary: "Unknown: {{$.foo}}")
 
-    let viewModel = CredentialViewModel(credential: Credential.Mock.sample, credentialDisplay: credentialDisplay)
+    let viewModel = CredentialViewModel(credential: VerifiableCredential.Mock.sample, credentialDisplay: credentialDisplay)
 
     XCTAssertEqual(viewModel.credentialDisplay?.summary, "Unknown: ")
   }
@@ -87,7 +87,7 @@ final class CredentialViewModelTests: XCTestCase {
   func testResolveTemplate_withSingleClaim_returnsResolvedSummary() {
     let credentialDisplay = CredentialDisplay(locale: "en", summary: "Name: {{$.firstName}}")
 
-    let viewModel = CredentialViewModel(credential: Credential.Mock.sample, credentialDisplay: credentialDisplay)
+    let viewModel = CredentialViewModel(credential: VerifiableCredential.Mock.sample, credentialDisplay: credentialDisplay)
 
     XCTAssertEqual(viewModel.credentialDisplay?.summary, "Name: Fritz")
   }
@@ -95,7 +95,7 @@ final class CredentialViewModelTests: XCTestCase {
   func testResolveTemplate_withMultipleClaims_returnsResolvedSummary() {
     let credentialDisplay = CredentialDisplay(locale: "en", summary: "Name: {{$.firstName}} {{$.lastName}}")
 
-    let viewModel = CredentialViewModel(credential: Credential.Mock.sample, credentialDisplay: credentialDisplay)
+    let viewModel = CredentialViewModel(credential: VerifiableCredential.Mock.sample, credentialDisplay: credentialDisplay)
 
     XCTAssertEqual(viewModel.credentialDisplay?.summary, "Name: Fritz Test")
   }
@@ -104,7 +104,7 @@ final class CredentialViewModelTests: XCTestCase {
     let credentialDisplay = CredentialDisplay(locale: "en", summary: "Name: {{$.firstName}}")
     let claim = CredentialClaim(key: "firstName", value: nil)
     let cluster = CredentialClaimCluster(claims: [claim])
-    let credential = Credential(payload: Data(), format: "format", issuer: "issuer", clusters: [cluster])
+    let credential = VerifiableCredential(payload: Data(), clusters: [cluster], format: "format", issuer: "issuer")
 
     let viewModel = CredentialViewModel(credential: credential, credentialDisplay: credentialDisplay)
 
@@ -114,7 +114,7 @@ final class CredentialViewModelTests: XCTestCase {
   func testResolveTemplate_withNoTemplate_returnsSummaryAsIs() {
     let credentialDisplay = CredentialDisplay(locale: "en", summary: "summary")
 
-    let viewModel = CredentialViewModel(credential: Credential.Mock.sample, credentialDisplay: credentialDisplay)
+    let viewModel = CredentialViewModel(credential: VerifiableCredential.Mock.sample, credentialDisplay: credentialDisplay)
 
     XCTAssertEqual(viewModel.credentialDisplay?.summary, "summary")
   }

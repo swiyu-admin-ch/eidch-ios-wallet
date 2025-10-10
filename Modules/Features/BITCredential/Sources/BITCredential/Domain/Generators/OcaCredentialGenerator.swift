@@ -12,7 +12,7 @@ import Spyable
 
 @Spyable
 protocol OcaCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential
 }
 
 // MARK: - OcaCredentialGenerator
@@ -21,7 +21,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential {
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential {
     guard let payload = anyCredential.raw.data(using: .utf8) else {
       throw CredentialError.invalidPayload
     }
@@ -30,21 +30,19 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
     let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: id)
 
-    return Credential(
+    return VerifiableCredential(
       id: id,
-      status: .unknown,
-      keyBinding: keyBinding,
       payload: payload,
-      rawCredentialData: rawCredentialData,
+      status: .unknown,
+      clusters: clusters,
       format: anyCredential.format,
       issuer: anyCredential.issuer,
-      validFrom: anyCredential.validFrom,
-      validUntil: anyCredential.validUntil,
-      createdAt: Date(),
-      updatedAt: nil,
-      clusters: clusters,
+      keyBinding: keyBinding,
+      rawCredentialData: rawCredentialData,
       issuerDisplays: issuerDisplays,
-      displays: credentialDisplays)
+      displays: credentialDisplays,
+      validFrom: anyCredential.validFrom,
+      validUntil: anyCredential.validUntil)
   }
 
   // MARK: Private

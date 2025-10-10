@@ -4,23 +4,17 @@ import Factory
 @MainActor
 extension Container {
 
-  // MARK: Public
-
-  public typealias PresentationCompletionHandler = () -> Void
-
-  public var presentationRequestReviewViewModel: ParameterFactory<(PresentationRequestContext, PresentationRouterRoutes), PresentationRequestReviewViewModel> {
+  var presentationRequestReviewViewModel: ParameterFactory<(PresentationRequestContext, PresentationInternalRoutes), PresentationRequestReviewViewModel> {
     self {
       PresentationRequestReviewViewModel(context: $0, router: $1)
     }
   }
 
-  public var compatibleCredentialViewModel: ParameterFactory<(context: PresentationRequestContext, inputDescriptorId: String, compatibleCredentials: [CompatibleCredential], router: PresentationRouterRoutes), CompatibleCredentialViewModel> {
+  var compatibleCredentialViewModel: ParameterFactory<(context: PresentationRequestContext, inputDescriptorId: String, compatibleCredentials: [CompatibleCredential], router: PresentationInternalRoutes), CompatibleCredentialViewModel> {
     self { CompatibleCredentialViewModel(context: $0, inputDescriptorId: $1, compatibleCredentials: $2, router: $3) }
   }
 
-  // MARK: Internal
-
-  var presentationRequestResultStateViewModel: ParameterFactory<(state: PresentationRequestResultState, context: PresentationRequestContext, router: PresentationRouterRoutes), PresentationRequestResultStateViewModel> {
+  var presentationRequestResultStateViewModel: ParameterFactory<(state: PresentationRequestResultState, context: PresentationRequestContext, router: PresentationInternalRoutes), PresentationRequestResultStateViewModel> {
     self { PresentationRequestResultStateViewModel(state: $0, context: $1, router: $2) }
   }
 
@@ -29,7 +23,7 @@ extension Container {
 extension Container {
 
   public var presentationRouter: Factory<PresentationRouter> {
-    self { PresentationRouter() }
+    self { PresentationRouter() }.cached
   }
 
 }
@@ -55,8 +49,4 @@ extension Container {
   // MARK: Internal
 
   var loadingMessageDelay: Factory<Double> { self { 5 } }
-
-  var getVerifierDisplayUseCase: Factory<GetVerifierDisplayUseCaseProtocol> {
-    self { GetVerifierDisplayUseCase() }
-  }
 }

@@ -1,3 +1,4 @@
+import BITCore
 import BITCredential
 import BITCredentialShared
 import Factory
@@ -5,38 +6,38 @@ import Foundation
 
 // MARK: - CompatibleCredentialViewModel
 
-public class CompatibleCredentialViewModel: ObservableObject {
+class CompatibleCredentialViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  public init(
+  init(
     context: PresentationRequestContext,
     inputDescriptorId: String,
     compatibleCredentials: [CompatibleCredential],
-    router: PresentationRouterRoutes)
+    router: PresentationInternalRoutes)
   {
     self.context = context
     self.inputDescriptorId = inputDescriptorId
     self.compatibleCredentials = compatibleCredentials
     self.router = router
-
-    verifierDisplay = getVerifierDisplayUseCase.execute(for: context.requestObject.clientMetadata, trustStatement: context.trustStatement)
   }
 
   // MARK: Internal
 
-  @Published var credentialViewModels: [CredentialViewModel] = []
+  @Published var credentialViewModels = [CredentialViewModel]()
 
-  var verifierDisplay: VerifierDisplay?
+  var verifierDisplay: VerifierDisplay {
+    context.getVerifierDisplay(considering: preferredUserLanguageCodes)
+  }
 
-  func didSelect(credential: Credential) {
+  func didSelect(credential: VerifiableCredential) {
     guard let compatibleCredential = compatibleCredentials.first(where: { $0.id == credential.id }) else { return }
     context.selectedCredentials[inputDescriptorId] = compatibleCredential
     router.presentationReview(with: context)
   }
 
-  func close() {
-    router.close()
+  func cancel() {
+    router.delegate?.cancel()
   }
 
   func updateCredentialViewModels(with colorScheme: String) {
@@ -51,8 +52,8 @@ public class CompatibleCredentialViewModel: ObservableObject {
   private let compatibleCredentials: [CompatibleCredential]
   private var inputDescriptorId: String
   private var context: PresentationRequestContext
-  private var router: PresentationRouterRoutes
-  @Injected(\.getVerifierDisplayUseCase) private var getVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol
+  private var router: PresentationInternalRoutes
+  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
 
 }

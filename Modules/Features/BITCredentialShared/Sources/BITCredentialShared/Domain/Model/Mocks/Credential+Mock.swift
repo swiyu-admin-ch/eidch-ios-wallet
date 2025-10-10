@@ -2,26 +2,26 @@
 import Foundation
 @testable import BITTestingCore
 
-// MARK: - Credential + Mockable
+// MARK: - VerifiableCredential + Mockable
 
-extension Credential: Mockable {
+extension VerifiableCredential: Mockable {
 
   public struct Mock {
 
     // MARK: Public
 
-    public static let array: [Credential] = [diploma, sampleDisplaysAdditional, sample]
-    public static let arrayMultipass: [Credential] = [sample, sample, sample, sample]
-    public static let sampleDisplaysAppDefault: Credential = Mocker.decode(fromFile: File.displaysAppDefault, bundle: .module)
-    public static let sampleDisplaysFallback: Credential = Mocker.decode(fromFile: File.displaysFallback, bundle: .module)
-    public static let sampleDisplaysUnsupported: Credential = Mocker.decode(fromFile: File.displaysUnsupported, bundle: .module)
-    public static let sampleDisplaysEmpty: Credential = Mocker.decode(fromFile: File.displaysEmpty, bundle: .module)
-    public static let sample: Credential = Mocker.decode(fromFile: Self.File.sample, bundle: .module)
-    public static let sampleWithoutKeyBinding: Credential = Mocker.decode(fromFile: Self.File.sampleWithoutKeyBinding, bundle: .module)
-    public static let diploma: Credential = Mocker.decode(fromFile: Self.File.diploma, bundle: .module)
-    public static let sampleDisplaysAdditional: Credential = Mocker.decode(fromFile: File.displaysAdditional, bundle: .module)
-    public static let otherSampleDisplaysAdditional: Credential = Mocker.decode(fromFile: File.displaysAdditional, bundle: .module)
-    public static let displaysThemed: Credential = Mocker.decode(fromFile: File.displaysThemed, bundle: .module)
+    public static let array: [VerifiableCredential] = [diploma, sampleDisplaysAdditional, sample]
+    public static let arrayMultipass: [VerifiableCredential] = [sample, sample, sample, sample]
+    public static let sampleDisplaysAppDefault: VerifiableCredential = Mocker.decode(fromFile: File.displaysAppDefault, bundle: .module)
+    public static let sampleDisplaysFallback: VerifiableCredential = Mocker.decode(fromFile: File.displaysFallback, bundle: .module)
+    public static let sampleDisplaysUnsupported: VerifiableCredential = Mocker.decode(fromFile: File.displaysUnsupported, bundle: .module)
+    public static let sampleDisplaysEmpty: VerifiableCredential = Mocker.decode(fromFile: File.displaysEmpty, bundle: .module)
+    public static let sample: VerifiableCredential = Mocker.decode(fromFile: Self.File.sample, bundle: .module)
+    public static let sampleWithoutKeyBinding: VerifiableCredential = Mocker.decode(fromFile: Self.File.sampleWithoutKeyBinding, bundle: .module)
+    public static let diploma: VerifiableCredential = Mocker.decode(fromFile: Self.File.diploma, bundle: .module)
+    public static let sampleDisplaysAdditional: VerifiableCredential = Mocker.decode(fromFile: File.displaysAdditional, bundle: .module)
+    public static let otherSampleDisplaysAdditional: VerifiableCredential = Mocker.decode(fromFile: File.displaysAdditional, bundle: .module)
+    public static let displaysThemed: VerifiableCredential = Mocker.decode(fromFile: File.displaysThemed, bundle: .module)
 
     // MARK: Internal
 

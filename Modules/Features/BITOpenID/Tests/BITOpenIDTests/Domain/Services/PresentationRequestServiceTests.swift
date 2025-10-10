@@ -137,6 +137,22 @@ final class PresentationRequestServiceTests: XCTestCase {
     }
   }
 
+  func testFetch_jwtRequestObjectWithClientIdMismatch_throwsInvalidError() async throws {
+    let request = PresentationRequest.jwt(JWTRequestObjectPayload.Mock.clientIdMismatch)
+    repositorySpy.fetchFromReturnValue = request
+
+    do {
+      _ = try await service.fetch(from: urlMock)
+      XCTFail("Should have thrown an error")
+    } catch {
+      if case .invalid(let presentationRequest) = error as? FetchPresentationRequestError {
+        XCTAssertEqual(presentationRequest, request)
+      } else {
+        XCTFail("Wrong error: \(error)")
+      }
+    }
+  }
+
   func testFetch_jwsValidatorReturnsFalse_throwsInvalidError() async throws {
     repositorySpy.fetchFromReturnValue = .jwt(jwtRequestObjectMock)
     jwsValidatorMock.validateIssuerDidActivationBufferReturnValue = false

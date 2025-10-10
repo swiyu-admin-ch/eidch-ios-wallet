@@ -36,16 +36,17 @@ struct AVIdentityCheckView: View {
 
   @ViewBuilder
   private func footer() -> some View {
-    AsyncButton(
-      action: { await viewModel.primaryAction() },
-      actionOptions: [.showProgressView],
-      label: {
-        Text(L10n.tkEidRequestAutoVerificationIdentityCheckButton)
-          .multilineTextAlignment(.center)
-          .lineLimit(1)
-      })
-      .buttonStyle(.filledPrimary)
-      .controlSize(.large)
+    ButtonSheet {
+      AsyncButton(
+        action: { await viewModel.primaryAction() },
+        actionOptions: [.showProgressView],
+        label: {
+          Text(L10n.tkEidRequestAutoVerificationIdentityCheckButton)
+            .multilineTextAlignment(.leading)
+        })
+        .buttonStyle(.primary)
+        .controlSize(.large)
+    }
   }
 
   @ViewBuilder

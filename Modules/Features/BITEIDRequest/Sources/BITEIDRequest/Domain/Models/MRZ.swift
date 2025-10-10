@@ -2,11 +2,11 @@ import Foundation
 
 // MARK: - MRZError
 
-public enum MRZError: Error, LocalizedError {
+enum MRZError: Error, LocalizedError {
   case malformed(reason: String)
   case invalidLineCount(actual: Int)
 
-  public var errorDescription: String? {
+  var errorDescription: String? {
     switch self {
     case .malformed(let reason):
       "MRZ is malformed: \(reason)"
@@ -18,20 +18,20 @@ public enum MRZError: Error, LocalizedError {
 
 // MARK: - MRZ
 
-public struct MRZ: Equatable {
+struct MRZ: Equatable {
 
   // MARK: Lifecycle
 
-  public init(values: [String]) throws {
+  init(values: [String]) throws {
     let processedValues = Self.processRawValues(values)
     try Self.validate(processedValues)
 
     self.values = processedValues
   }
 
-  // MARK: Public
+  // MARK: Internal
 
-  public var values: [String]
+  var values: [String]
 
   // MARK: Private
 
@@ -55,7 +55,7 @@ public struct MRZ: Equatable {
 // MARK: CustomStringConvertible
 
 extension MRZ: CustomStringConvertible {
-  public var description: String {
+  var description: String {
     values.joined(separator: "\n")
   }
 }

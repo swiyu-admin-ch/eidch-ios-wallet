@@ -1,7 +1,7 @@
 import BITEntities
 import Foundation
 
-public enum LegalRepresentantConsent: String, Equatable, Decodable {
+public enum LegalRepresentantConsent: String, Equatable, Codable {
   case verified = "VERIFIED"
   case notVerified = "NOT_VERIFIED"
   case notRequired = "NOT_REQUIRED"

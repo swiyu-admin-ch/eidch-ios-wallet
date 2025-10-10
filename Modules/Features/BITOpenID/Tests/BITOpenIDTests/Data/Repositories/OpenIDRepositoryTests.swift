@@ -174,9 +174,10 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequestBody: credentialRequestBody)
 
-    if case .deferred(let transactionId, let accessToken, _) = result {
+    if case .deferred(let transactionId, let accessToken, _, let format) = result {
       XCTAssertEqual(transactionId, mockCredentialResponseDeferred.transactionId)
       XCTAssertEqual(accessToken, mockFetchCredentialContext.accessToken.accessToken)
+      XCTAssertEqual(format, mockFetchCredentialContext.format)
     }
   }
 
@@ -205,45 +206,6 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     do {
       _ = try await repository.fetchCredentialStatus(from: mockUrl)
-      XCTFail("Should have thrown an error")
-    } catch {
-      guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
-      XCTAssertEqual(error.status, .internalServerError)
-    }
-  }
-
-  // MARK: - Trust Statements
-
-  func testTrustStatementsSuccess() async throws {
-    let expectedStatements = [TrustStatementPayload.Mock.allFieldsRawSdJwt, TrustStatementPayload.Mock.allFieldsRawSdJwt]
-    let mockStatementData = try JSONEncoder().encode(expectedStatements)
-    mockResponse(code: 200, data: mockStatementData)
-
-    let trustStatements = try await repository.fetchTrustStatements(from: mockUrl, for: "did")
-
-    XCTAssertEqual(trustStatements.count, 2)
-    XCTAssertEqual(trustStatements[0].payload, TrustStatementPayload.Mock.allFields.payload)
-    XCTAssertEqual(trustStatements[1].payload, TrustStatementPayload.Mock.allFields.payload)
-  }
-
-  func testTrustStatementsDecodingError() async throws {
-    let expectedStatements = ["invalidTrustStatement"]
-    let mockStatementData = try JSONEncoder().encode(expectedStatements)
-    mockResponse(code: 200, data: mockStatementData)
-
-    do {
-      _ = try await repository.fetchTrustStatements(from: mockUrl, for: "did")
-      XCTFail("Should have thrown an error")
-    } catch {
-      XCTAssertEqual(error as? SdJWSDecoderError, .invalidRawSdJwt)
-    }
-  }
-
-  func testTrustStatementsNetworkError() async throws {
-    mockResponse(code: 500)
-
-    do {
-      _ = try await repository.fetchTrustStatements(from: mockUrl, for: "did")
       XCTFail("Should have thrown an error")
     } catch {
       guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }

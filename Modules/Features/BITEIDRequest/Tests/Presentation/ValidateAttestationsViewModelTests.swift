@@ -42,7 +42,7 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
 
     XCTAssertFalse(fetchAttestationsUseCase.executeCalled)
     XCTAssertFalse(router.legalRepresentantCalled)
-    XCTAssertEqual(router.attestationError as! UserSessionError, .notLoggedIn)
+    XCTAssertEqual(router.validateAttestationsError as! UserSessionError, .notLoggedIn)
   }
 
   @MainActor

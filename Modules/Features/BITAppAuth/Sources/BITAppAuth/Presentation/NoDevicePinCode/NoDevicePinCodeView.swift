@@ -92,7 +92,7 @@ extension NoDevicePinCodeView {
       Text(L10n.tkUnsafedeviceUnsafePrimaryButton)
     }
     .controlSize(.large)
-    .buttonStyle(.filledPrimary)
+    .buttonStyle(.primary)
   }
 }
 

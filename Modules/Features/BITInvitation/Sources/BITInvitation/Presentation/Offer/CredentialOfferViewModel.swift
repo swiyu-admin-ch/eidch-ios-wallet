@@ -13,9 +13,9 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
 
   // MARK: Lifecycle
 
-  init(credential: Credential, trustStatement: TrustStatement? = nil, state: CredentialOfferViewModel.State = .result, router: CredentialOfferInternalRoutes) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation, state: CredentialOfferViewModel.State = .result, router: CredentialOfferInternalRoutes) {
     self.credential = credential
-    self.trustStatement = trustStatement
+    self.trustInformation = trustInformation
     self.router = router
     super.init(state)
   }
@@ -41,13 +41,10 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
     case none
   }
 
-  let credential: Credential
+  let credential: VerifiableCredential
+  let trustInformation: TrustInformation
 
   @Published var credentialViewModel: CredentialViewModel?
-
-  var issuerTrustStatus: TrustStatus {
-    (trustStatement != nil) ? .verified : .unverified
-  }
 
   override func reducer(_ state: inout State, _ event: Event) -> AnyPublisher<Event, Never>? {
     switch event {
@@ -92,7 +89,6 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   // MARK: Private
 
   private let router: CredentialOfferInternalRoutes
-  private var trustStatement: TrustStatement?
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol

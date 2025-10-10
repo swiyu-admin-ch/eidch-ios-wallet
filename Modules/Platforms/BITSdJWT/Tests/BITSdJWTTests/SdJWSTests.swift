@@ -41,7 +41,7 @@ final class SdJWSTests: XCTestCase {
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringNoKeys_ReturnsJwt() throws {
     let sdJwt = TestSdJWTPayload.Mock.flat
-    let keys: [String] = []
+    let keys = [String]()
 
     let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 

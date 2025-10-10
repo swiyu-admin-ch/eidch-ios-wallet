@@ -19,7 +19,7 @@ public struct Notification: View {
     closeAction: @escaping () -> Void,
     subtitleAction: (() -> Void)? = nil,
     background: Color = ThemingAssets.Brand.Core.swissRedLabel.swiftUIColor,
-    closeButtonStyle: CustomButtonStyle = .bezeledLightDestructive)
+    closeButtonStyle: CustomButtonStyle = .destructive)
   {
     self.image = image
     self.imageColor = imageColor
@@ -46,7 +46,7 @@ public struct Notification: View {
     closeAction: @escaping () -> Void,
     subtitleAction: (() -> Void)? = nil,
     background: Color = ThemingAssets.Brand.Core.swissRedLabel.swiftUIColor,
-    closeButtonStyle: CustomButtonStyle = .bezeledLightDestructive)
+    closeButtonStyle: CustomButtonStyle = .destructive)
   {
     image = Image(systemName: systemImageName)
     self.imageColor = imageColor

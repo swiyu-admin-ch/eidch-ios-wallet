@@ -13,13 +13,13 @@ struct ExpiredCell: View {
       image()
 
       VStack(alignment: .leading) {
-        Text(L10n.tkGetEidNotificationEidExpiredPrimary(viewModel.fullName))
+        Text(L10n.tkEidRequestNotificationEidExpiredPrimary(viewModel.fullName))
           .font(.custom.footnoteEmphasized)
           .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
           .accessibilityAddTraits(.isHeader)
           .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
-        Text(L10n.tkGetEidNotificationEidExpiredSecondary)
+        Text(L10n.tkEidRequestNotificationEidExpiredSecondary)
           .font(.custom.footnote)
           .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
           .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
@@ -31,7 +31,7 @@ struct ExpiredCell: View {
         }
       }, label: {
         Assets.close.swiftUIImage
-          .accessibilityLabel(L10n.tkGetEidNotificationCloseButton)
+          .accessibilityLabel(L10n.tkEidRequestNotificationCloseButton)
           .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       })
     }
@@ -39,12 +39,6 @@ struct ExpiredCell: View {
   }
 
   // MARK: Private
-
-  private enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-  }
 
   @Environment(\.sizeCategory) private var sizeCategory
 

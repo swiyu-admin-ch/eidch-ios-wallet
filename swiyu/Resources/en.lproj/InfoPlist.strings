@@ -1,2 +1,3 @@
 "NSFaceIDUsageDescription" = "Do you want to allow the use of Face ID to unlock the swiyu app?";
 "NSCameraUsageDescription" = "swiyu app uses the camera to scan QR codes.";
+"NFCReaderUsageDescription" = "swiyu app would like to use NFC to scan passports";

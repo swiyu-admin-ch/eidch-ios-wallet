@@ -13,13 +13,11 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    context = .Mock.vcSdJwtSample
     credentialMock = context.selectedCredentials[context.selectedCredentials.first!.key]!.credential
 
     Container.shared.reset()
     Container.shared.submitPresentationUseCase.register { self.submitPresentationUseCase }
     Container.shared.declinePresentationUseCase.register { self.declinePresentationUseCase }
-    Container.shared.getVerifierDisplayUseCase.register { self.getVerifierDisplayUseCase }
     Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCase }
 
     router = MockPresentationRouter()
@@ -27,24 +25,15 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     viewModel = PresentationRequestReviewViewModel(context: context, router: router)
   }
 
-  func testInitialStateWithoutVerifierDisplay_withoutTrustStatement() {
-    getVerifierDisplayUseCase.executeForTrustStatementReturnValue = mockUnTrustedVerifierDisplay
+  @MainActor
+  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() {
+    Container.shared.preferredUserLanguageCodes.register { ["en"] }
+
     viewModel = PresentationRequestReviewViewModel(context: context, router: router)
 
-    XCTAssertFalse(viewModel.showLoadingMessage)
-    XCTAssertEqual(viewModel.verifierDisplay, mockUnTrustedVerifierDisplay)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, context.trustStatement)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
-  }
-
-  func testInitialStateWithoutVerifierDisplay_withTrustStatement() {
-    getVerifierDisplayUseCase.executeForTrustStatementReturnValue = mockTrustedVerifierDisplay
-    viewModel = PresentationRequestReviewViewModel(context: context, router: router)
-
-    XCTAssertFalse(viewModel.showLoadingMessage)
-    XCTAssertEqual(viewModel.verifierDisplay, mockTrustedVerifierDisplay)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, context.trustStatement)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
+    XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
+    XCTAssertEqual(String(data: viewModel.verifierDisplay.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(viewModel.verifierDisplay.trustInformation, context.trustInformation)
   }
 
   func testSubmitPresentation_Success_NavigateToSuccess() async throws {
@@ -138,15 +127,12 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
   // MARK: Private
 
   private var viewModel: PresentationRequestReviewViewModel!
-  private var context: PresentationRequestContext!
-  private var credentialMock: Credential!
+  private var context: PresentationRequestContext = .Mock.vcSdJwtWithIdentityTrust
+  private var credentialMock: VerifiableCredential!
   private var submitPresentationUseCase = SubmitPresentationUseCaseProtocolSpy()
   private var declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
-  private var getVerifierDisplayUseCase = GetVerifierDisplayUseCaseProtocolSpy()
   private var getCredentialDisplayUseCase = GetCredentialDisplayUseCaseProtocolSpy()
   private var router = MockPresentationRouter()
-  private var mockTrustedVerifierDisplay = VerifierDisplay(name: "name", logo: Data(), trustStatus: .verified)
-  private var mockUnTrustedVerifierDisplay = VerifierDisplay(name: "name", logo: Data(), trustStatus: .unverified)
   private let themeMock = "light"
 }
 

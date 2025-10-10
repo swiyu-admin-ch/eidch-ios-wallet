@@ -12,7 +12,7 @@ import Spyable
 
 @Spyable
 protocol CredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, keyPair: VaultKeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> Credential
+  func generate(for anyCredential: AnyCredential, keyPair: VaultKeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> VerifiableCredential
 }
 
 // MARK: - CredentialGenerator
@@ -21,7 +21,7 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, keyPair: VaultKeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> Credential {
+  func generate(for anyCredential: AnyCredential, keyPair: VaultKeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> VerifiableCredential {
     let id = UUID()
     let keyBinding = try createKeyBinding(from: keyPair)
     let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialMetadata.display, credentialId: id)

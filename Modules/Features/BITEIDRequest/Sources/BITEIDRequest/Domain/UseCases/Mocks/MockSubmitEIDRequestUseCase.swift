@@ -1,4 +1,4 @@
-#if DEBUG
+#if targetEnvironment (simulator)
 import BITEIDRequestShared
 import Factory
 import Foundation

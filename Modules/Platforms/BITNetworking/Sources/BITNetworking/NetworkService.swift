@@ -3,13 +3,23 @@ import Factory
 import Foundation
 import Moya
 
+public typealias ProgressHandler = ProgressBlock
+
+// MARK: - NetworkService
+
 public struct NetworkService {
 
   // MARK: Public
 
-  public func request<D>(_ target: some TargetType, decoder: JSONDecoder = NetworkContainer.shared.decoder(), plugins: [PluginType] = []) async throws -> (D) where D: Decodable {
+  public func request<D>(
+    _ target: some TargetType,
+    decoder: JSONDecoder = NetworkContainer.shared.decoder(),
+    plugins: [PluginType] = [],
+    _ progress: ProgressBlock? = nil) async throws
+    -> (D) where D: Decodable
+  {
     try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins) { result in
+      fetch(target, plugins: plugins, progress: progress) { result in
         switch result {
         case .success(let response):
           do {
@@ -25,9 +35,15 @@ public struct NetworkService {
     })
   }
 
-  public func request<D>(_ target: some TargetType, decoder: JSONDecoder = NetworkContainer.shared.decoder(), plugins: [PluginType] = []) async throws -> (D, Response) where D: Decodable {
+  public func request<D>(
+    _ target: some TargetType,
+    decoder: JSONDecoder = NetworkContainer.shared.decoder(),
+    plugins: [PluginType] = [],
+    _ progress: ProgressBlock? = nil) async throws
+    -> (D, Response) where D: Decodable
+  {
     try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins) { result in
+      fetch(target, plugins: plugins, progress: progress) { result in
         switch result {
         case .success(let response):
           do {
@@ -44,9 +60,14 @@ public struct NetworkService {
   }
 
   @discardableResult
-  public func request(_ target: some TargetType, plugins: [PluginType] = []) async throws -> Response {
+  public func request(
+    _ target: some TargetType,
+    plugins: [PluginType] = [],
+    _ progress: ProgressBlock? = nil) async throws
+    -> Response
+  {
     try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins) { result in
+      fetch(target, plugins: plugins, progress: progress) { result in
         switch result {
         case .success(let response):
           continuation.resume(returning: response)
@@ -58,9 +79,15 @@ public struct NetworkService {
   }
 
   @discardableResult
-  public func request<D>(_ target: some TargetType, decoder: JSONDecoder = NetworkContainer.shared.decoder(), plugins: [PluginType] = []) async throws -> NetworkResponse<D> where D: Decodable {
+  public func request<D>(
+    _ target: some TargetType,
+    decoder: JSONDecoder = NetworkContainer.shared.decoder(),
+    plugins: [PluginType] = [],
+    _ progress: ProgressBlock? = nil) async throws
+    -> NetworkResponse<D> where D: Decodable
+  {
     try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins) { result in
+      fetch(target, plugins: plugins, progress: progress) { result in
         switch result {
         case .success(let response):
           do {
@@ -104,10 +131,10 @@ public struct NetworkService {
       plugins: registeredPlugins)
   }
 
-  private func fetch(_ target: some TargetType, plugins: [PluginType], _ completion: @escaping (Result<Response, Error>) -> Void) {
+  private func fetch(_ target: some TargetType, plugins: [PluginType], progress: ProgressBlock? = nil, _ completion: @escaping (Result<Response, Error>) -> Void) {
     let provider = makeProvider(target, plugins: plugins)
 
-    provider.request(target) { result in
+    provider.request(target, progress: progress) { result in
       switch result {
       case .success(let response):
         guard response.isSuccessful else { return completion(.failure(NetworkError(response: response))) }

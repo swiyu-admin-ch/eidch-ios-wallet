@@ -1,4 +1,4 @@
-#if DEBUG
+#if targetEnvironment (simulator)
 import Foundation
 import LocalAuthentication
 
@@ -8,6 +8,10 @@ public class FakeLAContext: LAContext {
   }
 
   public override func isCredentialSet(_ type: LACredentialType) -> Bool {
+    true
+  }
+
+  override public func canEvaluatePolicy(_ policy: LAPolicy, error: NSErrorPointer) -> Bool {
     true
   }
 }

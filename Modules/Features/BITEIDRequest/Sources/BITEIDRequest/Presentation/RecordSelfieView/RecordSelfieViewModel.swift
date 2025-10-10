@@ -127,7 +127,7 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
         let output = RecordSelfieOutput(packageResult)
         try await saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
 
-        self.router.dismiss()
+        self.router.submitEidRequest()
       } catch {
       }
     }

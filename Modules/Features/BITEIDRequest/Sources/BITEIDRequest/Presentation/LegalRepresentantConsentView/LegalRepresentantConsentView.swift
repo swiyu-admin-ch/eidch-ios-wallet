@@ -21,11 +21,16 @@ struct LegalRepresentantConsentView: View {
       backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
       content: {
         DefaultInformationContentView(
-          primary: L10n.tkGetEidGuardianSelectionPrimary,
-          secondary: L10n.tkGetEidGuardianSelectionSecondary)
+          primary: L10n.tkEidRequestGuardianSelectionPrimary,
+          secondary: L10n.tkEidRequestGuardianSelectionSecondary)
       },
       footer: {
-        viewFooter()
+        DefaultInformationFooterView(
+          primaryButtonLabel: L10n.tkEidRequestGuardianSelectionButtonObtainConsent,
+          primaryButtonStyle: .secondary,
+          primaryButtonAction: viewModel.obtainConsent,
+          secondaryButtonLabel: L10n.tkEidRequestGuardianSelectionButtonContinueAsGuardian,
+          secondaryButtonAction: viewModel.continueAsParent)
       })
       .navigationBarBackButtonHidden(true)
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
@@ -33,38 +38,7 @@ struct LegalRepresentantConsentView: View {
 
   // MARK: Private
 
-  private enum AccessibilityIdentifier: String {
-    case obtainConsentButton
-    case continueButton
-  }
-
   private var viewModel: LegalRepresentantConsentViewModel
-}
-
-extension LegalRepresentantConsentView {
-
-  @ViewBuilder
-  private func viewFooter() -> some View {
-    Button(action: viewModel.obtainConsent) {
-      Text(L10n.tkGetEidGuardianSelectionButtonObtainConsent)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-        .frame(maxWidth: .infinity)
-    }
-    .buttonStyle(.bezeledLight)
-    .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.obtainConsentButton.rawValue)
-
-    Button(action: viewModel.continueAsParent) {
-      Text(L10n.tkGetEidGuardianSelectionButtonContinueAsGuardian)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-        .frame(maxWidth: .infinity)
-    }
-    .buttonStyle(.bezeledLight)
-    .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)
-  }
 }
 
 #Preview {

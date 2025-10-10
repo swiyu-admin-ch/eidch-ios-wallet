@@ -49,12 +49,6 @@ struct CredentialOfferScreen: Screen {
     return HomeScreen(app: app)
   }
 
-  func scrollToAccept() -> CredentialOfferScreen {
-    let acceptButton = app.buttons[CredentialOfferView.AccessibilityIdentifier.acceptButton.rawValue]
-    scrollToElement(acceptButton, direction: .up)
-    return self
-  }
-
   func tapDecline() -> CredentialOfferScreen {
     app.tap(CredentialOfferView.AccessibilityIdentifier.declineButton.rawValue)
     return self
@@ -69,22 +63,6 @@ struct CredentialOfferScreen: Screen {
   func tapWrongData() -> CredentialOfferWrongDataScreen {
     app.tap(CredentialOfferView.AccessibilityIdentifier.wrongData.rawValue)
     return CredentialOfferWrongDataScreen(app: app)
-  }
-
-  func scrollToBottomDecline() -> CredentialOfferScreen {
-    let button = app.buttons[CredentialOfferView.AccessibilityIdentifier.bottomDeclineButton.rawValue]
-    scrollToElement(button)
-    return self
-  }
-
-  func tapBottomAccept() -> HomeScreen {
-    app.tap(CredentialOfferView.AccessibilityIdentifier.bottomAcceptButton.rawValue)
-    return HomeScreen(app: app)
-  }
-
-  func tapBottomDecline() -> CredentialOfferScreen {
-    app.tap(CredentialOfferView.AccessibilityIdentifier.bottomDeclineButton.rawValue)
-    return self
   }
 
   func tapConfirmDecline() -> HomeScreen {

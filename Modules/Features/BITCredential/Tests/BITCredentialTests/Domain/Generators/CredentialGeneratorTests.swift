@@ -150,8 +150,8 @@ final class CredentialGeneratorTests: XCTestCase {
   private let ocaBundleMock: OcaBundle = .Mock.simpleSample
   private let rawOcaBundleMock: RawOcaBundle = OcaBundle.Mock.simpleSampleData
 
-  private let ocaCredential: Credential = .Mock.sample
-  private let metadataCredential: Credential = .Mock.sampleDisplaysFallback
+  private let ocaCredential: VerifiableCredential = .Mock.sample
+  private let metadataCredential: VerifiableCredential = .Mock.sampleDisplaysFallback
 
   private var keyManagerSpy = KeyManagerProtocolSpy()
   private var ocaBundlerSpy: OcaBundlerProtocolSpy!

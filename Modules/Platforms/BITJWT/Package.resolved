@@ -1,5 +1,5 @@
 {
-  "originHash" : "b63c2364f14fdba67c20f8e5ba0cd360e5055ec8e073e646b1922f0fff16c633",
+  "originHash" : "edf8a209c4e463d5fe965ffbef06e1248e803d768202c6742405271b72aaf9ed",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiyu-admin-ch/didresolver-swift.git",
       "state" : {
-        "revision" : "2c324e97849523392be341282b666fe56856d0dd",
-        "version" : "2.0.0"
+        "revision" : "d94b8a676e3b893068933db8b5f5ddc7f8c43fe1",
+        "version" : "2.1.4"
       }
     },
     {

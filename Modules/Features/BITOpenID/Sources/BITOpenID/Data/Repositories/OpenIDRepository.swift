@@ -5,7 +5,6 @@ import BITSdJWT
 import Factory
 import Foundation
 import Moya
-import Spyable
 
 // MARK: - OpenIDRepository
 
@@ -81,14 +80,6 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     return try jwsDecoder.decode(TokenStatusList.self, from: response.data)
   }
 
-  func fetchTrustStatements(from url: URL, for subjectDid: String) async throws -> [TrustStatement] {
-    let statements: [String] = try await networkService.request(OpenIDEndpoint.trustStatements(url: url, subjectDid: subjectDid))
-    return try statements.map {
-      let data = $0.data(using: .utf8) ?? Data()
-      return try sdJwsDecoder.decode(TrustStatementPayload.self, from: data)
-    }
-  }
-
   // MARK: Private
 
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
@@ -103,7 +94,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     }
 
     #warning("TODO: Null check `deferredCredentialEndpoint` when implemented by Donum")
-    return .deferred(transactionId: transactionId, accessToken: context.accessToken.accessToken, endpoint: context.deferredCredentialEndpoint?.absoluteString ?? "")
+    return .deferred(transactionId: transactionId, accessToken: context.accessToken.accessToken, endpoint: context.deferredCredentialEndpoint?.absoluteString ?? "", format: context.format)
   }
 
   private func getCredential(from credentialResponse: CredentialResponse) throws -> FetchAnyCredentialResult {

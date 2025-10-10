@@ -6,12 +6,12 @@ import Foundation
 
 // MARK: - CheckAndUpdateCredentialStatusUseCase
 
-public struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol {
+struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol {
 
-  // MARK: Public
+  // MARK: Internal
 
-  public func execute(_ credentials: [Credential]) async throws -> [Credential] {
-    try await withThrowingTaskGroup(of: Credential.self, returning: [Credential].self) { taskGroup in
+  func execute(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential] {
+    try await withThrowingTaskGroup(of: VerifiableCredential.self, returning: [VerifiableCredential].self) { taskGroup in
 
       for credential in credentials {
         taskGroup.addTask {
@@ -19,13 +19,13 @@ public struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialSta
         }
       }
 
-      return try await taskGroup.reduce(into: [Credential]()) { updatedCredentials, credential in
+      return try await taskGroup.reduce(into: [VerifiableCredential]()) { updatedCredentials, credential in
         updatedCredentials.append(credential)
       }
     }
   }
 
-  public func execute(for credential: Credential) async throws -> Credential {
+  func execute(for credential: VerifiableCredential) async throws -> VerifiableCredential {
     let status = try await getStatus(of: credential)
     if status != .unknown {
       return try await updateCredentialStatus(credential, to: status)
@@ -37,12 +37,12 @@ public struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialSta
 
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
   @Injected(\.statusValidators) private var validators: [AnyStatusType: any AnyStatusCheckValidatorProtocol]
-  @Injected(\.databaseCredentialRepository) private var localRepository: CredentialRepositoryProtocol
+  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
   @Injected(\.dateBuffer) private var dateBuffer: TimeInterval
 }
 
 extension CheckAndUpdateCredentialStatusUseCase {
-  private func getStatus(of credential: Credential) async throws -> CredentialStatus {
+  private func getStatus(of credential: VerifiableCredential) async throws -> CredentialStatus {
     let anyCredential = try createAnyCredentialUseCase.execute(from: credential.payload, format: credential.format)
     let dateStatus = checkDateValidity(anyCredential: anyCredential)
     guard dateStatus == .valid else {
@@ -70,11 +70,11 @@ extension CheckAndUpdateCredentialStatusUseCase {
     return .valid
   }
 
-  private func updateCredentialStatus(_ credential: Credential, to status: CredentialStatus) async throws -> Credential {
+  private func updateCredentialStatus(_ credential: VerifiableCredential, to status: CredentialStatus) async throws -> VerifiableCredential {
     var credentialCopy = credential
     credentialCopy.status = status
 
-    return try await localRepository.update(credentialCopy)
+    return try await verifiableCredentialRepository.update(credentialCopy)
   }
 
 }

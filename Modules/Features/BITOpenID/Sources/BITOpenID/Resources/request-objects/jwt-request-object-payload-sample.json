@@ -33,6 +33,15 @@
                "fields":[
                   {
                      "path":[
+                        "$.vct"
+                     ],
+                     "filter": {
+                       "type": "string",
+                       "const": "vcSchemaId"
+                     }
+                  },
+                  {
+                     "path":[
                         "$.firstName"
                      ]
                   },

@@ -54,8 +54,8 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 0)
     XCTAssertEqual(viewModel.inputFieldState, .normal)
-    XCTAssertTrue(router.popNumberCalled)
-    XCTAssertEqual(router.popNumberCalledValue, 4)
+    XCTAssertTrue(router.popCountCalled)
+    XCTAssertEqual(router.popCountCalledValue, 3)
   }
 
   @MainActor
@@ -69,7 +69,7 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.pinCode.isEmpty)
     XCTAssertNotNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.inputFieldState, .error)
-    XCTAssertFalse(router.popNumberCalled)
+    XCTAssertFalse(router.popCountCalled)
     XCTAssertEqual(viewModel.attempts, 1)
   }
 
@@ -84,7 +84,7 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.pinCode.isEmpty)
     XCTAssertNotNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.inputFieldState, .error)
-    XCTAssertFalse(router.popNumberCalled)
+    XCTAssertFalse(router.popCountCalled)
     XCTAssertEqual(viewModel.attempts, 1)
   }
 

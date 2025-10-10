@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITEIDRequestShared
+@testable import BITTestingCore
 
 extension EIDRequestCaseFile {
 
@@ -11,6 +11,10 @@ extension EIDRequestCaseFile {
       EIDRequestCaseFile(fileName: "sample2", mime: .jpg, data: Data(), category: .documentScan),
       EIDRequestCaseFile(fileName: "sample3", mime: .jpg, data: Data(), category: .documentScan),
     ]
+
+    static func sample(name: String = "sample", category: Category = .documentScan) -> EIDRequestCaseFile {
+      EIDRequestCaseFile(fileName: name, mime: .jpg, data: Data(), category: category)
+    }
 
   }
 

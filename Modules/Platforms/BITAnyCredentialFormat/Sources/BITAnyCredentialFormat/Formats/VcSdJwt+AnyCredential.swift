@@ -33,6 +33,10 @@ extension VcSdJwt: AnyCredential {
     payload.expiredAt
   }
 
+  public var vcSchemaId: String {
+    payload.vct
+  }
+
   public func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any?] {
     switch claimSet {
     case .all:

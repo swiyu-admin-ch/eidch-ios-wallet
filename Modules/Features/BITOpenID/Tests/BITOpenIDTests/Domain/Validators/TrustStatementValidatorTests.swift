@@ -28,8 +28,6 @@ final class TrustStatementValidatorTests: XCTestCase {
   func testValidate_valid_argumentsPassed() async throws {
     _ = await validator.validate(trustStatementMock, for: subjectMock)
 
-    XCTAssertEqual(trustRegistryRepositorySpy.getTrustedDidsCallsCount, 1)
-
     XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferCallsCount, 1)
     XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedJws?.rawJWS, trustStatementMock.rawJWS)
     XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedDid, trustStatementMock.payload.issuer)
@@ -39,32 +37,16 @@ final class TrustStatementValidatorTests: XCTestCase {
     XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.issuer, trustStatementMock.payload.issuer)
   }
 
-  func testValidate_invalidVct_returnsFalse() async throws {
-    let trustStatement = TrustStatementPayload.Mock.invalidVct
-
-    let result = await validator.validate(trustStatement, for: subjectMock)
-
-    XCTAssertFalse(result)
-  }
-
   func testValidate_wrongSubject_returnsFalse() async throws {
-    let trustStatement = TrustStatementPayload.Mock.wrongSubject
+    let trustStatement = IdentityTrustStatementPayload.Mock.wrongSubject
 
     let result = await validator.validate(trustStatement, for: subjectMock)
-
-    XCTAssertFalse(result)
-  }
-
-  func testValidate_notTrustedDid_returnsFalse() async throws {
-    trustRegistryRepositorySpy.getTrustedDidsReturnValue = ["other"]
-
-    let result = await validator.validate(trustStatementMock, for: subjectMock)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_wrongAlgorithm_returnsFalse() async throws {
-    let trustStatement = TrustStatementPayload.Mock.wrongAlgorithm
+    let trustStatement = IdentityTrustStatementPayload.Mock.wrongAlgorithm
 
     let result = await validator.validate(trustStatement, for: subjectMock)
 
@@ -99,34 +81,29 @@ final class TrustStatementValidatorTests: XCTestCase {
 
   // MARK: Private
 
-  private let trustStatementMock: TrustStatement = TrustStatementPayload.Mock.validSample
+  private let trustStatementMock = IdentityTrustStatementPayload.Mock.validSample
   private let subjectMock = "subject"
   private let trustedDids: [String] = [
     "did:tdw:another-example",
     "issuer",
   ]
 
-  private var trustRegistryRepositorySpy: TrustRegistryRepositoryProtocolSpy!
-  private var jwsValidatorMock: JWSValidatorMock<TrustStatementPayload>!
+  private var jwsValidatorMock: JWSValidatorMock<IdentityTrustStatementPayload>!
   private var tokenStatusListValidatorSpy: AnyStatusCheckValidatorProtocolSpy!
 
   private var validator: TrustStatementValidator!
 
   private func registerMocks() {
-    trustRegistryRepositorySpy = TrustRegistryRepositoryProtocolSpy()
     jwsValidatorMock = JWSValidatorMock()
     tokenStatusListValidatorSpy = AnyStatusCheckValidatorProtocolSpy()
 
-    Container.shared.trustRegistryRepository.register { self.trustRegistryRepositorySpy }
+    Container.shared.trustRegistryTrustedDids.register { self.trustedDids }
     Container.shared.jwsValidator.register { self.jwsValidatorMock }
     Container.shared.tokenStatusListValidator.register { self.tokenStatusListValidatorSpy }
   }
 
   private func createSuccessState() {
-    trustRegistryRepositorySpy.getTrustedDidsReturnValue = trustedDids
     jwsValidatorMock.validateIssuerDidActivationBufferReturnValue = true
     tokenStatusListValidatorSpy.validateIssuerReturnValue = .valid
   }
 }
-
-// swiftlint:enable all

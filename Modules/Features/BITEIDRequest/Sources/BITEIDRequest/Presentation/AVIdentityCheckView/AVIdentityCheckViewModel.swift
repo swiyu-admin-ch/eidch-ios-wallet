@@ -18,6 +18,7 @@ class AVIdentityCheckViewModel {
       }
 
       let response = try await startAutoVerificationUseCase.execute(for: caseId)
+      router.context.authJwt = response.jwt
 
       guard response.isNFCRequired else {
         return router.recordDocument()

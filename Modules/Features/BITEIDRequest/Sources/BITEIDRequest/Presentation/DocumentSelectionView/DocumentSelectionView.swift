@@ -61,12 +61,6 @@ struct DocumentSelectionView: View {
 
   // MARK: Private
 
-  private enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-  }
-
   @StateObject private var viewModel: DocumentSelectionViewModel
 }
 

@@ -3,6 +3,7 @@ import XCTest
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -21,31 +22,34 @@ final class PairWalletUseCaseTests: XCTestCase {
   }
 
   func testExecute_success_assertCount() async throws {
-    try await useCase.execute(for: caseId)
+    let result = try await useCase.execute(for: caseId)
 
+    XCTAssertEqual(result, mockWalletPairingResponse.walletPairingId)
     XCTAssertEqual(eIDRequestRepository.pairWalletCaseIdCallsCount, 1)
     XCTAssertEqual(validateCredentialOfferInvitationUrlUseCase.executeCallsCount, 1)
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
-    XCTAssertEqual(deferredCredentialRepository.createCallsCount, 1)
+    XCTAssertEqual(eIDRequestCaseRepository.getIdCallsCount, 1)
+    XCTAssertEqual(eIDRequestCaseRepository.updateCallsCount, 1)
   }
 
   func testExecute_success_assertParameters() async throws {
-    try await useCase.execute(for: caseId)
+    _ = try await useCase.execute(for: caseId)
 
     XCTAssertEqual(eIDRequestRepository.pairWalletCaseIdReceivedCaseId, caseId)
     XCTAssertEqual(validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl, mockWalletPairingResponse.credentialOfferLink)
     XCTAssertEqual(fetchCredentialUseCase.executeFromReceivedOffer, mockCredentialOffer)
 
     if case .deferred(let credential) = mockFetchCredentialResult {
-      XCTAssertEqual(deferredCredentialRepository.createReceivedDeferredCredential, credential)
+      XCTAssertEqual(eIDRequestCaseRepository.getIdReceivedId, caseId)
+      XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.deferredCredential, credential)
     }
   }
 
   func testExecute_receiveCredential_throws() async throws {
-    fetchCredentialUseCase.executeFromReturnValue = .credential(.Mock.sample, nil)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(.Mock.sample, .Mock.untrustedIdentity)
 
     do {
-      try await useCase.execute(for: caseId)
+      _ = try await useCase.execute(for: caseId)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? FetchCredentialUseCaseError, .invalidCredential)
@@ -56,7 +60,7 @@ final class PairWalletUseCaseTests: XCTestCase {
     eIDRequestRepository.pairWalletCaseIdThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(for: caseId)
+      _ = try await useCase.execute(for: caseId)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -67,7 +71,7 @@ final class PairWalletUseCaseTests: XCTestCase {
     validateCredentialOfferInvitationUrlUseCase.executeThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(for: caseId)
+      _ = try await useCase.execute(for: caseId)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -78,18 +82,29 @@ final class PairWalletUseCaseTests: XCTestCase {
     fetchCredentialUseCase.executeFromThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(for: caseId)
+      _ = try await useCase.execute(for: caseId)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
-  func testExecute_createDeferredCredentialThrowsError_throwsError() async throws {
-    deferredCredentialRepository.createThrowableError = TestingError.error
+  func testExecute_getEidRequestCaseThrowsError_throwsError() async throws {
+    eIDRequestCaseRepository.getIdThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(for: caseId)
+      _ = try await useCase.execute(for: caseId)
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testExecute_updateRequestCaseThrowsError_throwsError() async throws {
+    eIDRequestCaseRepository.updateThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(for: caseId)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -102,23 +117,24 @@ final class PairWalletUseCaseTests: XCTestCase {
   private let mockCredentialOffer = CredentialOffer.Mock.sample
   private var mockFetchCredentialResult: FetchCredentialResult!
   private let mockWalletPairingResponse = WalletPairingResponse.Mock.sample
+  private let mockEIDRequestCase = EIDRequestCase.Mock.sampleAgentReview
 
   private var useCase: PairWalletUseCase!
 
   private var eIDRequestRepository: EIDRequestRepositoryProtocolSpy!
   private var fetchCredentialUseCase: FetchCredentialUseCaseProtocolSpy!
-  private var deferredCredentialRepository: DeferredCredentialRepositoryProtocolSpy!
+  private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocolSpy!
   private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy!
 
   private func registerMocks() {
     eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
     fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
-    deferredCredentialRepository = DeferredCredentialRepositoryProtocolSpy()
+    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
     validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
 
     Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
     Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
-    Container.shared.deferredCredentialRepository.register { self.deferredCredentialRepository }
+    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
     Container.shared.validateCredentialOfferInvitationUrlUseCase.register { self.validateCredentialOfferInvitationUrlUseCase }
   }
 
@@ -127,7 +143,8 @@ final class PairWalletUseCaseTests: XCTestCase {
     eIDRequestRepository.pairWalletCaseIdReturnValue = mockWalletPairingResponse
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
     fetchCredentialUseCase.executeFromReturnValue = mockFetchCredentialResult
-    deferredCredentialRepository.createReturnValue = DeferredCredential.Mock.sample
+    eIDRequestCaseRepository.getIdReturnValue = mockEIDRequestCase
+    eIDRequestCaseRepository.updateReturnValue = mockEIDRequestCase
   }
 
 }

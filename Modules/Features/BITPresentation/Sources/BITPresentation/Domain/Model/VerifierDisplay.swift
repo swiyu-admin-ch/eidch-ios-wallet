@@ -1,5 +1,5 @@
 import BITCore
-import BITCredentialShared
+import BITCredential
 import BITOpenID
 import Factory
 import Foundation
@@ -8,17 +8,17 @@ import Foundation
 
 public struct VerifierDisplay {
 
-  init(name: String?, logo: Data?, trustStatus: TrustStatus) {
+  init(name: String?, logo: Data?, trustInformation: TrustInformation) {
     self.name = name
     self.logo = logo
-    self.trustStatus = trustStatus
+    self.trustInformation = trustInformation
   }
 
   // MARK: Internal
 
   var name: String?
   var logo: Data?
-  var trustStatus: TrustStatus
+  var trustInformation: TrustInformation
 
 }
 
@@ -26,14 +26,14 @@ public struct VerifierDisplay {
 
 extension VerifierDisplay: Equatable {
   public static func == (lhs: VerifierDisplay, rhs: VerifierDisplay) -> Bool {
-    lhs.name == rhs.name && lhs.logo == rhs.logo && lhs.trustStatus == rhs.trustStatus
+    lhs.name == rhs.name && lhs.logo == rhs.logo && lhs.trustInformation == rhs.trustInformation
   }
 }
 
 #if DEBUG
 extension VerifierDisplay {
   struct Mock {
-    static let sample = VerifierDisplay(name: "Verifier", logo: nil, trustStatus: .verified)
+    static let sample = VerifierDisplay(name: "Verifier", logo: nil, trustInformation: .Mock.trustedIdentity)
   }
 }
 #endif

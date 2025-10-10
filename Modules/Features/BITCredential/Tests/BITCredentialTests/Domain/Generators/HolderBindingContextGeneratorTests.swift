@@ -71,7 +71,7 @@ final class HolderBindingContextGeneratorTests: XCTestCase {
   }
 
   func testGenerate_noMatchablePreferredAlgorithms_throwsUnsupportedAlgorithm() async throws {
-    let mockPreferredAlgos: [JWTAlgorithm] = []
+    let mockPreferredAlgos = [JWTAlgorithm]()
     Container.shared.preferredKeyBindingAlgorithmsOrdered.register { mockPreferredAlgos }
 
     generator = HolderBindingContextGenerator()

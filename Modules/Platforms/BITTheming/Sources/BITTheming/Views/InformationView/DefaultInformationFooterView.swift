@@ -6,51 +6,51 @@ public struct DefaultInformationFooterView: View {
 
   public init(
     primaryButtonLabel: String,
+    primaryButtonStyle: CustomButtonStyle = .primary,
     primaryButtonAction: @escaping (() -> Void),
     secondaryButtonLabel: String? = nil,
+    secondaryButtonStyle: CustomButtonStyle = .secondary,
     secondaryButtonAction: (() -> Void)? = nil,
     secondaryButtonDisabled: Bool = false)
   {
     self.primaryButtonLabel = primaryButtonLabel
+    self.primaryButtonStyle = primaryButtonStyle
     self.primaryButtonAction = primaryButtonAction
     self.secondaryButtonLabel = secondaryButtonLabel
     self.secondaryButtonAction = secondaryButtonAction
+    self.secondaryButtonStyle = secondaryButtonStyle
     self.secondaryButtonDisabled = secondaryButtonDisabled
   }
 
   // MARK: Public
 
   public var body: some View {
-    if secondaryButtonLabel == nil {
-      Spacer()
-    }
-
-    if let secondaryButtonLabel {
-      Button(action: { secondaryButtonAction?() }) {
-        Text(secondaryButtonLabel)
-          .multilineTextAlignment(.center)
-          .lineLimit(1)
-          .frame(maxWidth: .infinity)
-      }
-      .disabled(secondaryButtonDisabled)
-      .buttonStyle(.bezeledLight)
-      .controlSize(.large)
-      .accessibilityIdentifier(AccessibilityIdentifier.secondaryButton.rawValue)
-      .accessibilityLabel(secondaryButtonLabel)
-    }
-
-    Button(action: { primaryButtonAction() }) {
-      Text(primaryButtonLabel)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-        .if(sizeCategory.isAccessibilityCategory || secondaryButtonLabel != nil) {
-          $0.frame(maxWidth: .infinity)
+    ButtonSheet {
+      VStack(spacing: .x4) {
+        Button(action: { primaryButtonAction() }) {
+          Text(primaryButtonLabel)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity)
         }
+        .buttonStyle(primaryButtonStyle)
+        .controlSize(.large)
+        .accessibilityIdentifier(AccessibilityIdentifier.primaryButton.rawValue)
+        .accessibilityLabel(primaryButtonLabel)
+
+        if let secondaryButtonLabel {
+          Button(action: { secondaryButtonAction?() }) {
+            Text(secondaryButtonLabel)
+              .multilineTextAlignment(.leading)
+              .frame(maxWidth: .infinity)
+          }
+          .disabled(secondaryButtonDisabled)
+          .buttonStyle(secondaryButtonStyle)
+          .controlSize(.large)
+          .accessibilityIdentifier(AccessibilityIdentifier.secondaryButton.rawValue)
+          .accessibilityLabel(secondaryButtonLabel)
+        }
+      }
     }
-    .buttonStyle(.filledPrimary)
-    .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.primaryButton.rawValue)
-    .accessibilityLabel(primaryButtonLabel)
   }
 
   // MARK: Internal
@@ -65,9 +65,10 @@ public struct DefaultInformationFooterView: View {
   @Environment(\.sizeCategory) private var sizeCategory
 
   private let primaryButtonLabel: String
+  private let primaryButtonStyle: CustomButtonStyle
   private let primaryButtonAction: () -> Void
   private let secondaryButtonLabel: String?
+  private let secondaryButtonStyle: CustomButtonStyle
   private let secondaryButtonAction: (() -> Void)?
   private let secondaryButtonDisabled: Bool
-
 }

@@ -1,5 +1,5 @@
 {
-  "originHash" : "1a8df01724877479ccc52eaff112e8d92ca293ea6027ee92e1f6aae098802a04",
+  "originHash" : "3caf7d5c4e0d67af94958906d15868ac97123f4b9200924959eca5b47a366baf",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiyu-admin-ch/didresolver-swift.git",
       "state" : {
-        "revision" : "2c324e97849523392be341282b666fe56856d0dd",
-        "version" : "2.0.0"
+        "revision" : "d94b8a676e3b893068933db8b5f5ddc7f8c43fe1",
+        "version" : "2.1.4"
       }
     },
     {
@@ -71,6 +71,23 @@
       "state" : {
         "revision" : "c263811c1f3dbf002be9bd83107f7cdc38992b26",
         "version" : "15.0.3"
+      }
+    },
+    {
+      "identity" : "pera_av-wrapper-private_ios",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:admin-ch-ssi/PERA_av-wrapper-private_ios.git",
+      "state" : {
+        "revision" : "9c0cc8c83e68fc15cd96b42e1b34f841729ba50e"
+      }
+    },
+    {
+      "identity" : "popupview",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/exyte/PopupView",
+      "state" : {
+        "revision" : "d619317dbb98fe071d11be36c2525d3c213ad8e4",
+        "version" : "3.1.4"
       }
     },
     {

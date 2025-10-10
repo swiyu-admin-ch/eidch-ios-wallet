@@ -3,6 +3,7 @@ import BITEIDRequestShared
 import BITNetworking
 import Factory
 import Foundation
+import Moya
 import Spyable
 
 
@@ -15,6 +16,7 @@ protocol EIDRequestRepositoryProtocol {
   func startOnlineSession(caseId: String) async throws
   func pairWallet(caseId: String) async throws -> WalletPairingResponse
   func startAutoVerification(caseId: String, autoVerificationType: AutoVerificationType) async throws -> AutoVerificationResponse
+  func submitFile(_ file: EIDRequestCaseFile, caseId: String, authJwt: String, _ progress: ProgressBlock?) async throws
   func getPairingState(caseId: String, pairingId: String) async throws -> WalletPairingState
 }
 
@@ -38,11 +40,17 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
   func fetchLegalRepresentantVerification(for requestCaseId: String) async throws -> LegalRepresentantVerificationResponse {
     let clientAttestation = try await clientAttestationRepository.get()
 
-    return try await networkService.request(
-      EIDRequestEndpoint.legalRepresentantVerification(caseId: requestCaseId),
-      plugins: [ClientAttestationPlugin(
-        clientAttestation: clientAttestation.rawJWS
-      )])
+    do {
+      return try await networkService.request(
+        EIDRequestEndpoint.legalRepresentantVerification(caseId: requestCaseId),
+        plugins: [ClientAttestationPlugin(
+          clientAttestation: clientAttestation.rawJWS
+        )])
+    } catch let error as NetworkError where error.status == .badRequest {
+      throw try parseError(error)
+    } catch {
+      throw Error.unknownError
+    }
   }
 
   /// Business validation made by the mobile backend, without data integrity (nor Proof of possession).
@@ -50,7 +58,7 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
     do {
       try await networkService.request(EIDRequestEndpoint.validateAttestations(requestBody))
     } catch let error as NetworkError where error.status == .unprocessableEntity {
-      try parseError(error)
+      throw try parseError(error)
     } catch {
       throw Error.unknownError
     }
@@ -62,7 +70,7 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
     do {
       try await networkService.request(EIDRequestEndpoint.startOnlineSession(caseId: caseId), plugins: [clientAttestationPlugin])
     } catch let error as NetworkError {
-      try parseError(error)
+      throw try parseError(error)
     }
   }
 
@@ -78,6 +86,11 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
     return try await networkService.request(EIDRequestEndpoint.startAutoVerification(caseId, autoVerificationType), plugins: [clientAttestationPlugin])
   }
 
+  func submitFile(_ file: EIDRequestCaseFile, caseId: String, authJwt: String, _ progress: ProgressBlock?) async throws {
+    let authPlugin = AccessTokenPlugin(tokenClosure: { _ in authJwt })
+    try await networkService.request(EIDRequestEndpoint.submitFile(caseId: caseId, file: file), plugins: [authPlugin], progress)
+  }
+
   func getPairingState(caseId: String, pairingId: String) async throws -> WalletPairingState {
     let clientAttestationPlugin = try await generateClientAttestationPlugin(for: EIDRequestEmptyBody())
     let response: WalletPairingStateResponse = try await networkService.request(EIDRequestEndpoint.pairingState(caseId: caseId, pairingId: pairingId), plugins: [clientAttestationPlugin])
@@ -86,32 +99,33 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
 
   // MARK: Private
 
-  @Injected(\.sidUrl) private var sidUrl: URL
+  @Injected(\.sidBaseUrl) private var sidBaseUrl: URL
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.eIDRequestResponseDecoder) private var eIDRequestResponseDecoder: JSONDecoder
   @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
 
-  private func parseError(_ error: NetworkError) throws {
+  private func parseError(_ error: NetworkError) throws -> Swift.Error {
     let errorResponse = try JSONDecoder().decode(EIDRequestErrorResponse.self, from: error.response?.data ?? Data())
 
-    guard let eIDRequestError = errorResponse.errors.first, let code = eIDRequestError.code else {
-      throw error
+    guard let firstError = errorResponse.errors.first, let code = firstError.code else {
+      return error
     }
 
-    throw switch code {
+    return switch code {
     case .invalidClientAttestation: Error.invalidClientAttestation
     case .invalidKeyAttestation: Error.invalidKeyAttestation
     case .insufficientKeyStorageResistance: Error.insufficientKeyStorageResistance
     case .invalidState: Error.invalidState
-    case .resourcesNotFound: Error.unknownError
+    case .notFound: Error.unknownError
+    case .legalRepresentantNotRequired: Error.legalRepresentantNotRequired
     }
   }
 
   private func generateClientAttestationPlugin(for body: Encodable) async throws -> ClientAttestationPlugin {
     let (clientAttestation, proofOfPossession) = try await proofOfPossessionGenerator.generate(
       for: body,
-      audience: sidUrl.absoluteString,
+      audience: sidBaseUrl.absoluteString,
       challengeEndpoint: URL(target: EIDRequestEndpoint.challenge))
 
     return ClientAttestationPlugin(clientAttestation: clientAttestation.rawJWS, proofOfPossession: proofOfPossession.rawJWS)
@@ -124,6 +138,7 @@ extension EIDRequestRepository {
     case invalidClientAttestation
     case invalidKeyAttestation
     case insufficientKeyStorageResistance
+    case legalRepresentantNotRequired
     case unknownError
     case invalidState
   }

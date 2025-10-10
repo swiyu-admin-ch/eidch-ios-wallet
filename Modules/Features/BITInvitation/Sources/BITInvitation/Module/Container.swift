@@ -1,5 +1,5 @@
+import BITCredential
 import BITCredentialShared
-import BITOpenID
 import Factory
 import Foundation
 
@@ -8,16 +8,12 @@ extension Container {
 
   // MARK: - Credential offer
 
-  var credentialOfferViewModel: ParameterFactory<(credential: Credential, trustStatement: TrustStatement?, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes), CredentialOfferViewModel> {
-    self { CredentialOfferViewModel(credential: $0, trustStatement: $1, state: $2, router: $3) }
+  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes), CredentialOfferViewModel> {
+    self { CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2, router: $3) }
   }
 
-  var credentialOfferModule: ParameterFactory<(Credential, TrustStatement?), CredentialOfferModule> {
-    self { CredentialOfferModule(credential: $0, trustStatement: $1) }
-  }
-
-  var fetchPresentationRequestUseCase: Factory<FetchPresentationRequestUseCaseProtocol> {
-    self { FetchPresentationRequestUseCase() }
+  var credentialOfferModule: ParameterFactory<(VerifiableCredential, TrustInformation), CredentialOfferModule> {
+    self { CredentialOfferModule(credential: $0, trustInformation: $1) }
   }
 
   // MARK: - Camera
@@ -45,6 +41,10 @@ extension Container {
 extension Container {
 
   // MARK: Public
+
+  public var fetchPresentationRequestUseCase: Factory<FetchPresentationRequestUseCaseProtocol> {
+    self { FetchPresentationRequestUseCase() }
+  }
 
   public var invitationRouter: Factory<InvitationRouter> {
     self { InvitationRouter() }

@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiyu-admin-ch/didresolver-swift.git",
       "state" : {
-        "revision" : "2c324e97849523392be341282b666fe56856d0dd",
-        "version" : "2.0.0"
+        "revision" : "d94b8a676e3b893068933db8b5f5ddc7f8c43fe1",
+        "version" : "2.1.4"
       }
     },
     {
@@ -98,6 +98,15 @@
       "state" : {
         "revision" : "c263811c1f3dbf002be9bd83107f7cdc38992b26",
         "version" : "15.0.3"
+      }
+    },
+    {
+      "identity" : "pera_av-wrapper-private_ios",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:admin-ch-ssi/PERA_av-wrapper-private_ios.git",
+      "state" : {
+        "revision" : "c0725c1dcef5bae0818b01ced8e13a0aad74b71c",
+        "version" : "0.1.0"
       }
     },
     {

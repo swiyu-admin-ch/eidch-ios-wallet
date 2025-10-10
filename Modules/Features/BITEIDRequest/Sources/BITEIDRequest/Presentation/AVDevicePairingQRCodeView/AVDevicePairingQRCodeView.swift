@@ -24,10 +24,12 @@ struct AVDevicePairingQRCodeView: View {
     } footer: {
       viewFooter()
     }
+    .background(ThemingAssets.Background.primary.swiftUIColor)
     .task {
       await viewModel.fetchPairingQRCode()
     }
     .toolbar(content: toolbarContent)
+    .toolbarBackground(ThemingAssets.Background.primary.swiftUIColor, for: .navigationBar)
   }
 
   // MARK: Private
@@ -84,13 +86,13 @@ extension AVDevicePairingQRCodeView {
       Image(data: imageData)?
         .resizable()
         .frame(width: qrCodeSize, height: qrCodeSize)
-        .accessibilityLabel(L10n.tkGetEidGuardianConsentQrAlt)
+        .accessibilityLabel(L10n.tkWalletPairingDevicePairingQRCodeQrCodeAlt)
     }
   }
 
   @ViewBuilder
   private func viewFooter() -> some View {
-    FooterView {
+    ButtonSheet {
       VStack {
         if viewModel.walletPairingPollingManager.isPolling {
           HStack {
@@ -102,15 +104,15 @@ extension AVDevicePairingQRCodeView {
               .multilineTextAlignment(.leading)
           }
           .frame(maxWidth: .infinity)
+          .accessibilityElement(children: .combine)
         }
 
         Button(action: viewModel.close) {
           Text(L10n.tkGlobalClose)
-            .multilineTextAlignment(.center)
-            .lineLimit(1)
+            .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.bezeledLight)
+        .buttonStyle(.secondary)
         .controlSize(.large)
       }
     }

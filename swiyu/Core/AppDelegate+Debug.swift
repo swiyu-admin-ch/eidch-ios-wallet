@@ -1,11 +1,12 @@
 #if DEBUG
 import Factory
 import Foundation
-import Moya
 import RealmSwift
 @testable import BITAppAuth
 @testable import BITCredential
 @testable import BITDataStore
+@testable import BITEIDRequest
+@testable import BITEIDRequestShared
 @testable import BITHome
 @testable import BITInvitation
 @testable import BITJWT
@@ -48,6 +49,30 @@ extension Container: AutoRegistering {
       lockWalletUseCase.register { MockLockWalletUseCase() }
     }
 
+    // swiftlint: disable force_unwrapping
+    Container.shared.getEIDRequestCaseFilesUseCase.onDebug { _ in
+      let useCase = GetEIDRequestCaseFilesUseCaseProtocolSpy()
+      useCase.executeCaseIdReturnValue = [
+        EIDRequestCaseFile(fileName: "something.jpg", mime: .jpg, data: "jpg".data(using: .utf8)!, category: .documentScan),
+        EIDRequestCaseFile(fileName: "something1.jpg", mime: .jpg, data: "jpg".data(using: .utf8)!, category: .documentScan),
+        EIDRequestCaseFile(fileName: "something2.jpg", mime: .jpg, data: "jpg".data(using: .utf8)!, category: .documentScan),
+        EIDRequestCaseFile(fileName: "something3.jpg", mime: .jpg, data: "jpg".data(using: .utf8)!, category: .documentScan),
+        EIDRequestCaseFile(fileName: "something4.jpg", mime: .jpg, data: "jpg".data(using: .utf8)!, category: .documentScan),
+        EIDRequestCaseFile(fileName: "something5.jpg", mime: .jpg, data: "jpg".data(using: .utf8)!, category: .documentScan),
+      ]
+      return useCase
+    }
+
+    Container.shared.submitEIDRequestFileUseCase.onDebug { _ in
+      let useCase = SubmitEIDRequestFileUseCaseProtocolSpy()
+      useCase.executeCaseIdFileAuthJwtClosure = { _, _, _, _ in
+        let durations: [UInt64] = [1_000_000_000, 2_000_000_000, 3_000_000_000]
+        let randomDuration = durations.randomElement()!
+        try await Task.sleep(nanoseconds: randomDuration)
+      }
+      return useCase
+    }
+    // swiftlint: enable force_unwrapping
   }
 }
 

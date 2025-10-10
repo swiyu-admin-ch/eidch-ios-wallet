@@ -11,7 +11,7 @@ struct CredentialDetailView: View {
 
   // MARK: Lifecycle
 
-  init(credential: Credential, router: CredentialDetailInternalRoutes) {
+  init(credential: VerifiableCredential, router: CredentialDetailInternalRoutes) {
     _viewModel = StateObject(wrappedValue: Container.shared.credentialDetailViewModel((credential, router)))
   }
 
@@ -178,7 +178,7 @@ extension CredentialDetailView {
             .background(.ultraThickMaterial.opacity(0.70))
             .clipShape(.circle)
         })
-        .accessibilityLabel(L10n.tkGlobalCloseelfaAlt)
+        .accessibilityLabel(L10n.tkGlobalClosedetailsAlt)
         .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
         .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
       }

@@ -14,19 +14,19 @@ struct UnknownCell: View {
 
       VStack(alignment: .leading) {
         VStack(alignment: .leading) {
-          Text(L10n.tkGetEidNotificationEidUnknownStatePrimary(viewModel.fullName))
+          Text(L10n.tkEidRequestNotificationEidUnknownStatePrimary(viewModel.fullName))
             .font(.custom.footnoteEmphasized)
             .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
             .accessibilityAddTraits(.isHeader)
             .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
-          Text(L10n.tkGetEidNotificationEidUnknownStateSecondary)
+          Text(L10n.tkEidRequestNotificationEidUnknownStateSecondary)
             .font(.custom.footnote)
             .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
             .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
         }
 
-        Button(L10n.tkGetEidNotificationEidUnknownStateButton) {
+        Button(L10n.tkEidRequestNotificationEidUnknownStateButton) {
           Task {
             await viewModel.primaryAction()
           }
@@ -43,12 +43,6 @@ struct UnknownCell: View {
   }
 
   // MARK: Private
-
-  private enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-  }
 
   @Environment(\.sizeCategory) private var sizeCategory
 

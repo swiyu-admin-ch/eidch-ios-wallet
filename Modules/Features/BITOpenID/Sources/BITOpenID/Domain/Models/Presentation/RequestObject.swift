@@ -1,5 +1,6 @@
 import BITCore
 import BITJWT
+import BITSdJWT
 import Foundation
 
 // MARK: - RequestObjectError
@@ -146,7 +147,7 @@ extension ClientMetadata {
 
     // MARK: Private
 
-    private var values: [String: T] = [:]
+    private var values = [String: T]()
   }
 
   // MARK: Fileprivate
@@ -279,13 +280,9 @@ public struct Field: Codable, Equatable {
   }
 
   func isMatching(_ value: Any) -> Bool {
-    guard path.contains(Self.vctPath) else { return true } // we ignore filters for paths that are not vct
+    guard path.contains(VcSdJwtPayload.vctPath) else { return true } // we ignore filters for paths that are not vct
     return filter?.isMatching(value) ?? true
   }
-
-  // MARK: Private
-
-  private static let vctPath = "$.vct"
 
 }
 

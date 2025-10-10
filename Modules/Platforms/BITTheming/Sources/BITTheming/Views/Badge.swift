@@ -135,6 +135,22 @@ extension BadgeStyle where Self == PlainBadgeStyle {
   public static var plain: PlainBadgeStyle { PlainBadgeStyle() }
 }
 
+// MARK: - SuccessBadgeStyle
+
+public struct SuccessBadgeStyle: BadgeStyle {
+  public func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .padding(.horizontal, .x3)
+      .padding(.vertical, .x2)
+      .background(ThemingAssets.Brand.Bright.firGreen.swiftUIColor)
+      .foregroundStyle(ThemingAssets.Brand.Bright.firGreenLabel.swiftUIColor)
+  }
+}
+
+extension BadgeStyle where Self == SuccessBadgeStyle {
+  public static var success: SuccessBadgeStyle { SuccessBadgeStyle() }
+}
+
 // MARK: - ErrorBadgeStyle
 
 public struct ErrorBadgeStyle: BadgeStyle {
@@ -193,8 +209,8 @@ public struct InfoBadgeStyle: BadgeStyle {
     configuration.label
       .padding(.horizontal, .x3)
       .padding(.vertical, .x2)
-      .background(ThemingAssets.petrol3.swiftUIColor)
-      .foregroundColor(ThemingAssets.petrol.swiftUIColor)
+      .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
+      .foregroundColor(ThemingAssets.Brand.Bright.navyBlueLabel.swiftUIColor)
   }
 }
 

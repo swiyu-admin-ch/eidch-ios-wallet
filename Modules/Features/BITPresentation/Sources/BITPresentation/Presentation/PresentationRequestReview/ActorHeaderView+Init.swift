@@ -4,9 +4,9 @@ import Foundation
 
 extension ActorHeaderView {
 
-  init(verifier: VerifierDisplay?) {
-    let name = verifier?.name ?? L10n.tkPresentVerifierNameUnknown
-    self.init(name: name, trustStatus: verifier?.trustStatus ?? .unverified, imageData: verifier?.logo)
+  init(verifier: VerifierDisplay, topInset: CGFloat) {
+    let name = verifier.name ?? L10n.tkPresentVerifierNameUnknown
+    self.init(name: name, trustInformation: verifier.trustInformation, imageData: verifier.logo, topInset: topInset, isIssuance: false)
   }
 
 }

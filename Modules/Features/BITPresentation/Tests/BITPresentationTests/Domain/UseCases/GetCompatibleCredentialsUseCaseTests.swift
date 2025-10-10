@@ -37,7 +37,7 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
 
     XCTAssertEqual(compatibleCredentials?.first?.requestedFields, mockMatchingFields)
 
-    XCTAssertTrue(repositorySpy.getAllCalled)
+    XCTAssertTrue(verifiableCredentialRepository.getAllCalled)
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[0].format, mockCredentials[0].format)
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[0].payload, mockCredentials[0].payload)
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[1].format, mockCredentials[2].format)
@@ -48,13 +48,13 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
   }
 
   func testExecute_NoMatchingFormat_ThrowsNoCompatibleCredentials() async throws {
-    repositorySpy.getAllReturnValue = [.Mock.diploma]
+    verifiableCredentialRepository.getAllReturnValue = [.Mock.diploma]
 
     do {
       _ = try await useCase.execute(using: .Mock.VcSdJwt.sample)
       XCTFail("Should have thrown an exception")
     } catch CompatibleCredentialsError.compatibleCredentialNotFound {
-      XCTAssertTrue(repositorySpy.getAllCalled)
+      XCTAssertTrue(verifiableCredentialRepository.getAllCalled)
       XCTAssertFalse(createAnyCredentialUseCaseSpy.executeFromFormatCalled)
       XCTAssertFalse(fieldValidatorSpy.validateWithCalled)
     } catch {
@@ -103,12 +103,12 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
   }
 
   func testExecute_emptyWallet() async throws {
-    repositorySpy.getAllReturnValue = []
+    verifiableCredentialRepository.getAllReturnValue = []
     do {
       _ = try await useCase.execute(using: .Mock.VcSdJwt.sample)
       XCTFail("Should have thrown an exception")
     } catch CompatibleCredentialsError.emptyWallet {
-      XCTAssertTrue(repositorySpy.getAllCalled)
+      XCTAssertTrue(verifiableCredentialRepository.getAllCalled)
       XCTAssertFalse(createAnyCredentialUseCaseSpy.executeFromFormatCalled)
       XCTAssertFalse(fieldValidatorSpy.validateWithCalled)
     } catch {
@@ -119,13 +119,13 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
   // MARK: Private
 
   private let mockInputDescriptorId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-  private let mockCredentials: [Credential] = [.Mock.sample, .Mock.diploma, .Mock.sample]
+  private let mockCredentials: [VerifiableCredential] = [.Mock.sample, .Mock.diploma, .Mock.sample]
   private let mockAnyCredential = MockAnyCredential()
   private let firstNameField = PresentationField(jsonPath: "$.firstName", value: .string("Fritz"))
   private let lastNameField = PresentationField(jsonPath: "$.lastName", value: .string("Test"))
-  private var mockMatchingFields: [PresentationField] = []
+  private var mockMatchingFields = [PresentationField]()
 
-  private var repositorySpy = CredentialRepositoryProtocolSpy()
+  private var verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
   private var createAnyCredentialUseCaseSpy = CreateAnyCredentialUseCaseProtocolSpy()
   private var fieldValidatorSpy = PresentationFieldsValidatorProtocolSpy()
 
@@ -134,17 +134,17 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
   private func setUpMocks() {
     mockMatchingFields = [firstNameField, lastNameField]
 
-    repositorySpy = CredentialRepositoryProtocolSpy()
+    verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
     createAnyCredentialUseCaseSpy = CreateAnyCredentialUseCaseProtocolSpy()
     fieldValidatorSpy = PresentationFieldsValidatorProtocolSpy()
 
-    Container.shared.databaseCredentialRepository.register { self.repositorySpy }
+    Container.shared.verifiableCredentialRepository.register { self.verifiableCredentialRepository }
     Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCaseSpy }
     Container.shared.presentationFieldsValidator.register { self.fieldValidatorSpy }
   }
 
   private func success() {
-    repositorySpy.getAllReturnValue = mockCredentials
+    verifiableCredentialRepository.getAllReturnValue = mockCredentials
     createAnyCredentialUseCaseSpy.executeFromFormatReturnValue = mockAnyCredential
     fieldValidatorSpy.validateWithReturnValue = mockMatchingFields
   }

@@ -97,9 +97,7 @@ extension InformationView {
 
   @ViewBuilder
   private func footerContent() -> some View {
-    FooterView {
-      footer
-    }
+    footer
   }
 
 }

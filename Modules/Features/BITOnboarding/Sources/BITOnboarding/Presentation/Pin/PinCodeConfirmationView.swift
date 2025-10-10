@@ -83,7 +83,7 @@ struct PinCodeConfirmationView: View {
         secureField()
 
         continueButton()
-          .buttonStyle(.filledPrimary)
+          .buttonStyle(.primary)
       }
 
       if let message = viewModel.inputFieldMessage {
@@ -159,7 +159,7 @@ struct PinCodeConfirmationView: View {
       Text(L10n.tkGlobalContinue)
     }
     .environment(\.colorScheme, .light)
-    .buttonStyle(.filledPrimary)
+    .buttonStyle(.primary)
     .controlSize(.large)
     .accessibilityFocused($focus, equals: .continueButton)
     .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)

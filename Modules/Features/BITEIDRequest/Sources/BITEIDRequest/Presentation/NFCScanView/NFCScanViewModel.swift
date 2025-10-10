@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: - NFCScanViewModel
 
-class NFCScanViewModel {
+class NFCScanViewModel: ObservableObject {
 
   // MARK: Lifecycle
 

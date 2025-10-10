@@ -7,40 +7,12 @@ import SwiftUI
 
 // MARK: - PresentationRequestReviewView
 
-public struct PresentationRequestReviewView: View {
+struct PresentationRequestReviewView: View {
 
   // MARK: Lifecycle
 
-  public init(context: PresentationRequestContext, router: PresentationRouterRoutes) {
+  init(context: PresentationRequestContext, router: PresentationInternalRoutes) {
     _viewModel = StateObject(wrappedValue: Container.shared.presentationRequestReviewViewModel((context, router)))
-  }
-
-  // MARK: Public
-
-  public var body: some View {
-    content()
-      .accessibilityAction(named: L10n.tkPresentReviewPrimaryButtonAlt) {
-        Task { await viewModel.submit() }
-      }
-      .accessibilityAction(named: L10n.tkPresentReviewSecondaryButtonAlt) {
-        Task { await viewModel.deny() }
-      }
-      .readSize(onChange: { size in
-        compression = sizeCategory.isAccessibilityCategory ? .small : UICompressionStyle(height: size.height)
-      })
-      .navigationBarHidden(true)
-      .task {
-        if orientation.isPortrait {
-          focus = .header
-        } else {
-          focus = .subtitle
-        }
-      }
-      .onColorSchemeChange { scheme in
-        viewModel.updateCredentialViewModel(with: scheme.rawValue)
-      }
-      .accessibilityElement(children: .contain)
-      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Internal
@@ -51,6 +23,37 @@ public struct PresentationRequestReviewView: View {
     case denyButton
   }
 
+  var body: some View {
+    content()
+      .accessibilityAction(named: L10n.tkPresentReviewPrimaryButtonAlt) {
+        Task { await viewModel.submit() }
+      }
+      .accessibilityAction(named: L10n.tkPresentReviewSecondaryButtonAlt) {
+        Task { await viewModel.deny() }
+      }
+      .ignoresSafeArea(edges: .top)
+      .readSize(onChange: { size in
+        compression = sizeCategory.isAccessibilityCategory ? .small : UICompressionStyle(height: size.height)
+      })
+      .readSafeAreaInsets(onChange: { insets in
+        topInset = insets.top
+      })
+      .navigationBarHidden(true)
+      .task {
+        if orientation.isPortrait {
+          focus = .header
+        } else {
+          focus = .subtitle
+        }
+      }
+      .background(ThemingAssets.Background.secondary.swiftUIColor)
+      .onColorSchemeChange { scheme in
+        viewModel.updateCredentialViewModel(with: scheme.rawValue)
+      }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
+  }
+
   // MARK: Private
 
   private enum Focus: Hashable {
@@ -59,6 +62,7 @@ public struct PresentationRequestReviewView: View {
 
   @Environment(\.sizeCategory) private var sizeCategory
   @State private var compression = UICompressionStyle.normal
+  @State private var topInset: CGFloat = 0
 
   @StateObject private var viewModel: PresentationRequestReviewViewModel
 
@@ -94,12 +98,10 @@ extension PresentationRequestReviewView {
   private func portraitResultView(_ credential: CompatibleCredential) -> some View {
     VStack(alignment: .leading, spacing: 0) {
       actorHeader()
-        .padding(.horizontal, .x6)
-        .padding(.top, .x3)
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
       subtitle()
-        .padding(.top, .x8)
+        .padding(.top, .x3)
         .padding(.bottom, .x3)
         .padding(.horizontal, .x6)
         .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
@@ -117,7 +119,6 @@ extension PresentationRequestReviewView {
     .applyScrollViewIfNeeded()
     .safeAreaInset(edge: .bottom) {
       footerButtons()
-        .background(ThemingAssets.Materials.chrome.swiftUIColor)
         .accessibilitySortPriority(AccessibilityPriority.x4.rawValue) // not fully working for now...
         .accessibilityElement(children: .contain)
     }
@@ -130,16 +131,14 @@ extension PresentationRequestReviewView {
         .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
       VStack(alignment: .leading, spacing: 0) {
         actorHeader()
-          .padding(.bottom, .x2)
+          .padding(.bottom, .x3)
           .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
         claimsList(credential)
           .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
       }
-      .padding(.top, .x4)
       .applyScrollViewIfNeeded()
       .safeAreaInset(edge: .bottom) {
         footerButtons()
-          .background(ThemingAssets.Materials.chrome.swiftUIColor)
           .accessibilitySortPriority(AccessibilityPriority.x3.rawValue) // not fully working for now...
       }
     }
@@ -150,9 +149,10 @@ extension PresentationRequestReviewView {
   private func claimsList(_ compatibleCredential: CompatibleCredential) -> some View {
     VStack(alignment: .leading, spacing: 0) {
       Text(L10n.tkPresentReviewClaimsSectionPrimary(compatibleCredential.requestedClusteredClaims.flatMap(\.claims).count))
+        .accessibilityAddTraits(.isHeader)
         .font(.custom.subheadline)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        .padding(.horizontal, .x6)
+        .padding(.horizontal, .x2)
         .padding(.vertical, .x3)
       VStack {
         ClaimClusterList(compatibleCredential.requestedClusteredClaims)
@@ -166,39 +166,29 @@ extension PresentationRequestReviewView {
 
   @ViewBuilder
   private func footerButtons() -> some View {
-    FooterView {
-      ButtonStackView {
-        Button { Task { await viewModel.deny() } } label: {
-          Label(L10n.tkPresentReviewSecondaryButton, systemImage: "xmark")
-            .if(!sizeCategory.isAccessibilityCategory, transform: {
-              $0.multilineTextAlignment(.center)
-                .lineLimit(1)
-            })
-            .frame(maxWidth: .infinity)
-            .minimumScaleFactor(0.5)
-            .lineLimit(1)
-            .accessibilityLabel(L10n.tkPresentReviewSecondaryButtonAlt)
-        }
-        .buttonStyle(.filledPrimary)
-        .controlSize(.large)
-        .accessibilityIdentifier(AccessibilityIdentifier.denyButton.rawValue)
-        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
-
+    ButtonSheet(colorConfig: .secondary) {
+      AdaptiveButtonStack {
         Button { Task { await viewModel.submit() } } label: {
           Label(L10n.tkPresentReviewPrimaryButton, systemImage: "checkmark")
-            .if(!sizeCategory.isAccessibilityCategory, transform: {
-              $0.multilineTextAlignment(.center)
-                .lineLimit(1)
-            })
             .frame(maxWidth: .infinity)
-            .minimumScaleFactor(0.5)
             .lineLimit(1)
             .accessibilityLabel(L10n.tkPresentReviewPrimaryButtonAlt)
         }
-        .buttonStyle(.filledSecondary)
+        .buttonStyle(.tertiary)
         .controlSize(.large)
         .accessibilityIdentifier(AccessibilityIdentifier.acceptButton.rawValue)
         .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
+      } secondary: {
+        Button { Task { await viewModel.deny() } } label: {
+          Label(L10n.tkPresentReviewSecondaryButton, systemImage: "xmark")
+            .frame(maxWidth: .infinity)
+            .lineLimit(1)
+            .accessibilityLabel(L10n.tkPresentReviewSecondaryButtonAlt)
+        }
+        .buttonStyle(.primary)
+        .controlSize(.large)
+        .accessibilityIdentifier(AccessibilityIdentifier.denyButton.rawValue)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
       }
     }
   }
@@ -208,7 +198,7 @@ extension PresentationRequestReviewView {
 
 extension PresentationRequestReviewView {
   @ViewBuilder
-  private func loadingView(_ credential: Credential) -> some View {
+  private func loadingView(_ credential: VerifiableCredential) -> some View {
     if orientation.isPortrait {
       portraitLoadingView(credential)
     } else {
@@ -217,12 +207,10 @@ extension PresentationRequestReviewView {
   }
 
   @ViewBuilder
-  private func portraitLoadingView(_ credential: Credential) -> some View {
+  private func portraitLoadingView(_ credential: VerifiableCredential) -> some View {
     VStack {
       actorHeader()
-        .padding(.horizontal, .x6)
-        .padding(.top, .x3)
-        .padding(.bottom, .x4)
+        .padding(.bottom, .x3)
 
       VStack {
         Spacer()
@@ -237,7 +225,6 @@ extension PresentationRequestReviewView {
         Spacer(minLength: .x4)
         loader()
       }
-      .padding(.top, .x6)
       .padding(.bottom, .x10)
       .padding(.horizontal, .x6)
       .background(ThemingAssets.Background.secondary.swiftUIColor)
@@ -247,7 +234,7 @@ extension PresentationRequestReviewView {
   }
 
   @ViewBuilder
-  private func landscapeLoadingView(_ credential: Credential) -> some View {
+  private func landscapeLoadingView(_ credential: VerifiableCredential) -> some View {
     HStack(spacing: .x5) {
       credentialBoxWithSubtitle(credential)
       loader()
@@ -276,10 +263,8 @@ extension PresentationRequestReviewView {
 extension PresentationRequestReviewView {
   @ViewBuilder
   private func actorHeader() -> some View {
-    if let verifierDisplay = viewModel.verifierDisplay {
-      ActorHeaderView(verifier: verifierDisplay)
-        .accessibilityFocused($focus, equals: .header)
-    }
+    ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset)
+      .accessibilityFocused($focus, equals: .header)
   }
 
   @ViewBuilder
@@ -288,10 +273,11 @@ extension PresentationRequestReviewView {
       .font(.custom.subheadline)
       .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
       .accessibilityFocused($focus, equals: .subtitle)
+      .accessibilityAddTraits(.isHeader)
   }
 
   @ViewBuilder
-  private func credentialBoxWithSubtitle(_ credential: Credential) -> some View {
+  private func credentialBoxWithSubtitle(_ credential: VerifiableCredential) -> some View {
     VStack {
       subtitle()
         .padding(.top, .x4)

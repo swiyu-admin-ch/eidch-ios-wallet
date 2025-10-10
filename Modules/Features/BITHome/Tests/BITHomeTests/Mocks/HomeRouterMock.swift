@@ -37,7 +37,7 @@ class HomeRouterMock: HomeRouterRoutes {
     didCallExternalLinkUrl = true
   }
 
-  func credentialDetail(_ credential: Credential) {
+  func credentialDetail(_ credential: VerifiableCredential) {
     didCallOpenCredentialDetail = true
   }
 

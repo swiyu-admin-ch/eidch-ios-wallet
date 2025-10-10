@@ -49,9 +49,9 @@ extension NavigationPushOpeningStyle: OpeningStyle {
     navigationController?.popViewController(animated: isAnimated)
   }
 
-  public func pop(_ viewController: UIViewController, number: Int) {
+  public func pop(_ viewController: UIViewController, count: Int) {
     guard let navigationController = (self.viewController as? UINavigationController) ?? (viewController as? UINavigationController) ?? viewController.navigationController else { return }
-    let targetIndex = max(navigationController.viewControllers.count - number, 0)
+    let targetIndex = max(navigationController.viewControllers.count - 1 - count, 0)
     let targetViewController = navigationController.viewControllers[targetIndex]
     navigationController.popToViewController(targetViewController, animated: true)
   }

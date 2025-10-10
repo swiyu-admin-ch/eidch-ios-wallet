@@ -18,7 +18,7 @@ struct PresentationRequestResultStateScreen: Screen {
   }
 
   func tapClose() -> HomeScreen {
-    app.tap(PresentationRequestResultStateView.AccessibilityIdentifier.closeButton.rawValue)
+    app.tap(PresentationRequestResultStateView.AccessibilityIdentifier.finishButton.rawValue)
     return HomeScreen(app: app)
   }
 }

@@ -11,7 +11,7 @@ public protocol OpeningStyle: AnyObject {
   func close(_ viewController: UIViewController, _ onComplete: (() -> Void)?)
 
   func pop(_ viewController: UIViewController)
-  func pop(_ viewController: UIViewController, number: Int)
+  func pop(_ viewController: UIViewController, count: Int)
   func popToRoot(_ viewController: UIViewController)
   func dismiss(_ viewController: UIViewController)
 }

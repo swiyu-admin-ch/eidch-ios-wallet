@@ -21,9 +21,9 @@ struct WalletPairingView: View {
       backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
       content: {
         DefaultInformationContentView(
-          primary: L10n.tkGetEidWalletPairing1Title,
-          secondary: L10n.tkGetEidWalletPairing1Body,
-          tertiary: L10n.tkGetEidWalletPairing1SmallBody)
+          primary: L10n.tkEidRequestWalletPairing1Title,
+          secondary: L10n.tkEidRequestWalletPairing1Body,
+          tertiary: L10n.tkEidRequestWalletPairing1SmallBody)
       },
       footer: footer)
       .toolbar { CloseButtonToolbar(action: viewModel.close) }
@@ -39,30 +39,32 @@ extension WalletPairingView {
 
   @ViewBuilder
   private func footer() -> some View {
-    VStack {
-      AsyncButton(
-        action: { await viewModel.primaryAction() },
-        actionOptions: [.showProgressView],
-        label: {
-          Text(L10n.tkGetEidWalletPairing1PrimaryButton)
-            .multilineTextAlignment(.center)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity)
-        })
-        .buttonStyle(.filledPrimary)
-        .controlSize(.large)
+    ButtonSheet {
+      VStack(spacing: .x4) {
+        AsyncButton(
+          action: { await viewModel.primaryAction() },
+          actionOptions: [.showProgressView],
+          label: {
+            Text(L10n.tkEidRequestWalletPairing1PrimaryButton)
+              .multilineTextAlignment(.center)
+              .lineLimit(1)
+              .frame(maxWidth: .infinity)
+          })
+          .buttonStyle(.primary)
+          .controlSize(.large)
 
-      AsyncButton(
-        action: { await viewModel.secondaryAction() },
-        actionOptions: [.showProgressView],
-        label: {
-          Text(L10n.tkGetEidWalletPairing1SecondaryButton)
-            .multilineTextAlignment(.center)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity)
-        })
-        .buttonStyle(.bezeledLight)
-        .controlSize(.large)
+        AsyncButton(
+          action: { await viewModel.secondaryAction() },
+          actionOptions: [.showProgressView],
+          label: {
+            Text(L10n.tkEidRequestWalletPairing1SecondaryButton)
+              .multilineTextAlignment(.center)
+              .lineLimit(1)
+              .frame(maxWidth: .infinity)
+          })
+          .buttonStyle(.secondary)
+          .controlSize(.large)
+      }
     }
   }
 }

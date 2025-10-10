@@ -31,14 +31,15 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_success_returnsDeferredCredential() async throws {
-    repositorySpy.fetchCredentialWithCredentialRequestBodyReturnValue = .deferred(transactionId: mockTransactionId, accessToken: mockAccessToken, endpoint: mockDeferredCredentialEndpoint)
+    repositorySpy.fetchCredentialWithCredentialRequestBodyReturnValue = .deferred(transactionId: mockTransactionId, accessToken: mockAccessToken, endpoint: mockDeferredCredentialEndpoint, format: mockFormat)
 
     let result = try await useCase.execute(for: fetchCredentialContextMock)
 
-    if case .deferred(let transactionId, let accessToken, let endpoint) = result {
+    if case .deferred(let transactionId, let accessToken, let endpoint, let format) = result {
       XCTAssertEqual(transactionId, mockTransactionId)
       XCTAssertEqual(accessToken, mockAccessToken)
       XCTAssertEqual(endpoint, mockDeferredCredentialEndpoint)
+      XCTAssertEqual(format, mockFormat)
       XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 0)
     }
   }
@@ -180,6 +181,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   private let mockAccessToken = "mock_access_token"
   private let mockTransactionId = "mock_transaction_id"
   private let mockDeferredCredentialEndpoint = "mock_deferred_credential_endpoint"
+  private let mockFormat = "mock_format"
 
   private var useCase = FetchVcSdJwtCredentialUseCase()
   private var jwsEncoderMock = JWSEncoderMock<JWTProofPayload>()

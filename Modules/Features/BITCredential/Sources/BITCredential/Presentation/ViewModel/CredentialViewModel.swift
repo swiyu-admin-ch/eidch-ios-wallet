@@ -10,7 +10,7 @@ public class CredentialViewModel: Identifiable {
 
   // MARK: Lifecycle
 
-  public init(credential: Credential, credentialDisplay: CredentialDisplay?) {
+  public init(credential: VerifiableCredential, credentialDisplay: CredentialDisplay?) {
     self.credential = credential
     environment = credential.environment
     issuerDisplay = credential.issuerDisplays.findDisplayWithFallback()
@@ -21,7 +21,7 @@ public class CredentialViewModel: Identifiable {
 
   // MARK: Public
 
-  public let credential: Credential
+  public let credential: VerifiableCredential
   public let environment: CredentialEnvironment?
   public var credentialDisplay: CredentialDisplay?
   public let issuerDisplay: CredentialIssuerDisplay?

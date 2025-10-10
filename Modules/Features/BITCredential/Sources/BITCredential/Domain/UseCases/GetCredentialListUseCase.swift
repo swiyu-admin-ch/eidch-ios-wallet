@@ -1,18 +1,24 @@
 import BITCredentialShared
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - GetCredentialListUseCaseProtocol
+
+@Spyable
+public protocol GetCredentialListUseCaseProtocol {
+  func execute() async throws -> [VerifiableCredential]
+}
 
 // MARK: - GetCredentialListUseCase
 
-public struct GetCredentialListUseCase: GetCredentialListUseCaseProtocol {
+struct GetCredentialListUseCase: GetCredentialListUseCaseProtocol {
 
-  // MARK: Public
-
-  public func execute() async throws -> [Credential] {
-    try await databaseRepository.getAll()
+  func execute() async throws -> [VerifiableCredential] {
+    try await verifiableCredentialRepository.getAll()
   }
 
   // MARK: Private
 
-  @Injected(\.databaseCredentialRepository) private var databaseRepository: CredentialRepositoryProtocol
+  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
 }

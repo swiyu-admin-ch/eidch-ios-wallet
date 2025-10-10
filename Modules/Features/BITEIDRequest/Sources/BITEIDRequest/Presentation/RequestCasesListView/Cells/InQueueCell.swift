@@ -20,12 +20,6 @@ struct InQueueCell: View {
 
   // MARK: Private
 
-  private enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-  }
-
   @Environment(\.sizeCategory) private var sizeCategory
 
   @ViewBuilder
@@ -43,8 +37,8 @@ struct InQueueCell: View {
 
       VStack(alignment: .leading) {
         content(
-          title: L10n.tkGetEidNotificationEidProgressPrimary(viewModel.fullName),
-          content: L10n.tkGetEidNotificationEidProgressSecondary(viewModel.formattedDate))
+          title: L10n.tkEidRequestNotificationEidProgressPrimary(viewModel.fullName),
+          content: L10n.tkEidRequestNotificationEidProgressSecondary(viewModel.formattedDate))
       }
 
       Spacer()
@@ -58,11 +52,11 @@ struct InQueueCell: View {
 
       VStack(alignment: .leading) {
         content(
-          title: L10n.tkGetEidNotificationLegalRepresentantPendingConsentInQueuePrimary,
-          content: L10n.tkGetEidNotificationLegalRepresentantPendingConsentInQueueSecondary)
+          title: L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueuePrimary,
+          content: L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueueSecondary)
 
-        Button(L10n.tkGetEidNotificationLegalRepresentantPendingConsentInQueueButton, action: viewModel.primaryAction)
-          .buttonStyle(.filledSecondary)
+        Button(L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueueButton, action: viewModel.primaryAction)
+          .buttonStyle(.tertiary)
           .controlSize(.regular)
           .padding(.top, .x2)
           .dynamicTypeSize(...DynamicTypeSize.accessibility2)

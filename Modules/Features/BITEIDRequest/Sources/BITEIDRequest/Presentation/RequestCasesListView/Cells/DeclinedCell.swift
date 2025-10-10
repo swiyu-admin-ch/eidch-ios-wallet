@@ -36,8 +36,8 @@ struct DeclinedCell: View {
 
   @ViewBuilder
   private func faqButton() -> some View {
-    Button(L10n.tkGetEidNotificationDeclinedPrimaryButton, action: viewModel.openFAQ)
-      .buttonStyle(.filledSecondary)
+    Button(L10n.tkEidRequestNotificationDeclinedPrimaryButton, action: viewModel.openFAQ)
+      .buttonStyle(.tertiary)
       .controlSize(.regular)
       .dynamicTypeSize(...DynamicTypeSize.accessibility2)
       .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
@@ -59,13 +59,13 @@ struct DeclinedCell: View {
   @ViewBuilder
   private func content() -> some View {
     VStack(alignment: .leading) {
-      Text(L10n.tkGetEidNotificationDeclinedPrimary(viewModel.fullName))
+      Text(L10n.tkEidRequestNotificationDeclinedPrimary(viewModel.fullName))
         .font(.custom.footnoteEmphasized)
         .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
         .accessibilityAddTraits(.isHeader)
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
-      Text(L10n.tkGetEidNotificationDeclinedSecondary)
+      Text(L10n.tkEidRequestNotificationDeclinedSecondary)
         .font(.custom.footnote)
         .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
         .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)

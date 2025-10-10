@@ -27,8 +27,10 @@ enum Assets {
   static let credentialDemoPatternSmall = ImageAsset(name: "CredentialDemoPatternSmall")
   static let credentialFallbackBackground = ImageAsset(name: "CredentialFallbackBackground")
   static let deleteCredential = ImageAsset(name: "DeleteCredential")
+  static let legitimateBadge = ImageAsset(name: "LegitimateBadge")
   static let menu = ImageAsset(name: "Menu")
   static let noActivities = ImageAsset(name: "NoActivities")
+  static let notLegitimateBadge = ImageAsset(name: "NotLegitimateBadge")
   static let notTrustedBadge = ImageAsset(name: "NotTrustedBadge")
   static let statusInvalid = ImageAsset(name: "StatusInvalid")
   static let statusNotYetValid = ImageAsset(name: "StatusNotYetValid")
@@ -129,6 +131,8 @@ extension SwiftUI.Image {
   }
 }
 #endif
+
+// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

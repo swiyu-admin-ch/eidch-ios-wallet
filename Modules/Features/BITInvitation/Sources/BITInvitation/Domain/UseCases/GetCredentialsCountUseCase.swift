@@ -1,17 +1,23 @@
 import BITCredential
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - GetCredentialsCountUseCaseProtocol
+
+@Spyable
+protocol GetCredentialsCountUseCaseProtocol {
+  func execute() async throws -> Int
+}
+
+// MARK: - GetCredentialsCountUseCase
 
 struct GetCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol {
 
-  init(repository: CredentialRepositoryProtocol = Container.shared.databaseCredentialRepository()) {
-    self.repository = repository
-  }
-
   /// We async/await the call event though repository.count() is synchronous to avoid DB access crashes
   func execute() async throws -> Int {
-    try await repository.count()
+    try await verifiableCredentialRepository.count()
   }
 
-  private let repository: CredentialRepositoryProtocol
+  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
 }

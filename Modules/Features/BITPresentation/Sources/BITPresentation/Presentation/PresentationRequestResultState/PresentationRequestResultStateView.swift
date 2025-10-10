@@ -11,7 +11,7 @@ struct PresentationRequestResultStateView: View {
 
   // MARK: Lifecycle
 
-  init(state: PresentationRequestResultState, context: PresentationRequestContext, router: PresentationRouterRoutes) {
+  init(state: PresentationRequestResultState, context: PresentationRequestContext, router: PresentationInternalRoutes) {
     _viewModel = StateObject(wrappedValue: Container.shared.presentationRequestResultStateViewModel((state, context, router)))
   }
 
@@ -20,23 +20,26 @@ struct PresentationRequestResultStateView: View {
   enum AccessibilityIdentifier: String {
     case content = "presentationRequestResultStateContent"
     case successContent
-    case closeButton
+    case finishButton
   }
 
   var body: some View {
     VStack {
-      ActorHeaderView(verifier: viewModel.verifierDisplay)
-        .padding(.horizontal, .x6)
-        .padding(.top, .x3)
-        .padding(.bottom, .x4)
-      sheetView()
+      ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset)
+        .padding(.bottom, .x3)
+      stateView()
     }
     .applyScrollViewIfNeeded()
     .ignoresSafeArea(edges: .bottom)
+    .ignoresSafeArea(edges: .top)
     .readSize(onChange: { size in
       compression = sizeCategory.isAccessibilityCategory ? .small : UICompressionStyle(height: size.height)
       availableWidth = size.width
     })
+    .readSafeAreaInsets(onChange: { insets in
+      topInset = insets.top
+    })
+    .background(ThemingAssets.Background.secondary.swiftUIColor)
     .onAppear(perform: {
       isAccessibilityTitleFocused = true
     })
@@ -49,6 +52,7 @@ struct PresentationRequestResultStateView: View {
   @Environment(\.sizeCategory) private var sizeCategory
   @State private var compression = UICompressionStyle.normal
   @State private var availableWidth: CGFloat = 0
+  @State private var topInset: CGFloat = 0
 
   @AccessibilityFocusState(for: .voiceOver)
   private var isAccessibilityTitleFocused: Bool
@@ -56,7 +60,7 @@ struct PresentationRequestResultStateView: View {
   @StateObject private var viewModel: PresentationRequestResultStateViewModel
 
   @ViewBuilder
-  private func sheetView() -> some View {
+  private func stateView() -> some View {
     VStack {
       Spacer()
       if sizeCategory < .accessibilityExtraLarge {
@@ -190,14 +194,14 @@ struct PresentationRequestResultStateView: View {
   private func buttons() -> some View {
     switch viewModel.state {
     case .success:
-      closeButton()
+      finishButton()
         .buttonStyle(.firGreen)
     case .deny:
-      closeButton()
+      finishButton()
         .buttonStyle(.navyBlue)
     case .cancelled,
          .invalidCredential:
-      closeButton()
+      finishButton()
         .buttonStyle(.bezeled)
     case .error:
       errorButtons()
@@ -205,34 +209,32 @@ struct PresentationRequestResultStateView: View {
   }
 
   @ViewBuilder
-  private func closeButton() -> some View {
-    Button { viewModel.close() } label: {
-      Text(L10n.tkGlobalClose)
+  private func finishButton() -> some View {
+    AsyncButton(action: viewModel.finish) {
+      Text(L10n.tkGlobalFinish)
     }
     .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
+    .accessibilityIdentifier(AccessibilityIdentifier.finishButton.rawValue)
   }
 
   @ViewBuilder
   private func errorButtons() -> some View {
-    ButtonStackView {
-      let buttonSize = sizeCategory.isAccessibilityCategory ? .infinity : (min(availableWidth, 450) - .x2) / 2
+    AdaptiveButtonStack {
       Button { viewModel.retry() } label: {
         Text(L10n.tkPresentResultErrorButtonRetry)
-          .frame(maxWidth: buttonSize)
+          .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bezeled)
       .controlSize(.large)
-
-      Button { viewModel.close() } label: {
-        Text(L10n.tkGlobalCancel)
-          .frame(maxWidth: buttonSize)
+    } secondary: {
+      AsyncButton(action: viewModel.finish) {
+        Text(L10n.tkGlobalFinish)
+          .frame(maxWidth: .infinity)
       }
       .buttonStyle(.plain)
       .controlSize(.large)
     }
   }
-
 }
 
 extension PresentationRequestResultState {
@@ -245,7 +247,7 @@ extension PresentationRequestResultState {
     case .cancelled,
          .error,
          .invalidCredential:
-      ThemingAssets.Background.secondary.swiftUIColor
+      ThemingAssets.Background.tertiary.swiftUIColor
     }
   }
 
@@ -278,6 +280,6 @@ extension PresentationRequestResultState {
 
 #if DEBUG
 #Preview {
-  PresentationRequestResultStateView(state: .invalidCredential(claims: []), context: .Mock.vcSdJwtSample, router: PresentationRouter())
+  PresentationRequestResultStateView(state: .invalidCredential(claims: CredentialClaim.Mock.array), context: .Mock.vcSdJwtSample, router: PresentationRouter())
 }
 #endif

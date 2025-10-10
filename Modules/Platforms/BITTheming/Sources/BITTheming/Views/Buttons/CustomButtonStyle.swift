@@ -1,17 +1,14 @@
 import SwiftUI
 
 extension ButtonStyle where Self == CustomButtonStyle {
-  public static var basic: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .basic) }
   public static var bezeled: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .bezeled) }
-  public static var bezeledLight: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .bezeledLight) }
-  public static var bezeledLightReversed: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .bezeledLightReversed) }
-  public static var bezeledLightDestructive: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .bezeledLightDestructive) }
-  public static var filledPrimary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .filledPrimary) }
-  public static var filledSecondary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .filledSecondary) }
-  public static var filledDestructive: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .filledDestructive) }
+  public static var secondary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .secondary) }
+  public static var secondaryReversed: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .secondaryReversed) }
+  public static var destructive: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .destructive) }
+  public static var primary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .primary) }
+  public static var tertiary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .tertiary) }
   public static var firGreen: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .firGreen) }
   public static var navyBlue: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .navyBlue) }
-  public static var material: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .material) }
 }
 
 // MARK: - CircleButton
@@ -76,7 +73,7 @@ public struct CustomButton: View {
         $0.background(isEnabled ? .thinMaterial : .ultraThinMaterial, in: .capsule)
       })
       .background(configuration.isPressed ? .black.opacity(0.3) : .clear)
-      .foregroundColor(isEnabled ? buttonConfiguration.foregroundColor : ThemingAssets.Label.tertiary.swiftUIColor)
+      .foregroundColor(isEnabled ? buttonConfiguration.foregroundColor : buttonConfiguration.foregroundColorDisabled)
       .progressViewStyle(CircularProgressViewStyle(tint: isEnabled ? buttonConfiguration.progressViewTint : ThemingAssets.Label.tertiary.swiftUIColor))
       .clipShape(.capsule)
       .scaleEffect(configuration.isPressed ? CGSize(width: 0.95, height: 0.95) : CGSize(width: 1.0, height: 1.0))

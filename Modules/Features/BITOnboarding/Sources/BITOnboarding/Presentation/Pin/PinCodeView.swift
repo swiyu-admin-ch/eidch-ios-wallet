@@ -158,7 +158,7 @@ struct PinCodeView: View {
       Text(L10n.tkGlobalContinue)
     }
     .environment(\.colorScheme, .light)
-    .buttonStyle(.filledPrimary)
+    .buttonStyle(.primary)
     .controlSize(.large)
     .accessibilityFocused($focus, equals: .continueButton)
     .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)

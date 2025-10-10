@@ -124,13 +124,7 @@ extension Container {
   }
 
   public var internalContext: Factory<LAContextProtocol> {
-    self {
-      #if targetEnvironment (simulator)
-      FakeLAContext()
-      #else
-      LAContext()
-      #endif
-    }.singleton // LAContext should be a singleton since having too many of them, can lead to an error
+    self { LAContext() }.singleton // LAContext should be a singleton since having too many of them, can lead to an error
   }
 
   public var pepperKeyVaultOptions: Factory<VaultOptions> {

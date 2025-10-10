@@ -96,7 +96,7 @@ struct PinCodeFormView: View {
         secureField()
 
         nextButton()
-          .buttonStyle(.filledPrimary)
+          .buttonStyle(.primary)
       }
 
       if let message = inputFieldMessage {
@@ -166,7 +166,7 @@ struct PinCodeFormView: View {
     } label: {
       Text(L10n.onboardingContinue)
     }
-    .buttonStyle(.filledPrimary)
+    .buttonStyle(.primary)
     .controlSize(.large)
     .accessibilityFocused($focus, equals: .loginButton)
     .disabled(!isSubmitEnabled)

@@ -47,7 +47,6 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
     XCTAssertNotNil(credential.createdAt)
-    XCTAssertNil(credential.updatedAt)
     XCTAssertEqual(credential.issuerDisplays, issuerDisplaysMock)
     XCTAssertEqual(credential.clusters.count, 1)
 
@@ -70,7 +69,6 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
     XCTAssertNotNil(credential.createdAt)
-    XCTAssertNil(credential.updatedAt)
     XCTAssertEqual(credential.issuerDisplays, issuerDisplaysMock)
     XCTAssertEqual(credential.clusters.count, 1)
 

@@ -27,6 +27,6 @@ public struct CompatibleCredentialListView: View {
 
   // MARK: Private
 
-  private var viewModels: [CredentialViewModel] = []
+  private var viewModels = [CredentialViewModel]()
   private var didSelect: (CredentialViewModel) -> Void
 }

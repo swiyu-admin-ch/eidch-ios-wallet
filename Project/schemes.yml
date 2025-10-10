@@ -81,6 +81,24 @@ schemes:
       customArchiveName: swiyu-Abn
       revealArchiveInOrganizer: true
 
+  swiyu Abn Store:
+    build:
+      <<: *targets
+    run:
+      config: Abn Store (debug)
+      commandLineArguments: 
+        <<: *launch_arguments
+    test:
+      <<: *test_plans
+    profile:
+      config: Abn Store (release)
+    analyze:
+      config: Abn Store (debug)
+    archive:
+      config: Abn Store (release)
+      customArchiveName: swiyu-Abn-Store
+      revealArchiveInOrganizer: true
+
   swiyu Prod:
     build:
       <<: *targets

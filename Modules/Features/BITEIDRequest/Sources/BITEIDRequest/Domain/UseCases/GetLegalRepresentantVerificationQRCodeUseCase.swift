@@ -1,4 +1,3 @@
-import BITQRCode
 import Factory
 import Foundation
 import Spyable
@@ -14,21 +13,8 @@ protocol GetLegalRepresentantVerificationQRCodeUseCaseProtocol {
 
 struct GetLegalRepresentantVerificationQRCodeUseCase: GetLegalRepresentantVerificationQRCodeUseCaseProtocol {
   func execute(for caseId: String) async throws -> (imageData: Data, shareLink: URL) {
-    let legalRepresentantVerification = try await eIDRequestRepository.fetchLegalRepresentantVerification(for: caseId)
-
-    guard let qrCodeData = qrCodeGenerator.generate(from: legalRepresentantVerification.requestUrl.absoluteString) else {
-      throw GetLegalRepresentantVerificationQRCodeUseCaseError.failedToGenerateQRCode
-    }
-
-    return (qrCodeData, legalRepresentantVerification.verifierLink)
+    try await legalRepresentantVerificationService.getQRCode(for: caseId)
   }
 
-  @Injected(\.qrCodeGenerator) private var qrCodeGenerator: QRCodeGeneratorProtocol
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
-}
-
-// MARK: - GetLegalRepresentantVerificationQRCodeUseCaseError
-
-enum GetLegalRepresentantVerificationQRCodeUseCaseError: Error {
-  case failedToGenerateQRCode
+  @Injected(\.legalRepresentantVerificationService) private var legalRepresentantVerificationService: LegalRepresentantVerificationServiceProtocol
 }

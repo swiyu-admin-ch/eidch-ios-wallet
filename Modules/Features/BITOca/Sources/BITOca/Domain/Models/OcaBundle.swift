@@ -64,7 +64,7 @@ public struct OcaBundle {
 
   // MARK: Private
 
-  private var attributes: [OverlayBundleAttribute] = []
+  private var attributes = [OverlayBundleAttribute]()
   @Injected(\.overlayBundleAttributesGenerator) private var overlayBundleAttributeGenerator: OverlayBundleAttributesGeneratorProtocol
   @Injected(\.ocaBundleValidator) private var ocaBundleValidator: OcaBundleValidatorProtocol
   @Injected(\.rootCaptureBaseResolver) private var rootResolver: RootCaptureBaseResolverProtocol

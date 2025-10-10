@@ -18,7 +18,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
 
   init(
     context: PresentationRequestContext,
-    router: PresentationRouterRoutes = Container.shared.presentationRouter())
+    router: PresentationInternalRoutes)
   {
     self.context = context
     self.router = router
@@ -30,8 +30,6 @@ public class PresentationRequestReviewViewModel: ObservableObject {
       fatalError("Credential for input descriptor not found")
     }
     self.credential = credential
-
-    verifierDisplay = getVerifierDisplayUseCase.execute(for: context.requestObject.clientMetadata, trustStatement: context.trustStatement)
   }
 
   // MARK: Internal
@@ -45,9 +43,12 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   @Published var showLoadingMessage = false
   @Published var credentialViewModel: CredentialViewModel?
 
-  var verifierDisplay: VerifierDisplay?
   let credential: CompatibleCredential
   var denyTask: Task<Void, Error>?
+
+  var verifierDisplay: VerifierDisplay {
+    context.getVerifierDisplay(considering: preferredUserLanguageCodes)
+  }
 
   func submit() async {
     state = .loading
@@ -77,11 +78,11 @@ public class PresentationRequestReviewViewModel: ObservableObject {
 
   private var context: PresentationRequestContext
 
-  private let router: PresentationRouterRoutes
+  private let router: PresentationInternalRoutes
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.submitPresentationUseCase) private var submitPresentationUseCase: SubmitPresentationUseCaseProtocol
   @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
-  @Injected(\.getVerifierDisplayUseCase) private var getVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol
+  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
   @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
 

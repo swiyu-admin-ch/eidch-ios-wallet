@@ -58,11 +58,11 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testValidateCredentialOfferSuccess() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
-    let credential = Credential.Mock.sample
+    let credential = VerifiableCredential.Mock.sample
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustStatementPayload.Mock.validSample)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustInformation.Mock.trustedIdentity)
 
     await viewModel.setMetadataUrl(url)
 
@@ -96,14 +96,14 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testValidateCredentialOfferSuccess_withRouter() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
-    let credential = Credential.Mock.sample
+    let credential = VerifiableCredential.Mock.sample
 
     let viewModel = CameraViewModel(router: router)
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
 
-    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustStatementPayload.Mock.validSample)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustInformation.Mock.trustedIdentity)
 
     await viewModel.setMetadataUrl(url)
 
@@ -127,12 +127,12 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testValidateCredentialOfferSuccess_deeplink() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
-    let credential = Credential.Mock.sample
+    let credential = VerifiableCredential.Mock.sample
 
     getCredentialsCountUseCase.executeReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustStatementPayload.Mock.validSample)
+    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustInformation.Mock.trustedIdentity)
 
     viewModel = createViewModel(mode: .deeplink(url: url))
     await viewModel.onAppear()
@@ -273,7 +273,7 @@ final class CameraViewModelTests: XCTestCase {
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertFalse(router.didCallPresentationReview)
+    XCTAssertTrue(router.didCallStartPresentation)
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isErrorPopupPresented)
 
@@ -296,8 +296,7 @@ final class CameraViewModelTests: XCTestCase {
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertTrue(router.didCallCompatibleCredentials)
-    XCTAssertFalse(router.didCallPresentationReview)
+    XCTAssertTrue(router.didCallStartPresentation)
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isErrorPopupPresented)
 
@@ -354,8 +353,7 @@ final class CameraViewModelTests: XCTestCase {
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
     XCTAssertEqual(viewModel.error, .noConnection)
-    XCTAssertFalse(router.didCallCompatibleCredentials)
-    XCTAssertFalse(router.didCallPresentationReview)
+    XCTAssertFalse(router.didCallStartPresentation)
     XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
@@ -472,8 +470,7 @@ extension CameraViewModelTests {
   private func assertsNoInternetConnexion() {
     XCTAssertTrue(viewModel.isErrorPopupPresented)
     XCTAssertEqual(viewModel.error, .noConnection)
-    XCTAssertFalse(router.didCallCompatibleCredentials)
-    XCTAssertFalse(router.didCallPresentationReview)
+    XCTAssertFalse(router.didCallStartPresentation)
     XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)

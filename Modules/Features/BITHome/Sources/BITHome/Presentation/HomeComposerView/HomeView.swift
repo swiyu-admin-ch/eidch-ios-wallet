@@ -28,13 +28,6 @@ struct HomeView: View {
     case credential
   }
 
-  enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-    case x4 = 30
-  }
-
   var body: some View {
     content()
       .onAppear {
@@ -43,9 +36,7 @@ struct HomeView: View {
           await viewModel.onAppear()
         }
 
-        Task {
-          await viewModel.getEIDRequestCases()
-        }
+        focus = .scan
       }
       .accessibilityAction(named: L10n.tkGlobalScanPrimarybutton, {
         viewModel.openScanner()
@@ -101,19 +92,19 @@ extension HomeView {
         credentialsList()
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor, ThemingAssets.Label.primary.swiftUIColor)
           .accessibilityFocused($focus, equals: .list)
-          .accessibilitySortPriority(10)
-      case .error:
-        errorView()
+          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
+      case .error(let error):
+        errorView(error)
       case .empty:
         emptyView()
           .listRowSeparator(.hidden)
       }
     }
     .refreshable {
-      async let credentialStatus: Void = viewModel.send(event: .checkCredentialsStatus)
-      async let requestCasesStatus: Void = viewModel.fetchEIDRequestStatus()
-
-      _ = await (credentialStatus, requestCasesStatus)
+      await withTaskGroup(of: Void.self) { group in
+        group.addTask { await viewModel.fetchCredentialStatus() }
+        group.addTask { await viewModel.fetchRequestCaseStatus() }
+      }
     }
     .listRowSpacing(-10)
     .listStyle(.plain)
@@ -144,34 +135,20 @@ extension HomeView {
   }
 
   @ViewBuilder
-  private func errorView() -> some View {
+  private func errorView(_ error: Error) -> some View {
     ViewThatFits(in: .vertical) {
       VStack {
         Spacer()
-        EmptyStateView(.error(error: viewModel.stateError)) { Text("Refresh") } action: { await viewModel.send(event: .refresh) }
-          .padding(.horizontal, .x6)
+        emptyStateView(error)
         Spacer()
       }
-
-      ScrollView {
-        EmptyStateView(.error(error: viewModel.stateError)) { Text("Refresh") } action: { await viewModel.send(event: .refresh) }
-          .padding(.horizontal, .x6)
-      }
+      .applyScrollViewIfNeeded()
     }
   }
 
   @ViewBuilder
   private func menuButton() -> some View {
     Menu {
-      Section {
-        Button(action: viewModel.openHelp, label: {
-          Label(title: { Text(L10n.tkMenuHomeListHelp) }) { HomeAssets.menuHelp.swiftUIImage }
-        })
-        Button(action: viewModel.openSettings, label: {
-          Label(title: { Text(L10n.tkMenuHomeListSettings) }) { HomeAssets.menuSettings.swiftUIImage }
-        })
-      }
-
       Section {
         Button(action: viewModel.openBetaId, label: {
           Label(title: { Text(L10n.tkMenuHomeListAdd) }) { HomeAssets.menuID.swiftUIImage }
@@ -183,6 +160,15 @@ extension HomeView {
           })
         }
       }
+      Section {
+        Button(action: viewModel.openSettings, label: {
+          Label(title: { Text(L10n.tkMenuHomeListSettings) }) { HomeAssets.menuSettings.swiftUIImage }
+        })
+        Button(action: viewModel.openHelp, label: {
+          Label(title: { Text(L10n.tkMenuHomeListHelp) }) { HomeAssets.menuHelp.swiftUIImage }
+        })
+        .accessibilityAddTraits(.isLink)
+      }
     } label: {
       HomeAssets.menuButton.swiftUIImage
         .resizable()
@@ -190,9 +176,10 @@ extension HomeView {
         .frame(height: 60)
         .accessibilityHidden(true)
     }
+    .menuOrder(.fixed)
     .accessibilityLabel(L10n.tkGlobalMoreoptionsAlt)
     .accessibilityIdentifier(AccessibilityIdentifier.menuButton.rawValue)
-    .accessibilitySortPriority(50)
+    .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
     .accessibilityFocused($focus, equals: .menu)
     .accessibilityAddTraits(.isButton)
   }
@@ -208,17 +195,17 @@ extension HomeView {
       }
       .accessibilityLabel(L10n.tkGlobalScanPrimarybuttonAlt)
       .accessibilityIdentifier(AccessibilityIdentifier.scanButton.rawValue)
-      .accessibilitySortPriority(100)
+      .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
       .accessibilityFocused($focus, equals: .scan)
     } else {
       Button(action: viewModel.openScanner, label: {
         Label(title: { Text(L10n.tkGlobalScanPrimarybutton) }, icon: { Image(systemName: "qrcode") })
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       })
-      .buttonStyle(.filledPrimary)
+      .buttonStyle(.primary)
       .accessibilityLabel(L10n.tkGlobalScanPrimarybuttonAlt)
       .accessibilityIdentifier(AccessibilityIdentifier.scanButton.rawValue)
-      .accessibilitySortPriority(100)
+      .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
       .frame(height: 60)
       .accessibilityFocused($focus, equals: .scan)
     }
@@ -229,7 +216,6 @@ extension HomeView {
     ForEach(viewModel.credentialViewModels) { credentialViewModel in
       Button(action: { viewModel.openDetail(for: credentialViewModel.credential) }, label: {
         CredentialCell(credentialViewModel)
-          .accessibilityElement(children: .contain)
           .accessibilityIdentifier(AccessibilityIdentifier.credential.rawValue)
       })
     }
@@ -250,6 +236,7 @@ extension HomeView {
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .accessibilityLabel(L10n.tkGetBetaIdFirstUseTitle)
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+        .accessibilityAddTraits(.isHeader)
 
       Text(L10n.tkGetBetaIdFirstUseBody)
         .multilineTextAlignment(.center)
@@ -262,7 +249,7 @@ extension HomeView {
         Button(action: viewModel.openEIDRequest, label: {
           Label(L10n.tkMenuHomeListOrderEid, systemImage: "arrow.forward")
         })
-        .buttonStyle(.filledSecondary)
+        .buttonStyle(.tertiary)
         .controlSize(.large)
         .accessibilityLabel(L10n.tkMenuHomeListOrderEid)
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
@@ -272,12 +259,18 @@ extension HomeView {
       Button(action: viewModel.openBetaId, label: {
         Label(title: { Text(L10n.tkGlobalGetbetaidPrimarybutton) }, icon: { Image(systemName: "arrow.forward") })
       })
-      .buttonStyle(.filledSecondary)
+      .buttonStyle(.tertiary)
       .controlSize(.large)
       .accessibilityLabel(L10n.tkGlobalGetbetaidPrimarybutton)
       .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
       .padding(.top, .x4)
     }
+  }
+
+  @ViewBuilder
+  private func emptyStateView(_ error: Error) -> some View {
+    EmptyStateView(.error(error: error)) { Text(L10n.tkHomeHomescreenEmptyStateButton) } action: { await viewModel.fetchCredentials() }
+      .padding(.horizontal, .x6)
   }
 }
 

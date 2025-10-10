@@ -65,7 +65,7 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
 
   // MARK: Internal
 
-  @Published var packages: [PackageDependency] = []
+  @Published var packages = [PackageDependency]()
 
   // MARK: Private
 

@@ -127,7 +127,7 @@ public struct EmptyStateView<Label>: View where Label: View {
           }, label: {
             label()
           })
-          .buttonStyle(.filledPrimary)
+          .buttonStyle(.primary)
           .controlSize(.regular)
         } else {
           label()

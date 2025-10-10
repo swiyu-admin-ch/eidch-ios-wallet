@@ -26,7 +26,7 @@ final class VcSdJwtSchemaValidatorIntegrationTests: XCTestCase {
   }
 
   func testValidate_invalidClaims_returnsFalse() throws {
-    let claims: [String: Any] = [:]
+    let claims = [String: Any]()
     XCTAssertFalse(try validator.validate(claims, schema: schemaCredential))
     let insufficientClaims: [String: Any] = ["vct": "test"]
     XCTAssertFalse(try validator.validate(insufficientClaims, schema: schemaCredential))

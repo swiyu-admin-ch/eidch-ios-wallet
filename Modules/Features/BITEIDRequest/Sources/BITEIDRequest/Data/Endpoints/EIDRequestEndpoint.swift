@@ -1,3 +1,4 @@
+import BITEIDRequestShared
 import BITNetworking
 import Factory
 import Foundation
@@ -13,6 +14,7 @@ enum EIDRequestEndpoint {
   case startOnlineSession(caseId: String)
   case pairWallet(caseId: String)
   case startAutoVerification(String, AutoVerificationType)
+  case submitFile(caseId: String, file: EIDRequestCaseFile)
   case pairingState(caseId: String, pairingId: String)
 }
 
@@ -20,7 +22,20 @@ enum EIDRequestEndpoint {
 
 extension EIDRequestEndpoint: TargetType {
   var baseURL: URL {
-    Container.shared.sidUrl()
+    switch self {
+    case .submitFile:
+      Container.shared.avBaseUrl()
+    case .challenge,
+         .getStatus,
+         .legalRepresentantVerification,
+         .pairingState,
+         .pairWallet,
+         .startAutoVerification,
+         .startOnlineSession,
+         .submit,
+         .validateAttestations:
+      Container.shared.sidBaseUrl()
+    }
   }
 
   var path: String {
@@ -41,6 +56,8 @@ extension EIDRequestEndpoint: TargetType {
       "api/rest/eid/\(caseId)/pair-wallet"
     case .startAutoVerification(let caseId, let autoVerificationType):
       "api/rest/eid/\(caseId)/start-auto-verification/\(autoVerificationType.rawValue)"
+    case .submitFile(caseId: let caseId, _):
+      "cases/v1/\(caseId)/files"
     case .pairingState(let caseId, let pairingId):
       "api/rest/eid/\(caseId)/pair-wallet/\(pairingId)/state"
     }
@@ -49,6 +66,7 @@ extension EIDRequestEndpoint: TargetType {
   var method: Moya.Method {
     switch self {
     case .submit,
+         .submitFile,
          .validateAttestations: .post
     case .challenge,
          .getStatus,
@@ -56,8 +74,7 @@ extension EIDRequestEndpoint: TargetType {
          .pairingState: .get
     case .pairWallet,
          .startAutoVerification,
-         .startOnlineSession:
-      .put
+         .startOnlineSession: .put
     }
   }
 
@@ -65,7 +82,14 @@ extension EIDRequestEndpoint: TargetType {
     switch self {
     case .submit(let body as Codable),
          .validateAttestations(let body as Codable):
-      .requestJSONEncodable(body)
+      return .requestJSONEncodable(body)
+    case .submitFile(_, file: let file):
+      let multipart = MultipartFormData(
+        provider: .data(file.data),
+        name: file.fileName,
+        fileName: file.fileName,
+        mimeType: file.mime.mimeType)
+      return .uploadMultipart([multipart])
     case .challenge,
          .getStatus,
          .legalRepresentantVerification,
@@ -73,13 +97,14 @@ extension EIDRequestEndpoint: TargetType {
          .pairWallet,
          .startAutoVerification,
          .startOnlineSession:
-      .requestPlain
+      return .requestPlain
     }
   }
 
   var headers: [String: String]? {
     switch self {
     case .challenge,
+         .submitFile,
          .validateAttestations:
       NetworkHeader.standard.raw
     case .getStatus,
@@ -92,4 +117,19 @@ extension EIDRequestEndpoint: TargetType {
       nil // Handle by ClientAttestationPlugin
     }
   }
+}
+
+// MARK: AccessTokenAuthorizable
+
+extension EIDRequestEndpoint: AccessTokenAuthorizable {
+
+  var authorizationType: AuthorizationType? {
+    switch self {
+    case .submitFile:
+      .bearer
+    default:
+      nil
+    }
+  }
+
 }

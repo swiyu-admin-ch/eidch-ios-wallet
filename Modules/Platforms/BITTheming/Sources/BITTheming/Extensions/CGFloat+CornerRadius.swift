@@ -11,5 +11,6 @@ extension CGFloat {
   public static var l: CGFloat = 12
   public static var xl: CGFloat = 16
   public static var xxl: CGFloat = 24
+  public static var xxxl: CGFloat = 36
 
 }

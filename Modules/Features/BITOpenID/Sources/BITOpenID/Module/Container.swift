@@ -33,19 +33,6 @@ extension Container {
     self { PresentationRequestService() }
   }
 
-  public var trustRegistryMapping: Factory<[String: String]> {
-    self {
-      [
-        self.baseRegistryInt(): self.trustRegistryInt(),
-        self.baseRegistry(): self.trustRegistry(),
-      ]
-    }
-  }
-
-  public var trustRegistryTrustedDids: Factory<[String]> {
-    self { [ self.trustRegistryDidIntProd(), self.trustRegistryDidProd() ] }
-  }
-
   public var presentationFieldsValidator: Factory<PresentationFieldsValidatorProtocol> {
     self { PresentationFieldsValidator() }
   }
@@ -98,32 +85,6 @@ extension Container {
 
   var vcSdJwtSchemaValidator: Factory<VcSdJwtSchemaValidatorProtocol> {
     self { VcSdJwtSchemaValidator() }
-  }
-
-  // MARK: Private
-
-  private var baseRegistryInt: Factory<String> {
-    self { "identifier-reg.trust-infra.swiyu-int.admin.ch" }
-  }
-
-  private var trustRegistryInt: Factory<String> {
-    self { "trust-reg.trust-infra.swiyu-int.admin.ch" }
-  }
-
-  private var baseRegistry: Factory<String> {
-    self { "identifier-reg.trust-infra.swiyu.admin.ch" }
-  }
-
-  private var trustRegistry: Factory<String> {
-    self { "trust-reg.trust-infra.swiyu.admin.ch" }
-  }
-
-  private var trustRegistryDidIntProd: Factory<String> {
-    self { "did:tdw:QmWrXWFEDenvoYWFXxSQGFCa6Pi22Cdsg2r6weGhY2ChiQ:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:2e246676-209a-4c21-aceb-721f8a90b212" }
-  }
-
-  private var trustRegistryDidProd: Factory<String> {
-    self { "did:tdw:QmerEFUx69M5AB7oyoPQG6P17MbZQUHoe2Jxz9tXk7cSdf:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:02ee8aca-041f-4683-b878-8c6efa977292" }
   }
 }
 
@@ -226,22 +187,65 @@ extension Container {
 
   // MARK: Public
 
+  public var isIdentityTrustStatementEnabled: Factory<Bool> {
+    self { false }
+  }
+
   public var trustStatementService: Factory<TrustStatementServiceProtocol> {
     self { TrustStatementService() }
   }
 
-  public var baseRegistryDomainPattern: Factory<String> {
-    self { #"^did:tdw:[^:]+:([^:]+\.swiyu(-int)?\.admin\.ch):[^:]+"# }
+  public var trustStatementRepository: Factory<TrustStatementRepositoryProtocol> {
+    self { TrustStatementRepository() }
   }
 
-  public var trustRegistryRepository: Factory<TrustRegistryRepositoryProtocol> {
-    self { TrustRegistryRepository() }
+  public var trustRegistryMapping: Factory<[String: String]> {
+    self {
+      [
+        self.baseRegistryInt(): self.trustRegistryInt(),
+        self.baseRegistry(): self.trustRegistry(),
+      ]
+    }
+  }
+
+  public var trustRegistryTrustedDids: Factory<[String]> {
+    self { [ self.trustRegistryDidIntProd(), self.trustRegistryDidProd() ] }
   }
 
   // MARK: Internal
 
   var trustStatementValidator: Factory<TrustStatementValidatorProtocol> {
     self { TrustStatementValidator() }
+  }
+
+  var trustStatementUrlMapper: Factory<TrustStatementUrlMapperProtocol> {
+    self { TrustStatementUrlMapper() }
+  }
+
+  // MARK: Private
+
+  private var baseRegistryInt: Factory<String> {
+    self { "identifier-reg.trust-infra.swiyu-int.admin.ch" }
+  }
+
+  private var trustRegistryInt: Factory<String> {
+    self { "trust-reg.trust-infra.swiyu-int.admin.ch" }
+  }
+
+  private var baseRegistry: Factory<String> {
+    self { "identifier-reg.trust-infra.swiyu.admin.ch" }
+  }
+
+  private var trustRegistry: Factory<String> {
+    self { "trust-reg.trust-infra.swiyu.admin.ch" }
+  }
+
+  private var trustRegistryDidIntProd: Factory<String> {
+    self { "did:tdw:QmWrXWFEDenvoYWFXxSQGFCa6Pi22Cdsg2r6weGhY2ChiQ:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:2e246676-209a-4c21-aceb-721f8a90b212" }
+  }
+
+  private var trustRegistryDidProd: Factory<String> {
+    self { "did:tdw:QmerEFUx69M5AB7oyoPQG6P17MbZQUHoe2Jxz9tXk7cSdf:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:02ee8aca-041f-4683-b878-8c6efa977292" }
   }
 
 }

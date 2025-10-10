@@ -5,30 +5,36 @@ extension CredentialEntity {
 
   // MARK: Lifecycle
 
-  public convenience init(credential: Credential) {
+  public convenience init(verifiableCredential: VerifiableCredential) {
+    self.init(verifiableCredential)
+
+    self.verifiableCredential = VerifiableCredentialEntity(verifiableCredential)
+  }
+
+  public convenience init(deferredCredential: DeferredCredential) {
+    self.init(deferredCredential)
+
+    self.deferredCredential = DeferredCredentialEntity(deferredCredential)
+  }
+
+  private convenience init(_ credential: CredentialProtocol) {
     self.init()
     id = credential.id
-    setValues(from: credential)
-
-    let sortedClusters = credential.clusters.sorted(by: { $0.order < $1.order })
-    clusters.insert(contentsOf: sortedClusters.map(CredentialClaimClusterEntity.init), at: 0)
-    keyBinding = credential.keyBinding.flatMap(CredentialKeyBindingEntity.init)
+    format = credential.format
+    createdAt = credential.createdAt
     issuerDisplays.append(objectsIn: credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init))
     displays.append(objectsIn: credential.displays.map(CredentialDisplayEntity.init))
+    keyBinding = credential.keyBinding.flatMap(CredentialKeyBindingEntity.init)
     rawCredentialData = credential.rawCredentialData.flatMap(RawCredentialDataEntity.init)
   }
 
   // MARK: Public
 
-  public func setValues(from credential: Credential) {
-    status = credential.status.rawValue
-    payload = credential.payload
-    format = credential.format
-    issuer = credential.issuer
-    validFrom = credential.validFrom
-    validUntil = credential.validUntil
-    createdAt = credential.createdAt
-    updatedAt = credential.updatedAt
+  public func setValues(from credential: VerifiableCredential) {
+    verifiableCredential?.status = VerifiableCredentialEntity.CredentialStatus(credential.status)
   }
 
+  public func setValues(from credential: DeferredCredential) {
+    #warning("Implement when update credential")
+  }
 }

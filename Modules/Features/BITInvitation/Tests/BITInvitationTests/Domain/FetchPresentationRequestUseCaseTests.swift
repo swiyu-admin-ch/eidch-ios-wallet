@@ -1,5 +1,6 @@
 import Factory
 import XCTest
+@testable import BITCredential
 @testable import BITInvitation
 @testable import BITJWT
 @testable import BITOpenID
@@ -30,7 +31,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingReceivedRequestObject, Self.requestObjectMock)
 
-    XCTAssertEqual(trustStatementServiceSpy.fetchForCallsCount, 0)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 0)
   }
 
   func testExecute_plainRequestObjectOneCredential_returnsContext() async throws {
@@ -41,7 +42,8 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock])
     XCTAssertNil(context.inputDescriptorId)
     XCTAssertEqual(context.selectedCredentials, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock.first!])
-    XCTAssertNil(context.trustStatement)
+    XCTAssertEqual(context.trustInformation.identity, .untrusted)
+    XCTAssertEqual(context.trustInformation.vcSchema, .notProtected)
   }
 
   func textExecute_plainRequestObjectMultipleCredentials_argumentsPassed() async throws {
@@ -56,7 +58,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingReceivedRequestObject, Self.requestObjectMock)
 
-    XCTAssertEqual(trustStatementServiceSpy.fetchForCallsCount, 0)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 0)
   }
 
   func testExecute_plainRequestObjectMultipleCredentials_returnsContext() async throws {
@@ -69,7 +71,8 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: CompatibleCredential.Mock.array])
     XCTAssertEqual(context.inputDescriptorId, requestObject.firstInputDescriptor!.id)
     XCTAssertNil(context.selectedCredentials[requestObject.firstInputDescriptor!.id])
-    XCTAssertNil(context.trustStatement)
+    XCTAssertEqual(context.trustInformation.identity, .untrusted)
+    XCTAssertEqual(context.trustInformation.vcSchema, .notProtected)
   }
 
   func textExecute_jwtRequestObject_argumentsPassed() async throws {
@@ -84,12 +87,14 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingReceivedRequestObject, Self.requestObjectMock)
 
-    XCTAssertEqual(trustStatementServiceSpy.fetchForCallsCount, 1)
-    XCTAssertEqual(trustStatementServiceSpy.fetchForReceivedSubjectDid, jwtRequestObjectMock.payload.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 1)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, jwtRequestObjectMock.payload.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.type, .verification)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId, vcSchemaIdMock)
   }
 
   func testExecute_jwtRequestObject_returnsContextWithTrustStatement() async throws {
-    createSuccessState(request: .jwt(jwtRequestObjectMock), trustStatement: trustStatementMock)
+    createSuccessState(request: .jwt(jwtRequestObjectMock))
 
     let context = try await useCase.execute(url: urlMock)
 
@@ -98,7 +103,19 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock])
     XCTAssertNil(context.inputDescriptorId)
     XCTAssertEqual(context.selectedCredentials, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock.first!])
-    XCTAssertEqual(context.trustStatement, trustStatementMock)
+    XCTAssertEqual(context.trustInformation, trustInformationMock)
+  }
+
+  func testExecute_jwtRequestObjectWithoutVct_doesNotPassVct() async throws {
+    createSuccessState(request: .jwt(JWTRequestObjectPayload.Mock.noVct))
+
+    let context = try await useCase.execute(url: urlMock)
+
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 1)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, jwtRequestObjectMock.payload.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.type, .verification)
+    XCTAssertNil(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId)
+    XCTAssertEqual(context.trustInformation, trustInformationMock)
   }
 
   func testExecute_serviceInvalidUrlError_throwsInvalidUrlError() async throws {
@@ -125,7 +142,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
 
   func testExecute_serviceInvalidError_declinesAndThrowsInvalidRequestError() async throws {
     let request = PresentationRequest.plain(Self.requestObjectMock)
-    createSuccessState(request: request, trustStatement: trustStatementMock)
+    createSuccessState(request: request)
     serviceSpy.fetchFromThrowableError = FetchPresentationRequestError.invalid(request: request)
 
     do {
@@ -217,51 +234,37 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_fetchTrustStatementError_returnsContextWithoutTrustStatement() async throws {
-    createSuccessState(request: .jwt(jwtRequestObjectMock), trustStatement: trustStatementMock)
-    trustStatementServiceSpy.fetchForThrowableError = TestingError.error
-
-    let context = try await useCase.execute(url: urlMock)
-
-    let requestObject = jwtRequestObjectMock.payload
-    XCTAssertEqual(context.requestObject, requestObject)
-    XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock])
-    XCTAssertNil(context.inputDescriptorId)
-    XCTAssertEqual(context.selectedCredentials, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock.first!])
-    XCTAssertNil(context.trustStatement)
-    XCTAssertEqual(serviceSpy.declineForWithCallsCount, 0)
-  }
-
   // MARK: Private
 
   private static let requestObjectMock: RequestObject = .Mock.VcSdJwt.sample
 
   private let urlMock = URL(string: "https://example.com")!
+  private let vcSchemaIdMock = "vcSchemaId"
 
   private let jwtRequestObjectMock: JWTRequestObject = JWTRequestObjectPayload.Mock.sample
   private let compatibleCredentialsMock: [CompatibleCredential] = [CompatibleCredential.Mock.BIT]
-  private let trustStatementMock = TrustStatementPayload.Mock.validSample
+  private let trustInformationMock = TrustInformation.Mock.trustedIdentity
 
   private var serviceSpy: PresentationRequestServiceProtocolSpy!
   private var getCompatibleCredentialsUseCaseSpy: GetCompatibleCredentialsUseCaseProtocolSpy!
-  private var trustStatementServiceSpy: TrustStatementServiceProtocolSpy!
+  private var trustInformationServiceSpy: TrustInformationServiceProtocolSpy!
 
   private var useCase: FetchPresentationRequestUseCase!
 
   private func registerMocks() {
     serviceSpy = PresentationRequestServiceProtocolSpy()
     getCompatibleCredentialsUseCaseSpy = GetCompatibleCredentialsUseCaseProtocolSpy()
-    trustStatementServiceSpy = TrustStatementServiceProtocolSpy()
+    trustInformationServiceSpy = TrustInformationServiceProtocolSpy()
 
     Container.shared.presentationRequestService.register { self.serviceSpy }
     Container.shared.getCompatibleCredentialsUseCase.register { self.getCompatibleCredentialsUseCaseSpy }
-    Container.shared.trustStatementService.register { self.trustStatementServiceSpy }
+    Container.shared.trustInformationService.register { self.trustInformationServiceSpy }
   }
 
-  private func createSuccessState(request: PresentationRequest = .plain(requestObjectMock), trustStatement: TrustStatement? = nil) {
+  private func createSuccessState(request: PresentationRequest = .plain(requestObjectMock)) {
     serviceSpy.fetchFromReturnValue = request
     getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = [request.requestObject.firstInputDescriptor!.id: compatibleCredentialsMock]
-    trustStatementServiceSpy.fetchForReturnValue = trustStatement
+    trustInformationServiceSpy.fetchForTypeVcSchemaIdReturnValue = trustInformationMock
   }
 }
 

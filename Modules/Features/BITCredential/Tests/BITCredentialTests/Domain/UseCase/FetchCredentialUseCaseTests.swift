@@ -27,14 +27,14 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   func testExecute_validResultCredentialAndTrustStatement_returnsBoth() async throws {
     let result = try await useCase.execute(from: offer)
 
-    if case .credential(let credential, let trustStatement) = result {
+    if case .credential(let credential, let trustInformation) = result {
       XCTAssertEqual(credential, updatedCredential)
-      XCTAssertEqual(trustStatement, mockTrustStatement)
+      XCTAssertEqual(trustInformation, mockTrustInformation)
     }
   }
 
   func testExecute_validResultDeferredCredential_returns() async throws {
-    fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReturnValue = FetchAnyCredentialResult.deferred(transactionId: mockTransactionId, accessToken: mockAccessToken, endpoint: mockDeferredCredentialEndpoint)
+    fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReturnValue = FetchAnyCredentialResult.deferred(transactionId: mockTransactionId, accessToken: mockAccessToken, endpoint: mockDeferredCredentialEndpoint, format: mockFormat)
 
     let result = try await useCase.execute(from: offer)
 
@@ -42,11 +42,12 @@ final class FetchCredentialUseCaseTests: XCTestCase {
       XCTAssertEqual(deferredCredential.accessToken, mockAccessToken)
       XCTAssertEqual(deferredCredential.endpoint, mockDeferredCredentialEndpoint)
       XCTAssertEqual(deferredCredential.transactionId, mockTransactionId)
+      XCTAssertEqual(deferredCredential.format, mockFormat)
 
       XCTAssertFalse(fetchVcMetadataUseCase.executeForCalled)
       XCTAssertFalse(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperCalled)
-      XCTAssertFalse(trustStatementServiceSpy.fetchForCalled)
-      XCTAssertFalse(credentialRepository.createCredentialCalled)
+      XCTAssertFalse(trustInformationServiceSpy.fetchForTypeVcSchemaIdCalled)
+      XCTAssertFalse(verifiableCredentialRepository.createCalled)
       XCTAssertFalse(checkAndUpdateCredentialStatusUseCase.executeCalled)
     }
   }
@@ -59,9 +60,9 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextCallsCount, 1)
     XCTAssertEqual(fetchVcMetadataUseCase.executeForCallsCount, 1)
     XCTAssertEqual(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperCallsCount, 1)
-    XCTAssertEqual(credentialRepository.createCredentialCallsCount, 1)
+    XCTAssertEqual(verifiableCredentialRepository.createCallsCount, 1)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
-    XCTAssertEqual(trustStatementServiceSpy.fetchForCallsCount, 1)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 1)
   }
 
   func testExecute_validResultCredentialAndTrustStatement_argumentsPassed() async throws {
@@ -79,11 +80,13 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertNotNil(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
     XCTAssertEqual(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.metadataWrapper.selectedCredential.claims, metadataWrapper.selectedCredential.claims)
 
-    XCTAssertTrue(credentialRepository.createCredentialReceivedCredential!.issuerDisplays.allSatisfy { issuerDisplay in
-      mockTrustStatement.payload.entityNames.keys.contains(issuerDisplay.locale!)
-    })
+    for issuerDisplay in verifiableCredentialRepository.createReceivedCredential!.issuerDisplays {
+      XCTAssertEqual(issuerDisplay.name, "\(issuerDisplay.locale!) entityName")
+    }
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
-    XCTAssertEqual(trustStatementServiceSpy.fetchForReceivedSubjectDid, anyCredential.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, anyCredential.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.type, .issuance)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId, anyCredential.vcSchemaId)
   }
 
   func testExecute_fetchOCAReturnsNil_passesNilAndReturnsBoth() async throws {
@@ -91,14 +94,14 @@ final class FetchCredentialUseCaseTests: XCTestCase {
 
     let result = try await useCase.execute(from: offer)
 
-    if case .credential(let credential, let trustStatement) = result {
+    if case .credential(let credential, let trustInformation) = result {
       XCTAssertEqual(credential, updatedCredential)
-      XCTAssertEqual(trustStatement, mockTrustStatement)
+      XCTAssertEqual(trustInformation, mockTrustInformation)
     }
 
-    XCTAssertTrue(credentialRepository.createCredentialReceivedCredential!.issuerDisplays.allSatisfy { issuerDisplay in
-      mockTrustStatement.payload.entityNames.keys.contains(issuerDisplay.locale!)
-    })
+    for issuerDisplay in verifiableCredentialRepository.createReceivedCredential!.issuerDisplays {
+      XCTAssertEqual(issuerDisplay.name, "\(issuerDisplay.locale!) entityName")
+    }
     XCTAssertNil(credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
   }
@@ -160,8 +163,8 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_credentialRepositoryFailure_throwsError() async throws {
-    credentialRepository.createCredentialThrowableError = TestingError.error
+  func testExecute_verifiableCredentialRepositoryFailure_throwsError() async throws {
+    verifiableCredentialRepository.createThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(from: offer)
@@ -176,31 +179,9 @@ final class FetchCredentialUseCaseTests: XCTestCase {
 
     let result = try await useCase.execute(from: offer)
 
-    if case .credential(let credential, let trustStatement) = result {
+    if case .credential(let credential, let trustInformation) = result {
       XCTAssertEqual(credential, repositoryCredential)
-      XCTAssertEqual(trustStatement, mockTrustStatement)
-    }
-  }
-
-  func testExecute_fetchTrustStatementFailure_returnsValidCredentialAndNilStatement() async throws {
-    trustStatementServiceSpy.fetchForThrowableError = TestingError.error
-
-    let result = try await useCase.execute(from: offer)
-
-    if case .credential(let credential, let trustStatement) = result {
-      XCTAssertEqual(credential, updatedCredential)
-      XCTAssertNil(trustStatement)
-    }
-  }
-
-  func testExecute_fetchTrustStatementReturnsNil_returnsValidCredentialAndNilStatement() async throws {
-    trustStatementServiceSpy.fetchForReturnValue = nil
-
-    let result = try await useCase.execute(from: offer)
-
-    if case .credential(let credential, let trustStatement) = result {
-      XCTAssertEqual(credential, updatedCredential)
-      XCTAssertNil(trustStatement)
+      XCTAssertEqual(trustInformation, mockTrustInformation)
     }
   }
 
@@ -211,24 +192,25 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   private var fetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseProtocolSpy!
   private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocolSpy!
   private var credentialGenerator: CredentialGeneratorProtocolSpy!
-  private var credentialRepository: CredentialRepositoryProtocolSpy!
+  private var verifiableCredentialRepository: VerifiableCredentialRepositoryProcotolSpy!
   private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
-  private var trustStatementServiceSpy: TrustStatementServiceProtocolSpy!
+  private var trustInformationServiceSpy: TrustInformationServiceProtocolSpy!
   private var credentialKeyRepository: CredentialKeyRepositoryProtocolSpy!
   private var useCase: FetchCredentialUseCase!
 
-  private let generatedCredential: Credential = .Mock.sample
-  private let repositoryCredential: Credential = .Mock.sampleWithoutKeyBinding
-  private let updatedCredential: Credential = .Mock.sampleDisplaysEmpty
+  private let generatedCredential: VerifiableCredential = .Mock.sample
+  private let repositoryCredential: VerifiableCredential = .Mock.sampleWithoutKeyBinding
+  private let updatedCredential: VerifiableCredential = .Mock.sampleDisplaysEmpty
   private let metadataWrapper: CredentialMetadataWrapper = .Mock.sample
   private let anyCredential: AnyCredential = MockAnyCredential()
   private let offer: CredentialOffer = .Mock.sample
   private let rawOcaBundleMock = "rawOcaBundle".data(using: .utf8)!
-  private let mockTrustStatement = TrustStatementPayload.Mock.validSample
+  private let mockTrustInformation = TrustInformation.Mock.trustedIdentity
   private let mockHolderBindingContext = HolderBindingContext.Mock.softwareKey
   private let mockAccessToken = "mock_access_token"
   private let mockDeferredCredentialEndpoint = "mock_deferred_credential_endpoint"
   private let mockTransactionId = "mock_transaction_id"
+  private let mockFormat = "mock_format"
 
   private func registerMocks() {
     fetchMetadataUseCase = FetchMetadataUseCaseProtocolSpy()
@@ -236,8 +218,8 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     fetchAnyVerifiableCredentialUseCase = FetchAnyVerifiableCredentialUseCaseProtocolSpy()
     fetchVcMetadataUseCase = FetchVcMetadataUseCaseProtocolSpy()
     credentialGenerator = CredentialGeneratorProtocolSpy()
-    trustStatementServiceSpy = TrustStatementServiceProtocolSpy()
-    credentialRepository = CredentialRepositoryProtocolSpy()
+    trustInformationServiceSpy = TrustInformationServiceProtocolSpy()
+    verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
     checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
     credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()
 
@@ -246,8 +228,8 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     Container.shared.fetchAnyVerifiableCredentialUseCase.register { self.fetchAnyVerifiableCredentialUseCase }
     Container.shared.fetchVcMetadataUseCase.register { self.fetchVcMetadataUseCase }
     Container.shared.credentialGenerator.register { self.credentialGenerator }
-    Container.shared.trustStatementService.register { self.trustStatementServiceSpy }
-    Container.shared.databaseCredentialRepository.register { self.credentialRepository }
+    Container.shared.trustInformationService.register { self.trustInformationServiceSpy }
+    Container.shared.verifiableCredentialRepository.register { self.verifiableCredentialRepository }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
     Container.shared.credentialKeyRepository.register { self.credentialKeyRepository }
 
@@ -259,9 +241,9 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReturnValue = FetchAnyCredentialResult.credential(anyCredential)
     fetchVcMetadataUseCase.executeForReturnValue = rawOcaBundleMock
     credentialGenerator.generateForKeyPairRawOcaBundleMetadataWrapperReturnValue = generatedCredential
-    credentialRepository.createCredentialReturnValue = repositoryCredential
+    verifiableCredentialRepository.createReturnValue = repositoryCredential
     checkAndUpdateCredentialStatusUseCase.executeForReturnValue = updatedCredential
-    trustStatementServiceSpy.fetchForReturnValue = mockTrustStatement
+    trustInformationServiceSpy.fetchForTypeVcSchemaIdReturnValue = mockTrustInformation
   }
 }
 

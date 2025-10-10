@@ -1,3 +1,4 @@
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import XCTest
 @testable import BITCredential
@@ -16,19 +17,22 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
     registerMocks()
+
+    router.delegate = presentationFinishDelegateMock
+
     viewModel = CompatibleCredentialViewModel(context: Self.contextMock, inputDescriptorId: Self.inputDescriptorMock.id, compatibleCredentials: compatibleCredentialMocks, router: router)
     createSuccessState()
   }
 
   @MainActor
-  func testInit_setsValues() {
+  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() {
+    Container.shared.preferredUserLanguageCodes.register { ["en"] }
+
     viewModel = CompatibleCredentialViewModel(context: Self.contextMock, inputDescriptorId: Self.inputDescriptorMock.id, compatibleCredentials: compatibleCredentialMocks, router: router)
 
-    XCTAssertNotNil(Self.contextMock.trustStatement)
-    XCTAssertNotNil(viewModel.verifierDisplay)
-    XCTAssertEqual(viewModel.verifierDisplay?.trustStatus, .verified)
-    XCTAssertEqual(getVerifierDisplayUseCaseSpy.executeForTrustStatementReceivedArguments?.trustStatement, Self.contextMock.trustStatement)
-    XCTAssertEqual(getVerifierDisplayUseCaseSpy.executeForTrustStatementReceivedArguments?.verifier, Self.contextMock.requestObject.clientMetadata)
+    XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
+    XCTAssertEqual(String(data: viewModel.verifierDisplay.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(viewModel.verifierDisplay.trustInformation, Self.contextMock.trustInformation)
   }
 
   @MainActor
@@ -40,10 +44,10 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testClose() {
-    viewModel.close()
+  func testCancel_delegateCancelCalled() {
+    viewModel.cancel()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(presentationFinishDelegateMock.cancelCalled, true)
   }
 
   func testUpdateCredentialViewModels_light_setsViewModel() async {
@@ -75,28 +79,23 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private static var contextMock = PresentationRequestContext.Mock.vcSdJwtWithTrustStatementSample
+  private static var contextMock = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
   private static let inputDescriptorMock = contextMock.requestObject.presentationDefinition.inputDescriptors.first!
 
   private let themeMock = "light"
 
   private var viewModel: CompatibleCredentialViewModel!
-  private var getVerifierDisplayUseCaseSpy = GetVerifierDisplayUseCaseProtocolSpy()
   private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
 
   private let router = MockPresentationRouter()
+  private let presentationFinishDelegateMock = MockPresentationFinishDelegate()
   private let compatibleCredentialMocks = [CompatibleCredential.Mock.BIT, CompatibleCredential.Mock.diploma]
 
-  // swiftlint:enable all
-
   private func createSuccessState() {
-    getVerifierDisplayUseCaseSpy.executeForTrustStatementReturnValue = .Mock.sample
     getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = .Mock.lightEnglish
   }
 
   private func registerMocks() {
-    Container.shared.getVerifierDisplayUseCase.register { self.getVerifierDisplayUseCaseSpy }
     Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
   }
 }

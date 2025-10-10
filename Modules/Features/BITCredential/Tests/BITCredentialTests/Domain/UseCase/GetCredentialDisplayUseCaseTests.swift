@@ -57,7 +57,7 @@ final class GetCredentialDisplayUseCaseTests: XCTestCase {
 
   // MARK: Private
 
-  private let credential = Credential.Mock.displaysThemed
+  private let credential = VerifiableCredential.Mock.displaysThemed
   private var useCase: GetCredentialDisplayUseCase!
 
   private func mockPreferredLanguages(_ languages: [String]) {

@@ -141,7 +141,7 @@ extension CodableValue: Equatable {
 extension CodableValue {
 
   public static func convert(dictionaryOfAny: [String: Any]) throws -> [String: CodableValue] {
-    var dictionaryOfCodableValue: [String: CodableValue] = [:]
+    var dictionaryOfCodableValue = [String: CodableValue]()
     for (key, value) in dictionaryOfAny {
       dictionaryOfCodableValue[key] = try CodableValue(anyValue: value)
     }
@@ -149,7 +149,7 @@ extension CodableValue {
   }
 
   public static func convert(arrayOfAny: [Any]) throws -> [CodableValue?] {
-    var arrayOfCodableValue: [CodableValue?] = []
+    var arrayOfCodableValue = [CodableValue?]()
     for value in arrayOfAny {
       try arrayOfCodableValue.append(CodableValue(anyValue: value))
     }

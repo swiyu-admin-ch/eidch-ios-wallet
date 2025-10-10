@@ -13,8 +13,8 @@ public class ClosableRoutesMock: ClosableRoutes {
   public var closeWithCompletionCalled = false
   public var closeCalled = false
   public var popCalled = false
-  public var popNumberCalled = false
-  public var popNumberCalledValue = 0
+  public var popCountCalled = false
+  public var popCountCalledValue = 0
   public var popToRootCalled = false
   public var dismissCalled = false
 
@@ -31,9 +31,9 @@ public class ClosableRoutesMock: ClosableRoutes {
     popCalled = true
   }
 
-  public func pop(number: Int) {
-    popNumberCalledValue = number
-    popNumberCalled = true
+  public func pop(count: Int) {
+    popCountCalledValue = count
+    popCountCalled = true
   }
 
   public func popToRoot() {

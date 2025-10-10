@@ -8,7 +8,7 @@ public typealias AnalyticsProtocol = Loggable & PrivacySettable & ProviderRegist
 
 final class Analytics: AnalyticsProtocol {
 
-  private(set) var providers: [AnalyticsProviderProtocol] = []
+  private(set) var providers = [AnalyticsProviderProtocol]()
 
   var isAnalyticsEnabled: Bool {
     providers.contains { $0.isAnalyticsEnabled }

@@ -84,7 +84,7 @@ extension VersionEnforcementView {
     }
     .padding(.bottom, .x2)
     .controlSize(.large)
-    .buttonStyle(.filledPrimary)
+    .buttonStyle(.primary)
     .accessibilityLabel(L10n.versionEnforcementButton)
   }
 

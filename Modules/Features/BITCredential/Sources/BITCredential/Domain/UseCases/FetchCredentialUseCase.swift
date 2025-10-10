@@ -28,8 +28,8 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
       switch result {
       case .credential(let credential):
         anyCredential = credential
-      case .deferred(let transactionId, let accessToken, let endpoint):
-        return .deferred(DeferredCredential(transactionId: transactionId, accessToken: accessToken, endpoint: endpoint))
+      case .deferred(let transactionId, let accessToken, let endpoint, let format):
+        return .deferred(DeferredCredential(transactionId: transactionId, accessToken: accessToken, endpoint: endpoint, format: format))
       }
     } catch {
       if let keyPair = holderBindingContext?.keyPair {
@@ -49,17 +49,16 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
   @Injected(\.credentialKeyRepository) private var credentialKeyRepository: CredentialKeyRepositoryProtocol
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol
   @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
-  @Injected(\.trustStatementService) private var trustStatementService
-  @Injected(\.databaseCredentialRepository) private var credentialRepository: CredentialRepositoryProtocol
+  @Injected(\.trustInformationService) private var trustInformationService
+  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
 
-  private func updateCredentialIssuerDisplays(credential: Credential, with trustStatement: TrustStatement) async throws -> Credential {
-
+  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: any LocalizedTrustStatement) async throws -> VerifiableCredential {
     var credentialCopy = credential
 
     credentialCopy.issuerDisplays = credentialCopy.issuerDisplays.compactMap { issuerDisplay in
       guard let locale = issuerDisplay.locale else { return nil }
-      let entityNames = trustStatement.resolvedPayload.entityNames
+      let entityNames = trustStatement.entityNames
       return CredentialIssuerDisplay(
         id: issuerDisplay.id,
         locale: issuerDisplay.locale,
@@ -74,16 +73,15 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
   private func generateCredential(from anyCredential: AnyCredential, metadata: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> FetchCredentialResult {
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(for: anyCredential)
     var credential = try credentialGenerator.generate(for: anyCredential, keyPair: holderBindingContext?.keyPair, rawOcaBundle: rawOcaBundle, metadataWrapper: metadata)
-    let trustStatement = try? await trustStatementService.fetch(for: anyCredential.issuer)
+    let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
 
-    if let trustStatement {
+    if case .trusted(let trustStatement) = trustInformation.identity {
       credential = try await updateCredentialIssuerDisplays(credential: credential, with: trustStatement)
     }
 
-    let savedCredential = try await credentialRepository.create(credential: credential)
+    let savedCredential = try await verifiableCredentialRepository.create(credential)
     let updatedCredential = (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
-
-    return .credential(updatedCredential, trustStatement)
+    return .credential(updatedCredential, trustInformation)
   }
 }
 

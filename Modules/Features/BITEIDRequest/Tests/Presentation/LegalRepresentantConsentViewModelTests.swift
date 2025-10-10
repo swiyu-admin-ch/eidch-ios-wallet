@@ -20,7 +20,7 @@ class LegalRepresentantConsentViewModelTests: XCTestCase {
 
   func testContinueAsParent() {
     viewModel.continueAsParent()
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(router.legalRepresentantVerificationArgument, caseId)
   }
 
   func testClose() {

@@ -47,7 +47,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   }
 
   func testGenerate_noClaimsRequested() throws {
-    let requestedClaims: [String] = []
+    let requestedClaims = [String]()
 
     let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
 

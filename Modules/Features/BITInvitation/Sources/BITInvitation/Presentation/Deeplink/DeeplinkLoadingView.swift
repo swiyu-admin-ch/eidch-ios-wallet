@@ -49,15 +49,6 @@ struct DeeplinkLoadingView: View {
 
 extension DeeplinkLoadingView {
 
-  private enum AccessibilityPriority: Double {
-    case x1 = 100
-    case x2 = 80
-    case x3 = 50
-    case x4 = 30
-    case x5 = 20
-    case x6 = 10
-  }
-
   @ViewBuilder
   private func progressView() -> some View {
     ZStack {
@@ -113,7 +104,7 @@ extension DeeplinkLoadingView {
       Button(L10n.tkGlobalClose, action: viewModel.close)
         .padding(.bottom, .x6)
         .controlSize(.large)
-        .buttonStyle(.filledPrimary)
+        .buttonStyle(.primary)
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     }
     .padding(.horizontal, .x6)

@@ -13,14 +13,13 @@ struct SettingsSection<Content: View>: View {
   // MARK: Internal
 
   var body: some View {
-    VStack(alignment: .leading, spacing: .x2) {
+    Section {
+      content
+    } header: {
       sectionHeader(title)
-      VStack(spacing: 0) {
-        content
-      }
-      .background(ThemingAssets.Background.groupedRow.swiftUIColor)
-      .clipShape(.rect(cornerRadius: .CornerRadius.m))
     }
+    .listRowInsets(EdgeInsets())
+    .textCase(nil)
   }
 
   // MARK: Private
@@ -34,6 +33,7 @@ struct SettingsSection<Content: View>: View {
       Text(title)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .font(.custom.body)
+        .padding(.top, .x10)
         .padding(.leading, .x2)
         .padding(.bottom, .x3)
         .accessibilityAddTraits(.isHeader)

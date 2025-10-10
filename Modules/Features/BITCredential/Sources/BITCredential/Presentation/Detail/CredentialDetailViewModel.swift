@@ -11,7 +11,7 @@ class CredentialDetailViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(_ credential: Credential, router: CredentialDetailInternalRoutes) {
+  init(_ credential: VerifiableCredential, router: CredentialDetailInternalRoutes) {
     self.credential = credential
     self.router = router
     configureObservers()
@@ -27,7 +27,7 @@ class CredentialDetailViewModel: ObservableObject {
   @Published var credentialViewModel: CredentialViewModel?
   @Published var isDeleteCredentialAlertPresented = false
 
-  @Published var credential: Credential {
+  @Published var credential: VerifiableCredential {
     didSet {
       updateCredentialViewModel(with: colorScheme)
     }

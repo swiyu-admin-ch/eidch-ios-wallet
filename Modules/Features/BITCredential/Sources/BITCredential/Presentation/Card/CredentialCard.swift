@@ -305,16 +305,16 @@ extension CredentialCard {
 #Preview {
   ScrollView {
     VStack {
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
         .controlSize(.mini)
 
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
         .controlSize(.small)
 
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
         .controlSize(.regular)
 
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: Credential.Mock.sample.displays[0]))
+      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
         .controlSize(.large)
     }
   }

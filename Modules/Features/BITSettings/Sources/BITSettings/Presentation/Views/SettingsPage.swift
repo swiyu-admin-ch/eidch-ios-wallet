@@ -14,18 +14,19 @@ struct SettingsPage<Content: View>: View {
 
   var body: some View {
     ZStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: .x10) {
-          content
-        }
-        .padding(.x4)
+      ThemingAssets.Background.secondary.swiftUIColor
+        .frame(maxWidth: .infinity)
+        .ignoresSafeArea()
+      List {
+        content
+          .listRowSeparator(.hidden)
       }
       .frame(maxWidth: 635)
+      .scrollContentBackground(.hidden)
+      .navigationTitle(title)
+      .navigationBarTitleDisplayMode(.inline)
     }
-    .frame(maxWidth: .infinity)
-    .background(ThemingAssets.Background.secondary.swiftUIColor)
-    .navigationTitle(title)
-    .navigationBarTitleDisplayMode(.inline)
+
   }
 
   // MARK: Private

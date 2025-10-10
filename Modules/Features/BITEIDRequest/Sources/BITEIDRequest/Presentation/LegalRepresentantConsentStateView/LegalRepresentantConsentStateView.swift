@@ -69,7 +69,7 @@ extension LegalRepresentantConsentStateView {
         .accessibilityIdentifier(AccessibilityIdentifier.secondaryText.rawValue)
 
       VStack {
-        Text(L10n.tkGetEidQueuingBody2Ios)
+        Text(L10n.tkEidRequestQueuingBody2Ios)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           .multilineTextAlignment(.leading)
@@ -112,9 +112,9 @@ extension LegalRepresentantConsentStateView {
   @ViewBuilder
   private func readyForOnlineSessionSecondaryText(_ readyForOnlineSessionViewModel: ReadyForOnlineSessionStateViewModel) -> some View {
     if readyForOnlineSessionViewModel.isLegalRepresentantConsentVerified {
-      Text(L10n.tkGetEidLegalRepresentantGivenConsentReadyForAVSecondary)
+      Text(L10n.tkEidRequestLegalRepresentantGivenConsentReadyForAVSecondary)
     } else {
-      Text("\(L10n.tkGetEidLegalRepresentantPendingConsentReadyForAVSecondaryPrefix) \(Text(readyForOnlineSessionViewModel.formattedDateAndTime).font(.custom.bodyBold)) \(L10n.tkGetEidLegalRepresentantPendingConsentReadyForAVSecondarySuffix)")
+      Text("\(L10n.tkEidRequestLegalRepresentantPendingConsentReadyForAVSecondaryPrefix) \(Text(readyForOnlineSessionViewModel.formattedDateAndTime).font(.custom.bodyBold)) \(L10n.tkEidRequestLegalRepresentantPendingConsentReadyForAVSecondarySuffix)")
     }
   }
 }

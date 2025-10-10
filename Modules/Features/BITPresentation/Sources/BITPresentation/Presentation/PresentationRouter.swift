@@ -8,4 +8,14 @@ public protocol PresentationRouterRoutes: ClosableRoutes, PresentationRoutes {}
 
 // MARK: - PresentationRouter
 
-final public class PresentationRouter: Router<UIViewController>, PresentationRouterRoutes {}
+final public class PresentationRouter: Router<UIViewController>, PresentationRouterRoutes, PresentationInternalRoutes {
+  public weak var delegate: PresentationFinishDelegate?
+}
+
+// MARK: - PresentationFinishDelegate
+
+public protocol PresentationFinishDelegate: AnyObject {
+  func retry()
+  func cancel()
+  func finish(with state: PresentationRequestResultState) async
+}

@@ -15,7 +15,6 @@ enum OpenIDEndpoint {
   case openIdConfiguration(issuerURL: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
-  case trustStatements(url: URL, subjectDid: String)
 }
 
 // MARK: TargetType
@@ -33,7 +32,6 @@ extension OpenIDEndpoint: TargetType {
          .openIdConfiguration(let baseUrl),
          .publicKeyInfo(let baseUrl),
          .status(let baseUrl),
-         .trustStatements(let baseUrl, _),
          .typeMetadata(let baseUrl),
          .vcSchema(let baseUrl):
       baseUrl
@@ -48,8 +46,6 @@ extension OpenIDEndpoint: TargetType {
       ".well-known/openid-credential-issuer"
     case .openIdConfiguration:
       ".well-known/oauth-authorization-server"
-    case .trustStatements(_, let did):
-      "api/v1/truststatements/identity/\(did)"
     case .accessToken,
          .credential,
          .publicKeyInfo,
@@ -67,7 +63,6 @@ extension OpenIDEndpoint: TargetType {
          .openIdConfiguration,
          .publicKeyInfo,
          .status,
-         .trustStatements,
          .typeMetadata,
          .vcSchema:
       .get
@@ -84,7 +79,6 @@ extension OpenIDEndpoint: TargetType {
          .openIdConfiguration,
          .publicKeyInfo,
          .status,
-         .trustStatements,
          .typeMetadata,
          .vcSchema:
       .requestPlain
@@ -109,7 +103,6 @@ extension OpenIDEndpoint: TargetType {
          .metadata,
          .openIdConfiguration,
          .publicKeyInfo,
-         .trustStatements,
          .typeMetadata:
       NetworkHeader.standard.raw
     case .credential(_, _, let token):

@@ -6,8 +6,8 @@ class VersionEnforcementRouterMock: VersionEnforcementRouterRoutes {
   var closeWithCompletionCalled = false
   var closeCalled = false
   var popCalled = false
-  var popNumberCalled = false
-  var popNumberCalledValue = 0
+  var popCountCalled = false
+  var popCountCalledValue = 0
   var popToRootCalled = false
   var dismissCalled = false
 
@@ -27,9 +27,9 @@ class VersionEnforcementRouterMock: VersionEnforcementRouterRoutes {
     popCalled = true
   }
 
-  func pop(number: Int) {
-    popNumberCalledValue = number
-    popNumberCalled = true
+  func pop(count: Int) {
+    popCountCalledValue = count
+    popCountCalled = true
   }
 
   func popToRoot() {

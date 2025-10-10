@@ -4,6 +4,7 @@ import Spyable
 
 @Spyable
 public protocol CheckAndUpdateCredentialStatusUseCaseProtocol {
-  func execute(_ credentials: [Credential]) async throws -> [Credential]
-  func execute(for credential: Credential) async throws -> Credential
+  @discardableResult
+  func execute(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential]
+  func execute(for credential: VerifiableCredential) async throws -> VerifiableCredential
 }

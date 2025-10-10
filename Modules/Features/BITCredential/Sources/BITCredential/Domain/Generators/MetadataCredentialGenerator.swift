@@ -11,7 +11,7 @@ import Spyable
 
 @Spyable
 protocol MetadataCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential
 }
 
 // MARK: - MetadataCredentialGenerator
@@ -20,28 +20,27 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> Credential {
+  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential {
     guard let payload = anyCredential.raw.data(using: .utf8) else {
       throw CredentialError.invalidPayload
     }
     let cluster = createCluster(from: anyCredential.claims, selectedCredential: selectedCredential)
     let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: id)
 
-    return Credential(
+    return VerifiableCredential(
       id: id,
-      status: .unknown,
-      keyBinding: keyBinding,
+      progressionState: .unaccepted,
       payload: payload,
-      rawCredentialData: rawCredentialData,
+      status: .unknown,
+      clusters: [cluster],
       format: anyCredential.format,
       issuer: anyCredential.issuer,
-      validFrom: anyCredential.validFrom,
-      validUntil: anyCredential.validUntil,
-      createdAt: Date(),
-      updatedAt: nil,
-      clusters: [cluster],
+      keyBinding: keyBinding,
+      rawCredentialData: rawCredentialData,
       issuerDisplays: issuerDisplays,
-      displays: credentialDisplays)
+      displays: credentialDisplays,
+      validFrom: anyCredential.validFrom,
+      validUntil: anyCredential.validUntil)
   }
 
   // MARK: Private

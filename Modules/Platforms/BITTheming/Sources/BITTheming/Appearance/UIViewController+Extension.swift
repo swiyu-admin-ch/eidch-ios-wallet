@@ -3,11 +3,11 @@ import UIKit
 
 extension UIViewController {
 
-  public func applyNavigationAppearance(_ appearance: UINavigationBarAppearance) {
+  public func applyNavigationAppearance(_ appearance: UINavigationBarAppearance, scrollEdgeAppearance: UINavigationBarAppearance? = nil) {
     navigationController?.navigationBar.standardAppearance = appearance
-    navigationController?.navigationBar.scrollEdgeAppearance = appearance
+    navigationController?.navigationBar.scrollEdgeAppearance = scrollEdgeAppearance
     navigationController?.navigationBar.compactAppearance = appearance
-    navigationController?.navigationBar.compactScrollEdgeAppearance = appearance
+    navigationController?.navigationBar.compactScrollEdgeAppearance = scrollEdgeAppearance
   }
 
 }

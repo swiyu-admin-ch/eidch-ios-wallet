@@ -3,6 +3,7 @@ struct AutoVerificationResponse: Codable, Equatable {
   // MARK: Internal
 
   let isNFCRequired: Bool
+  let jwt: String
 
   enum CodingKeys: String, CodingKey {
     case jwt
@@ -13,7 +14,6 @@ struct AutoVerificationResponse: Codable, Equatable {
 
   // MARK: Private
 
-  private let jwt: String
   private let isScanDocumentRequired: Bool
   private let isDocumentVideoRecordingRequired: Bool
 }

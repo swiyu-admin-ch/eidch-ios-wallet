@@ -8,7 +8,7 @@ import Spyable
 
 @Spyable
 protocol PairWalletUseCaseProtocol {
-  func execute(for caseId: String) async throws
+  func execute(for caseId: String) async throws -> String
 }
 
 // MARK: - PairWalletUseCase
@@ -17,22 +17,27 @@ struct PairWalletUseCase: PairWalletUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(for caseId: String) async throws {
-    let credentialOfferLink = try await eIDRequestRepository.pairWallet(caseId: caseId).credentialOfferLink
-    let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(credentialOfferLink)
+  func execute(for caseId: String) async throws -> String {
+    let walletPairingResponse = try await eIDRequestRepository.pairWallet(caseId: caseId)
+    let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(walletPairingResponse.credentialOfferLink)
     let fetchCredentialResult = try await fetchCredentialUseCase.execute(from: credentialOffer)
 
     guard case .deferred(let deferredCredential) = fetchCredentialResult else {
       throw FetchCredentialUseCaseError.invalidCredential // Expect only a deferred credential here
     }
 
-    try await deferredCredentialRepository.create(deferredCredential)
+    var eIDRequestCase = try await eIDRequestCaseRepository.get(id: caseId)
+    eIDRequestCase.deferredCredential = deferredCredential
+
+    try await eIDRequestCaseRepository.update(eIDRequestCase)
+
+    return walletPairingResponse.walletPairingId
   }
 
   // MARK: Private
 
   @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
   @Injected(\.fetchCredentialUseCase) private var fetchCredentialUseCase: FetchCredentialUseCaseProtocol
-  @Injected(\.deferredCredentialRepository) private var deferredCredentialRepository: DeferredCredentialRepositoryProtocol
+  @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
   @Injected(\.validateCredentialOfferInvitationUrlUseCase) private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocol
 }

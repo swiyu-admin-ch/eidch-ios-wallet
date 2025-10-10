@@ -20,7 +20,7 @@ public struct EIDRequestStatus: Decodable, Equatable {
 
 extension EIDRequestStatus {
 
-  public enum State: String, Decodable {
+  public enum State: String, Codable {
     case inQueue = "IN_QUEUING"
     case readyForOnlineSession = "READY_FOR_ONLINE_SESSION"
     case inTargetWalletPairing = "IN_TARGET_WALLET_PAIRING"

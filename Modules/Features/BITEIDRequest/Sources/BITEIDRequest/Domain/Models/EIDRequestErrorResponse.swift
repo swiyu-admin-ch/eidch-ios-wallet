@@ -8,8 +8,9 @@ struct EIDRequestErrorResponse: Codable {
       case invalidClientAttestation = "InvalidClientAttestation"
       case invalidKeyAttestation = "InvalidKeyAttestation"
       case insufficientKeyStorageResistance = "InsufficientKeyStorageResistance"
-      case resourcesNotFound = "NoResourceFoundException"
       case invalidState = "AntragInWrongStateException"
+      case notFound = "NoResourceFoundException"
+      case legalRepresentantNotRequired = "LegalRepresentantNotRequiredException"
     }
 
     let code: Code?

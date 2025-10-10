@@ -2,6 +2,7 @@ import BITCredential
 import BITJWT
 import BITOpenID
 import BITPresentation
+import BITSdJWT
 import Factory
 import Foundation
 import Spyable
@@ -9,17 +10,17 @@ import Spyable
 // MARK: - FetchPresentationRequestUseCaseProtocol
 
 @Spyable
-protocol FetchPresentationRequestUseCaseProtocol {
+public protocol FetchPresentationRequestUseCaseProtocol {
   func execute(url: URL) async throws -> PresentationRequestContext
 }
 
 // MARK: - FetchPresentationRequestUseCase
 
-struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol {
+public struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol {
 
-  // MARK: Internal
+  // MARK: Public
 
-  func execute(url: URL) async throws -> PresentationRequestContext {
+  public func execute(url: URL) async throws -> PresentationRequestContext {
     let request = try await fetchRequest(from: url)
     let credentialsRequests = try await getCompatibleCredentialsUseCase.execute(using: request.requestObject)
     return try await createContext(request: request, credentialsRequests: credentialsRequests)
@@ -29,7 +30,7 @@ struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol 
 
   @Injected(\.presentationRequestService) private var presentationRequestService
   @Injected(\.getCompatibleCredentialsUseCase) private var getCompatibleCredentialsUseCase
-  @Injected(\.trustStatementService) private var trustStatementService
+  @Injected(\.trustInformationService) private var trustInformationService
 
   private func fetchRequest(from url: URL) async throws -> PresentationRequest {
     do {
@@ -55,7 +56,7 @@ struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol 
     let context = PresentationRequestContext(requestObject: request.requestObject, requests: credentialsRequests)
     guard context.hasCompatibleCredentials else { throw FetchPresentationRequestUseCaseError.invalidRequest }
     if case .jwt(let jws) = request {
-      context.trustStatement = try? await trustStatementService.fetch(for: jws.payload.issuer)
+      context.trustInformation = await trustInformationService.fetch(for: jws.payload.clientId, type: .verification, vcSchemaId: jws.payload.requestedVcSchemaId)
     }
     return context
   }
@@ -67,4 +68,25 @@ enum FetchPresentationRequestUseCaseError: Error {
   case invalidUrl
   case invalidRequest
   case expiredRequest
+}
+
+extension JWTRequestObjectPayload {
+
+  // MARK: Fileprivate
+
+  fileprivate var requestedVcSchemaId: String? {
+    presentationDefinition.inputDescriptors.compactMap { descriptor in
+      let vcSchemaIdField = descriptor.constraints.fields.first { field in
+        field.path.contains { vcSchemaIdPaths.contains($0) }
+      }
+      return vcSchemaIdField?.filter?.const
+    }.first // only support first input descriptor for now
+  }
+
+  // MARK: Private
+
+  private var vcSchemaIdPaths: [String] {
+    [VcSdJwtPayload.vctPath]
+  }
+
 }

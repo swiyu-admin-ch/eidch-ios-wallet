@@ -105,6 +105,17 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
+  func testFetchLegalRepresentantVerification_legalRepresentantNotRequired_throwsLegalRepresentantNotRequiredError() async throws {
+    try mockResponse(code: 400, data: JSONEncoder().encode(EIDRequestErrorResponse.Mock.legalRepresentantNotRequiredSample))
+
+    do {
+      _ = try await repository.fetchLegalRepresentantVerification(for: "caseId")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? EIDRequestRepository.Error, .legalRepresentantNotRequired)
+    }
+  }
+
   // MARK: - Validate attestations
 
   func testValidateAttestations_clientAttestationInvalid_throwsInvalidClientAttestationError() async throws {
@@ -247,7 +258,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
 
     Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
     Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGenerator }
-    Container.shared.sidUrl.register { self.strURL }
+    Container.shared.sidBaseUrl.register { self.strURL }
   }
 
 }

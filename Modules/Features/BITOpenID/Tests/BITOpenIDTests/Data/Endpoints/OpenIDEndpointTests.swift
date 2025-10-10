@@ -61,20 +61,6 @@ final class OpenIDEndpointTests: XCTestCase {
     XCTAssertEqual("\(baseUrl)/\(expectedEndpoint)", endpoint.absoluteString)
   }
 
-  func testTrustStatements() throws {
-    let baseUrl = "https://example.com"
-    let did = "did:example:1234"
-    let expectedEndpoint = "api/v1/truststatements/identity/\(did)"
-
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
-
-    let endpoint = URL(target: OpenIDEndpoint.trustStatements(url: url, subjectDid: did))
-    XCTAssertEqual("\(baseUrl)/\(expectedEndpoint)", endpoint.absoluteString)
-  }
-
   func testAccessToken() throws {
     let baseUrl = "https://example.com"
     let code = "12345678-9ABC-ABCD-ABCD-ABCDEFGHIJKLMN"

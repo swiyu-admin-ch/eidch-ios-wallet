@@ -29,28 +29,14 @@ public struct AdaptiveColumnsView<PrimaryContent: View, SecondaryContent: View, 
 
   @ViewBuilder
   private func portrait() -> some View {
-    ViewThatFits(in: .vertical) {
-      VStack(spacing: spacing.portrait) {
-        primaryContent()
-        secondaryContent()
-        Spacer()
-        footer()
-      }
-
-      ScrollView {
-        VStack(spacing: spacing.portrait) {
-          primaryContent()
-          secondaryContent()
-          if sizeCategory.isAccessibilityCategory {
-            footer()
-          }
-        }
-      }
-      .if(!sizeCategory.isAccessibilityCategory, transform: {
-        $0.safeAreaInset(edge: .bottom) {
-          footer()
-        }
-      })
+    VStack(spacing: spacing.portrait) {
+      primaryContent()
+      secondaryContent()
+      Spacer()
+    }
+    .applyScrollViewIfNeeded()
+    .safeAreaInset(edge: .bottom) {
+      footer()
     }
   }
 
@@ -91,15 +77,10 @@ public struct AdaptiveColumnsView<PrimaryContent: View, SecondaryContent: View, 
 
         ScrollView {
           secondary
-          if sizeCategory.isAccessibilityCategory {
-            footer()
-          }
         }
-        .if(!sizeCategory.isAccessibilityCategory, transform: {
-          $0.safeAreaInset(edge: .bottom) {
-            footer()
-          }
-        })
+        .safeAreaInset(edge: .bottom) {
+          footer()
+        }
       }
     }
   }

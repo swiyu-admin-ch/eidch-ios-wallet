@@ -31,7 +31,7 @@ class LegalRepresentantConsentStateViewModel {
     switch state {
     case .inQueue: getInQueueStatePrimaryText()
     case .readyForOnlineSession: getReadyForAVStatePrimaryText()
-    case .expired: L10n.tkGetEidLegalRepresentantPendingConsentExpiredPrimary
+    case .expired: L10n.tkEidRequestLegalRepresentantPendingConsentExpiredPrimary
     case .agentReview,
          .declined,
          .unknown: ""
@@ -41,7 +41,7 @@ class LegalRepresentantConsentStateViewModel {
   var secondaryText: String {
     switch state {
     case .inQueue: getInQueueStateSecondaryText()
-    case .expired: L10n.tkGetEidLegalRepresentantPendingConsentExpiredSecondary
+    case .expired: L10n.tkEidRequestLegalRepresentantPendingConsentExpiredSecondary
     case .agentReview,
          .declined,
          .readyForOnlineSession,
@@ -51,7 +51,7 @@ class LegalRepresentantConsentStateViewModel {
 
   var primaryButtonText: String {
     switch state {
-    case .readyForOnlineSession where state.isLegalRepresentantConsentVerified: L10n.tkGetEidLegalRepresentantPendingConsentStartButton
+    case .readyForOnlineSession where state.isLegalRepresentantConsentVerified: L10n.tkEidRequestLegalRepresentantPendingConsentStartButton
     default: L10n.tkGlobalClose
     }
   }
@@ -72,14 +72,14 @@ class LegalRepresentantConsentStateViewModel {
   }
 
   private func getInQueueStatePrimaryText() -> String {
-    state.isLegalRepresentantConsentVerified ? L10n.tkGetEidConsentOkAvQueuePrimary : L10n.tkGetEidLegalRepresentantPendingConsentInQueuePrimary
+    state.isLegalRepresentantConsentVerified ? L10n.tkEidRequestConsentOkAvQueuePrimary : L10n.tkEidRequestLegalRepresentantPendingConsentInQueuePrimary
   }
 
   private func getInQueueStateSecondaryText() -> String {
-    state.isLegalRepresentantConsentVerified ? L10n.tkGetEidConsentOkAvQueueSecondary : L10n.tkGetEidLegalRepresentantPendingConsentInQueueSecondary
+    state.isLegalRepresentantConsentVerified ? L10n.tkEidRequestConsentOkAvQueueSecondary : L10n.tkEidRequestLegalRepresentantPendingConsentInQueueSecondary
   }
 
   private func getReadyForAVStatePrimaryText() -> String {
-    state.isLegalRepresentantConsentVerified ? L10n.tkGetEidLegalRepresentantGivenConsentReadyForAVPrimary : L10n.tkGetEidLegalRepresentantPendingConsentReadyForAVPrimary
+    state.isLegalRepresentantConsentVerified ? L10n.tkEidRequestLegalRepresentantGivenConsentReadyForAVPrimary : L10n.tkEidRequestLegalRepresentantPendingConsentReadyForAVPrimary
   }
 }

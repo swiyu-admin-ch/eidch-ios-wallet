@@ -14,6 +14,8 @@ configs:
   Ref (release): release
   Abn (debug): debug
   Abn (release): release
+  Abn Store (debug): debug
+  Abn Store (release): release
   Prod (debug): debug
   Prod (release): release
 

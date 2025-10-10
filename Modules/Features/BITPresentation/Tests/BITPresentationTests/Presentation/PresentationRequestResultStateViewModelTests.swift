@@ -1,5 +1,7 @@
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
 import Factory
 import XCTest
+@testable import BITCredential
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITTestingCore
@@ -10,55 +12,43 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
 
   @MainActor
   override func setUp() {
-    context = .Mock.vcSdJwtSample
     Container.shared.reset()
-    Container.shared.getVerifierDisplayUseCase.register { self.getVerifierDisplayUseCase }
     router = MockPresentationRouter()
+    router.delegate = presentationFinishDelegateMock
 
     viewModel = PresentationRequestResultStateViewModel(state: .error, context: context, router: router)
   }
 
   @MainActor
-  func testInitialStateWithoutVerifierDisplay_withoutTrustStatement() {
-    getVerifierDisplayUseCase.executeForTrustStatementReturnValue = mockUnTrustedVerifierDisplay
-    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context, router: router)
-    XCTAssertEqual(viewModel.verifierDisplay, mockUnTrustedVerifierDisplay)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, context.trustStatement)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
-  }
+  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() {
+    Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
-  @MainActor
-  func testInitialStateWithoutVerifierDisplay_withTrustStatement() {
-    getVerifierDisplayUseCase.executeForTrustStatementReturnValue = mockTrustedVerifierDisplay
     viewModel = PresentationRequestResultStateViewModel(state: .error, context: context, router: router)
 
-    XCTAssertEqual(viewModel.verifierDisplay, mockTrustedVerifierDisplay)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.trustStatement, context.trustStatement)
-    XCTAssertEqual(getVerifierDisplayUseCase.executeForTrustStatementReceivedArguments?.verifier, context.requestObject.clientMetadata)
+    XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
+    XCTAssertEqual(String(data: viewModel.verifierDisplay.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(viewModel.verifierDisplay.trustInformation, context.trustInformation)
   }
 
   @MainActor
-  func testClose_CloseCalled() async throws {
-    viewModel.close()
+  func testFinish_delegateFinishCalled() async throws {
+    await viewModel.finish()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(presentationFinishDelegateMock.finishCalled, true)
   }
 
   @MainActor
-  func testRetry_PopCalled() async throws {
+  func testRetry_delegateRetryCalled() async throws {
     viewModel.retry()
 
-    XCTAssertTrue(router.popCalled)
+    XCTAssertEqual(presentationFinishDelegateMock.retryCalled, true)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
   private var viewModel: PresentationRequestResultStateViewModel!
-  private var context: PresentationRequestContext!
-  private var getVerifierDisplayUseCase = GetVerifierDisplayUseCaseProtocolSpy()
+  private var context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
   private var router = MockPresentationRouter()
-  private var mockTrustedVerifierDisplay = VerifierDisplay(name: "name", logo: Data(), trustStatus: .verified)
-  private var mockUnTrustedVerifierDisplay = VerifierDisplay(name: "name", logo: Data(), trustStatus: .unverified)
+  private let presentationFinishDelegateMock = MockPresentationFinishDelegate()
   // swiftlint:enable all
 }

@@ -16,7 +16,7 @@ final class DeferredCredentialRepositoryTests: XCTestCase {
 
   func testCreate_success() async throws {
     let deferredCredential = try await repository.create(mockDeferredCredential)
-    let savedDeferredCredential = try await repository.get(id: deferredCredential.transactionId)
+    let savedDeferredCredential = try await repository.get(id: UUID(uuidString: deferredCredential.transactionId)!)
 
     XCTAssertEqual(deferredCredential, savedDeferredCredential)
   }

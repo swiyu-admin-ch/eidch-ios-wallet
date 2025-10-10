@@ -59,7 +59,9 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
   }
 
   private func validateJWS(of jwtRequestObject: JWTRequestObject) async -> Bool {
-    guard jwtRequestObject.header.algorithm == JWTAlgorithm.ES256 else { return false }
-    return (try? await jwsValidator.validate(jwtRequestObject, issuerDid: jwtRequestObject.payload.clientId)) ?? false
+    guard
+      jwtRequestObject.header.algorithm == JWTAlgorithm.ES256,
+      jwtRequestObject.payload.clientId == jwtRequestObject.payload.issuer else { return false }
+    return (try? await jwsValidator.validate(jwtRequestObject, issuerDid: jwtRequestObject.payload.issuer)) ?? false
   }
 }

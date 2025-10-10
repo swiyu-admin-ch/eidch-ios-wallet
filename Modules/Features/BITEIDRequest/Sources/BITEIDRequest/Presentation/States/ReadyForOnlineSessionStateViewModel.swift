@@ -37,15 +37,15 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
   }
 
   var primaryText: String {
-    isLegalRepresentantConsentVerified ? L10n.tkGetEidNotificationEidReadyPrimary(fullName) : L10n.tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVPrimary
+    isLegalRepresentantConsentVerified ? L10n.tkEidRequestNotificationEidReadyPrimary(fullName) : L10n.tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVPrimary
   }
 
   var secondaryText: String {
-    isLegalRepresentantConsentVerified ? L10n.tkGetEidNotificationEidReadySecondary(formattedDate) : L10n.tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVSecondary(formattedDateAndTime)
+    isLegalRepresentantConsentVerified ? L10n.tkEidRequestNotificationEidReadySecondary(formattedDate) : L10n.tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVSecondary(formattedDateAndTime)
   }
 
   var buttonText: String {
-    isLegalRepresentantConsentVerified ? L10n.tkGetEidNotificationEidReadyGreenButton : L10n.tkGetEidNotificationLegalRepresentantPendingConsentReadyForAVButton
+    isLegalRepresentantConsentVerified ? L10n.tkEidRequestNotificationEidReadyGreenButton : L10n.tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVButton
   }
 
   func primaryAction() {

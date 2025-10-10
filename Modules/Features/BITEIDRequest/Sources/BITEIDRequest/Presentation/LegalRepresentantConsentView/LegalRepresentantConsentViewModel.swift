@@ -17,7 +17,7 @@ class LegalRepresentantConsentViewModel {
   }
 
   func continueAsParent() {
-    close()
+    router.legalRepresentantVerification(caseId: caseId)
   }
 
   func close() {

@@ -38,6 +38,7 @@ enum Assets {
   static let closeCircle = ImageAsset(name: "CloseCircle")
   static let eidRequestCaseIcon = ImageAsset(name: "EIDRequestCaseIcon")
   static let emergency = ImageAsset(name: "Emergency")
+  static let error = ImageAsset(name: "Error")
   static let face = ImageAsset(name: "Face")
   static let hand = ImageAsset(name: "Hand")
   static let idCheck = ImageAsset(name: "IDCheck")
@@ -139,6 +140,8 @@ extension SwiftUI.Image {
   }
 }
 #endif
+
+// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

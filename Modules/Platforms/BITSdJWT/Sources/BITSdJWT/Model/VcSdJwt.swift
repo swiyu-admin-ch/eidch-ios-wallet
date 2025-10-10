@@ -12,6 +12,8 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
 
   // MARK: Public
 
+  public static let vctPath = "$.vct"
+
   public let type: String? = "vc+sd-jwt"
 
   /// registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
@@ -47,6 +49,7 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
     case subject = "sub"
     case issuedAt = "iat"
   }
+
 }
 
 // MARK: VcSdJwtPayload.ExpandedKeyBinding

@@ -15,8 +15,8 @@ let package = Package(
       targets: ["BITEIDRequestShared"]),
   ],
   dependencies: [
-    .package(path: "../BITCredentialShared"),
     .package(path: "../BITEntities"),
+    .package(path: "../BITCredentialShared"),
     .package(path: "../../Platforms/BITCore"),
     .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", branch: "main"),
   ],
@@ -25,9 +25,9 @@ let package = Package(
       name: "BITEIDRequestShared",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
-        .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITEntities", package: "BITEntities"),
+        .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITAVWrapper", package: "eidch-ios-av-lib"),
       ],
       resources: [.process("Resources")]),

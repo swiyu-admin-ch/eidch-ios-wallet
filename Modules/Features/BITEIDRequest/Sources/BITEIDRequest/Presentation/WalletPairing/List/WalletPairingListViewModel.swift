@@ -14,6 +14,7 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 
   init(router: EIDRequestInternalRoutes) {
     self.router = router
+    walletPairingPollingManager.delegate = self
   }
 
   // MARK: Internal
@@ -28,13 +29,34 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
     case paired(String)
   }
 
-  @Published var isPrimaryButtonDisabled = true
   @Published var isToastPresented = false
   @Published var toastMessage: String?
   @Published var currentDevicePairingState = CurrentDevicePairingState.initial
+  @Published var targetWallets: EIDRequestStatus.TargetWallet?
 
-  @Published var pairedDevicesCounter = 0
-  @Published var isLimitReached = false
+  var isPrimaryButtonDisabled: Bool {
+    targetWallets?.pairedWallets.isEmpty ?? true
+  }
+
+  var isBackButtonHidden: Bool {
+    !isPrimaryButtonDisabled
+  }
+
+  var pairedDevicesCounter: Int {
+    guard requestCase != nil, let targetWallets else {
+      return 0
+    }
+
+    return isCurrentDevicePaired ? targetWallets.pairedWallets.count - 1 : targetWallets.pairedWallets.count
+  }
+
+  var isCurrentDevicePaired: Bool {
+    requestCase?.deferredCredential != nil
+  }
+
+  var isLimitReached: Bool {
+    targetWallets?.limitReached ?? false
+  }
 
   func pairDevice(_ type: DeviceType) async {
     switch type {
@@ -52,6 +74,7 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 
   func close() {
     router.close()
+    walletPairingPollingManager.stopPolling()
   }
 
   func didPairWallet() {
@@ -61,6 +84,7 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 
     Task { @MainActor in
       do {
+        self.requestCase = try await fetchEIDRequestCaseUseCase.execute(caseId: caseId)
         let status = try await fetchEIDRequestStatusUseCase.execute(for: caseId)
         handleStatus(status)
       } catch {
@@ -78,27 +102,28 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 
   // MARK: Private
 
+  private var requestCase: EIDRequestCase?
   private let router: EIDRequestInternalRoutes
 
-  @Injected(\.fetchEIDRequestStatusUseCase) private var fetchEIDRequestStatusUseCase
   @Injected(\.pairWalletUseCase) private var pairWalletUseCase
   @Injected(\.walletPairingDateFormatter) private var walletPairingDateFormatter
+  @Injected(\.walletPairingPollingManager) private var walletPairingPollingManager
+  @Injected(\.fetchEIDRequestStatusUseCase) private var fetchEIDRequestStatusUseCase
+  @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
 
   private func handleStatus(_ status: EIDRequestStatus) {
     #warning("React here to the different states (EIDCULTURA-319)")
-    guard let targetWallets = status.targetWallets, status.state == .inTargetWalletPairing else { return }
+    guard let targetWallets = status.targetWallets, status.state == .inTargetWalletPairing else {
+      return
+    }
 
     withAnimation {
-      self.pairedDevicesCounter = targetWallets.pairedWallets.count
-      self.isLimitReached = targetWallets.limitReached
-      self.isPrimaryButtonDisabled = targetWallets.pairedWallets.count == 0
+      self.targetWallets = targetWallets
     }
   }
 
   private func reset() {
     withAnimation {
-      pairedDevicesCounter = 0
-      isLimitReached = false
       clearToast()
     }
   }
@@ -111,13 +136,17 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 
       setState(.loading)
 
-      try await pairWalletUseCase.execute(for: caseId)
-
-      isPrimaryButtonDisabled = false
-      setState(.paired(walletPairingDateFormatter.string(from: Date())))
+      let pairingId = try await pairWalletUseCase.execute(for: caseId)
+      walletPairingPollingManager.startPolling(for: caseId, pairingId: pairingId)
     } catch {
       setState(.initial)
+      walletPairingPollingManager.reset()
     }
+  }
+
+  private func updateCurrentDevicePairing() {
+    walletPairingPollingManager.stopPolling()
+    setState(.paired(walletPairingDateFormatter.string(from: Date())))
   }
 
   private func setState(_ state: CurrentDevicePairingState) {
@@ -126,6 +155,10 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
     }
   }
 
+  private func stopCurrentDevicePairing() {
+    setState(.initial)
+    walletPairingPollingManager.stopPolling()
+  }
 }
 
 // MARK: - DevicePairingDelegate
@@ -133,4 +166,28 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 @MainActor @Spyable
 protocol DevicePairingDelegate: AnyObject {
   func didPairWallet()
+}
+
+// MARK: - WalletPairingListViewModel + WalletPairingPollingDelegate
+
+extension WalletPairingListViewModel: WalletPairingPollingDelegate {
+
+  func pollingManager(_ manager: any WalletPairingPollingProtocol, didUpdateState state: WalletPairingPollingManager.State) {
+    switch state {
+    case .state(let pollingState):
+      switch pollingState {
+      case .accepted:
+        didPairWallet()
+        updateCurrentDevicePairing()
+      case .rejected:
+        #warning("TODO: Dedicated story (https://jira.bit.admin.ch/browse/EIDCULTURA-382)")
+        stopCurrentDevicePairing()
+      case .open:
+        break
+      }
+
+    case .error:
+      walletPairingPollingManager.stopPolling()
+    }
+  }
 }

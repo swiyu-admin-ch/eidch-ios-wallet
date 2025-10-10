@@ -1,5 +1,5 @@
 {
-  "originHash" : "264e25a43674950e24c67665bcc324ea54413238909141c80b8584c619936b2a",
+  "originHash" : "903c820b95d23fbf0811252bffac785e09afe0ff4bdf1b45b140d3721c0f18f3",
   "pins" : [
     {
       "identity" : "lottie-ios",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "047aa81b77adcbf583a966dfef620d17650cc656",
         "version" : "4.5.1"
+      }
+    },
+    {
+      "identity" : "popupview",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/exyte/PopupView",
+      "state" : {
+        "revision" : "d619317dbb98fe071d11be36c2525d3c213ad8e4",
+        "version" : "3.1.4"
       }
     },
     {

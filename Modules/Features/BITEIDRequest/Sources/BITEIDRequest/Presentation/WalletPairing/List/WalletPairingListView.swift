@@ -30,8 +30,8 @@ struct WalletPairingListView: View {
     .safeAreaInset(edge: .bottom) {
       footer()
     }
+    .navigationBarBackButtonHidden(viewModel.isBackButtonHidden)
     .toolbar(content: toolbarContent)
-    .navigationBarBackButtonHidden()
     .frame(maxWidth: 568)
     .toastMessage(
       isPresented: $viewModel.isToastPresented,
@@ -78,7 +78,7 @@ struct WalletPairingListView: View {
         HStack {
           Text(L10n.tkEidRequestWalletPairingAdditionalDeviceCounter(viewModel.pairedDevicesCounter))
           Spacer()
-          Assets.checkmark.swiftUIImage
+          checkmark()
             .accessibilityHidden(true)
         }
         .accessibilityElement(children: .combine)
@@ -114,13 +114,13 @@ struct WalletPairingListView: View {
 
   @ViewBuilder
   private func footer() -> some View {
-    FooterView {
+    ButtonSheet {
       Button(action: viewModel.primaryAction, label: {
         Text(L10n.tkEidRequestWalletPairingButtonPrimary)
           .frame(maxWidth: .infinity)
       })
       .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
-      .buttonStyle(.filledPrimary)
+      .buttonStyle(.primary)
       .controlSize(.large)
       .disabled(viewModel.isPrimaryButtonDisabled)
     }
@@ -135,6 +135,12 @@ struct WalletPairingListView: View {
       .padding(.bottom, .x1)
   }
 
+  @ViewBuilder
+  private func checkmark() -> some View {
+    Image(systemName: "checkmark.circle.fill")
+      .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
+  }
+
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
@@ -145,6 +151,7 @@ struct WalletPairingListView: View {
       .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
     }
   }
+
 }
 
 // MARK: - Pair current device components
@@ -205,8 +212,7 @@ extension WalletPairingListView {
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
 
-        Image(systemName: "checkmark.circle.fill")
-          .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
+        checkmark()
       }
     }
   }

@@ -1,5 +1,5 @@
+import BITCredential
 import BITCredentialShared
-import BITOpenID
 import Factory
 import SwiftUI
 
@@ -8,9 +8,9 @@ class CredentialOfferModule {
 
   // MARK: Lifecycle
 
-  init(credential: Credential, trustStatement: TrustStatement?, router: CredentialOfferRouter = Container.shared.credentialOfferRouter()) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation, router: CredentialOfferRouter = Container.shared.credentialOfferRouter()) {
     self.router = router
-    let viewController = UIHostingController(rootView: CredentialOfferView(credential: credential, trustStatement: trustStatement, router: router))
+    let viewController = UIHostingController(rootView: CredentialOfferView(credential: credential, trustInformation: trustInformation, router: router))
     router.viewController = viewController
 
     self.viewController = viewController

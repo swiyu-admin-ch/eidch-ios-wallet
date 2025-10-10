@@ -1,7 +1,4 @@
-import BITAnalytics
 import BITCore
-import BITCredentialShared
-import Combine
 import Factory
 import Foundation
 
@@ -15,30 +12,33 @@ public class PresentationRequestResultStateViewModel: ObservableObject {
   init(
     state: PresentationRequestResultState,
     context: PresentationRequestContext,
-    router: PresentationRouterRoutes = Container.shared.presentationRouter())
+    router: PresentationInternalRoutes)
   {
     self.state = state
+    self.context = context
     self.router = router
-
-    verifierDisplay = getVerifierDisplayUseCase.execute(for: context.requestObject.clientMetadata, trustStatement: context.trustStatement)
   }
 
   // MARK: Internal
 
   let state: PresentationRequestResultState
-  var verifierDisplay: VerifierDisplay?
 
-  func close() {
-    router.close()
+  var verifierDisplay: VerifierDisplay {
+    context.getVerifierDisplay(considering: preferredUserLanguageCodes)
+  }
+
+  func finish() async {
+    await router.delegate?.finish(with: state)
   }
 
   func retry() {
-    router.pop()
+    router.delegate?.retry()
   }
 
   // MARK: Private
 
-  private let router: PresentationRouterRoutes
-  @Injected(\.getVerifierDisplayUseCase) private var getVerifierDisplayUseCase: GetVerifierDisplayUseCaseProtocol
+  private let router: PresentationInternalRoutes
+  private let context: PresentationRequestContext
+  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 
 }

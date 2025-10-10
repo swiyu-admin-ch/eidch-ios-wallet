@@ -143,7 +143,7 @@ final class CredentialClaimViewModelTests: XCTestCase {
   func testValueLabel_numericValue_formatsLocalizedSeparators() {
     let expectedForLanguage = [
       (language: "de-CH", input: "123456.7", expected: "123’456.7"),
-      (language: "fr-CH", input: "123456.7", expected: "123 456,7"),
+      (language: "fr-CH", input: "123456.7", expected: "123’456.7"),
       (language: "it-CH", input: "123456.7", expected: "123’456.7"),
       (language: "rm-CH", input: "123456.7", expected: "123’456.7"),
       (language: "en-US", input: "123456.7", expected: "123,456.7"),

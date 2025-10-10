@@ -37,6 +37,10 @@ public struct MockAnyCredential: AnyCredential {
     nil
   }
 
+  public var vcSchemaId: String {
+    "vcSchemaId"
+  }
+
   public func getClaimsDictionary(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> [String: Any?] {
     [:]
   }

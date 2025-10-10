@@ -24,7 +24,7 @@ public struct PresentationRequestBody: Codable, Equatable {
       let encoder = JSONEncoder()
       encoder.keyEncodingStrategy = .convertToSnakeCase
 
-      var dictionary: [String: Any?] = [:]
+      var dictionary = [String: Any?]()
       dictionary["vp_token"] = vpToken
 
       guard let presentationSubmissionString = try String(data: encoder.encode(presentationSubmission), encoding: .utf8) else {

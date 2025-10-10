@@ -29,7 +29,7 @@ class ValidateAttestationsErrorViewModel: ObservableObject {
   var primaryText: String {
     switch error {
     case EIDRequestRepository.Error.insufficientKeyStorageResistance:
-      L10n.tkEidRequestClientAttestationNotSupportedTitle
+      L10n.tkEidRequestClientAttestationInsufficientKeyStorageTitle
     case DCError.serverUnavailable:
       L10n.tkEidRequestClientAttestationDeviceCheckTimeoutTitle
     case is DCError:
@@ -44,7 +44,7 @@ class ValidateAttestationsErrorViewModel: ObservableObject {
   var secondaryText: String {
     switch error {
     case EIDRequestRepository.Error.insufficientKeyStorageResistance:
-      L10n.tkEidRequestClientAttestationNotSupportedBody
+      L10n.tkEidRequestClientAttestationInsufficientKeyStorageBody
     case DCError.serverUnavailable:
       L10n.tkEidRequestClientAttestationDeviceCheckTimeoutBody
     case is DCError:

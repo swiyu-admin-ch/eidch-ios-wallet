@@ -2,6 +2,7 @@ import BITAVWrapper
 import BITEIDRequestShared
 import Factory
 import Foundation
+import Spyable
 
 @MainActor
 extension Container {
@@ -62,6 +63,14 @@ extension Container {
     self { LegalRepresentantConsentViewModel(router: $0, caseId: $1) }
   }
 
+  var legalRepresentantVerificationViewModel: ParameterFactory<String, LegalRepresentantVerificationViewModel> {
+    self { LegalRepresentantVerificationViewModel(caseId: $0) }
+  }
+
+  var eIDRequestErrorViewModel: ParameterFactory<(EIDRequestErrorDelegate, Error), EIDRequestErrorViewModel> {
+    self { EIDRequestErrorViewModel(delegate: $0, error: $1) }
+  }
+
   var legalRepresentantQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantQRCodeViewModel> {
     self { LegalRepresentantQRCodeViewModel(router: $0, caseId: $1) }
   }
@@ -108,6 +117,10 @@ extension Container {
     self { NFCScanViewModel(router: $0) }
   }
 
+  var submitEIDRequestFilesViewModel: ParameterFactory<EIDRequestInternalRoutes, SubmitEIDRequestFilesViewModel> {
+    self { SubmitEIDRequestFilesViewModel(router: $0) }
+  }
+
 }
 
 extension Container {
@@ -136,9 +149,18 @@ extension Container {
     self { false }
   }
 
-  public var sidUrl: Factory<URL> {
+  public var sidBaseUrl: Factory<URL> {
     self {
       guard let url = URL(string: "https://www.sid.admin.ch/sid-web/") else {
+        fatalError("No valid URL for SID url")
+      }
+      return url
+    }
+  }
+
+  public var avBaseUrl: Factory<URL> {
+    self {
+      guard let url = URL(string: "https://av.admin.ch/") else {
         fatalError("No valid URL for SID url")
       }
       return url
@@ -175,6 +197,14 @@ extension Container {
 
   // MARK: Internal
 
+  var submitEIDRequestFileUseCase: Factory<SubmitEIDRequestFileUseCaseProtocol> {
+    self { SubmitEIDRequestFileUseCase() }
+  }
+
+  var getEIDRequestCaseFilesUseCase: Factory<GetEIDRequestCaseFilesUseCaseProtocol> {
+    self { GetEIDRequestCaseFilesUseCase() }
+  }
+
   var fetchAttestationsUseCase: Factory<FetchAttestationsUseCaseProtocol> {
     self { FetchAttestationsUseCase() }
   }
@@ -194,7 +224,7 @@ extension Container {
   }
 
   var eIDRequestRouter: Factory<EIDRequestRouter> {
-    self { EIDRequestRouter() }
+    self { EIDRequestRouter() }.cached
   }
 
   var eIDRequestAfterOnboardingEnabledRepository: Factory<EIDRequestAfterOnboardingEnabledRepositoryProcotol> {
@@ -219,6 +249,10 @@ extension Container {
 
   var getLegalRepresentantVerificationQRCodeUseCase: Factory<GetLegalRepresentantVerificationQRCodeUseCaseProtocol> {
     self { GetLegalRepresentantVerificationQRCodeUseCase() }
+  }
+
+  var getLegalRepresentantPresentationRequestContextUseCase: Factory<GetLegalRepresentantPresentationRequestContextUseCaseProtocol> {
+    self { GetLegalRepresentantPresentationRequestContextUseCase() }
   }
 
   var validateAttestationsUseCase: Factory<ValidateAttestationsUseCaseProtocol> {
@@ -255,6 +289,10 @@ extension Container {
 
   var walletPairingDateFormatter: Factory<DateFormatter> {
     self { DateFormatter(format: "dd.MM.yyyy HH:mm") }
+  }
+
+  var legalRepresentantVerificationService: Factory<LegalRepresentantVerificationServiceProtocol> {
+    self { LegalRepresentantVerificationService() }
   }
 }
 

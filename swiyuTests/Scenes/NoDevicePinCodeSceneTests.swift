@@ -88,6 +88,6 @@ final class MockNoDevicePinRoutes: NoDevicePinCodeRouterRoutes {
   func pop() {}
   func popToRoot() {}
   func dismiss() {}
-  func pop(number: Int) {}
+  func pop(count: Int) {}
 
 }

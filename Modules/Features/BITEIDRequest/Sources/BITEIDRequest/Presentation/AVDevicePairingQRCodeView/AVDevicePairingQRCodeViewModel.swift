@@ -9,8 +9,7 @@ class AVDevicePairingQRCodeViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, delegate: DevicePairingDelegate? = nil)
-  {
+  init(router: EIDRequestInternalRoutes, delegate: DevicePairingDelegate? = nil) {
     self.router = router
     self.delegate = delegate
 
@@ -77,8 +76,7 @@ class AVDevicePairingQRCodeViewModel: ObservableObject {
 
 extension AVDevicePairingQRCodeViewModel: WalletPairingPollingDelegate {
 
-  func pollingManager(_ manager: any WalletPairingPollingProtocol, didUpdateState state: WalletPairingPollingManager.State)
-  {
+  func pollingManager(_ manager: any WalletPairingPollingProtocol, didUpdateState state: WalletPairingPollingManager.State) {
     switch state {
     case .state(let pollingState):
       switch pollingState {

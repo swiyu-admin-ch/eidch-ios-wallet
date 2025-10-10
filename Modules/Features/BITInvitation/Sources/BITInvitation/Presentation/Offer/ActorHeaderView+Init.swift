@@ -5,9 +5,9 @@ import Foundation
 
 extension ActorHeaderView {
 
-  init(issuer: CredentialIssuerDisplay?, trustStatus: TrustStatus) {
+  init(issuer: CredentialIssuerDisplay?, trustInformation: TrustInformation, topInset: CGFloat) {
     let name = issuer?.name ?? L10n.tkErrorNotregisteredTitle
-    self.init(name: name, trustStatus: trustStatus, imageData: issuer?.image)
+    self.init(name: name, trustInformation: trustInformation, imageData: issuer?.image, topInset: topInset)
   }
 
 }

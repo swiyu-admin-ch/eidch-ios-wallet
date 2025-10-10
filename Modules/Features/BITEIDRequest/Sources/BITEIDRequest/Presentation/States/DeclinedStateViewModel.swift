@@ -16,7 +16,7 @@ public class DeclinedStateViewModel: RequestCaseStateBaseViewModel {
   }
 
   func openFAQ() {
-    guard let url = URL(string: L10n.tkGetEidNotificationDeclinedFaqLink) else {
+    guard let url = URL(string: L10n.tkEidRequestNotificationDeclinedFaqLink) else {
       return
     }
 

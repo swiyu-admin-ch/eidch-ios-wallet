@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "verified_badge.pdf",
+      "filename" : "verified_badge.svg",
       "idiom" : "universal"
     },
     {
@@ -11,7 +11,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "verified_badge_dark.pdf",
+      "filename" : "verified_badge_dark.svg",
       "idiom" : "universal"
     }
   ],

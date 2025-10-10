@@ -46,7 +46,7 @@ extension QueueInformationView {
 
   private func main() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
-      Text(L10n.tkGetEidQueuingTitle)
+      Text(L10n.tkEidRequestQueuingTitle)
         .font(.custom.title)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(.leading)
@@ -55,7 +55,7 @@ extension QueueInformationView {
         .accessibilityIdentifier(AccessibilityIdentifier.primaryText.rawValue)
         .accessibilityAddTraits(.isHeader)
 
-      Text(L10n.tkGetEidQueuingBody)
+      Text(L10n.tkEidRequestQueuingBody)
         .font(.custom.body)
         .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
         .multilineTextAlignment(.leading)
@@ -63,7 +63,7 @@ extension QueueInformationView {
         .accessibilityIdentifier(AccessibilityIdentifier.secondaryText.rawValue)
 
       VStack {
-        Text(L10n.tkGetEidQueuingBody2Ios)
+        Text(L10n.tkEidRequestQueuingBody2Ios)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           .multilineTextAlignment(.leading)

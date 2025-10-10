@@ -22,7 +22,6 @@ final class ReceiveTests: UITestCase {
       .assertCredentialOfferWrongDataScreen()
       .tapClose()
       .assertCredentialOfferScreen()
-      .scrollToAccept()
       .tapAccept()
       .assertHomeScreen()
   }
@@ -65,19 +64,6 @@ final class ReceiveTests: UITestCase {
     }
     credentialOfferScreen
       .tapAccept()
-      .assertHomeScreen()
-  }
-
-  func testBottomButtons() {
-    HomeScreen.navigateToAfterLaunchingApp(app)
-      .tapScanForCredentialOffer()
-      .assertCredentialOfferScreen()
-      .scrollToBottomDecline()
-      .tapBottomDecline()
-      .assertConfirmDeclineDisplayed()
-      .tapCancelDecline()
-      .assertCredentialOfferScreen()
-      .tapBottomAccept()
       .assertHomeScreen()
   }
 }

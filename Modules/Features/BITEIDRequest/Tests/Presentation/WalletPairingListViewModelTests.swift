@@ -1,5 +1,6 @@
 import Factory
 import XCTest
+@testable import BITCredentialShared
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 @testable import BITL10n
@@ -30,10 +31,8 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.toastMessage)
     XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
     XCTAssertFalse(viewModel.isLimitReached)
-  }
-
-  func testPairDevice_currentDevice() async {
-    await viewModel.pairDevice(.current)
+    XCTAssertTrue(walletPairingPollingManager.delegate === viewModel)
+    XCTAssertFalse(viewModel.isBackButtonHidden)
   }
 
   func testPairDevice_otherDevice() async {
@@ -44,13 +43,15 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   @MainActor
   func testPairDevice_currentDevice_success() async {
+    setupSuccessfulStatusResponse()
+
     await viewModel.pairDevice(.current)
 
     XCTAssertEqual(pairWalletUseCase.executeForCallsCount, 1)
     XCTAssertEqual(pairWalletUseCase.executeForReceivedCaseId, caseId)
 
-    XCTAssertEqual(viewModel.isPrimaryButtonDisabled, false)
-    XCTAssertEqual(viewModel.currentDevicePairingState, .paired(walletPairingDateFormatter.string(from: Date())))
+    XCTAssertEqual(walletPairingPollingManager.startPollingForPairingIdReceivedArguments?.caseId, caseId)
+    XCTAssertEqual(walletPairingPollingManager.startPollingForPairingIdReceivedArguments?.pairingId, mockPairingId)
   }
 
   @MainActor
@@ -60,6 +61,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     await viewModel.pairDevice(.current)
 
     XCTAssertEqual(viewModel.currentDevicePairingState, .initial)
+    XCTAssertTrue(walletPairingPollingManager.resetCalled)
   }
 
   @MainActor
@@ -81,6 +83,7 @@ class WalletPairingListViewModelTests: XCTestCase {
   func testClose() {
     viewModel.close()
 
+    XCTAssertTrue(walletPairingPollingManager.stopPollingCalled)
     XCTAssertTrue(router.closeCalled)
   }
 
@@ -108,7 +111,8 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     XCTAssertTrue(fetchEIDRequestStatusUseCase.executeForCalled)
 
-    XCTAssertEqual(viewModel.pairedDevicesCounter, 2)
+    XCTAssertTrue(viewModel.isBackButtonHidden)
+    XCTAssertEqual(viewModel.pairedDevicesCounter, 1)
     XCTAssertTrue(viewModel.isLimitReached)
     XCTAssertFalse(viewModel.isPrimaryButtonDisabled)
   }
@@ -163,6 +167,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await waitForAsyncTask()
 
+    XCTAssertFalse(viewModel.isBackButtonHidden)
     XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
@@ -175,6 +180,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await waitForAsyncTask()
 
+    XCTAssertFalse(viewModel.isBackButtonHidden)
     XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
@@ -187,9 +193,36 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await waitForAsyncTask()
 
+    XCTAssertTrue(viewModel.isBackButtonHidden)
+    XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
+    XCTAssertFalse(viewModel.isLimitReached)
+    XCTAssertFalse(viewModel.isPrimaryButtonDisabled)
+  }
+
+  func testDidPairWallet_withOnePairedWalletAndNoDeferredCredential_enablesButton() async {
+    fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase.Mock.sampleAgentReview
+    setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 1, limitReached: false)
+
+    viewModel.didPairWallet()
+
+    await waitForAsyncTask()
+
+    XCTAssertTrue(viewModel.isBackButtonHidden)
     XCTAssertEqual(viewModel.pairedDevicesCounter, 1)
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertFalse(viewModel.isPrimaryButtonDisabled)
+  }
+
+  func testPollingManagerDidUpdateState_acceptedState_updateCurrentDevice() {
+    setupSuccessfulStatusResponse()
+
+    let pollingState = WalletPairingPollingManager.State.state(.accepted)
+
+    viewModel.pollingManager(walletPairingPollingManager, didUpdateState: pollingState)
+
+    XCTAssertEqual(walletPairingPollingManager.stopPollingCallsCount, 1)
+    XCTAssertEqual(viewModel.isPrimaryButtonDisabled, true)
+    XCTAssertEqual(viewModel.currentDevicePairingState, .paired(walletPairingDateFormatter.string(from: Date())))
   }
 
   // MARK: - Animation Tests
@@ -205,11 +238,12 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await waitForAsyncTask()
 
-    XCTAssertEqual(viewModel.pairedDevicesCounter, 2)
+    XCTAssertEqual(viewModel.pairedDevicesCounter, 1)
     XCTAssertTrue(viewModel.isLimitReached)
   }
 
   func testToastAndClearToast_sequence() async {
+    setupSuccessfulStatusResponse()
     setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 1, limitReached: false)
 
     viewModel.didPairWallet()
@@ -232,36 +266,49 @@ class WalletPairingListViewModelTests: XCTestCase {
   // MARK: Private
 
   private let caseId = "testCaseId"
+  private let mockPairingId = "testPairingId"
   private var router: MockEIDRequestRouter!
   private var viewModel: WalletPairingListViewModel!
   private var fetchEIDRequestStatusUseCase: FetchEIDRequestStatusUseCaseProtocolSpy!
+  private var fetchEIDRequestCaseUseCase: FetchEIDRequestCaseUseCaseProtocolSpy!
   private var pairWalletUseCase: PairWalletUseCaseProtocolSpy!
   private var walletPairingDateFormatter: DateFormatter!
+  private var walletPairingPollingManager: WalletPairingPollingProtocolSpy!
 
   private func registerMocks() {
     fetchEIDRequestStatusUseCase = FetchEIDRequestStatusUseCaseProtocolSpy()
+    fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
+    fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase(
+      id: "id",
+      rawMRZ: [],
+      documentNumber: "documentNumber",
+      lastName: "lastname",
+      firstName: "firstname",
+      deferredCredential: DeferredCredential.Mock.sample)
+
+    Container.shared.fetchEIDRequestCaseUseCase.register { self.fetchEIDRequestCaseUseCase }
     Container.shared.fetchEIDRequestStatusUseCase.register { self.fetchEIDRequestStatusUseCase }
 
     router = MockEIDRequestRouter()
     router.context.caseId = caseId
 
     pairWalletUseCase = PairWalletUseCaseProtocolSpy()
+    pairWalletUseCase.executeForReturnValue = mockPairingId
+
     walletPairingDateFormatter = DateFormatter(format: "dd.MM.yyyy HH:mm")
+    walletPairingPollingManager = WalletPairingPollingProtocolSpy()
 
     Container.shared.pairWalletUseCase.register { self.pairWalletUseCase }
     Container.shared.walletPairingDateFormatter.register { self.walletPairingDateFormatter }
+    Container.shared.walletPairingPollingManager.register { self.walletPairingPollingManager }
   }
 
   private func setupSuccessfulStatusResponse() {
     setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 2, limitReached: true)
   }
 
-  private func setupStatusResponse(
-    state: EIDRequestStatus.State,
-    pairedWalletCount: Int = 0,
-    limitReached: Bool = false)
-  {
-    var pairedWallets: [EIDRequestStatus.TargetWallet.PairedWallet] = []
+  private func setupStatusResponse(state: EIDRequestStatus.State, pairedWalletCount: Int = 0, limitReached: Bool = false) {
+    var pairedWallets = [EIDRequestStatus.TargetWallet.PairedWallet]()
     for _ in 0..<pairedWalletCount {
       pairedWallets.append(.init(pairedAt: Date()))
     }
@@ -274,7 +321,7 @@ class WalletPairingListViewModelTests: XCTestCase {
   private func waitForAsyncTask() async {
     // Wait for the async task in didPairWallet to complete
     await withCheckedContinuation { continuation in
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
         continuation.resume()
       }
     }

@@ -74,7 +74,7 @@ extension ModalOpeningStyle: OpeningStyle {
     close(viewController, nil)
   }
 
-  public func pop(_ viewController: UIViewController, number: Int) {
+  public func pop(_ viewController: UIViewController, count: Int) {
     close(viewController, nil)
   }
 

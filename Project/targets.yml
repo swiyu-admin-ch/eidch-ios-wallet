@@ -163,7 +163,6 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.dev
-          ENABLE_TESTABILITY: true
           SWIFT_ACTIVE_COMPILATION_CONDITIONS:
             - "DEBUG"
             - "DEV"
@@ -186,7 +185,6 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.ref
-          ENABLE_TESTABILITY: true
           SWIFT_ACTIVE_COMPILATION_CONDITIONS:
             - "DEBUG"
             - "REF"
@@ -209,7 +207,6 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abn
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.abn
-          ENABLE_TESTABILITY: true
           SWIFT_ACTIVE_COMPILATION_CONDITIONS:
             - "DEBUG"
             - "ABN"
@@ -227,12 +224,34 @@ targets:
           DYNATRACE_USER_OPT_IN: false
           PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu.abn
 
+        Abn Store (debug):
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-ABNSTORE
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abnstore
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.abnstore
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS:
+            - "DEBUG"
+            - "ABN"
+            - "ABNSTORE"
+          DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+          ENABLE_TESTABILITY: YES
+          GCC_DYNAMIC_NO_PIC: NO
+          GCC_OPTIMIZATION_LEVEL: 0
+          GCC_PREPROCESSOR_DEFINITIONS: $(inherited)
+          MTL_ENABLE_DEBUG_INFO: INCLUDE_SOURCE
+          ONLY_ACTIVE_ARCH: YES
+          SWIFT_OPTIMIZATION_LEVEL: -Onone
+          DYNATRACE_APP_ID: ${DYNATRACE_APP_ID_PROD}
+          DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_PROD}
+          DYNATRACE_DEBUG_LEVEL: "OFF"
+          DYNATRACE_USER_OPT_IN: false
+          PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu.abnstore
+
         Prod (debug):
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu
-          ENABLE_TESTABILITY: true
           SWIFT_ACTIVE_COMPILATION_CONDITIONS:
             - "DEBUG"
             - "PROD"
@@ -306,6 +325,26 @@ targets:
           DYNATRACE_DEBUG_LEVEL: "WARNING"
           DYNATRACE_USER_OPT_IN: true
           PXL_APP_ID: SZ3M2Z456W.ch.admin.bit.swiyu.abn
+
+        Abn Store (release):
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-ABNSTORE
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abnstore
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.abnstore
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS:
+            - "RELEASE"
+            - "ABN"
+            - "ABNSTORE"
+          DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+          ENABLE_NS_ASSERTIONS: NO
+          MTL_ENABLE_DEBUG_INFO: NO
+          SWIFT_COMPILATION_MODE: wholemodule
+          SWIFT_OPTIMIZATION_LEVEL: -O
+          DYNATRACE_APP_ID: ${DYNATRACE_APP_ID_ABN}
+          DYNATRACE_BEACON_URL: ${DYNATRACE_BEACON_URL_ABN}
+          DYNATRACE_DEBUG_LEVEL: "WARNING"
+          DYNATRACE_USER_OPT_IN: true
+          PXL_APP_ID: SZ3M2Z456W.ch.admin.bit.swiyu.abnstore
 
         Prod (release):
           PRODUCT_NAME: "swiyu"

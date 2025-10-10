@@ -62,7 +62,7 @@ struct RecordDocumentView: View {
       content: state.popupContent,
       contentColor: ThemingAssets.Label.primary.swiftUIColor,
       closeAction: viewModel.closeIntroductionPopup,
-      background: ThemingAssets.Background.secondary.swiftUIColor, closeButtonStyle: .bezeledLight)
+      background: ThemingAssets.Background.secondary.swiftUIColor, closeButtonStyle: .secondary)
       .padding(.horizontal, .x3)
       .padding(.vertical, .x2)
       .frame(maxWidth: 480)

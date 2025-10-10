@@ -1,4 +1,5 @@
 import BITCore
+import BITCredential
 import BITOpenID
 import BITPresentation
 
@@ -20,10 +21,10 @@ extension PresentationRequestContext {
 
   // MARK: Lifecycle
 
-  public convenience init(requestObject: RequestObject, compatibleCredentials: [CompatibleCredential], trustStatement: TrustStatement? = nil) {
+  public convenience init(requestObject: RequestObject, compatibleCredentials: [CompatibleCredential], trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected)) {
     self.init(requestObject: requestObject)
     let inputDescriptors = requestObject.presentationDefinition.inputDescriptors.map(\.id)
-    var requests: [InputDescriptorID: [CompatibleCredential]] = [:]
+    var requests = [InputDescriptorID: [CompatibleCredential]]()
     for inputDescriptorID in inputDescriptors {
       requests[inputDescriptorID] = compatibleCredentials
     }
@@ -31,7 +32,7 @@ extension PresentationRequestContext {
       selectedCredentials[descriptorId] = credential
     }
 
-    self.trustStatement = trustStatement
+    self.trustInformation = trustInformation
   }
 
   // MARK: Internal

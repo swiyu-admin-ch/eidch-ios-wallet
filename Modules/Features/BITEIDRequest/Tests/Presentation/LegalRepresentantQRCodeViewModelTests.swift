@@ -12,6 +12,7 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
 
   override func setUp() {
     router = MockEIDRequestRouter()
+    router.context.caseId = mockCaseId
     getLegalRepresentantVerificationQRCodeUseCase = GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
 

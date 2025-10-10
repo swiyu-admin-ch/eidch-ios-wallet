@@ -79,7 +79,7 @@ public struct AnimationSequence {
   // MARK: Private
 
   private static func generateRandomSteps(from config: AnimationConfiguration) -> [AnimationStep] {
-    var steps: [AnimationStep] = []
+    var steps = [AnimationStep]()
     var currentMinOffset = config.offsetRange.lowerBound
 
     for _ in 0..<config.stepCount {
@@ -113,7 +113,7 @@ extension AnimationSequence {
   )
 }
 
-// MARK: - Animation State Manager
+// MARK: - AnimationStateManager
 
 @MainActor
 class AnimationStateManager: ObservableObject {

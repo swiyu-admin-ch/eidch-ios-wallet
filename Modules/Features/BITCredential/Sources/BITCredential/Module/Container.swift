@@ -7,6 +7,14 @@ import SwiftUI
 
 extension Container {
 
+  // MARK: Public
+
+  public var trustInformationService: Factory<TrustInformationServiceProtocol> {
+    self { TrustInformationService() }
+  }
+
+  // MARK: Internal
+
   var holderBindingContextGenerator: Factory<HolderBindingContextGeneratorProtocol> {
     self { HolderBindingContextGenerator() }
   }
@@ -45,12 +53,12 @@ extension Container {
   }
 
   @MainActor
-  var credentialDetailViewModel: ParameterFactory<(Credential, CredentialDetailInternalRoutes), CredentialDetailViewModel> {
+  var credentialDetailViewModel: ParameterFactory<(VerifiableCredential, CredentialDetailInternalRoutes), CredentialDetailViewModel> {
     self { CredentialDetailViewModel($0, router: $1) }
   }
 
   @MainActor
-  var credentialDetailModule: ParameterFactory<Credential, CredentialDetailModule> {
+  var credentialDetailModule: ParameterFactory<VerifiableCredential, CredentialDetailModule> {
     self { CredentialDetailModule(credential: $0) }
   }
 
@@ -89,8 +97,8 @@ extension Container {
 
 extension Container {
 
-  public var databaseCredentialRepository: Factory<CredentialRepositoryProtocol> {
-    self { RealmCredentialRepository() }
+  public var verifiableCredentialRepository: Factory<VerifiableCredentialRepositoryProcotol> {
+    self { VerifiableCredentialRepository() }
   }
 
   public var deferredCredentialRepository: Factory<DeferredCredentialRepositoryProtocol> {

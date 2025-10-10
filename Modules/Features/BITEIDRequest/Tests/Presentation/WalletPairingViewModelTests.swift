@@ -92,6 +92,7 @@ final class WalletPairingViewModelTests: XCTestCase {
 
   // MARK: Private
 
+  private let mockPairingId = "mockPairingId"
   private var router: MockEIDRequestRouter!
   private var viewModel: WalletPairingViewModel!
   private var pairWalletUseCase: PairWalletUseCaseProtocolSpy!
@@ -99,6 +100,7 @@ final class WalletPairingViewModelTests: XCTestCase {
 
   private func registerMocks() {
     pairWalletUseCase = PairWalletUseCaseProtocolSpy()
+    pairWalletUseCase.executeForReturnValue = mockPairingId
     startOnlineSessionUseCase = StartOnlineSessionUseCaseProtocolSpy()
 
     Container.shared.pairWalletUseCase.register { self.pairWalletUseCase }

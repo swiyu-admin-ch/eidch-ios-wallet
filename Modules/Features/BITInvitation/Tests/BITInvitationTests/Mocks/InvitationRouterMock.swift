@@ -1,3 +1,4 @@
+import BITCredential
 import BITCredentialShared
 import BITInvitation
 import BITNavigation
@@ -19,17 +20,10 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
   var didCallPresentationResultState = false
   var didCallWrongData = false
   var didCallBetaId = false
+  var didCallStartPresentation = false
 
-  func compatibleCredentials(for inputDescriptorId: String, and context: PresentationRequestContext) throws {
-    didCallCompatibleCredentials = true
-  }
-
-  func presentationReview(with context: PresentationRequestContext) {
-    didCallPresentationReview = true
-  }
-
-  func presentationResultState(with state: BITPresentation.PresentationRequestResultState, context: BITPresentation.PresentationRequestContext) {
-    didCallPresentationResultState = true
+  func startPresentation(context: PresentationRequestContext, delegate: (any PresentationFinishDelegate)?) throws {
+    didCallStartPresentation = true
   }
 
   func externalSettings() {
@@ -44,7 +38,7 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
     didCallInvitation = true
   }
 
-  func credentialOffer(credential: Credential, trustStatement: TrustStatement?) {
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
     didCallCredentialOffer = true
   }
 

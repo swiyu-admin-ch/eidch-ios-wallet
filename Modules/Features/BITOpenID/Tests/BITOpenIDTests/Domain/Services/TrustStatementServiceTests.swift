@@ -20,101 +20,387 @@ final class TrustStatementServiceTests: XCTestCase {
     success()
   }
 
-  func testFetch_oneValidTrustStatement_returnsTrustStatement() async throws {
-    let trustStatement = try await service.fetch(for: subjectMock)
+  // MARK: fetchMetadata
 
-    XCTAssertEqual(trustStatement, trustStatementMock)
+  func testFetchMetadata_oneValidTrustStatement_returnsTrustStatement() async throws {
+    setupMetadataTrustStatement()
+
+    let trustStatement = try await service.fetchMetadata(for: subjectDidMock)
+
+    XCTAssertEqual(trustStatement, metadataTrustStatementMock)
   }
 
-  func testFetch_oneValidTrustStatement_argumentsPassed() async throws {
-    _ = try await service.fetch(for: subjectMock)
+  func testFetchMetadata_oneValidTrustStatement_argumentsPassed() async throws {
+    setupMetadataTrustStatement()
 
-    XCTAssertEqual(trustRegistryRepositorySpy.getTrustRegistryDomainForCallsCount, 1)
-    XCTAssertEqual(trustRegistryRepositorySpy.getTrustRegistryDomainForReceivedBaseRegistryDomain, Self.subjectDomain)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromForCallsCount, 1)
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromForReceivedArguments?.url.absoluteString, "https://\(Self.registryDomain)")
-    XCTAssertEqual(openIDRepositorySpy.fetchTrustStatementsFromForReceivedArguments?.subjectDid, subjectMock)
-    XCTAssertEqual(trustStatementValidatorSpy.validateForCallsCount, 1)
-    XCTAssertEqual(trustStatementValidatorSpy.validateForReceivedArguments?.trustStatement, trustStatementMock)
-    XCTAssertEqual(trustStatementValidatorSpy.validateForReceivedArguments?.subject, subjectMock)
+    _ = try await service.fetchMetadata(for: subjectDidMock)
+
+    XCTAssertEqual(mapperSpy.mapDidCallsCount, 1)
+    XCTAssertEqual(mapperSpy.mapDidReceivedDid, subjectDidMock)
+
+    XCTAssertEqual(repositorySpy.fetchMetadataTrustStatementsFromForCallsCount, 1)
+    XCTAssertEqual(repositorySpy.fetchMetadataTrustStatementsFromForReceivedArguments?.url, trustStatementUrlMock)
+    XCTAssertEqual(repositorySpy.fetchMetadataTrustStatementsFromForReceivedArguments?.subjectDid, subjectDidMock)
+
+    XCTAssertEqual(metadataValidatorSpy.validateForCallsCount, 1)
+    XCTAssertEqual(metadataValidatorSpy.validateForReceivedTrustStatement, metadataTrustStatementMock)
+    XCTAssertEqual(metadataValidatorSpy.validateForReceivedSubject, subjectDidMock)
   }
 
-  func testFetch_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
-    openIDRepositorySpy.fetchTrustStatementsFromForReturnValue = [
-      TrustStatementPayload.Mock.allFields,
-      TrustStatementPayload.Mock.allFields,
-      trustStatementMock,
+  func testFetchMetadata_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
+    setupMetadataTrustStatement()
+    repositorySpy.fetchMetadataTrustStatementsFromForReturnValue = [
+      MetadataTrustStatementPayload.Mock.invalidVct,
+      MetadataTrustStatementPayload.Mock.allFields,
+      metadataTrustStatementMock,
     ]
     var count = 0
-    trustStatementValidatorSpy.validateForClosure = { _, _ in
-      if count < 2 {
+    metadataValidatorSpy.validateForClosure = { _, _ in
+      if count < 1 {
         count += 1
         return false
       }
       return true
     }
 
-    let trustStatement = try await service.fetch(for: subjectMock)
+    let trustStatement = try await service.fetchMetadata(for: subjectDidMock)
 
-    XCTAssertEqual(trustStatementValidatorSpy.validateForCallsCount, 3)
-    XCTAssertEqual(trustStatement, trustStatementMock)
+    XCTAssertEqual(metadataValidatorSpy.validateForCallsCount, 2)
+    XCTAssertEqual(trustStatement, metadataTrustStatementMock)
   }
 
-  func testFetch_multipleTrustStatementsAreValid_returnsNil() async throws {
-    openIDRepositorySpy.fetchTrustStatementsFromForReturnValue = [
-      trustStatementMock,
-      trustStatementMock,
+  func testFetchMetadata_multipleTrustStatementsAreValid_throwsValidationError() async throws {
+    setupMetadataTrustStatement()
+    repositorySpy.fetchMetadataTrustStatementsFromForReturnValue = [
+      metadataTrustStatementMock,
+      metadataTrustStatementMock,
     ]
 
-    let trustStatement = try await service.fetch(for: subjectMock)
-
-    XCTAssertNil(trustStatement)
+    do {
+      _ = try await service.fetchMetadata(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
   }
 
-  func testFetch_noTrustStatements_returnsNil() async throws {
-    openIDRepositorySpy.fetchTrustStatementsFromForReturnValue = []
+  func testFetchMetadata_multipleTrustStatementsWithOtherVct_throwsValidationError() async throws {
+    setupMetadataTrustStatement()
+    repositorySpy.fetchMetadataTrustStatementsFromForReturnValue = [
+      MetadataTrustStatementPayload.Mock.invalidVct,
+      MetadataTrustStatementPayload.Mock.invalidVct,
+    ]
 
-    let trustStatement = try await service.fetch(for: subjectMock)
-
-    XCTAssertNil(trustStatement)
+    do {
+      _ = try await service.fetchMetadata(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
   }
 
-  func testFetch_invalidTrustStatement_returnsNil() async throws {
-    trustStatementValidatorSpy.validateForReturnValue = false
+  func testFetchMetadata_noTrustStatements_throwsValidationError() async throws {
+    setupMetadataTrustStatement()
+    repositorySpy.fetchMetadataTrustStatementsFromForReturnValue = []
 
-    let trustStatement = try await service.fetch(for: subjectMock)
-
-    XCTAssertNil(trustStatement)
+    do {
+      _ = try await service.fetchMetadata(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
   }
 
-  func testFetch_notMatchingBaseRegistryDomain_throwsError() async throws {
-    Container.shared.baseRegistryDomainPattern.register { #"^not_matching:([^:]+)$"# }
+  func testFetchMetadata_noTrustStatementFromTrustedDid_throwsValidationError() async throws {
+    setupMetadataTrustStatement()
+    Container.shared.trustRegistryTrustedDids.register { ["other"] }
     service = TrustStatementService()
 
     do {
-      _ = try await service.fetch(for: subjectMock)
+      _ = try await service.fetchMetadata(for: subjectDidMock)
       XCTFail("An error was expected")
     } catch {
-      XCTAssertEqual(error as? TrustStatementServiceError, .cannotParseTrustRegistryDomain)
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
     }
   }
 
-  func testFetch_trustRegistryRepositoryReturnsNil_throwsError() async throws {
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = nil
+  func testFetchMetadata_invalidTrustStatement_throwsValidationError() async throws {
+    setupMetadataTrustStatement()
+    metadataValidatorSpy.validateForReturnValue = false
 
     do {
-      _ = try await service.fetch(for: subjectMock)
+      _ = try await service.fetchMetadata(for: subjectDidMock)
       XCTFail("An error was expected")
     } catch {
-      XCTAssertEqual(error as? TrustStatementServiceError, .cannotParseTrustRegistryDomain)
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
     }
   }
 
-  func testFetch_openIDRepositoryThrows_throwsError() async throws {
-    openIDRepositorySpy.fetchTrustStatementsFromForThrowableError = TestingError.error
+  func testFetchMetadata_trustStatementRepositoryThrows_throwsError() async throws {
+    setupMetadataTrustStatement()
+    repositorySpy.fetchMetadataTrustStatementsFromForThrowableError = TestingError.error
 
     do {
-      _ = try await service.fetch(for: subjectMock)
+      _ = try await service.fetchMetadata(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  // MARK: fetchIdentity
+
+  func testFetchIdentity_oneValidTrustStatement_returnsTrustStatement() async throws {
+    let trustStatement = try await service.fetchIdentity(for: subjectDidMock)
+
+    XCTAssertEqual(trustStatement, identityTrustStatementMock)
+  }
+
+  func testFetchIdentity_oneValidTrustStatement_argumentsPassed() async throws {
+    _ = try await service.fetchIdentity(for: subjectDidMock)
+
+    XCTAssertEqual(mapperSpy.mapDidCallsCount, 1)
+    XCTAssertEqual(mapperSpy.mapDidReceivedDid, subjectDidMock)
+
+    XCTAssertEqual(repositorySpy.fetchIdentityTrustStatementsFromForCallsCount, 1)
+    XCTAssertEqual(repositorySpy.fetchIdentityTrustStatementsFromForReceivedArguments?.url, trustStatementUrlMock)
+    XCTAssertEqual(repositorySpy.fetchIdentityTrustStatementsFromForReceivedArguments?.subjectDid, subjectDidMock)
+
+    XCTAssertEqual(identityValidatorSpy.validateForCallsCount, 1)
+    XCTAssertEqual(identityValidatorSpy.validateForReceivedTrustStatement, identityTrustStatementMock)
+    XCTAssertEqual(identityValidatorSpy.validateForReceivedSubject, subjectDidMock)
+  }
+
+  func testFetchIdentity_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
+    repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [
+      IdentityTrustStatementPayload.Mock.invalidVct,
+      IdentityTrustStatementPayload.Mock.allFields,
+      identityTrustStatementMock,
+    ]
+    var count = 0
+    identityValidatorSpy.validateForClosure = { _, _ in
+      if count < 1 {
+        count += 1
+        return false
+      }
+      return true
+    }
+
+    let trustStatement = try await service.fetchIdentity(for: subjectDidMock)
+
+    XCTAssertEqual(identityValidatorSpy.validateForCallsCount, 2)
+    XCTAssertEqual(trustStatement, identityTrustStatementMock)
+  }
+
+  func testFetchIdentity_multipleTrustStatementsAreValid_throwsValidationError() async throws {
+    repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [
+      identityTrustStatementMock,
+      identityTrustStatementMock,
+    ]
+
+    do {
+      _ = try await service.fetchIdentity(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchIdentity_multipleTrustStatementsWithOtherVct_throwsValidationError() async throws {
+    repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [
+      IdentityTrustStatementPayload.Mock.invalidVct,
+      IdentityTrustStatementPayload.Mock.invalidVct,
+    ]
+
+    do {
+      _ = try await service.fetchIdentity(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchIdentity_noTrustStatements_throwsValidationError() async throws {
+    repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = []
+
+    do {
+      _ = try await service.fetchIdentity(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchIdentity_noTrustStatementFromTrustedDid_throwsValidationError() async throws {
+    Container.shared.trustRegistryTrustedDids.register { ["other"] }
+    service = TrustStatementService()
+
+    do {
+      _ = try await service.fetchIdentity(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchIdentity_invalidTrustStatement_throwsValidationError() async throws {
+    identityValidatorSpy.validateForReturnValue = false
+
+    do {
+      _ = try await service.fetchIdentity(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchIdentity_trustStatementRepositoryThrows_throwsError() async throws {
+    repositorySpy.fetchIdentityTrustStatementsFromForThrowableError = TestingError.error
+
+    do {
+      _ = try await service.fetchIdentity(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  // MARK: fetchVcSchema
+
+  func testFetchVcSchema_oneValidTrustStatement_returnsTrustStatement() async throws {
+    setupVcSchemaTrustStatement()
+
+    let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertEqual(trustStatement, vcSchemaTrustStatementMock)
+  }
+
+  func testFetchVcSchema_oneValidTrustStatement_argumentsPassed() async throws {
+    setupVcSchemaTrustStatement()
+
+    _ = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertEqual(mapperSpy.mapDidCallsCount, 1)
+    XCTAssertEqual(mapperSpy.mapDidReceivedDid, subjectDidMock)
+
+    XCTAssertEqual(repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdCallsCount, 1)
+    XCTAssertEqual(repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReceivedArguments?.url, trustStatementUrlMock)
+    XCTAssertEqual(repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReceivedArguments?.subjectDid, subjectDidMock)
+    XCTAssertEqual(repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReceivedArguments?.type, vcSchemaTypeMock)
+    XCTAssertEqual(repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReceivedArguments?.vcSchemaId, vcSchemaIdMock)
+
+    XCTAssertEqual(vcSchemaValidatorSpy.validateForCallsCount, 1)
+    XCTAssertEqual(vcSchemaValidatorSpy.validateForReceivedTrustStatement, vcSchemaTrustStatementMock)
+    XCTAssertEqual(vcSchemaValidatorSpy.validateForReceivedSubject, subjectDidMock)
+  }
+
+  func testFetchVcSchema_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
+    setupVcSchemaTrustStatement()
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReturnValue = [
+      VcSchemaTrustStatementPayload.Mock.invalidVct,
+      VcSchemaTrustStatementPayload.Mock.validOtherSample,
+      vcSchemaTrustStatementMock,
+    ]
+    var count = 0
+    vcSchemaValidatorSpy.validateForClosure = { _, _ in
+      if count < 1 {
+        count += 1
+        return false
+      }
+      return true
+    }
+
+    let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertEqual(vcSchemaValidatorSpy.validateForCallsCount, 2)
+    XCTAssertEqual(trustStatement, vcSchemaTrustStatementMock)
+  }
+
+  func testFetchVcSchema_multipleTrustStatementsAreValid_throwsValidationError() async throws {
+    setupVcSchemaTrustStatement()
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReturnValue = [
+      vcSchemaTrustStatementMock,
+      vcSchemaTrustStatementMock,
+    ]
+
+    do {
+      _ = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchVcSchema_multipleTrustStatementsWithOtherVct_returnsNil() async throws {
+    setupVcSchemaTrustStatement()
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReturnValue = [
+      VcSchemaTrustStatementPayload.Mock.invalidVct,
+      VcSchemaTrustStatementPayload.Mock.invalidVct,
+    ]
+
+    let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertNil(trustStatement)
+  }
+
+  func testFetchVcSchema_verificationTrustStatementWithOtherVct_returnsNil() async throws {
+    setupVcSchemaTrustStatement()
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReturnValue = [
+      VcSchemaTrustStatementPayload.Mock.invalidVct,
+    ]
+
+    let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: .verification, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertNil(trustStatement)
+  }
+
+  func testFetchVcSchema_noTrustStatements_returnsNil() async throws {
+    setupVcSchemaTrustStatement()
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReturnValue = []
+
+    let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertNil(trustStatement)
+  }
+
+  func testFetchVcSchema_noTrustStatementFromTrustedDid_returnsNil() async throws {
+    setupVcSchemaTrustStatement()
+    Container.shared.trustRegistryTrustedDids.register { ["other"] }
+    service = TrustStatementService()
+
+    let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertNil(trustStatement)
+  }
+
+  func testFetchVcSchema_invalidTrustStatement_throwsValidationError() async throws {
+    setupVcSchemaTrustStatement()
+    vcSchemaValidatorSpy.validateForReturnValue = false
+
+    do {
+      _ = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchVcSchema_invalidVcSchemaId_throwsValidationError() async throws {
+    setupVcSchemaTrustStatement()
+    do {
+      _ = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: "invalid")
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TrustStatementServiceError, .validationFailed)
+    }
+  }
+
+  func testFetchVcSchema_trustStatementRepositoryThrows_throwsError() async throws {
+    setupVcSchemaTrustStatement()
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdThrowableError = TestingError.error
+
+    do {
+      _ = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -123,34 +409,57 @@ final class TrustStatementServiceTests: XCTestCase {
 
   // MARK: Private
 
-  private static let registryDomain = "registry.ch"
-  private static let subjectDomain = "subject.ch"
+  private let trustStatementUrlMock = URL(string: "https://example.com")
+  private let trustedDids: [String] = ["did:tdw:another-example", "issuer"]
+  private var subjectDidMock = "subjectDid"
+  private var vcSchemaTypeMock = VcSchemaTrustStatementType.issuance
+  private var vcSchemaIdMock = "vcSchemaId"
+  private let metadataTrustStatementMock = MetadataTrustStatementPayload.Mock.validSample
+  private let identityTrustStatementMock = IdentityTrustStatementPayload.Mock.validSample
+  private let vcSchemaTrustStatementMock = VcSchemaTrustStatementPayload.Mock.validSample
 
-  private var subjectMock = "did:tdw:\(subjectDomain)"
-  private let trustStatementMock = TrustStatementPayload.Mock.validSample
-
-  private var trustRegistryRepositorySpy: TrustRegistryRepositoryProtocolSpy!
-  private var openIDRepositorySpy: OpenIDRepositoryProtocolSpy!
-  private var trustStatementValidatorSpy: TrustStatementValidatorProtocolSpy!
+  private var mapperSpy: TrustStatementUrlMapperProtocolSpy!
+  private var repositorySpy: TrustStatementRepositoryProtocolSpy!
+  private var metadataValidatorSpy: TrustStatementValidatorProtocolSpy<MetadataTrustStatementPayload>!
+  private var identityValidatorSpy: TrustStatementValidatorProtocolSpy<IdentityTrustStatementPayload>!
+  private var vcSchemaValidatorSpy: TrustStatementValidatorProtocolSpy<VcSchemaTrustStatementPayload>!
 
   private var service: TrustStatementService!
 
   private func registerMocks() {
-    trustRegistryRepositorySpy = TrustRegistryRepositoryProtocolSpy()
-    openIDRepositorySpy = OpenIDRepositoryProtocolSpy()
-    trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy()
+    mapperSpy = TrustStatementUrlMapperProtocolSpy()
+    repositorySpy = TrustStatementRepositoryProtocolSpy()
+    identityValidatorSpy = TrustStatementValidatorProtocolSpy()
 
-    Container.shared.trustRegistryRepository.register { self.trustRegistryRepositorySpy }
-    Container.shared.openIDRepository.register { self.openIDRepositorySpy }
-    Container.shared.trustStatementValidator.register { self.trustStatementValidatorSpy }
-    Container.shared.baseRegistryDomainPattern.register { #"^did:tdw:([^:]+)$"# }
+    Container.shared.trustStatementUrlMapper.register { self.mapperSpy }
+    Container.shared.trustStatementRepository.register { self.repositorySpy }
+    Container.shared.trustStatementValidator.register { self.identityValidatorSpy }
+    Container.shared.trustRegistryTrustedDids.register { self.trustedDids }
   }
 
   private func success() {
-    trustRegistryRepositorySpy.getTrustRegistryDomainForReturnValue = Self.registryDomain
-    openIDRepositorySpy.fetchTrustStatementsFromForReturnValue = [trustStatementMock]
-    trustStatementValidatorSpy.validateForReturnValue = true
+    mapperSpy.mapDidReturnValue = trustStatementUrlMock
+    repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [identityTrustStatementMock]
+    identityValidatorSpy.validateForReturnValue = true
   }
 
-  // swiftlint:enable all
+  private func setupMetadataTrustStatement() {
+    metadataValidatorSpy = TrustStatementValidatorProtocolSpy()
+    Container.shared.trustStatementValidator.register { self.metadataValidatorSpy }
+
+    service = TrustStatementService()
+
+    repositorySpy.fetchMetadataTrustStatementsFromForReturnValue = [metadataTrustStatementMock]
+    metadataValidatorSpy.validateForReturnValue = true
+  }
+
+  private func setupVcSchemaTrustStatement() {
+    vcSchemaValidatorSpy = TrustStatementValidatorProtocolSpy()
+    Container.shared.trustStatementValidator.register { self.vcSchemaValidatorSpy }
+
+    service = TrustStatementService()
+
+    repositorySpy.fetchVcSchemaTrustStatementsFromForTypeVcSchemaIdReturnValue = [vcSchemaTrustStatementMock]
+    vcSchemaValidatorSpy.validateForReturnValue = true
+  }
 }

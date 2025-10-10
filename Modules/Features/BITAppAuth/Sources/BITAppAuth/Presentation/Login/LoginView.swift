@@ -146,7 +146,7 @@ extension LoginView {
   private func lockedViewFooter() -> some View {
     if viewModel.isBiometricAuthenticationAvailable {
       biometricButton()
-        .buttonStyle(.filledPrimary)
+        .buttonStyle(.primary)
         .accessibilitySortPriority(800)
         .controlSize(.large)
     }
@@ -156,7 +156,7 @@ extension LoginView {
     } label: {
       Text(L10n.tkLoginLockedSecondarybuttonText)
     }
-    .buttonStyle(.bezeledLightReversed)
+    .buttonStyle(.secondaryReversed)
     .controlSize(.large)
     .accessibilitySortPriority(700)
     .accessibilityFocused($focus, equals: .helpButton)
@@ -227,7 +227,7 @@ extension LoginView {
 
         if viewModel.isBiometricAuthenticationAvailable {
           biometricButton()
-            .buttonStyle(.bezeledLightReversed)
+            .buttonStyle(.secondaryReversed)
         }
       }
 
@@ -266,7 +266,7 @@ extension LoginView {
     HStack {
       if viewModel.isBiometricAuthenticationAvailable {
         biometricButton()
-          .buttonStyle(.bezeledLightReversed)
+          .buttonStyle(.secondaryReversed)
           .accessibilitySortPriority(500)
       }
 
@@ -353,7 +353,7 @@ extension LoginView {
       Text(L10n.tkGlobalLoginPrimarybutton)
     }
     .environment(\.colorScheme, .light)
-    .buttonStyle(.filledPrimary)
+    .buttonStyle(.primary)
     .controlSize(.large)
     .accessibilityFocused($focus, equals: .loginButton)
     .accessibilityIdentifier(AccessibilityIdentifier.loginButton.rawValue)

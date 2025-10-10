@@ -8,16 +8,15 @@ import RealmSwift
 
 extension Container: AutoRegistering {
   public func autoRegister() {
-    baseRegistryDomainPattern.register { #"^did:tdw:(.+)"# }
     pepperKeyVaultOptions.register { .none }
     delayAfterAcceptingCredential.register { 0 }
     loadingDelay.register { 0 }
 
     openIDRepository.register { MockOpenIDRepository() }
+    trustStatementRepository.register { MockTrustStatementRepository() }
     ocaRepository.register { MockOCARepository() }
 
     versionEnforcementRepository.register { MockVersionEnforcementRepository() }
-    trustRegistryRepository.register { MockTrustRegistryRepository() }
 
     updateAnalyticsStatusUseCase.register { MockUpdateAnalyticStatusUseCase() }
     registerPinCodeUseCase.register { MockRegisterPinCodeUseCase() }

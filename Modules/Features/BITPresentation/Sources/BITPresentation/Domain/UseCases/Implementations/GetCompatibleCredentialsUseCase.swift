@@ -1,9 +1,16 @@
 import BITAnyCredentialFormat
-import BITCore
 import BITCredential
 import BITCredentialShared
 import BITOpenID
 import Factory
+import Spyable
+
+// MARK: - GetCompatibleCredentialsUseCaseProtocol
+
+@Spyable
+public protocol GetCompatibleCredentialsUseCaseProtocol {
+  func execute(using requestObject: RequestObject) async throws -> [InputDescriptorID: [CompatibleCredential]]
+}
 
 // MARK: - CompatibleCredentialsError
 
@@ -30,7 +37,7 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
           }
         }
 
-        var requests: [String: [CompatibleCredential]] = [:]
+        var requests = [String: [CompatibleCredential]]()
         for try await (inputDescriptorId, compatibleCredentials) in group {
           requests[inputDescriptorId] = compatibleCredentials
         }
@@ -50,23 +57,23 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
 
   // MARK: Private
 
-  @Injected(\.databaseCredentialRepository) private var repository: CredentialRepositoryProtocol
+  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
   @Injected(\.presentationFieldsValidator) private var presentationFieldsValidator: PresentationFieldsValidatorProtocol
 
   private func execute(inputDescriptor: InputDescriptor) async throws -> [CompatibleCredential] {
-    let credentials = try await repository.getAll()
+    let credentials = try await verifiableCredentialRepository.getAll()
     if credentials.isEmpty {
       throw CompatibleCredentialsError.emptyWallet
     }
-    let compatibleCredentials = try filter(credentials: credentials, withInputDescriptor: inputDescriptor)
+    let compatibleCredentials = filter(credentials: credentials, withInputDescriptor: inputDescriptor)
     if compatibleCredentials.isEmpty {
       throw CompatibleCredentialsError.compatibleCredentialNotFound
     }
     return compatibleCredentials
   }
 
-  private func filter(credentials: [Credential], withInputDescriptor inputDescriptor: InputDescriptor) throws -> [CompatibleCredential] {
+  private func filter(credentials: [VerifiableCredential], withInputDescriptor inputDescriptor: InputDescriptor) -> [CompatibleCredential] {
     credentials.compactMap { credential in
       do {
         guard credential.validate(withFormats: inputDescriptor.formats) else { return nil }
@@ -79,10 +86,9 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
       }
     }
   }
-
 }
 
-extension Credential {
+extension VerifiableCredential {
 
   fileprivate func validate(withFormats formats: [Format]) -> Bool {
     let matchingFormats = formats.filter { $0.label == self.format }

@@ -15,8 +15,8 @@ struct AgentReviewCell: View {
       image()
 
       content(
-        title: L10n.tkGetEidNotificationAgentReviewPrimary(viewModel.fullName),
-        content: L10n.tkGetEidNotificationAgentReviewSecondary)
+        title: L10n.tkEidRequestNotificationAgentReviewPrimary(viewModel.fullName),
+        content: L10n.tkEidRequestNotificationAgentReviewSecondary)
     }
   }
 

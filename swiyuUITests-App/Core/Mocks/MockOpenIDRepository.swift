@@ -35,15 +35,11 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
   }
 
   func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult {
-    .deferred(transactionId: "transactionId", accessToken: "accessToken", endpoint: "endpoint")
+    try .credential(VcSdJwtPayload.Mock.validSample())
   }
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
     try TokenStatusList.Mock.credentialStatusSample()
-  }
-
-  func fetchTrustStatements(from url: URL, for subjectDid: String) async throws -> [TrustStatement] {
-    try TrustStatement.Mock.trustStatementValidSample()
   }
 
 }
@@ -75,11 +71,14 @@ extension AccessToken {
   }
 }
 
-// MARK: - CredentialResponse.Mock
+// MARK: - VcSdJwtPayload.Mock
 
-extension CredentialResponse {
+extension VcSdJwtPayload {
   struct Mock {
-    static let sample: CredentialResponse = Mocker.decode(fromFile: "credential-response-ui-mocks")
+    static func validSample() throws -> VcSdJwt {
+      let data = Mocker.getData(fromFile: "vc-sd-jwt-credential-ui-mocks", ofType: "txt") ?? Data()
+      return try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(VcSdJwtPayload.self, from: data)
+    }
   }
 }
 
@@ -109,22 +108,10 @@ extension TokenStatusList {
   }
 }
 
-// MARK: - TrustStatement.Mock
+// MARK: - VerifiableCredential.Mock
 
-extension TrustStatement {
-  struct Mock {
-    static func trustStatementValidSample() throws -> [TrustStatement] {
-      let trustStatementData: Data = Mocker.getData(fromFile: "jwt-trust-statement-valid-ui-mocks", ofType: "txt") ?? Data()
-      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(TrustStatementPayload.self, from: trustStatementData)
-      return [trustStatement]
-    }
-  }
-}
-
-// MARK: - Credential.Mock
-
-extension Credential {
+extension VerifiableCredential {
   enum Mock {
-    static let sampleVC: Credential = Mocker.decode(fromFile: "credential-database-sample")
+    static let sampleVC: VerifiableCredential = Mocker.decode(fromFile: "credential-database-sample")
   }
 }

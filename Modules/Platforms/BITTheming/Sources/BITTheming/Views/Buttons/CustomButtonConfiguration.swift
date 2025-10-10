@@ -33,25 +33,31 @@ public struct CustomButtonConfiguration {
 }
 
 extension CustomButtonConfiguration {
-  public static var basic = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Label.primary.swiftUIColor,
-    backgroundColor: .clear,
-    backgroundColorDisabled: .clear,
-    progressViewTint: ThemingAssets.Label.primary.swiftUIColor)
+  public static var primary = CustomButtonConfiguration(
+    foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
+    backgroundColor: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
+    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
+    progressViewTint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
 
-  public static var bezeledLight = CustomButtonConfiguration(
+  public static var secondary = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Label.primary.swiftUIColor,
-    backgroundColor: ThemingAssets.Fills.tertiary.swiftUIColor,
+    backgroundColor: ThemingAssets.Background.Button.secondary.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.accentColor.swiftUIColor)
 
-  public static var bezeledLightReversed = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
+  public static var secondaryReversed = CustomButtonConfiguration(
+    foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
+    foregroundColorDisabled: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
     backgroundColor: ThemingAssets.Grays.white.swiftUIColor,
-    backgroundColorDisabled: ThemingAssets.Grays.white.swiftUIColor,
     progressViewTint: ThemingAssets.Label.primary.swiftUIColor)
 
-  public static var bezeledLightDestructive = CustomButtonConfiguration(
+  public static var tertiary = CustomButtonConfiguration(
+    foregroundColor: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor,
+    backgroundColor: ThemingAssets.Brand.Core.firGreen.swiftUIColor,
+    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
+    progressViewTint: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
+
+  public static var destructive = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor.opacity(0.2),
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
@@ -62,24 +68,6 @@ extension CustomButtonConfiguration {
     backgroundColor: ThemingAssets.Brand.Shades.navyBlue70.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
-
-  public static var filledPrimary = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
-    backgroundColor: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
-    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
-    progressViewTint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
-
-  public static var filledSecondary = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor,
-    backgroundColor: ThemingAssets.Brand.Core.firGreen.swiftUIColor,
-    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
-    progressViewTint: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
-
-  public static var filledDestructive = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Brand.Core.white.swiftUIColor,
-    backgroundColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor,
-    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
-    progressViewTint: ThemingAssets.Brand.Core.white.swiftUIColor)
 
   public static var firGreen = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.firGreen.swiftUIColor,
@@ -92,12 +80,4 @@ extension CustomButtonConfiguration {
     backgroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
-
-  public static var material = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Brand.Core.white.swiftUIColor,
-    foregroundColorDisabled: ThemingAssets.Label.secondary.swiftUIColor.opacity(0.6),
-    backgroundColor: ThemingAssets.Fills.tertiary.swiftUIColor,
-    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor.opacity(0.3),
-    progressViewTint: ThemingAssets.Brand.Core.white.swiftUIColor,
-    isMaterialEnabled: true)
 }

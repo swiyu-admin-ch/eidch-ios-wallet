@@ -19,64 +19,43 @@ final class GetLegalRepresentantVerificationQRCodeUseCaseTests: XCTestCase {
   }
 
   func testExecute_happyPath_parameters() async throws {
-    let result = try await useCase.execute(for: mockCaseId)
+    let result = try await useCase.execute(for: caseIdMock)
 
-    XCTAssertEqual(result.shareLink, mockLegalRepresentantVerification.verifierLink)
-    XCTAssertEqual(repository.fetchLegalRepresentantVerificationForReceivedRequestCaseId, mockCaseId)
-    XCTAssertEqual(qrCodeGenerator.generateFromCorrectionLevelScaleReceivedArguments?.input, mockLegalRepresentantVerification.requestUrl.absoluteString)
+    XCTAssertEqual(result.imageData, qrCodeMock)
+    XCTAssertEqual(result.shareLink, verifierLinkMock)
+    XCTAssertEqual(verificationService.getQRCodeForReceivedCaseId, caseIdMock)
+    XCTAssertEqual(verificationService.getQRCodeForCallsCount, 1)
   }
 
-  func testExecute_happyPath_callCount() async throws {
-    let result = try await useCase.execute(for: mockCaseId)
-
-    XCTAssertEqual(result.shareLink, mockLegalRepresentantVerification.verifierLink)
-    XCTAssertEqual(repository.fetchLegalRepresentantVerificationForCallsCount, 1)
-    XCTAssertEqual(qrCodeGenerator.generateFromCorrectionLevelScaleCallsCount, 1)
-  }
-
-  func testExecute_repositoryFailure_expectError() async throws {
-    repository.fetchLegalRepresentantVerificationForThrowableError = TestingError.error
+  func testExecute_serviceFailure_expectError() async throws {
+    verificationService.getQRCodeForThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(for: mockCaseId)
+      _ = try await useCase.execute(for: caseIdMock)
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
-  func testExecute_qrCodeGenerationReturnsNil_expectError() async throws {
-    qrCodeGenerator.generateFromCorrectionLevelScaleReturnValue = nil
-
-    do {
-      _ = try await useCase.execute(for: mockCaseId)
-    } catch {
-      XCTAssertEqual(error as? GetLegalRepresentantVerificationQRCodeUseCaseError, .failedToGenerateQRCode)
-    }
-  }
-
   // MARK: Private
 
-  private let mockCaseId = "caseId"
-  private let mockLegalRepresentantVerification = LegalRepresentantVerificationResponse.Mock.sample
+  private let caseIdMock = "caseId"
+  private let qrCodeMock = "qrCodeMock".data(using: .utf8)!
+  private let requestURLMock = URL(string: "https://example.com")!
+  private let verifierLinkMock = URL(string: "https://example.com")!
 
   private var useCase: GetLegalRepresentantVerificationQRCodeUseCase!
 
-  private var qrCodeGenerator: QRCodeGeneratorProtocolSpy!
-  private var repository: EIDRequestRepositoryProtocolSpy!
+  private var verificationService: LegalRepresentantVerificationServiceProtocolSpy!
 
   private func setupSuccessState() {
-    repository.fetchLegalRepresentantVerificationForReturnValue = mockLegalRepresentantVerification
-    qrCodeGenerator.generateFromCorrectionLevelScaleReturnValue = Data()
+    verificationService.getQRCodeForReturnValue = (qrCodeMock, verifierLinkMock)
   }
 
   private func registerMocks() {
-    repository = EIDRequestRepositoryProtocolSpy()
-    qrCodeGenerator = QRCodeGeneratorProtocolSpy()
+    verificationService = LegalRepresentantVerificationServiceProtocolSpy()
 
-    Container.shared.eIDRequestRepository.register { self.repository }
-    Container.shared.qrCodeGenerator.register { self.qrCodeGenerator }
+    Container.shared.legalRepresentantVerificationService.register { self.verificationService }
   }
 
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

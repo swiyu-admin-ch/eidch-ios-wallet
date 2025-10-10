@@ -159,7 +159,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     return createAnyCredential(claims: [captureBase1Claim1, captureBase2Claim1, captureBase3Claim1])
   }
 
-  private func assertBasicCredential(_ credential: Credential) {
+  private func assertBasicCredential(_ credential: VerifiableCredential) {
     XCTAssertEqual(credential.id, idMock)
     XCTAssertEqual(credential.status, .unknown)
     XCTAssertEqual(credential.keyBinding, keyBindingMock)
@@ -170,7 +170,6 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
     XCTAssertNotNil(credential.createdAt)
-    XCTAssertNil(credential.updatedAt)
     XCTAssertEqual(credential.issuerDisplays, issuerDisplaysMock)
   }
 

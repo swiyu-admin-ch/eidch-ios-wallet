@@ -87,6 +87,6 @@ final class MockOnboardingInternalRoutes: OnboardingInternalRoutes {
   }
 
   func popToRoot() {}
-  func pop(number: Int) {}
+  func pop(count: Int) {}
   func close(onComplete: (() -> Void)?) {}
 }

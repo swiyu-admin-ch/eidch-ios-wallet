@@ -2,27 +2,26 @@ import Foundation
 @testable import BITNavigationTestCore
 @testable import BITPresentation
 
-class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes {
+// MARK: - MockPresentationRouter
 
-  var didCallPresentationRequest = false
+final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes, PresentationInternalRoutes {
+
+  weak var delegate: PresentationFinishDelegate?
+
   var didCallCompatibleCredentials = false
-  var didCallNextCompatibleCredentials = false
   var didCallPresentationReview = false
   var calledPresentationResultState: PresentationRequestResultState?
+  var startPresentationContext: PresentationRequestContext?
 
-  func presentationRequest(using context: BITPresentation.PresentationRequestContext) throws {
-    didCallPresentationRequest = true
+  func startPresentation(context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws {
+    startPresentationContext = context
   }
 
-  func compatibleCredentials(for inputDescriptorId: String, and context: PresentationRequestContext) throws {
+  func compatibleCredentials(for inputDescriptorId: InputDescriptorID, context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws {
     didCallCompatibleCredentials = true
   }
 
-  func nextCompatibleCredentials(after inputDescriptorId: String, and context: PresentationRequestContext) throws {
-    didCallNextCompatibleCredentials = true
-  }
-
-  func presentationReview(with context: PresentationRequestContext) {
+  func presentationReview(with context: BITPresentation.PresentationRequestContext) {
     didCallPresentationReview = true
   }
 
@@ -30,4 +29,25 @@ class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes {
     calledPresentationResultState = state
   }
 
+}
+
+// MARK: - MockPresentationFinishDelegate
+
+class MockPresentationFinishDelegate: PresentationFinishDelegate {
+
+  var retryCalled = false
+  var cancelCalled = false
+  var finishCalled = false
+
+  func retry() {
+    retryCalled = true
+  }
+
+  func cancel() {
+    cancelCalled = true
+  }
+
+  func finish(with state: PresentationRequestResultState) async {
+    finishCalled = true
+  }
 }

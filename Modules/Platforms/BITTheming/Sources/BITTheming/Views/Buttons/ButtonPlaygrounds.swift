@@ -2,46 +2,48 @@ import SwiftUI
 
 // MARK: - ButtonLibrary
 
-private struct ButtonPlaygrounds: View {
+struct ButtonPlaygrounds: View {
 
   @State var isHidden = false
 
   var body: some View {
     List {
-      Section("Basic") {
-        section(style: .basic, text: "Tap on me ! Oh oui")
+      Section("primary") {
+        section(style: .primary)
       }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowInsets(EdgeInsets())
 
-      Section("Bezeled") {
-        section(style: .bezeled, text: "Accept")
+      Section("secondary") {
+        section(style: .secondary)
       }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowInsets(EdgeInsets())
 
-      Section("bezeledLight") {
-        section(style: .bezeledLight)
+      Section("secondary reversed") {
+        section(style: .secondaryReversed)
+          .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
       }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-      Section("filledPrimary") {
-        section(style: .filledPrimary)
-      }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowInsets(EdgeInsets())
 
-      Section("filledSecondary") {
-        section(style: .filledSecondary)
+      Section("tertiary") {
+        section(style: .tertiary)
       }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowInsets(EdgeInsets())
 
-      Section("filledDestructive") {
-        section(style: .filledDestructive)
+      Section("destructive") {
+        section(style: .destructive)
       }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowInsets(EdgeInsets())
 
-      Section("material") {
-        section(style: .material)
-          .background(.blue)
+      Section("bezeled") {
+        section(style: .bezeled)
       }
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowInsets(EdgeInsets())
+
+      Section("navy blue") {
+        section(style: .navyBlue)
+      }
+      .listRowInsets(EdgeInsets())
+
     }
   }
 

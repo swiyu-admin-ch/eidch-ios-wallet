@@ -33,7 +33,7 @@ final class DisplayLocalizableTests: XCTestCase {
       MockDisplay(locale: UserLocale.LocaleIdentifier.swissItalian.rawValue),
     ]
 
-    let preferredLanguageCodes: [UserLanguageCode] = []
+    let preferredLanguageCodes = [UserLanguageCode]()
 
     let display = displays.findDisplayWithFallback(preferredLanguageCodes: preferredLanguageCodes)
 
@@ -42,7 +42,7 @@ final class DisplayLocalizableTests: XCTestCase {
   }
 
   func testFindDisplayWithFallback_WhenDisplaysAreEmpty_ReturnsNil() {
-    let displays: [MockDisplay] = []
+    let displays = [MockDisplay]()
     let preferredLanguageCodes: [UserLanguageCode] = [
       UserLanguageCode(UserLanguageCode.LanguageIdentifier.french.rawValue),
       UserLanguageCode(UserLanguageCode.LanguageIdentifier.italian.rawValue),
@@ -105,7 +105,7 @@ final class DisplayLocalizableTests: XCTestCase {
   }
 
   func testFindDisplaysWithFallback_EmptyInputReturnsEmpty() {
-    let displays: [MockDisplay] = []
+    let displays = [MockDisplay]()
 
     let result = displays.findDisplaysWithFallback(preferredLanguageCodes: [UserLanguageCode(UserLanguageCode.LanguageIdentifier.french.rawValue)])
 

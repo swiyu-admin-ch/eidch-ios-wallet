@@ -113,8 +113,8 @@ final class CredentialDetailViewModelTests: XCTestCase {
   // MARK: Private
 
   // swiftlint:disable all
-  private let credentialMock = Credential.Mock.sample
-  private let updateCredentialMock = Credential.Mock.diploma
+  private let credentialMock = VerifiableCredential.Mock.sample
+  private let updateCredentialMock = VerifiableCredential.Mock.diploma
   private let credentialDisplayMock = CredentialDisplay.Mock.lightEnglish
   private let themeMock = "light"
   private var mockRouter = CredentialDetailRouterMock()

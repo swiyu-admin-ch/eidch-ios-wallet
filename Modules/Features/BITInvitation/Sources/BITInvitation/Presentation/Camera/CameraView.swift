@@ -174,7 +174,7 @@ extension CameraView {
       contentColor: ThemingAssets.Label.secondary.swiftUIColor,
       closeAction: close,
       background: ThemingAssets.Background.tertiary.swiftUIColor,
-      closeButtonStyle: .bezeledLight)
+      closeButtonStyle: .secondary)
       .accessibilityFocused($focus, equals: .tip)
   }
 

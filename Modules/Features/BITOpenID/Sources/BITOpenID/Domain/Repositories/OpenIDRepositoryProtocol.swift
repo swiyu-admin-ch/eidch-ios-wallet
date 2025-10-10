@@ -14,5 +14,4 @@ public protocol OpenIDRepositoryProtocol {
   func fetchAccessToken(from url: URL, preAuthorizedCode: String) async throws -> AccessToken
   func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList>
-  func fetchTrustStatements(from url: URL, for subjectDid: String) async throws -> [TrustStatement]
 }

@@ -4,7 +4,7 @@ import BITNavigation
 // MARK: - CredentialDetailRoutes
 
 public protocol CredentialDetailRoutes {
-  func credentialDetail(_ credential: Credential)
+  func credentialDetail(_ credential: VerifiableCredential)
 }
 
 // MARK: - CredentialDetailInternalRoutes

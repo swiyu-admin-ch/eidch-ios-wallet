@@ -1,3 +1,4 @@
+import BITCredential
 import BITCredentialShared
 import BITOpenID
 import Foundation
@@ -7,15 +8,15 @@ import Foundation
 final class MockCredentialOfferRouter: ClosableRoutesMock, CredentialOfferRoutes, CredentialOfferInternalRoutes {
 
   private(set) var credentialOfferCalled = false
-  private(set) var credentialOfferCredential: Credential?
-  private(set) var trustStatement: TrustStatement?
+  private(set) var credentialOfferCredential: VerifiableCredential?
+  private(set) var trustInformation: TrustInformation?
   private(set) var wrongDataCalled = false
   private(set) var externalLinkCalled = false
 
-  func credentialOffer(credential: Credential, trustStatement: TrustStatement?) {
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
     credentialOfferCalled = true
     credentialOfferCredential = credential
-    self.trustStatement = trustStatement
+    self.trustInformation = trustInformation
   }
 
   func wrongData() {

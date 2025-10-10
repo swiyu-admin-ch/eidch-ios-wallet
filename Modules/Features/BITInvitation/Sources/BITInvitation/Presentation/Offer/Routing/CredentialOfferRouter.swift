@@ -1,6 +1,6 @@
+import BITCredential
 import BITCredentialShared
 import BITNavigation
-import BITOpenID
 import Factory
 import SwiftUI
 
@@ -11,8 +11,8 @@ final class CredentialOfferRouter: Router<UIViewController>, CredentialOfferInte
 @MainActor
 extension CredentialOfferRoutes where Self: RouterProtocol {
 
-  public func credentialOffer(credential: Credential, trustStatement: TrustStatement?) {
-    let module = Container.shared.credentialOfferModule((credential, trustStatement: trustStatement))
+  public func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
+    let module = Container.shared.credentialOfferModule((credential, trustInformation))
     let style = NavigationPushOpeningStyle()
     module.router.current = style
 

@@ -10,7 +10,7 @@ final class CredentialDetailRouter: Router<UIViewController>, CredentialDetailIn
 @MainActor
 extension CredentialDetailRoutes where Self: RouterProtocol {
 
-  public func credentialDetail(_ credential: Credential) {
+  public func credentialDetail(_ credential: VerifiableCredential) {
     let module = Container.shared.credentialDetailModule(credential)
     let style = ModalOpeningStyle(animated: true, modalPresentationStyle: .fullScreen)
     module.router.current = style

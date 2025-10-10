@@ -9,13 +9,15 @@ import Spyable
 
 @Spyable
 public protocol TrustStatementServiceProtocol {
-  func fetch(for subjectDid: String) async throws -> TrustStatement?
+  func fetchMetadata(for subjectDid: String) async throws -> MetadataTrustStatement
+  func fetchIdentity(for subjectDid: String) async throws -> IdentityTrustStatement
+  func fetchVcSchema(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async throws -> VcSchemaTrustStatement?
 }
 
 // MARK: - TrustStatementServiceError
 
-enum TrustStatementServiceError: Error {
-  case cannotParseTrustRegistryDomain
+public enum TrustStatementServiceError: Error {
+  case validationFailed
 }
 
 // MARK: - TrustStatementService
@@ -24,49 +26,65 @@ struct TrustStatementService: TrustStatementServiceProtocol {
 
   // MARK: Internal
 
-  func fetch(for subjectDid: String) async throws -> TrustStatement? {
-    let trustStatementURL = try getTrustStatementURL(for: subjectDid)
-    let trustStatements = try await fetchValidTrustStatements(from: trustStatementURL, subjectDid: subjectDid)
-    guard trustStatements.count == 1 else { return nil }
-    return trustStatements.first
+  func fetchMetadata(for subjectDid: String) async throws -> MetadataTrustStatement {
+    let trustStatementURL = try urlMapper.map(did: subjectDid)
+    let trustStatements = try await trustStatementRepository.fetchMetadataTrustStatements(from: trustStatementURL, for: subjectDid)
+      .filter { trustStatement in
+        trustStatement.payload.vct == Self.trustStatementMetadataVct && trustedDids.contains(trustStatement.payload.issuer)
+      }
+    let validTrustStatements = await trustStatements.asyncFilter { trustStatement in
+      await trustStatementValidator.validate(trustStatement, for: subjectDid)
+    }
+    guard validTrustStatements.count == 1, let statement = validTrustStatements.first else { throw TrustStatementServiceError.validationFailed }
+    return statement
+  }
+
+  func fetchIdentity(for subjectDid: String) async throws -> IdentityTrustStatement {
+    let trustStatementURL = try urlMapper.map(did: subjectDid)
+    let trustStatements = try await trustStatementRepository.fetchIdentityTrustStatements(from: trustStatementURL, for: subjectDid)
+      .filter { trustStatement in
+        trustStatement.payload.vct == Self.trustStatementIdentityVct && trustedDids.contains(trustStatement.payload.issuer)
+      }
+    let validTrustStatements = await trustStatements.asyncFilter { trustStatement in
+      await trustStatementValidator.validate(trustStatement, for: subjectDid)
+    }
+    guard validTrustStatements.count == 1, let statement = validTrustStatements.first else { throw TrustStatementServiceError.validationFailed }
+    return statement
+  }
+
+  func fetchVcSchema(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async throws -> VcSchemaTrustStatement? {
+    let trustStatementURL = try urlMapper.map(did: subjectDid)
+    let trustStatements = try await trustStatementRepository.fetchVcSchemaTrustStatements(from: trustStatementURL, for: subjectDid, type: type, vcSchemaId: vcSchemaId)
+      .filter { trustStatement in
+        trustStatement.payload.vct == type.vct && trustedDids.contains(trustStatement.payload.issuer)
+      }
+    guard !trustStatements.isEmpty else { return nil }
+    let validTrustStatements = await trustStatements.asyncFilter { trustStatement in
+      await trustStatementValidator.validate(trustStatement, for: subjectDid) &&
+        trustStatement.resolvedPayload.vcSchemaId?.absoluteString == vcSchemaId
+    }
+    guard validTrustStatements.count == 1, let statement = validTrustStatements.first else { throw TrustStatementServiceError.validationFailed }
+    return statement
   }
 
   // MARK: Private
 
-  @Injected(\.baseRegistryDomainPattern) private var baseRegistryDomainPattern: String
-  @Injected(\.openIDRepository) private var openIDRepository
-  @Injected(\.trustRegistryRepository) private var trustRegistryRepository
+  private static let trustStatementMetadataVct = "TrustStatementMetadataV1"
+  private static let trustStatementIdentityVct = "TrustStatementIdentityV1"
+
+  @Injected(\.trustStatementUrlMapper) private var urlMapper
+  @Injected(\.trustStatementRepository) private var trustStatementRepository
+  @Injected(\.trustRegistryTrustedDids) private var trustedDids: [String]
   @Injected(\.trustStatementValidator) private var trustStatementValidator
+}
 
-  private func getTrustStatementURL(for subjectDid: String) throws -> URL {
-    guard
-      let baseRegistryDomain = getBaseRegistryDomain(from: subjectDid),
-      let trustRegistryDomain = trustRegistryRepository.getTrustRegistryDomain(for: baseRegistryDomain),
-      let trustStatementURL = URL(string: "https://\(trustRegistryDomain)")
-    else {
-      throw TrustStatementServiceError.cannotParseTrustRegistryDomain
+extension VcSchemaTrustStatementType {
+  var vct: String {
+    switch self {
+    case .issuance:
+      "TrustStatementIssuanceV1"
+    case .verification:
+      "TrustStatementVerificationV1"
     }
-    return trustStatementURL
-  }
-
-  private func getBaseRegistryDomain(from did: String) -> String? {
-    guard
-      let regex = try? Regex(baseRegistryDomainPattern),
-      let match = did.firstMatch(of: regex),
-      match.output.count > 1,
-      let range = match.output[1].range
-    else {
-      return nil
-    }
-    return String(did[range])
-  }
-
-  private func fetchValidTrustStatements(from url: URL, subjectDid: String) async throws -> [TrustStatement] {
-    let trustStatements = try await openIDRepository.fetchTrustStatements(from: url, for: subjectDid)
-    var validStatements: [TrustStatement] = []
-    for trustStatement in trustStatements where await trustStatementValidator.validate(trustStatement, for: subjectDid) {
-      validStatements.append(trustStatement)
-    }
-    return validStatements
   }
 }

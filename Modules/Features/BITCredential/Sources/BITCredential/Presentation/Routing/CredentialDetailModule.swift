@@ -7,7 +7,7 @@ class CredentialDetailModule {
 
   // MARK: Lifecycle
 
-  init(credential: Credential, router: CredentialDetailRouter = Container.shared.credentialDetailRouter()) {
+  init(credential: VerifiableCredential, router: CredentialDetailRouter = Container.shared.credentialDetailRouter()) {
     self.router = router
     let viewController = UINavigationController(rootViewController: UIHostingController(rootView: CredentialDetailView(credential: credential, router: router)))
     router.viewController = viewController

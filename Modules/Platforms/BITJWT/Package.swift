@@ -20,7 +20,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCrypto"),
     .package(path: "../../Platforms/BITVault"),
     .package(path: "../../Platforms/BITNetworking"),
-    .package(url: "https://github.com/swiyu-admin-ch/didresolver-swift.git", exact: "2.0.0"),
+    .package(url: "https://github.com/swiyu-admin-ch/didresolver-swift.git", exact: "2.1.4"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "2.4.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),

@@ -22,23 +22,15 @@ final class CredentialOfferViewModelTests: XCTestCase {
     router = MockCredentialOfferRouter()
     createSuccessState()
 
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: trustStatementMock, router: router)
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: trustInformationMock, router: router)
   }
 
   func testInit_ValuesWithTrustStatement() async {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: trustStatementMock, router: router)
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: trustInformationMock, router: router)
 
     XCTAssertEqual(viewModel.credential, credentialMock)
     XCTAssertEqual(viewModel.state, .result)
-    XCTAssertEqual(viewModel.issuerTrustStatus, .verified)
-  }
-
-  func testInit_ValuesWithoutTrustStatement() async {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustStatement: nil, router: router)
-
-    XCTAssertEqual(viewModel.credential, credentialMock)
-    XCTAssertEqual(viewModel.state, .result)
-    XCTAssertEqual(viewModel.issuerTrustStatus, .unverified)
+    XCTAssertEqual(viewModel.trustInformation, trustInformationMock)
   }
 
   func testUpdateCredentialViewModel_light_setsViewModel() {
@@ -104,8 +96,8 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
   // swiftlint:disable all
   private var viewModel: CredentialOfferViewModel!
-  private var credentialMock = Credential.Mock.sample
-  private var trustStatementMock: TrustStatement? = TrustStatementPayload.Mock.validSample
+  private var credentialMock = VerifiableCredential.Mock.sample
+  private var trustInformationMock = TrustInformation.Mock.trustedIdentity
   private let themeMock = "light"
   private var router: MockCredentialOfferRouter!
   private var delayAfterAcceptingCredential: UInt64 = 0

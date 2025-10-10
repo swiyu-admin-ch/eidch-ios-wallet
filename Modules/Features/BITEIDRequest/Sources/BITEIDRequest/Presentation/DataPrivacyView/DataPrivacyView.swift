@@ -19,14 +19,14 @@ struct DataPrivacyView: View {
       backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
       content: {
         DefaultInformationContentView(
-          primary: L10n.tkGetEidDataPrivacyTitle,
-          secondary: L10n.tkGetEidDataPrivacyBody,
-          tertiary: L10n.tkGetEidDataPrivacyLinkText,
+          primary: L10n.tkEidRequestDataPrivacyTitle,
+          secondary: L10n.tkEidRequestDataPrivacyBody,
+          tertiary: L10n.tkEidRequestDataPrivacyLinkText,
           tertiaryAction: viewModel.openHelp)
       },
       footer: {
         DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkGetEidDataPrivacyPrimaryButton,
+          primaryButtonLabel: L10n.tkEidRequestDataPrivacyPrimaryButton,
           primaryButtonAction: viewModel.primaryAction)
       })
       .toolbar { CloseButtonToolbar(action: viewModel.close) }

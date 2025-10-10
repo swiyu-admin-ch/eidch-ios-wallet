@@ -37,6 +37,15 @@ public enum ThemingAssets {
   }
 
   public enum Background {
+    public enum Button {
+      public static let secondary = ColorAsset(name: "Background/Button/Secondary")
+    }
+
+    public enum ButtonSheet {
+      public static let primary = ColorAsset(name: "Background/ButtonSheet/Primary")
+      public static let secondary = ColorAsset(name: "Background/ButtonSheet/Secondary")
+    }
+
     public static let fallback = ColorAsset(name: "Background/Fallback")
     public static let groupedRow = ColorAsset(name: "Background/GroupedRow")
     public static let primary = ColorAsset(name: "Background/Primary")
@@ -218,6 +227,8 @@ extension SwiftUI.Color {
 }
 #endif
 
+// MARK: - ImageAsset
+
 public struct ImageAsset {
   #if os(macOS)
   public typealias Image = NSImage
@@ -301,6 +312,8 @@ extension SwiftUI.Image {
   }
 }
 #endif
+
+// MARK: - BundleToken
 
 // swiftlint:disable convenience_type
 private final class BundleToken {

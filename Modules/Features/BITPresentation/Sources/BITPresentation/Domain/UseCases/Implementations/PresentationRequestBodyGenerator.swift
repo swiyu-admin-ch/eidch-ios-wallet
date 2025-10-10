@@ -2,20 +2,26 @@ import BITAnalytics
 import BITAnyCredentialFormat
 import BITAppAuth
 import BITCredentialShared
-import BITCrypto
-import BITLocalAuthentication
 import BITOpenID
 import BITVault
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - PresentationRequestBodyGeneratorProtocol
+
+@Spyable
+public protocol PresentationRequestBodyGeneratorProtocol {
+  func generate(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, inputDescriptor: InputDescriptor) throws -> PresentationRequestBody
+}
 
 // MARK: - PresentationRequestBodyGenerator
 
-public struct PresentationRequestBodyGenerator: PresentationRequestBodyGeneratorProtocol {
+struct PresentationRequestBodyGenerator: PresentationRequestBodyGeneratorProtocol {
 
-  // MARK: Public
+  // MARK: Internal
 
-  public func generate(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, inputDescriptor: InputDescriptor) throws -> PresentationRequestBody {
+  func generate(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, inputDescriptor: InputDescriptor) throws -> PresentationRequestBody {
     let credential = compatibleCredential.credential
     let fields = compatibleCredential.requestedFields.map(\.key)
 
@@ -37,7 +43,7 @@ public struct PresentationRequestBodyGenerator: PresentationRequestBodyGenerator
   @Injected(\.anyDescriptorMapGenerator) private var anyDescriptorMapGenerator: AnyDescriptorMapGeneratorProtocol
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
 
-  private func createVpToken(credential: Credential, requestObject: RequestObject, fields: [String]) throws -> VpToken {
+  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, fields: [String]) throws -> VpToken {
     guard
       userSession.isLoggedIn,
       let context = userSession.context

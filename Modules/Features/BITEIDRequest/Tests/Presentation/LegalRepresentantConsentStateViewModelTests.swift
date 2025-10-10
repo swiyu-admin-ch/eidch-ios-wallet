@@ -19,8 +19,8 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
 
     viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
 
-    XCTAssertEqual(viewModel.primaryText, L10n.tkGetEidConsentOkAvQueuePrimary)
-    XCTAssertEqual(viewModel.secondaryText, L10n.tkGetEidConsentOkAvQueueSecondary)
+    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestConsentOkAvQueuePrimary)
+    XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestConsentOkAvQueueSecondary)
     XCTAssertEqual(viewModel.primaryButtonText, L10n.tkGlobalClose)
   }
 
@@ -30,8 +30,8 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
 
     viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
 
-    XCTAssertEqual(viewModel.primaryText, L10n.tkGetEidLegalRepresentantPendingConsentInQueuePrimary)
-    XCTAssertEqual(viewModel.secondaryText, L10n.tkGetEidLegalRepresentantPendingConsentInQueueSecondary)
+    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantPendingConsentInQueuePrimary)
+    XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestLegalRepresentantPendingConsentInQueueSecondary)
     XCTAssertEqual(viewModel.primaryButtonText, L10n.tkGlobalClose)
   }
 
@@ -41,8 +41,8 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
 
     viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
 
-    XCTAssertEqual(viewModel.primaryText, L10n.tkGetEidLegalRepresentantGivenConsentReadyForAVPrimary)
-    XCTAssertEqual(viewModel.primaryButtonText, L10n.tkGetEidLegalRepresentantPendingConsentStartButton)
+    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantGivenConsentReadyForAVPrimary)
+    XCTAssertEqual(viewModel.primaryButtonText, L10n.tkEidRequestLegalRepresentantPendingConsentStartButton)
   }
 
   func testInit_readyForAVState_legalRepresentantNotVerified() throws {
@@ -52,7 +52,7 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
 
     XCTAssertEqual(viewModel.primaryButtonText, L10n.tkGlobalClose)
-    XCTAssertEqual(viewModel.primaryText, L10n.tkGetEidLegalRepresentantPendingConsentReadyForAVPrimary)
+    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantPendingConsentReadyForAVPrimary)
   }
 
   func testInit_expired() throws {
@@ -61,8 +61,8 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
 
     viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
 
-    XCTAssertEqual(viewModel.primaryText, L10n.tkGetEidLegalRepresentantPendingConsentExpiredPrimary)
-    XCTAssertEqual(viewModel.secondaryText, L10n.tkGetEidLegalRepresentantPendingConsentExpiredSecondary)
+    XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantPendingConsentExpiredPrimary)
+    XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestLegalRepresentantPendingConsentExpiredSecondary)
     XCTAssertEqual(viewModel.primaryButtonText, L10n.tkGlobalClose)
   }
 

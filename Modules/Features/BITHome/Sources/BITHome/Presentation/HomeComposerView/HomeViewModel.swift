@@ -4,112 +4,38 @@ import BITCore
 import BITCredential
 import BITCredentialShared
 import BITEIDRequest
-import BITEntities
 import BITL10n
 import Combine
 import Factory
 import Foundation
-import RealmSwift
 import SwiftUI
 
 // MARK: - HomeViewModel
 
-class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
+@MainActor
+class HomeViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(
-    _ initialState: State = .results,
-    router: HomeRouterRoutes,
-    credentials: [Credential] = [],
-    notificationCenter: NotificationCenter = NotificationCenter.default)
-  {
-    self.credentials = credentials
+  init(router: HomeRouterRoutes) {
     self.router = router
-    self.notificationCenter = notificationCenter
 
-    super.init(initialState)
     registerNotifications()
   }
 
   // MARK: Internal
 
-  enum State: Equatable {
+  enum State {
     case results
-    case error
+    case error(_ error: Error)
     case empty
   }
 
-  enum Event {
-    case fetchCredentials
-    case didFetchCredentials(_ credentials: [Credential])
-    case checkCredentialsStatus
-    case didCheckCredentialsStatus
-    case didCheckCredentialsStatusWithError(_ error: Error)
-
-    case refresh
-    case setError(_ error: Error)
-  }
-
-  @Published var requestCases: [RequestCaseViewState] = []
-  @Published var credentialViewModels: [CredentialViewModel] = []
-  @Published var isVerificationInstructionPresented = false
+  @Published var state = State.results
+  @Published var requestCases = [RequestCaseViewState]()
+  @Published var credentialViewModels = [CredentialViewModel]()
 
   @Injected(\.isEIDRequestFeatureEnabled) var isEIDRequestFeatureEnabled: Bool
-
-  override func reducer(_ state: inout State, _ event: Event) -> AnyPublisher<Event, Never>? {
-    switch (state, event) {
-    case (_, .fetchCredentials):
-      return AnyPublisher.run {
-        try await self.getCredentialListUseCase.execute()
-      } onSuccess: { credentials in
-        .didFetchCredentials(credentials)
-      } onError: { error in
-        .setError(error)
-      }
-
-    case (_, .didFetchCredentials(let credentials)):
-      stateError = nil
-
-      if credentials.isEmpty {
-        state = .empty
-        return nil
-      }
-
-      state = .results
-      withAnimation {
-        self.credentials = credentials
-      }
-
-    case (_, .refresh):
-      return Just(.fetchCredentials).eraseToAnyPublisher()
-
-    case (_, .checkCredentialsStatus):
-      return AnyPublisher.run {
-        try await self.checkAndUpdateCredentialStatusUseCase.execute(self.credentials)
-      } onSuccess: { _ in
-        .fetchCredentials
-      } onError: { error in
-        self.analytics.log(error)
-        return .didCheckCredentialsStatusWithError(error)
-      }
-
-    case (_, .didCheckCredentialsStatus),
-         (_, .didCheckCredentialsStatusWithError(_)):
-      return nil
-
-    case (_, .setError(let error)):
-      analytics.log(error)
-
-      if credentials.isEmpty {
-        state = .error
-      }
-
-      stateError = error
-    }
-
-    return nil
-  }
 
   func onAppear() async {
     if isEIDRequestFeatureEnabled, isEIDRequestAfterOnboardingEnabledUseCase.execute() {
@@ -118,24 +44,59 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
     }
 
     if isUserLoggedInUseCase.execute() {
-      await send(event: .refresh)
+      await withTaskGroup(of: Void.self) { group in
+        group.addTask { await self.fetchCredentials() }
+        group.addTask { await self.getEIDRequestCases() }
+      }
     }
   }
 
+  func fetchCredentials() async {
+    do {
+      let credentials = try await getCredentialListUseCase.execute()
+
+      if credentials.isEmpty {
+        return setState(.empty)
+      }
+
+      setState(.results)
+      withAnimation {
+        self.credentials = credentials
+      }
+    } catch {
+      analytics.log(error)
+
+      if credentials.isEmpty {
+        setState(.error(error))
+      }
+    }
+  }
+
+  func fetchCredentialStatus() async {
+    do {
+      try await checkAndUpdateCredentialStatusUseCase.execute(credentials)
+      await fetchCredentials()
+    } catch {
+      analytics.log(error)
+    }
+  }
+
+  @MainActor
   func getEIDRequestCases() async {
     do {
       requestCases = try await getEIDRequestCaseListUseCase.execute()
         .compactMap { try? RequestCaseViewState($0, delegate: self) }
 
       if !requestCases.isEmpty {
-        await fetchEIDRequestStatus()
+        await fetchRequestCaseStatus()
       }
     } catch {
       requestCases = []
     }
   }
 
-  func fetchEIDRequestStatus() async {
+  @MainActor
+  func fetchRequestCaseStatus() async {
     do {
       requestCases = try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.requestCaseId))
         .map { try RequestCaseViewState($0, delegate: self) }
@@ -155,10 +116,7 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
   // MARK: Private
 
   private var colorScheme = String()
-
   private let router: HomeRouterRoutes
-
-  private let notificationCenter: NotificationCenter
 
   @Injected(\.getCredentialListUseCase) private var getCredentialListUseCase: GetCredentialListUseCaseProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
@@ -170,23 +128,29 @@ class HomeViewModel: StateMachine<HomeViewModel.State, HomeViewModel.Event> {
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
 
-  private var credentials: [Credential] = [] {
+  private var credentials = [VerifiableCredential]() {
     didSet {
       updateCredentialViewModels(with: colorScheme)
     }
   }
 
   private func registerNotifications() {
-    notificationCenter.addObserver(forName: .didLogin, object: nil, queue: .main, using: { [weak self] _ in self?.onDidLogin() })
+    NotificationCenter.default.addObserver(forName: .didLogin, object: nil, queue: .main, using: { [weak self] _ in self?.onDidLogin() })
   }
 
   private func onDidLogin() {
     Task {
-      await send(event: .refresh)
-      await send(event: .checkCredentialsStatus)
+      await fetchCredentials()
+      await fetchCredentialStatus()
     }
   }
 
+  @MainActor
+  private func setState(_ newState: State) {
+    withAnimation {
+      self.state = newState
+    }
+  }
 }
 
 extension HomeViewModel {
@@ -204,7 +168,7 @@ extension HomeViewModel {
     router.openExternalLink(url: url)
   }
 
-  func openDetail(for credential: Credential) {
+  func openDetail(for credential: VerifiableCredential) {
     router.credentialDetail(credential)
   }
 
@@ -232,7 +196,7 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 
   func didUpdateRequestCaseState() {
     Task {
-      await fetchEIDRequestStatus()
+      await fetchRequestCaseStatus()
     }
   }
 

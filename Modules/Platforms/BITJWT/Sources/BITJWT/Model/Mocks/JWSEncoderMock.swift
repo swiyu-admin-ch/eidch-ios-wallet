@@ -17,7 +17,7 @@ class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
   var encodeUsingReturnValue: Data?
   var receivedKeyPair: VaultKeyPair?
   var receivedValue: U?
-  var receivedAdditionalHeaderParameters: [String: Any] = [:]
+  var receivedAdditionalHeaderParameters = [String: Any]()
   var encodeUsingThrowableError: Error?
   var encodeReturnValue: JWS<U>?
 

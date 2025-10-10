@@ -86,12 +86,12 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   // MARK: Private
 
-  @Published private var credential: Credential?
+  @Published private var credential: VerifiableCredential?
   @Published private var qrCodeObject: AVMetadataMachineReadableCodeObject?
 
   private var invitationURL: URL?
   private var router: InvitationRouterRoutes
-  private var bag: Set<AnyCancellable> = []
+  private var bag = Set<AnyCancellable>()
   private var previousUrl: String?
   private var hasProcessedInitialURL = false
 
@@ -122,26 +122,20 @@ class CameraViewModel: ObservableObject, Vibrating {
     isTorchEnabled = false
     cameraManager.stop()
 
-    if
-      context.hasCompatibleCredentials,
-      let id = context.inputDescriptorId
-    {
-      return try router.compatibleCredentials(for: id, and: context)
-    }
-    return router.presentationReview(with: context)
+    try router.startPresentation(context: context, delegate: self)
   }
 
   private func processCredentialOffer(url: URL) async throws {
     let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(url)
     let fetchCredentialResult = try await fetchCredentialUseCase.execute(from: credentialOffer)
 
-    guard case .credential(let credential, let trustStatement) = fetchCredentialResult else {
+    guard case .credential(let credential, let trustInformation) = fetchCredentialResult else {
       throw FetchCredentialUseCaseError.deferredCredentialNotSupported // Deferred credential are not supported yet in this flow
     }
 
     isTorchEnabled = false
     cameraManager.stop()
-    router.credentialOffer(credential: credential, trustStatement: trustStatement)
+    router.credentialOffer(credential: credential, trustInformation: trustInformation)
   }
 
   private func resetTorchAndInvitation() {
@@ -217,5 +211,21 @@ extension CameraViewModel {
 
   func toggleTorch() {
     isTorchEnabled.toggle()
+  }
+}
+
+// MARK: PresentationFinishDelegate
+
+extension CameraViewModel: PresentationFinishDelegate {
+  func retry() {
+    router.pop()
+  }
+
+  func cancel() {
+    router.close()
+  }
+
+  func finish(with state: PresentationRequestResultState) async {
+    router.close()
   }
 }

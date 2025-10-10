@@ -1,4 +1,3 @@
-import BITAppAuth
 import BITL10n
 import BITTheming
 import Factory
@@ -27,7 +26,6 @@ struct SettingsView: View {
           SettingsItem(
             image: Assets.language.swiftUIImage,
             title: L10n.tkSettingsWalletLanguage,
-            detail: viewModel.currentLanguage,
             type: .navigation { viewModel.openLanguage() },
             hasDivider: false)
         }
@@ -38,11 +36,10 @@ struct SettingsView: View {
           SettingsItem(image: Assets.imprint.swiftUIImage, title: L10n.tkSettingsGeneralImprint, type: .navigation { path.append(Setting.imprint) }, hasDivider: false)
         }
       }
-      .navigationBar(.defaultTransparent)
+      .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
       .toolbar {
         CloseButtonToolbar { dismiss() }
       }
-      .onAppear(perform: viewModel.getCurrentLanguage)
       .navigationDestination(for: Setting.self) { setting in
         switch setting {
         case .security: SecuritySettingsView(path: $path)

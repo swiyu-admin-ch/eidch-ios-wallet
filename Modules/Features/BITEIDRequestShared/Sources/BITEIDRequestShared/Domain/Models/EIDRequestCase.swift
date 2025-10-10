@@ -3,7 +3,7 @@ import BITEntities
 import Foundation
 
 
-public struct EIDRequestCase: Decodable, Identifiable {
+public struct EIDRequestCase: Codable, Identifiable {
 
   // MARK: Lifecycle
 
@@ -17,7 +17,6 @@ public struct EIDRequestCase: Decodable, Identifiable {
     firstName: String,
     state: EIDRequestState? = nil,
     files: [EIDRequestCaseFile] = [],
-    walletPairingId: String? = nil,
     deferredCredential: DeferredCredential? = nil)
   {
     self.id = id
@@ -28,7 +27,6 @@ public struct EIDRequestCase: Decodable, Identifiable {
     self.lastName = lastName
     self.firstName = firstName
     self.state = state
-    self.walletPairingId = walletPairingId
     self.deferredCredential = deferredCredential
   }
 
@@ -46,8 +44,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
       lastName: entity.lastName,
       firstName: entity.firstName,
       state: entity.state.map(EIDRequestState.init),
-      walletPairingId: entity.walletPairingId,
-      deferredCredential: entity.deferredCredential.map(DeferredCredential.init))
+      deferredCredential: entity.credential.flatMap(DeferredCredential.init))
   }
 
   // MARK: Public
@@ -58,6 +55,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
   public let firstName: String
   public let createdAt: Date
   public let selectedDocumentType: IdentityType
+  public var deferredCredential: DeferredCredential?
 
   // MARK: Internal
 
@@ -70,14 +68,11 @@ public struct EIDRequestCase: Decodable, Identifiable {
     case firstName
     case createdAt
     case state
-    case walletPairingId
     case deferredCredential
   }
 
   let rawMRZ: String
   let documentNumber: String
-  let walletPairingId: String?
-  let deferredCredential: DeferredCredential?
 
   // MARK: Private
 
@@ -85,38 +80,7 @@ public struct EIDRequestCase: Decodable, Identifiable {
 
 }
 
-extension EIDRequestCaseEntity {
-
-  // MARK: Lifecycle
-
-  public convenience init(_ requestCase: EIDRequestCase) {
-    self.init()
-    id = requestCase.id
-    setValues(from: requestCase)
-  }
-
-  // MARK: Public
-
-  public func setValues(from requestCase: EIDRequestCase) {
-    rawMRZ = requestCase.rawMRZ
-
-    if let requestCaseState = requestCase.state {
-      state = EIDRequestStateEntity(requestCaseState)
-    }
-
-    documentNumber = requestCase.documentNumber
-    selectedDocumentType = requestCase.selectedDocumentType.rawValue
-    firstName = requestCase.firstName
-    lastName = requestCase.lastName
-    createdAt = requestCase.createdAt
-    walletPairingId = requestCase.walletPairingId
-
-    if let deferredCredential = requestCase.deferredCredential {
-      self.deferredCredential = DeferredCredentialEntity(deferredCredential)
-    }
-  }
-}
-
+// MARK: Equatable
 
 extension EIDRequestCase: Equatable {
   public static func == (lhs: EIDRequestCase, rhs: EIDRequestCase) -> Bool {
@@ -128,7 +92,6 @@ extension EIDRequestCase: Equatable {
       lhs.createdAt == rhs.createdAt &&
       lhs.firstName == rhs.firstName &&
       lhs.selectedDocumentType == rhs.selectedDocumentType &&
-      lhs.walletPairingId == rhs.walletPairingId &&
       lhs.deferredCredential == rhs.deferredCredential
   }
 }

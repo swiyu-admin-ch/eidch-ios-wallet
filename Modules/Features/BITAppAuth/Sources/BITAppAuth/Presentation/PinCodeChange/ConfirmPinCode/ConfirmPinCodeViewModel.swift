@@ -73,8 +73,8 @@ public class ConfirmPinCodeViewModel: ObservableObject, Vibrating {
 
   private func closeFlow() {
     router.context.changePinCodeDelegate?.didChangePinCode()
-    // 4 because we have 3 steps in the change flow and we want to go back on the 4th screen aka Settings
-    router.pop(number: 4)
+    // back to settings
+    router.pop(count: 3)
   }
 
   private func reset() {

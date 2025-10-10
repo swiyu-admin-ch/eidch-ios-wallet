@@ -80,7 +80,7 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
   // MARK: Private
 
   private var userDidRequestValidation = false
-  private var bag: Set<AnyCancellable> = []
+  private var bag = Set<AnyCancellable>()
 
   @Injected(\.getUniquePassphraseUseCase) private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocol
   @Injected(\.lockWalletUseCase) private var lockWalletUseCase: LockWalletUseCaseProtocol
