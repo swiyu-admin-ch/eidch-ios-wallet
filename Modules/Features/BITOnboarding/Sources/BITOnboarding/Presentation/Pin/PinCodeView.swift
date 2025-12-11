@@ -53,7 +53,6 @@ struct PinCodeView: View {
 
   @StateObject private var viewModel: PinCodeViewModel
   @FocusState private var inputFocused: Bool
-  @AccessibilityFocusState private var errorFocusedState: Bool
   @AccessibilityFocusState private var focus: Focus?
   @Environment(\.sizeCategory) private var sizeCategory
 

@@ -1,5 +1,4 @@
 import BITAVWrapper
-import BITL10n
 import Factory
 import Foundation
 
@@ -9,10 +8,9 @@ class NFCScanViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-
+  init() {
     avBeam.messageDelegate = self
+    avBeam.nfcDelegate = self
 
     if avBeam.state == AVBeamState.initialized {
       state = .ready
@@ -28,42 +26,41 @@ class NFCScanViewModel: ObservableObject {
   }
 
   @Published var state = State.sdkInitializing
+  @Published var destination: EIDRequestDestinations?
 
   func initializeSDK() {
     do {
       let config = AVBeamInitConfig(appId: avBeamAppID)
       try avBeam.initialize(using: config)
     } catch {
-      #warning("TODO: Handle error case here when implemented")
+      state = .error(error)
     }
   }
 
-  func startNFCScan() { }
+  func startNFCScan() async {
+    do {
+      guard let caseId = context.caseId else {
+        throw EIDRequestError.missingCaseId
+      }
 
-  func stopNFCScan() {
-//    avBeam.stopScanDocument()
-//    avBeam.shutdown()
-  }
+      guard let authenticationToken = context.autoVerificationResponse?.jwt else {
+        throw EIDRequestError.missingAuthenticationToken
+      }
 
-  func close() {
-    router.close()
-  }
+      let config = try await avBeamNFCConfigurator.configure(for: caseId, authenticationToken: authenticationToken)
 
-  func openHelp() {
-    #warning("TODO: Define URL")
-    guard let url = URL(string: L10n.tkEidRequestNfcScanHelpLink) else {
-      return
+      try avBeam.startNfcScan(config: config)
+    } catch {
+      state = .error(error)
     }
-
-    router.openExternalLink(url: url)
   }
 
   // MARK: Private
 
   @Injected(\.avBeam) private var avBeam
   @Injected(\.avBeamAppID) private var avBeamAppID
-
-  private let router: EIDRequestInternalRoutes
+  @Injected(\.eidRequestContext) private var context
+  @Injected(\.avBeamNFCConfigurator) private var avBeamNFCConfigurator: AVBeamNFCConfiguratorProtocol
 }
 
 // MARK: AVBeamMessageDelegate
@@ -80,5 +77,13 @@ extension NFCScanViewModel: AVBeamMessageDelegate {
       default: ()
       }
     }
+  }
+}
+
+// MARK: AVBeamNfcDelegate
+
+extension NFCScanViewModel: AVBeamNfcDelegate {
+  func didCompleteNfcScan(packageResult: AVBeamPackageResult) {
+    destination = .nfcScanResult(packageResult)
   }
 }

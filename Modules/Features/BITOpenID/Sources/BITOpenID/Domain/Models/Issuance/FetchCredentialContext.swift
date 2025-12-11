@@ -7,7 +7,6 @@ public class FetchCredentialContext {
   init(
     format: String,
     selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported,
-    credentialOffers: [String],
     credentialIssuer: String,
     holderBindingContext: HolderBindingContext?,
     accessToken: AccessToken,
@@ -17,7 +16,6 @@ public class FetchCredentialContext {
   {
     self.format = format
     self.selectedCredential = selectedCredential
-    self.credentialOffers = credentialOffers
     self.credentialIssuer = credentialIssuer
     self.holderBindingContext = holderBindingContext
     self.accessToken = accessToken
@@ -30,7 +28,6 @@ public class FetchCredentialContext {
 
   let format: String
   let selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported
-  let credentialOffers: [String]
   let credentialIssuer: String
   let holderBindingContext: HolderBindingContext?
   let createdAt: Date

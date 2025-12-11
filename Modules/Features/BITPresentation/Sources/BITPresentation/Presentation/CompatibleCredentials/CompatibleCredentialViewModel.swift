@@ -12,27 +12,23 @@ class CompatibleCredentialViewModel: ObservableObject {
 
   init(
     context: PresentationRequestContext,
-    inputDescriptorId: String,
-    compatibleCredentials: [CompatibleCredential],
     router: PresentationInternalRoutes)
   {
     self.context = context
-    self.inputDescriptorId = inputDescriptorId
-    self.compatibleCredentials = compatibleCredentials
     self.router = router
   }
 
   // MARK: Internal
 
-  @Published var credentialViewModels = [CredentialViewModel]()
+  @Published var credentialViewModels = [VerifiableCredentialViewModel]()
 
   var verifierDisplay: VerifierDisplay {
-    context.getVerifierDisplay(considering: preferredUserLanguageCodes)
+    context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
   }
 
   func didSelect(credential: VerifiableCredential) {
-    guard let compatibleCredential = compatibleCredentials.first(where: { $0.id == credential.id }) else { return }
-    context.selectedCredentials[inputDescriptorId] = compatibleCredential
+    guard let compatibleCredential = context.compatibleCredentials.first(where: { $0.id == credential.id }) else { return }
+    context.selectedCredential = compatibleCredential
     router.presentationReview(with: context)
   }
 
@@ -41,19 +37,16 @@ class CompatibleCredentialViewModel: ObservableObject {
   }
 
   func updateCredentialViewModels(with colorScheme: String) {
-    credentialViewModels = compatibleCredentials.map(\.credential).map {
-      let display = getCredentialDisplayUseCase.execute(for: $0.displays, colorScheme: colorScheme)
-      return CredentialViewModel(credential: $0, credentialDisplay: display)
+    credentialViewModels = context.compatibleCredentials.map(\.credential).map {
+      VerifiableCredentialViewModel(credential: $0, colorScheme: colorScheme)
     }
   }
 
   // MARK: Private
 
-  private let compatibleCredentials: [CompatibleCredential]
-  private var inputDescriptorId: String
   private var context: PresentationRequestContext
   private var router: PresentationInternalRoutes
+
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
-  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
 
 }

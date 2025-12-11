@@ -19,12 +19,15 @@ public struct TrustInformation: Equatable {
 public enum IdentityTrust: Equatable {
   case trusted(any LocalizedTrustStatement)
   case untrusted
+  case unknown
 
   // MARK: Public
 
   public static func == (lhs: IdentityTrust, rhs: IdentityTrust) -> Bool {
     switch (lhs, rhs) {
     case (.untrusted, .untrusted):
+      return true
+    case (.unknown, .unknown):
       return true
     case (.trusted(let lhsStmt), .trusted(let rhsStmt)):
       if

@@ -53,19 +53,14 @@ extension Container {
   }
 
   @MainActor
-  var credentialDetailViewModel: ParameterFactory<(VerifiableCredential, CredentialDetailInternalRoutes), CredentialDetailViewModel> {
-    self { CredentialDetailViewModel($0, router: $1) }
+  var credentialDetailViewModel: ParameterFactory<VerifiableCredential, CredentialDetailViewModel> {
+    self { CredentialDetailViewModel($0) }
   }
 
   @MainActor
   var credentialDetailModule: ParameterFactory<VerifiableCredential, CredentialDetailModule> {
     self { CredentialDetailModule(credential: $0) }
   }
-
-  var credentiaDetaillWrongDataViewModel: ParameterFactory<CredentialDetailInternalRoutes, CredentialDetailWrongDataViewModel> {
-    self { CredentialDetailWrongDataViewModel(router: $0) }
-  }
-
 }
 
 // MARK: - Use cases
@@ -74,6 +69,10 @@ extension Container {
 
   public var getCredentialListUseCase: Factory<GetCredentialListUseCaseProtocol> {
     self { GetCredentialListUseCase() }
+  }
+
+  public var getCredentialUseCase: Factory<GetCredentialUseCaseProtocol> {
+    self { GetCredentialUseCase() }
   }
 
   public var checkAndUpdateCredentialStatusUseCase: Factory<CheckAndUpdateCredentialStatusUseCaseProtocol> {
@@ -91,17 +90,22 @@ extension Container {
   public var getCredentialDisplayUseCase: Factory<GetCredentialDisplayUseCaseProtocol> {
     self { GetCredentialDisplayUseCase() }
   }
+
+  public var saveDeferredCredentialUseCase: Factory<SaveDeferredCredentialUseCaseProtocol> {
+    self { SaveDeferredCredentialUseCase() }
+  }
+
+  public var refreshDeferredCredentialUseCase: Factory<RefreshDeferredCredentialUseCaseProtocol> {
+    self { RefreshDeferredCredentialUseCase() }
+  }
 }
 
 // MARK: - Repositories
 
 extension Container {
 
-  public var verifiableCredentialRepository: Factory<VerifiableCredentialRepositoryProcotol> {
-    self { VerifiableCredentialRepository() }
+  public var credentialRepository: Factory<CredentialRepositoryProcotol> {
+    self { CredentialRepository() }
   }
 
-  public var deferredCredentialRepository: Factory<DeferredCredentialRepositoryProtocol> {
-    self { DeferredCredentialRepository() }
-  }
 }

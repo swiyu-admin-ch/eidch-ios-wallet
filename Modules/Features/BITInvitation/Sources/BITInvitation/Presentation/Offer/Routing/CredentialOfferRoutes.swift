@@ -12,4 +12,5 @@ public protocol CredentialOfferRoutes {
 
 protocol CredentialOfferInternalRoutes: ClosableRoutes, ExternalRoutes {
   func wrongData()
+  func badgeInformation(badgeType: BadgeType)
 }

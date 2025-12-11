@@ -12,34 +12,48 @@ class AVIdentityCheckViewModelTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    router = MockEIDRequestRouter()
-    router.context.caseId = "caseId"
+    context = EIDRequestContext()
+    context.caseId = "caseId"
+    Container.shared.eidRequestContext.register { self.context }
 
     registerMocks()
-    viewModel = AVIdentityCheckViewModel(router: router)
+    viewModel = AVIdentityCheckViewModel()
     createSuccessState()
   }
 
-  func testPrimaryAction_withNFC_success() async {
+  func testPrimaryAction_nfcRequired_success() async {
     await viewModel.primaryAction()
 
-    XCTAssertTrue(router.nfcScanCalled)
+    XCTAssertEqual(viewModel.destination, .nfcScan)
+    XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationResponse)
     XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
-    XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, router.context.caseId)
+    XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
   }
 
-  func testPrimaryAction_withoutNFC_success() async {
-    startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationResponseNoNFC
+  func testPrimaryAction_documentRecordingRequired_success() async {
+    startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationResponseRecordDocument
 
     await viewModel.primaryAction()
 
-    XCTAssertTrue(router.recordDocumentCalled)
+    XCTAssertEqual(viewModel.destination, .recordDocument)
+    XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationResponseRecordDocument)
     XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
-    XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, router.context.caseId)
+    XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
+  }
+
+  func testPrimaryAction_documentScanRequired_success() async {
+    startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationResponseScanDocument
+
+    await viewModel.primaryAction()
+
+    XCTAssertEqual(viewModel.destination, .scanDocument)
+    XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationResponseScanDocument)
+    XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
   }
 
   func testPrimaryAction_missingCaseId_routeToError() async {
-    router.context.caseId = nil
+    context.caseId = nil
 
     await viewModel.primaryAction()
 
@@ -54,19 +68,15 @@ class AVIdentityCheckViewModelTests: XCTestCase {
     #warning("TODO: XCTAssert error case here when implemented")
   }
 
-  func testClose() {
-    viewModel.close()
-    XCTAssertTrue(router.closeCalled)
-  }
-
   // MARK: Private
 
   private let mockAutoVerificationResponse = AutoVerificationResponse.Mock.nfcSample
-  private let mockAutoVerificationResponseNoNFC = AutoVerificationResponse.Mock.noNfcSample
+  private let mockAutoVerificationResponseScanDocument = AutoVerificationResponse.Mock.scanDocumentSample
+  private let mockAutoVerificationResponseRecordDocument = AutoVerificationResponse.Mock.recordDocumentSample
 
-  private var router: MockEIDRequestRouter!
   private var viewModel: AVIdentityCheckViewModel!
   private var startAutoVerificationUseCase: StartAutoVerificationUseCaseProtocolSpy!
+  private var context: EIDRequestContext!
 
   private func registerMocks() {
     startAutoVerificationUseCase = StartAutoVerificationUseCaseProtocolSpy()
@@ -77,5 +87,3 @@ class AVIdentityCheckViewModelTests: XCTestCase {
     startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationResponse
   }
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

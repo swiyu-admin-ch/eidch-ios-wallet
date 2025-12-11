@@ -1,11 +1,12 @@
 import BITEIDRequestShared
+import BITL10n
 import Foundation
 
 public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle
 
-  init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
+  override init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     guard let onlineSessionStartOpenAt = requestCase.state?.onlineSessionStartOpenAt else {
       throw RequestCaseViewStateError.invalidState
     }
@@ -23,8 +24,32 @@ public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
     onlineSessionStartOpenAt.longDateFormat
   }
 
+  var notificationTitle: String {
+    if isLegalRepresentantConsentVerified {
+      return L10n.tkEidRequestNotificationEidProgressPrimary(fullName)
+    }
+
+    return L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueuePrimary
+  }
+
+  var notificationContent: String {
+    if isLegalRepresentantConsentVerified {
+      return L10n.tkEidRequestNotificationEidProgressSecondary(formattedDate)
+    }
+
+    return L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueueSecondary
+  }
+
+  var notificationType: RequestCaseNotificationView.NotificationType {
+    if isLegalRepresentantConsentVerified {
+      return .default
+    }
+
+    return .primary(label: L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueueButton, action: primaryAction)
+  }
+
   func primaryAction() {
-    delegate?.didTapObtainConsent(caseId: requestCaseId)
+    delegate?.didTapObtainConsent(caseId: id)
   }
 
 }

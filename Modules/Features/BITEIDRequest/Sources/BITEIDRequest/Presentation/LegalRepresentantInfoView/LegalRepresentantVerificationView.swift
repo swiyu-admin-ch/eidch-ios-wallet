@@ -33,6 +33,7 @@ struct LegalRepresentantVerificationView: View {
           .controlSize(.large)
         }
       })
+      .toolbar(.visible)
   }
 
   // MARK: Private

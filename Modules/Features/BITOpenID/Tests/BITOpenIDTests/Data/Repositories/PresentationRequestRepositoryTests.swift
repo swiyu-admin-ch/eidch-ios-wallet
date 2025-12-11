@@ -26,6 +26,7 @@ final class PresentationRequestRepositoryTests: XCTestCase {
 
     if case .plain(let requestObject) = response {
       XCTAssertEqual(requestObject, RequestObject.Mock.VcSdJwt.sample)
+      XCTAssertEqual(requestObject.raw, expectedRequestObject)
     } else {
       XCTFail("Wrong request object response type")
     }

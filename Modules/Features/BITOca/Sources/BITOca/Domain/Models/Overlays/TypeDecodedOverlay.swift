@@ -32,6 +32,7 @@ struct TypeDecodedOverlay: Decodable {
     case .label1_0: try LabelOverlay1x0(from: decoder)
     case .meta1_0: try MetaOverlay1x0(from: decoder)
     case .order1_0: try OrderOverlay1x0(from: decoder)
+    case .sensitive1_0: try SensitiveOverlay1x0(from: decoder)
     case .standard1_0: try StandardOverlay1x0(from: decoder)
     default: nil
     }

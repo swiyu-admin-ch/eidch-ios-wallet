@@ -1,26 +1,24 @@
 import BITAVWrapper
 import BITL10n
+import BITNavigation
 import BITNetworking
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
+import UIKit
 
 // MARK: - ScanDocumentViewModel
 
 @MainActor
-class ScanDocumentViewModel: ObservableObject {
+class ScanDocumentViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-
+  init() {
     avBeam.messageDelegate = self
     avBeam.scanDocumentDelegate = self
-
-    if avBeam.state == AVBeamState.initialized {
-      state = .ready
-    }
   }
 
   // MARK: Internal
@@ -53,27 +51,25 @@ class ScanDocumentViewModel: ObservableObject {
     }
   }
 
-  enum StateView {
-    case sdkInitializing
-    case ready
-    case error(_ error: Error)
+  enum StateView: Equatable {
+    case loading
+    case camera
   }
 
-  @Published var state = StateView.sdkInitializing
+  @Published var state = StateView.loading
   @Published var introductionPopupState: ScanningState? = .recto
   @Published var isNotificationPresented = false
   @Published var notification: AVBeamNotification? = nil
+  @Published var isNavigationCloseTriggered = false
+
+  @Published var destination: EIDRequestDestinations?
 
   @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
-  @Published var scanningState = ScanningState.recto {
-    didSet {
-      introductionPopupState = scanningState
-    }
-  }
+  var scanFrame = CGRect.zero
 
   var overlayImage: (front: Image, back: Image) {
-    let image: (ImageAsset, ImageAsset) = switch router.context.identityType {
+    let image: (ImageAsset, ImageAsset) = switch context.identityType {
     case .passport:
       (Assets.Camera.passportFront, Assets.Camera.passportBack)
     default:
@@ -82,11 +78,21 @@ class ScanDocumentViewModel: ObservableObject {
     return (image.0.swiftUIImage, image.1.swiftUIImage)
   }
 
+  @Published var scanningState = ScanningState.recto {
+    didSet {
+      introductionPopupState = scanningState
+    }
+  }
+
   var title: String {
     scanningState.title
   }
 
   func initializeSDK() {
+    if avBeam.state == .initialized {
+      return startCamera()
+    }
+
     do {
       let config = AVBeamInitConfig(appId: avBeamAppID)
       try avBeam.initialize(using: config)
@@ -97,74 +103,99 @@ class ScanDocumentViewModel: ObservableObject {
 
   func stop() {
     avBeam.stopScanDocument()
-    avBeam.shutdown()
   }
 
-  func startCamera() async {
-    Task {
+  func startCamera() {
+    let avBeam = avBeam
+    Task.detached { [weak self] in
       do {
         try avBeam.startCamera()
+        await MainActor.run {
+          self?.state = .camera
+        }
       } catch {
-        handleError(error)
+        await MainActor.run {
+          self?.handleError(error)
+        }
       }
     }
   }
 
-  func startScan(frame: CGRect) async {
-    Task {
+  func startScan() {
+    let config = AVBeamScanDocumentConfig(scanFrame: scanFrame, timeout: 15)
+    let avBeam = avBeam
+    Task.detached { [weak self] in
       do {
-        let config = AVBeamScanDocumentConfig(scanFrame: frame, timeout: 15)
         try avBeam.startScanDocument(config: config)
       } catch {
-        handleError(error)
+        await MainActor.run {
+          self?.handleError(error)
+        }
       }
     }
   }
 
   func close() {
     stop()
-    router.close()
+    navigationClose()
   }
 
   // MARK: Private
 
-  private let router: EIDRequestInternalRoutes
-
   @Injected(\.avBeamAppID) private var avBeamAppID
+  @Injected(\.eidRequestContext) private var context
+  @Injected(\.updateEIDRequestCaseFilesUseCase) private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocol
 
   private func handleError(_ error: Error) {
-    state = .error(error)
+    destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+      self?.reset()
+      self?.startCamera()
+    }))
   }
 
+  private func reset() {
+    scanningState = .recto
+    isNotificationPresented = false
+    notification = nil
+  }
+
+  private func handleScanDocumentOutput(_ output: ScanDocumentOutput) async throws {
+    guard let caseId = context.caseId, let autoVerificationResponse = context.autoVerificationResponse else {
+      return destination = .scanDocumentSubmit(output)
+    }
+
+    try await updateEIDRequestCaseFilesUseCase(for: caseId, scanDocumentOutput: output)
+    destination = autoVerificationResponse.isNFCRequired ? .nfcScan : .recordDocument
+  }
 }
 
 // MARK: AVBeamMessageDelegate
 
 extension ScanDocumentViewModel: AVBeamMessageDelegate {
 
-  func didReceiveError(error: AVBeamError) {}
+  nonisolated func didReceiveError(error: AVBeamError) {}
 
-  func didReceiveNotification(notification: AVBeamNotification) {
+  nonisolated func didReceiveNotification(notification: AVBeamNotification) {
     Task { @MainActor in
       switch notification {
       case .initialized:
-        self.state = .ready
+        self.startCamera()
 
       case .idDocMatched,
            .idDocNotMatched:
         break
 
+      case .streamingStarted:
+        self.startScan()
+
       case .idDetectionDone:
-        self.isNotificationPresented = false
-        self.notification = nil
-        introductionPopupState = nil
+        break
 
       case .idRecognitionStopped:
-        self.isNotificationPresented = false
-        self.notification = nil
+        break
 
       case .idNeedSecondPageForMatching:
-        scanningState = .verso
+        self.scanningState = .verso
 
       default:
         self.isNotificationPresented = true
@@ -178,12 +209,18 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
 
 extension ScanDocumentViewModel: AVBeamScanDocumentDelegate {
 
-  func didCompleteScanDocument(packageResult: AVBeamPackageResult) {
+  nonisolated func didCompleteScanDocument(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       do {
-        let output = try ScanDocumentOutput(packageResult, identityType: router.context.identityType ?? .identityCard)
-        router.scanDocumentSubmit(output)
+        try? avBeam.stopCamera()
+        self.isNotificationPresented = false
+        self.notification = nil
+        self.introductionPopupState = nil
+
+        let output = try ScanDocumentOutput(packageResult, identityType: self.context.identityType ?? .identityCard)
+        try await handleScanDocumentOutput(output)
       } catch {
+        self.handleError(error)
       }
     }
   }

@@ -1,7 +1,9 @@
 import Factory
 import Foundation
+import Spyable
 
 
+@Spyable
 protocol DeleteEIDRequestCaseFileUseCaseProtocol {
   func execute(forRequestCaseId id: String) async throws
 }

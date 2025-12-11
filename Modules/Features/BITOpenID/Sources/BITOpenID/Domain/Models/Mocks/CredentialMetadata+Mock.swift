@@ -17,6 +17,9 @@ extension CredentialMetadata: Mockable {
     static let sampleEmptyKeyStorage: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-empty-key-storage", bundle: Bundle.module)
     static let sampleMultipleKeyStorage: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-multiple-key-storage", bundle: Bundle.module)
     static let sampleWithoutProofTypes: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-without-proof-types", bundle: Bundle.module)
+    static let vctUrl: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-vct-url", bundle: Bundle.module)
+    static let vctMetadataUri: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-vct-metadata-uri", bundle: Bundle.module)
+
     static let sampleUnsupportedProofTypeAlgorithmData: Data = Mocker.getData(fromFile: "credential-metadata-unsupported-proof-type-algorithm", bundle: Bundle.module) ?? Data()
     static let sampleUnsupportedCryptographicBindingMethodData: Data = Mocker.getData(fromFile: "credential-metadata-unsupported-cryptographic-binding-method", bundle: Bundle.module) ?? Data()
 

@@ -7,118 +7,94 @@ import Spyable
 @MainActor
 extension Container {
 
-  var introductionViewModel: ParameterFactory<EIDRequestInternalRoutes, IntroductionViewModel> {
-    self { IntroductionViewModel(router: $0) }
+  var scanDocumentViewModel: Factory<ScanDocumentViewModel> {
+    self { ScanDocumentViewModel() }
   }
 
-  var dataPrivacyViewModel: ParameterFactory<EIDRequestInternalRoutes, DataPrivacyViewModel> {
-    self { DataPrivacyViewModel(router: $0) }
+  var scanDocumentSubmitViewModel: ParameterFactory<ScanDocumentOutput, ScanDocumentSubmitViewModel> {
+    self { ScanDocumentSubmitViewModel(scanDocumentOutput: $0) }
   }
 
-  var cameraPermissionViewModel: ParameterFactory<EIDRequestInternalRoutes, CameraPermissionViewModel> {
-    self { CameraPermissionViewModel(router: $0) }
+  var recordDocumentViewModel: Factory<RecordDocumentViewModel> {
+    self { RecordDocumentViewModel() }
   }
 
-  var scanDocumentViewModel: ParameterFactory<EIDRequestInternalRoutes, ScanDocumentViewModel> {
-    self { ScanDocumentViewModel(router: $0) }
+  var recordSelfieViewModel: Factory<RecordSelfieViewModel> {
+    self { RecordSelfieViewModel() }
   }
 
-  var scanDocumentSubmitViewModel: ParameterFactory<(ScanDocumentOutput, EIDRequestInternalRoutes), ScanDocumentSubmitViewModel> {
-    self { ScanDocumentSubmitViewModel(scanDocumentOutput: $0, router: $1) }
+  var queueInformationViewModel: ParameterFactory<Date, QueueInformationViewModel> {
+    self { QueueInformationViewModel(onlineSessionStartDate: $0) }
   }
 
-  var recordDocumentViewModel: ParameterFactory<EIDRequestInternalRoutes, RecordDocumentViewModel> {
-    self { RecordDocumentViewModel(router: $0) }
+  var walletPairingViewModel: Factory<WalletPairingViewModel> {
+    self { WalletPairingViewModel() }
   }
 
-  var recordSelfieViewModel: ParameterFactory<EIDRequestInternalRoutes, RecordSelfieViewModel> {
-    self { RecordSelfieViewModel(router: $0) }
+  var walletPairingListViewModel: Factory<WalletPairingListViewModel> {
+    self { WalletPairingListViewModel() }
   }
 
-  var queueInformationViewModel: ParameterFactory<(EIDRequestInternalRoutes, Date), QueueInformationViewModel> {
-    self { QueueInformationViewModel(router: $0, onlineSessionStartDate: $1) }
+  var avWelcomeViewModel: Factory<AVWelcomeViewModel> {
+    self { AVWelcomeViewModel() }
   }
 
-  var walletPairingViewModel: ParameterFactory<EIDRequestInternalRoutes, WalletPairingViewModel> {
-    self { WalletPairingViewModel(router: $0) }
+  var avIdentityCheckViewModel: Factory<AVIdentityCheckViewModel> {
+    self { AVIdentityCheckViewModel() }
   }
 
-  var walletPairingListViewModel: ParameterFactory<EIDRequestInternalRoutes, WalletPairingListViewModel> {
-    self { WalletPairingListViewModel(router: $0) }
+  var legalRepresentantViewModel: Factory<LegalRepresentantViewModel> {
+    self { LegalRepresentantViewModel() }
   }
 
-  var avWelcomeViewModel: ParameterFactory<EIDRequestInternalRoutes, AVWelcomeViewModel> {
-    self { AVWelcomeViewModel(router: $0) }
-  }
-
-  var avIdentityCheckViewModel: ParameterFactory<EIDRequestInternalRoutes, AVIdentityCheckViewModel> {
-    self { AVIdentityCheckViewModel(router: $0) }
-  }
-
-  var legalRepresentantViewModel: ParameterFactory<EIDRequestInternalRoutes, LegalRepresentantViewModel> {
-    self { LegalRepresentantViewModel(router: $0) }
-  }
-
-  var legalRepresentantConsentViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantConsentViewModel> {
-    self { LegalRepresentantConsentViewModel(router: $0, caseId: $1) }
+  var legalRepresentantConsentViewModel: ParameterFactory<String, LegalRepresentantConsentViewModel> {
+    self { LegalRepresentantConsentViewModel(caseId: $0) }
   }
 
   var legalRepresentantVerificationViewModel: ParameterFactory<String, LegalRepresentantVerificationViewModel> {
     self { LegalRepresentantVerificationViewModel(caseId: $0) }
   }
 
-  var eIDRequestErrorViewModel: ParameterFactory<(EIDRequestErrorDelegate, Error), EIDRequestErrorViewModel> {
-    self { EIDRequestErrorViewModel(delegate: $0, error: $1) }
+  var legalRepresentantQRCodeViewModel: ParameterFactory<String, LegalRepresentantQRCodeViewModel> {
+    self { LegalRepresentantQRCodeViewModel(caseId: $0) }
   }
 
-  var legalRepresentantQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, String), LegalRepresentantQRCodeViewModel> {
-    self { LegalRepresentantQRCodeViewModel(router: $0, caseId: $1) }
+  var walletPairingOfferViewModel: ParameterFactory<(Void) -> Void, WalletPairingOfferViewModel> {
+    self { WalletPairingOfferViewModel($0) }
   }
 
-  var avDevicePairingQRCodeViewModel: ParameterFactory<(EIDRequestInternalRoutes, DevicePairingDelegate?), AVDevicePairingQRCodeViewModel> {
-    self { AVDevicePairingQRCodeViewModel(router: $0, delegate: $1) }
+  var legalRepresentantConsentStateViewModel: ParameterFactory<RequestCaseViewState, LegalRepresentantConsentStateViewModel> {
+    self { LegalRepresentantConsentStateViewModel(state: $0) }
   }
 
-  var legalRepresentantConsentStateViewModel: ParameterFactory<(EIDRequestInternalRoutes, RequestCaseViewState), LegalRepresentantConsentStateViewModel> {
-    self { LegalRepresentantConsentStateViewModel(router: $0, state: $1) }
+  var documentSelectionViewModel: Factory<DocumentSelectionViewModel> {
+    self { DocumentSelectionViewModel() }
   }
 
-  var documentSelectionViewModel: ParameterFactory<EIDRequestInternalRoutes, DocumentSelectionViewModel> {
-    self { DocumentSelectionViewModel(router: $0) }
-  }
-
-  var validateAttestationsViewModel: ParameterFactory<EIDRequestInternalRoutes, ValidateAttestationsViewModelProtocol> {
+  var validateAttestationsViewModel: Factory<ValidateAttestationsViewModel> {
     self {
       #if targetEnvironment(simulator)
-      MockValidateAttestationsViewModel(router: $0)
+      MockValidateAttestationsViewModel()
       #else
-      ValidateAttestationsViewModel(router: $0)
+      ValidateAttestationsViewModel()
       #endif
     }
   }
 
-  var clientAttestationErrorViewModel: ParameterFactory<EIDRequestInternalRoutes, ClientAttestationErrorViewModel> {
-    self { ClientAttestationErrorViewModel(router: $0) }
+  var validateAttestationsErrorViewModel: ParameterFactory<(ErrorWrapper, (Void) -> Void), ValidateAttestationsErrorViewModel> {
+    self { ValidateAttestationsErrorViewModel(error: $0, callback: $1) }
   }
 
-  var keyAttestationErrorViewModel: ParameterFactory<EIDRequestInternalRoutes, KeyAttestationErrorViewModel> {
-    self { KeyAttestationErrorViewModel(router: $0) }
+  var nfcScanViewModel: Factory<NFCScanViewModel> {
+    self { NFCScanViewModel() }
   }
 
-  var validateAttestationsErrorViewModel: ParameterFactory<(EIDRequestInternalRoutes, ValidateAttestationsErrorDelegate, Error), ValidateAttestationsErrorViewModel> {
-    self { ValidateAttestationsErrorViewModel(router: $0, delegate: $1, error: $2) }
+  var submitEIDRequestFilesViewModel: Factory<SubmitEIDRequestFilesViewModel> {
+    self { SubmitEIDRequestFilesViewModel() }
   }
 
-  var avIntroSelfieVideoViewModel: ParameterFactory<EIDRequestInternalRoutes, AVIntroSelfieVideoViewModel> {
-    self { AVIntroSelfieVideoViewModel(router: $0) }
-  }
-
-  var nfcScanViewModel: ParameterFactory<EIDRequestInternalRoutes, NFCScanViewModel> {
-    self { NFCScanViewModel(router: $0) }
-  }
-
-  var submitEIDRequestFilesViewModel: ParameterFactory<EIDRequestInternalRoutes, SubmitEIDRequestFilesViewModel> {
-    self { SubmitEIDRequestFilesViewModel(router: $0) }
+  var nfcScanResultViewModel: ParameterFactory<AVBeamPackageResult, NFCScanResultViewModel> {
+    self { NFCScanResultViewModel(package: $0) }
   }
 
 }
@@ -167,6 +143,15 @@ extension Container {
     }
   }
 
+  public var avSocketUrl: Factory<URL> {
+    self {
+      guard let url = URL(string: "wss://av.admin.ch/nfc/ws1/validate") else {
+        fatalError("No valid socket URL for AV")
+      }
+      return url
+    }
+  }
+
   public var isEIDRequestAfterOnboardingEnabledUseCase: Factory<IsEIDRequestAfterOnboardingEnabledUseCaseProtocol> {
     self { IsEIDRequestAfterOnboardingEnabledUseCase() }
   }
@@ -187,22 +172,67 @@ extension Container {
     self { DeleteEIDRequestCaseUseCase() }
   }
 
-  public var submitEIDRequestUseCase: Factory<SubmitEIDRequestUseCaseProtocol> {
-    self { SubmitEIDRequestUseCase() }
+  // MARK: Internal
+
+  var applyEIDRequestUseCase: Factory<ApplyEIDRequestUseCaseProtocol> {
+    #if targetEnvironment (simulator)
+    self { MockApplyEIDRequestUseCase() }
+    #else
+    self { ApplyEIDRequestUseCase() }
+    #endif
   }
 
-  public var saveEIDRequestFilesUseCase: Factory<SaveEIDRequestFilesUseCaseProtocol> {
+  var saveEIDRequestFilesUseCase: Factory<SaveEIDRequestFilesUseCaseProtocol> {
     self { SaveEIDRequestFilesUseCase() }
   }
 
-  // MARK: Internal
+  var sidAllowedFiles: Factory<[String]> {
+    self {
+      [
+        "fullFrameFirstPage.png",
+        "fullFrameSecondPage.png",
+        "video.mp4",
+        "document.mp4",
+        "mobile-result.xml",
+        "mobile-result.json",
+        "metadata.bin",
+      ]
+    }
+  }
+
+  var sidFilenameMap: Factory<[String: String?]> {
+    self {
+      [
+        "fullFrameFirstPage.png": nil,
+        "fullFrameSecondPage.png": nil,
+        "video.mp4": nil,
+        "docRecVideo.mp4": "document.mp4",
+        "result.xml": "mobile-result.xml",
+        "result.json": "mobile-result.json",
+        "metadata.bin": nil,
+      ]
+    }
+  }
+
+  var captureFaceDelay: Factory<UInt64> {
+    self { 1_500_000_000 }
+      .context(.test) { 10 }
+  }
 
   var submitEIDRequestFileUseCase: Factory<SubmitEIDRequestFileUseCaseProtocol> {
     self { SubmitEIDRequestFileUseCase() }
   }
 
+  var submitEIDRequestUseCase: Factory<SubmitEIDRequestUseCaseProtocol> {
+    self { SubmitEIDRequestUseCase() }
+  }
+
   var getEIDRequestCaseFilesUseCase: Factory<GetEIDRequestCaseFilesUseCaseProtocol> {
     self { GetEIDRequestCaseFilesUseCase() }
+  }
+
+  var eidRequestContext: Factory<EIDRequestContext> {
+    self { EIDRequestContext() }.shared
   }
 
   var fetchAttestationsUseCase: Factory<FetchAttestationsUseCaseProtocol> {
@@ -241,10 +271,6 @@ extension Container {
 
   var requestCasePriorityOrder: Factory<[EIDRequestStatus.State]> {
     self { [.readyForOnlineSession, .inQueue] }
-  }
-
-  var eIDRequestContext: Factory<EIDRequestContext> {
-    self { EIDRequestContext() }
   }
 
   var getLegalRepresentantVerificationQRCodeUseCase: Factory<GetLegalRepresentantVerificationQRCodeUseCaseProtocol> {
@@ -293,6 +319,22 @@ extension Container {
 
   var legalRepresentantVerificationService: Factory<LegalRepresentantVerificationServiceProtocol> {
     self { LegalRepresentantVerificationService() }
+  }
+
+  var avBeamNFCService: Factory<AVBeamNFCServiceProtocol> {
+    self { AVBeamNFCService() }
+  }
+
+  var avBeamNFCConfigurator: Factory<AVBeamNFCConfiguratorProtocol> {
+    self { AVBeamNFCConfigurator() }
+  }
+
+  var fetchNFCScanResultUseCase: Factory<FetchNFCScanResultUseCaseProtocol> {
+    self { FetchNFCScanResultUseCase() }
+  }
+
+  var updateEIDRequestCaseFilesUseCase: Factory<UpdateEIDRequestCaseFilesUseCaseProtocol> {
+    self { UpdateEIDRequestCaseFilesUseCase() }
   }
 }
 

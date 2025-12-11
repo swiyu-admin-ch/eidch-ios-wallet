@@ -43,5 +43,4 @@ final class StringExtensionsTests: XCTestCase {
     XCTAssertNotNil(anyObject as? Int)
     XCTAssertEqual(anyObject as? Int, 0)
   }
-
 }

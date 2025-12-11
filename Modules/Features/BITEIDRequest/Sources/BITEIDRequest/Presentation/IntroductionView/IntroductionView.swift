@@ -1,15 +1,10 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 struct IntroductionView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.introductionViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -26,18 +21,22 @@ struct IntroductionView: View {
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkEidRequestIntroPrimaryButton,
-          primaryButtonAction: viewModel.openDataPrivacy,
+          primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.dataPrivacyView) },
           secondaryButtonLabel: L10n.tkEidRequestIntroSecondaryButton,
-          secondaryButtonAction: viewModel.close)
+          secondaryButtonAction: { navigator.dismiss() })
       })
+      .toolbar {
+        CloseButtonToolbar(action: {
+          navigator.dismiss()
+        })
+      }
   }
 
   // MARK: Private
 
-  private var viewModel: IntroductionViewModel
-
+  @Environment(\.navigator) private var navigator: Navigator
 }
 
 #Preview {
-  IntroductionView(router: EIDRequestRouter())
+  IntroductionView()
 }

@@ -1,4 +1,3 @@
-// swiftlint:disable all
 import Factory
 import XCTest
 @testable import BITCrypto
@@ -8,117 +7,83 @@ import XCTest
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
 
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
+
 final class TypeMetadataServiceTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
-    repository = OpenIDRepositoryProtocolSpy()
-    sriValidator = SRIValidatorProtocolSpy()
-
-    Container.shared.openIDRepository.register { self.repository }
-    Container.shared.sriValidator.register { self.sriValidator }
-
+    super.setUp()
+    Container.shared.reset()
+    registerMocks()
     service = TypeMetadataService()
+    createSuccessState()
   }
 
-  func testFetchTypeMetadata_success() async throws {
-    sriValidator.validateWithReturnValue = true
-    repository.fetchTypeMetadataFromReturnValue = mockResponse
-
-    let typeMetadata = try await service.fetch(mockVcSdJwt)
+  func testFetchTypeMetadata_success_assertParameters() async throws {
+    let typeMetadata = try await service.fetch(from: typeMetadataUriMock, vct: Self.vctMock)
 
     XCTAssertEqual(typeMetadata, Self.mockTypeMetadata)
-    XCTAssertEqual(repository.fetchTypeMetadataFromReceivedUrl, URL(string: mockVcSdJwt.vct))
+    XCTAssertEqual(repository.fetchTypeMetadataFromReceivedUrl, Self.vctUrlMock)
     XCTAssertEqual(sriValidator.validateWithReceivedArguments?.data, Self.mockTypeMetadataData)
-    XCTAssertEqual(sriValidator.validateWithReceivedArguments?.integrity, mockVcSdJwt.vctIntegrity)
+    XCTAssertEqual(sriValidator.validateWithReceivedArguments?.integrity, Self.vctIntegrityMock)
   }
 
-  func testTypeMetadata_vctIsNotAnURL() async throws {
-    var vcSdJwt = mockVcSdJwt
-    vcSdJwt.vct = "not-a-url"
+  func testFetchTypeMetadata_success_assertCount() async throws {
+    _ = try await service.fetch(from: typeMetadataUriMock, vct: Self.vctMock)
 
-    let typeMetadata = try await service.fetch(vcSdJwt)
-
-    XCTAssertNil(typeMetadata)
-    XCTAssertFalse(sriValidator.validateWithCalled)
-    XCTAssertFalse(repository.fetchTypeMetadataFromCalled)
+    XCTAssertEqual(repository.fetchTypeMetadataFromCallsCount, 1)
+    XCTAssertEqual(sriValidator.validateWithCallsCount, 1)
   }
 
-  func testTypeMetadata_fetchFailed() async throws {
+  func testTypeMetadata_fetchFailed_throws() async throws {
     repository.fetchTypeMetadataFromThrowableError = TestingError.error
 
     do {
-      _ = try await service.fetch(mockVcSdJwt)
-    } catch TestingError.error {
-      XCTAssertFalse(sriValidator.validateWithCalled)
-      XCTAssertTrue(repository.fetchTypeMetadataFromCalled)
+      _ = try await service.fetch(from: typeMetadataUriMock, vct: Self.vctMock)
     } catch {
-      XCTFail("Expected a TestingError.error")
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
   func testTypeMetadata_vctMismatch() async throws {
-    var vcSdJwt = mockVcSdJwt
-    vcSdJwt.vct = "https://other.com"
-    repository.fetchTypeMetadataFromReturnValue = mockResponse
-
     do {
-      _ = try await service.fetch(vcSdJwt)
+      _ = try await service.fetch(from: typeMetadataUriMock, vct: "other")
       XCTFail("Expected a FetchCredentialError.vctMismatch")
-    } catch TypeMetadataServiceError.vctMismatch {
-      XCTAssertTrue(repository.fetchTypeMetadataFromCalled)
-      XCTAssertEqual(repository.fetchTypeMetadataFromCallsCount, 1)
-      XCTAssertFalse(sriValidator.validateWithCalled)
     } catch {
-      XCTFail("Expected a FetchCredentialError.vctMismatch")
+      XCTAssertEqual(error as? TypeMetadataServiceError, .vctMismatch)
     }
   }
 
   func testTypeMetadata_missingIntegrity() async throws {
-    var vcSdJwt = mockVcSdJwt
-    vcSdJwt.vctIntegrity = nil
-    repository.fetchTypeMetadataFromReturnValue = mockResponse
+    let typeMetadataUriMock = TypeMetadataUri(url: Self.vctUrlMock, integrity: nil)
 
-    do {
-      _ = try await service.fetch(vcSdJwt)
-      XCTFail("Expected a FetchCredentialError.missingVctIntegrity")
-    } catch TypeMetadataServiceError.missingVctIntegrity {
-      XCTAssertTrue(repository.fetchTypeMetadataFromCalled)
-      XCTAssertEqual(repository.fetchTypeMetadataFromCallsCount, 1)
-      XCTAssertFalse(sriValidator.validateWithCalled)
-    } catch {
-      XCTFail("Expected a FetchCredentialError.missingVctIntegrity")
-    }
+    let typeMetadata = try await service.fetch(from: typeMetadataUriMock, vct: Self.vctMock)
+
+    XCTAssertNotNil(typeMetadata)
+    XCTAssertFalse(sriValidator.validateWithCalled)
   }
 
   func testTypeMetadata_sriValidationFailed() async throws {
-    repository.fetchTypeMetadataFromReturnValue = mockResponse
     sriValidator.validateWithReturnValue = false
 
     do {
-      _ = try await service.fetch(mockVcSdJwt)
+      _ = try await service.fetch(from: typeMetadataUriMock, vct: Self.vctMock)
       XCTFail("Expected a FetchCredentialError.typeMetadataInvalidIntegrity error")
-    } catch TypeMetadataServiceError.typeMetadataInvalidIntegrity {
-      XCTAssertTrue(sriValidator.validateWithCalled)
-      XCTAssertEqual(sriValidator.validateWithCallsCount, 1)
     } catch {
-      XCTFail("Expected a FetchCredentialError.typeMetadataInvalidIntegrity error")
+      XCTAssertEqual(error as? TypeMetadataServiceError, .typeMetadataInvalidIntegrity)
     }
   }
 
   func testTypeMetadata_sriValidationError() async throws {
-    repository.fetchTypeMetadataFromReturnValue = mockResponse
     sriValidator.validateWithThrowableError = TestingError.error
 
     do {
-      _ = try await service.fetch(mockVcSdJwt)
+      _ = try await service.fetch(from: typeMetadataUriMock, vct: Self.vctMock)
       XCTFail("Expected a FetchCredentialError.typeMetadataInvalidIntegrity error")
-    } catch TypeMetadataServiceError.typeMetadataInvalidIntegrity {
-      XCTAssertTrue(sriValidator.validateWithCalled)
-      XCTAssertEqual(sriValidator.validateWithCallsCount, 1)
     } catch {
-      XCTFail("Expected a FetchCredentialError.typeMetadataInvalidIntegrity error")
+      XCTAssertEqual(error as? TypeMetadataServiceError, .typeMetadataInvalidIntegrity)
     }
   }
 
@@ -126,15 +91,29 @@ final class TypeMetadataServiceTests: XCTestCase {
 
   private static let mockTypeMetadata = TypeMetadata.Mock.sampleStandard
   private static let mockTypeMetadataData = TypeMetadata.Mock.sampleStandardData
+  private static let vctMock = "https://credentials.example.com/identity_credential"
+  private static let vctUrlMock = URL(string: vctMock)!
+  private static let vctIntegrityMock = "vctIntegrity"
+
+  private var service: TypeMetadataService!
 
   private let mockResponse = NetworkResponse(object: mockTypeMetadata, data: mockTypeMetadataData)
-
-  private let mockVcSdJwt = VcSdJwtPayload.Mock.samplePayload
+  private let typeMetadataUriMock = TypeMetadataUri(url: vctUrlMock, integrity: vctIntegrityMock)
 
   private var sriValidator: SRIValidatorProtocolSpy!
   private var repository: OpenIDRepositoryProtocolSpy!
-  private var service: TypeMetadataService!
+
+  private func registerMocks() {
+    repository = OpenIDRepositoryProtocolSpy()
+    sriValidator = SRIValidatorProtocolSpy()
+
+    Container.shared.openIDRepository.register { self.repository }
+    Container.shared.sriValidator.register { self.sriValidator }
+  }
+
+  private func createSuccessState() {
+    sriValidator.validateWithReturnValue = true
+    repository.fetchTypeMetadataFromReturnValue = mockResponse
+  }
 
 }
-
-// swiftlint:enable all

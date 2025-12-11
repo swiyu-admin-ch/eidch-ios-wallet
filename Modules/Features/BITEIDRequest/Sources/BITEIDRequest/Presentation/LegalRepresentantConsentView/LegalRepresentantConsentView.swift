@@ -1,6 +1,7 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - LegalRepresentantConsentView
@@ -9,8 +10,8 @@ struct LegalRepresentantConsentView: View {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, caseId: String) {
-    viewModel = Container.shared.legalRepresentantConsentViewModel((router, caseId))
+  init(caseId: String) {
+    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantConsentViewModel(caseId))
   }
 
   // MARK: Internal
@@ -33,14 +34,16 @@ struct LegalRepresentantConsentView: View {
           secondaryButtonAction: viewModel.continueAsParent)
       })
       .navigationBarBackButtonHidden(true)
-      .toolbar { CloseButtonToolbar(action: viewModel.close) }
+      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+      .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  private var viewModel: LegalRepresentantConsentViewModel
+  @StateObject private var viewModel: LegalRepresentantConsentViewModel
+  @Environment(\.navigator) private var navigator
 }
 
 #Preview {
-  LegalRepresentantConsentView(router: EIDRequestRouter(), caseId: "caseId")
+  LegalRepresentantConsentView(caseId: "caseId")
 }

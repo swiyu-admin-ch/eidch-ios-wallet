@@ -10,7 +10,7 @@ targets:
           - "**/*.sh"
     scheme:
       testTargets:
-        - swiyuTests 
+        - swiyuTests
     info:
       path: ../swiyu/Info.plist
       properties:
@@ -62,6 +62,7 @@ targets:
 
         NSCameraUsageDescription: 'swiyu app would like to use your camera to scan QRCodes.'
         NSFaceIDUsageDescription: 'swiyu app would like to use your biometric references to access secured resources.'
+        NFCReaderUsageDescription: 'swiyu app would like to use NFC to scan passports'
 
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
@@ -97,7 +98,10 @@ targets:
         DTXInstrumentLifecycleMonitoring: false
         DTXInstrumentFrameworks: false
 
+        # PXL SDK
         AVBeamAppID: $(PXL_APP_ID)
+        com.apple.developer.nfc.readersession.iso7816.select-identifiers:
+            - A0000002471001
 
     settings:
       base:
@@ -366,6 +370,11 @@ targets:
           DYNATRACE_USER_OPT_IN: true
           PXL_APP_ID: 2NG6YF3PM2.ch.admin.foitt.swiyu
 
+    entitlements:
+      path: ../swiyu/swiyu.entitlements
+      properties:
+        com.apple.developer.nfc.readersession.formats: ["TAG"]
+
     dependencies:
       - package: Factory
       - package: BITCore
@@ -397,6 +406,9 @@ targets:
       - package: BITOca
       - package: BITAppAttestation
       - package: BITEIDRequestShared
+      - package: BITActivity
+      - package: BITActivityDetail
+      - package: BITNonCompliance
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh
@@ -465,7 +477,7 @@ targets:
         CFBundleURLTypes:
             - CFBundleTypeRole: Editor
               CFBundleURLName: openid-credential-offer
-              CFBundleURLSchemes: 
+              CFBundleURLSchemes:
                 - openid-credential-offer
                 - swiyu
 
@@ -491,7 +503,6 @@ targets:
         TARGETED_DEVICE_FAMILY: 1
         CODE_SIGN_STYLE: Manual
         PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu-uitests-app.dev
-        CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: iPhone Developer
         PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu-uitests-app.dev
         SDKROOT: iphoneos
@@ -544,7 +555,7 @@ targets:
         GCC_WARN_UNUSED_VARIABLE: YES
         MTL_FAST_MATH: YES
         ENABLE_BITCODE: NO
-                
+
       configs:
         Test (debug): {}
         Test (release):
@@ -590,6 +601,9 @@ targets:
       - package: BITEIDRequest
       - package: BITAppAttestation
       - package: BITEIDRequestShared
+      - package: BITActivity
+      - package: BITActivityDetail
+      - package: BITNonCompliance
 
     preBuildScripts:
       - path: ../Scripts/format_generated_files.sh
@@ -614,7 +628,7 @@ targets:
         name: Swift packages list
         outputFiles:
           - "/tmp/swiyuUITests-AppDummyOutputFileSwiftPackagesList.txt"
-    
+
     postBuildScripts:
       - path: ../Scripts/settings_bundle.sh
         name: Settings bundle
@@ -670,6 +684,9 @@ targets:
       - package: BITOpenID
       - package: BITAnyCredentialFormat
       - package: BITEIDRequest
+      - package: BITActivity
+      - package: BITActivityDetail
+      - package: BITNonCompliance
 
       deploymentTarget: "16.0"
       settings:

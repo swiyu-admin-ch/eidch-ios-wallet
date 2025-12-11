@@ -4,10 +4,12 @@
   "vct#integrity": "sha265-onXnKxyPhvWaqkNqWgpL0r1lEoBfLIsJQfFuY5ydHPg",
   "iss": "did:tdw:example",
   "cnf": {
-    "kty": "EC",
-    "crv": "P-256",
-    "x": "1rBmcvygc51308vVv-4EGIqvLrheRqMkfpsDLCT9ecI",
-    "y": "VKlPl4xkvIkFin9BHKxun_i-In8s-Zzq-asiFYD4WE8"
+    "jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "1rBmcvygc51308vVv-4EGIqvLrheRqMkfpsDLCT9ecI",
+      "y": "VKlPl4xkvIkFin9BHKxun_i-In8s-Zzq-asiFYD4WE8"
+    }
   },
   "exp": 1767168000,
   "iat": 1739282713,

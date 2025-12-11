@@ -39,15 +39,14 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
 
     let requestObject = Self.requestObjectMock
     XCTAssertEqual(context.requestObject, requestObject)
-    XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock])
-    XCTAssertNil(context.inputDescriptorId)
-    XCTAssertEqual(context.selectedCredentials, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock.first!])
+    XCTAssertEqual(context.compatibleCredentials, compatibleCredentialsMock)
+    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first!)
     XCTAssertEqual(context.trustInformation.identity, .untrusted)
     XCTAssertEqual(context.trustInformation.vcSchema, .notProtected)
   }
 
   func textExecute_plainRequestObjectMultipleCredentials_argumentsPassed() async throws {
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = [Self.requestObjectMock.firstInputDescriptor!.id: CompatibleCredential.Mock.array]
+    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = CompatibleCredential.Mock.array
 
     _ = try await useCase.execute(url: urlMock)
 
@@ -62,15 +61,14 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
   }
 
   func testExecute_plainRequestObjectMultipleCredentials_returnsContext() async throws {
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = [Self.requestObjectMock.firstInputDescriptor!.id: CompatibleCredential.Mock.array]
+    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = CompatibleCredential.Mock.array
 
     let context = try await useCase.execute(url: urlMock)
 
     let requestObject = Self.requestObjectMock
     XCTAssertEqual(context.requestObject, requestObject)
-    XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: CompatibleCredential.Mock.array])
-    XCTAssertEqual(context.inputDescriptorId, requestObject.firstInputDescriptor!.id)
-    XCTAssertNil(context.selectedCredentials[requestObject.firstInputDescriptor!.id])
+    XCTAssertEqual(context.compatibleCredentials, CompatibleCredential.Mock.array)
+    XCTAssertNil(context.selectedCredential)
     XCTAssertEqual(context.trustInformation.identity, .untrusted)
     XCTAssertEqual(context.trustInformation.vcSchema, .notProtected)
   }
@@ -100,9 +98,8 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
 
     let requestObject = jwtRequestObjectMock.payload
     XCTAssertEqual(context.requestObject, requestObject)
-    XCTAssertEqual(context.compatibleCredentialsRequestMap, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock])
-    XCTAssertNil(context.inputDescriptorId)
-    XCTAssertEqual(context.selectedCredentials, [requestObject.firstInputDescriptor!.id: compatibleCredentialsMock.first!])
+    XCTAssertEqual(context.compatibleCredentials, compatibleCredentialsMock)
+    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first!)
     XCTAssertEqual(context.trustInformation, trustInformationMock)
   }
 
@@ -223,17 +220,6 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_invalidPresentationRequest_throwsInvalidPresentRequestError() async throws {
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = [:]
-
-    do {
-      _ = try await useCase.execute(url: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      XCTAssertEqual(error as? FetchPresentationRequestUseCaseError, .invalidRequest)
-    }
-  }
-
   // MARK: Private
 
   private static let requestObjectMock: RequestObject = .Mock.VcSdJwt.sample
@@ -263,7 +249,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
 
   private func createSuccessState(request: PresentationRequest = .plain(requestObjectMock)) {
     serviceSpy.fetchFromReturnValue = request
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = [request.requestObject.firstInputDescriptor!.id: compatibleCredentialsMock]
+    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = compatibleCredentialsMock
     trustInformationServiceSpy.fetchForTypeVcSchemaIdReturnValue = trustInformationMock
   }
 }

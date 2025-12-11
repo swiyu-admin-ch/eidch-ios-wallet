@@ -2,35 +2,48 @@ import BITAVWrapper
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - ScanDocumentView
 
 struct ScanDocumentView: View {
 
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.scanDocumentViewModel(router))
-  }
-
   // MARK: Internal
 
   var body: some View {
-    VStack {
+    ZStack {
+      Color.clear
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ThemingAssets.Background.secondary.swiftUIColor)
+        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
+        .ignoresSafeArea(edges: .bottom)
+
       switch viewModel.state {
-      case .sdkInitializing:
-        loadingView()
-      case .ready:
+      case .camera:
         scannerView()
-      case .error(let error):
-        Text(error.localizedDescription)
+          .transition(.opacity)
+      case .loading:
+        loadingView()
+          .transition(.opacity)
+          .task {
+            viewModel.initializeSDK()
+          }
       }
     }
+    .cameraPermission()
+    .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+    .font(.custom.body)
+    .animation(.easeInOut(duration: 0.4), value: viewModel.state)
     .readSize { size in
       self.size = size
     }
-    .toolbar { CloseButtonToolbar(action: viewModel.close) }
+    .onDisappear(perform: {
+      viewModel.stop()
+    })
+    .toolbar { CloseButtonToolbar(action: viewModel.navigationClose) }
+    .navigate(to: $viewModel.destination)
+    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
@@ -41,13 +54,99 @@ struct ScanDocumentView: View {
   @State private var currentDisplayState = ScanDocumentViewModel.ScanningState.recto
   @State private var scale = 1.0
 
-  @StateObject private var viewModel: ScanDocumentViewModel
+  @InjectedObject(\.scanDocumentViewModel) private var viewModel: ScanDocumentViewModel
 
   private let defaultScale = 1.0
   private let axis: (x: CGFloat, y: CGFloat, z: CGFloat) = (x: 0, y: 1, z: 0)
   private let animationDuration: TimeInterval = 0.4
   private let animatedScale: CGFloat = 0.95
   private let animatedRotationAngle: Double = 90
+  private let oppositeRotationAngle: Double = 180
+  private let defaultRotationAngle: Double = 0
+  private let rotationVisibilityRange: Range<Double> = 90..<270
+
+  @ViewBuilder
+  private func loadingView() -> some View {
+    VStack {
+      ProgressView()
+      Text(L10n.tkEidRequestSdkInitializationPrimary)
+    }
+  }
+
+  @ViewBuilder
+  private func scannerView() -> some View {
+    ZStack(alignment: .center) {
+      GLViewWrapper(viewModel.avBeam.getGLView)
+        .background(ThemingAssets.Background.secondary.swiftUIColor)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
+        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+
+      ZStack {
+        viewModel.overlayImage.front
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .padding(.x4)
+          .scaleEffect(scale)
+          .rotation3DEffect(
+            .degrees(rotationAngle),
+            axis: axis)
+          .opacity(rotationVisibilityRange.contains(rotationAngle) ? 0 : 1)
+
+        viewModel.overlayImage.back
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .padding(.x4)
+          .scaleEffect(scale)
+          .rotation3DEffect(
+            .degrees(rotationAngle + oppositeRotationAngle),
+            axis: axis)
+          .opacity(rotationVisibilityRange.contains(rotationAngle) ? 1 : 0)
+      }
+      .onReceive(viewModel.$scanningState) { newState in
+        if newState != currentDisplayState {
+          currentDisplayState = newState
+
+          withAnimation(.easeInOut(duration: animationDuration * 2)) {
+            rotationAngle = (newState == .verso) ? oppositeRotationAngle : defaultRotationAngle
+            scale = animatedScale
+          }
+
+          DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            withAnimation(.easeInOut(duration: animationDuration)) {
+              scale = defaultScale
+            }
+          }
+        }
+      }
+    }
+    .task {
+      let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+      viewModel.scanFrame = frame
+    }
+    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+    .popup(item: $viewModel.introductionPopupState, itemView: introductionPopupView) {
+      $0.appearFrom(.bottomSlide)
+        .position(.bottom)
+        .closeOnTap(false)
+        .closeOnTapOutside(false)
+        .type(.floater(verticalPadding: 0, horizontalPadding: 0, useSafeAreaInset: true))
+    }
+    .popup(isPresented: $viewModel.isNotificationPresented, view: {
+      popupView(viewModel.notification)
+    }) {
+      $0.appearFrom(.topSlide)
+        .position(.top)
+        .closeOnTap(false)
+        .closeOnTapOutside(false)
+        .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
+    }
+    .navigationTitle(viewModel.title)
+  }
+
+}
+
+extension ScanDocumentView {
 
   @ViewBuilder
   private func introductionPopupView(_ state: ScanDocumentViewModel.ScanningState) -> some View {
@@ -78,101 +177,8 @@ struct ScanDocumentView: View {
     }
   }
 
-  @ViewBuilder
-  private func loadingView() -> some View {
-    VStack {
-      ProgressView()
-      Text(L10n.tkEidRequestSdkInitializationPrimary)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(ThemingAssets.Background.secondary.swiftUIColor)
-    .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-    .ignoresSafeArea(edges: .bottom)
-    .task {
-      viewModel.initializeSDK()
-    }
-  }
-
-  @ViewBuilder
-  private func scannerView() -> some View {
-    ZStack(alignment: .center) {
-      GLViewWrapper(viewModel.avBeam.getGLView)
-        .background(ThemingAssets.Background.secondary.swiftUIColor)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
-
-      ZStack {
-        viewModel.overlayImage.front
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .padding(.x4)
-          .scaleEffect(scale)
-          .rotation3DEffect(
-            .degrees(rotationAngle),
-            axis: axis)
-          .opacity(rotationAngle > 90 && rotationAngle < 270 ? 0 : 1)
-
-        viewModel.overlayImage.back
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .padding(.x4)
-          .scaleEffect(scale)
-          .rotation3DEffect(
-            .degrees(rotationAngle + 180),
-            axis: axis)
-          .opacity(rotationAngle > 90 && rotationAngle < 270 ? 1 : 0)
-      }
-      .onReceive(viewModel.$scanningState) { newState in
-        if newState != currentDisplayState {
-          currentDisplayState = newState
-
-          withAnimation(.easeInOut(duration: animationDuration * 2)) {
-            if newState == .verso {
-              rotationAngle = 180
-            } else {
-              rotationAngle = 0
-            }
-            scale = animatedScale
-          }
-
-          DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-            withAnimation(.easeInOut(duration: animationDuration)) {
-              scale = defaultScale
-            }
-          }
-        }
-      }
-    }
-    .task {
-      let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-      await viewModel.startCamera()
-      await viewModel.startScan(frame: frame)
-    }
-    .onDisappear(perform: {
-      viewModel.stop()
-    })
-    .popup(item: $viewModel.introductionPopupState, itemView: introductionPopupView) {
-      $0.appearFrom(.bottomSlide)
-        .position(.bottom)
-        .closeOnTap(false)
-        .closeOnTapOutside(false)
-        .type(.floater(verticalPadding: 0, horizontalPadding: 0, useSafeAreaInset: true))
-    }
-    .popup(isPresented: $viewModel.isNotificationPresented, view: {
-      popupView(viewModel.notification)
-    }) {
-      $0.appearFrom(.topSlide)
-        .position(.top)
-        .closeOnTap(false)
-        .closeOnTapOutside(false)
-        .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
-    }
-    .navigationTitle(viewModel.title)
-  }
-
 }
 
 #Preview {
-  ScanDocumentView(router: EIDRequestRouter())
+  ScanDocumentView()
 }

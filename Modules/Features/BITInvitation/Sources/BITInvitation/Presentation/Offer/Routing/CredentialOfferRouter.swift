@@ -27,4 +27,12 @@ extension CredentialOfferInternalRoutes where Self: RouterProtocol {
     let viewController = UINavigationController(rootViewController: UIHostingController(rootView: CredentialOfferWrongDataView(router: self)))
     open(viewController, as: ModalOpeningStyle(animatedWhenPresenting: true))
   }
+
+  func badgeInformation(badgeType: BadgeType) {
+    let view = BadgeInformationView(badgeType: badgeType) { [weak self] in
+      self?.dismiss()
+    }
+    let viewController = UINavigationController(rootViewController: UIHostingController(rootView: view))
+    open(viewController, as: ModalOpeningStyle(animatedWhenPresenting: true))
+  }
 }

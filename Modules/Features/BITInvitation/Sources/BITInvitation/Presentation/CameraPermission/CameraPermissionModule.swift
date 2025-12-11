@@ -6,9 +6,9 @@ class CameraPermissionModule {
 
   // MARK: Lifecycle
 
-  init(router: InvitationRouter = Container.shared.invitationRouter()) {
+  init(router: InvitationRouter = Container.shared.invitationRouter(), delegate: InvitationDelegate? = nil) {
     self.router = router
-    let viewController = UIHostingController(rootView: CameraPermissionView(router: router))
+    let viewController = UIHostingController(rootView: CameraPermissionView(router: router, delegate: delegate))
     router.viewController = viewController
     self.viewController = viewController
   }

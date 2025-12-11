@@ -4,27 +4,30 @@ import BITOca
 import BITSdJWT
 import Factory
 import Foundation
+import Spyable
 
-struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForAnyCredentialUseCaseProtocol {
+// MARK: - FetchVcMetadataForCredentialUseCaseProtocol
+
+@Spyable
+public protocol FetchVcMetadataForCredentialUseCaseProtocol {
+  func execute(anyCredential: AnyCredential) async throws -> (VcSchema?, RawOcaBundle?)
+  func execute(metadata: any CredentialMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?)
+}
+
+// MARK: - FetchVcMetadataForVcSdJwtUseCase
+
+struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForCredentialUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(for anyCredential: AnyCredential) async throws -> (VcSchema?, RawOcaBundle?) {
+  func execute(anyCredential: AnyCredential) async throws -> (VcSchema?, RawOcaBundle?) {
     guard let vcSdJwt = anyCredential as? VcSdJwt else { throw CredentialFormatError.formatNotSupported }
-    let typeMetadata = try await typeMetadataService.fetch(vcSdJwt.payload)
-    var rawOcaBundle: RawOcaBundle? = nil
-    var vcSchema: VcSchema? = nil
-    if let metadata = typeMetadata {
-      vcSchema = try await vcSchemaService.fetch(for: metadata)
-      if let vcSchema {
-        let claims = anyCredential.getClaimsDictionary(.all)
-        guard try vcSdJwtSchemaValidator.validate(claims, schema: vcSchema) else {
-          throw FetchAnyVerifiableCredentialError.invalidVcSchema
-        }
-      }
-      rawOcaBundle = try await fetchOCABundle(from: metadata)
-    }
-    return (vcSchema, rawOcaBundle)
+    return try await fetchMetadata(from: vcSdJwt.payload.typeMetadataUri, vct: vcSdJwt.payload.vct)
+  }
+
+  func execute(metadata: any CredentialMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?) {
+    guard let vcSdJwtMetadata = metadata as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported else { throw CredentialFormatError.formatNotSupported }
+    return try await fetchMetadata(from: vcSdJwtMetadata.typeMetadataUri, vct: vcSdJwtMetadata.vct)
   }
 
   // MARK: Private
@@ -33,6 +36,21 @@ struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForAnyCredentialUseCaseP
   @Injected(\.vcSdJwtSchemaValidator) private var vcSdJwtSchemaValidator: VcSdJwtSchemaValidatorProtocol
   @Injected(\.typeMetadataService) private var typeMetadataService: TypeMetadataServiceProtocol
   @Injected(\.ocaBundleService) private var ocaBundleService: OCABundleServiceProtocol
+
+  private func fetchMetadata(from uri: TypeMetadataUri?, vct: String) async throws -> (VcSchema?, RawOcaBundle?) {
+    guard
+      let uri,
+      let typeMetadata = try await typeMetadataService.fetch(from: uri, vct: vct)
+    else { return (nil, nil) }
+    let vcSchema = try await vcSchemaService.fetch(for: typeMetadata)
+    if let vcSchema {
+      guard try vcSdJwtSchemaValidator.validate(schema: vcSchema) else {
+        throw FetchAnyVerifiableCredentialError.invalidVcSchema
+      }
+    }
+    let rawOcaBundle = try await fetchOCABundle(from: typeMetadata)
+    return (vcSchema, rawOcaBundle)
+  }
 
   private func fetchOCABundle(from typeMetadata: TypeMetadata) async throws -> RawOcaBundle? {
     guard

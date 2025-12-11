@@ -8,19 +8,18 @@ import Spyable
 
 enum TypeMetadataServiceError: Error {
   case vctMismatch
-  case missingVctIntegrity
   case typeMetadataInvalidIntegrity
 }
 
 // MARK: - TypeMetadataServiceProtocol
 
 @Spyable
-public protocol TypeMetadataServiceProtocol {
+protocol TypeMetadataServiceProtocol {
   ///
-  /// Fetches the type metadata based on the `vct` property of a `vc`.
+  /// Fetches the type metadata based on the `vct_metadata_uri` or `vct` property of a `vc`.
   ///
   /// Returns:
-  /// - The fetched `TypeMetadata` if available, or `nil` if `vc.vct` does not exist or is not a valid URL.
+  /// - The fetched `TypeMetadata` if available..
   ///
   /// Throws:
   /// - `RepositoryError` if the network request fails.
@@ -28,7 +27,7 @@ public protocol TypeMetadataServiceProtocol {
   /// - `TypeMetadataServiceError.missingVctIntegrity` if `vc.vctIntegrity` is not available but `vc.vct` is present.
   /// - `TypeMetadataServiceError.typeMetadataInvalidIntegrity` if the `SRI` validator fails to validate integrity.
   ///
-  func fetch(_ vc: VcSdJwtPayload) async throws -> TypeMetadata?
+  func fetch(from uri: TypeMetadataUri, vct: String) async throws -> TypeMetadata?
 }
 
 // MARK: - TypeMetadataService
@@ -37,24 +36,20 @@ struct TypeMetadataService: TypeMetadataServiceProtocol {
 
   // MARK: Internal
 
-  func fetch(_ vc: VcSdJwtPayload) async throws -> TypeMetadata? {
-    guard let url = URL(string: vc.vct), url.isValidHttpUrl else {
-      return nil
-    }
-
-    let response = try await repository.fetchTypeMetadata(from: url)
+  func fetch(from uri: TypeMetadataUri, vct: String) async throws -> TypeMetadata? {
+    let response = try await repository.fetchTypeMetadata(from: uri.url)
     let typeMetadata = response.object
 
-    guard vc.vct == typeMetadata.vct else {
+    guard vct == typeMetadata.vct else {
       throw TypeMetadataServiceError.vctMismatch
     }
 
-    guard let vctIntegrity = vc.vctIntegrity else {
-      throw TypeMetadataServiceError.missingVctIntegrity
+    guard let integrity = uri.integrity else {
+      return typeMetadata
     }
 
     do {
-      guard try sriValidator.validate(response.data, with: vctIntegrity) else {
+      guard try sriValidator.validate(response.data, with: integrity) else {
         throw TypeMetadataServiceError.typeMetadataInvalidIntegrity
       }
       return typeMetadata

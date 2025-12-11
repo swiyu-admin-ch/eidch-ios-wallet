@@ -21,6 +21,7 @@ extension CredentialEntity {
     self.init()
     id = credential.id
     format = credential.format
+    selectedConfigurationId = credential.selectedConfigurationId
     createdAt = credential.createdAt
     issuerDisplays.append(objectsIn: credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init))
     displays.append(objectsIn: credential.displays.map(CredentialDisplayEntity.init))
@@ -35,6 +36,7 @@ extension CredentialEntity {
   }
 
   public func setValues(from credential: DeferredCredential) {
-    #warning("Implement when update credential")
+    deferredCredential?.polledAt = credential.polledAt
+    deferredCredential?.pollingInterval = credential.pollingInterval
   }
 }

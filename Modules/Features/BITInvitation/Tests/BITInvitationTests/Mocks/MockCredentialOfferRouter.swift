@@ -12,6 +12,7 @@ final class MockCredentialOfferRouter: ClosableRoutesMock, CredentialOfferRoutes
   private(set) var trustInformation: TrustInformation?
   private(set) var wrongDataCalled = false
   private(set) var externalLinkCalled = false
+  private(set) var didCallBadgeInformation = false
 
   func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
     credentialOfferCalled = true
@@ -25,6 +26,10 @@ final class MockCredentialOfferRouter: ClosableRoutesMock, CredentialOfferRoutes
 
   func openExternalLink(url: URL) {
     externalLinkCalled = true
+  }
+
+  func badgeInformation(badgeType: BadgeType) {
+    didCallBadgeInformation = true
   }
 
 }

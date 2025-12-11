@@ -8,6 +8,7 @@ public enum OverlayType {
   case label
   case meta
   case order
+  case sensitive
   case standard
 
   // MARK: Internal
@@ -32,6 +33,8 @@ public enum OverlayType {
       [.meta1_0]
     case .order:
       [.order1_0]
+    case .sensitive:
+      [.sensitive1_0]
     case .standard:
       [.standard1_0]
     }

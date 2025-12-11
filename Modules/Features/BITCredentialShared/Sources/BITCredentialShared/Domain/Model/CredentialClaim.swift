@@ -15,6 +15,7 @@ public struct CredentialClaim: Codable, ClusterItem {
     valueType: String = "string",
     valueDisplayInfo: String? = nil,
     order: Int = 0,
+    isSensitive: Bool = false,
     displays: [CredentialClaimDisplay] = [])
   {
     self.id = id
@@ -23,6 +24,7 @@ public struct CredentialClaim: Codable, ClusterItem {
     self.valueType = valueType
     self.valueDisplayInfo = valueDisplayInfo
     self.order = order
+    self.isSensitive = isSensitive
     self.displays = displays
     preferredDisplay = displays.findDisplayWithFallback() ?? CredentialClaimDisplay(name: key)
   }
@@ -35,6 +37,7 @@ public struct CredentialClaim: Codable, ClusterItem {
     let valueType = try container.decode(String.self, forKey: .valueType)
     let valueDisplayInfo = try container.decodeIfPresent(String.self, forKey: .valueDisplayInfo)
     let order = try container.decode(Int.self, forKey: .order)
+    let isSensitive = try container.decode(Bool.self, forKey: .isSensitive)
     let displays = try container.decode([CredentialClaimDisplay].self, forKey: .displays)
 
     self.init(
@@ -44,6 +47,7 @@ public struct CredentialClaim: Codable, ClusterItem {
       valueType: valueType,
       valueDisplayInfo: valueDisplayInfo,
       order: order,
+      isSensitive: isSensitive,
       displays: displays)
   }
 
@@ -56,6 +60,7 @@ public struct CredentialClaim: Codable, ClusterItem {
       valueType: entity.valueType,
       valueDisplayInfo: entity.valueDisplayInfo,
       order: Int(entity.order),
+      isSensitive: entity.isSensitive,
       displays: displays)
   }
 
@@ -67,8 +72,9 @@ public struct CredentialClaim: Codable, ClusterItem {
   public var valueType: String
   public var valueDisplayInfo: String?
   public var order: Int
+  public var isSensitive: Bool
   public var displays: [CredentialClaimDisplay]
-  public var preferredDisplay: CredentialClaimDisplay?
+  public var preferredDisplay: CredentialClaimDisplay
 
   // MARK: Internal
 
@@ -79,6 +85,7 @@ public struct CredentialClaim: Codable, ClusterItem {
     case valueType = "value_type"
     case valueDisplayInfo = "value_display_info"
     case order
+    case isSensitive = "is_sensitive"
     case displays
   }
 }

@@ -12,6 +12,7 @@ public struct OverlayBundleAttribute: Equatable {
     format: String? = nil,
     labels: [Locale: String] = [:],
     order: Int? = nil,
+    isSensitive: Bool = false,
     standard: Standard? = nil)
   {
     self.captureBaseDigest = captureBaseDigest
@@ -23,6 +24,7 @@ public struct OverlayBundleAttribute: Equatable {
     self.format = format
     self.labels = labels
     self.order = order
+    self.isSensitive = isSensitive
     self.standard = standard
   }
 
@@ -37,5 +39,6 @@ public struct OverlayBundleAttribute: Equatable {
   public let format: String?
   public let labels: [Locale: String]
   public let order: Int?
+  public let isSensitive: Bool
   public let standard: Standard?
 }

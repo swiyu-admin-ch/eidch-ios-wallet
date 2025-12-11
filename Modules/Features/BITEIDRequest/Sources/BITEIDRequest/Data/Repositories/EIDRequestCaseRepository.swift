@@ -16,6 +16,9 @@ protocol EIDRequestCaseRepositoryProtocol {
   func update(_ eIDRequestCase: EIDRequestCase) async throws -> EIDRequestCase
   func delete(_ id: String) async throws
 
+  // MARK: - Files
+
+  func getFile(forRequestCaseId id: String, name: String, category: EIDRequestCaseFile.Category) async throws -> EIDRequestCaseFile
   func getAllFiles(forRequestCaseId id: String) async throws -> [EIDRequestCaseFile]
   func getFiles(forRequestCaseId id: String, matching category: EIDRequestCaseFile.Category) async throws -> [EIDRequestCaseFile]
   func save(file: EIDRequestCaseFile, forRequestCaseId id: String) async throws
@@ -66,6 +69,18 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
     try database.delete(entity)
   }
 
+  func getFile(forRequestCaseId id: String, name: String, category: EIDRequestCaseFile.Category) async throws -> EIDRequestCaseFile {
+    let file = try database.get(EIDRequestCaseFileEntity.self)
+      .filter { $0.requestCase.first?.id == id && $0.category == category.rawValue && $0.fileName == name }
+      .first
+
+    guard let file else {
+      throw EIDRequestCaseRepositoryError.notFound
+    }
+
+    return try EIDRequestCaseFile(file)
+  }
+
   func getAllFiles(forRequestCaseId id: String) async throws -> [EIDRequestCaseFile] {
     let entity = try getEntity(id)
     return try entity.files.compactMap(EIDRequestCaseFile.init)
@@ -80,6 +95,7 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
 
   func save(file: EIDRequestCaseFile, forRequestCaseId id: String) async throws {
     let entity = try getEntity(id)
+    let file = renameFileIfNeeded(file)
     try database.write {
       entity.files.append(EIDRequestCaseFileEntity(file))
     }
@@ -87,8 +103,9 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
 
   func save(files: [EIDRequestCaseFile], forRequestCaseId id: String) async throws {
     let entity = try getEntity(id)
+    let renamedFiles = renameFilesIfNeeded(files)
     try database.write {
-      entity.files.append(objectsIn: files.map(EIDRequestCaseFileEntity.init))
+      entity.files.append(objectsIn: renamedFiles.map(EIDRequestCaseFileEntity.init))
     }
   }
 
@@ -101,12 +118,22 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
 
   // MARK: Private
 
-  @Injected(\.dataStore) private var database: RealmDataStoreProtocol
+  @Injected(\.dataStore) private var database
+  @Injected(\.sidFilenameMap) private var filenameMap
 
   private func getEntity(_ id: String) throws -> EIDRequestCaseEntity {
     let results = try database.get(EIDRequestCaseEntity.self, forPrimaryKey: id)
     guard let entity = results else { throw EIDRequestCaseRepositoryError.notFound }
     return entity
+  }
+
+  private func renameFileIfNeeded(_ file: EIDRequestCaseFile) -> EIDRequestCaseFile {
+    guard let filename = filenameMap[file.fileName] ?? nil else { return file }
+    return EIDRequestCaseFile(id: file.id, fileName: filename, mime: file.mime, data: file.data, category: file.category)
+  }
+
+  private func renameFilesIfNeeded(_ files: [EIDRequestCaseFile]) -> [EIDRequestCaseFile] {
+    files.map { renameFileIfNeeded($0) }
   }
 
 }

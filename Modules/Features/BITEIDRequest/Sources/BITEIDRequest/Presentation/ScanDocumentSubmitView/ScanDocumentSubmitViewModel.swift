@@ -1,60 +1,79 @@
-import BITAVWrapper
-import BITNetworking
+import BITL10n
+import BITNavigation
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
+import SwiftUI
 
 @MainActor
-class ScanDocumentSubmitViewModel: ObservableObject {
+class ScanDocumentSubmitViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Lifecycle
 
-  init(scanDocumentOutput: ScanDocumentOutput, router: EIDRequestInternalRoutes) {
+  init(scanDocumentOutput: ScanDocumentOutput) {
     self.scanDocumentOutput = scanDocumentOutput
-    self.router = router
   }
 
   // MARK: Internal
 
+  @Published var isNavigationCloseTriggered = false
+  @Published var destination: EIDRequestDestinations?
+
   func submit() async {
     do {
       let startTime = Date()
-      let requestCase = try await submitEIDRequestUseCase.execute(
+      let requestCase = try await applyEIDRequestUseCase(
         scanDocumentOutput: scanDocumentOutput,
-        hasLegalRepresentant: router.context.hasLegalRepresentant)
+        hasLegalRepresentant: context.hasLegalRepresentant)
 
       await applyMinimumDelay(startTime: startTime)
 
       guard requestCase.state != nil else {
-        return close()
+        return navigationClose()
       }
 
       let viewState = try RequestCaseViewState(requestCase)
-      router.context.caseId = requestCase.id
+      context.caseId = requestCase.id
 
       if !viewState.isLegalRepresentantConsentVerified {
-        return router.legalRepresentantConsent(caseId: requestCase.id)
+        return destination = .legalRepresentantConsent(caseId: requestCase.id)
       }
 
-      return switch viewState {
-      case .inQueue(let state): router.queueInformation(state.onlineSessionStartOpenAt)
-      case .readyForOnlineSession: router.walletPairing()
-      default: close()
+      switch viewState {
+      case .inQueue(let state):
+        destination = .queueInformation(state.onlineSessionStartOpenAt)
+      case .readyForOnlineSession:
+        destination = .walletPairing
+      default: navigationClose()
       }
     } catch {
+      destination = .error(ErrorDataset(
+        primary: L10n.tkEidRequestSubmitErrorPrimary,
+        secondary: L10n.tkEidRequestSubmitErrorSecondary,
+        tertiary: L10n.tkEidRequestSubmitErrorTertiary,
+        primaryAction: {
+          Task {
+            await self.submit()
+          }
+        },
+        primaryActionLabel: L10n.tkEidRequestSubmitErrorPrimaryButton,
+        tertiaryAction: openHelp))
     }
-  }
-
-  func close() {
-    router.close()
   }
 
   // MARK: Private
 
-  private var router: EIDRequestInternalRoutes
   private let scanDocumentOutput: ScanDocumentOutput
   private let minimumDelayInSeconds: TimeInterval = 2.0
 
-  @Injected(\.submitEIDRequestUseCase) private var submitEIDRequestUseCase
+  @Injected(\.eidRequestContext) private var context
+  @Injected(\.applyEIDRequestUseCase) private var applyEIDRequestUseCase
+
+  private func openHelp() {
+    guard let url = URL(string: L10n.tkEidRequestSubmitErrorTertiaryLink) else { return }
+    UIApplication.shared.open(url)
+  }
 
   // MARK: - Delay Management
 

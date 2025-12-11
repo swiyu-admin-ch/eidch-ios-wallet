@@ -1,14 +1,15 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 struct ValidateAttestationsErrorView: View {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, delegate: ValidateAttestationsErrorDelegate, error: Error) {
-    viewModel = Container.shared.validateAttestationsErrorViewModel((router, delegate, error))
+  init(error: ErrorWrapper, callback: @escaping (Void) -> Void) {
+    _viewModel = StateObject(wrappedValue: Container.shared.validateAttestationsErrorViewModel((error, callback)))
   }
 
   // MARK: Internal
@@ -23,12 +24,15 @@ struct ValidateAttestationsErrorView: View {
           secondary: viewModel.secondaryText)
       },
       footer: { footer() })
+      .navigationBack(onChangeOf: $viewModel.isNavigationBackTriggered)
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .navigationBarBackButtonHidden(true)
+      .toolbar(.visible)
   }
 
   // MARK: Private
 
-  private var viewModel: ValidateAttestationsErrorViewModel
+  @StateObject private var viewModel: ValidateAttestationsErrorViewModel
 
   @ViewBuilder
   private func footer() -> some View {
@@ -37,11 +41,11 @@ struct ValidateAttestationsErrorView: View {
         primaryButtonLabel: L10n.tkEidRequestAttestationUnknownErrorPrimaryButton,
         primaryButtonAction: viewModel.primaryAction,
         secondaryButtonLabel: L10n.tkEidRequestAttestationUnknownErrorSecondaryButton,
-        secondaryButtonAction: viewModel.secondaryAction)
+        secondaryButtonAction: viewModel.navigationClose)
     } else {
       DefaultInformationFooterView(
         primaryButtonLabel: L10n.tkEidRequestAttestationUnknownErrorSecondaryButton,
-        primaryButtonAction: viewModel.secondaryAction)
+        primaryButtonAction: viewModel.navigationClose)
     }
   }
 

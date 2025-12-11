@@ -1,0 +1,180 @@
+[env]
+_.file = '.env'
+
+[tools]
+xcodegen = '2.44.1'
+swiftlint = '0.62.1'
+swiftformat = '0.58.5'
+swiftgen = '6.6.3'
+danger-swift = '3.22.0'
+ruby = '3.4.7'
+'gem:bundler' = '2.7'
+
+[tasks.generate-project]
+description = 'Build xcode project'
+depends = ['build-project']
+run = ['open swiyu.xcodeproj']
+
+[tasks.regenerate-project]
+description = 'Build xcode project without applying swiftgen, swiftformat'
+depends = ['rebuild-project']
+run = ['open swiyu.xcodeproj']
+
+[tasks.build-project]
+description = 'Build xcode project'
+run = [
+    'mise swiftgen',
+    'mise swiftformat',
+    'mise xcode-configuration',
+    'mise xcodegen',
+]
+
+[tasks.rebuild-project]
+description = 'Re-Build xcode project without applying swiftgen, swiftformat'
+run = ['mise xcode-configuration', 'mise xcodegen']
+
+[tasks.tests]
+description = 'Run app tests'
+depends = ['build-project']
+run = ['bundle exec fastlane scan --scheme "swiyu Ref"']
+
+[tasks.swiftlint]
+description = 'Linting'
+run = 'swiftlint'
+
+[tasks.swiftformat]
+description = 'Format the project to expected code standards'
+run = 'swiftformat .'
+
+[tasks.swiftgen]
+description = 'Generate assets files'
+run = [
+    'swiftgen',
+    'swiftgen --config Modules/Platforms/BITCore/swiftgen.yml',
+    'swiftgen --config Modules/Platforms/BITL10n/swiftgen.yml',
+    'swiftgen --config Modules/Platforms/BITTheming/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITActivity/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITActivityDetail/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITAppAuth/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITCredential/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITEIDRequest/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITHome/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITInvitation/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITOnboarding/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITPresentation/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITSettings/swiftgen.yml',
+]
+
+[tasks.xcodegen]
+description = 'Build xcodeproj file'
+run = 'xcodegen'
+
+[tasks.danger]
+description = 'Danger swift'
+run = ['swift build', 'swift run danger-swift ci']
+
+[tasks.deploy]
+description = 'Deploy'
+run = 'bundle exec fastlane deploy env:{{option(name="environment", default="ref")}}'
+
+[tasks.deploy-ref]
+description = 'Deploy REF (updraft)'
+run = 'mise run deploy --environment ref'
+
+[tasks.deploy-abn]
+description = 'Deploy ABN (updraft)'
+run = 'mise run deploy --environment abn'
+
+[tasks.deploy-prod]
+description = 'Deploy PROD (testflight, appstoreconnect)'
+run = 'mise run deploy --environment prod'
+
+[tasks.refresh-all-profiles]
+description = 'Refresh all prov. profiles (appstore, enterprise)'
+run = ['mise refresh-profiles-appstore', 'mise refresh-profiles-enterprise']
+
+[tasks.refresh-profiles-appstore]
+description = 'Refresh AppStore provisonning profiles (all envs)'
+run = [
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:dev',
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn',
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:prod',
+]
+
+[tasks.refresh-profiles-enterprise]
+description = 'Refresh Enterprise provisonning profiles (all envs)'
+run = [
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn',
+]
+
+[tasks.ci]
+description = 'Run CI lane (dev)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:dev']
+
+[tasks.ci-build-ref]
+description = 'Run build lane (ref)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:ref']
+
+[tasks.ci-build-abn]
+description = 'Run appstore build (abn)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:abn']
+
+[tasks.ci-build-abn-store]
+description = 'Run appstore build (abn_store)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:abnstore']
+
+[tasks.ci-build-prod]
+description = 'Run appstore build (prod)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:prod']
+
+[tasks.tag]
+description = 'Run tag a version for a type defined as an env variable'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios tag_version version_bump_type:$APP_VERSION_BUMP_TYPE']
+
+[tasks.ci-build-ref-sim]
+description = 'Run simulator build (ref)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build_simulator env:ref']
+
+[tasks.ci-build-abn-sim]
+description = 'Run simulator build (abn)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build_simulator env:abn']
+
+[tasks.application-tests]
+description = 'Run application (ui) tests'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_uitests env:apptest']
+
+[tasks.xcode-configuration-ci]
+description = 'Xcode configuration for CI'
+run = [
+    'defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidation -bool YES',
+    'defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES',
+]
+
+[tasks.xcode-configuration]
+description = 'Add a series of configurations for xcode to align with necessary requirements'
+run = [
+    'defaults write com.apple.dt.Xcode DVTTextEditorTrimTrailingWhitespace -bool YES',
+    'defaults write com.apple.dt.Xcode DVTTextEditorTrimWhitespaceOnlyLines -bool YES',
+    'defaults write com.apple.dt.Xcode DVTTextIndentTabWidth -int 2',
+    'defaults write com.apple.dt.Xcode DVTTextIndentWidth -int 2',
+    'defaults write com.apple.dt.Xcode DVTTextPageGuideLocation -int 100',
+]
+
+[tasks.pre-commit]
+description = 'pre-commit hook'
+depends = ['swiftformat', 'swiftlint', 'sort-text-keys']
+
+[tasks.sort-text-keys]
+description = 'Sorts text keys and fails on duplicates'
+run = ['Scripts/sort_text_keys.rb']

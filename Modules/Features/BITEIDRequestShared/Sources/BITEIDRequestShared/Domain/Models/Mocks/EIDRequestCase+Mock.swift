@@ -4,6 +4,23 @@ import Foundation
 
 extension EIDRequestCase: Mockable {
   public struct Mock {
+
+    // MARK: Public
+
+    public static let validSamples: [EIDRequestCase] = [
+      sampleInQueue,
+      sampleInQueueNotVerified,
+      sampleAVReady,
+      sampleAVReadyNotVerified,
+      sampleWithoutState,
+      sampleDeclined,
+      sampleExpired,
+      sampleWalletPairing,
+      sampleAgentReview,
+    ]
+
+    // MARK: Internal
+
     static let sampleInQueue: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-queue", bundle: Bundle.module)
     static let sampleInQueueNotVerified: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-queue-not-verified", bundle: Bundle.module)
     static let sampleExpired: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-expired", bundle: Bundle.module)
@@ -15,8 +32,8 @@ extension EIDRequestCase: Mockable {
     static let sampleAVReadyNotVerified: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-not-verified", bundle: Bundle.module)
     static let sampleAVReadyNoOnlineSessionTimeout: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-without-online-session-timeout", bundle: Bundle.module)
     static let sampleWithoutState: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-without-state", bundle: Bundle.module)
+    static let sampleWalletPairing: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-wallet-pairing", bundle: Bundle.module)
 
-    public static let validSamples: [EIDRequestCase] = [sampleInQueue, sampleAVReady, sampleWithoutState, sampleAVReadyNotVerified, sampleInQueueNotVerified]
   }
 }
 #endif

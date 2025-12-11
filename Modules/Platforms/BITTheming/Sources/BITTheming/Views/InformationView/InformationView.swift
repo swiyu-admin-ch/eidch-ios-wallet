@@ -47,9 +47,6 @@ public struct InformationView<Content: View, Footer: View>: View {
       primaryContent: leftContent,
       secondaryContent: rightContent,
       footer: footerContent)
-      .onAppear {
-        resetAccessibilityFocus()
-      }
   }
 
   // MARK: Internal
@@ -60,8 +57,6 @@ public struct InformationView<Content: View, Footer: View>: View {
 
   // MARK: Private
 
-  @AccessibilityFocusState private var isCurrentPageFocused: Bool
-
   @Orientation private var orientation
 
   private let footer: Footer
@@ -70,13 +65,6 @@ public struct InformationView<Content: View, Footer: View>: View {
   private let image: Image
   private let backgroundImage: Image?
   private let backgroundColor: Color?
-
-  private func resetAccessibilityFocus() {
-    DispatchQueue.main.async {
-      isCurrentPageFocused = false
-      isCurrentPageFocused = true
-    }
-  }
 }
 
 // MARK: - Components
@@ -92,7 +80,7 @@ extension InformationView {
   private func rightContent() -> some View {
     content
       .padding(.horizontal, .x6)
-      .accessibilityFocused($isCurrentPageFocused)
+      .accessibilityPriorityFocus()
   }
 
   @ViewBuilder

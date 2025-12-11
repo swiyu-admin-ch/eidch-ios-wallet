@@ -1,17 +1,12 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - LegalRepresentantView
 
 struct LegalRepresentantView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.legalRepresentantViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -33,14 +28,16 @@ struct LegalRepresentantView: View {
           secondaryButtonAction: { viewModel.action(false) })
       })
       .navigationBarBackButtonHidden()
-      .toolbar { CloseButtonToolbar(action: viewModel.close) }
+      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+      .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  private var viewModel: LegalRepresentantViewModel
+  @InjectedObject(\.legalRepresentantViewModel) private var viewModel
+  @Environment(\.navigator) private var navigator
 }
 
 #Preview {
-  LegalRepresentantView(router: EIDRequestRouter())
+  LegalRepresentantView()
 }

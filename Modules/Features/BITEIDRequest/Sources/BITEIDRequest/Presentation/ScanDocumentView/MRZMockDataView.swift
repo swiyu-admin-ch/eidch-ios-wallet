@@ -1,15 +1,10 @@
 import BITAVWrapper
 import BITTheming
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 struct MRZMockDataView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
 
   // MARK: Internal
 
@@ -20,17 +15,21 @@ struct MRZMockDataView: View {
           guard let mrz = try? MRZ(values: mrzData.payload.mrz) else { return }
 
           let output = ScanDocumentOutput(mrz: mrz, identityType: mrzData.identityType ?? .identityCard)
-          router.scanDocumentSubmit(output)
+          navigator.push(EIDRequestDestinations.scanDocumentSubmit(output))
         }
       }
     }
     .scrollContentBackground(.hidden)
     .listStyle(.grouped)
-    .toolbar { CloseButtonToolbar(action: router.close) }
+    .toolbar {
+      CloseButtonToolbar(action: {
+        navigator.dismiss()
+      })
+    }
   }
 
   // MARK: Private
 
-  private var router: EIDRequestInternalRoutes
+  @Environment(\.navigator) private var navigator
 
 }

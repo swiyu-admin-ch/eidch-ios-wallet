@@ -48,9 +48,9 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
-  // MARK: - Submit request
+  // MARK: - Apply request
 
-  func testSubmitRequest_success() async throws {
+  func testApplyRequest_success() async throws {
     let expectedResponse = EIDRequestResponse.Mock.sample
 
     guard let mockeIDRequestPayload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
@@ -59,7 +59,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
 
     mockResponse(code: 200, data: EIDRequestResponse.Mock.sampleData)
 
-    let response = try await repository.submitRequest(with: mockeIDRequestPayload)
+    let response = try await repository.apply(with: mockeIDRequestPayload)
 
     XCTAssertEqual(expectedResponse, response)
     XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.body as? EIDRequestPayload, mockeIDRequestPayload)
@@ -67,7 +67,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
     XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.challengeEndpoint, URL(target: EIDRequestEndpoint.challenge))
   }
 
-  func testSubmitRequest_generateProofOfPossessionsFails_throwsError() async throws {
+  func testApplyRequest_generateProofOfPossessionsFails_throwsError() async throws {
     proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
 
     guard let mockeIDRequestPayload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
@@ -75,7 +75,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
 
     do {
-      _ = try await repository.submitRequest(with: mockeIDRequestPayload)
+      _ = try await repository.apply(with: mockeIDRequestPayload)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -211,7 +211,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
   func testStartAutoVerification_success() async throws {
     mockResponse(code: 200, data: AutoVerificationResponse.Mock.sampleData)
 
-    let result = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1)
+    let result = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1, isNFCAvailable: true)
 
     XCTAssertEqual(result, AutoVerificationResponse.Mock.nfcSample)
     XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointCallsCount, 1)
@@ -221,10 +221,28 @@ final class EIDRequestRepositoryTests: XCTestCase {
     proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
 
     do {
-      _ = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1)
+      _ = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1, isNFCAvailable: true)
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+
+  func testSubmitRequest_success() async throws {
+    mockResponse(code: 200)
+
+    try await repository.submitRequest(caseId: "caseId", authJwt: "authJwt")
+  }
+
+  func testSubmitRequest_throwsError() async throws {
+    mockResponse(code: 404)
+
+    do {
+      try await repository.submitRequest(caseId: "caseId", authJwt: "authJwt")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssert(error is NetworkError)
     }
   }
 

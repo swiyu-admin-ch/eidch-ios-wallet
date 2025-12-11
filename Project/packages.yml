@@ -19,8 +19,6 @@ packages:
     path: ../Modules/Platforms/BITNetworking
   BITTheming:
     path: ../Modules/Platforms/BITTheming
-  BITNetworking:
-    path: ../Modules/Platforms/BITNetworking
   BITVault:
     path: ../Modules/Platforms/BITVault
   BITDataStore:
@@ -68,3 +66,9 @@ packages:
     path: ../Modules/Features/BITAppAttestation
   BITEIDRequestShared:
     path: ../Modules/Features/BITEIDRequestShared
+  BITActivity:
+    path: ../Modules/Features/BITActivity
+  BITActivityDetail:
+    path: ../Modules/Features/BITActivityDetail
+  BITNonCompliance:
+    path: ../Modules/Features/BITNonCompliance

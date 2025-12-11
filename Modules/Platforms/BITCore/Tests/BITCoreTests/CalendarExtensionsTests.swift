@@ -6,11 +6,21 @@ final class CalendarExtensionsTests: XCTestCase {
 
   // MARK: Internal
 
+  override func setUp() {
+    setenv("TZ", "UTC", 1)
+    CFTimeZoneResetSystem()
+  }
+
+  override func tearDown() {
+    unsetenv("TZ")
+    CFTimeZoneResetSystem()
+  }
+
   func testNumberOfDaysBetween_sameDay_Returns0() throws {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 0)
   }
@@ -19,7 +29,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay - 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 0)
   }
@@ -28,7 +38,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerHour - 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 0)
   }
@@ -37,7 +47,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay + 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 1)
   }
@@ -46,7 +56,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerHour + 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 1)
   }
@@ -55,7 +65,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay * 2 - 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 1)
   }
@@ -64,7 +74,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay + Self.secondsPerHour - 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 1)
   }
@@ -73,7 +83,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay * 7 + 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 7)
   }
@@ -82,7 +92,7 @@ final class CalendarExtensionsTests: XCTestCase {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay * 6 + Self.secondsPerHour + 1)
 
-    let days = Self.calendar.numberOfDaysBetween(fromDate, and: toDate)
+    let days = calendar.numberOfDaysBetween(fromDate, and: toDate)
 
     XCTAssertEqual(days, 7)
   }
@@ -91,9 +101,11 @@ final class CalendarExtensionsTests: XCTestCase {
 
   private static let secondsPerHour: Double = 60 * 60
   private static let secondsPerDay: Double = secondsPerHour * 24
-  private static let calendar = Calendar(identifier: .iso8601)
 
-  private let midnightDate = calendar.startOfDay(for: Date())
-  private let elevenPMDate = calendar.startOfDay(for: Date()).advanced(by: secondsPerHour * 23)
+  private lazy var calendar = Calendar(identifier: .iso8601)
+
+  private lazy var midnightDate: Date = calendar.startOfDay(for: Date())
+
+  private lazy var elevenPMDate: Date = calendar.startOfDay(for: Date()).advanced(by: Self.secondsPerHour * 23)
 
 }

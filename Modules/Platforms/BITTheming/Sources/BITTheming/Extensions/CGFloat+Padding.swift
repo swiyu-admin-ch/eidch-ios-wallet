@@ -12,6 +12,7 @@ extension CGFloat {
   public static var x4: CGFloat = 16
   public static var x5: CGFloat = 20
   public static var x6: CGFloat = 24
+  public static var x7: CGFloat = 28
   public static var x8: CGFloat = 32
   public static var x9: CGFloat = 36
   public static var x10: CGFloat = 40

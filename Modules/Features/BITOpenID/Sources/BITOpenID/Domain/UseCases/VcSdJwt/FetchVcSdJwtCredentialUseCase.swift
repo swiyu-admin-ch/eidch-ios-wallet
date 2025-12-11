@@ -15,6 +15,7 @@ protocol FetchAnyCredentialUseCaseProtocol {
 // MARK: - FetchVcSdJwtCredentialUseCaseError
 
 enum FetchVcSdJwtCredentialUseCaseError: Error {
+  case unsupportedMetadataType
   case invalidRawJWS
   case invalidTransactionId
 }
@@ -27,7 +28,8 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
 
   func execute(for context: FetchCredentialContext) async throws -> FetchAnyCredentialResult {
     let proof = try createProof(using: context)
-    let credentialBody = VcSdJwtCredentialRequestBody(format: context.format, proof: proof, vct: context.selectedCredential.vct)
+    guard let vcSdJwtMetadata = context.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported else { throw FetchVcSdJwtCredentialUseCaseError.unsupportedMetadataType }
+    let credentialBody = VcSdJwtCredentialRequestBody(format: context.format, proof: proof, vct: vcSdJwtMetadata.vct)
     let fetchCredentialResult = try await repository.fetchCredential(with: context, credentialRequestBody: credentialBody)
 
     if case .credential(let anyCredential) = fetchCredentialResult {

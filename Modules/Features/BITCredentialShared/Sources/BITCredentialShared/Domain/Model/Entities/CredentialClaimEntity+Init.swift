@@ -20,6 +20,7 @@ extension CredentialClaimEntity {
     valueType = claim.valueType
     valueDisplayInfo = claim.valueDisplayInfo
     order = Int16(claim.order)
+    isSensitive = claim.isSensitive
   }
 
 }

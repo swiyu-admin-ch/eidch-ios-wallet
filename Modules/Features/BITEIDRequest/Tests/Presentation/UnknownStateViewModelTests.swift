@@ -21,7 +21,7 @@ class UnknownStateViewModelTests: XCTestCase {
     viewModel = try UnknownStateViewModel(requestCase: mockEidRequestCase, delegate: delegate)
 
     XCTAssertEqual(viewModel.fullName, "\(mockEidRequestCase.firstName) \(mockEidRequestCase.lastName)")
-    XCTAssertEqual(viewModel.requestCaseId, mockEidRequestCase.id)
+    XCTAssertEqual(viewModel.id, mockEidRequestCase.id)
     XCTAssertNotNil(viewModel.delegate)
   }
 

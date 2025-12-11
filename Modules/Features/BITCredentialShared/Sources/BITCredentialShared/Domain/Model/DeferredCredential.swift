@@ -1,4 +1,5 @@
 import BITEntities
+import BITOpenID
 import Foundation
 
 // MARK: - DeferredCredential
@@ -8,12 +9,14 @@ public struct DeferredCredential: Codable, CredentialProtocol {
   // MARK: Lifecycle
 
   public init(
+    id: UUID = UUID(),
     transactionId: String,
     createdAt: Date = Date(),
-    progressionState: ProgressionState = .invalid,
+    progressionState: ProgressionState = .inProgress,
     accessToken: String,
     endpoint: String,
     format: String,
+    selectedConfigurationId: String? = nil,
     issuerDisplays: [CredentialIssuerDisplay] = [],
     displays: [CredentialDisplay] = [],
     pollingInterval: Int = Self.defaultPollingInterval,
@@ -21,6 +24,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     rawCredentialData: RawCredentialData? = nil,
     polledAt: Date? = nil)
   {
+    self.id = id
     self.transactionId = transactionId
     self.accessToken = accessToken
     self.createdAt = createdAt
@@ -33,6 +37,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     self.displays = displays
     self.rawCredentialData = rawCredentialData
     self.keyBinding = keyBinding
+    self.selectedConfigurationId = selectedConfigurationId
   }
 
   public init(_ entity: CredentialEntity) throws {
@@ -44,12 +49,14 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     let displays = Array(entity.displays.map(CredentialDisplay.init))
 
     self.init(
-      transactionId: entity.id.uuidString,
+      id: entity.id,
+      transactionId: deferredCredential.id,
       createdAt: entity.createdAt,
       progressionState: DeferredCredential.ProgressionState(deferredCredential.progressState),
       accessToken: deferredCredential.accessToken,
       endpoint: deferredCredential.endpoint,
       format: entity.format,
+      selectedConfigurationId: entity.selectedConfigurationId,
       issuerDisplays: issuerDisplays,
       displays: displays,
       pollingInterval: entity.deferredCredential?.pollingInterval ?? Self.defaultPollingInterval,
@@ -58,29 +65,38 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       polledAt: entity.deferredCredential?.polledAt)
   }
 
-  // MARK: Public
-
-  public static let defaultPollingInterval = 24 * 60 * 60
-
-  public let format: String
-  public let createdAt: Date
-  public var issuerDisplays: [CredentialIssuerDisplay]
-  public var displays: [CredentialDisplay]
-
-  public var id: UUID {
-    UUID(uuidString: transactionId) ?? UUID()
+  public init(_ deferredCredentialRequest: DeferredCredentialRequest) {
+    self.init(
+      transactionId: deferredCredentialRequest.transactionId,
+      accessToken: deferredCredentialRequest.accessToken,
+      endpoint: deferredCredentialRequest.endpoint,
+      format: deferredCredentialRequest.format)
   }
 
-  // MARK: Internal
+  // MARK: Public
 
-  let transactionId: String
-  let accessToken: String
-  let endpoint: String
-  let progressionState: ProgressionState
-  let pollingInterval: Int
-  let polledAt: Date?
-  let keyBinding: CredentialKeyBinding?
-  let rawCredentialData: RawCredentialData?
+  public static let defaultPollingInterval = 5
+
+  public let format: String
+  public let selectedConfigurationId: String?
+  public let createdAt: Date
+  public let issuerDisplays: [CredentialIssuerDisplay]
+  public let displays: [CredentialDisplay]
+
+  public var pollingInterval: Int
+  public var polledAt: Date?
+
+  public let transactionId: String
+  public let accessToken: String
+  public let endpoint: String
+
+  public var keyBinding: CredentialKeyBinding?
+  public var rawCredentialData: RawCredentialData?
+
+  public let progressionState: ProgressionState
+
+  public var id: UUID
+
 }
 
 // MARK: Equatable
@@ -97,7 +113,8 @@ extension DeferredCredential: Equatable {
       lhs.polledAt == rhs.polledAt &&
       lhs.accessToken == rhs.accessToken &&
       lhs.endpoint == rhs.endpoint &&
-      lhs.transactionId == rhs.transactionId
+      lhs.transactionId == rhs.transactionId &&
+      lhs.selectedConfigurationId == rhs.selectedConfigurationId
   }
 }
 
@@ -108,6 +125,8 @@ extension DeferredCredential {
   public enum ProgressionState: String, Codable {
     case inProgress
     case invalid
+
+    // MARK: Lifecycle
 
     init(_ state: DeferredCredentialEntity.ProgressionState) {
       switch state {

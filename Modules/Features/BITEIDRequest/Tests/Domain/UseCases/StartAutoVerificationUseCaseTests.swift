@@ -13,7 +13,7 @@ final class StartAutoVerificationUseCaseTests: XCTestCase {
     super.setUp()
 
     eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
-    eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeReturnValue = mockAutoVerificationResponse
+    eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReturnValue = mockAutoVerificationResponse
     Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
 
     useCase = StartAutoVerificationUseCase()
@@ -23,13 +23,13 @@ final class StartAutoVerificationUseCaseTests: XCTestCase {
     let result = try await useCase.execute(for: mockCaseId)
 
     XCTAssertEqual(result, mockAutoVerificationResponse)
-    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeCallsCount, 1)
-    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeReceivedArguments?.caseId, mockCaseId)
-    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeReceivedArguments?.autoVerificationType, .av1)
+    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableCallsCount, 1)
+    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReceivedArguments?.caseId, mockCaseId)
+    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReceivedArguments?.autoVerificationType, .av1)
   }
 
   func testExecute_failure() async throws {
-    eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeThrowableError = TestingError.error
+    eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: mockCaseId)

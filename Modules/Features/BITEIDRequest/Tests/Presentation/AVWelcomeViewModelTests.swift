@@ -7,18 +7,17 @@ class AVWelcomeViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
-    viewModel = AVWelcomeViewModel(router: router)
+
+    viewModel = AVWelcomeViewModel()
   }
 
   func testPrimaryAction() {
     viewModel.primaryAction()
-    XCTAssertTrue(router.walletPairingCalled)
+    XCTAssertEqual(viewModel.destination, .walletPairing)
   }
 
   // MARK: Private
 
-  private var router: MockEIDRequestRouter!
   private var viewModel: AVWelcomeViewModel!
 }
 

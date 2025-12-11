@@ -15,6 +15,7 @@ enum OpenIDEndpoint {
   case openIdConfiguration(issuerURL: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
+  case deferredCredential(url: URL, transactionId: String)
 }
 
 // MARK: TargetType
@@ -27,6 +28,7 @@ extension OpenIDEndpoint: TargetType {
     switch self {
     case .accessToken(let baseUrl, _),
          .credential(let baseUrl, _, _),
+         .deferredCredential(let baseUrl, _),
          .fallbackOpenIdConfiguration(let baseUrl),
          .metadata(let baseUrl),
          .openIdConfiguration(let baseUrl),
@@ -48,6 +50,7 @@ extension OpenIDEndpoint: TargetType {
       ".well-known/oauth-authorization-server"
     case .accessToken,
          .credential,
+         .deferredCredential,
          .publicKeyInfo,
          .status,
          .typeMetadata,
@@ -67,7 +70,8 @@ extension OpenIDEndpoint: TargetType {
          .vcSchema:
       .get
     case .accessToken,
-         .credential:
+         .credential,
+         .deferredCredential:
       .post
     }
   }
@@ -82,6 +86,11 @@ extension OpenIDEndpoint: TargetType {
          .typeMetadata,
          .vcSchema:
       .requestPlain
+
+    case .deferredCredential(_, let transactionId):
+      .requestParameters(
+        parameters: ["transaction_id": transactionId],
+        encoding: JSONEncoding.default)
 
     case .accessToken(_, let preAuthorizedCode):
       .requestParameters(parameters: [
@@ -99,6 +108,7 @@ extension OpenIDEndpoint: TargetType {
   var headers: [String: String]? {
     switch self {
     case .accessToken,
+         .deferredCredential,
          .fallbackOpenIdConfiguration,
          .metadata,
          .openIdConfiguration,
@@ -144,4 +154,19 @@ extension OpenIDEndpoint: TargetType {
   private static let valueApplicationFormUrlEncoded = "application/x-www-form-urlencoded"
   private static let valueApplicationVcSchema = "application/schema+json"
   private static let valueApplicationVcSchemaInstance = "application/schema-instance+json"
+}
+
+// MARK: AccessTokenAuthorizable
+
+extension OpenIDEndpoint: AccessTokenAuthorizable {
+
+  var authorizationType: AuthorizationType? {
+    switch self {
+    case .deferredCredential:
+      .bearer
+    default:
+      nil
+    }
+  }
+
 }

@@ -10,12 +10,20 @@ public struct CredentialResponse: Codable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(rawCredential: String, transactionId: String? = nil, cNonce: String? = nil, cNonceExpiresIn: String? = nil, notificationId: String? = nil) {
+  public init(
+    rawCredential: String,
+    transactionId: String? = nil,
+    cNonce: String? = nil,
+    cNonceExpiresIn: String? = nil,
+    notificationId: String? = nil,
+    interval: Int? = nil)
+  {
     self.rawCredential = rawCredential
     self.transactionId = transactionId
     self.cNonce = cNonce
     self.cNonceExpiresIn = cNonceExpiresIn
     self.notificationId = notificationId
+    self.interval = interval
   }
 
   // MARK: Public
@@ -35,6 +43,9 @@ public struct CredentialResponse: Codable, Equatable {
   /// Identifying an issued Credential
   public let notificationId: String?
 
+  ///  Interval in seconds between 2 fetch of a deferred credential
+  public let interval: Int?
+
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
@@ -43,6 +54,7 @@ public struct CredentialResponse: Codable, Equatable {
     case cNonce = "c_nonce"
     case cNonceExpiresIn = "c_nonce_expires_in"
     case notificationId = "notification_id"
+    case interval
   }
 
 }

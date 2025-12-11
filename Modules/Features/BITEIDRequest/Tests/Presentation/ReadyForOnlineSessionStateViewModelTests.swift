@@ -20,7 +20,7 @@ class ReadyForOnlineSessionStateViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.fullName, "\(mockEidRequestCase.firstName) \(mockEidRequestCase.lastName)")
     XCTAssertEqual(viewModel.onlineSessionStartTimeoutAt, mockEidRequestCase.state?.onlineSessionStartTimeoutAt)
     XCTAssertEqual(viewModel.formattedDate, mockEidRequestCase.state?.onlineSessionStartTimeoutAt?.longDateFormat)
-    XCTAssertEqual(viewModel.requestCaseId, mockEidRequestCase.id)
+    XCTAssertEqual(viewModel.id, mockEidRequestCase.id)
     XCTAssertNotNil(viewModel.delegate)
   }
 

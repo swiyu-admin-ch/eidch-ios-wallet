@@ -1,17 +1,12 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - ValidateAttestationsView
 
 struct ValidateAttestationsView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.validateAttestationsViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -19,29 +14,20 @@ struct ValidateAttestationsView: View {
     AdaptiveColumnsView(
       primaryContent: leftContent,
       secondaryContent: rightContent)
+      .toolbar(.visible)
       .navigationBarBackButtonHidden()
+      .navigate(to: $viewModel.destination)
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .onFirstAppear {
         Task {
           await viewModel.fetchAttestations()
         }
       }
-      .onAppear {
-        resetAccessibilityFocus()
-      }
   }
 
   // MARK: Private
 
-  @AccessibilityFocusState private var isCurrentPageFocused: Bool
-
-  private var viewModel: ValidateAttestationsViewModelProtocol
-
-  private func resetAccessibilityFocus() {
-    DispatchQueue.main.async {
-      isCurrentPageFocused = false
-      isCurrentPageFocused = true
-    }
-  }
+  @InjectedObject(\.validateAttestationsViewModel) private var viewModel
 }
 
 // MARK: - Components
@@ -63,7 +49,7 @@ extension ValidateAttestationsView {
         .font(.custom.title)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(.leading)
-        .accessibilityFocused($isCurrentPageFocused)
+        .accessibilityPriorityFocus()
         .accessibilityAddTraits(.isHeader)
         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -79,5 +65,5 @@ extension ValidateAttestationsView {
 }
 
 #Preview {
-  ValidateAttestationsView(router: EIDRequestRouter())
+  ValidateAttestationsView()
 }

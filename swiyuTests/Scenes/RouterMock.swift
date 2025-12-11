@@ -1,3 +1,4 @@
+import BITInvitation
 import BITNavigation
 import Foundation
 @testable import swiyu
@@ -24,11 +25,11 @@ class RootRouterMock: RootRouterRoutes {
     return true
   }
 
-  func invitation() {
+  func invitation(delegate: InvitationDelegate?) {
     didCallInvitation = true
   }
 
-  func camera(openingStyle: any OpeningStyle) {
+  func camera(openingStyle: any OpeningStyle, delegate: InvitationDelegate?) {
     didCallCamera = true
   }
 

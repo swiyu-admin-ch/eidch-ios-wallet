@@ -9,33 +9,30 @@ class LegalRepresentantViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
-    viewModel = LegalRepresentantViewModel(router: router)
+    context = EIDRequestContext()
+    Container.shared.eidRequestContext.register { self.context }
+
+    viewModel = LegalRepresentantViewModel()
   }
 
   func testYesAction() {
     viewModel.action(true)
 
-    XCTAssertTrue(router.documentSelectionCalled)
-    XCTAssertEqual(router.context.hasLegalRepresentant, true)
+    XCTAssertEqual(viewModel.destination, .documentSelection)
+    XCTAssertEqual(context.hasLegalRepresentant, true)
   }
 
   func testNoAction() {
     viewModel.action(false)
 
-    XCTAssertTrue(router.documentSelectionCalled)
-    XCTAssertEqual(router.context.hasLegalRepresentant, false)
-  }
-
-  func testClose() {
-    viewModel.close()
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(viewModel.destination, .documentSelection)
+    XCTAssertEqual(context.hasLegalRepresentant, false)
   }
 
   // MARK: Private
 
-  private var router: MockEIDRequestRouter!
   private var viewModel: LegalRepresentantViewModel!
+  private var context: EIDRequestContext!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping

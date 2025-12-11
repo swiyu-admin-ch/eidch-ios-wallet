@@ -1,15 +1,10 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 struct AVWelcomeView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.avWelcomeViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -23,6 +18,12 @@ struct AVWelcomeView: View {
           primaryButtonLabel: L10n.tkEidRequestAutoVerificationWelcomeButton,
           primaryButtonAction: viewModel.primaryAction)
       })
+      .navigate(to: $viewModel.destination)
+      .toolbar {
+        CloseButtonToolbar(action: {
+          navigator.dismiss()
+        })
+      }
   }
 
   // MARK: Private
@@ -34,7 +35,9 @@ struct AVWelcomeView: View {
     case tertiaryTipText
   }
 
-  private var viewModel: AVWelcomeViewModel
+  @Environment(\.navigator) private var navigator: Navigator
+
+  @InjectedObject(\.avWelcomeViewModel) private var viewModel
 
   @ViewBuilder
   private func content() -> some View {
@@ -77,5 +80,5 @@ struct AVWelcomeView: View {
 }
 
 #Preview {
-  AVWelcomeView(router: EIDRequestRouter())
+  AVWelcomeView()
 }

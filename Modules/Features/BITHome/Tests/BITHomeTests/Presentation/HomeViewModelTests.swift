@@ -28,18 +28,48 @@ final class HomeViewModelTests: XCTestCase {
 
   func testInitialValues() {
     XCTAssertEqual(viewModel.state, .results)
+    XCTAssertFalse(viewModel.isCredentialSavedPopupPresented)
     XCTAssertTrue(viewModel.requestCases.isEmpty)
-    XCTAssertTrue(viewModel.credentialViewModels.isEmpty)
+    XCTAssertTrue(viewModel.credentials.isEmpty)
   }
 
   // MARK: - onAppear()
 
-  func testOnAppear_eIDRequestFeatureEnabled_success() async {
+  func testOnAppear_everythingEnabled_containResults() async {
     await viewModel.onAppear()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
-    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 1)
     XCTAssertEqual(enableEIDRequestAfterOnboardingUseCase.executeReceivedEnable, false)
+
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials?.count, mockCrendentials.compactMap({ $0 as? DeferredCredential }).count)
+
+    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
+
+    XCTAssertEqual(viewModel.state, .results)
+    XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
+    XCTAssertEqual(viewModel.requestCases.map(\.id), mockEIDRequestCases.map(\.id))
+  }
+
+  func testOnAppear_noCredential_stateEmpty() async {
+    getCredentialListUseCase.executeReturnValue = []
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(viewModel.state, .empty)
+    XCTAssertTrue(viewModel.credentials.isEmpty)
+  }
+
+  func testOnAppear_credentialThrowError_stateError() async {
+    getCredentialListUseCase.executeThrowableError = TestingError.error
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(viewModel.state, .error(TestingError.error))
+    XCTAssertTrue(viewModel.credentials.isEmpty)
   }
 
   func testOnAppear_eIDRequestFeatureNotEnabled_routeToEidRequest() async {
@@ -50,103 +80,83 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallEIDRequest)
     XCTAssertTrue(enableEIDRequestAfterOnboardingUseCase.executeCalled)
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
-    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 1)
-  }
-
-  // MARK: - fetchCredential()
-
-  func testFetchCredentials_withCredentials_success() async {
-    await viewModel.fetchCredentials()
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
 
     XCTAssertEqual(viewModel.state, .results)
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
-    XCTAssertEqual(viewModel.credentialViewModels.map(\.credential), mockCrendentials)
   }
 
-  func testFetchCredentials_withoutCredentials_success() async {
-    getCredentialListUseCase.executeReturnValue = []
-
-    await viewModel.fetchCredentials()
-
-    XCTAssertEqual(viewModel.state, .empty)
-    XCTAssertTrue(viewModel.credentialViewModels.isEmpty)
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
-  }
-
-  func testFetchCredentials_getCredentialsThrows_failure() async {
-    getCredentialListUseCase.executeThrowableError = TestingError.error
-
-    await viewModel.fetchCredentials()
-
-    XCTAssertEqual(viewModel.state, .error(TestingError.error))
-    XCTAssertTrue(viewModel.credentialViewModels.isEmpty)
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
-  }
-
-  // MARK: - fetchCredentialStatus()
-
-  func testFetchCredentialStatus_success() async {
-    await viewModel.fetchCredentialStatus()
-
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
-  }
-
-  func testFetchCredentialStatus_checkStatusThrows_failure() async {
-    checkAndUpdateCredentialStatusUseCase.executeThrowableError = TestingError.error
-
-    await viewModel.fetchCredentialStatus()
-
-    XCTAssertFalse(getCredentialListUseCase.executeCalled)
-  }
-
-
-  func testGetRequestCasesList_withCases_success() async throws {
-    await viewModel.getEIDRequestCases()
-
-    XCTAssertEqual(viewModel.requestCases.count, mockEIDRequestCases.count)
-    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 1)
-    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeReceivedRequestCaseIds, mockEIDRequestCases.map(\.id))
-  }
-
-  func testGetRequestCasesList_withoutCases_success() async throws {
+  func testOnAppear_noEIDRequest_stateResult() async {
     getEIDRequestCaseListUseCase.executeReturnValue = []
 
-    await viewModel.getEIDRequestCases()
+    await viewModel.onAppear()
 
+    XCTAssertEqual(viewModel.state, .results)
     XCTAssertTrue(viewModel.requestCases.isEmpty)
-    XCTAssertFalse(updateEIDRequestCaseStatusUseCase.executeCalled)
   }
 
-  func testGetRequestCasesList_getRequestCasesThrows_failure() async {
+  func testOnAppear_eidRequestFailure_stateResult() async {
     getEIDRequestCaseListUseCase.executeThrowableError = TestingError.error
 
-    await viewModel.getEIDRequestCases()
+    await viewModel.onAppear()
 
+    XCTAssertEqual(viewModel.state, .results)
     XCTAssertTrue(viewModel.requestCases.isEmpty)
-    XCTAssertFalse(updateEIDRequestCaseStatusUseCase.executeCalled)
   }
 
-  // MARK: - fetchRequestCaseStatus()
+  func testOnAppear_noData_stateEmpty() async {
+    getEIDRequestCaseListUseCase.executeReturnValue = []
+    getCredentialListUseCase.executeReturnValue = []
 
-  func testFetchRequestCasesStatus_success() async throws {
-    await viewModel.fetchRequestCaseStatus()
+    await viewModel.onAppear()
 
-    XCTAssertEqual(viewModel.requestCases.count, mockEIDRequestCases.count)
+    XCTAssertEqual(viewModel.state, .empty)
+    XCTAssertTrue(viewModel.requestCases.isEmpty)
   }
 
-  func testFetchRequestCasesStatus_failure() async throws {
-    let mockRequestCases = try mockEIDRequestCases.map { try RequestCaseViewState($0, delegate: viewModel) }
-    updateEIDRequestCaseStatusUseCase.executeThrowableError = TestingError.error
+  // MARK: - Refresh
 
-    viewModel.requestCases = mockRequestCases
+  func testRefresh_containResults() async {
+    await viewModel.refresh()
 
-    await viewModel.fetchRequestCaseStatus()
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials?.count, mockCrendentials.compactMap({ $0 as? DeferredCredential }).count)
 
-    XCTAssertEqual(mockRequestCases, viewModel.requestCases)
+    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
+
+    XCTAssertEqual(viewModel.state, .results)
+    XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
+    XCTAssertEqual(viewModel.requestCases.map(\.id), mockEIDRequestCases.map(\.id))
   }
+
+  func testRefresh_afterOnAppear_noData() async {
+    await viewModel.onAppear()
+
+    getEIDRequestCaseListUseCase.executeReturnValue = []
+    getCredentialListUseCase.executeReturnValue = []
+
+    await viewModel.refresh()
+
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 4)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 2)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 2)
+    XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials?.count, mockCrendentials.compactMap({ $0 as? DeferredCredential }).count)
+
+    XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 4)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 2)
+
+    XCTAssertEqual(viewModel.state, .empty)
+    XCTAssertTrue(viewModel.credentials.isEmpty)
+    XCTAssertTrue(viewModel.requestCases.isEmpty)
+  }
+
+  // MARK: - Navigation
 
   func testOpenScanner() {
     viewModel.openScanner()
@@ -166,10 +176,10 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallExternalLinkUrl)
   }
 
-  func testOpenCredentialDetail() {
-    viewModel.openDetail(for: .Mock.sample)
+  func testOpenCredentialDetail_deferredCredential_doNothing() {
+    viewModel.openDetail(for: DeferredCredentialViewModel(credential: .Mock.sample))
 
-    XCTAssertTrue(mockRouter.didCallOpenCredentialDetail)
+    XCTAssertFalse(mockRouter.didCallOpenCredentialDetail)
   }
 
   func testOpenBetaId() {
@@ -202,39 +212,28 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(mockRouter.didCallExternalLinkUrl, true)
   }
 
-  func testUpdateCredentialViewModels_light_setsViewModel() async {
-    let credentialMocks: [VerifiableCredential] = [.Mock.diploma, .Mock.sample]
-    getCredentialListUseCase.executeReturnValue = credentialMocks
-    var calls = 0
-    getCredentialDisplayUseCase.executeForColorSchemeClosure = { _, _ in
-      if calls <= 2 {
-        calls += 1
-        return .Mock.lightEnglish
-      }
-      return .Mock.sample
-    }
-    await viewModel.fetchCredentials() // set up credentials which will already trigger an updateCredentialViewModels
-
-    viewModel.updateCredentialViewModels(with: themeMock)
-
-    XCTAssertEqual(viewModel.credentialViewModels[0].credentialDisplay, .Mock.lightEnglish)
-    XCTAssertEqual(viewModel.credentialViewModels[0].credential, credentialMocks[0])
-    XCTAssertEqual(viewModel.credentialViewModels[1].credentialDisplay, .Mock.sample)
-    XCTAssertEqual(viewModel.credentialViewModels[1].credential, credentialMocks[1])
-  }
-
   func testUpdateCredentialViewModels_argumentsPassed() async {
     let credentialMocks: [VerifiableCredential] = [.Mock.diploma, .Mock.sample]
     getCredentialListUseCase.executeReturnValue = credentialMocks
 
-    await viewModel.fetchCredentials() // set up credentials which will already trigger an updateCredentialViewModels
+    await viewModel.onAppear() // set up credentials which will already trigger an updateCredentialViewModels
 
     viewModel.updateCredentialViewModels(with: themeMock)
 
-    XCTAssertEqual(getCredentialDisplayUseCase.executeForColorSchemeReceivedInvocations[2].colorScheme, themeMock)
-    XCTAssertEqual(getCredentialDisplayUseCase.executeForColorSchemeReceivedInvocations[2].displays, credentialMocks[0].displays)
-    XCTAssertEqual(getCredentialDisplayUseCase.executeForColorSchemeReceivedInvocations[3].colorScheme, themeMock)
-    XCTAssertEqual(getCredentialDisplayUseCase.executeForColorSchemeReceivedInvocations[3].displays, credentialMocks[1].displays)
+    XCTAssertEqual(viewModel.credentials[0].credential.displays, credentialMocks[0].displays)
+    XCTAssertEqual(viewModel.credentials[1].credential.displays, credentialMocks[1].displays)
+  }
+
+  func testDidSavedDeferredCredential_success() {
+    viewModel.didSaveDeferredCredential()
+
+    XCTAssertTrue(viewModel.isCredentialSavedPopupPresented)
+  }
+
+  func testDidTapWalletPairing() {
+    viewModel.didTapWalletPairing(caseId: mockCaseId)
+
+    XCTAssertEqual(mockRouter.didCallWalletPairingArgument, mockCaseId)
   }
 
   // MARK: Private
@@ -251,7 +250,7 @@ final class HomeViewModelTests: XCTestCase {
   private var mockRouter: HomeRouterMock!
   private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocolSpy!
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
-  private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocolSpy!
+  private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocolSpy!
   private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
 
@@ -263,19 +262,19 @@ final class HomeViewModelTests: XCTestCase {
     getEIDRequestCaseListUseCase = GetEIDRequestCaseListUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
     deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
-    getCredentialDisplayUseCase = GetCredentialDisplayUseCaseProtocolSpy()
     isUserLoggedInUseCase = IsUserLoggedInUseCaseProtocolSpy()
+    refreshDeferredCredentialUseCase = RefreshDeferredCredentialUseCaseProtocolSpy()
 
     Container.shared.getEIDRequestCaseListUseCase.register { self.getEIDRequestCaseListUseCase }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCase }
     Container.shared.deleteEIDRequestCaseUseCase.register { self.deleteEIDRequestCaseUseCase }
-    Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCase }
     Container.shared.isUserLoggedInUseCase.register { self.isUserLoggedInUseCase }
     Container.shared.getCredentialListUseCase.register { self.getCredentialListUseCase }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
     Container.shared.isEIDRequestAfterOnboardingEnabledUseCase.register { self.isEIDRequestAfterOnboardingEnabledUseCase }
     Container.shared.enableEIDRequestAfterOnboardingUseCase.register { self.enableEIDRequestAfterOnboardingUseCase }
     Container.shared.isEIDRequestFeatureEnabled.register { true }
+    Container.shared.refreshDeferredCredentialUseCase.register { self.refreshDeferredCredentialUseCase }
   }
 
   private func createSuccesState() {
@@ -283,7 +282,6 @@ final class HomeViewModelTests: XCTestCase {
     isUserLoggedInUseCase.executeReturnValue = true
     getCredentialListUseCase.executeReturnValue = mockCrendentials
     getEIDRequestCaseListUseCase.executeReturnValue = mockEIDRequestCases
-    updateEIDRequestCaseStatusUseCase.executeReturnValue = mockEIDRequestCases
     checkAndUpdateCredentialStatusUseCase.executeReturnValue = mockCrendentials
   }
 }

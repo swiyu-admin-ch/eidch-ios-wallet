@@ -2,17 +2,12 @@ import BITL10n
 import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 // MARK: - WalletPairingListView
 
 struct WalletPairingListView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.walletPairingListViewModel(router))
-  }
 
   // MARK: Internal
 
@@ -42,13 +37,18 @@ struct WalletPairingListView: View {
         isHeaderFocused = true
       }
     }
+    .task {
+      await viewModel.fetchStatus()
+    }
+    .navigate(to: $viewModel.destination)
+    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
   @AccessibilityFocusState private var isHeaderFocused: Bool
 
-  @StateObject private var viewModel: WalletPairingListViewModel
+  @InjectedObject(\.walletPairingListViewModel) private var viewModel
 
   @ViewBuilder
   private func header() -> some View {
@@ -144,7 +144,7 @@ struct WalletPairingListView: View {
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
+      Button(action: viewModel.navigationClose, label: {
         Assets.close.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClose)
@@ -219,5 +219,5 @@ extension WalletPairingListView {
 }
 
 #Preview {
-  WalletPairingListView(router: EIDRequestRouter())
+  WalletPairingListView()
 }

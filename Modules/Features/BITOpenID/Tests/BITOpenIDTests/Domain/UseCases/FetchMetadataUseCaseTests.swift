@@ -1,3 +1,4 @@
+import Factory
 import Spyable
 import XCTest
 @testable import BITOpenID
@@ -8,8 +9,8 @@ final class FetchMetadataUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    spyRepository = OpenIDRepositoryProtocolSpy()
-    useCase = FetchMetadataUseCase(repository: spyRepository)
+    registerMocks()
+    useCase = FetchMetadataUseCase()
     success()
   }
 
@@ -51,6 +52,10 @@ final class FetchMetadataUseCaseTests: XCTestCase {
   private func success() {
     guard let mockUrl = URL(string: "http://mock.url") else { fatalError("url generation") }
     spyRepository.fetchMetadataFromReturnValue = CredentialMetadataResponse(metadata: mockMetadata, raw: mockMetadataData)
+  }
+
+  private func registerMocks() {
+    Container.shared.openIDRepository.register { self.spyRepository }
   }
 
 }

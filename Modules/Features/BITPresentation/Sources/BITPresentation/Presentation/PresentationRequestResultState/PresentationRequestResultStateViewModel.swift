@@ -24,7 +24,7 @@ public class PresentationRequestResultStateViewModel: ObservableObject {
   let state: PresentationRequestResultState
 
   var verifierDisplay: VerifierDisplay {
-    context.getVerifierDisplay(considering: preferredUserLanguageCodes)
+    context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
   }
 
   func finish() async {

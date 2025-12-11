@@ -1,15 +1,10 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 struct AVIdentityCheckView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.avIdentityCheckViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -20,7 +15,12 @@ struct AVIdentityCheckView: View {
       content: { content() },
       footer: { footer() })
       .navigationBarBackButtonHidden(true)
-      .toolbar { CloseButtonToolbar(action: viewModel.close) }
+      .toolbar {
+        CloseButtonToolbar(action: {
+          navigator.dismiss()
+        })
+      }
+      .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
@@ -32,7 +32,8 @@ struct AVIdentityCheckView: View {
     case tertiaryTipText
   }
 
-  private var viewModel: AVIdentityCheckViewModel
+  @InjectedObject(\.avIdentityCheckViewModel) private var viewModel
+  @Environment(\.navigator) private var navigator
 
   @ViewBuilder
   private func footer() -> some View {
@@ -90,5 +91,5 @@ struct AVIdentityCheckView: View {
 }
 
 #Preview {
-  AVIdentityCheckView(router: EIDRequestRouter())
+  AVIdentityCheckView()
 }

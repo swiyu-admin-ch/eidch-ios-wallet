@@ -1,0 +1,26 @@
+{
+  "extractedData":{
+     "1":"name",
+     "64": "ID<<<I7A<<<<<<7<<<<<<<<<<<<<<<",
+     "65": "1001015X3012316<<<<<<<<<<<<<<2",
+     "66": "MINDERJAEHRIGE<<ANNETTE<<<<<<<",
+     "43": "MINDERJAEHRIGE",
+     "44": "ANNETTE",
+     "46": "TEST NUMBER",
+     "188": "10-10-2022",
+  },
+  "errorType":0,
+  "errorCode":0,
+  "errorCodes":[
+
+  ],
+  "status":0,
+  "activeScenario":0,
+  "files":[
+    {
+        "type":40,
+        "description":"description",
+        "data":"bmV3c2luZ2xlb3Vyc2VsdmVzc3RyaWtlZmlmdHlxdWlja2x5Zm9yZWlnbmxpZ2h0aGU="
+    }
+  ]
+}

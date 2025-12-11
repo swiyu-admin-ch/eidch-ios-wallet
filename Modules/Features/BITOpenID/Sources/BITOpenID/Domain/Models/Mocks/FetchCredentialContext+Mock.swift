@@ -11,6 +11,7 @@ extension FetchCredentialContext {
 
     static let sample = make(format: "some-format")
     static let sampleVcSdJwt = make(format: "vc+sd-jwt")
+    static let vcSdJwtUnsupportedMetadataType = make(format: "vc+sd-jwt", selectedCredential: MockAnyCredentialConfigurationSupported())
     static let sampleVcSdJwtWithoutHolderBinding = make(format: "vc+sd-jwt", holderBindingContext: nil)
     static let sampleVcSdJwtWithoutKeyAttestation = make(format: "vc+sd-jwt", holderBindingContext: HolderBindingContext.Mock.softwareKey)
 
@@ -25,17 +26,23 @@ extension FetchCredentialContext {
     private static func make(
       format: String,
       invalid: Bool = false,
+      selectedCredential: (any CredentialMetadata.AnyCredentialConfigurationSupported)? = nil,
       holderBindingContext: HolderBindingContext? = .Mock.attestedHardwareKey)
       -> FetchCredentialContext
     {
-      guard let mockCredentialsSupported: any CredentialMetadata.AnyCredentialConfigurationSupported = CredentialMetadata.Mock.sample.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
-        fatalError("Mock of CredentialMetadata doesn't contain valid credentialConfigurationSupported")
+      let credentialConfig: any CredentialMetadata.AnyCredentialConfigurationSupported
+      if let selectedCredential {
+        credentialConfig = selectedCredential
+      } else {
+        guard let mockCredentialsSupported: any CredentialMetadata.AnyCredentialConfigurationSupported = CredentialMetadata.Mock.sample.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
+          fatalError("Mock of CredentialMetadata doesn't contain valid credentialConfigurationSupported")
+        }
+        credentialConfig = mockCredentialsSupported
       }
 
       return FetchCredentialContext(
         format: format,
-        selectedCredential: mockCredentialsSupported,
-        credentialOffers: ["credential-offer"],
+        selectedCredential: credentialConfig,
         credentialIssuer: "credential-issuer",
         holderBindingContext: holderBindingContext,
         accessToken: AccessToken(cNonce: "cNonce", accessToken: "access-token"),

@@ -1,3 +1,4 @@
+// swiftlint:disable force_unwrapping force_cast
 import BITCore
 import XCTest
 @testable import BITOpenID
@@ -11,16 +12,13 @@ final class CredentialMetadataTests: XCTestCase {
     XCTAssertFalse(credentialMetadata.credentialConfigurationsSupported.isEmpty)
     XCTAssertFalse(credentialMetadata.display?.isEmpty == true)
 
-    guard let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
-      return XCTFail("credentialSupported is nil")
-    }
+    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })!.value
 
     XCTAssertNotNil(credentialSupported.cryptographicBindingMethodsSupported)
     XCTAssertNotNil(credentialSupported.display)
     XCTAssertNotNil(credentialSupported.orderClaims)
     XCTAssertNotNil(credentialSupported.credentialSigningAlgValuesSupported)
     XCTAssertNotNil(credentialSupported.proofTypesSupported)
-    // swiftlint:disable force_unwrapping
     XCTAssertFalse(credentialSupported.cryptographicBindingMethodsSupported!.isEmpty)
     XCTAssertFalse(credentialSupported.display!.isEmpty)
     XCTAssertFalse(credentialSupported.orderClaims!.isEmpty)
@@ -29,7 +27,6 @@ final class CredentialMetadataTests: XCTestCase {
     if case .jwt(let type) = credentialSupported.proofTypesSupported.first {
       XCTAssertEqual(type.supportedAlgorithms.count, 2)
     }
-    // swiftlint:enable force_unwrapping
 
     XCTAssertFalse(credentialSupported.claims.isEmpty)
     XCTAssertEqual(credentialSupported.claims.count, credentialSupported.orderClaims?.count)
@@ -42,11 +39,27 @@ final class CredentialMetadataTests: XCTestCase {
 
   func testDecodeMetadata_WithoutProofTypes_ReturnsMetadataWithoutProofTypes() async throws {
     let credentialMetadata = CredentialMetadata.Mock.sampleWithoutProofTypes
-    guard let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
-      return XCTFail("credentialSupported is nil")
-    }
+    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })!.value
 
     XCTAssertTrue(credentialSupported.proofTypesSupported.isEmpty)
+  }
+
+  func testDecodeMetadata_WithVctUrl_ReturnsMetadataWithVctUrl() async throws {
+    let credentialMetadata = CredentialMetadata.Mock.vctUrl
+    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first!.value as! CredentialMetadata.VcSdJwtCredentialConfigurationSupported
+
+    XCTAssertEqual(credentialSupported.vct, "https://vct.example.com")
+    XCTAssertEqual(credentialSupported.vctIntegrity, "vctIntegrity")
+  }
+
+  func testDecodeMetadata_WithVctMetadataUri_ReturnsMetadataWithVctMetadataUri() async throws {
+    let credentialMetadata = CredentialMetadata.Mock.vctMetadataUri
+    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first!.value as! CredentialMetadata.VcSdJwtCredentialConfigurationSupported
+
+    XCTAssertEqual(credentialSupported.vct, "vct")
+    XCTAssertNil(credentialSupported.vctIntegrity)
+    XCTAssertEqual(credentialSupported.vctMetadataUri, "https://vct-metadata.example.com")
+    XCTAssertEqual(credentialSupported.vctMetadataUriIntegrity, "vctMetadataUriIntegrity")
   }
 
   func testDecodeMetadata_WithUnsupportedProofTypeAlgorithm_ThrowsError() async throws {

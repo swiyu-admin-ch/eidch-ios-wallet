@@ -29,6 +29,7 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     XCTAssertNil(attribute.format)
     XCTAssertTrue(attribute.labels.isEmpty)
     XCTAssertNil(attribute.order)
+    XCTAssertFalse(attribute.isSensitive)
     XCTAssertNil(attribute.standard)
   }
 
@@ -120,6 +121,18 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
     XCTAssertEqual(attribute.order, 1)
     XCTAssertNil(otherAttribute.order)
+  }
+
+  func testGenerate_isSensitive_returnsAttributeWithIsSensitive() throws {
+    let overlay = SensitiveOverlay1x0(captureBaseDigest: Self.rootCaptureBaseDigest, attributes: [Self.attributeMock])
+    let ocaBundle = try OcaBundle(captureBases: [rootCaptureBaseMock], overlays: [overlay])
+
+    let attributes = generator.generate(from: ocaBundle)
+
+    let attribute = attributes.first { $0.name == Self.attributeMock }!
+    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    XCTAssertTrue(attribute.isSensitive)
+    XCTAssertFalse(otherAttribute.isSensitive)
   }
 
   func testGenerate_standard_returnsAttributeWithStandard() throws {

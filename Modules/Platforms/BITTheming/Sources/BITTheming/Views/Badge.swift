@@ -2,146 +2,136 @@ import SwiftUI
 
 // MARK: - Badge
 
-public struct Badge<Content>: View where Content: View {
+public struct Badge: View {
 
   // MARK: Lifecycle
 
-  public init(@ViewBuilder label: @escaping () -> Content) {
-    content = label
+  public init(label: String, image: Image? = nil) {
+    self.label = label
+    self.image = image
   }
 
   // MARK: Public
 
+  public let label: String
+  public let image: Image?
+
   public var body: some View {
-    style
-      .makeBody(configuration: BadgeStyleConfiguration(
-        label: BadgeStyleConfiguration.Label(content: content()))
-      )
-      .clipShape(.capsule(style: .continuous))
+    style.resolved(with: configuration)
+      .clipShape(.rect(cornerRadius: .CornerRadius.s))
+  }
+
+  // MARK: Internal
+
+  var configuration: BadgeStyleConfiguration {
+    BadgeStyleConfiguration(label: label, image: image)
   }
 
   // MARK: Private
 
   @Environment(\.badgeStyle) private var style
 
-  @ViewBuilder private var content: () -> Content
-
 }
 
 // MARK: - BadgeStyle
 
-public protocol BadgeStyle {
+public protocol BadgeStyle: DynamicProperty {
   associatedtype Body: View
   typealias Configuration = BadgeStyleConfiguration
 
-  func makeBody(configuration: Self.Configuration) -> Self.Body
+  @ViewBuilder
+  func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> Body
+}
+
+extension BadgeStyle {
+  func resolved(with configuration: BadgeStyleConfiguration) -> AnyView {
+    AnyView(ResolvedBadgeStyle(base: self, configuration: configuration))
+  }
 }
 
 // MARK: - BadgeStyleConfiguration
 
 public struct BadgeStyleConfiguration {
-
-  /// A type-erased label of a Card.
-  public struct Label: View {
-    public init(content: some View) {
-      body = AnyView(content)
-    }
-
-    public var body: AnyView
-  }
-
-  public let label: BadgeStyleConfiguration.Label
-}
-
-// MARK: - AnyBadgeStyle
-
-public struct AnyBadgeStyle: BadgeStyle {
-  private var _makeBody: (Configuration) -> AnyView
-
-  public init(style: some BadgeStyle) {
-    _makeBody = { configuration in
-      AnyView(style.makeBody(configuration: configuration))
-    }
-  }
-
-  public func makeBody(configuration: Configuration) -> some View {
-    _makeBody(configuration)
-      .labelStyle(.badge)
-      .font(.custom.footnote)
-      .lineLimit(1)
-  }
-}
-
-// MARK: - BadgeStyleKey
-
-public struct BadgeStyleKey: EnvironmentKey {
-  public static var defaultValue = AnyBadgeStyle(style: DefaultBadgeStyle())
+  public let label: String
+  public let image: Image?
 }
 
 extension EnvironmentValues {
-  public var badgeStyle: AnyBadgeStyle {
+
+  // MARK: Internal
+
+  var badgeStyle: any BadgeStyle {
     get { self[BadgeStyleKey.self] }
     set { self[BadgeStyleKey.self] = newValue }
   }
+
+  // MARK: Private
+
+  private enum BadgeStyleKey: EnvironmentKey {
+    static var defaultValue: any BadgeStyle {
+      DefaultBadgeStyle()
+    }
+  }
+
 }
 
 extension View {
-  public func badgeStyle(_ style: some BadgeStyle) -> some View {
-    environment(\.badgeStyle, AnyBadgeStyle(style: style))
+  public func badgeStyle(_ style: any BadgeStyle) -> some View {
+    environment(\.badgeStyle, style)
   }
 }
 
-// MARK: - BezeledGrayBadgeStyle
+// MARK: - ResolvedBadgeStyle
 
-public struct BezeledGrayBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
-      .foregroundStyle(ThemingAssets.Brand.Bright.navyBlueLabel.swiftUIColor)
+struct ResolvedBadgeStyle<Base: BadgeStyle>: View {
+  let base: Base
+  let configuration: BadgeStyleConfiguration
+
+  var body: some View {
+    base.makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
   }
-}
 
-extension BadgeStyle where Self == BezeledGrayBadgeStyle {
-  public static var bezeledGray: BezeledGrayBadgeStyle { BezeledGrayBadgeStyle() }
+  @ScaledMetric(relativeTo: .body) private var badgeIconWidth = 14
 }
 
 // MARK: - DefaultBadgeStyle
 
 public struct DefaultBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .background(Color.white.opacity(0.8))
+  public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
+    HStack(spacing: 3) {
+      configuration.image?
+        .resizable()
+        .scaledToFit()
+        .frame(width: badgeIconWidth)
+        .accessibilityHidden(true)
+      Text(configuration.label)
+        .font(.custom.footnote)
+        .lineLimit(1)
+    }
+    .padding(.horizontal, .x3)
+    .padding(.vertical, .x2)
   }
 }
 
-extension BadgeStyle where Self == DefaultBadgeStyle {
-  public static var standard: DefaultBadgeStyle { DefaultBadgeStyle() }
-}
+// MARK: - InfoBadgeStyle
 
-// MARK: - PlainBadgeStyle
-
-public struct PlainBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
+public struct InfoBadgeStyle: BadgeStyle {
+  public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
+    DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
+      .foregroundStyle(ThemingAssets.Brand.Bright.navyBlueLabel.swiftUIColor)
   }
 }
 
-extension BadgeStyle where Self == PlainBadgeStyle {
-  public static var plain: PlainBadgeStyle { PlainBadgeStyle() }
+extension BadgeStyle where Self == InfoBadgeStyle {
+  public static var info: InfoBadgeStyle { InfoBadgeStyle() }
 }
 
 // MARK: - SuccessBadgeStyle
 
 public struct SuccessBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
+  public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
+    DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
       .background(ThemingAssets.Brand.Bright.firGreen.swiftUIColor)
       .foregroundStyle(ThemingAssets.Brand.Bright.firGreenLabel.swiftUIColor)
   }
@@ -154,13 +144,10 @@ extension BadgeStyle where Self == SuccessBadgeStyle {
 // MARK: - ErrorBadgeStyle
 
 public struct ErrorBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
+  public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
+    DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
       .background(ThemingAssets.Brand.Bright.swissRed.swiftUIColor)
       .foregroundColor(ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor)
-      .preferredColorScheme(.light)
   }
 }
 
@@ -168,29 +155,25 @@ extension BadgeStyle where Self == ErrorBadgeStyle {
   public static var error: ErrorBadgeStyle { ErrorBadgeStyle() }
 }
 
-// MARK: - WarningBadgeStyle
+// MARK: - SensitiveBadgeStyle
 
-public struct WarningBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .background(ThemingAssets.orange2.swiftUIColor)
-      .foregroundColor(ThemingAssets.Brand.Accent.orange.swiftUIColor)
+public struct SensitiveBadgeStyle: BadgeStyle {
+  public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
+    DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .background(ThemingAssets.Component.Pill.brightPurple.swiftUIColor)
+      .foregroundColor(ThemingAssets.Component.Pill.brightPurpleLabel.swiftUIColor)
   }
 }
 
-extension BadgeStyle where Self == WarningBadgeStyle {
-  public static var warning: WarningBadgeStyle { WarningBadgeStyle() }
+extension BadgeStyle where Self == SensitiveBadgeStyle {
+  public static var sensitive: SensitiveBadgeStyle { SensitiveBadgeStyle() }
 }
 
 // MARK: - OutlineBadgeStyle
 
 public struct OutlineBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
+  public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
+    DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
       .overlay {
         RoundedRectangle(cornerRadius: 50)
           .stroke(ThemingAssets.Brand.Core.black.swiftUIColor.opacity(0.5), lineWidth: 1)
@@ -200,42 +183,4 @@ public struct OutlineBadgeStyle: BadgeStyle {
 
 extension BadgeStyle where Self == OutlineBadgeStyle {
   public static var outline: OutlineBadgeStyle { OutlineBadgeStyle() }
-}
-
-// MARK: - InfoBadgeStyle
-
-public struct InfoBadgeStyle: BadgeStyle {
-  public func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
-      .foregroundColor(ThemingAssets.Brand.Bright.navyBlueLabel.swiftUIColor)
-  }
-}
-
-extension BadgeStyle where Self == InfoBadgeStyle {
-  public static var info: InfoBadgeStyle { InfoBadgeStyle() }
-}
-
-// MARK: - BadgeLabelStyle
-
-public struct BadgeLabelStyle: LabelStyle {
-  private var spacing = 0.0
-
-  public init(spacing: Double) {
-    self.spacing = spacing
-  }
-
-  public func makeBody(configuration: Configuration) -> some View {
-    HStack(spacing: spacing) {
-      configuration.icon
-        .scaleEffect(0.8)
-      configuration.title
-    }
-  }
-}
-
-extension LabelStyle where Self == BadgeLabelStyle {
-  public static var badge: BadgeLabelStyle { BadgeLabelStyle(spacing: 2) }
 }

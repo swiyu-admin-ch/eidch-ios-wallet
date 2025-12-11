@@ -1,17 +1,12 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - WalletPairingView
 
 struct WalletPairingView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.walletPairingViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -26,13 +21,15 @@ struct WalletPairingView: View {
           tertiary: L10n.tkEidRequestWalletPairing1SmallBody)
       },
       footer: footer)
-      .toolbar { CloseButtonToolbar(action: viewModel.close) }
       .navigationBarBackButtonHidden(true)
+      .toolbar { CloseButtonToolbar(action: viewModel.navigationClose) }
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+      .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  private var viewModel: WalletPairingViewModel
+  @InjectedObject(\.walletPairingViewModel) private var viewModel
 }
 
 extension WalletPairingView {
@@ -70,5 +67,5 @@ extension WalletPairingView {
 }
 
 #Preview {
-  WalletPairingView(router: EIDRequestRouter())
+  WalletPairingView()
 }

@@ -1,6 +1,7 @@
 import BITDeeplink
 import BITNavigation
 import BITPresentation
+import Spyable
 import UIKit
 
 // MARK: - InvitationRouterRoutes
@@ -10,3 +11,10 @@ public protocol InvitationRouterRoutes: ClosableRoutes & CredentialOfferRoutes &
 // MARK: - InvitationRouter
 
 final public class InvitationRouter: Router<UIViewController>, InvitationRouterRoutes {}
+
+// MARK: - InvitationDelegate
+
+@Spyable
+public protocol InvitationDelegate: AnyObject {
+  func didSaveDeferredCredential()
+}

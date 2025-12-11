@@ -12,6 +12,7 @@ struct PresentationRequestResultStateView: View {
   // MARK: Lifecycle
 
   init(state: PresentationRequestResultState, context: PresentationRequestContext, router: PresentationInternalRoutes) {
+    self.router = router
     _viewModel = StateObject(wrappedValue: Container.shared.presentationRequestResultStateViewModel((state, context, router)))
   }
 
@@ -25,8 +26,9 @@ struct PresentationRequestResultStateView: View {
 
   var body: some View {
     VStack {
-      ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset)
-        .padding(.bottom, .x3)
+      ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { badgeType in
+        router.badgeInformation(badgeType: badgeType)
+      }.padding(.bottom, .x3)
       stateView()
     }
     .applyScrollViewIfNeeded()
@@ -58,6 +60,8 @@ struct PresentationRequestResultStateView: View {
   private var isAccessibilityTitleFocused: Bool
 
   @StateObject private var viewModel: PresentationRequestResultStateViewModel
+
+  private let router: PresentationInternalRoutes
 
   @ViewBuilder
   private func stateView() -> some View {
@@ -97,7 +101,7 @@ struct PresentationRequestResultStateView: View {
     case .cancelled:
       errorMessages(title: L10n.tkPresentResultCanceledVerificationPrimary, subtitle: L10n.tkPresentResultCanceledVerificationSecondary)
     case .error:
-      errorMessages(title: L10n.tkPresentResultErrorSecondary, subtitle: L10n.tkPresentResultErrorSecondary)
+      errorMessages(title: L10n.tkPresentResultErrorPrimary, subtitle: L10n.tkPresentResultErrorSecondary)
     }
   }
 
@@ -161,7 +165,7 @@ struct PresentationRequestResultStateView: View {
           .padding(.top, 2)
           .accessibilityHidden(true)
       }
-      Text(claim.preferredDisplay?.name ?? claim.key)
+      Text(claim.preferredDisplay.name ?? claim.key)
         .font(.custom.body)
     }
   }

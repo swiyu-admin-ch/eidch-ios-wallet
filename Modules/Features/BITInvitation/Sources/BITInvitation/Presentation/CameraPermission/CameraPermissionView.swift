@@ -8,8 +8,8 @@ struct CameraPermissionView: View {
 
   // MARK: Lifecycle
 
-  init(router: InvitationRouterRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.cameraPermissionViewModel(router))
+  init(router: InvitationRouterRoutes, delegate: InvitationDelegate?) {
+    _viewModel = StateObject(wrappedValue: Container.shared.cameraPermissionViewModel((router, delegate)))
   }
 
   // MARK: Internal

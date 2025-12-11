@@ -1,17 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "nfc_light.svg",
-      "idiom" : "universal"
-    },
-    {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
-        }
-      ],
-      "filename" : "nfc_dark.svg",
+      "filename" : "nfc.pdf",
       "idiom" : "universal"
     }
   ],

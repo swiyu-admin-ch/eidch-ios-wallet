@@ -1,14 +1,15 @@
 import BITEIDRequestShared
 import Foundation
 
-public class RequestCaseStateBaseViewModel {
+// MARK: - RequestCaseStateBaseViewModel
+
+public class RequestCaseStateBaseViewModel: Identifiable {
 
   // MARK: Lifecycle
 
-  public init(requestCase: EIDRequestCase, id: String = UUID().uuidString, delegate: RequestCaseViewStateDelegate? = nil) throws {
-    requestCaseId = requestCase.id
+  public init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     fullName = "\(requestCase.firstName) \(requestCase.lastName)"
-    self.id = id
+    id = requestCase.id
     self.delegate = delegate
 
     guard let consent = requestCase.state?.legalRepresentantConsent else {
@@ -23,11 +24,11 @@ public class RequestCaseStateBaseViewModel {
 
   public weak var delegate: RequestCaseViewStateDelegate?
 
+  public let id: String
+
   // MARK: Internal
 
-  let id: String
   let fullName: String
-  let requestCaseId: String
 
   var isLegalRepresentantConsentVerified: Bool {
     switch legalRepresentantConsent {
@@ -41,5 +42,23 @@ public class RequestCaseStateBaseViewModel {
   // MARK: Private
 
   private let legalRepresentantConsent: LegalRepresentantConsent
+
+}
+
+// MARK: Hashable
+
+extension RequestCaseStateBaseViewModel: Hashable {
+
+  public static func == (lhs: RequestCaseStateBaseViewModel, rhs: RequestCaseStateBaseViewModel) -> Bool {
+    lhs.id == rhs.id &&
+      lhs.fullName == rhs.fullName &&
+      lhs.legalRepresentantConsent == rhs.legalRepresentantConsent
+  }
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+    hasher.combine(fullName)
+    hasher.combine(legalRepresentantConsent)
+  }
 
 }

@@ -21,6 +21,7 @@ let package = Package(
     .package(path: "../BITCredentialShared"),
     .package(path: "../BITAppAuth"),
     .package(path: "../BITCredential"),
+    .package(path: "../BITActivity"),
     .package(path: "../../Platforms/BITNetworking"),
     .package(path: "../../Platforms/BITSdJWT"),
     .package(path: "../../Platforms/BITJWT"),
@@ -45,6 +46,7 @@ let package = Package(
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITCredential", package: "BITCredential"),
+        .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITVault", package: "BITVault"),
@@ -62,6 +64,7 @@ let package = Package(
       name: "BITPresentationTests",
       dependencies: [
         "BITPresentation",
+        .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
         .product(name: "BITSdJWTMocks", package: "BITSdJWT"),
         .product(name: "BITJWT", package: "BITJWT"),

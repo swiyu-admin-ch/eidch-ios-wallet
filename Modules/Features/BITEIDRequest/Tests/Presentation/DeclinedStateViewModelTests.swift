@@ -22,7 +22,7 @@ class DeclinedStateViewModelTests: XCTestCase {
     viewModel = try DeclinedStateViewModel(requestCase: mockRequestCase, delegate: delegate)
 
     XCTAssertEqual(viewModel.fullName, "\(mockRequestCase.firstName) \(mockRequestCase.lastName)")
-    XCTAssertEqual(viewModel.requestCaseId, mockRequestCase.id)
+    XCTAssertEqual(viewModel.id, mockRequestCase.id)
     XCTAssertNotNil(viewModel.delegate)
   }
 

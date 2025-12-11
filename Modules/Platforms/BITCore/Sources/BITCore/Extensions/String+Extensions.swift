@@ -40,5 +40,4 @@ extension String {
   enum DataConversionError: Error {
     case stringEncodingFailed
   }
-
 }

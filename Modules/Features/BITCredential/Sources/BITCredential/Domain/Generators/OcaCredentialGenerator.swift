@@ -1,7 +1,5 @@
 import BITAnyCredentialFormat
-import BITCore
 import BITCredentialShared
-import BITCrypto
 import BITOca
 import BITOpenID
 import Factory
@@ -12,7 +10,8 @@ import Spyable
 
 @Spyable
 protocol OcaCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential
+  func generate(for anyCredential: AnyCredential, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential
+  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential
 }
 
 // MARK: - OcaCredentialGenerator
@@ -21,28 +20,44 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, ocaBundle: OcaBundle, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential {
+  func generate(for anyCredential: AnyCredential, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential {
     guard let payload = anyCredential.raw.data(using: .utf8) else {
       throw CredentialError.invalidPayload
     }
     let clusters = createClusters(from: anyCredential.claims, ocaBundle: ocaBundle)
     let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
-    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: id)
+    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
 
     return VerifiableCredential(
-      id: id,
+      id: context.credentialId,
       payload: payload,
       status: .unknown,
       clusters: clusters,
       format: anyCredential.format,
       issuer: anyCredential.issuer,
-      keyBinding: keyBinding,
-      rawCredentialData: rawCredentialData,
-      issuerDisplays: issuerDisplays,
+      keyBinding: context.keyBinding,
+      rawCredentialData: context.rawCredentialData,
+      issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
       validFrom: anyCredential.validFrom,
       validUntil: anyCredential.validUntil)
+  }
+
+  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential {
+    let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
+      .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
+    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
+
+    return DeferredCredential(
+      transactionId: deferredCredentialRequest.transactionId,
+      accessToken: deferredCredentialRequest.accessToken,
+      endpoint: deferredCredentialRequest.endpoint,
+      format: deferredCredentialRequest.format,
+      issuerDisplays: context.issuerDisplays,
+      displays: credentialDisplays,
+      keyBinding: context.keyBinding,
+      rawCredentialData: context.rawCredentialData)
   }
 
   // MARK: Private

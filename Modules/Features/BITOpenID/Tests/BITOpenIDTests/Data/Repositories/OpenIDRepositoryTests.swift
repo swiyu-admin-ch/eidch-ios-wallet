@@ -174,10 +174,10 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequestBody: credentialRequestBody)
 
-    if case .deferred(let transactionId, let accessToken, _, let format) = result {
-      XCTAssertEqual(transactionId, mockCredentialResponseDeferred.transactionId)
-      XCTAssertEqual(accessToken, mockFetchCredentialContext.accessToken.accessToken)
-      XCTAssertEqual(format, mockFetchCredentialContext.format)
+    if case .deferred(let deferredCredentialRequest) = result {
+      XCTAssertEqual(deferredCredentialRequest.transactionId, mockCredentialResponseDeferred.transactionId)
+      XCTAssertEqual(deferredCredentialRequest.accessToken, mockFetchCredentialContext.accessToken.accessToken)
+      XCTAssertEqual(deferredCredentialRequest.format, mockFetchCredentialContext.format)
     }
   }
 
@@ -236,6 +236,26 @@ final class OpenIDRepositoryTests: XCTestCase {
     }
   }
 
+  // MARK: - Refresh deferred credential
+
+  func testRefreshDeferredCredential_success() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData)
+
+    let credential = try await repository.refreshDeferredCredential(from: mockUrl, transactionId: "transactionId", acccessToken: "acccessToken", format: "format")
+
+    XCTAssertEqual(credential.raw, mockCredentialResponse.rawCredential)
+  }
+
+  func testRefreshDeferredCredential_issuancePendingError_throws() async throws {
+    mockResponse(code: 400, data: mockDeferredCredentialErrorResponseData)
+
+    do {
+      _ = try await repository.refreshDeferredCredential(from: mockUrl, transactionId: "transactionId", acccessToken: "acccessToken", format: "format")
+    } catch {
+      XCTAssertEqual(error as? OpenIdRepositoryError, .credentialIssuancePending(interval: 12345))
+    }
+  }
+
   // MARK: Private
 
   // swiftlint: disable all
@@ -246,6 +266,7 @@ final class OpenIDRepositoryTests: XCTestCase {
   private let mockCredentialResponseDeferredData = CredentialResponse.Mock.sampleDeferredData
   private let mockFetchCredentialContext = FetchCredentialContext.Mock.sample
   private let credentialRequestBody = VcSdJwtCredentialRequestBody.Mock.sample
+  private let mockDeferredCredentialErrorResponseData = DeferredCredentialErrorResponse.Mock.sampleData
 
   // swiftlint: enable all
   private var repository = OpenIDRepository()

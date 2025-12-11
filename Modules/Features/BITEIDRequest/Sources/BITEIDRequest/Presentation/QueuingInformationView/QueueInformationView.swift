@@ -1,6 +1,7 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - QueueInformationView
@@ -9,8 +10,8 @@ struct QueueInformationView: View {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, onlineSessionStartDate: Date) {
-    viewModel = Container.shared.queueInformationViewModel((router, onlineSessionStartDate))
+  init(onlineSessionStartDate: Date) {
+    viewModel = Container.shared.queueInformationViewModel(onlineSessionStartDate)
   }
 
   // MARK: Internal
@@ -23,7 +24,7 @@ struct QueueInformationView: View {
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkGlobalContinue,
-          primaryButtonAction: viewModel.primaryAction)
+          primaryButtonAction: { navigator.dismiss() })
       })
       .navigationBarBackButtonHidden(true)
   }
@@ -36,6 +37,8 @@ struct QueueInformationView: View {
     case tertiaryText
     case startDateText
   }
+
+  @Environment(\.navigator) private var navigator
 
   private var viewModel: QueueInformationViewModel
 }
@@ -79,9 +82,10 @@ extension QueueInformationView {
       }
     }
     .frame(maxWidth: .infinity)
+    .toolbar(.visible)
   }
 }
 
 #Preview {
-  QueueInformationView(router: EIDRequestRouter(), onlineSessionStartDate: Date())
+  QueueInformationView(onlineSessionStartDate: Date())
 }

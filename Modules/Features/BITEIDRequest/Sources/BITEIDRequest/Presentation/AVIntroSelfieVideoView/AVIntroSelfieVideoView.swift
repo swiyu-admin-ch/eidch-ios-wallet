@@ -1,15 +1,10 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 struct AVIntroSelfieVideoView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.avIntroSelfieVideoViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -25,18 +20,18 @@ struct AVIntroSelfieVideoView: View {
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkGlobalContinue,
-          primaryButtonAction: viewModel.primaryAction)
+          primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.recordSelfie) })
       })
       .navigationBarBackButtonHidden(true)
-      .toolbar { CloseButtonToolbar(action: viewModel.close) }
+      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
   }
 
   // MARK: Private
 
-  private var viewModel: AVIntroSelfieVideoViewModel
+  @Environment(\.navigator) private var navigator
 
 }
 
 #Preview {
-  AVIntroSelfieVideoView(router: EIDRequestRouter())
+  AVIntroSelfieVideoView()
 }

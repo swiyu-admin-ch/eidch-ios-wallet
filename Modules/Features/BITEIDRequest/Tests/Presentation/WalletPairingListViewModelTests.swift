@@ -5,6 +5,7 @@ import XCTest
 @testable import BITEIDRequestShared
 @testable import BITL10n
 @testable import BITTestingCore
+@testable import BITTheming
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping init_with_name force_try
 
@@ -16,13 +17,15 @@ class WalletPairingListViewModelTests: XCTestCase {
   override func setUp() {
     super.setUp()
     registerMocks()
-    viewModel = WalletPairingListViewModel(router: router)
+    viewModel = WalletPairingListViewModel()
   }
 
   override func tearDown() {
     super.tearDown()
     Container.shared.reset()
   }
+
+  // MARK: - Initial State Tests
 
   func testInitialState() {
     XCTAssertEqual(viewModel.currentDevicePairingState, .initial)
@@ -33,12 +36,30 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(walletPairingPollingManager.delegate === viewModel)
     XCTAssertFalse(viewModel.isBackButtonHidden)
+    XCTAssertNil(viewModel.destination)
+    XCTAssertFalse(viewModel.isNavigationCloseTriggered)
   }
+
+  // MARK: - Pair Device Tests
 
   func testPairDevice_otherDevice() async {
     await viewModel.pairDevice(.other)
 
-    XCTAssertTrue(router.avDevicePairingQRCodeCalled)
+    if case .walletPairingOffer(let callback) = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected .walletPairingOffer destination")
+    }
+  }
+
+  func testPairDevice_otherDevice_clearsToast() async {
+    viewModel.toastMessage = "Test message"
+    viewModel.isToastPresented = true
+
+    await viewModel.pairDevice(.other)
+
+    XCTAssertFalse(viewModel.isToastPresented)
+    XCTAssertNil(viewModel.toastMessage)
   }
 
   @MainActor
@@ -55,6 +76,24 @@ class WalletPairingListViewModelTests: XCTestCase {
   }
 
   @MainActor
+  func testPairDevice_currentDevice_setsLoadingState() async {
+    setupSuccessfulStatusResponse()
+
+    // Note: This test may be flaky due to timing, but demonstrates the state transition
+    let expectation = expectation(description: "Loading state set")
+
+    Task {
+      await viewModel.pairDevice(.current)
+      expectation.fulfill()
+    }
+
+    // Give it a moment to enter loading state
+    try? await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
+
+    await fulfillment(of: [expectation], timeout: 1.0)
+  }
+
+  @MainActor
   func testPairDevice_currentDevicePairWalletThrows_failure() async {
     pairWalletUseCase.executeForThrowableError = TestingError.error
 
@@ -66,26 +105,33 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   @MainActor
   func testPairDevice_currentDeviceMissingCaseId_failure() async {
-    router.context.caseId = nil
+    context.caseId = nil
 
     await viewModel.pairDevice(.current)
 
     XCTAssertEqual(viewModel.currentDevicePairingState, .initial)
+    XCTAssertTrue(walletPairingPollingManager.resetCalled)
   }
+
+  // MARK: - Primary Action Tests
 
   @MainActor
   func testPrimaryAction_success() {
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.avIdentityCheckCalled)
+    XCTAssertEqual(viewModel.destination, .avIdentityCheck)
   }
+
+  // MARK: - Close Tests
 
   func testClose() {
     viewModel.close()
 
     XCTAssertTrue(walletPairingPollingManager.stopPollingCalled)
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
+
+  // MARK: - Toast Tests
 
   func testClearToast() {
     viewModel.toastMessage = "Test message"
@@ -97,7 +143,74 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.toastMessage)
   }
 
-  // MARK: - DevicePairingDelegate Tests
+  func testToastAndClearToast_sequence() async {
+    setupSuccessfulStatusResponse()
+    setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 1, limitReached: false)
+
+    viewModel.didPairWallet()
+    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertNotNil(viewModel.toastMessage)
+
+    await waitForAsyncTask()
+
+    viewModel.clearToast()
+    XCTAssertFalse(viewModel.isToastPresented)
+    XCTAssertNil(viewModel.toastMessage)
+
+    viewModel.didPairWallet()
+
+    await waitForAsyncTask()
+    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertNotNil(viewModel.toastMessage)
+  }
+
+  // MARK: - FetchStatus Tests
+
+  func testFetchStatus_withValidCaseId_success() async {
+    setupSuccessfulStatusResponse()
+
+    await viewModel.fetchStatus()
+
+    XCTAssertTrue(fetchEIDRequestCaseUseCase.executeCaseIdCalled)
+    XCTAssertEqual(fetchEIDRequestCaseUseCase.executeCaseIdReceivedCaseId, caseId)
+    XCTAssertTrue(fetchEIDRequestStatusUseCase.executeForCalled)
+    XCTAssertEqual(fetchEIDRequestStatusUseCase.executeForReceivedCaseId, caseId)
+  }
+
+  func testFetchStatus_withNoCaseId_returnsEarly() async {
+    context.caseId = nil
+
+    await viewModel.fetchStatus()
+
+    XCTAssertFalse(fetchEIDRequestCaseUseCase.executeCaseIdCalled)
+    XCTAssertFalse(fetchEIDRequestStatusUseCase.executeForCalled)
+  }
+
+  func testFetchStatus_withFetchCaseError_showsError() async {
+    fetchEIDRequestCaseUseCase.executeCaseIdThrowableError = TestingError.error
+
+    await viewModel.fetchStatus()
+
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
+    } else {
+      XCTFail("Expected .error destination")
+    }
+  }
+
+  func testFetchStatus_withFetchStatusError_showsError() async {
+    fetchEIDRequestStatusUseCase.executeForThrowableError = TestingError.error
+
+    await viewModel.fetchStatus()
+
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
+    } else {
+      XCTFail("Expected .error destination")
+    }
+  }
+
+  // MARK: - DidPairWallet Tests
 
   func testDidPairWallet_withValidCaseId_success() async {
     setupSuccessfulStatusResponse()
@@ -118,17 +231,18 @@ class WalletPairingListViewModelTests: XCTestCase {
   }
 
   func testDidPairWallet_withNoCaseId() {
-    router.context.caseId = nil
+    context.caseId = nil
 
     viewModel.didPairWallet()
 
-    XCTAssertNil(viewModel.toastMessage)
-    XCTAssertFalse(viewModel.isToastPresented)
+    // Toast should still be shown even without case ID
+    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
+    XCTAssertTrue(viewModel.isToastPresented)
 
     XCTAssertFalse(fetchEIDRequestStatusUseCase.executeForCalled)
   }
 
-  func testDidPairWallet_withFetchError() async {
+  func testDidPairWallet_withFetchError_showsErrorDestination() async {
     fetchEIDRequestStatusUseCase.executeForThrowableError = TestingError.error
 
     viewModel.didPairWallet()
@@ -141,47 +255,59 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     XCTAssertTrue(fetchEIDRequestStatusUseCase.executeForCalled)
 
-    // State should not be updated on error
-    XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
-    XCTAssertFalse(viewModel.isLimitReached)
-    XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
+    // Should show error destination
+    if case .error = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected .error destination")
+    }
   }
 
-  func testDidPairWallet_withWrongState_doesNotUpdateUI() async {
+  func testDidPairWallet_withExpireState_presentTimeout() async {
     setupStatusResponse(state: .expired, pairedWalletCount: 1, limitReached: false)
 
     viewModel.didPairWallet()
 
     await waitForAsyncTask()
 
-    // Should not update UI for non-readyForOnlineSession state
+    // Should not update UI for non-inTargetWalletPairing state
     XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
+    XCTAssertEqual(viewModel.destination, .timeout)
+  }
+
+  func testDidPairWallet_withReadyForOnlineSessionState_presentTimeout() async {
+    setupStatusResponse(state: .readyForOnlineSession, pairedWalletCount: 1, limitReached: false)
+
+    viewModel.didPairWallet()
+
+    await waitForAsyncTask()
+    XCTAssertEqual(viewModel.destination, .timeout)
   }
 
   func testDidPairWallet_withNoTargetWallets_doesNotUpdateUI() async {
-    setupStatusResponse(state: .readyForOnlineSession, pairedWalletCount: 0, limitReached: false)
+    setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 0, limitReached: false)
 
     viewModel.didPairWallet()
 
     await waitForAsyncTask()
 
     XCTAssertFalse(viewModel.isBackButtonHidden)
-    XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
+    XCTAssertEqual(viewModel.pairedDevicesCounter, -1) // -1 because the requestCase contains a deferred credential
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
   }
 
   func testDidPairWallet_withZeroPairedWallets_keepsButtonDisabled() async {
-    setupStatusResponse(state: .readyForOnlineSession, pairedWalletCount: 0, limitReached: false)
+    setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 0, limitReached: false)
 
     viewModel.didPairWallet()
 
     await waitForAsyncTask()
 
     XCTAssertFalse(viewModel.isBackButtonHidden)
-    XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
+    XCTAssertEqual(viewModel.pairedDevicesCounter, -1) // -1 because the requestCase contains a deferred credential
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
   }
@@ -213,6 +339,76 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isPrimaryButtonDisabled)
   }
 
+  // MARK: - Computed Properties Tests
+
+  func testIsPrimaryButtonDisabled_withNoTargetWallets() {
+    viewModel.targetWallets = nil
+    XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
+  }
+
+  func testIsPrimaryButtonDisabled_withEmptyPairedWallets() {
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(limitReached: false, pairedWallets: [])
+    XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
+  }
+
+  func testIsPrimaryButtonDisabled_withPairedWallets() {
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(
+      limitReached: false,
+      pairedWallets: [.init(pairedAt: Date())])
+    XCTAssertFalse(viewModel.isPrimaryButtonDisabled)
+  }
+
+  func testIsBackButtonHidden_whenButtonDisabled() {
+    viewModel.targetWallets = nil
+    XCTAssertFalse(viewModel.isBackButtonHidden)
+  }
+
+  func testIsBackButtonHidden_whenButtonEnabled() {
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(
+      limitReached: false,
+      pairedWallets: [.init(pairedAt: Date())])
+    XCTAssertTrue(viewModel.isBackButtonHidden)
+  }
+
+  func testPairedDevicesCounter_withNoRequestCase() {
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(
+      limitReached: false,
+      pairedWallets: [.init(pairedAt: Date())])
+    XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
+  }
+
+  func testIsCurrentDevicePaired_withDeferredCredential() async {
+    setupSuccessfulStatusResponse()
+    await viewModel.fetchStatus()
+
+    XCTAssertTrue(viewModel.isCurrentDevicePaired)
+  }
+
+  func testIsCurrentDevicePaired_withoutDeferredCredential() async {
+    fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase.Mock.sampleAgentReview
+    setupSuccessfulStatusResponse()
+    await viewModel.fetchStatus()
+
+    XCTAssertFalse(viewModel.isCurrentDevicePaired)
+  }
+
+  func testIsLimitReached_withNoTargetWallets() {
+    viewModel.targetWallets = nil
+    XCTAssertFalse(viewModel.isLimitReached)
+  }
+
+  func testIsLimitReached_whenLimitNotReached() {
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(limitReached: false, pairedWallets: [])
+    XCTAssertFalse(viewModel.isLimitReached)
+  }
+
+  func testIsLimitReached_whenLimitReached() {
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(limitReached: true, pairedWallets: [])
+    XCTAssertTrue(viewModel.isLimitReached)
+  }
+
+  // MARK: - Polling Delegate Tests
+
   func testPollingManagerDidUpdateState_acceptedState_updateCurrentDevice() {
     setupSuccessfulStatusResponse()
 
@@ -221,8 +417,42 @@ class WalletPairingListViewModelTests: XCTestCase {
     viewModel.pollingManager(walletPairingPollingManager, didUpdateState: pollingState)
 
     XCTAssertEqual(walletPairingPollingManager.stopPollingCallsCount, 1)
-    XCTAssertEqual(viewModel.isPrimaryButtonDisabled, true)
-    XCTAssertEqual(viewModel.currentDevicePairingState, .paired(walletPairingDateFormatter.string(from: Date())))
+    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
+    XCTAssertTrue(viewModel.isToastPresented)
+
+    // Verify paired state with formatted date
+    if case .paired(let dateString) = viewModel.currentDevicePairingState {
+      XCTAssertFalse(dateString.isEmpty)
+      XCTAssertEqual(dateString, walletPairingDateFormatter.string(from: Date()))
+    } else {
+      XCTFail("Expected .paired state")
+    }
+  }
+
+  func testPollingManagerDidUpdateState_rejectedState_stopsCurrentDevicePairing() {
+    let pollingState = WalletPairingPollingManager.State.state(.rejected)
+
+    viewModel.pollingManager(walletPairingPollingManager, didUpdateState: pollingState)
+
+    XCTAssertEqual(viewModel.currentDevicePairingState, .initial)
+    XCTAssertEqual(walletPairingPollingManager.stopPollingCallsCount, 1)
+  }
+
+  func testPollingManagerDidUpdateState_openState_noAction() {
+    let pollingState = WalletPairingPollingManager.State.state(.open)
+
+    viewModel.pollingManager(walletPairingPollingManager, didUpdateState: pollingState)
+
+    XCTAssertEqual(viewModel.currentDevicePairingState, .initial)
+    XCTAssertFalse(walletPairingPollingManager.stopPollingCalled)
+  }
+
+  func testPollingManagerDidUpdateState_errorState_stopsPolling() {
+    let errorState = WalletPairingPollingManager.State.error("Poke")
+
+    viewModel.pollingManager(walletPairingPollingManager, didUpdateState: errorState)
+
+    XCTAssertTrue(walletPairingPollingManager.stopPollingCalled)
   }
 
   // MARK: - Animation Tests
@@ -242,32 +472,66 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isLimitReached)
   }
 
-  func testToastAndClearToast_sequence() async {
+  // MARK: - Integration Tests
+
+  func testFullPairingFlow_currentDevice() async {
     setupSuccessfulStatusResponse()
-    setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 1, limitReached: false)
 
-    viewModel.didPairWallet()
+    // Start pairing
+    await viewModel.pairDevice(.current)
+
+    // Verify polling started
+    XCTAssertTrue(walletPairingPollingManager.startPollingForPairingIdCalled)
+
+    // Simulate accepted state
+    viewModel.pollingManager(
+      walletPairingPollingManager,
+      didUpdateState: .state(.accepted))
+
+    // Verify toast shown
     XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertNotNil(viewModel.toastMessage)
+    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
+
+    // Verify paired state
+    if case .paired = viewModel.currentDevicePairingState {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected paired state")
+    }
 
     await waitForAsyncTask()
 
-    viewModel.clearToast()
-    XCTAssertFalse(viewModel.isToastPresented)
-    XCTAssertNil(viewModel.toastMessage)
+    // Verify status updated
+    XCTAssertNotNil(viewModel.targetWallets)
+  }
 
+  func testFullPairingFlow_otherDevice() async {
+    // Navigate to pairing offer
+    await viewModel.pairDevice(.other)
+
+    if case .walletPairingOffer = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected walletPairingOffer destination")
+    }
+
+    // Simulate successful pairing
+    setupSuccessfulStatusResponse()
     viewModel.didPairWallet()
 
     await waitForAsyncTask()
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertNotNil(viewModel.toastMessage)
+
+    // Verify UI updated
+    XCTAssertFalse(viewModel.isPrimaryButtonDisabled)
+    XCTAssertTrue(viewModel.isBackButtonHidden)
   }
 
   // MARK: Private
 
   private let caseId = "testCaseId"
   private let mockPairingId = "testPairingId"
-  private var router: MockEIDRequestRouter!
+
+  private var context: EIDRequestContext!
   private var viewModel: WalletPairingListViewModel!
   private var fetchEIDRequestStatusUseCase: FetchEIDRequestStatusUseCaseProtocolSpy!
   private var fetchEIDRequestCaseUseCase: FetchEIDRequestCaseUseCaseProtocolSpy!
@@ -276,6 +540,7 @@ class WalletPairingListViewModelTests: XCTestCase {
   private var walletPairingPollingManager: WalletPairingPollingProtocolSpy!
 
   private func registerMocks() {
+
     fetchEIDRequestStatusUseCase = FetchEIDRequestStatusUseCaseProtocolSpy()
     fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
     fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase(
@@ -289,8 +554,8 @@ class WalletPairingListViewModelTests: XCTestCase {
     Container.shared.fetchEIDRequestCaseUseCase.register { self.fetchEIDRequestCaseUseCase }
     Container.shared.fetchEIDRequestStatusUseCase.register { self.fetchEIDRequestStatusUseCase }
 
-    router = MockEIDRequestRouter()
-    router.context.caseId = caseId
+    context = EIDRequestContext()
+    context.caseId = caseId
 
     pairWalletUseCase = PairWalletUseCaseProtocolSpy()
     pairWalletUseCase.executeForReturnValue = mockPairingId
@@ -301,6 +566,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     Container.shared.pairWalletUseCase.register { self.pairWalletUseCase }
     Container.shared.walletPairingDateFormatter.register { self.walletPairingDateFormatter }
     Container.shared.walletPairingPollingManager.register { self.walletPairingPollingManager }
+    Container.shared.eidRequestContext.register { self.context }
   }
 
   private func setupSuccessfulStatusResponse() {
@@ -327,5 +593,3 @@ class WalletPairingListViewModelTests: XCTestCase {
     }
   }
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

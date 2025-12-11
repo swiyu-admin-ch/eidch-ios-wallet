@@ -1,5 +1,6 @@
 import BITCredentialShared
 import Factory
+import NavigatorUI
 import SwiftUI
 
 @MainActor
@@ -9,7 +10,11 @@ class CredentialDetailModule {
 
   init(credential: VerifiableCredential, router: CredentialDetailRouter = Container.shared.credentialDetailRouter()) {
     self.router = router
-    let viewController = UINavigationController(rootViewController: UIHostingController(rootView: CredentialDetailView(credential: credential, router: router)))
+    let viewController = UIHostingController(rootView: ManagedNavigationStack {
+      CredentialDetailView(credential: credential)
+        .navigationDestination(CredentialDetailDestinations.self)
+    })
+
     router.viewController = viewController
 
     self.viewController = viewController

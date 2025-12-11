@@ -1,88 +1,82 @@
-SHELL := /bin/bash
 .DEFAULT_GOAL := generate
-
-# Paths
-XCODEGEN ?= xcodegen
-SWIFTGEN ?= swiftgen
-SWIFTFORMAT ?= swiftformat
-PROJECT := swiyu.xcodeproj
-LOCK_DIR := /tmp/build_module_lock
 
 # ANSI color codes
 RESET := \033[0m
 GREEN := \033[0;32m
-YELLOW := \033[0;33m
-CYAN := \033[0;36m
-RED := \033[0;31m
 BLUE := \033[0;34m
 
-# Performance
-NCPU := $(shell sysctl -n hw.ncpu)
+# Main setup target
+setup: .install-mise .configure-mise .install-mise-tools .bundler .list-tools .list-tasks .warm generate
+	@printf "$(GREEN)=> Setup completed successfully!$(RESET)\n"
+	@printf "$(BLUE)=> Opening up swiyu$(RESET)\n"
+	@printf "$(BLUE)=> Note: From now on, you can simply use make to open the project$(RESET)\n"
 
-# SPM
-SPM_DIRS := $(shell find Modules/Features Modules/Platforms -type d -mindepth 1 -maxdepth 1)
+setup-ci: .install-mise .install-mise-tools
+	@printf "$(GREEN)=> Setup CI completed successfully!$(RESET)\n"
 
-.PHONY: clean-locks
+# Check if mise is installed, install if not
+.install-mise:
+	@if command -v mise >/dev/null 2>&1; then \
+		printf "$(BLUE)=> Mise is already installed, skipping installation$(RESET)\n"; \
+		mise self-update; \
+	else \
+		printf "$(GREEN)=> Installing mise$(RESET)\n"; \
+		curl https://mise.run | sh; \
+		echo 'eval "$$(~/.local/bin/mise activate zsh)"' >> ~/.zshrc; \
+		exec zsh; \
+		mise doctor; \
+		printf "$(GREEN)=> Mise installed successfully!$(RESET)\n"; \
+	fi
 
-install: 
-	@printf "$(GREEN)=> Install dependencies$(RESET)\n"
-	brew update
-	brew bundle
+# Configure mise settings
+.configure-mise:
+	@printf "$(GREEN)=> Configuring mise$(RESET)\n"
+	mise settings experimental=true & mise generate git-pre-commit --write --task=pre-commit
+
+# Install tools defined in mise configuration
+.install-mise-tools:
+	@printf "$(GREEN)=> Installing tools$(RESET)\n"
+	mise trust
+	mise settings experimental=true
+	mise install
+
+# List installed tools
+.list-tools:
+	@printf "$(GREEN)=> Installed tools$(RESET)\n"
+	mise ls
+
+# List available tasks
+.list-tasks:
+	@printf "$(GREEN)=> Available tasks$(RESET)\n"
+	mise tasks
+
+.bundler:
 	bundle install
 
-clean-locks:
-	@rm -rf $(LOCK_DIR)
+generate: .generate-project
+gen: generate
 
-generate-project: generate-info-plist generate-swiftgen
-	@printf "$(GREEN)✨ Project generation complete$(RESET)\n"
+regenerate: .regenerate-project
+regen: regenerate
 
-generate-info-plist:
-	@printf "          $(YELLOW)⠋ Generating Info.plist$(RESET)\r"
-	@if ! $(XCODEGEN) generate 2>/dev/null >/dev/null; then \
-		printf "          $(RED)✗ Generating Info.plist - Failed$(RESET)\n"; \
-		exit 1; \
-	fi
-	@printf "          $(GREEN)✓ Generating Info.plist$(RESET)\n"
+.build: 
+	mise build-project
 
-generate-swiftgen:
-	@printf "          $(YELLOW)⠋ Generating Assets using SwiftGen$(RESET)\r"
-	@if ! $(SWIFTGEN) 2>/dev/null >/dev/null; then \
-		printf "          $(RED)✗ Generating Assets - Failed$(RESET)\n"; \
-		exit 1; \
-	fi
-	@printf "          $(GREEN)✓ Generating Assets using SwiftGen$(RESET)\n"
+.warm: 
+	@printf "$(GREEN)=> Warming project$(RESET)\n"
+	mise xcodegen
+.generate-project:
+	mise generate-project
+.regenerate-project:
+	mise regenerate-project
 
-prepare-modules: clean-locks
-	@printf "\n$(CYAN)═══════════════════════════ Processing Modules ════════════════════════$(RESET)\n"
-	@mkdir -p $(LOCK_DIR)
-	@printf "%s\n" $(SPM_DIRS) | sort | xargs -P $(NCPU) -n 1 ./Scripts/build_module.sh
-	@printf "          $(GREEN)✓ All modules processed$(RESET)\n"
-	@rm -rf $(LOCK_DIR)
+# Help target - only public target besides setup
+help:
+	@echo "Available targets:"
+	@echo "  setup                    - Project setup"
+	@echo "  generate (gen)           - Generate & Open project"
+	@echo "  regenerate (regen)       - Regenerate & Open project without applying formatting tools (swiftgen, swiftformat, ...)"
+	@echo "  help                     - Show this help message"
+	@echo "mise tasks"
 
-format:
-	@printf "\n$(CYAN)═══════════════════════════ Formatting Code ═══════════════════════════$(RESET)\n"
-	@printf "          $(YELLOW)⠋ Formatting project code$(RESET)\r"
-	@if ! $(SWIFTFORMAT) --quiet . 2>/dev/null >/dev/null; then \
-		printf "          $(RED)✗ Formatting project code - Failed$(RESET)\n"; \
-		exit 1; \
-	fi
-	@printf "          $(GREEN)✓ Formatting project code$(RESET)\n"
-
-open-project:
-	@printf "$(GREEN)=> Opening $(PROJECT) using Xcode$(RESET)\n"
-	@open "$(PROJECT)"
-
-generate-all: generate-project format prepare-modules open-project
-
-# Main targets
-generate:
-	@START_TIME=$$(date +%s); \
-	$(MAKE) -f $(firstword $(MAKEFILE_LIST)) generate-all; \
-	END_TIME=$$(date +%s); \
-	ELAPSED_TIME=$$((END_TIME - START_TIME)); \
-	printf "$(GREEN)✨ All tasks completed successfully in $(BLUE)%d seconds$(RESET)\n" $$ELAPSED_TIME
-
-setup: install generate
-	@printf "$(GREEN)✨ Setup completed successfully$(RESET)\n"
-
-.PHONY: install generate-project generate-info-plist generate-swiftgen prepare-modules format open-project generate generate-all setup
+.PHONY: setup help generate gen regenerate regen

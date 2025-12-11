@@ -18,12 +18,6 @@ struct ButtonPlaygrounds: View {
       }
       .listRowInsets(EdgeInsets())
 
-      Section("secondary reversed") {
-        section(style: .secondaryReversed)
-          .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
-      }
-      .listRowInsets(EdgeInsets())
-
       Section("tertiary") {
         section(style: .tertiary)
       }

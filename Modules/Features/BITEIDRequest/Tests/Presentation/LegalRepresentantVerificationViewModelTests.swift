@@ -37,7 +37,11 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
 
     await viewModel.startVerification()
 
-    XCTAssertEqual(router.legalRepresentantConsentStateArgument, mockRequestCaseStateView)
+    if case .legalRepresentantConsentState = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected destination: .legalRepresentantConsentState")
+    }
   }
 
   func testStartVerification_useCaseError_errorRouteCalled() async {
@@ -45,7 +49,11 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
 
     await viewModel.startVerification()
 
-    XCTAssertEqual(router.eIDRequestError as? TestingError, TestingError.error)
+    if case .error = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected destination: .error")
+    }
   }
 
   // MARK: Private

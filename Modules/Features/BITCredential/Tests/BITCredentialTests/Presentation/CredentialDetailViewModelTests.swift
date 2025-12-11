@@ -1,5 +1,6 @@
 import Factory
 import XCTest
+@testable import BITActivity
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITTestingCore
@@ -14,13 +15,13 @@ final class CredentialDetailViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
 
-    viewModel = CredentialDetailViewModel(credentialMock, router: mockRouter)
+    viewModel = CredentialDetailViewModel(credentialMock)
 
     createSuccessState()
   }
 
   func test_init() {
-    viewModel = CredentialDetailViewModel(credentialMock, router: mockRouter)
+    viewModel = CredentialDetailViewModel(credentialMock)
 
     XCTAssertFalse(viewModel.isDeleteCredentialAlertPresented)
     XCTAssertEqual(viewModel.credential, credentialMock)
@@ -32,11 +33,14 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.credential, updateCredentialMock)
     XCTAssertEqual(viewModel.credentialViewModel?.credential, updateCredentialMock)
     XCTAssertEqual(viewModel.credentialViewModel?.credentialDisplay, credentialDisplayMock)
+    XCTAssertEqual(viewModel.activities.map(\.activity), activitiesMock)
   }
 
   func test_onAppear_argumentsPassed() async {
     await viewModel.onAppear()
 
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReceivedArguments?.credentialId, credentialMock.id)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReceivedArguments?.limit, 2)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCaseSpy.executeForReceivedCredential, credentialMock)
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, "")
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, updateCredentialMock.displays)
@@ -58,23 +62,10 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, updateCredentialMock.displays)
   }
 
-  func test_openWrongData() {
-    viewModel.openWrongdata()
-
-    XCTAssertTrue(mockRouter.didCallWrongData)
-  }
-
-  func test_close() {
-    viewModel.close()
-
-    XCTAssertTrue(mockRouter.closeCalled)
-  }
-
   func test_delete_success() async {
     await viewModel.deleteCredential()
 
     XCTAssertTrue(deleteCredentialUseCaseSpy.executeCalled)
-    XCTAssertTrue(mockRouter.closeCalled)
   }
 
   func test_delete_failure() async {
@@ -83,14 +74,6 @@ final class CredentialDetailViewModelTests: XCTestCase {
     await viewModel.deleteCredential()
 
     XCTAssertTrue(deleteCredentialUseCaseSpy.executeCalled)
-    XCTAssertFalse(mockRouter.closeCalled)
-  }
-
-  func testUpdateCredentialViewModel_light_setsViewModel() {
-    viewModel.updateCredentialViewModel(with: themeMock)
-
-    XCTAssertEqual(viewModel.credentialViewModel?.credentialDisplay, .Mock.lightEnglish)
-    XCTAssertEqual(viewModel.credentialViewModel?.credential, credentialMock)
   }
 
   func testUpdateCredentialViewModel_argumentsPassed() {
@@ -116,13 +99,14 @@ final class CredentialDetailViewModelTests: XCTestCase {
   private let credentialMock = VerifiableCredential.Mock.sample
   private let updateCredentialMock = VerifiableCredential.Mock.diploma
   private let credentialDisplayMock = CredentialDisplay.Mock.lightEnglish
+  private let activitiesMock: [Activity] = [.Mock.issueTrusted, .Mock.presentationAcceptedTrusted]
   private let themeMock = "light"
-  private var mockRouter = CredentialDetailRouterMock()
   private var viewModel: CredentialDetailViewModel!
 
   private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
   private var checkAndUpdateCredentialStatusUseCaseSpy = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
   private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
+  private var getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
 
   // swiftlint:enable all
 
@@ -130,12 +114,14 @@ final class CredentialDetailViewModelTests: XCTestCase {
     checkAndUpdateCredentialStatusUseCaseSpy.executeForReturnValue = updateCredentialMock
     deleteCredentialUseCaseSpy.executeClosure = { _ in }
     getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = credentialDisplayMock
+    getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReturnValue = activitiesMock
   }
 
   private func registerMocks() {
     Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCaseSpy }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCaseSpy }
     Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
+    Container.shared.getCredentialActivitiesUseCase.register { self.getCredentialActivitiesUseCaseSpy }
   }
 
 }

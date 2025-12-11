@@ -14,7 +14,6 @@ extension CredentialMetadata {
     var proofTypesSupported: [ProofType] { get }
     var orderClaims: [String]? { get }
     var claims: [Claim] { get }
-    var vct: String { get }
 
     init(from decoder: Decoder) throws
   }

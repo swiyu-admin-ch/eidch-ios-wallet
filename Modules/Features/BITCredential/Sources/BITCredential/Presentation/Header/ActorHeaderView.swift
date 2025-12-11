@@ -1,4 +1,5 @@
 import BITCredentialShared
+import BITOpenID
 import BITTheming
 import SwiftUI
 
@@ -8,12 +9,13 @@ public struct ActorHeaderView: View {
 
   // MARK: Lifecycle
 
-  public init(name: String, trustInformation: TrustInformation, imageData: Data? = nil, topInset: CGFloat = 0, isIssuance: Bool = true) {
+  public init(name: String, trustInformation: TrustInformation, imageData: Data? = nil, topInset: CGFloat = 0, type: ActorHeaderViewType = .issuance, onBadgeTapped: ((BadgeType) -> Void)? = nil) {
     self.name = name
     self.trustInformation = trustInformation
     self.imageData = imageData
     self.topInset = topInset
-    self.isIssuance = isIssuance
+    self.type = type
+    self.onBadgeTapped = onBadgeTapped
   }
 
   // MARK: Public
@@ -44,30 +46,17 @@ public struct ActorHeaderView: View {
 
   // MARK: Private
 
-  private static let imageMaxSize: CGFloat = 24
-
-  @ScaledMetric(relativeTo: .body) private var badgeIconWidth: CGFloat = 14
-
   private let imageData: Data?
   private let name: String
   private let trustInformation: TrustInformation
   private let topInset: CGFloat
-  private let isIssuance: Bool
+  private let type: ActorHeaderViewType
+  private let onBadgeTapped: ((BadgeType) -> Void)?
 
   private var actorInformation: some View {
     HStack(alignment: .center, spacing: .x4) {
-      (imageData.flatMap(Image.init) ?? Assets.unknownIcon.swiftUIImage)
-        .renderingMode(.template)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: Self.imageMaxSize, height: Self.imageMaxSize)
-        .foregroundColor(.white)
-        .colorMultiply(colorScheme.standardColor())
-        .padding(.x3)
-        .background(ThemingAssets.Background.secondary.swiftUIColor)
-        .clipShape(Circle())
+      NormalizedLogoCircular(imageData)
         .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
-        .accessibilityHidden(true)
 
       Text(name)
         .font(.custom.body)
@@ -79,43 +68,63 @@ public struct ActorHeaderView: View {
   private var badges: some View {
     FlowLayout(verticalSpacing: .x3, horizontalSpacing: .x3) {
       let identityTrust = trustInformation.identity
-      badge(image: identityTrust.icon, label: identityTrust.description, style: identityTrust.badgeStyle)
-      if
-        let icon = trustInformation.vcSchema.icon,
-        let description = trustInformation.vcSchema.getDescription(isIssuance: isIssuance),
-        let style = trustInformation.vcSchema.badgeStyle
-      {
-        badge(image: icon, label: description, style: style)
+      Button {
+        onBadgeTapped?(.actorInformation(type: identityTrust.actorInformationBadgeType, actorName: name))
+      } label: {
+        ActorInformationBadge(type: identityTrust.actorInformationBadgeType)
+      }
+      if let badgeType = trustInformation.vcSchema.getActorInformationBadgeType(for: type) {
+        Button {
+          onBadgeTapped?(.actorInformation(type: badgeType, actorName: name))
+        } label: {
+          ActorInformationBadge(type: badgeType)
+        }
       }
     }
-  }
-
-  private func badge(image: Image, label: String, style: any BadgeStyle) -> some View {
-    Badge {
-      Label(
-        title: {
-          Text(label)
-        },
-        icon: {
-          image
-            .resizable()
-            .scaledToFit()
-            .frame(width: badgeIconWidth)
-            .accessibilityHidden(true)
-        })
-    }
-    .badgeStyle(AnyBadgeStyle(style: style))
   }
 }
 
 #if DEBUG
 #Preview {
   VStack(spacing: .x10) {
-    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyTrusted, isIssuance: true)
-    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyUntrusted, isIssuance: true)
-    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyTrusted, isIssuance: false)
-    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyUntrusted, isIssuance: false)
+    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyTrusted, type: .issuance)
+    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyUntrusted, type: .issuance)
+    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyTrusted, type: .presentation)
+    ActorHeaderView(name: "Test", trustInformation: .Mock.fullyUntrusted, type: .presentation)
   }
   .background(.gray)
 }
 #endif
+
+// MARK: - ActorHeaderViewType
+
+public enum ActorHeaderViewType {
+  case issuance
+  case presentation
+}
+
+extension IdentityTrust {
+  var actorInformationBadgeType: ActorInformationBadgeType {
+    switch self {
+    case .trusted:
+      .trusted
+    case .untrusted:
+      .notTrusted
+    case .unknown:
+      .unknownTrust
+    }
+  }
+}
+
+extension VcSchemaTrust {
+  func getActorInformationBadgeType(for type: ActorHeaderViewType) -> ActorInformationBadgeType? {
+    switch self {
+    case .trusted:
+      type == .issuance ? .legitimateIssuer : .legitimateVerifier
+    case .untrusted:
+      type == .issuance ? .notLegitimateIssuer : .notLegitimateVerifier
+    case .notProtected:
+      nil
+    }
+  }
+}

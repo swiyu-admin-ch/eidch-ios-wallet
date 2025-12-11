@@ -1,5 +1,6 @@
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 @MainActor
@@ -9,7 +10,11 @@ class LegalRepresentantConsentModule {
 
   init(router: EIDRequestRouter = Container.shared.eIDRequestRouter(), caseId: String) {
     self.router = router
-    let viewController = UINavigationController(rootViewController: HideBackButtonHostingController(rootView: LegalRepresentantConsentView(router: router, caseId: caseId)))
+    let viewController = UIHostingController(rootView:
+      ManagedNavigationStack {
+        EIDRequestDestinations.legalRepresentantConsent(caseId: caseId)
+          .navigationDestination(EIDRequestDestinations.self)
+      })
     router.viewController = viewController
     self.viewController = viewController
   }

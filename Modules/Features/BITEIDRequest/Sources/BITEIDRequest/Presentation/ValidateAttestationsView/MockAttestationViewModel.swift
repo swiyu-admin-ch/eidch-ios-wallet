@@ -2,24 +2,12 @@
 import Foundation
 import SwiftUI
 
-class MockValidateAttestationsViewModel: ValidateAttestationsViewModelProtocol {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
-
-  // MARK: Internal
+class MockValidateAttestationsViewModel: ValidateAttestationsViewModel {
 
   @MainActor
-  func fetchAttestations() async {
-    router.legalRepresentant()
+  override func fetchAttestations() async {
+    destination = .legalRepresentant
   }
-
-  // MARK: Private
-
-  private let router: EIDRequestInternalRoutes
 
 }
 #endif

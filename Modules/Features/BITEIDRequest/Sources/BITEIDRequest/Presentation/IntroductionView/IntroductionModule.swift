@@ -1,4 +1,5 @@
 import Factory
+import NavigatorUI
 import SwiftUI
 
 @MainActor
@@ -8,7 +9,10 @@ class IntroductionModule {
 
   init(router: EIDRequestRouter = Container.shared.eIDRequestRouter()) {
     self.router = router
-    let viewController = UINavigationController(rootViewController: UIHostingController(rootView: IntroductionView(router: router)))
+    let viewController = UIHostingController(rootView: ManagedNavigationStack {
+      EIDRequestDestinations.introduction()
+        .navigationDestination(EIDRequestDestinations.self)
+    })
     router.viewController = viewController
     self.viewController = viewController
   }

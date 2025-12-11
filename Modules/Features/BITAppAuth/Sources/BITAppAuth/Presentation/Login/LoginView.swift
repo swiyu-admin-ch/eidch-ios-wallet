@@ -156,7 +156,8 @@ extension LoginView {
     } label: {
       Text(L10n.tkLoginLockedSecondarybuttonText)
     }
-    .buttonStyle(.secondaryReversed)
+    .buttonStyle(.secondary)
+    .environment(\.colorScheme, .light)
     .controlSize(.large)
     .accessibilitySortPriority(700)
     .accessibilityFocused($focus, equals: .helpButton)
@@ -227,7 +228,7 @@ extension LoginView {
 
         if viewModel.isBiometricAuthenticationAvailable {
           biometricButton()
-            .buttonStyle(.secondaryReversed)
+            .buttonStyle(.secondary)
         }
       }
 
@@ -266,7 +267,7 @@ extension LoginView {
     HStack {
       if viewModel.isBiometricAuthenticationAvailable {
         biometricButton()
-          .buttonStyle(.secondaryReversed)
+          .buttonStyle(.secondary)
           .accessibilitySortPriority(500)
       }
 
@@ -343,6 +344,7 @@ extension LoginView {
     }
     .controlSize(.large)
     .accessibilityFocused($focus, equals: .biometricButton)
+    .environment(\.colorScheme, .light)
   }
 
   @ViewBuilder

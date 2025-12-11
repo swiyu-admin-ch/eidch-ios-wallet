@@ -8,8 +8,9 @@ import Foundation
 
 public struct VerifierDisplay {
 
-  init(name: String?, logo: Data?, trustInformation: TrustInformation) {
+  init(name: String?, locale: UserLocale? = nil, logo: Data?, trustInformation: TrustInformation) {
     self.name = name
+    self.locale = locale
     self.logo = logo
     self.trustInformation = trustInformation
   }
@@ -17,6 +18,7 @@ public struct VerifierDisplay {
   // MARK: Internal
 
   var name: String?
+  var locale: UserLocale?
   var logo: Data?
   var trustInformation: TrustInformation
 
@@ -26,7 +28,10 @@ public struct VerifierDisplay {
 
 extension VerifierDisplay: Equatable {
   public static func == (lhs: VerifierDisplay, rhs: VerifierDisplay) -> Bool {
-    lhs.name == rhs.name && lhs.logo == rhs.logo && lhs.trustInformation == rhs.trustInformation
+    lhs.name == rhs.name &&
+      lhs.locale == rhs.locale &&
+      lhs.logo == rhs.logo &&
+      lhs.trustInformation == rhs.trustInformation
   }
 }
 

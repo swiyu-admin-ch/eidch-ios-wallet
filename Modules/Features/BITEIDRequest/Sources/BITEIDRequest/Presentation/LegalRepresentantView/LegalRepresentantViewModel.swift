@@ -1,24 +1,20 @@
+import Factory
+import SwiftUI
+
 @MainActor
-class LegalRepresentantViewModel {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
+class LegalRepresentantViewModel: ObservableObject {
 
   // MARK: Internal
 
-  func action(_ value: Bool) {
-    router.context.hasLegalRepresentant = value
-    router.documentSelection()
-  }
+  @Published var destination: EIDRequestDestinations?
 
-  func close() {
-    router.close()
+  func action(_ value: Bool) {
+    context.hasLegalRepresentant = value
+    destination = .documentSelection
   }
 
   // MARK: Private
 
-  private let router: EIDRequestInternalRoutes
+  @Injected(\.eidRequestContext) private var context
+
 }

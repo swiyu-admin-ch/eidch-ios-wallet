@@ -1,42 +1,40 @@
 import Factory
+import SwiftUI
 
-class AVIdentityCheckViewModel {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
+class AVIdentityCheckViewModel: ObservableObject {
 
   // MARK: Internal
+
+  @Published var destination: EIDRequestDestinations?
 
   @MainActor
   func primaryAction() async {
     do {
-      guard let caseId = router.context.caseId else {
+      guard let caseId = context.caseId else {
         throw EIDRequestError.missingCaseId
       }
 
       let response = try await startAutoVerificationUseCase.execute(for: caseId)
-      router.context.authJwt = response.jwt
+      context.autoVerificationResponse = response
 
-      guard response.isNFCRequired else {
-        return router.recordDocument()
-      }
-
-      return router.nfcScan()
+      destination = getNextDestination(from: response)
     } catch {
       #warning("TODO: Handle error case here when implemented")
     }
   }
 
-  func close() {
-    router.close()
-  }
-
   // MARK: Private
 
-  private let router: EIDRequestInternalRoutes
-
+  @Injected(\.eidRequestContext) private var context
   @Injected(\.startAutoVerificationUseCase) private var startAutoVerificationUseCase
+
+  private func getNextDestination(from response: AutoVerificationResponse) -> EIDRequestDestinations {
+    if response.isScanDocumentRequired {
+      .scanDocument
+    } else if response.isNFCRequired {
+      .nfcScan
+    } else {
+      .recordDocument
+    }
+  }
 }

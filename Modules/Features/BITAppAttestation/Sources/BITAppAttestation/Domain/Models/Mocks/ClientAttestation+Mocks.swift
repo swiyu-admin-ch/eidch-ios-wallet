@@ -18,6 +18,7 @@ extension ClientAttestationPayload: Mockable {
     static let sampleIncorrectBindingKey: ClientAttestation = decodeClientAttestation(fromFile: "client-attestation-incorrect-binding-key")
     static let sampleIncorrectKid: ClientAttestation = decodeClientAttestation(fromFile: "client-attestation-incorrect-kid")
     static let sampleIncorrectSub: ClientAttestation = decodeClientAttestation(fromFile: "client-attestation-incorrect-sub")
+    static let sampleExpired: ClientAttestation = encodePayload(fromFile: "client-attestation-expired")
 
     // MARK: Private
 

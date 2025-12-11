@@ -78,5 +78,7 @@ private struct SizePreferenceKey: PreferenceKey {
 
 private struct SafeAreaInsetsPreferenceKey: PreferenceKey {
   static var defaultValue = EdgeInsets()
-  static func reduce(value: inout EdgeInsets, nextValue: () -> EdgeInsets) {}
+  static func reduce(value: inout EdgeInsets, nextValue: () -> EdgeInsets) {
+    value = EdgeInsets(top: value.top.rounded(), leading: value.leading.rounded(), bottom: value.bottom.rounded(), trailing: value.trailing.rounded())
+  }
 }

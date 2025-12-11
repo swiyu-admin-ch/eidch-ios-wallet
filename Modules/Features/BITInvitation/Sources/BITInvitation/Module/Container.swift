@@ -18,12 +18,12 @@ extension Container {
 
   // MARK: - Camera
 
-  var cameraPermissionViewModel: ParameterFactory<InvitationRouterRoutes, CameraPermissionViewModel> {
-    self { CameraPermissionViewModel(router: $0) }
+  var cameraPermissionViewModel: ParameterFactory<(InvitationRouterRoutes, InvitationDelegate?), CameraPermissionViewModel> {
+    self { CameraPermissionViewModel(router: $0, delegate: $1) }
   }
 
-  var cameraViewModel: ParameterFactory<InvitationRouterRoutes, CameraViewModel> {
-    self { CameraViewModel(router: $0) }
+  var cameraViewModel: ParameterFactory<(InvitationRouterRoutes, InvitationDelegate?), CameraViewModel> {
+    self { CameraViewModel(router: $0, delegate: $1) }
   }
 
   var deeplinkViewModel: ParameterFactory<(URL, InvitationRouterRoutes), DeeplinkViewModel> {

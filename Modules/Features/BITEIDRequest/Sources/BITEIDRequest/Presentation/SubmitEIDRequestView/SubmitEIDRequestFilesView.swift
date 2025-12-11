@@ -2,16 +2,11 @@ import BITL10n
 import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 
 struct SubmitEIDRequestView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.submitEIDRequestFilesViewModel(router))
-  }
 
   // MARK: Internal
 
@@ -21,25 +16,14 @@ struct SubmitEIDRequestView: View {
       .task {
         await viewModel.submit()
       }
-      .onAppear {
-        resetAccessibilityFocus()
-      }
+      .navigate(to: $viewModel.destination)
+      .toolbar(.visible)
   }
 
   // MARK: Private
 
-  @AccessibilityFocusState private var errorFocusedState: Bool
-  @AccessibilityFocusState private var isCurrentPageFocused: Bool
-
-  @StateObject private var viewModel: SubmitEIDRequestFilesViewModel
-
-  private func resetAccessibilityFocus() {
-    DispatchQueue.main.async {
-      isCurrentPageFocused = false
-      isCurrentPageFocused = true
-    }
-  }
-
+  @InjectedObject(\.submitEIDRequestFilesViewModel) private var viewModel
+  @Environment(\.navigator) private var navigator
 }
 
 // MARK: - Components
@@ -62,7 +46,7 @@ extension SubmitEIDRequestView {
         .font(.custom.title)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(.leading)
-        .accessibilityFocused($isCurrentPageFocused)
+        .accessibilityPriorityFocus()
         .accessibilityAddTraits(.isHeader)
 
       Text(L10n.tkEidRequestSubmitDocumentsSecondary)

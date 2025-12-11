@@ -18,20 +18,32 @@ final class VerifiableCredentialTests: XCTestCase {
     Container.shared.reset()
   }
 
-  func testInit_demoDid_returnsDemoCredential() {
-    let issuer = "did:tdw:mock=:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:123"
+  func testInit_swiyuDid_returnsSwiyuCredential() {
+    for didMethod in ["tdw", "webvh"] {
+      let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:123"
 
-    let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+      let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
 
-    XCTAssertEqual(credential.environment, .demo)
+      XCTAssertEqual(credential.environment, .swiyu, "didMethod: \(didMethod)")
+    }
   }
 
-  func testInit_notDemoDid_returnsNormalCredential() {
-    let issuer = "did:tdw:mock=:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:123"
+  func testInit_swiyuIntDid_returnsSwiyuIntCredential() {
+    for didMethod in ["tdw", "webvh"] {
+      let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:123"
+
+      let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+
+      XCTAssertEqual(credential.environment, .swiyuInt, "didMethod: \(didMethod)")
+    }
+  }
+
+  func testInit_externalDid_returnsExternalCredential() {
+    let issuer = "did:tdw:mock=:identifier-reg.trust-infra.example.ch:api:v1:did:123"
 
     let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
 
-    XCTAssertEqual(credential.environment, .none)
+    XCTAssertEqual(credential.environment, .external)
   }
 
   func testFindDisplay_additionalDisplays_notAvailable() {
@@ -77,7 +89,7 @@ final class VerifiableCredentialTests: XCTestCase {
     let claims = credential.clusters.first?.claims ?? []
     for claim in claims {
       let claimDisplay = claim.preferredDisplay
-      XCTAssertEqual(claimDisplay?.name, claim.key)
+      XCTAssertEqual(claimDisplay.name, claim.key)
     }
   }
 
@@ -87,8 +99,6 @@ final class VerifiableCredentialTests: XCTestCase {
     let claims = credential.clusters.first?.claims ?? []
     for claim in claims {
       let claimDisplay = claim.preferredDisplay
-      XCTAssertNotNil(claimDisplay)
-      guard let claimDisplay else { fatalError("claim display is nil") }
       XCTAssertTrue(claimDisplay.locale?.starts(with: "\(expectedLanguageCode)-") ?? false)
     }
   }

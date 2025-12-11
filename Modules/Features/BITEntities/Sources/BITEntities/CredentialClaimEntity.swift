@@ -11,6 +11,7 @@ public class CredentialClaimEntity: Object {
   @Persisted public var valueType: String
   @Persisted public var valueDisplayInfo: String?
   @Persisted public var order: Int16
+  @Persisted public var isSensitive: Bool
   @Persisted public var displays = List<CredentialClaimDisplayEntity>()
 
 }

@@ -6,15 +6,16 @@ import Moya
 
 
 enum EIDRequestEndpoint {
-  case submit(EIDRequestPayload)
+  case apply(EIDRequestPayload)
   case getStatus(caseId: String)
   case legalRepresentantVerification(caseId: String)
   case challenge
   case validateAttestations(ValidateAttestationsRequestBody)
   case startOnlineSession(caseId: String)
   case pairWallet(caseId: String)
-  case startAutoVerification(String, AutoVerificationType)
+  case startAutoVerification(caseId: String, autoVerificationType: AutoVerificationType, isNFCAvailable: Bool)
   case submitFile(caseId: String, file: EIDRequestCaseFile)
+  case submit(caseId: String)
   case pairingState(caseId: String, pairingId: String)
 }
 
@@ -23,16 +24,17 @@ enum EIDRequestEndpoint {
 extension EIDRequestEndpoint: TargetType {
   var baseURL: URL {
     switch self {
-    case .submitFile:
+    case .submit,
+         .submitFile:
       Container.shared.avBaseUrl()
-    case .challenge,
+    case .apply,
+         .challenge,
          .getStatus,
          .legalRepresentantVerification,
          .pairingState,
          .pairWallet,
          .startAutoVerification,
          .startOnlineSession,
-         .submit,
          .validateAttestations:
       Container.shared.sidBaseUrl()
     }
@@ -40,7 +42,7 @@ extension EIDRequestEndpoint: TargetType {
 
   var path: String {
     switch self {
-    case .submit:
+    case .apply:
       "api/rest/eid/apply"
     case .getStatus(let caseId):
       "api/rest/eid/\(caseId)/state"
@@ -54,18 +56,21 @@ extension EIDRequestEndpoint: TargetType {
       "api/rest/eid/\(caseId)/start-online-session"
     case .pairWallet(let caseId):
       "api/rest/eid/\(caseId)/pair-wallet"
-    case .startAutoVerification(let caseId, let autoVerificationType):
+    case .startAutoVerification(let caseId, let autoVerificationType, _):
       "api/rest/eid/\(caseId)/start-auto-verification/\(autoVerificationType.rawValue)"
-    case .submitFile(caseId: let caseId, _):
-      "cases/v1/\(caseId)/files"
     case .pairingState(let caseId, let pairingId):
       "api/rest/eid/\(caseId)/pair-wallet/\(pairingId)/state"
+    case .submitFile(caseId: let caseId, _):
+      "cases/v1/\(caseId)/files"
+    case .submit(let caseId):
+      "cases/v1/\(caseId)/submit"
     }
   }
 
   var method: Moya.Method {
     switch self {
-    case .submit,
+    case .apply,
+         .submit,
          .submitFile,
          .validateAttestations: .post
     case .challenge,
@@ -80,34 +85,36 @@ extension EIDRequestEndpoint: TargetType {
 
   var task: Moya.Task {
     switch self {
-    case .submit(let body as Codable),
+    case .apply(let body as Codable),
          .validateAttestations(let body as Codable):
-      return .requestJSONEncodable(body)
+      .requestJSONEncodable(body)
     case .submitFile(_, file: let file):
-      let multipart = MultipartFormData(
-        provider: .data(file.data),
-        name: file.fileName,
-        fileName: file.fileName,
-        mimeType: file.mime.mimeType)
-      return .uploadMultipart([multipart])
+      .requestData(file.data)
+    case .startAutoVerification(_, _, let isNFCAvailable):
+      .requestParameters(parameters: ["nfcAvailable": isNFCAvailable], encoding: URLEncoding.queryString)
     case .challenge,
          .getStatus,
          .legalRepresentantVerification,
          .pairingState,
          .pairWallet,
-         .startAutoVerification,
-         .startOnlineSession:
-      return .requestPlain
+         .startOnlineSession,
+         .submit:
+      .requestPlain
     }
   }
 
   var headers: [String: String]? {
     switch self {
+    case .submitFile(_, let file):
+      [
+        "Content-Disposition": "attachment; filename=\"\(file.fileName)\"",
+        "Content-Type": "application/octet-stream",
+      ]
     case .challenge,
-         .submitFile,
          .validateAttestations:
       NetworkHeader.standard.raw
-    case .getStatus,
+    case .apply,
+         .getStatus,
          .legalRepresentantVerification,
          .pairingState,
          .pairWallet,
@@ -125,7 +132,8 @@ extension EIDRequestEndpoint: AccessTokenAuthorizable {
 
   var authorizationType: AuthorizationType? {
     switch self {
-    case .submitFile:
+    case .submit,
+         .submitFile:
       .bearer
     default:
       nil

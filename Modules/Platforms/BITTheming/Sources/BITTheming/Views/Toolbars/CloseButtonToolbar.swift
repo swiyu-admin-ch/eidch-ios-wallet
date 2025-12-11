@@ -2,7 +2,8 @@ import BITL10n
 import SwiftUI
 
 public struct CloseButtonToolbar: ToolbarContent {
-  public init(action: @escaping () -> Void) {
+  public init(accessibilityIdentifier: String = "closeButton", action: @escaping () -> Void) {
+    self.accessibilityIdentifier = accessibilityIdentifier
     self.action = action
   }
 
@@ -12,8 +13,10 @@ public struct CloseButtonToolbar: ToolbarContent {
         ThemingAssets.close.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClose)
+      .accessibilityIdentifier(accessibilityIdentifier)
     }
   }
 
-  private var action: () -> Void = {}
+  private let accessibilityIdentifier: String
+  private let action: () -> Void
 }

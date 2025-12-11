@@ -25,7 +25,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   func testGenerate_nestedWithClaimsOnRoot_returnsCredentialWithOneCluster() throws {
     let anyCredential = createNestedAnyCredential()
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.nested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.nested, context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 1)
@@ -37,7 +37,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     let anyCredential = createNestedAnyCredential()
     let additionalClaim = createTextClaim(jsonPath: "$.other_path", value: "other_value")
     anyCredential.claims.insert(additionalClaim, at: 1)
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.nested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.nested, context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 2)
@@ -53,7 +53,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   func testGenerate_nestedWithoutClaimsOnRoot_returnsCredentialWithClusters() throws {
     let anyCredential = createSimpleNestedCredential()
 
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.simpleNested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.simpleNested, context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 3)
@@ -65,7 +65,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     let additionalClaim = createTextClaim(jsonPath: "$.other_path", value: "other_value")
     anyCredential.claims.insert(additionalClaim, at: 1)
 
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: keyBindingMock, ocaBundle: OcaBundle.Mock.simpleNested, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.simpleNested, context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 4)
@@ -92,10 +92,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   private let validUntilMock = Date()
   private let ocaBundleMock = OcaBundle.Mock.simpleSample
 
-  private let idMock = UUID()
-  private let issuerDisplaysMock = [CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)]
-  private let rawCredentialDataMock = RawCredentialData()
-  private let keyBindingMock = CredentialKeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
+  private let mockCredentialGeneratorContext = CredentialGeneratorContext.Mock.sample
 
   private var captureBaseDisplayGeneratorSpy = CaptureBaseDisplayGeneratorProtocolSpy()
 
@@ -160,17 +157,17 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   }
 
   private func assertBasicCredential(_ credential: VerifiableCredential) {
-    XCTAssertEqual(credential.id, idMock)
+    XCTAssertEqual(credential.id, mockCredentialGeneratorContext.credentialId)
     XCTAssertEqual(credential.status, .unknown)
-    XCTAssertEqual(credential.keyBinding, keyBindingMock)
+    XCTAssertEqual(credential.keyBinding, mockCredentialGeneratorContext.keyBinding)
     XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
-    XCTAssertEqual(credential.rawCredentialData, rawCredentialDataMock)
+    XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContext.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
     XCTAssertEqual(credential.issuer, issuerMock)
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
     XCTAssertNotNil(credential.createdAt)
-    XCTAssertEqual(credential.issuerDisplays, issuerDisplaysMock)
+    XCTAssertEqual(credential.issuerDisplays, mockCredentialGeneratorContext.issuerDisplays)
   }
 
   private func assertNestedCluster(_ cluster: CredentialClaimCluster) {

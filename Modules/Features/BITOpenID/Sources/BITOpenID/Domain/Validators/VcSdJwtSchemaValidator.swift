@@ -6,21 +6,17 @@ import Spyable
 
 @Spyable
 public protocol VcSdJwtSchemaValidatorProtocol {
-  func validate(_ claims: [String: Any?], schema: Data) throws -> Bool
+  func validate(schema: Data) throws -> Bool
 }
 
 // MARK: - VcSdJwtSchemaValidator
 
-public struct VcSdJwtSchemaValidator: VcSdJwtSchemaValidatorProtocol {
+struct VcSdJwtSchemaValidator: VcSdJwtSchemaValidatorProtocol {
 
-  // MARK: Public
+  // MARK: Internal
 
-  public func validate(_ claims: [String: Any?], schema: Data) throws -> Bool {
-    guard try conformsTo202012MetaSchema(schema) && conformsToVcSdJwtSchema(schema) else {
-      return false
-    }
-
-    return try validator.validate(dictionary: claims, with: schema)
+  func validate(schema: Data) throws -> Bool {
+    try conformsTo202012MetaSchema(schema) && conformsToVcSdJwtSchema(schema)
   }
 
   // MARK: Private

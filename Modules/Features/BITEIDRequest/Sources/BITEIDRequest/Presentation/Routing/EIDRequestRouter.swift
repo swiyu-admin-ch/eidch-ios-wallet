@@ -11,7 +11,7 @@ final public class EIDRequestRouter: Router<UIViewController>, EIDRequestRouterR
 
   // MARK: Lifecycle
 
-  init(context: EIDRequestContext = Container.shared.eIDRequestContext()) {
+  init(context: EIDRequestContext = Container.shared.eidRequestContext()) {
     self.context = context
   }
 

@@ -1,8 +1,9 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import RealmSwift
 import XCTest
 @testable import BITAppAttestation
+
+// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 
 final class ClientAttestationRepositoryTests: XCTestCase {
 
@@ -35,10 +36,20 @@ final class ClientAttestationRepositoryTests: XCTestCase {
     }
   }
 
+  func testDeleteClientAttestation_success() async throws {
+    do {
+      let clientAttestation = try await repository.create(mockClientAttestation)
+      try repository.delete()
+
+      _ = try await repository.get()
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? ClientAttestationRepositoryError, .notFound)
+    }
+  }
+
   // MARK: Private
 
   private let mockClientAttestation = ClientAttestationPayload.Mock.sample
   private var repository: ClientAttestationRepositoryProtocol!
 }
-
-// swiftlint: enable implicitly_unwrapped_optional force_unwrapping

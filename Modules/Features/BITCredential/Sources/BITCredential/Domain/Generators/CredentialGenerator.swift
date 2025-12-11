@@ -1,5 +1,4 @@
 import BITAnyCredentialFormat
-import BITCore
 import BITCredentialShared
 import BITOca
 import BITOpenID
@@ -12,7 +11,8 @@ import Spyable
 
 @Spyable
 protocol CredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, keyPair: VaultKeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> VerifiableCredential
+  func generate(for anyCredential: AnyCredential, keyBinding: CredentialKeyBinding?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> VerifiableCredential
+  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, keyBinding: CredentialKeyBinding?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> DeferredCredential
 }
 
 // MARK: - CredentialGenerator
@@ -21,16 +21,23 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, keyPair: VaultKeyPair?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> VerifiableCredential {
-    let id = UUID()
-    let keyBinding = try createKeyBinding(from: keyPair)
-    let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialMetadata.display, credentialId: id)
-    let ocaBundle = rawOcaBundle.flatMap { try? ocaBundler.createOcaBundle($0) }
-    let rawCredentialData = RawCredentialData(rawOIDMetadata: metadataWrapper.rawData, rawOcaBundle: rawOcaBundle)
+  func generate(for anyCredential: AnyCredential, keyBinding: CredentialKeyBinding?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> VerifiableCredential {
+    let (context, ocaBundle) = try generate(keyBinding: keyBinding, rawOcaBundle: rawOcaBundle, metadataWrapper: metadataWrapper)
+
     return if let ocaBundle {
-      try ocaCredentialGenerator.generate(for: anyCredential, id: id, keyBinding: keyBinding, ocaBundle: ocaBundle, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData)
+      try ocaCredentialGenerator.generate(for: anyCredential, ocaBundle: ocaBundle, context: context)
     } else {
-      try metadataCredentialGenerator.generate(for: anyCredential, id: id, keyBinding: keyBinding, selectedCredential: metadataWrapper.selectedCredential, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData)
+      try metadataCredentialGenerator.generate(for: anyCredential, selectedCredential: metadataWrapper.selectedCredential, context: context)
+    }
+  }
+
+  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, keyBinding: CredentialKeyBinding?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> DeferredCredential {
+    let (context, ocaBundle) = try generate(keyBinding: keyBinding, rawOcaBundle: rawOcaBundle, metadataWrapper: metadataWrapper)
+
+    return if let ocaBundle {
+      try ocaCredentialGenerator.generateDeferred(deferredCredentialRequest, ocaBundle: ocaBundle, context: context)
+    } else {
+      try metadataCredentialGenerator.generateDeferred(deferredCredentialRequest, selectedCredential: metadataWrapper.selectedCredential, context: context)
     }
   }
 
@@ -39,7 +46,15 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
   @Injected(\.ocaBundler) private var ocaBundler: OcaBundlerProtocol
   @Injected(\.ocaCredentialGenerator) private var ocaCredentialGenerator: OcaCredentialGeneratorProtocol
   @Injected(\.metadataCredentialGenerator) private var metadataCredentialGenerator: MetadataCredentialGeneratorProtocol
-  @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
+
+  private func generate(keyBinding: CredentialKeyBinding?, rawOcaBundle: RawOcaBundle?, metadataWrapper: CredentialMetadataWrapper) throws -> (CredentialGeneratorContext, OcaBundle?) {
+    let id = UUID()
+    let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialMetadata.display, credentialId: id)
+    let ocaBundle = rawOcaBundle.flatMap { try? ocaBundler.createOcaBundle($0) }
+    let rawCredentialData = RawCredentialData(rawOIDMetadata: metadataWrapper.rawData, rawOcaBundle: rawOcaBundle)
+
+    return (CredentialGeneratorContext(credentialId: id, selectedCredentialSupportedId: metadataWrapper.selectedCredentialSupportedId, keyBinding: keyBinding, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData), ocaBundle)
+  }
 
   private func createIssuerDisplays(from displays: [CredentialMetadata.CredentialMetadataDisplay]?, credentialId: UUID) -> [CredentialIssuerDisplay] {
     displays?.map { display in
@@ -49,21 +64,5 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
         credentialId: credentialId,
         image: display.logo?.url?.dataURLData)
     } ?? []
-  }
-
-  private func createKeyBinding(from keyPair: VaultKeyPair?) throws -> CredentialKeyBinding? {
-    try keyPair.flatMap { keyPair in
-      let isHardwareKey = keyPair.options?.contains(.secureEnclave) ?? false
-      let (publicKey, privateKey): (Data?, Data?) = isHardwareKey
-        ? (nil, nil)
-        : try keyManager.getExternalRepresentation(of: keyPair.privateKey)
-
-      return CredentialKeyBinding(
-        id: UUID(uuidString: keyPair.identifier) ?? UUID(),
-        algorithm: keyPair.algorithm.rawValue,
-        bindingType: isHardwareKey ? .hardware : .software,
-        publicKey: publicKey,
-        privateKey: privateKey)
-    }
   }
 }

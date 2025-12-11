@@ -1,6 +1,6 @@
-import BITCore
 import BITCredentialShared
 import BITL10n
+import BITOpenID
 import BITTheming
 import SwiftUI
 
@@ -10,8 +10,25 @@ public struct CredentialCard<Header: View>: View {
 
   // MARK: Lifecycle
 
-  public init(_ viewModel: CredentialViewModel, @ViewBuilder header: () -> Header? = { EmptyView() }) {
-    self.viewModel = viewModel
+  public init(
+    name: String? = nil,
+    summary: String? = nil,
+    background: String? = nil,
+    logoBase64: Data? = nil,
+    environment: TrustEnvironment? = nil,
+    statusBadgeLabel: String? = nil,
+    statusBadgeImage: Image? = nil,
+    statusBadgeStyle: (any BadgeStyle)? = nil,
+    @ViewBuilder header: () -> Header? = { EmptyView() })
+  {
+    self.name = name
+    self.summary = summary
+    self.environment = environment
+    self.background = background
+    self.logoBase64 = logoBase64
+    self.statusBadgeLabel = statusBadgeLabel
+    self.statusBadgeImage = statusBadgeImage
+    self.statusBadgeStyle = statusBadgeStyle
     self.header = header()
   }
 
@@ -32,7 +49,7 @@ public struct CredentialCard<Header: View>: View {
         }
       }
       .overlay {
-        if viewModel.environment == .demo {
+        if environment == .swiyuInt {
           (controlSize < .regular ? Assets.credentialDemoPatternSmall.swiftUIImage : Assets.credentialDemoPattern.swiftUIImage)
             .opacity(0.5)
             .clipped()
@@ -57,7 +74,14 @@ public struct CredentialCard<Header: View>: View {
   @Environment(\.controlSize) private var controlSize
   @State private var size = CGSize.zero
 
-  private let viewModel: CredentialViewModel
+  private var name: String?
+  private var summary: String?
+  private var background: String?
+  private var logoBase64: Data?
+  private var environment: TrustEnvironment?
+  private var statusBadgeLabel: String?
+  private var statusBadgeImage: Image?
+  private var statusBadgeStyle: (any BadgeStyle)?
 
   private let header: Header?
 
@@ -69,7 +93,7 @@ public struct CredentialCard<Header: View>: View {
   }
 
   private var backgroundColor: Color? {
-    guard let hexColor = viewModel.credentialDisplay?.backgroundColor else { return nil }
+    guard let hexColor = background else { return nil }
     return Color(hex: hexColor)
   }
 
@@ -90,7 +114,7 @@ public struct CredentialCard<Header: View>: View {
 
   @ViewBuilder
   private func image() -> some View {
-    if let data = viewModel.credentialDisplay?.logoBase64, !sizeCategory.isAccessibilityCategory || controlSize < .large {
+    if let data = logoBase64, !sizeCategory.isAccessibilityCategory || controlSize < .large {
       Image(data: data)?
         .renderingMode(.template)
         .resizable()
@@ -123,13 +147,13 @@ public struct CredentialCard<Header: View>: View {
       Spacer()
 
       VStack(alignment: .leading) {
-        Text(viewModel.credentialDisplay?.name ?? defaultText)
+        Text(name ?? defaultText)
           .font(.mono.headline)
           .fixedSize(horizontal: false, vertical: true)
           .frame(maxWidth: .infinity, alignment: .leading)
           .multilineTextAlignment(.leading)
 
-        if let summary = viewModel.credentialDisplay?.summary {
+        if let summary {
           Text(summary)
             .font(.mono.headline)
             .fixedSize(horizontal: false, vertical: true)
@@ -151,14 +175,14 @@ public struct CredentialCard<Header: View>: View {
 
       HStack(alignment: .top) {
         VStack(alignment: .leading) {
-          Text(viewModel.credentialDisplay?.name ?? defaultText)
+          Text(name ?? defaultText)
             .font(.mono.headline)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
             .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
-          if let summary = viewModel.credentialDisplay?.summary {
+          if let summary {
             Text(summary)
               .font(.mono.headline)
               .fixedSize(horizontal: false, vertical: true)
@@ -218,16 +242,15 @@ public struct CredentialCard<Header: View>: View {
 
   @ViewBuilder
   private func badges() -> some View {
-    if viewModel.environment == .demo {
-      Badge {
-        Text(L10n.tkCredentialStatusDemo)
-      }
-      .badgeStyle(.bezeledGray)
-      .colorScheme(cardColorScheme == .dark ? .light : .dark)
-      .accessibilityLabel(L10n.tkCredentialStatusDemoAlt)
+    if environment == .swiyuInt {
+      Badge(label: L10n.tkCredentialStatusDemo)
+        .badgeStyle(.info)
+        .colorScheme(cardColorScheme == .dark ? .light : .dark)
+        .accessibilityLabel(L10n.tkCredentialStatusDemoAlt)
     }
-
-    CredentialStatusBadge(viewModel)
+    if let statusBadgeLabel, let statusBadgeImage, let statusBadgeStyle {
+      CredentialStatusBadge(label: statusBadgeLabel, image: statusBadgeImage, style: statusBadgeStyle)
+    }
   }
 
 }
@@ -236,7 +259,7 @@ extension CredentialCard {
 
   private var minWidth: CGFloat {
     switch controlSize {
-    case .mini: 34
+    case .mini: 48
     case .small: 72
     default: 172
     }
@@ -244,7 +267,7 @@ extension CredentialCard {
 
   private var maxWidth: CGFloat {
     switch controlSize {
-    case .mini: 34
+    case .mini: 48
     case .small: 72
     default: .infinity
     }
@@ -252,7 +275,7 @@ extension CredentialCard {
 
   private var minHeight: CGFloat {
     switch controlSize {
-    case .mini: 34
+    case .mini: 66
     case .small: 96
     case .regular: 150
     default: 250
@@ -261,7 +284,7 @@ extension CredentialCard {
 
   private var maxHeight: CGFloat {
     switch controlSize {
-    case .mini: 34
+    case .mini: 66
     case .small: 96
     case .large: .infinity
     default: sizeCategory.isAccessibilityCategory ? .infinity : 500
@@ -278,14 +301,14 @@ extension CredentialCard {
   private var imageMaxHeight: CGFloat {
     switch controlSize {
     case .large: 32
-    case .mini: 16
+    case .mini: 24
     default: 21
     }
   }
 
   private var imageMaxWidth: CGFloat {
     switch controlSize {
-    case .mini: 16
+    case .mini: 24
     case .small: maxWidth - .x2
     default: 60
     }
@@ -305,16 +328,16 @@ extension CredentialCard {
 #Preview {
   ScrollView {
     VStack {
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
+      CredentialCard(statusBadgeLabel: "label", statusBadgeImage: Image(systemName: "faceid"), statusBadgeStyle: .info)
         .controlSize(.mini)
 
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
+      CredentialCard(statusBadgeLabel: "label", statusBadgeImage: Image(systemName: "faceid"), statusBadgeStyle: .info)
         .controlSize(.small)
 
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
+      CredentialCard(statusBadgeLabel: "label", statusBadgeImage: Image(systemName: "faceid"), statusBadgeStyle: .info)
         .controlSize(.regular)
 
-      CredentialCard(CredentialViewModel(credential: .Mock.sample, credentialDisplay: VerifiableCredential.Mock.sample.displays[0]))
+      CredentialCard(statusBadgeLabel: "label", statusBadgeImage: Image(systemName: "faceid"), statusBadgeStyle: .info)
         .controlSize(.large)
     }
   }

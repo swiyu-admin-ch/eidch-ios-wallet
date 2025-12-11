@@ -133,6 +133,15 @@ final class OcaClaimGeneratorTests: XCTestCase {
     assertClaim(claim, order: 1)
   }
 
+  func testGenerate_attributeWithIsSensitive_returnsClaimWithIsSensitive() throws {
+    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
+    let attribute = createAttribute(attributeType: .text, isSensitive: true)
+
+    let claim = generator.generate(for: anyClaim, ocaAttribute: attribute)
+
+    assertClaim(claim, isSensitive: true)
+  }
+
   func testGenerate_dataURLPNG_returnsPNGClaim() throws {
     let anyClaim = createAnyClaim(value: .string("data:image/png;base64,\(Self.valueMock)"))
     let attribute = createAttribute(attributeType: .text, standard: .dataURLScheme)
@@ -309,10 +318,11 @@ final class OcaClaimGeneratorTests: XCTestCase {
     format: String? = nil,
     labels: [BITOca.Locale: String] = [:],
     order: Int? = nil,
+    isSensitive: Bool = false,
     standard: Standard? = nil)
     -> OverlayBundleAttribute
   {
-    OverlayBundleAttribute(captureBaseDigest: "captureBaseDigest", name: "name", attributeType: attributeType, characterEncoding: encoding, entryMapping: entryMapping, format: format, labels: labels, order: order, standard: standard)
+    OverlayBundleAttribute(captureBaseDigest: "captureBaseDigest", name: "name", attributeType: attributeType, characterEncoding: encoding, entryMapping: entryMapping, format: format, labels: labels, order: order, isSensitive: isSensitive, standard: standard)
   }
 
   private func createLabels(for locales: [BITOca.Locale]) -> [BITOca.Locale: String] {
@@ -333,6 +343,7 @@ final class OcaClaimGeneratorTests: XCTestCase {
     valueType: ValueType = .string,
     valueDisplayInfo: String? = nil,
     order: Int = Int(Int16.max),
+    isSensitive: Bool = false,
     displays: [CredentialClaimDisplay] = [],
     ocaAttribute: OverlayBundleAttribute? = nil)
   {
@@ -341,6 +352,7 @@ final class OcaClaimGeneratorTests: XCTestCase {
     XCTAssertEqual(claim.valueType, valueType.rawValue)
     XCTAssertEqual(claim.valueDisplayInfo, valueDisplayInfo)
     XCTAssertEqual(claim.order, order)
+    XCTAssertEqual(claim.isSensitive, isSensitive)
 
     XCTAssertEqual(claim.displays.count, displays.count)
     for display in claim.displays {

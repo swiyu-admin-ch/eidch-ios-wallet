@@ -24,6 +24,7 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
       let formatByAttribute = getFormatForAttributes(for: base, ocaBundle: ocaBundle)
       let labelsByAttribute = getLabelsForAttributes(for: base, ocaBundle: ocaBundle)
       let orderByAttribute = getOrderForAttributes(for: base, ocaBundle: ocaBundle)
+      let sensitiveAttributes = getSensitiveAttributes(for: base, ocaBundle: ocaBundle)
       let standardByAttribute = getStandardForAttributes(for: base, ocaBundle: ocaBundle)
       return base.attributes.map { attribute in
         OverlayBundleAttribute(
@@ -36,6 +37,7 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
           format: formatByAttribute[attribute.key],
           labels: labelsByAttribute[attribute.key] ?? [:],
           order: orderByAttribute[attribute.key],
+          isSensitive: sensitiveAttributes.contains(attribute.key),
           standard: standardByAttribute[attribute.key])
       }
     }
@@ -129,6 +131,16 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
     }
   }
 
+  private func getSensitiveAttributes(for base: any CaptureBase, ocaBundle: OcaBundle) -> [AttributeKey] {
+    let overlays = ocaBundle.getLatestOverlaysOfType(overlayType: .sensitive, digest: base.digest)
+      .compactMap { $0 as? any SensitiveOverlay }
+    guard let overlay = overlays.first else { return [] }
+    if overlays.count > 1 {
+      analytics.log(AnalyticsEvent.duplicateInSensitiveOverlays)
+    }
+    return overlay.attributes
+  }
+
   private func getStandardForAttributes(for base: any CaptureBase, ocaBundle: OcaBundle) -> [AttributeKey: Standard] {
     let overlays = ocaBundle.getLatestOverlaysOfType(overlayType: .standard, digest: base.digest)
       .compactMap { $0 as? any StandardOverlay }
@@ -153,6 +165,7 @@ extension OverlayBundleAttributesGenerator {
     case duplicateInFormatOverlays
     case duplicateInLabelOverlays
     case duplicateInOrderOverlays
+    case duplicateInSensitiveOverlays
     case duplicateInStandardOverlays
   }
 }

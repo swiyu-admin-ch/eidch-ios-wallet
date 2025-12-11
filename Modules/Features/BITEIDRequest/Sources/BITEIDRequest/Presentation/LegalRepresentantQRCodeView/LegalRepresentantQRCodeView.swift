@@ -1,6 +1,7 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - LegalRepresentantQRCodeView
@@ -9,8 +10,8 @@ struct LegalRepresentantQRCodeView: View {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, caseId: String) {
-    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantQRCodeViewModel((router, caseId)))
+  init(caseId: String) {
+    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantQRCodeViewModel(caseId))
   }
 
   // MARK: Internal
@@ -24,6 +25,9 @@ struct LegalRepresentantQRCodeView: View {
     } footer: {
       viewFooter()
     }
+    .toolbar(.visible)
+    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+    .navigate(to: $viewModel.destination)
     .task {
       await viewModel.getVerificationQRCode()
     }
@@ -32,6 +36,7 @@ struct LegalRepresentantQRCodeView: View {
   // MARK: Private
 
   @StateObject private var viewModel: LegalRepresentantQRCodeViewModel
+  @Environment(\.navigator) private var navigator
 
   private let qrCodeSize = 200.0
 }
@@ -128,5 +133,5 @@ extension LegalRepresentantQRCodeView {
 }
 
 #Preview {
-  LegalRepresentantQRCodeView(router: EIDRequestRouter(), caseId: "caseId")
+  LegalRepresentantQRCodeView(caseId: "caseId")
 }

@@ -1,3 +1,4 @@
+import BITCredential
 import BITNavigation
 import SwiftUI
 
@@ -12,8 +13,8 @@ extension PresentationRoutes where Self: RouterProtocol {
     let viewController: UIViewController
     let style = NavigationPushOpeningStyle()
 
-    if let id = context.inputDescriptorId {
-      let module = try CompatibleCredentialsModule(context: context, inputDescriptorId: id)
+    if context.compatibleCredentials.count > 1 {
+      let module = try CompatibleCredentialsModule(context: context)
       module.router.current = style
       module.router.delegate = delegate
       viewController = module.viewController
@@ -33,11 +34,20 @@ extension PresentationRoutes where Self: RouterProtocol {
 protocol PresentationInternalRoutes: ClosableRoutes {
   var delegate: PresentationFinishDelegate? { get set }
 
+  func badgeInformation(badgeType: BadgeType)
   func presentationReview(with context: PresentationRequestContext)
   func presentationResultState(with state: PresentationRequestResultState, context: PresentationRequestContext)
 }
 
 extension PresentationInternalRoutes where Self: RouterProtocol {
+  func badgeInformation(badgeType: BadgeType) {
+    let view = BadgeInformationView(badgeType: badgeType) { [weak self] in
+      self?.dismiss()
+    }
+    let viewController = UINavigationController(rootViewController: UIHostingController(rootView: view))
+    open(viewController, as: ModalOpeningStyle(animatedWhenPresenting: true))
+  }
+
   func presentationReview(with context: PresentationRequestContext) {
     let viewController = UIHostingController(rootView: PresentationRequestReviewView(context: context, router: self))
     open(viewController, on: self.viewController, as: NavigationPushOpeningStyle())

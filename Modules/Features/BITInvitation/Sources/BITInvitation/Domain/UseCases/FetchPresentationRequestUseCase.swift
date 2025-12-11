@@ -22,8 +22,8 @@ public struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCasePr
 
   public func execute(url: URL) async throws -> PresentationRequestContext {
     let request = try await fetchRequest(from: url)
-    let credentialsRequests = try await getCompatibleCredentialsUseCase.execute(using: request.requestObject)
-    return try await createContext(request: request, credentialsRequests: credentialsRequests)
+    let compatibleCredentials = try await getCompatibleCredentialsUseCase.execute(using: request.requestObject)
+    return try await createContext(request: request, compatibleCredentials: compatibleCredentials)
   }
 
   // MARK: Private
@@ -52,9 +52,8 @@ public struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCasePr
     }
   }
 
-  private func createContext(request: PresentationRequest, credentialsRequests: [InputDescriptorID: [CompatibleCredential]]) async throws -> PresentationRequestContext {
-    let context = PresentationRequestContext(requestObject: request.requestObject, requests: credentialsRequests)
-    guard context.hasCompatibleCredentials else { throw FetchPresentationRequestUseCaseError.invalidRequest }
+  private func createContext(request: PresentationRequest, compatibleCredentials: [CompatibleCredential]) async throws -> PresentationRequestContext {
+    let context = PresentationRequestContext(presentationRequest: request, compatibleCredentials: compatibleCredentials)
     if case .jwt(let jws) = request {
       context.trustInformation = await trustInformationService.fetch(for: jws.payload.clientId, type: .verification, vcSchemaId: jws.payload.requestedVcSchemaId)
     }

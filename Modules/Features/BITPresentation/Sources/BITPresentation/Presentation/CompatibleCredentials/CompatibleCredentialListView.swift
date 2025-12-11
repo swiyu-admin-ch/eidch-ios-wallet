@@ -10,7 +10,7 @@ public struct CompatibleCredentialListView: View {
 
   // MARK: Lifecycle
 
-  public init(viewModels: [CredentialViewModel] = [], _ didSelect: @escaping (CredentialViewModel) -> Void) {
+  public init(viewModels: [VerifiableCredentialViewModel] = [], _ didSelect: @escaping (VerifiableCredentialViewModel) -> Void) {
     self.viewModels = viewModels
     self.didSelect = didSelect
   }
@@ -20,13 +20,13 @@ public struct CompatibleCredentialListView: View {
   public var body: some View {
     ForEach(Array(zip(viewModels.indices, viewModels)), id: \.0) { _, viewModel in
       Button(action: { didSelect(viewModel) }, label: {
-        CredentialCell(viewModel, disclosureIndicator: .navigation)
+        VerifiableCredentialCell(viewModel, disclosureIndicator: .navigation)
       })
     }
   }
 
   // MARK: Private
 
-  private var viewModels = [CredentialViewModel]()
-  private var didSelect: (CredentialViewModel) -> Void
+  private var viewModels = [VerifiableCredentialViewModel]()
+  private var didSelect: (VerifiableCredentialViewModel) -> Void
 }

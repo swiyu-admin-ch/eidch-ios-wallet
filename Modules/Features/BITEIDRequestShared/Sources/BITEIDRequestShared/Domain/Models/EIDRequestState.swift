@@ -98,3 +98,16 @@ extension EIDRequestState: Equatable {
       lhs.legalRepresentantConsent == rhs.legalRepresentantConsent
   }
 }
+
+// MARK: Hashable
+
+extension EIDRequestState: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+    hasher.combine(state)
+    hasher.combine(lastPolledAt)
+    hasher.combine(onlineSessionStartOpenAt)
+    hasher.combine(onlineSessionStartTimeoutAt)
+    hasher.combine(legalRepresentantConsent)
+  }
+}

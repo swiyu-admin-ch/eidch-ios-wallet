@@ -1,12 +1,15 @@
 import BITInvitation
+import BITNavigation
 import BITPresentation
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 
 // MARK: - LegalRepresentantVerificationViewModel
 
 @MainActor
-class LegalRepresentantVerificationViewModel {
+class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosable, NavigationBackable {
 
   // MARK: Lifecycle
 
@@ -17,14 +20,21 @@ class LegalRepresentantVerificationViewModel {
 
   // MARK: Internal
 
+  @Published var destination: EIDRequestDestinations?
+  @Published var isNavigationCloseTriggered = false
+  @Published var isNavigationBackTriggered = false
+
   func startVerification() async {
     do {
       let context = try await getLegalRepresentantPresentationRequestContextUseCase.execute(for: caseId)
+      #warning("Might create an issue as the router is not linked to anything")
       try router.startPresentation(context: context, delegate: self)
     } catch EIDRequestRepository.Error.legalRepresentantNotRequired {
       await openConsentState()
     } catch {
-      router.eIDRequestError(error: error, delegate: self)
+      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+        self?.errorCallback(error)
+      }))
     }
   }
 
@@ -39,54 +49,49 @@ class LegalRepresentantVerificationViewModel {
   private func openConsentState() async {
     do {
       let requestCase = try await updateEIDRequestCaseStatusUseCase.execute(for: caseId)
-      let viewState = try RequestCaseViewState(requestCase)
+      let state = try RequestCaseViewState(requestCase)
 
-      if case .unknown = viewState {
-        return router.close()
+      if case .unknown = state {
+        return isNavigationCloseTriggered = true
       }
 
-      router.legalRepresentantConsentState(viewState)
+      destination = .legalRepresentantConsentState(state: state)
     } catch {
-      router.eIDRequestError(error: error, delegate: self)
+      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+        self?.errorCallback(error)
+      }))
     }
   }
 
-}
-
-
-extension LegalRepresentantVerificationViewModel: @preconcurrency EIDRequestErrorDelegate {
-  func primaryAction(error: Error) {
+  private func errorCallback(_ error: Error) {
     switch error {
     case CompatibleCredentialsError.compatibleCredentialNotFound,
          CompatibleCredentialsError.emptyWallet:
-      router.legalRepresentantEIDRequest()
+      destination = .introduction
     case EIDRequestRepository.Error.unknownError:
-      router.pop()
+      isNavigationBackTriggered = true
     default:
-      router.close()
+      isNavigationCloseTriggered = true
     }
   }
 
-  func close() {
-    router.close()
-  }
 }
 
 // MARK: @preconcurrency PresentationFinishDelegate
 
 extension LegalRepresentantVerificationViewModel: @preconcurrency PresentationFinishDelegate {
   func retry() {
-    router.pop()
+    isNavigationBackTriggered = true
   }
 
   func cancel() {
-    router.close()
+    isNavigationCloseTriggered = true
   }
 
   func finish(with state: PresentationRequestResultState) async {
     switch state {
     case .success: await openConsentState()
-    default: router.close()
+    default: isNavigationCloseTriggered = true
     }
   }
 }

@@ -1,20 +1,17 @@
 import SwiftUI
 
-struct FlowLayout: Layout {
+public struct FlowLayout: Layout {
 
   // MARK: Lifecycle
 
-  init(verticalSpacing: CGFloat = 0, horizontalSpacing: CGFloat = 0) {
+  public init(verticalSpacing: CGFloat = 0, horizontalSpacing: CGFloat = 0) {
     self.verticalSpacing = verticalSpacing
     self.horizontalSpacing = horizontalSpacing
   }
 
-  // MARK: Internal
+  // MARK: Public
 
-  let verticalSpacing: CGFloat
-  let horizontalSpacing: CGFloat
-
-  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+  public func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
     if let width = proposal.width, width > 0 {
       let height = calculateHeight(boundsWidth: width, proposal: proposal, subviews: subviews)
       return CGSize(width: width, height: height)
@@ -23,7 +20,7 @@ struct FlowLayout: Layout {
     return proposal.replacingUnspecifiedDimensions()
   }
 
-  func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+  public func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
     var x: CGFloat = 0
     var y: CGFloat = 0
     var rowHeight: CGFloat = 0
@@ -49,6 +46,9 @@ struct FlowLayout: Layout {
   }
 
   // MARK: Private
+
+  private let verticalSpacing: CGFloat
+  private let horizontalSpacing: CGFloat
 
   private func calculateHeight(boundsWidth: CGFloat, proposal: ProposedViewSize, subviews: Subviews) -> CGFloat {
     var x: CGFloat = 0

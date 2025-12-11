@@ -8,7 +8,7 @@ enum EIDRequestCaseFileError: Error {
 }
 
 
-public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable {
+public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable, Hashable {
 
   // MARK: Lifecycle
 
@@ -21,12 +21,12 @@ public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable {
     self.createdAt = createdAt
   }
 
+  public init(_ file: AVBeamFile, category: Category) {
+    self.init(fileName: file.description, mime: file.type, data: file.data, category: category)
+  }
+
   public init(_ entity: EIDRequestCaseFileEntity) throws {
-    guard
-      let category = Category(rawValue: entity.category),
-      let mime = AVBeamFileType(entity.mime)
-    else
-    {
+    guard let category = Category(rawValue: entity.category), let mime = AVBeamFileType(entity.mime) else {
       throw EIDRequestCaseFileError.cannotParseEntity
     }
 
@@ -46,6 +46,7 @@ public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable {
     case documentRecording
     case faceRecording
     case nfcScan
+    case other
   }
 
   public let id: UUID

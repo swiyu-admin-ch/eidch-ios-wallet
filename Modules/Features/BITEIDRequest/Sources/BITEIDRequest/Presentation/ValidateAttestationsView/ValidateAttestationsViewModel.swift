@@ -1,31 +1,26 @@
 import BITAppAuth
+import BITL10n
 import BITLocalAuthentication
+import BITNavigation
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
-
-// MARK: - ValidateAttestationsViewModelProtocol
-
-protocol ValidateAttestationsViewModelProtocol {
-  func fetchAttestations() async
-}
 
 // MARK: - ValidateAttestationsViewModel
 
-class ValidateAttestationsViewModel: ValidateAttestationsViewModelProtocol {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
+class ValidateAttestationsViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Internal
+
+  @Published var destination: EIDRequestDestinations?
+  @Published var isNavigationCloseTriggered = false
 
   @MainActor
   func fetchAttestations() async {
     guard let context = userSession.context else {
-      return router.validateAttestationsError(delegate: self, error: UserSessionError.notLoggedIn)
+      return destination = .validateAttestationError(error: ErrorWrapper(UserSessionError.notLoggedIn), Callback<Void> { self.handleCallback() })
     }
 
     let startTime = Date()
@@ -35,7 +30,7 @@ class ValidateAttestationsViewModel: ValidateAttestationsViewModelProtocol {
 
       await applyMinimumDelay(startTime: startTime)
 
-      return router.legalRepresentant()
+      return destination = .legalRepresentant
     } catch {
       return await handleError(error, startTime: startTime)
     }
@@ -43,7 +38,6 @@ class ValidateAttestationsViewModel: ValidateAttestationsViewModelProtocol {
 
   // MARK: Private
 
-  private let router: EIDRequestInternalRoutes
   private let minimumDelayInSeconds: TimeInterval = 2.0
 
   @Injected(\.userSession) private var userSession: Session
@@ -79,21 +73,36 @@ class ValidateAttestationsViewModel: ValidateAttestationsViewModelProtocol {
 
     switch error {
     case EIDRequestRepository.Error.invalidClientAttestation:
-      return router.clientAttestationError()
+      return destination = .error(ErrorDataset(
+        primary: L10n.tkEidRequestClientAttestationErrorPrimary,
+        secondary: L10n.tkEidRequestClientAttestationErrorSecondary,
+        tertiary: L10n.tkEidRequestClientAttestationErrorTertiary,
+        primaryAction: { self.openLink(L10n.tkGlobalStoreLink) },
+        primaryActionLabel: L10n.tkEidRequestClientAttestationErrorPrimaryButton,
+        secondaryAction: {
+          self.isNavigationCloseTriggered = true
+        },
+        secondaryActionLabel: L10n.tkEidRequestClientAttestationErrorSecondaryButton,
+        tertiaryAction: { self.openLink(L10n.tkEidRequestClientAttestationErrorHelpLink) }))
     case EIDRequestRepository.Error.invalidKeyAttestation:
-      return router.keyAttestationError()
+      return destination = .error(ErrorDataset(
+        primary: L10n.tkEidRequestKeyAttestationErrorPrimary,
+        secondary: L10n.tkEidRequestKeyAttestationErrorSecondary,
+        tertiary: L10n.tkEidRequestKeyAttestationErrorTertiary,
+        primaryActionLabel: L10n.tkEidRequestKeyAttestationErrorPrimaryButton))
     default:
-      return router.validateAttestationsError(delegate: self, error: error)
+      return destination = .error(ErrorDataset(error, primaryAction: { self.handleCallback() }))
     }
   }
-}
 
-// MARK: ValidateAttestationsErrorDelegate
-
-extension ValidateAttestationsViewModel: ValidateAttestationsErrorDelegate {
-  func didTapPrimaryAction() {
+  private func handleCallback() {
     Task {
       await fetchAttestations()
     }
+  }
+
+  private func openLink(_ link: String) {
+    guard let url = URL(string: link) else { return }
+    UIApplication.shared.open(url)
   }
 }

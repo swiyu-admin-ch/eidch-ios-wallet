@@ -9,27 +9,27 @@ final class GetCredentialListUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    Container.shared.verifiableCredentialRepository.register { self.verifiableCredentialRepository }
+    Container.shared.credentialRepository.register { self.credentialRepository }
 
     useCase = GetCredentialListUseCase()
   }
 
   func testExecuteSucces() async throws {
-    verifiableCredentialRepository.getAllReturnValue = mockCredentials
+    credentialRepository.getAllReturnValue = mockCredentials
 
     let credentials = try await useCase.execute()
 
     XCTAssertEqual(credentials.count, mockCredentials.count)
-    XCTAssertTrue(verifiableCredentialRepository.getAllCalled)
+    XCTAssertTrue(credentialRepository.getAllCalled)
   }
 
   func testExecuteWithRepositoryError() async throws {
-    verifiableCredentialRepository.getAllThrowableError = TestingError.error
+    credentialRepository.getAllThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute()
     } catch {
-      XCTAssertTrue(verifiableCredentialRepository.getAllCalled)
+      XCTAssertTrue(credentialRepository.getAllCalled)
     }
   }
 
@@ -38,7 +38,7 @@ final class GetCredentialListUseCaseTests: XCTestCase {
   // swiftlint:disable all
   private var useCase: GetCredentialListUseCase!
   private var mockCredentials: [VerifiableCredential] = [.Mock.sample, .Mock.sampleDisplaysAdditional, .Mock.diploma]
-  private var verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
+  private var credentialRepository = CredentialRepositoryProcotolSpy()
   // swiftlint:enable all
 
 }

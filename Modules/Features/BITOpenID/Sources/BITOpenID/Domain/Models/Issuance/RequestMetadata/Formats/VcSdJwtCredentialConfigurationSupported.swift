@@ -12,6 +12,34 @@ extension CredentialMetadata {
 
     // MARK: Lifecycle
 
+    init(
+      format: String,
+      scope: String? = nil,
+      cryptographicBindingMethodsSupported: [CryptographicBindingMethod]? = nil,
+      credentialSigningAlgValuesSupported: [String]? = nil,
+      vct: String,
+      vctIntegrity: String? = nil,
+      vctMetadataUri: String? = nil,
+      vctMetadataUriIntegrity: String? = nil,
+      display: [CredentialSupportedDisplay]? = nil,
+      proofTypesSupported: [ProofType] = [],
+      orderClaims: [String]? = nil,
+      claims: [CredentialMetadata.Claim] = [])
+    {
+      self.format = format
+      self.scope = scope
+      self.cryptographicBindingMethodsSupported = cryptographicBindingMethodsSupported
+      self.credentialSigningAlgValuesSupported = credentialSigningAlgValuesSupported
+      self.vct = vct
+      self.vctIntegrity = vctIntegrity
+      self.vctMetadataUri = vctMetadataUri
+      self.vctMetadataUriIntegrity = vctMetadataUriIntegrity
+      self.display = display
+      self.proofTypesSupported = proofTypesSupported
+      self.orderClaims = orderClaims
+      self.claims = claims
+    }
+
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
 
@@ -22,6 +50,9 @@ extension CredentialMetadata {
       self.format = format
 
       vct = try container.decode(String.self, forKey: .vct)
+      vctIntegrity = try container.decodeIfPresent(String.self, forKey: .vctIntegrity)
+      vctMetadataUri = try container.decodeIfPresent(String.self, forKey: .vctMetadataUri)
+      vctMetadataUriIntegrity = try container.decodeIfPresent(String.self, forKey: .vctMetadataUriIntegrity)
       scope = try container.decodeIfPresent(String.self, forKey: .scope)
 
       let cryptographicBindingMethods = try container.decodeIfPresent([String].self, forKey: .cryptographicBindingMethodsSupported)
@@ -61,6 +92,9 @@ extension CredentialMetadata {
     public let credentialSigningAlgValuesSupported: [String]?
 
     public let vct: String
+    public let vctIntegrity: String?
+    public let vctMetadataUri: String?
+    public let vctMetadataUriIntegrity: String?
 
     public let display: [CredentialSupportedDisplay]?
     public let proofTypesSupported: [ProofType]
@@ -72,6 +106,9 @@ extension CredentialMetadata {
 
     enum CodingKeys: String, CodingKey {
       case vct
+      case vctIntegrity = "vct#integrity"
+      case vctMetadataUri = "vct_metadata_uri"
+      case vctMetadataUriIntegrity = "vct_metadata_uri#integrity"
       case format
       case scope
       case cryptographicBindingMethodsSupported = "cryptographic_binding_methods_supported"

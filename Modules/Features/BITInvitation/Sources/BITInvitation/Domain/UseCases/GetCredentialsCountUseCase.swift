@@ -16,8 +16,8 @@ struct GetCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol {
 
   /// We async/await the call event though repository.count() is synchronous to avoid DB access crashes
   func execute() async throws -> Int {
-    try await verifiableCredentialRepository.count()
+    try await credentialRepository.count()
   }
 
-  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
+  @Injected(\.credentialRepository) private var credentialRepository
 }

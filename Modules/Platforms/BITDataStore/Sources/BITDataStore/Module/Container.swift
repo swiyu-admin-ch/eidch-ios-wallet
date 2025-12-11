@@ -19,8 +19,8 @@ extension Container {
 
   public var realmDataStoreConfiguration: Factory<Realm.Configuration> {
     self {
-      // Database scheme v5.0
-      let schemaVersion: UInt64 = 12
+      // Database scheme v6.1
+      let schemaVersion: UInt64 = 14
 
       let config = Realm.Configuration(
         schemaVersion: schemaVersion,

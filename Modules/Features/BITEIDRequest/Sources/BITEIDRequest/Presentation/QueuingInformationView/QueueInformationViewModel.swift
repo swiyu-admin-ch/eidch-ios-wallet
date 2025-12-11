@@ -1,12 +1,10 @@
 import Foundation
 
-@MainActor
 class QueueInformationViewModel {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, onlineSessionStartDate: Date) {
-    self.router = router
+  init(onlineSessionStartDate: Date) {
     expectedOnlineSessionStart = onlineSessionStartDate.longDateFormat
   }
 
@@ -14,11 +12,4 @@ class QueueInformationViewModel {
 
   var expectedOnlineSessionStart: String
 
-  func primaryAction() {
-    router.close()
-  }
-
-  // MARK: Private
-
-  private let router: EIDRequestInternalRoutes
 }

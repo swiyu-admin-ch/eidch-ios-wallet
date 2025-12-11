@@ -20,12 +20,12 @@ struct CredentialClaimViewModel {
   }
 
   var nameLabel: String {
-    claim.preferredDisplay?.name ?? claim.key
+    claim.preferredDisplay.name ?? claim.key
   }
 
   var valueLabel: String {
     var label: String
-    if let localizedValue = claim.preferredDisplay?.value {
+    if let localizedValue = claim.preferredDisplay.value {
       label = localizedValue
     } else {
       let claimValue = switch valueType {
@@ -37,6 +37,10 @@ struct CredentialClaimViewModel {
     }
     // truncating after reasonable length, size of A4 document
     return label.count > 1800 ? String(label.prefix(1800) + "…") : label
+  }
+
+  var isSensitive: Bool {
+    claim.isSensitive
   }
 
   // MARK: Private

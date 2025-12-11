@@ -23,7 +23,7 @@ final class OcaCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withKeyPair_argumentsPassed() throws {
-    _ = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: keyBindingMock, ocaBundle: ocaBundleMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    _ = try generator.generate(for: anyCredentialSpy, ocaBundle: ocaBundleMock, context: mockCredentialGeneratorContext)
 
     XCTAssertEqual(captureBaseDisplayGeneratorSpy.generateFromCallsCount, 1)
     XCTAssertEqual(captureBaseDisplayGeneratorSpy.generateFromReceivedOcaBundle?.rootCaptureBaseDigest, ocaBundleMock.rootCaptureBaseDigest)
@@ -35,19 +35,19 @@ final class OcaCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withKeyPair_returnsCredential() throws {
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: keyBindingMock, ocaBundle: ocaBundleMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, ocaBundle: ocaBundleMock, context: mockCredentialGeneratorContext)
 
-    XCTAssertEqual(credential.id, idMock)
+    XCTAssertEqual(credential.id, mockCredentialGeneratorContext.credentialId)
     XCTAssertEqual(credential.status, .unknown)
-    XCTAssertEqual(credential.keyBinding, keyBindingMock)
+    XCTAssertEqual(credential.keyBinding, mockCredentialGeneratorContext.keyBinding)
     XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
-    XCTAssertEqual(credential.rawCredentialData, rawCredentialDataMock)
+    XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContext.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
     XCTAssertEqual(credential.issuer, issuerMock)
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
     XCTAssertNotNil(credential.createdAt)
-    XCTAssertEqual(credential.issuerDisplays, issuerDisplaysMock)
+    XCTAssertEqual(credential.issuerDisplays, mockCredentialGeneratorContext.issuerDisplays)
     XCTAssertEqual(credential.clusters.count, 1)
 
     let claims = credential.clusters.first!.claims
@@ -57,19 +57,19 @@ final class OcaCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutKeyPair_returnsCredential() throws {
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, ocaBundle: ocaBundleMock, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, ocaBundle: ocaBundleMock, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
-    XCTAssertEqual(credential.id, idMock)
+    XCTAssertEqual(credential.id, mockCredentialGeneratorContextWithoutKeyBinding.credentialId)
     XCTAssertEqual(credential.status, .unknown)
     XCTAssertNil(credential.keyBinding)
     XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
-    XCTAssertEqual(credential.rawCredentialData, rawCredentialDataMock)
+    XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContextWithoutKeyBinding.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
     XCTAssertEqual(credential.issuer, issuerMock)
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
     XCTAssertNotNil(credential.createdAt)
-    XCTAssertEqual(credential.issuerDisplays, issuerDisplaysMock)
+    XCTAssertEqual(credential.issuerDisplays, mockCredentialGeneratorContextWithoutKeyBinding.issuerDisplays)
     XCTAssertEqual(credential.clusters.count, 1)
 
     let claims = credential.clusters.first!.claims
@@ -94,7 +94,7 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     let anyCredential = createAnyCredential(claims: anyClaims)
     let ocaBundle = OcaBundle.Mock.simpleSample
 
-    let credential = try generator.generate(for: anyCredential, id: idMock, keyBinding: nil, ocaBundle: ocaBundle, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredential, ocaBundle: ocaBundle, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
     let claims = credential.clusters.first!.claims
     XCTAssertEqual(claims.count, 4)
@@ -113,7 +113,7 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     let captureBase = CaptureBase1x0(digest: ocaBundleMock.rootCaptureBaseDigest, attributes: [:], classification: nil, flaggedAttributes: nil)
     let ocaBundle = try OcaBundle(captureBases: [captureBase], overlays: [])
 
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, ocaBundle: ocaBundle, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, ocaBundle: ocaBundle, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
     XCTAssertTrue(credential.displays.isEmpty)
   }
@@ -122,7 +122,45 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     let captureBase = CaptureBase1x0(digest: "digest", attributes: [:], classification: nil, flaggedAttributes: nil)
     let ocaBundle = try OcaBundle(captureBases: [captureBase], overlays: [])
 
-    let credential = try generator.generate(for: anyCredentialSpy, id: idMock, keyBinding: nil, ocaBundle: ocaBundle, issuerDisplays: issuerDisplaysMock, rawCredentialData: rawCredentialDataMock)
+    let credential = try generator.generate(for: anyCredentialSpy, ocaBundle: ocaBundle, context: mockCredentialGeneratorContextWithoutKeyBinding)
+
+    XCTAssertTrue(credential.displays.isEmpty)
+  }
+
+  // MARK: - Generate Deferred credential
+
+  func testGenerateDeferredCredential_withKeyPair_argumentsPassed() throws {
+    _ = try generator.generateDeferred(mockDeferredCredentialRequest, ocaBundle: ocaBundleMock, context: mockCredentialGeneratorContext)
+
+    XCTAssertEqual(captureBaseDisplayGeneratorSpy.generateFromCallsCount, 1)
+    XCTAssertEqual(captureBaseDisplayGeneratorSpy.generateFromReceivedOcaBundle?.rootCaptureBaseDigest, ocaBundleMock.rootCaptureBaseDigest)
+  }
+
+  func testGenerateDeferredCredential_withKeyPair_returnsCredential() throws {
+    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, ocaBundle: ocaBundleMock, context: mockCredentialGeneratorContext)
+    assertDeferredCredential(credential, context: mockCredentialGeneratorContext)
+  }
+
+  func testGenerateDeferredCredential_withoutKeyPair_returnsCredential() throws {
+    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, ocaBundle: ocaBundleMock, context: mockCredentialGeneratorContextWithoutKeyBinding)
+    assertDeferredCredential(credential, context: mockCredentialGeneratorContextWithoutKeyBinding)
+  }
+
+  func testGenerateDeferredCredential_noCaptureBaseDisplays_returnsCredentialWithoutDisplays() throws {
+    captureBaseDisplayGeneratorSpy.generateFromReturnValue = []
+    let captureBase = CaptureBase1x0(digest: ocaBundleMock.rootCaptureBaseDigest, attributes: [:], classification: nil, flaggedAttributes: nil)
+    let ocaBundle = try OcaBundle(captureBases: [captureBase], overlays: [])
+
+    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, ocaBundle: ocaBundle, context: mockCredentialGeneratorContextWithoutKeyBinding)
+
+    XCTAssertTrue(credential.displays.isEmpty)
+  }
+
+  func testGenerateDeferredCredential_noRootCaptureBaseDigest_returnsCredentialWithoutDisplays() throws {
+    let captureBase = CaptureBase1x0(digest: "digest", attributes: [:], classification: nil, flaggedAttributes: nil)
+    let ocaBundle = try OcaBundle(captureBases: [captureBase], overlays: [])
+
+    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, ocaBundle: ocaBundle, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
     XCTAssertTrue(credential.displays.isEmpty)
   }
@@ -140,10 +178,10 @@ final class OcaCredentialGeneratorTests: XCTestCase {
   private let validUntilMock = Date()
   private let ocaBundleMock = OcaBundle.Mock.oneAttribute
 
-  private let idMock = UUID()
-  private let issuerDisplaysMock = [CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)]
-  private let rawCredentialDataMock = RawCredentialData()
-  private let keyBindingMock = CredentialKeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
+  private let mockDeferredCredentialRequest = DeferredCredentialRequest.Mock.sample
+
+  private let mockCredentialGeneratorContext = CredentialGeneratorContext.Mock.sample
+  private let mockCredentialGeneratorContextWithoutKeyBinding = CredentialGeneratorContext.Mock.sampleWithoutKeyBinding
 
   private var anyCredentialSpy = AnyCredentialSpy()
   private let anyClaimSpy = AnyClaimSpy()
@@ -164,6 +202,18 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     anyClaimSpy.key = "$.\(Self.keyMock)"
     anyClaimSpy.value = .string(Self.valueMock)
     anyCredentialSpy = createAnyCredential(claims: [anyClaimSpy])
+  }
+
+  private func assertDeferredCredential(_ deferredCredential: DeferredCredential, context: CredentialGeneratorContext) {
+    XCTAssertEqual(deferredCredential.transactionId, mockDeferredCredentialRequest.transactionId)
+    XCTAssertEqual(deferredCredential.accessToken, mockDeferredCredentialRequest.accessToken)
+    XCTAssertEqual(deferredCredential.endpoint, mockDeferredCredentialRequest.endpoint)
+    XCTAssertEqual(deferredCredential.format, mockDeferredCredentialRequest.format)
+    XCTAssertEqual(deferredCredential.keyBinding, context.keyBinding)
+    XCTAssertEqual(deferredCredential.rawCredentialData, context.rawCredentialData)
+    XCTAssertEqual(deferredCredential.issuerDisplays, context.issuerDisplays)
+
+    assertCredentialDisplays(deferredCredential.displays, credentialId: context.credentialId, derivedFromOCA: true)
   }
 
   private func createAnyCredential(claims: [AnyClaimSpy]) -> AnyCredentialSpy {

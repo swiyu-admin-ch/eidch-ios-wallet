@@ -47,7 +47,7 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
   // MARK: Private
 
   private var viewModel: PresentationRequestResultStateViewModel!
-  private var context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
+  private let context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
   private var router = MockPresentationRouter()
   private let presentationFinishDelegateMock = MockPresentationFinishDelegate()
   // swiftlint:enable all

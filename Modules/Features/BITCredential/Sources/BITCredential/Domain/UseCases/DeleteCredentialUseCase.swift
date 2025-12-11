@@ -26,12 +26,12 @@ struct DeleteCredentialUseCase: DeleteCredentialUseCaseProtocol {
       try? keyManager.deleteKeyPair(withIdentifier: keyId.uuidString, algorithm: algorithm)
     }
 
-    try await verifiableCredentialRepository.delete(credential.id)
+    try await credentialRepository.delete(credential.id)
   }
 
   // MARK: Private
 
-  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
+  @Injected(\.credentialRepository) private var credentialRepository
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
 
 }

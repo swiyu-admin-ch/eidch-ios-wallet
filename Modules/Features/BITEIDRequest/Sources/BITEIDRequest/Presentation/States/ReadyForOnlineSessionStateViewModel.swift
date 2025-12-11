@@ -6,7 +6,7 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
 
   // MARK: Lifecycle
 
-  init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
+  override init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     guard let onlineSessionStartTimeoutAt = requestCase.state?.onlineSessionStartTimeoutAt else {
       throw RequestCaseViewStateError.invalidState
     }
@@ -36,23 +36,23 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
     )
   }
 
-  var primaryText: String {
+  var notificationTitle: String {
     isLegalRepresentantConsentVerified ? L10n.tkEidRequestNotificationEidReadyPrimary(fullName) : L10n.tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVPrimary
   }
 
-  var secondaryText: String {
+  var notificationContent: String {
     isLegalRepresentantConsentVerified ? L10n.tkEidRequestNotificationEidReadySecondary(formattedDate) : L10n.tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVSecondary(formattedDateAndTime)
   }
 
-  var buttonText: String {
+  var primaryActionLabel: String {
     isLegalRepresentantConsentVerified ? L10n.tkEidRequestNotificationEidReadyGreenButton : L10n.tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVButton
   }
 
   func primaryAction() {
     if isLegalRepresentantConsentVerified {
-      delegate?.didStartAutoVerification(caseId: requestCaseId)
+      delegate?.didStartAutoVerification(caseId: id)
     } else {
-      delegate?.didTapObtainConsent(caseId: requestCaseId)
+      delegate?.didTapObtainConsent(caseId: id)
     }
   }
 

@@ -14,6 +14,7 @@ public protocol RealmDataStoreProtocol {
 
   func delete(_ data: Object, configuration: Realm.Configuration) throws
   func delete(_ data: [Object], configuration: Realm.Configuration) throws
+  func delete(_ data: Results<some Object>, configuration: Realm.Configuration) throws
 
   @discardableResult
   func write<Result>(configuration: Realm.Configuration, _ block: () throws -> Result) throws -> Result
@@ -42,6 +43,10 @@ extension RealmDataStoreProtocol {
   }
 
   public func delete(_ data: [Object]) throws {
+    try delete(data, configuration: Container.shared.realmDataStoreConfiguration())
+  }
+
+  public func delete(_ data: Results<some Object>) throws {
     try delete(data, configuration: Container.shared.realmDataStoreConfiguration())
   }
 

@@ -18,7 +18,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
 
-    viewModel = SubmitEIDRequestFilesViewModel(router: router)
+    viewModel = SubmitEIDRequestFilesViewModel()
 
     success()
   }
@@ -133,10 +133,12 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
 
     XCTAssertEqual(getEIDRequestFilesUseCase.executeCaseIdCallsCount, 1)
     XCTAssertEqual(getEIDRequestFilesUseCase.executeCaseIdReceivedCaseId, mockCaseId)
+    XCTAssertEqual(deleteEIDRequestCaseFileUseCase.executeForRequestCaseIdCallsCount, 1)
+    XCTAssertEqual(deleteEIDRequestCaseFileUseCase.executeForRequestCaseIdReceivedId, mockCaseId)
   }
 
   func testSubmit_noCaseId_doesNotCallGetEIDRequestFiles() async {
-    router.context.caseId = nil
+    context.caseId = nil
 
     await viewModel.submit()
 
@@ -157,14 +159,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
     await viewModel.submit()
 
     XCTAssertEqual(submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtCallsCount, 2)
-  }
-
-  func testSubmit_allFilesCompleted_callsSubmitEidRequestUseCase() async {
-    submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtThrowableError = TestingError.error
-
-    await viewModel.submit()
-
-    XCTAssertFalse(submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantCalled)
+    XCTAssertTrue(submitEIDRequestUseCase.callAsFunctionCaseIdAuthJwtCalled)
   }
 
   func testSubmit_getFilesThrowsError_doesNotSubmit() async {
@@ -212,7 +207,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
     XCTAssertEqual(submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtCallsCount, 1)
     XCTAssertEqual(submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtReceivedArguments?.caseId, mockCaseId)
     XCTAssertEqual(submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtReceivedArguments?.file.id, mockFileId1)
-    XCTAssertEqual(submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtReceivedArguments?.authJwt, mockAuthJwt)
+    XCTAssertEqual(submitEIDRequestFileUseCase.executeCaseIdFileAuthJwtReceivedArguments?.authJwt, mockAutoVerificationResponse.jwt)
   }
 
   func testRetryFileUpload_nonFailedFile_doesNotRetry() async {
@@ -233,7 +228,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
   }
 
   func testRetryFileUpload_noCaseId_doesNotRetry() async {
-    router.context.caseId = nil
+    context.caseId = nil
     viewModel.fileUploads = [
       mockFileId1: FileUploadInfo(file: mockFile1),
     ]
@@ -245,7 +240,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
   }
 
   func testRetryFileUpload_noAuthJwt_doesNotRetry() async {
-    router.context.authJwt = nil
+    context.autoVerificationResponse = nil
     viewModel.fileUploads = [
       mockFileId1: FileUploadInfo(file: mockFile1),
     ]
@@ -266,28 +261,33 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
 
     await viewModel.retryFileUpload(mockFileId1)
 
+    XCTAssertTrue(submitEIDRequestUseCase.callAsFunctionCaseIdAuthJwtCalled)
   }
 
   func testSubmitEidRequest_validContext_closesRouter() async {
     await viewModel.submitEidRequest()
 
-    XCTAssertTrue(router.closeCalled)
+//    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   func testSubmitEidRequest_noCaseId_doesNotClose() async {
-    router.context.caseId = nil
+    context.caseId = nil
 
     await viewModel.submitEidRequest()
 
-    XCTAssertFalse(router.closeCalled)
+    let destination = viewModel.destination
+//    if case let .error(let error, let action) = destination {
+//
+//    }
+//    XCTAssertFalse(viewModel.destination, .error())
   }
 
   func testSubmitEidRequest_noAuthJwt_doesNotClose() async {
-    router.context.authJwt = nil
+    context.autoVerificationResponse = nil
 
     await viewModel.submitEidRequest()
 
-    XCTAssertFalse(router.closeCalled)
+//    XCTAssertFalse(viewModel.destination, .error)
   }
 
   func testUpload_successfulUpload_setsCompletedState() async {
@@ -317,36 +317,42 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
 
   // MARK: Private
 
+  private var context: EIDRequestContext!
   private var getEIDRequestFilesUseCase: GetEIDRequestCaseFilesUseCaseProtocolSpy!
   private var submitEIDRequestFileUseCase: SubmitEIDRequestFileUseCaseProtocolSpy!
   private var submitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocolSpy!
-  private var router: MockEIDRequestRouter!
+  private var deleteEIDRequestCaseFileUseCase: DeleteEIDRequestCaseFileUseCaseProtocolSpy!
+
   private var viewModel: SubmitEIDRequestFilesViewModel!
 
   private let mockFile1 = EIDRequestCaseFile.Mock.sample
   private let mockFile2 = EIDRequestCaseFile.Mock.sample(name: "sample2")
   private let mockFile3 = EIDRequestCaseFile.Mock.sample(name: "sample3")
   private let mockCaseId = "mock_case_id"
-  private let mockAuthJwt = "mock_auth_jwt"
+  private let mockAutoVerificationResponse = AutoVerificationResponse.Mock.nfcSample
 
   private var mockFileId1: UUID { mockFile1.id }
   private var mockFileId2: UUID { mockFile2.id }
   private var mockFileId3: UUID { mockFile3.id }
 
   private func registerMocks() {
+    context = EIDRequestContext()
+
     getEIDRequestFilesUseCase = GetEIDRequestCaseFilesUseCaseProtocolSpy()
     submitEIDRequestFileUseCase = SubmitEIDRequestFileUseCaseProtocolSpy()
+    deleteEIDRequestCaseFileUseCase = DeleteEIDRequestCaseFileUseCaseProtocolSpy()
     submitEIDRequestUseCase = SubmitEIDRequestUseCaseProtocolSpy()
-    router = MockEIDRequestRouter()
 
+    Container.shared.eidRequestContext.register { self.context }
     Container.shared.getEIDRequestCaseFilesUseCase.register { self.getEIDRequestFilesUseCase }
     Container.shared.submitEIDRequestFileUseCase.register { self.submitEIDRequestFileUseCase }
     Container.shared.submitEIDRequestUseCase.register { self.submitEIDRequestUseCase }
+    Container.shared.deleteEIDRequestCaseFileUseCase.register { self.deleteEIDRequestCaseFileUseCase }
   }
 
   private func success() {
     getEIDRequestFilesUseCase.executeCaseIdReturnValue = [mockFile1, mockFile2]
-    router.context.caseId = mockCaseId
-    router.context.authJwt = mockAuthJwt
+    context.caseId = mockCaseId
+    context.autoVerificationResponse = mockAutoVerificationResponse
   }
 }

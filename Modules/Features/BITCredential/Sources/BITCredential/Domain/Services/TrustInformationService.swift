@@ -18,7 +18,11 @@ struct TrustInformationService: TrustInformationServiceProtocol {
   // MARK: Internal
 
   func fetch(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String?) async -> TrustInformation {
-    let identityTrust = await fetchIdentityTrust(for: subjectDid)
+    let identityTrust: IdentityTrust = if TrustEnvironment(did: subjectDid) != .external {
+      await fetchIdentityTrust(for: subjectDid)
+    } else {
+      .unknown
+    }
     let vcSchemaTrust: VcSchemaTrust = if let vcSchemaId {
       await fetchVcSchemaTrust(for: subjectDid, type: type, vcSchemaId: vcSchemaId)
     } else {

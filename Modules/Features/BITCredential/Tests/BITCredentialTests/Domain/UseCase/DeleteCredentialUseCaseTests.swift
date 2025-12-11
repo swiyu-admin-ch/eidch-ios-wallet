@@ -12,10 +12,10 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
 
   override func setUp() {
     keyManagerProtocolSpy = KeyManagerProtocolSpy()
-    verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProcotolSpy()
 
     Container.shared.keyManager.register { self.keyManagerProtocolSpy }
-    Container.shared.verifiableCredentialRepository.register { self.verifiableCredentialRepository }
+    Container.shared.credentialRepository.register { self.credentialRepository }
 
     useCase = DeleteCredentialUseCase()
   }
@@ -25,7 +25,7 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
 
     XCTAssertEqual(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier, mockCredential.keyBinding?.id.uuidString)
     XCTAssertEqual(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm, VaultAlgorithm.eciesEncryptionStandardVariableIVX963SHA256AESGCM)
-    XCTAssertEqual(verifiableCredentialRepository.deleteReceivedId, mockCredential.id)
+    XCTAssertEqual(credentialRepository.deleteReceivedId, mockCredential.id)
   }
 
   func testDeleteCredential_WithoutPrivateKey() async throws {
@@ -35,7 +35,7 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
     try await useCase.execute(credential)
 
     XCTAssertFalse(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
-    XCTAssertEqual(verifiableCredentialRepository.deleteReceivedId, mockCredential.id)
+    XCTAssertEqual(credentialRepository.deleteReceivedId, mockCredential.id)
   }
 
   func testDeleteCredential_FailureOnVaultAlgorithm() async throws {
@@ -45,7 +45,7 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
     try await useCase.execute(credential)
 
     XCTAssertFalse(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
-    XCTAssertEqual(verifiableCredentialRepository.deleteReceivedId, mockCredential.id)
+    XCTAssertEqual(credentialRepository.deleteReceivedId, mockCredential.id)
   }
 
   func testDeleteCredential_FailureOnVault() async throws {
@@ -54,18 +54,18 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
     try await useCase.execute(mockCredential)
 
     XCTAssertTrue(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
-    XCTAssertEqual(verifiableCredentialRepository.deleteReceivedId, mockCredential.id)
+    XCTAssertEqual(credentialRepository.deleteReceivedId, mockCredential.id)
   }
 
   func testDeleteCredential_FailureOnRepository() async throws {
-    verifiableCredentialRepository.deleteThrowableError = TestingError.error
+    credentialRepository.deleteThrowableError = TestingError.error
 
     do {
       try await useCase.execute(mockCredential)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(verifiableCredentialRepository.deleteCalled)
-      XCTAssertEqual(verifiableCredentialRepository.deleteCallsCount, 1)
+      XCTAssertTrue(credentialRepository.deleteCalled)
+      XCTAssertEqual(credentialRepository.deleteCallsCount, 1)
 
       XCTAssertTrue(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
       XCTAssertEqual(keyManagerProtocolSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 1)
@@ -78,5 +78,5 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
   private var keyBindingWithUnknownAlgorithm = CredentialKeyBinding(id: UUID(), algorithm: "unknown_algorithm", bindingType: .hardware)
   private var useCase = DeleteCredentialUseCase()
   private var keyManagerProtocolSpy = KeyManagerProtocolSpy()
-  private var verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
+  private var credentialRepository = CredentialRepositoryProcotolSpy()
 }

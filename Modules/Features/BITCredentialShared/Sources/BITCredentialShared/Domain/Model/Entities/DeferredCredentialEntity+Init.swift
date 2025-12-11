@@ -6,7 +6,7 @@ extension DeferredCredentialEntity {
   public convenience init(_ credential: DeferredCredential) {
     self.init()
 
-    id = UUID(uuidString: credential.transactionId)?.uuidString ?? UUID().uuidString
+    id = credential.transactionId
     accessToken = credential.accessToken
     endpoint = credential.endpoint
     createdAt = credential.createdAt

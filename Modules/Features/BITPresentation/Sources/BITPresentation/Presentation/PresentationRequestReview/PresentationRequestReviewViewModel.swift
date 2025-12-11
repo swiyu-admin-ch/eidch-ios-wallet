@@ -1,6 +1,8 @@
+import BITActivity
 import BITAnalytics
 import BITCore
 import BITCredential
+import BITCredentialShared
 import BITOpenID
 import Combine
 import Factory
@@ -8,73 +10,59 @@ import Foundation
 
 // MARK: - PresentationRequestReviewViewModel
 
-/// `important`: The implementation supports and takes only the first input descriptor given by the context
-///
-/// The support of multiple input descriptors has to be defined.
 @MainActor
 public class PresentationRequestReviewViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(
-    context: PresentationRequestContext,
-    router: PresentationInternalRoutes)
-  {
+  init(context: PresentationRequestContext, router: PresentationInternalRoutes) {
     self.context = context
     self.router = router
 
-    guard
-      let inputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first,
-      let credential = context.selectedCredentials[inputDescriptor.id] else
-    {
-      fatalError("Credential for input descriptor not found")
+    guard let credential = context.selectedCredential else {
+      fatalError("No selected credential")
     }
     self.credential = credential
   }
 
   // MARK: Internal
 
-  enum ViewState: Equatable {
-    case result
-    case loading
+  enum Event {
+    case submit(PresentationRequestReviewState.Result, Bool)
+    case deny
   }
 
-  @Published var state = ViewState.result
-  @Published var showLoadingMessage = false
-  @Published var credentialViewModel: CredentialViewModel?
+  @Published private(set) var state = PresentationRequestReviewState.loading
+  @Published var isUnknownVerifierAlertShown = false
 
-  let credential: CompatibleCredential
-  var denyTask: Task<Void, Error>?
+  private(set) var denyTask: Task<Void, Error>?
 
-  var verifierDisplay: VerifierDisplay {
-    context.getVerifierDisplay(considering: preferredUserLanguageCodes)
-  }
-
-  func submit() async {
-    state = .loading
-    startDelayedLoadingMessageTask()
-    do {
-      try await submitPresentationUseCase.execute(context: context)
-      router.presentationResultState(with: .success(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)
-    } catch {
-      handleSubmitError(error)
+  func send(_ event: Event) async {
+    switch event {
+    case .deny:
+      await deny()
+    case .submit(let result, let force):
+      await submit(result, force: force)
     }
   }
 
-  func deny() async {
-    denyTask = Task.detached(priority: .background) { [weak self] in
-      guard let self else { return }
-      try? await declinePresentationUseCase.execute(requestObject: context.requestObject)
+  func updateCredential(with colorScheme: String) {
+    switch state {
+    case .loading:
+      let viewState = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: colorScheme)
+      state = .result(viewState)
+    case .result(let viewState):
+      let credential = VerifiableCredentialViewModel(credential: viewState.credential.credential, colorScheme: colorScheme)
+      state = .result(viewState.changing(\.credential, to: credential))
+    case .processing(let viewState):
+      let credential = VerifiableCredentialViewModel(credential: viewState.credential.credential, colorScheme: colorScheme)
+      state = .processing(viewState.changing(\.credential, to: credential))
     }
-    router.presentationResultState(with: .deny, context: context)
-  }
-
-  func updateCredentialViewModel(with colorScheme: String) {
-    let display = getCredentialDisplayUseCase.execute(for: credential.credential.displays, colorScheme: colorScheme)
-    credentialViewModel = CredentialViewModel(credential: credential.credential, credentialDisplay: display)
   }
 
   // MARK: Private
+
+  private let credential: CompatibleCredential
 
   private var context: PresentationRequestContext
 
@@ -83,34 +71,66 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   @Injected(\.submitPresentationUseCase) private var submitPresentationUseCase: SubmitPresentationUseCaseProtocol
   @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
-  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
   @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
+
+  private var verifierDisplay: VerifierDisplay {
+    context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
+  }
+
+  private func submit(_ result: PresentationRequestReviewState.Result, force: Bool = false) async {
+    if force || context.trustInformation.identity != .unknown {
+      let viewState = PresentationRequestReviewState.Processing(result: result)
+      state = .processing(viewState)
+      startDelayedLoadingMessageTask()
+      do {
+        try await submitPresentationUseCase.execute(context: context)
+        router.presentationResultState(with: .success(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)
+      } catch {
+        handleSubmitError(error, processing: viewState)
+      }
+    } else {
+      isUnknownVerifierAlertShown = true
+    }
+  }
 
   private func startDelayedLoadingMessageTask() {
     Timer.scheduledTimer(withTimeInterval: loadingMessageDelay, repeats: false, block: { _ in
       Task { @MainActor [weak self] in
         guard let self else { return }
-        showLoadingMessage = state == .loading
+        if case .processing(let viewModel) = state {
+          let viewModel = viewModel.changing(\.isMessagePresented, to: true)
+          state = .processing(viewModel)
+        }
       }
     })
   }
 
-  private func handleSubmitError(_ error: Error) {
-    showLoadingMessage = false
+  private func handleSubmitError(_ error: Error, processing: PresentationRequestReviewState.Processing) {
     analytics.log(error)
-    if let presentationError = error as? SubmitPresentationError {
-      switch presentationError {
-      case .invalidCredential:
-        router.presentationResultState(with: .invalidCredential(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)
-      case .processClosed:
-        router.presentationResultState(with: .cancelled, context: context)
-      default:
-        router.presentationResultState(with: .error, context: context)
-      }
-    } else {
-      router.presentationResultState(with: .error, context: context)
-    }
-    state = .result
+    let resultState = PresentationRequestResultState(error: error, claims: credential.requestedClusteredClaims.flatMap(\.claims))
+    router.presentationResultState(with: resultState, context: context)
+    let viewModel = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: processing.credential.colorScheme)
+    state = .result(viewModel)
   }
 
+  private func deny() async {
+    denyTask = Task.detached(priority: .background) { [weak self] in
+      guard let self else { return }
+      try? await declinePresentationUseCase.execute(context: context)
+    }
+    router.presentationResultState(with: .deny, context: context)
+  }
+}
+
+extension PresentationRequestResultState {
+  init(error: Error, claims: [CredentialClaim]) {
+    self = switch error as? SubmitPresentationError {
+    case .invalidCredential:
+      .invalidCredential(claims: claims)
+    case .processClosed:
+      .cancelled
+    default:
+      .error
+    }
+  }
 }

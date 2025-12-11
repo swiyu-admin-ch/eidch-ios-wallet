@@ -3,7 +3,6 @@ import SwiftUI
 extension ButtonStyle where Self == CustomButtonStyle {
   public static var bezeled: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .bezeled) }
   public static var secondary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .secondary) }
-  public static var secondaryReversed: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .secondaryReversed) }
   public static var destructive: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .destructive) }
   public static var primary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .primary) }
   public static var tertiary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .tertiary) }
@@ -64,7 +63,7 @@ public struct CustomButton: View {
 
   public var body: some View {
     configuration.label
-      .lineLimit(1)
+      .lineLimit(sizeCategory.isAccessibilityCategory ? nil : 1)
       .padding(.horizontal, horizontalPadding)
       .padding(.vertical, verticalPadding)
       .font(font)
@@ -75,7 +74,12 @@ public struct CustomButton: View {
       .background(configuration.isPressed ? .black.opacity(0.3) : .clear)
       .foregroundColor(isEnabled ? buttonConfiguration.foregroundColor : buttonConfiguration.foregroundColorDisabled)
       .progressViewStyle(CircularProgressViewStyle(tint: isEnabled ? buttonConfiguration.progressViewTint : ThemingAssets.Label.tertiary.swiftUIColor))
-      .clipShape(.capsule)
+      .if(!sizeCategory.isAccessibilityCategory) {
+        $0.clipShape(.capsule)
+      }
+      .if(sizeCategory.isAccessibilityCategory) {
+        $0.clipShape(RoundedRectangle(cornerRadius: .xxl))
+      }
       .scaleEffect(configuration.isPressed ? CGSize(width: 0.95, height: 0.95) : CGSize(width: 1.0, height: 1.0))
       .animation(.interactiveSpring, value: configuration.isPressed)
       .border(width: accessibilityShowButtonShapes ? 1 : 0, color: ThemingAssets.Brand.Core.black.swiftUIColor)
@@ -91,6 +95,7 @@ public struct CustomButton: View {
   @Environment(\.controlSize) private var controlSize
   @Environment(\.accessibilityShowButtonShapes) private var accessibilityShowButtonShapes
   @Environment(\.isEnabled) private var isEnabled: Bool
+  @Environment(\.sizeCategory) private var sizeCategory
 
   private var horizontalPadding: CGFloat {
     switch controlSize {

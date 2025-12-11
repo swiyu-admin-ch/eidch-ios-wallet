@@ -31,6 +31,7 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
 
   enum Event {
     case accept
+    case confirmAccept
     case decline
     case openWrongData
     case confirmDecline
@@ -44,18 +45,19 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   let credential: VerifiableCredential
   let trustInformation: TrustInformation
 
-  @Published var credentialViewModel: CredentialViewModel?
+  @Published var credentialViewModel: VerifiableCredentialViewModel?
+  @Published var isUnknownIssuerAlertShown = false
 
   override func reducer(_ state: inout State, _ event: Event) -> AnyPublisher<Event, Never>? {
     switch event {
     case .accept:
-      withAnimation {
-        state = .loading
-        Task {
-          try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
-          router.close()
-        }
+      if trustInformation.identity != .unknown {
+        accept(&state)
+      } else {
+        isUnknownIssuerAlertShown = true
       }
+    case .confirmAccept:
+      accept(&state)
     case .decline:
       state = .decline
     case .openWrongData:
@@ -82,8 +84,7 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   }
 
   func updateCredentialViewModel(with colorScheme: String) {
-    let display = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
-    credentialViewModel = CredentialViewModel(credential: credential, credentialDisplay: display)
+    credentialViewModel = VerifiableCredentialViewModel(credential: credential, colorScheme: colorScheme)
   }
 
   // MARK: Private
@@ -91,5 +92,14 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
   private let router: CredentialOfferInternalRoutes
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
-  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
+
+  private func accept(_ state: inout State) {
+    withAnimation {
+      state = .loading
+      Task {
+        try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
+        router.close()
+      }
+    }
+  }
 }

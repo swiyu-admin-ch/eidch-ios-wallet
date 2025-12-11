@@ -10,9 +10,9 @@ public class CameraModule {
 
   // MARK: Lifecycle
 
-  public init(router: InvitationRouter = Container.shared.invitationRouter()) {
+  public init(router: InvitationRouter = Container.shared.invitationRouter(), delegate: InvitationDelegate? = nil) {
     self.router = router
-    let viewController = UIHostingController(rootView: CameraView(router: router))
+    let viewController = UIHostingController(rootView: CameraView(router: router, delegate: delegate))
     router.viewController = viewController
     self.viewController = viewController
   }

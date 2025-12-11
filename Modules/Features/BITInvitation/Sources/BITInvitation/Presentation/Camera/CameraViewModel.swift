@@ -20,15 +20,17 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   // MARK: Lifecycle
 
-  init(router: InvitationRouterRoutes) {
+  init(router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
     self.router = router
+    self.delegate = delegate
     configureBindings()
     session = cameraManager.session
     try? cameraManager.configure()
   }
 
-  init(url: URL, router: InvitationRouterRoutes) {
+  init(url: URL, router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
     self.router = router
+    self.delegate = delegate
     scannerDelay = 0
     invitationURL = url
   }
@@ -86,6 +88,8 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   // MARK: Private
 
+  private weak var delegate: InvitationDelegate?
+
   @Published private var credential: VerifiableCredential?
   @Published private var qrCodeObject: AVMetadataMachineReadableCodeObject?
 
@@ -102,6 +106,7 @@ class CameraViewModel: ObservableObject, Vibrating {
   @Injected(\.getCredentialsCountUseCase) private var getCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol
   @Injected(\.checkInvitationTypeUseCase) private var checkInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol
   @Injected(\.validateCredentialOfferInvitationUrlUseCase) private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocol
+  @Injected(\.saveDeferredCredentialUseCase) private var saveDeferredCredentialUseCase: SaveDeferredCredentialUseCaseProtocol
 
   private func configureBindings() {
     cameraManager.$capturedObject.sink { [weak self] qrcode in
@@ -127,15 +132,13 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   private func processCredentialOffer(url: URL) async throws {
     let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(url)
-    let fetchCredentialResult = try await fetchCredentialUseCase.execute(from: credentialOffer)
+    let (credential, trustInformation) = try await fetchCredentialUseCase.execute(from: credentialOffer)
 
-    guard case .credential(let credential, let trustInformation) = fetchCredentialResult else {
-      throw FetchCredentialUseCaseError.deferredCredentialNotSupported // Deferred credential are not supported yet in this flow
+    if let verifiableCredential = credential as? VerifiableCredential, let trustInformation {
+      openCredentialOffer(credential: verifiableCredential, trustInformation: trustInformation)
+    } else if let deferredCredential = credential as? DeferredCredential {
+      try await saveDeferredCredential(deferredCredential)
     }
-
-    isTorchEnabled = false
-    cameraManager.stop()
-    router.credentialOffer(credential: credential, trustInformation: trustInformation)
   }
 
   private func resetTorchAndInvitation() {
@@ -160,6 +163,20 @@ class CameraViewModel: ObservableObject, Vibrating {
       invitationURL = nil // Keep the torch enabled
     } else {
       resetTorchAndInvitation()
+    }
+  }
+
+  private func openCredentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
+    isTorchEnabled = false
+    cameraManager.stop()
+    router.credentialOffer(credential: credential, trustInformation: trustInformation)
+  }
+
+  private func saveDeferredCredential(_ deferredCredential: DeferredCredential) async throws {
+    try await saveDeferredCredentialUseCase.execute(for: deferredCredential)
+
+    router.close { [weak self] in
+      self?.delegate?.didSaveDeferredCredential()
     }
   }
 }

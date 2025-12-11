@@ -44,7 +44,6 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(
       receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported,
       mockMetadataWrapper.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
-    XCTAssertEqual(receivedContext.credentialOffers, mockCredentialOffer.credentialConfigurationIds)
     XCTAssertEqual(receivedContext.credentialIssuer, mockMetadataWrapper.credentialMetadata.credentialIssuer)
     XCTAssertEqual(receivedContext.holderBindingContext, mockHolderBindingContext)
     XCTAssertEqual(receivedContext.accessToken, mockAccessToken)

@@ -1,31 +1,28 @@
 import Factory
+import SwiftUI
 
 @MainActor
-class LegalRepresentantConsentViewModel {
+class LegalRepresentantConsentViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, caseId: String) {
-    self.router = router
+  init(caseId: String) {
     self.caseId = caseId
   }
 
   // MARK: Internal
 
+  @Published var destination: EIDRequestDestinations?
+
   func obtainConsent() {
-    router.legalRepresentantQRCode(caseId: caseId)
+    destination = .legalRepresentantQRCode(caseId: caseId)
   }
 
   func continueAsParent() {
-    router.legalRepresentantVerification(caseId: caseId)
-  }
-
-  func close() {
-    router.close()
+    destination = .legalRepresentantVerification(caseId: caseId)
   }
 
   // MARK: Private
 
   private let caseId: String
-  private let router: EIDRequestInternalRoutes
 }

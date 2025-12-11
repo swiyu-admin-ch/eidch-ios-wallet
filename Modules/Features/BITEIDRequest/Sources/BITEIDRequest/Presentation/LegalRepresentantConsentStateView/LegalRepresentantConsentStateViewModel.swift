@@ -1,20 +1,23 @@
+import BITEIDRequestShared
 import BITL10n
+import BITNavigation
 import Factory
 import SwiftUI
 
 @MainActor
-class LegalRepresentantConsentStateViewModel {
+class LegalRepresentantConsentStateViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, state: RequestCaseViewState) {
-    self.router = router
+  init(state: RequestCaseViewState) {
     self.state = state
   }
 
   // MARK: Internal
 
   let state: RequestCaseViewState
+  @Published var isNavigationCloseTriggered = false
+  @Published var destination: EIDRequestDestinations?
 
   var image: Image {
     switch state {
@@ -23,7 +26,8 @@ class LegalRepresentantConsentStateViewModel {
     case .agentReview,
          .declined,
          .expired,
-         .unknown: Assets.closeCircle.swiftUIImage
+         .unknown,
+         .walletPairing: Assets.closeCircle.swiftUIImage
     }
   }
 
@@ -34,7 +38,8 @@ class LegalRepresentantConsentStateViewModel {
     case .expired: L10n.tkEidRequestLegalRepresentantPendingConsentExpiredPrimary
     case .agentReview,
          .declined,
-         .unknown: ""
+         .unknown,
+         .walletPairing: ""
     }
   }
 
@@ -45,7 +50,8 @@ class LegalRepresentantConsentStateViewModel {
     case .agentReview,
          .declined,
          .readyForOnlineSession,
-         .unknown: ""
+         .unknown,
+         .walletPairing: ""
     }
   }
 
@@ -58,14 +64,13 @@ class LegalRepresentantConsentStateViewModel {
 
   func primaryAction() {
     switch state {
-    case .readyForOnlineSession where state.isLegalRepresentantConsentVerified: router.avIdentityCheck()
-    default: router.close()
+    case .readyForOnlineSession where state.isLegalRepresentantConsentVerified:
+      destination = .avIdentityCheck
+    default: isNavigationCloseTriggered = true
     }
   }
 
   // MARK: Private
-
-  private let router: EIDRequestInternalRoutes
 
   private func getReadyForAutoVerificationImage() -> Image {
     state.isLegalRepresentantConsentVerified ? Assets.check.swiftUIImage : Assets.timer.swiftUIImage

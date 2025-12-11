@@ -147,7 +147,7 @@ struct SettingsItem: View {
         .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
         .accessibilityHidden(true)
     case .navigation:
-      Assets.chevronRight.swiftUIImage
+      ThemingAssets.chevronRight.swiftUIImage
         .resizable()
         .scaledToFit()
         .frame(width: trailingIconSize, height: trailingIconSize)

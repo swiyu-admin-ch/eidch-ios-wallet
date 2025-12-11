@@ -13,24 +13,26 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
-    router.context.hasLegalRepresentant = true
-    submitEIDRequestUseCase = SubmitEIDRequestUseCaseProtocolSpy()
+    context = EIDRequestContext()
+    context.hasLegalRepresentant = true
+    applyEIDRequestUseCase = ApplyEIDRequestUseCaseProtocolSpy()
 
-    Container.shared.submitEIDRequestUseCase.register { self.submitEIDRequestUseCase }
+    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.applyEIDRequestUseCase.register { self.applyEIDRequestUseCase }
 
     success()
   }
 
   func testInitialState() {
-    XCTAssertNotNil(viewModel)
+    XCTAssertFalse(viewModel.isNavigationCloseTriggered)
+    XCTAssertNil(viewModel.destination)
   }
 
   func testSubmit_arguments() async throws {
     await viewModel.submit()
 
-    XCTAssertEqual(submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReceivedArguments?.scanDocumentOutput, scanDocumentOutput)
-    XCTAssertEqual(submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReceivedArguments?.hasLegalRepresentant, true)
+    XCTAssertEqual(applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReceivedArguments?.scanDocumentOutput, scanDocumentOutput)
+    XCTAssertEqual(applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReceivedArguments?.hasLegalRepresentant, true)
   }
 
   func testSubmit_inQueueStateVerified_routeToQueueInformation() async throws {
@@ -39,51 +41,51 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
     await viewModel.submit()
 
     if case .inQueue(let inQueueStateViewModel) = viewState {
-      XCTAssertEqual(router.queueInformationArgument, inQueueStateViewModel.onlineSessionStartOpenAt)
-      XCTAssertEqual(router.context.caseId, mockEidRequestCase.id)
+      XCTAssertEqual(viewModel.destination, .queueInformation(inQueueStateViewModel.onlineSessionStartOpenAt))
+      XCTAssertEqual(context.caseId, mockEidRequestCase.id)
     }
   }
 
   func testSubmit_emptyFiles_flowContinues() async throws {
     let viewState = try RequestCaseViewState(mockEidRequestCase)
     let scanDocumentOutput = try ScanDocumentOutput(mrz: MRZ(values: MRZ.Mock.sampleValues), identityType: .identityCard)
-    viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput, router: router)
+    viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
     await viewModel.submit()
 
     if case .inQueue(let inQueueStateViewModel) = viewState {
-      XCTAssertEqual(router.queueInformationArgument, inQueueStateViewModel.onlineSessionStartOpenAt)
+      XCTAssertEqual(viewModel.destination, .queueInformation(inQueueStateViewModel.onlineSessionStartOpenAt))
     }
   }
 
   func testSubmit_noState_close() async throws {
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = EIDRequestCase.Mock.sampleWithoutState
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = EIDRequestCase.Mock.sampleWithoutState
 
     await viewModel.submit()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   func testSubmit_inQueueStateNotVerified_routeToLegalRepresentantConsent() async throws {
     let mockEidRequestCase = EIDRequestCase.Mock.sampleInQueueNotVerified
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
 
     await viewModel.submit()
 
-    XCTAssertEqual(router.legalRepresentantConsentArgument, mockEidRequestCase.id)
+    XCTAssertEqual(viewModel.destination, .legalRepresentantConsent(caseId: mockEidRequestCase.id))
   }
 
   func testSubmit_readyForOnlineSession_routeToWalletPairing() async throws {
     let mockEidRequestCase = EIDRequestCase.Mock.sampleAVReady
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
 
     await viewModel.submit()
 
-    XCTAssertTrue(router.walletPairingCalled)
-    XCTAssertEqual(router.context.caseId, mockEidRequestCase.id)
+    XCTAssertEqual(viewModel.destination, .walletPairing)
+    XCTAssertEqual(context.caseId, mockEidRequestCase.id)
   }
 
   func testSubmit_errorHandling_doesNotCrash() async throws {
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantThrowableError = TestingError.error
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantThrowableError = TestingError.error
 
     await viewModel.submit()
 
@@ -92,7 +94,7 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
 
   func testSubmit_appliesMinimumDelay() async throws {
     let mockEidRequestCase = EIDRequestCase.Mock.sampleInQueue
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
 
     let startTime = Date()
     await viewModel.submit()
@@ -104,7 +106,7 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
 
   func testSubmit_fastResponse_stillAppliesMinimumDelay() async throws {
     let mockEidRequestCase = EIDRequestCase.Mock.sampleInQueue
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
 
     let startTime = Date()
     await viewModel.submit()
@@ -116,32 +118,33 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
 
   func testSubmit_defaultCase_closesWhenNoMatchingState() async throws {
     let mockEidRequestCase = EIDRequestCase.Mock.sampleExpired
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
 
     await viewModel.submit()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   @MainActor
   func testClose() {
-    viewModel.close()
-    XCTAssertTrue(router.closeCalled)
+    viewModel.navigationClose()
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
+  private var context: EIDRequestContext!
   private let scanDocumentOutput = ScanDocumentOutput(mrz: MRZ.Mock.sample, files: EIDRequestCaseFile.Mock.sampleArray, identityType: .identityCard)
   private let mockEidRequestCase = EIDRequestCase.Mock.sampleInQueue
   private let payload = MRZData.Mock.array.first!.payload
-  private var router: MockEIDRequestRouter!
+
   private var viewModel: ScanDocumentSubmitViewModel!
-  private var submitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocolSpy!
+  private var applyEIDRequestUseCase: ApplyEIDRequestUseCaseProtocolSpy!
 
   private func success() {
-    viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput, router: router)
+    viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
 
-    submitEIDRequestUseCase.executeScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
+    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
   }
 
 }

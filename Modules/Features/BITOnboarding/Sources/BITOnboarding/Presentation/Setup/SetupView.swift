@@ -35,24 +35,11 @@ struct SetupView: View {
           await viewModel.run()
         }
       }
-      .onAppear {
-        resetAccessibilityFocus()
-      }
   }
 
   // MARK: Private
 
-  @AccessibilityFocusState private var errorFocusedState: Bool
-  @AccessibilityFocusState private var isCurrentPageFocused: Bool
-
   @StateObject private var viewModel: SetupViewModel
-
-  private func resetAccessibilityFocus() {
-    DispatchQueue.main.async {
-      isCurrentPageFocused = false
-      isCurrentPageFocused = true
-    }
-  }
 }
 
 // MARK: - Components
@@ -75,7 +62,7 @@ extension SetupView {
         .font(.custom.title)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(.leading)
-        .accessibilityFocused($isCurrentPageFocused)
+        .accessibilityPriorityFocus()
         .accessibilityAddTraits(.isHeader)
 
       Text(L10n.tkOnboardingSetupSecondary)

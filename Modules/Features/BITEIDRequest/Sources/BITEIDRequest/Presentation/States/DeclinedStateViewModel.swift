@@ -6,9 +6,21 @@ public class DeclinedStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Internal
 
+  var notificationTitle: String {
+    L10n.tkEidRequestNotificationDeclinedPrimary(fullName)
+  }
+
+  var notificationContent: String {
+    L10n.tkEidRequestNotificationDeclinedSecondary
+  }
+
+  var primaryActionLabel: String {
+    L10n.tkEidRequestNotificationDeclinedPrimaryButton
+  }
+
   func deleteRequestCase() async {
     do {
-      try await deleteEIDRequestCaseUseCase.execute(requestCaseId)
+      try await deleteEIDRequestCaseUseCase.execute(id)
       delegate?.didDeleteRequestCase()
     } catch {
       #warning("TODO: Handle fallback here")

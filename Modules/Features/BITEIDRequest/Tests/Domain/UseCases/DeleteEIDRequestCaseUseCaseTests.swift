@@ -1,9 +1,10 @@
-// swiftlint:disable implicitly_unwrapped_optional
 import Factory
 import XCTest
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 @testable import BITTestingCore
+
+// swiftlint:disable implicitly_unwrapped_optional
 
 final class DeleteEIDRequestCaseUseCaseTests: XCTestCase {
 
@@ -17,28 +18,41 @@ final class DeleteEIDRequestCaseUseCaseTests: XCTestCase {
     useCase = DeleteEIDRequestCaseUseCase()
   }
 
-  func testExecuteSucces() async throws {
-    try await useCase.execute(mockEIDRequestCase.id)
+  func testExecute_success() async throws {
+    try await useCase.execute(mockCaseId)
 
-    XCTAssertEqual(repository.deleteReceivedId, mockEIDRequestCase.id)
+    XCTAssertEqual(repository.deleteAllFilesForRequestCaseIdCallsCount, 1)
+    XCTAssertEqual(repository.deleteAllFilesForRequestCaseIdReceivedId, mockCaseId)
+    XCTAssertEqual(repository.deleteCallsCount, 1)
+    XCTAssertEqual(repository.deleteReceivedId, mockCaseId)
   }
 
-  func testExecuteFailure() async throws {
+  func testExecute_deleteFilesFails_throws() async throws {
+    repository.deleteAllFilesForRequestCaseIdThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(mockCaseId)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertFalse(repository.deleteCalled)
+    }
+  }
+
+  func testExecute_deleteRequestCaseFails_throws() async throws {
     repository.deleteThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(mockEIDRequestCase.id)
+      _ = try await useCase.execute(mockCaseId)
       XCTFail("An error was expected")
-    } catch TestingError.error {
-      XCTAssertEqual(repository.deleteReceivedId, mockEIDRequestCase.id)
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
   // MARK: Private
 
   private var useCase: DeleteEIDRequestCaseUseCase!
-  private let mockEIDRequestCase: EIDRequestCase = .Mock.sampleExpired
+  private let mockCaseId = "caseId"
   private var repository: EIDRequestCaseRepositoryProtocolSpy!
 }
-
-// swiftlint:enable implicitly_unwrapped_optional

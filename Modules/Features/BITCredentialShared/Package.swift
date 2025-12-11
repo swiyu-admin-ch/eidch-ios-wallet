@@ -21,12 +21,14 @@ let package = Package(
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITAnyCredentialFormat"),
     .package(path: "../BITEntities"),
+    .package(path: "../BITOpenID"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
   ],
   targets: [
     .target(
       name: "BITCredentialShared",
       dependencies: [
+        .product(name: "BITOpenID", package: "BITOpenID"),
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITVault", package: "BITVault"),

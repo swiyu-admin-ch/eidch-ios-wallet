@@ -11,15 +11,17 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
-    router.context.caseId = mockCaseId
+    context = EIDRequestContext()
+    context.caseId = mockCaseId
+    Container.shared.eidRequestContext.register { self.context }
+
     getLegalRepresentantVerificationQRCodeUseCase = GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
 
     Container.shared.getLegalRepresentantVerificationQRCodeUseCase.register { self.getLegalRepresentantVerificationQRCodeUseCase }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCase }
 
-    viewModel = LegalRepresentantQRCodeViewModel(router: router, caseId: mockCaseId)
+    viewModel = LegalRepresentantQRCodeViewModel(caseId: mockCaseId)
   }
 
   func initialState() {
@@ -58,7 +60,12 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
 
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeForReceivedRequestCaseId, mockCaseId)
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeForCallsCount, 1)
-    XCTAssertEqual(router.legalRepresentantConsentStateArgument, mockRequestCaseStateView)
+
+    if case .legalRepresentantConsentState = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected legalRepresentantConsentState case")
+    }
   }
 
   func testFinish_updateRequestCaseFails_close() async {
@@ -66,7 +73,7 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
 
     await viewModel.finish()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   func testFinish_unknownState_close() async throws {
@@ -74,16 +81,17 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
 
     await viewModel.finish()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
   private let mockCaseId = "caseId"
-  private var router: MockEIDRequestRouter!
+
   private var viewModel: LegalRepresentantQRCodeViewModel!
   private var getLegalRepresentantVerificationQRCodeUseCase: GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy!
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
+  private var context: EIDRequestContext!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping

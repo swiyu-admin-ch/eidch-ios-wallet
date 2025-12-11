@@ -1,9 +1,3 @@
-# strings:
-#   inputs: Modules/Platforms/BITCore/Sources/BITCore/Resources/de.lproj
-#   outputs:
-#     - templateName: structured-swift5
-#       output: Modules/Platforms/BITCore/Sources/BITCore/Helpers/Strings.swift
-
 xcassets:
   inputs:
     - swiyu/Resources/Assets.xcassets

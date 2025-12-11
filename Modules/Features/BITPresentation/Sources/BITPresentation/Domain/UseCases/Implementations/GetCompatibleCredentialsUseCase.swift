@@ -9,7 +9,7 @@ import Spyable
 
 @Spyable
 public protocol GetCompatibleCredentialsUseCaseProtocol {
-  func execute(using requestObject: RequestObject) async throws -> [InputDescriptorID: [CompatibleCredential]]
+  func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential]
 }
 
 // MARK: - CompatibleCredentialsError
@@ -27,42 +27,9 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
 
   // MARK: Internal
 
-  func execute(using requestObject: RequestObject) async throws -> [InputDescriptorID: [CompatibleCredential]] {
-    do {
-      let requests = try await withThrowingTaskGroup(of: (inputDescriptorId: String, compatibleCredentials: [CompatibleCredential]).self, returning: [String: [CompatibleCredential]].self) { group in
-        for inputDescriptor in requestObject.presentationDefinition.inputDescriptors {
-          group.addTask {
-            let compatibleCredentials = try await execute(inputDescriptor: inputDescriptor)
-            return (inputDescriptor.id, compatibleCredentials)
-          }
-        }
-
-        var requests = [String: [CompatibleCredential]]()
-        for try await (inputDescriptorId, compatibleCredentials) in group {
-          requests[inputDescriptorId] = compatibleCredentials
-        }
-
-        return requests
-      }
-
-      if requests.contains(where: \.value.isEmpty) {
-        throw CompatibleCredentialsError.compatibleCredentialNotFound
-      }
-
-      return requests
-    } catch {
-      throw error
-    }
-  }
-
-  // MARK: Private
-
-  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
-  @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
-  @Injected(\.presentationFieldsValidator) private var presentationFieldsValidator: PresentationFieldsValidatorProtocol
-
-  private func execute(inputDescriptor: InputDescriptor) async throws -> [CompatibleCredential] {
-    let credentials = try await verifiableCredentialRepository.getAll()
+  func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential] {
+    guard let inputDescriptor = requestObject.firstInputDescriptor else { return [] }
+    let credentials = try await credentialRepository.getAllVerifiableCredentials()
     if credentials.isEmpty {
       throw CompatibleCredentialsError.emptyWallet
     }
@@ -72,6 +39,12 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
     }
     return compatibleCredentials
   }
+
+  // MARK: Private
+
+  @Injected(\.credentialRepository) private var credentialRepository
+  @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase
+  @Injected(\.presentationFieldsValidator) private var presentationFieldsValidator
 
   private func filter(credentials: [VerifiableCredential], withInputDescriptor inputDescriptor: InputDescriptor) -> [CompatibleCredential] {
     credentials.compactMap { credential in

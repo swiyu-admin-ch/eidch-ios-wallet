@@ -1,5 +1,5 @@
 {
-  "originHash" : "1260180faf890ace6f4cc5a9102e2c624734f75d53862babeb8487442c82c90c",
+  "originHash" : "f2131a83e38d32f7a25f967fe7ec8431a50895a53263c50fa87f2f8544274cd3",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiyu-admin-ch/jsonschema-swift.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "cebc8693b3840552f1943786cbaabac0e853ac1b"
+        "revision" : "cebc8693b3840552f1943786cbaabac0e853ac1b",
+        "version" : "0.30.0"
       }
     },
     {
@@ -101,12 +101,21 @@
       }
     },
     {
+      "identity" : "navigator",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hmlongco/Navigator",
+      "state" : {
+        "revision" : "a0d4e1f4cea5f99aad2aa963b121168840e17c96",
+        "version" : "1.3.1"
+      }
+    },
+    {
       "identity" : "pera_av-wrapper-private_ios",
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:admin-ch-ssi/PERA_av-wrapper-private_ios.git",
       "state" : {
-        "revision" : "b03eeb178e71e59ad5ee1b8c5abf5ea4eebe4817",
-        "version" : "0.2.0"
+        "revision" : "b4513023cfe5a360f050c4a2d6b6aa2f9c4aa847",
+        "version" : "0.12.0"
       }
     },
     {

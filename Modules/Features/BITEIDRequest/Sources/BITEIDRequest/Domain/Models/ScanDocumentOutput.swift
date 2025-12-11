@@ -4,13 +4,20 @@ import Foundation
 
 // MARK: - ScanDocumentOutput
 
-public struct ScanDocumentOutput: Equatable {
+public struct ScanDocumentOutput: Equatable, Hashable {
 
   // MARK: Lifecycle
 
   init(_ packageResult: AVBeamPackageResult, identityType: IdentityType) throws {
     mrz = try MRZ(from: packageResult)
-    files = packageResult.data.files.map { EIDRequestCaseFile($0, category: .documentScan) }
+    files = packageResult.files.map { EIDRequestCaseFile($0, category: .documentScan) }
+
+    // Add extracted data as a file, for NFC scan
+    let data = try JSONEncoder().encode(packageResult.data.extractedData)
+    let extractedDataFile = EIDRequestCaseFile(fileName: Self.extractedDataFileName, mime: .json, data: data, category: .documentScan)
+
+    files.append(extractedDataFile)
+
     self.identityType = identityType
   }
 
@@ -20,10 +27,21 @@ public struct ScanDocumentOutput: Equatable {
     self.identityType = identityType
   }
 
+  // MARK: Public
+
+  public let mrz: MRZ
+  public let identityType: IdentityType
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(mrz)
+    hasher.combine(files)
+    hasher.combine(identityType)
+  }
+
   // MARK: Internal
 
-  let mrz: MRZ
-  let files: [EIDRequestCaseFile]
-  let identityType: IdentityType
+  static let extractedDataFileName = "extractedData.json"
+
+  private(set) var files: [EIDRequestCaseFile]
 
 }

@@ -15,6 +15,7 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
       let data = try await networkService.request(PresentationEndpoint.requestObject(url: url)).data
       guard let jws = try? jwsDecoder.decode(JWTRequestObjectPayload.self, from: data) else {
         let object = try decoder.decode(RequestObject.self, from: data)
+        object.raw = data
         return .plain(object)
       }
       return .jwt(jws)

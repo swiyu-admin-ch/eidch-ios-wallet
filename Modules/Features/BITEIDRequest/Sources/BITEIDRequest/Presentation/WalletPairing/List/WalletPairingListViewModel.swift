@@ -1,19 +1,21 @@
 import BITEIDRequestShared
 import BITL10n
+import BITNavigation
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import Spyable
 import SwiftUI
 
 // MARK: - WalletPairingListViewModel
 
 @MainActor
-class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
+class WalletPairingListViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
+  init() {
     walletPairingPollingManager.delegate = self
   }
 
@@ -33,6 +35,9 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
   @Published var toastMessage: String?
   @Published var currentDevicePairingState = CurrentDevicePairingState.initial
   @Published var targetWallets: EIDRequestStatus.TargetWallet?
+
+  @Published var destination: EIDRequestDestinations?
+  @Published var isNavigationCloseTriggered = false
 
   var isPrimaryButtonDisabled: Bool {
     targetWallets?.pairedWallets.isEmpty ?? true
@@ -64,32 +69,36 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
       await pairCurrentDevice()
     case .other:
       clearToast()
-      router.avDevicePairingQRCode(delegate: self)
+      destination = .walletPairingOffer(Callback<Void>(handler: didPairWallet))
     }
   }
 
   func primaryAction() {
-    router.avIdentityCheck()
+    destination = .avIdentityCheck
   }
 
   func close() {
-    router.close()
     walletPairingPollingManager.stopPolling()
+    navigationClose()
   }
 
   func didPairWallet() {
-    guard let caseId = router.context.caseId else { return }
     toastMessage = L10n.tkEidRequestWalletPairingNotificationSuccess
     isToastPresented = true
 
-    Task { @MainActor in
-      do {
-        self.requestCase = try await fetchEIDRequestCaseUseCase.execute(caseId: caseId)
-        let status = try await fetchEIDRequestStatusUseCase.execute(for: caseId)
-        handleStatus(status)
-      } catch {
-        #warning("TODO: Present error screen (Story TBD)")
-      }
+    Task { await fetchStatus() }
+  }
+
+  func fetchStatus() async {
+    guard let caseId = context.caseId else { return }
+    do {
+      requestCase = try await fetchEIDRequestCaseUseCase.execute(caseId: caseId)
+      let status = try await fetchEIDRequestStatusUseCase.execute(for: caseId)
+      handleStatus(status)
+    } catch {
+      destination = .error(ErrorDataset(error, primaryAction: {
+        self.navigationClose()
+      }))
     }
   }
 
@@ -103,22 +112,24 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
   // MARK: Private
 
   private var requestCase: EIDRequestCase?
-  private let router: EIDRequestInternalRoutes
-
   @Injected(\.pairWalletUseCase) private var pairWalletUseCase
   @Injected(\.walletPairingDateFormatter) private var walletPairingDateFormatter
   @Injected(\.walletPairingPollingManager) private var walletPairingPollingManager
   @Injected(\.fetchEIDRequestStatusUseCase) private var fetchEIDRequestStatusUseCase
+  @Injected(\.eidRequestContext) private var context
   @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
 
   private func handleStatus(_ status: EIDRequestStatus) {
-    #warning("React here to the different states (EIDCULTURA-319)")
-    guard let targetWallets = status.targetWallets, status.state == .inTargetWalletPairing else {
-      return
-    }
+    switch status.state {
+    case .inTargetWalletPairing:
+      guard let targetWallets = status.targetWallets else { return }
 
-    withAnimation {
-      self.targetWallets = targetWallets
+      withAnimation {
+        self.targetWallets = targetWallets
+      }
+
+    default:
+      destination = .timeout
     }
   }
 
@@ -130,7 +141,7 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
 
   private func pairCurrentDevice() async {
     do {
-      guard let caseId = router.context.caseId else {
+      guard let caseId = context.caseId else {
         throw EIDRequestError.missingCaseId
       }
 
@@ -161,14 +172,7 @@ class WalletPairingListViewModel: ObservableObject, DevicePairingDelegate {
   }
 }
 
-// MARK: - DevicePairingDelegate
-
-@MainActor @Spyable
-protocol DevicePairingDelegate: AnyObject {
-  func didPairWallet()
-}
-
-// MARK: - WalletPairingListViewModel + WalletPairingPollingDelegate
+// MARK: WalletPairingPollingDelegate
 
 extension WalletPairingListViewModel: WalletPairingPollingDelegate {
 

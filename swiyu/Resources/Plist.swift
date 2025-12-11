@@ -45,6 +45,7 @@ enum PlistFiles {
   static let dtxUserOptIn: String = _document["DTXUserOptIn"]
   static let itsAppUsesNonExemptEncryption: Bool = _document["ITSAppUsesNonExemptEncryption"]
   static let lsHasLocalizedDisplayName: Bool = _document["LSHasLocalizedDisplayName"]
+  static let nfcReaderUsageDescription: String = _document["NFCReaderUsageDescription"]
   static let nsAppTransportSecurity: [String: Any] = _document["NSAppTransportSecurity"]
   static let nsCameraUsageDescription: String = _document["NSCameraUsageDescription"]
   static let nsFaceIDUsageDescription: String = _document["NSFaceIDUsageDescription"]
@@ -55,6 +56,7 @@ enum PlistFiles {
   static let uiLaunchStoryboardName: String = _document["UILaunchStoryboardName"]
   static let uiRequiredDeviceCapabilities: [String] = _document["UIRequiredDeviceCapabilities"]
   static let uiSupportedInterfaceOrientations: [String] = _document["UISupportedInterfaceOrientations"]
+  static let comAppleDeveloperNfcReadersessionIso7816SelectIdentifiers: [String] = _document["com.apple.developer.nfc.readersession.iso7816.select-identifiers"]
 
   // MARK: Private
 

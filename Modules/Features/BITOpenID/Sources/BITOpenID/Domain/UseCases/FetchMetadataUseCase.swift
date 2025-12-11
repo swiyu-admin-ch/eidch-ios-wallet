@@ -13,23 +13,17 @@ public protocol FetchMetadataUseCaseProtocol {
 
 struct FetchMetadataUseCase: FetchMetadataUseCaseProtocol {
 
-  // MARK: Lifecycle
-
-  init(repository: OpenIDRepositoryProtocol = Container.shared.openIDRepository()) {
-    self.repository = repository
-  }
-
   // MARK: Internal
 
   func execute(for offer: CredentialOffer) async throws -> CredentialMetadataWrapper {
     let issuerUrl = try getIssuerUrl(from: offer)
-    let response = try await repository.fetchMetadata(from: issuerUrl)
+    let response = try await openIDRepository.fetchMetadata(from: issuerUrl)
     return try await createWrapper(from: response, offer: offer)
   }
 
   // MARK: Private
 
-  private let repository: OpenIDRepositoryProtocol
+  @Injected(\.openIDRepository) private var openIDRepository: OpenIDRepositoryProtocol
 
   private func createWrapper(from response: CredentialMetadataResponse, offer: CredentialOffer) async throws -> CredentialMetadataWrapper {
     guard let selectedCredentialId = offer.credentialConfigurationIds.first else {

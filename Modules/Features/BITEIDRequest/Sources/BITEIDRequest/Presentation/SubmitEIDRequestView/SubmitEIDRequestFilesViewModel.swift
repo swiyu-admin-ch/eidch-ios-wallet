@@ -1,21 +1,18 @@
 import BITEIDRequestShared
 import BITNetworking
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 
 
 @MainActor
 class SubmitEIDRequestFilesViewModel: ObservableObject {
 
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
-
   // MARK: Internal
 
   @Published var fileUploads = [UUID: FileUploadInfo]()
+  @Published var destination: EIDRequestDestinations?
 
   /// Overall upload progress (0.0 to 1.0)
   var overallProgress: Double {
@@ -48,8 +45,10 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
   }
 
   func submit() async {
-    guard let caseId = router.context.caseId else {
-      return router.eIDRequestError(error: EidRequestError.missingContextInformations, delegate: self)
+    guard let caseId = context.caseId else {
+      return destination = .error(ErrorDataset(EidRequestError.missingContextInformations, primaryAction: { [weak self] in
+        self?.retryAction()
+      }))
     }
 
     do {
@@ -60,7 +59,9 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
         await submitEidRequest()
       }
     } catch {
-      router.eIDRequestError(error: error, delegate: self)
+      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+        self?.retryAction()
+      }))
     }
   }
 
@@ -80,7 +81,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
       let uploadInfo = fileUploads[fileId],
       case .failed = uploadInfo.state else { return }
 
-    guard let caseId = router.context.caseId, let authJwt = router.context.authJwt else { return }
+    guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else { return }
 
     fileUploads[fileId]?.state = .pending
     await upload(uploadInfo.file, caseId: caseId, authJwt: authJwt)
@@ -91,29 +92,47 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
   }
 
   func submitEidRequest() async {
-    do {
-      guard let caseId = router.context.caseId, let authJwt = router.context.authJwt else {
-        return router.eIDRequestError(error: EidRequestError.missingContextInformations, delegate: self)
-      }
+    guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else {
+      return destination = .error(ErrorDataset(EidRequestError.missingContextInformations, primaryAction: { [weak self] in
+        self?.retryAction()
+      }))
+    }
 
-      #warning("Move to successfully sent files screen (for now: back home)")
-      router.close()
+    do {
+      try await submitEIDRequestUseCase(caseId: caseId, authJwt: authJwt)
+      try await deleteEIDRequestCaseFileUseCase.execute(forRequestCaseId: caseId)
+
+      Container.shared.eidRequestContext.reset()
+      destination = .success
     } catch {
-      router.eIDRequestError(error: error, delegate: self)
+      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+        Task {
+          await self?.submitEidRequest()
+        }
+      }))
+    }
+  }
+
+  func retryAction() {
+    Task {
+      await retryFailedUploads()
     }
   }
 
   // MARK: Private
 
-  private var router: EIDRequestInternalRoutes
+  @Injected(\.eidRequestContext) private var context
 
   @Injected(\.getEIDRequestCaseFilesUseCase) private var getEIDRequestFilesUseCase
   @Injected(\.submitEIDRequestFileUseCase) private var submitEIDRequestFileUseCase
   @Injected(\.submitEIDRequestUseCase) private var submitEIDRequestUseCase
+  @Injected(\.deleteEIDRequestCaseFileUseCase) private var deleteEIDRequestCaseFileUseCase: DeleteEIDRequestCaseFileUseCaseProtocol
 
   private func sendFiles(_ files: [EIDRequestCaseFile]) async {
-    guard let caseId = router.context.caseId, let authJwt = router.context.authJwt else {
-      return router.eIDRequestError(error: EidRequestError.missingContextInformations, delegate: self)
+    guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else {
+      return destination = .error(ErrorDataset(EidRequestError.missingContextInformations, primaryAction: { [weak self] in
+        self?.retryAction()
+      }))
     }
 
     for file in files {
@@ -153,20 +172,6 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
   private func updateProgress(_ id: UUID, progress: Double) {
     fileUploads[id]?.state = .uploading(progress: progress)
   }
-}
-
-
-extension SubmitEIDRequestFilesViewModel: EIDRequestErrorDelegate {
-
-  func primaryAction(error: any Error) {
-    Task {
-      await retryFailedUploads()
-    }
-  }
-
-  func close() {
-    router.close()
-  }
 
 }
 
@@ -177,6 +182,8 @@ enum FileUploadState: Equatable {
   case uploading(progress: Double)
   case completed
   case failed(Error)
+
+  // MARK: Internal
 
   static func == (lhs: FileUploadState, rhs: FileUploadState) -> Bool {
     switch (lhs, rhs) {
@@ -196,11 +203,17 @@ enum FileUploadState: Equatable {
 // MARK: - FileUploadInfo
 
 struct FileUploadInfo {
-  let file: EIDRequestCaseFile
-  var state: FileUploadState
+
+  // MARK: Lifecycle
 
   init(file: EIDRequestCaseFile) {
     self.file = file
     state = .pending
   }
+
+  // MARK: Internal
+
+  let file: EIDRequestCaseFile
+  var state: FileUploadState
+
 }

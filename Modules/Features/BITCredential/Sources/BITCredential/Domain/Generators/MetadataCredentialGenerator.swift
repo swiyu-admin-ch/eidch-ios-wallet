@@ -1,7 +1,6 @@
 import BITAnyCredentialFormat
 import BITCore
 import BITCredentialShared
-import BITCrypto
 import BITOpenID
 import Factory
 import Foundation
@@ -11,7 +10,8 @@ import Spyable
 
 @Spyable
 protocol MetadataCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential
+  func generate(for anyCredential: AnyCredential, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential
+  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential
 }
 
 // MARK: - MetadataCredentialGenerator
@@ -20,27 +20,43 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, id: UUID, keyBinding: CredentialKeyBinding?, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, issuerDisplays: [CredentialIssuerDisplay], rawCredentialData: RawCredentialData) throws -> VerifiableCredential {
+  func generate(for anyCredential: AnyCredential, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential {
     guard let payload = anyCredential.raw.data(using: .utf8) else {
       throw CredentialError.invalidPayload
     }
     let cluster = createCluster(from: anyCredential.claims, selectedCredential: selectedCredential)
-    let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: id)
+    let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: context.credentialId)
 
     return VerifiableCredential(
-      id: id,
+      id: context.credentialId,
       progressionState: .unaccepted,
       payload: payload,
       status: .unknown,
       clusters: [cluster],
       format: anyCredential.format,
+      selectedConfigurationId: context.selectedCredentialSupportedId,
       issuer: anyCredential.issuer,
-      keyBinding: keyBinding,
-      rawCredentialData: rawCredentialData,
-      issuerDisplays: issuerDisplays,
+      keyBinding: context.keyBinding,
+      rawCredentialData: context.rawCredentialData,
+      issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
       validFrom: anyCredential.validFrom,
       validUntil: anyCredential.validUntil)
+  }
+
+  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential {
+    let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: context.credentialId)
+
+    return DeferredCredential(
+      transactionId: deferredCredentialRequest.transactionId,
+      accessToken: deferredCredentialRequest.accessToken,
+      endpoint: deferredCredentialRequest.endpoint,
+      format: deferredCredentialRequest.format,
+      selectedConfigurationId: context.selectedCredentialSupportedId,
+      issuerDisplays: context.issuerDisplays,
+      displays: credentialDisplays,
+      keyBinding: context.keyBinding,
+      rawCredentialData: context.rawCredentialData)
   }
 
   // MARK: Private

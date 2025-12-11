@@ -1,4 +1,6 @@
 import Alamofire
+import BITActivity
+import BITActivityDetail
 import BITAnalytics
 import BITAppAuth
 import BITCredential
@@ -9,6 +11,7 @@ import BITNetworking
 import BITTheming
 import Factory
 import LocalAuthentication
+import NavigatorUI
 import UIKit
 
 // MARK: - AppDelegate
@@ -33,10 +36,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     setupAdditionalConfigurationsIfNeeded()
     registerDefaultEnvironmentValues()
     registerEnvironmentValues()
-
-    #if targetEnvironment (simulator)
-    registerSimluatorEnvironmentValues()
-    #endif
+    registerViewProviders()
 
     return true
   }
@@ -111,10 +111,14 @@ extension AppDelegate {
     Container.shared.additionalCredentialOfferSchemes.register { [ "swiyu" ] }
   }
 
-  #if targetEnvironment (simulator)
-  private func registerSimluatorEnvironmentValues() {
-    Container.shared.submitEIDRequestUseCase.register { MockSubmitEIDRequestUseCase () }
-    Container.shared.internalContext.register { FakeLAContext() }
+  private func registerViewProviders() {
+    Container.shared.activityDetailViewProvider.register {
+      NavigationViewProvider {
+        switch $0 {
+        case .activityDetail(let activity, let credentialId):
+          ActivityDetailDestinations.activityDetail(activity: activity, credentialId: credentialId)
+        }
+      }
+    }
   }
-  #endif
 }

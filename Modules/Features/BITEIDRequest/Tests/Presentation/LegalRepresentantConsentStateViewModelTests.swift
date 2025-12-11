@@ -10,14 +10,14 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
+
   }
 
   func testInit_inQueueState_legalRepresentantVerified() throws {
     let requestCase = EIDRequestCase.Mock.sampleInQueue
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
 
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestConsentOkAvQueuePrimary)
     XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestConsentOkAvQueueSecondary)
@@ -28,7 +28,7 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     let requestCase = EIDRequestCase.Mock.sampleInQueueNotVerified
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
 
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantPendingConsentInQueuePrimary)
     XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestLegalRepresentantPendingConsentInQueueSecondary)
@@ -39,7 +39,7 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     let requestCase = EIDRequestCase.Mock.sampleAVReady
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
 
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantGivenConsentReadyForAVPrimary)
     XCTAssertEqual(viewModel.primaryButtonText, L10n.tkEidRequestLegalRepresentantPendingConsentStartButton)
@@ -49,7 +49,7 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     let requestCase = EIDRequestCase.Mock.sampleAVReadyNotVerified
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
 
     XCTAssertEqual(viewModel.primaryButtonText, L10n.tkGlobalClose)
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantPendingConsentReadyForAVPrimary)
@@ -59,7 +59,7 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     let requestCase = EIDRequestCase.Mock.sampleExpired
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
 
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestLegalRepresentantPendingConsentExpiredPrimary)
     XCTAssertEqual(viewModel.secondaryText, L10n.tkEidRequestLegalRepresentantPendingConsentExpiredSecondary)
@@ -70,25 +70,24 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     let requestCase = EIDRequestCase.Mock.sampleAVReady
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.avIdentityCheckCalled)
+    XCTAssertEqual(viewModel.destination, .avIdentityCheck)
   }
 
   func testPrimaryAction_inQueueState_close() throws {
     let requestCase = EIDRequestCase.Mock.sampleInQueue
     let requestCaseViewState = try RequestCaseViewState(requestCase)
 
-    viewModel = LegalRepresentantConsentStateViewModel(router: router, state: requestCaseViewState)
+    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
-  private var router: MockEIDRequestRouter!
   private var viewModel: LegalRepresentantConsentStateViewModel!
 }
 

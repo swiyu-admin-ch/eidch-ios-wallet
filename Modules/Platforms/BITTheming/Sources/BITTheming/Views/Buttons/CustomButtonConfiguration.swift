@@ -36,7 +36,7 @@ extension CustomButtonConfiguration {
   public static var primary = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
-    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
+    backgroundColorDisabled: ThemingAssets.Background.Button.primaryDisabled.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
 
   public static var secondary = CustomButtonConfiguration(
@@ -44,12 +44,6 @@ extension CustomButtonConfiguration {
     backgroundColor: ThemingAssets.Background.Button.secondary.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.accentColor.swiftUIColor)
-
-  public static var secondaryReversed = CustomButtonConfiguration(
-    foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
-    foregroundColorDisabled: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
-    backgroundColor: ThemingAssets.Grays.white.swiftUIColor,
-    progressViewTint: ThemingAssets.Label.primary.swiftUIColor)
 
   public static var tertiary = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor,

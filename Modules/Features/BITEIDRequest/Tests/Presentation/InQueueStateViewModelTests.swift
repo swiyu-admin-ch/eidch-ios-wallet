@@ -20,7 +20,7 @@ class InQueueStateViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.fullName, "\(mockEidRequestCase.firstName) \(mockEidRequestCase.lastName)")
     XCTAssertEqual(viewModel.onlineSessionStartOpenAt, mockEidRequestCase.state?.onlineSessionStartOpenAt)
     XCTAssertEqual(viewModel.formattedDate, mockEidRequestCase.state?.onlineSessionStartOpenAt?.longDateFormat)
-    XCTAssertEqual(viewModel.requestCaseId, mockEidRequestCase.id)
+    XCTAssertEqual(viewModel.id, mockEidRequestCase.id)
     XCTAssertNotNil(viewModel.delegate)
   }
 

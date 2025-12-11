@@ -53,6 +53,13 @@ public class RealmDataStore: RealmDataStoreProtocol {
     }
   }
 
+  public func delete(_ data: Results<some Object>, configuration: Realm.Configuration) throws {
+    let realm = try Realm(configuration: configuration)
+    try realm.write {
+      realm.delete(data)
+    }
+  }
+
   @discardableResult
   public func write<Result>(configuration: Realm.Configuration, _ block: () throws -> Result) throws -> Result {
     let realm = try Realm(configuration: configuration)

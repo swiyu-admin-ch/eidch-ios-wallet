@@ -10,34 +10,34 @@ final class GetCredentialsCountUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    verifiableCredentialRepository = VerifiableCredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProcotolSpy()
 
-    Container.shared.verifiableCredentialRepository.register { self.verifiableCredentialRepository }
+    Container.shared.credentialRepository.register { self.credentialRepository }
     useCase = GetCredentialsCountUseCase()
   }
 
   func testExecuteTrue_Success() async throws {
-    verifiableCredentialRepository.countReturnValue = 1
+    credentialRepository.countReturnValue = 1
 
     let count = try await useCase.execute()
 
-    XCTAssertTrue(verifiableCredentialRepository.countCalled)
+    XCTAssertTrue(credentialRepository.countCalled)
     XCTAssertEqual(count, 1)
   }
 
   func testExecuteFalse_Success() async throws {
-    verifiableCredentialRepository.countReturnValue = 0
+    credentialRepository.countReturnValue = 0
 
     let count = try await useCase.execute()
 
-    XCTAssertTrue(verifiableCredentialRepository.countCalled)
+    XCTAssertTrue(credentialRepository.countCalled)
     XCTAssertEqual(count, 0)
   }
 
   // MARK: Private
 
   // swiftlint: disable all
-  private var verifiableCredentialRepository: VerifiableCredentialRepositoryProcotolSpy!
+  private var credentialRepository: CredentialRepositoryProcotolSpy!
   private var useCase: GetCredentialsCountUseCase!
   // swiftlint: enable all
 

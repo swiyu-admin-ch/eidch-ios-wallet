@@ -1,0 +1,41 @@
+publiccodeYmlVersion: 0.4.0
+name: swiyu iOS Wallet
+applicationSuite: swiyu Trust Infrastructure
+url: https://github.com/swiyu-admin-ch/eidch-ios-wallet
+platforms:
+  - ios
+categories:
+  - digital-citizenship
+  - identity-management
+usedBy:
+  - Federal Office of Justice
+  - Federal Office of Information Technology, Systems and Telecommunication
+  - Fedpol
+  - Astra
+developmentStatus: beta
+softwareType: standalone/mobile
+description:
+  en:
+    localisedName: swiyu iOS Wallet
+    shortDescription: iOS Wallet App for the swiyu Trust Infrastructure
+    longDescription: The wallet can best be described as a secure, digital application (e.g., installed on a mobile device) that stores and manages digital credentials issued to individuals. This wallet is the primary interface through which individual holders (e.g. citizens and residents) interact with other participants.
+    apiDocumentation: https://swiyu-admin-ch.github.io/technology-stack/
+    features:
+      - Identity wallet
+      - Request, hold and present verifiable credentials
+legal:
+  license: MIT
+maintenance:
+  type: internal
+  contacts:
+   - name: Andre Kunz
+     email: info@swiyu.admin.ch
+     affiliation: Federal Office of Justice
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - en
+    - de
+    - fr
+    - it
+    - rm

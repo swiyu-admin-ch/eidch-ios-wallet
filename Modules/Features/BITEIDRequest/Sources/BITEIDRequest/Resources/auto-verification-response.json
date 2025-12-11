@@ -1,0 +1,6 @@
+{
+  "jwt": "jwt",
+  "use_nfc": true,
+  "scan_document": false,
+  "record_document_video": false
+}

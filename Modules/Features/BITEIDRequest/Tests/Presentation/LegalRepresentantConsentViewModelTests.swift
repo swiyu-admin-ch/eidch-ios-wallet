@@ -9,29 +9,22 @@ class LegalRepresentantConsentViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
-    viewModel = LegalRepresentantConsentViewModel(router: router, caseId: caseId)
+    viewModel = LegalRepresentantConsentViewModel(caseId: caseId)
   }
 
   func testObtainConsent() {
     viewModel.obtainConsent()
-    XCTAssertEqual(router.legalRepresentantQRCodeArgument, caseId)
+    XCTAssertEqual(viewModel.destination, .legalRepresentantQRCode(caseId: caseId))
   }
 
   func testContinueAsParent() {
     viewModel.continueAsParent()
-    XCTAssertEqual(router.legalRepresentantVerificationArgument, caseId)
-  }
-
-  func testClose() {
-    viewModel.close()
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(viewModel.destination, .legalRepresentantVerification(caseId: caseId))
   }
 
   // MARK: Private
 
   private let caseId = "caseId"
-  private var router: MockEIDRequestRouter!
   private var viewModel: LegalRepresentantConsentViewModel!
 }
 

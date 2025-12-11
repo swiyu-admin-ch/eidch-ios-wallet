@@ -1,13 +1,13 @@
+import BITNavigation
 import Factory
 import Foundation
 
 @MainActor
-class LegalRepresentantQRCodeViewModel: ObservableObject {
+class LegalRepresentantQRCodeViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, caseId: String) {
-    self.router = router
+  init(caseId: String) {
     self.caseId = caseId
   }
 
@@ -20,6 +20,8 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
   }
 
   @Published var state = QRCodeViewState.loading
+  @Published var destination: EIDRequestDestinations?
+  @Published var isNavigationCloseTriggered = false
 
   var isShareQRCodeDisabled: Bool {
     state == .loading || state == .error
@@ -28,15 +30,16 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
   func finish() async {
     do {
       let requestCase = try await updateEIDRequestCaseStatusUseCase.execute(for: caseId)
-      let viewState = try RequestCaseViewState(requestCase)
+      let state = try RequestCaseViewState(requestCase)
 
-      if case .unknown = viewState {
-        return router.close()
+      if case .unknown = state {
+        return isNavigationCloseTriggered = true
       }
 
-      router.legalRepresentantConsentState(viewState)
+      destination = .legalRepresentantConsentState(state: state)
     } catch {
-      router.close()
+      #warning("TODO: errors must be managed. We temporary close the flow for now.")
+      isNavigationCloseTriggered = true
     }
   }
 
@@ -54,7 +57,6 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
   // MARK: Private
 
   private let caseId: String
-  private let router: EIDRequestInternalRoutes
 
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
   @Injected(\.getLegalRepresentantVerificationQRCodeUseCase) private var getLegalRepresentantVerificationQRCodeUseCase: GetLegalRepresentantVerificationQRCodeUseCaseProtocol

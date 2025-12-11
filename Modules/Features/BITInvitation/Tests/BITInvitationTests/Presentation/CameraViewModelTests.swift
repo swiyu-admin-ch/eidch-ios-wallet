@@ -30,6 +30,7 @@ final class CameraViewModelTests: XCTestCase {
     Container.shared.getCompatibleCredentialsUseCase.register { self.getCompatibleCredentialsUseCase }
     Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
     Container.shared.getCredentialsCountUseCase.register { self.getCredentialsCountUseCase }
+    Container.shared.saveDeferredCredentialUseCase.register { self.saveDeferredCredentialUseCase }
 
     analyticsProvider = MockProvider()
     analytics = Analytics()
@@ -62,7 +63,7 @@ final class CameraViewModelTests: XCTestCase {
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustInformation.Mock.trustedIdentity)
+    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustInformation.Mock.trustedIdentity)
 
     await viewModel.setMetadataUrl(url)
 
@@ -81,16 +82,19 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testValidateCredentialOffer_deferredCredential_throwsError() async {
+  func testValidateCredentialOffer_deferredCredential_saveCredential() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = .deferred(DeferredCredential.Mock.sample)
+    fetchCredentialUseCase.executeFromReturnValue = (DeferredCredential.Mock.sample, nil)
 
     await viewModel.setMetadataUrl(url)
 
-    XCTAssertEqual(viewModel.error, .invalidQRCode)
+    XCTAssertTrue(router.closeWithCompletionCalled)
+    XCTAssertTrue(mockDelegate.didSaveDeferredCredentialCalled)
+    XCTAssertEqual(saveDeferredCredentialUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(saveDeferredCredentialUseCase.executeForReceivedDeferredCredential, DeferredCredential.Mock.sample)
   }
 
   @MainActor
@@ -103,7 +107,7 @@ final class CameraViewModelTests: XCTestCase {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
 
-    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustInformation.Mock.trustedIdentity)
+    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustInformation.Mock.trustedIdentity)
 
     await viewModel.setMetadataUrl(url)
 
@@ -132,7 +136,7 @@ final class CameraViewModelTests: XCTestCase {
     getCredentialsCountUseCase.executeReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = .credential(credential, TrustInformation.Mock.trustedIdentity)
+    fetchCredentialUseCase.executeFromReturnValue = (credential, TrustInformation.Mock.trustedIdentity)
 
     viewModel = createViewModel(mode: .deeplink(url: url))
     await viewModel.onAppear()
@@ -289,7 +293,6 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testValidatePresentationWithMultipleCredentialSuccess() async throws {
     let context = PresentationRequestContext.Mock.vcSdJwtSample
-    context.inputDescriptorId = "test-id"
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
     fetchPresentationRequestUseCase.executeUrlReturnValue = context
@@ -438,9 +441,11 @@ final class CameraViewModelTests: XCTestCase {
   private var getCompatibleCredentialsUseCase = GetCompatibleCredentialsUseCaseProtocolSpy()
   private var fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
   private var getCredentialsCountUseCase = GetCredentialsCountUseCaseProtocolSpy()
+  private var saveDeferredCredentialUseCase = SaveDeferredCredentialUseCaseProtocolSpy()
   private var mockRequestObject: RequestObject!
   private var router = InvitationRouterMock()
 
+  private let mockDelegate = InvitationDelegateSpy()
   private var viewModel: CameraViewModel!
   private var mockCredentialWithKeyBinding: (AnyCredential, VaultKeyPair?)!
   private let url = URL(string: "openid-credential-offer://url")!
@@ -461,8 +466,8 @@ extension CameraViewModelTests {
   @MainActor
   private func createViewModel(mode: InvitationMode = .qr) -> CameraViewModel {
     switch mode {
-    case .qr: CameraViewModel(router: router)
-    case .deeplink(let url): CameraViewModel(url: url, router: router)
+    case .qr: CameraViewModel(router: router, delegate: mockDelegate)
+    case .deeplink(let url): CameraViewModel(url: url, router: router, delegate: mockDelegate)
     }
   }
 

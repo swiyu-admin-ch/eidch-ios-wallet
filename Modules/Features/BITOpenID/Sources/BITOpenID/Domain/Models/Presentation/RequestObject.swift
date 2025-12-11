@@ -39,6 +39,7 @@ public class RequestObject: Codable {
   public let clientId: String
   public let clientIdScheme: String?
   public let responseMode: String
+  public var raw: Data?
 
   public var firstInputDescriptor: InputDescriptor? {
     presentationDefinition.inputDescriptors.first
@@ -143,6 +144,11 @@ extension ClientMetadata {
         .lazy
         .compactMap { values[$0] }
         .first ?? values[""]
+    }
+
+    /// Returns all localized displays keyed by their locale identifier.
+    public func getAllDisplays() -> [String: T] {
+      values
     }
 
     // MARK: Private

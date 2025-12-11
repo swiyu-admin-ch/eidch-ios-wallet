@@ -15,116 +15,23 @@
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:swiyu.xcodeproj",
-        "identifier" : "18E63AF93FE788D4E42ADFD3",
-        "name" : "swiyuTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITNetworking",
-        "identifier" : "BITNetworkingTests",
-        "name" : "BITNetworkingTests"
+        "containerPath" : "container:Modules\/Features\/BITInvitation",
+        "identifier" : "BITInvitationTests",
+        "name" : "BITInvitationTests"
       }
     },
     {
       "target" : {
-        "containerPath" : "container:Modules\/Features\/BITCredentialShared",
-        "identifier" : "BITCredentialSharedTests",
-        "name" : "BITCredentialSharedTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITDeeplink",
-        "identifier" : "BITDeeplinkTests",
-        "name" : "BITDeeplinkTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITSdJWT",
-        "identifier" : "BITSdJWTTests",
-        "name" : "BITSdJWTTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITAppAuth",
-        "identifier" : "BITAppAuthTests",
-        "name" : "BITAppAuthTests"
+        "containerPath" : "container:Modules\/Features\/BITAppAttestation",
+        "identifier" : "BITAppAttestationTests",
+        "name" : "BITAppAttestationTests"
       }
     },
     {
       "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITJWT",
-        "identifier" : "BITJWTTests",
-        "name" : "BITJWTTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITCredential",
-        "identifier" : "BITCredentialTests",
-        "name" : "BITCredentialTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITSettings",
-        "identifier" : "BITSettingsTests",
-        "name" : "BITSettingsTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITQRCode",
-        "identifier" : "BITQRCodeTests",
-        "name" : "BITQRCodeTests"
-      }
-    },
-    {
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITAnyCredentialFormat",
-        "identifier" : "BITAnyCredentialFormatTests",
-        "name" : "BITAnyCredentialFormatTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITDataStore",
-        "identifier" : "BITDataStoreTests",
-        "name" : "BITDataStoreTests"
-      }
-    },
-    {
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITHome",
-        "identifier" : "BITHomeTests",
-        "name" : "BITHomeTests"
-      }
-    },
-    {
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITOpenID",
-        "identifier" : "BITOpenIDTests",
-        "name" : "BITOpenIDTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITOnboarding",
-        "identifier" : "BITOnboardingTests",
-        "name" : "BITOnboardingTests"
+        "containerPath" : "container:Modules\/Platforms\/BITNavigation",
+        "identifier" : "BITNavigationTests",
+        "name" : "BITNavigationTests"
       }
     },
     {
@@ -138,49 +45,9 @@
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITVault",
-        "identifier" : "BITVaultTests",
-        "name" : "BITVaultTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITAnalytics",
-        "identifier" : "BITAnalyticsTests",
-        "name" : "BITAnalyticsTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITInvitation",
-        "identifier" : "BITInvitationTests",
-        "name" : "BITInvitationTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITAppInfo",
-        "identifier" : "BITAppInfoTests",
-        "name" : "BITAppInfoTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Features\/BITPresentation",
-        "identifier" : "BITPresentationTests",
-        "name" : "BITPresentationTests"
-      }
-    },
-    {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITCore",
-        "identifier" : "BITCoreTests",
-        "name" : "BITCoreTests"
+        "containerPath" : "container:Modules\/Platforms\/BITNetworking",
+        "identifier" : "BITNetworkingTests",
+        "name" : "BITNetworkingTests"
       }
     },
     {
@@ -194,9 +61,47 @@
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:Modules\/Platforms\/BITTheming",
-        "identifier" : "BITThemingTests",
-        "name" : "BITThemingTests"
+        "containerPath" : "container:Modules\/Platforms\/BITDataStore",
+        "identifier" : "BITDataStoreTests",
+        "name" : "BITDataStoreTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITOca",
+        "identifier" : "BITOcaTests",
+        "name" : "BITOcaTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:swiyu.xcodeproj",
+        "identifier" : "18E63AF93FE788D4E42ADFD3",
+        "name" : "swiyuTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITAnyCredentialFormat",
+        "identifier" : "BITAnyCredentialFormatTests",
+        "name" : "BITAnyCredentialFormatTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITQRCode",
+        "identifier" : "BITQRCodeTests",
+        "name" : "BITQRCodeTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITCredential",
+        "identifier" : "BITCredentialTests",
+        "name" : "BITCredentialTests"
       }
     },
     {
@@ -209,16 +114,24 @@
     },
     {
       "target" : {
-        "containerPath" : "container:Modules\/Features\/BITOca",
-        "identifier" : "BITOcaTests",
-        "name" : "BITOcaTests"
+        "containerPath" : "container:Modules\/Features\/BITHome",
+        "identifier" : "BITHomeTests",
+        "name" : "BITHomeTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITPresentation",
+        "identifier" : "BITPresentationTests",
+        "name" : "BITPresentationTests"
       }
     },
     {
       "target" : {
-        "containerPath" : "container:Modules\/Features\/BITAppAttestation",
-        "identifier" : "BITAppAttestationTests",
-        "name" : "BITAppAttestationTests"
+        "containerPath" : "container:Modules\/Features\/BITCredentialDetail",
+        "identifier" : "BITCredentialDetailTests",
+        "name" : "BITCredentialDetailTests"
       }
     },
     {
@@ -226,6 +139,123 @@
         "containerPath" : "container:Modules\/Features\/BITEntities",
         "identifier" : "BITEntitiesTests",
         "name" : "BITEntitiesTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITOpenID",
+        "identifier" : "BITOpenIDTests",
+        "name" : "BITOpenIDTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITCredentialShared",
+        "identifier" : "BITCredentialSharedTests",
+        "name" : "BITCredentialSharedTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITSdJWT",
+        "identifier" : "BITSdJWTTests",
+        "name" : "BITSdJWTTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITSettings",
+        "identifier" : "BITSettingsTests",
+        "name" : "BITSettingsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITAppAuth",
+        "identifier" : "BITAppAuthTests",
+        "name" : "BITAppAuthTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITAnalytics",
+        "identifier" : "BITAnalyticsTests",
+        "name" : "BITAnalyticsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITVault",
+        "identifier" : "BITVaultTests",
+        "name" : "BITVaultTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITAppInfo",
+        "identifier" : "BITAppInfoTests",
+        "name" : "BITAppInfoTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITActivity",
+        "identifier" : "BITActivityTests",
+        "name" : "BITActivityTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITActivityDetail",
+        "identifier" : "BITActivityDetailTests",
+        "name" : "BITActivityDetailTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITCore",
+        "identifier" : "BITCoreTests",
+        "name" : "BITCoreTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITJWT",
+        "identifier" : "BITJWTTests",
+        "name" : "BITJWTTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITOnboarding",
+        "identifier" : "BITOnboardingTests",
+        "name" : "BITOnboardingTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITDeeplink",
+        "identifier" : "BITDeeplinkTests",
+        "name" : "BITDeeplinkTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Platforms\/BITTheming",
+        "identifier" : "BITThemingTests",
+        "name" : "BITThemingTests"
       }
     }
   ],

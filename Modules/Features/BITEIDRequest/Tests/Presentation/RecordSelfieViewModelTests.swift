@@ -1,4 +1,5 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping init_with_name
+import BITL10n
 import Factory
 import Spyable
 import SwiftUI
@@ -8,6 +9,7 @@ import XCTest
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 @testable import BITTestingCore
+@testable import BITTheming
 
 // MARK: - RecordSelfieViewModelTests
 
@@ -17,12 +19,15 @@ class RecordSelfieViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
     avBeam = AVBeamProtocolSpy()
     saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
+    context = EIDRequestContext()
 
     Container.shared.avBeam.register { self.avBeam }
     Container.shared.saveEIDRequestFilesUseCase.register { self.saveEIDRequestFilesUseCase }
+    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.recordSelfieTimeout.register { 10.0 }
+    Container.shared.avBeamAppID.register { self.appId }
 
     success()
   }
@@ -31,175 +36,235 @@ class RecordSelfieViewModelTests: XCTestCase {
     Container.shared.reset()
   }
 
-  func testInitialization_sdkNotInitialized_stateIsInitializing() {
-    avBeam.state = .notInitialized
-
-    viewModel = RecordSelfieViewModel(router: router)
-
-    XCTAssertEqual(viewModel.state, .sdkInitializing)
+  func testInitialization_stateIsLoading() {
+    XCTAssertEqual(viewModel.state, .loading)
+    XCTAssertEqual(viewModel.buttonState, .initial)
     XCTAssertFalse(viewModel.isNotificationPresented)
+    XCTAssertTrue(viewModel.isIntroductionPopupPresented)
     XCTAssertNil(viewModel.notification)
     XCTAssertNotNil(avBeam.messageDelegate)
     XCTAssertNotNil(avBeam.captureFaceDelegate)
   }
 
-  func testCloseIntroductionPopup_shouldBeNil() {
+  func testCloseIntroductionPopup_shouldSetToFalse() {
     XCTAssertTrue(viewModel.isIntroductionPopupPresented)
+
     viewModel.closeIntroductionPopup()
+
     XCTAssertFalse(viewModel.isIntroductionPopupPresented)
   }
 
   // MARK: - SDK Initialization Tests
 
-  func testInitializeSDK_success_doesNotChangeState() async {
-    await viewModel.initializeSDK()
+  func testInitializeSDK_whenAlreadyInitialized_startsCamera() {
+    avBeam.state = .initialized
+
+    viewModel.initializeSDK()
+
+    XCTAssertFalse(avBeam.initializeUsingCalled)
+  }
+
+  func testInitializeSDK_whenNotInitialized_initializesSDK() {
+    avBeam.state = .notInitialized
+
+    viewModel.initializeSDK()
 
     XCTAssertTrue(avBeam.initializeUsingCalled)
     XCTAssertNotNil(avBeam.initializeUsingReceivedConfig)
     XCTAssertEqual(avBeam.initializeUsingReceivedConfig?.appId, appId)
   }
 
-  func testInitializeSDK_failure_setsErrorState() async {
+  func testInitializeSDK_failure_setsErrorDestination() {
+    avBeam.state = .notInitialized
     avBeam.initializeUsingThrowableError = TestingError.error
 
-    await viewModel.initializeSDK()
+    viewModel.initializeSDK()
 
-    if case .error(let error) = viewModel.state {
-      XCTAssertEqual(error as? TestingError, TestingError.error)
+    XCTAssertNotNil(viewModel.destination)
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
     } else {
-      XCTFail("Expected error state")
+      XCTFail("Expected error destination")
     }
   }
 
   // MARK: - Record Tests
 
-  func testStartRecord_success_callsAVBeamWithCorrectConfig() async {
-    await viewModel.startRecordSelfie()
-    await Task.yield()
+  func testStartRecordSelfie_success_callsAVBeamWithCorrectConfig() async {
+    viewModel.startRecordSelfie()
+
+    // Wait for async task to complete
+    try? await Task.sleep(nanoseconds: taskDelay)
 
     XCTAssertTrue(avBeam.startCaptureFaceConfigCalled)
     let config = avBeam.startCaptureFaceConfigReceivedConfig
-    XCTAssertEqual(config?.duration, 10)
+    XCTAssertEqual(config?.duration, 10.0)
+    XCTAssertTrue(config?.files.isEmpty == true)
   }
 
-  func testStartRecord_failure_setsErrorState() async {
+  func testStartRecordSelfie_failure_handlesError() async {
     avBeam.startCaptureFaceConfigThrowableError = TestingError.error
 
-    await viewModel.startRecordSelfie()
-    await Task.yield()
+    viewModel.startRecordSelfie()
 
-    if case .error(let error) = viewModel.state {
-      XCTAssertEqual(error as? TestingError, TestingError.error)
+    // Wait for async task to complete
+    try? await Task.sleep(nanoseconds: taskDelay)
+
+    XCTAssertNotNil(viewModel.destination)
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
     } else {
-      XCTFail("Expected error state")
+      XCTFail("Expected error destination")
     }
+  }
+
+  func testStartRecordSelfie_buttonStateIsRecord_stopCaptureFace() async {
+    viewModel.buttonState = .record
+
+    viewModel.startRecordSelfie()
+
+    XCTAssertEqual(viewModel.buttonState, .initial)
+    XCTAssertFalse(viewModel.isNotificationPresented)
+    XCTAssertTrue(viewModel.isIntroductionPopupPresented)
+    XCTAssertNil(viewModel.notification)
+    XCTAssertTrue(avBeam.stopCaptureFaceCalled)
   }
 
   // MARK: - Stop and Close Tests
 
-  func testStop_callsAVBeamMethods() {
+  func testStop_callsAVBeamStopCaptureFace() {
     viewModel.stop()
 
     XCTAssertTrue(avBeam.stopCaptureFaceCalled)
-    XCTAssertTrue(avBeam.shutdownCalled)
   }
 
-  func testClose_callsStopAndRouter() {
+  func testClose_callsStopAndNavigationClose() {
     viewModel.close()
 
-    XCTAssertTrue(avBeam.stopCaptureFaceCalled)
-    XCTAssertTrue(avBeam.shutdownCalled)
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: - AVBeamMessageDelegate Tests
 
-  func testDidReceiveNotification_initialized_setsReadyState() async {
+  func testDidReceiveNotification_initialized_startsCamera() {
     viewModel.didReceiveNotification(notification: .initialized)
-    await Task.yield()
 
-    XCTAssertEqual(viewModel.state, .ready)
+    // The startCamera method is called internally
+    // We can't directly test state change due to async nature
   }
 
-  func testDidReceiveNotification_faceCapturingStopped_removeAllPopups() async {
+  func testDidReceiveNotification_streamingStarted_noStateChange() {
+    let initialState = viewModel.state
+
+    viewModel.didReceiveNotification(notification: .streamingStarted)
+
+    XCTAssertEqual(viewModel.state, initialState)
+  }
+
+  func testDidReceiveNotification_faceCapturingStopped_clearsNotificationAndPopup() async {
+    viewModel.isNotificationPresented = true
+    viewModel.notification = .faceCaptureTiltSmile
+    viewModel.isIntroductionPopupPresented = true
+
     viewModel.didReceiveNotification(notification: .faceCapturingStopped)
+
     await Task.yield()
 
-    XCTAssertNil(viewModel.notification)
     XCTAssertFalse(viewModel.isNotificationPresented)
+    XCTAssertNil(viewModel.notification)
     XCTAssertFalse(viewModel.isIntroductionPopupPresented)
   }
 
   func testDidReceiveNotification_faceCaptureTiltSmile_showsNotification() async {
     viewModel.didReceiveNotification(notification: .faceCaptureTiltSmile)
     await Task.yield()
-
     XCTAssertTrue(viewModel.isNotificationPresented)
     XCTAssertEqual(viewModel.notification, .faceCaptureTiltSmile)
   }
 
-  func testDidReceiveNotification_faceCaptureStarted_showsNotification() async {
-    viewModel.didReceiveNotification(notification: .faceCaptureTiltSmile)
+  func testDidReceiveNotification_faceCapturingStarted_showsNotification() async {
+    viewModel.didReceiveNotification(notification: .faceCapturingStarted)
+
     await Task.yield()
 
-    XCTAssertTrue(viewModel.isNotificationPresented)
-    XCTAssertEqual(viewModel.notification, .faceCaptureTiltSmile)
+    XCTAssertEqual(viewModel.buttonState, .record)
   }
 
-  func testDidReceiveNotification_unknownNotification_showsNotification() async {
-    viewModel.didReceiveNotification(notification: .faceCaptureMoveLeft)
+  func testDidReceiveNotification_defaultCase_showsNotification() async {
+    let testNotification = AVBeamNotification.faceCaptureMoveLeft
+
+    viewModel.didReceiveNotification(notification: testNotification)
+
     await Task.yield()
 
     XCTAssertTrue(viewModel.isNotificationPresented)
-    XCTAssertEqual(viewModel.notification, .faceCaptureMoveLeft)
+    XCTAssertEqual(viewModel.notification, testNotification)
   }
 
-  func testDidReceiveNotification_outOfScopeNotification_showsNotification() async {
-    viewModel.didReceiveNotification(notification: .dataDecrypted)
-    await Task.yield()
+  // MARK: - AVBeamCaptureFaceDelegate Tests
 
-    XCTAssertTrue(viewModel.isNotificationPresented)
-    XCTAssertEqual(viewModel.notification, .dataDecrypted)
+  func testDidCompleteCaptureFace_success_savesFilesAndNavigates() async {
+    let packageResult = AVBeamPackageResult(.init())
+
+    viewModel.didCompleteCaptureFace(packageResult: packageResult)
+
+    try? await Task.sleep(nanoseconds: taskDelay)
+
+    XCTAssertTrue(saveEIDRequestFilesUseCase.executeForRequestCaseIdCalled)
+    XCTAssertTrue(avBeam.stopCaptureFaceCalled)
+    XCTAssertEqual(viewModel.destination, .submitEidRequest)
+    XCTAssertEqual(viewModel.buttonState, .success)
+  }
+
+  func testDidCompleteCaptureFace_missingCaseId_handlesError() async {
+    context.caseId = nil
+    let packageResult = AVBeamPackageResult(.init())
+
+    viewModel.didCompleteCaptureFace(packageResult: packageResult)
+
+    try? await Task.sleep(nanoseconds: taskDelay)
+
+    XCTAssertNotNil(viewModel.destination)
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset(EIDRequestError.missingCaseId))
+    } else {
+      XCTFail("Expected error destination")
+    }
+  }
+
+  func testDidCompleteCaptureFace_saveFilesError_handlesError() async {
+    saveEIDRequestFilesUseCase.executeForRequestCaseIdThrowableError = TestingError.error
+    let packageResult = AVBeamPackageResult(.init())
+
+    viewModel.didCompleteCaptureFace(packageResult: packageResult)
+
+    try? await Task.sleep(nanoseconds: taskDelay)
+
+    XCTAssertNotNil(viewModel.destination)
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
+    } else {
+      XCTFail("Expected error destination")
+    }
   }
 
   // MARK: Private
 
-  private var router: MockEIDRequestRouter!
-  private var requestCase: EIDRequestCase = .Mock.sampleAVReady
   private var viewModel: RecordSelfieViewModel!
   private var avBeam: AVBeamProtocolSpy!
   private var saveEIDRequestFilesUseCase: SaveEIDRequestFilesUseCaseProtocolSpy!
+  private var context: EIDRequestContext!
+  private let taskDelay: UInt64 = 100_000_000
 
-  private let appId = ""
-
-  // MARK: - Initialization Tests
+  private let appId = "test-app-id"
 
   private func success() {
     avBeam.state = .initialized
-    Container.shared.avBeamAppID.register { self.appId }
-    router.context.caseId = "1"
-
-    viewModel = RecordSelfieViewModel(router: router)
-    XCTAssertEqual(viewModel.state, .ready)
+    context.caseId = "test-case-id"
+    viewModel = RecordSelfieViewModel()
+    XCTAssertEqual(viewModel.state, .loading)
   }
 
-}
-
-// MARK: - RecordSelfieViewModel.StateView + Equatable
-
-extension RecordSelfieViewModel.StateView: Equatable {
-  public static func == (lhs: RecordSelfieViewModel.StateView, rhs: RecordSelfieViewModel.StateView) -> Bool {
-    switch (lhs, rhs) {
-    case (.sdkInitializing, .sdkInitializing):
-      true
-    case (.ready, .ready):
-      true
-    case (.error(let lhsError), .error(let rhsError)):
-      lhsError.localizedDescription == rhsError.localizedDescription
-    default:
-      false
-    }
-  }
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping

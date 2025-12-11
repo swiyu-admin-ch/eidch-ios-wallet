@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import BITCrypto
 import BITJWT
 import BITNetworking
@@ -14,4 +15,5 @@ public protocol OpenIDRepositoryProtocol {
   func fetchAccessToken(from url: URL, preAuthorizedCode: String) async throws -> AccessToken
   func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList>
+  func refreshDeferredCredential(from url: URL, transactionId: String, acccessToken: String, format: String) async throws -> AnyCredential
 }

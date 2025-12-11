@@ -10,6 +10,7 @@ import Foundation
 // MARK: - MockOpenIDRepository
 
 struct MockOpenIDRepository: OpenIDRepositoryProtocol {
+
   func fetchVcSchemaData(from url: URL) async throws -> VcSchema {
     TypeMetadata.Mock.vcSchemaData
   }
@@ -40,6 +41,10 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
     try TokenStatusList.Mock.credentialStatusSample()
+  }
+
+  func refreshDeferredCredential(from url: URL, transactionId: String, acccessToken: String, format: String) async throws -> any AnyCredential {
+    try VcSdJwtPayload.Mock.validSample()
   }
 
 }

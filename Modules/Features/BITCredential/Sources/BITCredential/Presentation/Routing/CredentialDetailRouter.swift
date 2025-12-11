@@ -5,7 +5,7 @@ import SwiftUI
 
 // MARK: - CredentialDetailRouter
 
-final class CredentialDetailRouter: Router<UIViewController>, CredentialDetailInternalRoutes { }
+final class CredentialDetailRouter: Router<UIViewController> { }
 
 @MainActor
 extension CredentialDetailRoutes where Self: RouterProtocol {
@@ -17,13 +17,5 @@ extension CredentialDetailRoutes where Self: RouterProtocol {
 
     let viewController = module.viewController
     open(viewController, on: self.viewController, as: style)
-  }
-}
-
-extension CredentialDetailInternalRoutes where Self: RouterProtocol {
-
-  func wrongData() {
-    let viewController = UINavigationController(rootViewController: UIHostingController(rootView: CredentialDetailWrongDataView(router: self)))
-    open(viewController, as: ModalOpeningStyle(animatedWhenPresenting: true))
   }
 }

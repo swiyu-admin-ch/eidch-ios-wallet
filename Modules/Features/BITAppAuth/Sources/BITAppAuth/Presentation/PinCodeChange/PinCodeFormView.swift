@@ -52,7 +52,6 @@ struct PinCodeFormView: View {
 
   @Binding private var pinCode: String
   @FocusState private var inputFocused: Bool
-  @AccessibilityFocusState private var errorFocusedState: Bool
   @AccessibilityFocusState private var focus: Focus?
   @Environment(\.sizeCategory) private var sizeCategory
 

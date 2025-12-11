@@ -1,6 +1,8 @@
+import BITEIDRequestShared
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - LegalRepresentantConsentStateView
@@ -9,8 +11,8 @@ struct LegalRepresentantConsentStateView: View {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, state: RequestCaseViewState) {
-    viewModel = Container.shared.legalRepresentantConsentStateViewModel((router, state))
+  init(state: RequestCaseViewState) {
+    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantConsentStateViewModel(state))
   }
 
   // MARK: Internal
@@ -23,6 +25,9 @@ struct LegalRepresentantConsentStateView: View {
       footer: {
         DefaultInformationFooterView(primaryButtonLabel: viewModel.primaryButtonText, primaryButtonAction: viewModel.primaryAction)
       })
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+      .navigate(to: $viewModel.destination)
+      .toolbar(.visible)
   }
 
   // MARK: Private
@@ -34,7 +39,7 @@ struct LegalRepresentantConsentStateView: View {
     case startDateText
   }
 
-  private var viewModel: LegalRepresentantConsentStateViewModel
+  @StateObject private var viewModel: LegalRepresentantConsentStateViewModel
 }
 
 extension LegalRepresentantConsentStateView {

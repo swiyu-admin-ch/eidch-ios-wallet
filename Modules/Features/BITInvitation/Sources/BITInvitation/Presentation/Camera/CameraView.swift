@@ -11,8 +11,8 @@ struct CameraView: View {
 
   // MARK: Lifecycle
 
-  init(router: InvitationRouterRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.cameraViewModel(router))
+  init(router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
+    _viewModel = StateObject(wrappedValue: Container.shared.cameraViewModel((router, delegate)))
   }
 
   // MARK: Internal

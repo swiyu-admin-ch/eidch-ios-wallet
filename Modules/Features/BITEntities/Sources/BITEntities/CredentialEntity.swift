@@ -5,6 +5,7 @@ public class CredentialEntity: Object {
 
   @Persisted(primaryKey: true) public var id: UUID
   @Persisted public var format: String
+  @Persisted public var selectedConfigurationId: String?
   @Persisted public var createdAt = Date()
 
   @Persisted public var eIDRequestCase: EIDRequestCaseEntity?
@@ -15,5 +16,6 @@ public class CredentialEntity: Object {
 
   @Persisted public var issuerDisplays = List<CredentialIssuerDisplayEntity>()
   @Persisted public var displays = List<CredentialDisplayEntity>()
+  @Persisted public var activities = List<CredentialActivityEntity>()
 
 }

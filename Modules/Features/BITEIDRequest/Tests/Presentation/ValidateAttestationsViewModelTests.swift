@@ -5,8 +5,10 @@ import Spyable
 import XCTest
 @testable import BITAppAttestation
 @testable import BITEIDRequest
+@testable import BITL10n
 @testable import BITLocalAuthentication
 @testable import BITTestingCore
+@testable import BITTheming
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_cast
 
@@ -18,7 +20,6 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    router = MockEIDRequestRouter()
     userSession = SessionSpy()
     fetchAttestationsUseCase = FetchAttestationsUseCaseProtocolSpy()
     mockContext = LAContextProtocolSpy()
@@ -41,8 +42,12 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
     await viewModel.fetchAttestations()
 
     XCTAssertFalse(fetchAttestationsUseCase.executeCalled)
-    XCTAssertFalse(router.legalRepresentantCalled)
-    XCTAssertEqual(router.validateAttestationsError as! UserSessionError, .notLoggedIn)
+
+    if case .validateAttestationError = viewModel.destination {
+      XCTAssert(true)
+    } else {
+      XCTFail("Expected legalRepresentantConsentState case")
+    }
   }
 
   @MainActor
@@ -54,7 +59,7 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
     let elapsedTime = Date().timeIntervalSince(startTime)
 
     XCTAssertTrue(fetchAttestationsUseCase.executeCalled)
-    XCTAssertTrue(router.legalRepresentantCalled)
+    XCTAssertEqual(viewModel.destination, .legalRepresentant)
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
@@ -67,7 +72,12 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertTrue(router.clientAttestationErrorCalled)
+    XCTAssertEqual(viewModel.destination, .error(ErrorDataset(
+      primary: L10n.tkEidRequestClientAttestationErrorPrimary,
+      secondary: L10n.tkEidRequestClientAttestationErrorSecondary,
+      tertiary: L10n.tkEidRequestClientAttestationErrorTertiary,
+      primaryActionLabel: L10n.tkEidRequestClientAttestationErrorPrimaryButton,
+      secondaryActionLabel: L10n.tkEidRequestClientAttestationErrorSecondaryButton)))
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
@@ -80,7 +90,11 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertTrue(router.keyAttestationErrorCalled)
+    XCTAssertEqual(viewModel.destination, .error(ErrorDataset(
+      primary: L10n.tkEidRequestKeyAttestationErrorPrimary,
+      secondary: L10n.tkEidRequestKeyAttestationErrorSecondary,
+      tertiary: L10n.tkEidRequestKeyAttestationErrorTertiary,
+      primaryActionLabel: L10n.tkEidRequestKeyAttestationErrorPrimaryButton)))
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
@@ -100,7 +114,7 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
       try await Task.sleep(nanoseconds: 2_000_000_000)
     }
 
-    viewModel = ValidateAttestationsViewModel(router: router)
+    viewModel = ValidateAttestationsViewModel()
 
     let startTime = Date()
     await viewModel.fetchAttestations()
@@ -116,7 +130,7 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
       try await Task.sleep(nanoseconds: 1_000_000_000)
     }
 
-    viewModel = ValidateAttestationsViewModel(router: router)
+    viewModel = ValidateAttestationsViewModel()
 
     let startTime = Date()
     await viewModel.fetchAttestations()
@@ -129,14 +143,14 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
   // MARK: Private
 
   private var viewModel: ValidateAttestationsViewModel!
-  private var router: MockEIDRequestRouter!
   private var userSession: SessionSpy!
   private var fetchAttestationsUseCase: FetchAttestationsUseCaseProtocolSpy!
   private var mockContext: LAContextProtocolSpy!
 
+  @MainActor
   private func success() {
     userSession.context = mockContext
-    viewModel = ValidateAttestationsViewModel(router: router)
+    viewModel = ValidateAttestationsViewModel()
   }
 }
 

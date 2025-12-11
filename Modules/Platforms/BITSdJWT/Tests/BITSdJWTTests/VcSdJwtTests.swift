@@ -1,8 +1,6 @@
-// swiftlint:disable implicitly_unwrapped_optional
 import Factory
 import Foundation
 import XCTest
-@testable import BITCrypto
 @testable import BITJWT
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
@@ -14,37 +12,39 @@ final class VcSdJwtTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-    decoder = SdJWSDecoder()
   }
 
-  func testDecode_allFields() throws {
-    let vcSdJwt = VcSdJwtPayload.Mock.allFieldsData
+  func testDecode_allFields_success() throws {
+    let vcSdJwt = VcSdJwtPayload.Mock.sample
     try assertVcSdJwt(vcSdJwt)
   }
 
-  // MARK: - Hotfix decoding
-
-  func testDecode_expandedFormat_success() throws {
-    let vcSdJwt = VcSdJwtPayload.ExpandedMock.validSample
+  func testDecode_withoutKeyBinding_success() throws {
+    let vcSdJwt = VcSdJwtPayload.Mock.noKeyBinding
     try assertVcSdJwt(vcSdJwt)
   }
 
-  func testDecode_expandedFormatWithoutJWK_success() throws {
-    let vcSdJwt = VcSdJwtPayload.ExpandedMock.sampleWithoutJwk
-    try assertVcSdJwt(vcSdJwt)
+  func testDecode_withOneReservedClaim_success() throws {
+    let vcSdJwt = VcSdJwtPayload.Mock.reservedClaimsWithOneClaim
+    try assertVcSdJwt(vcSdJwt, vctMetadataUri: Self.vctUrlMock, vctMetadataUriIntegrity: Self.vctIntegrityMock)
   }
 
-  func testDecode_expandedFormatWithoutKeyDetails_success() throws {
-    let vcSdJwt = VcSdJwtPayload.ExpandedMock.sampleWithoutKeyDetails
-    try assertVcSdJwt(vcSdJwt)
+  func testDecode_vctMetadataUri_success() throws {
+    let vcSdJwt = VcSdJwtPayload.Mock.vctMetadataUri
+    try assertVcSdJwt(
+      vcSdJwt,
+      vct: "identity_credential",
+      vctIntegrity: nil,
+      vctMetadataUri: Self.vctUrlMock,
+      vctMetadataUriIntegrity: Self.vctIntegrityMock)
   }
 
   // MARK: Private
 
-  private var decoder: SdJWSDecoder!
+  private static let vctUrlMock = "https://credentials.example.com/identity_credential"
+  private static let vctIntegrityMock = "sha265-onXnKxyPhvWaqkNqWgpL0r1lEoBfLIsJQfFuY5ydHPg"
 
-  private func assertVcSdJwt(_ data: Data) throws {
-    let vcSdJwt = try decoder.decode(VcSdJwtPayload.self, from: data)
+  private func assertVcSdJwt(_ vcSdJwt: VcSdJwt, vct: String = vctUrlMock, vctIntegrity: String? = vctIntegrityMock, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil) throws {
     let payload = vcSdJwt.payload
     let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 285, uri: "https://example.com/statuslist/example.jwt"))
 
@@ -52,8 +52,10 @@ final class VcSdJwtTests: XCTestCase {
     XCTAssertEqual(payload.issuer, "did:tdw:example")
     XCTAssertEqual(payload.activatedAt, Date(timeIntervalSince1970: 1722499200))
     XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 1767168000))
-    XCTAssertEqual(payload.vct, "https://credentials.example.com/identity_credential")
-    XCTAssertEqual(payload.vctIntegrity, "sha265-onXnKxyPhvWaqkNqWgpL0r1lEoBfLIsJQfFuY5ydHPg")
+    XCTAssertEqual(payload.vct, vct)
+    XCTAssertEqual(payload.vctIntegrity, vctIntegrity)
+    XCTAssertEqual(payload.vctMetadataUri, vctMetadataUri)
+    XCTAssertEqual(payload.vctMetadataUriIntegrity, vctMetadataUriIntegrity)
     XCTAssertEqual(payload.statusList, expectedStatusList)
     XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1739282713))
   }

@@ -21,7 +21,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
   func testExecute_vcSdJwt_returnsOcaBundle() async throws {
     success(format: .vcSdJwt)
 
-    let ocaBundle = try await useCase.execute(for: anyCredentialSpy)
+    let ocaBundle = try await useCase.execute(anyCredential: anyCredentialSpy)
 
     XCTAssertNotNil(ocaBundle)
   }
@@ -29,9 +29,9 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
   func testExecute_vcSdJwt_argumentsPassed() async throws {
     success(format: .vcSdJwt)
 
-    _ = try await useCase.execute(for: anyCredentialSpy)
+    _ = try await useCase.execute(anyCredential: anyCredentialSpy)
 
-    XCTAssertEqual(fetchVcMetadataForVcSdJwtUseCaseSpy.executeForReceivedAnyCredential?.raw, anyCredentialSpy.raw)
+    XCTAssertEqual(fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReceivedAnyCredential?.raw, anyCredentialSpy.raw)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.count, 1)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.first, keyMock)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.jsonSchema, vcSdJwtJsonSchemaMock)
@@ -39,18 +39,18 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
 
   func testExecute_vcSdJwtNilVcSchemaAndNilOca_returnsNil() async throws {
     success(format: .vcSdJwt)
-    fetchVcMetadataForVcSdJwtUseCaseSpy.executeForReturnValue = (nil, nil)
+    fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReturnValue = (nil, nil)
 
-    let ocaBundle = try await useCase.execute(for: anyCredentialSpy)
+    let ocaBundle = try await useCase.execute(anyCredential: anyCredentialSpy)
 
     XCTAssertNil(ocaBundle)
   }
 
   func testExecute_vcSdJwtNilVcSchema_returnsOcaBundle() async throws {
     success(format: .vcSdJwt)
-    fetchVcMetadataForVcSdJwtUseCaseSpy.executeForReturnValue = (nil, vcSdJwtOcaBundleMock)
+    fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReturnValue = (nil, vcSdJwtOcaBundleMock)
 
-    let ocaBundle = try await useCase.execute(for: anyCredentialSpy)
+    let ocaBundle = try await useCase.execute(anyCredential: anyCredentialSpy)
 
     XCTAssertNotNil(ocaBundle)
     XCTAssertFalse(jsonSchemaValidatorSpy.validateDictionaryWithCalled)
@@ -58,10 +58,10 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
 
   func testExecute_vcSdJwtFailure_throwsError() async throws {
     success(format: .vcSdJwt)
-    fetchVcMetadataForVcSdJwtUseCaseSpy.executeForThrowableError = TestingError.error
+    fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(for: anyCredentialSpy)
+      _ = try await useCase.execute(anyCredential: anyCredentialSpy)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -73,7 +73,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = false
 
     do {
-      _ = try await useCase.execute(for: anyCredentialSpy)
+      _ = try await useCase.execute(anyCredential: anyCredentialSpy)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .invalidVcSchema)
@@ -85,7 +85,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     jsonSchemaValidatorSpy.validateDictionaryWithThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(for: anyCredentialSpy)
+      _ = try await useCase.execute(anyCredential: anyCredentialSpy)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -96,7 +96,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     anyCredentialSpy.format = "invalid"
 
     do {
-      _ = try await useCase.execute(for: anyCredentialSpy)
+      _ = try await useCase.execute(anyCredential: anyCredentialSpy)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? CredentialFormatError, .formatNotSupported)
@@ -107,16 +107,16 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
 
   private var useCase = FetchVcMetadataUseCase()
   private var anyCredentialSpy = AnyCredentialSpy()
-  private var fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForAnyCredentialUseCaseProtocolSpy()
+  private var fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForCredentialUseCaseProtocolSpy()
   private var jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
-  private var dispatcherMock: [CredentialFormat: FetchVcMetadataForAnyCredentialUseCaseProtocolSpy]!
+  private var dispatcherMock: [CredentialFormat: FetchVcMetadataForCredentialUseCaseProtocolSpy]!
   private let vcSdJwtOcaBundleMock = "vcSdJwtOcaBundle".data(using: .utf8)!
   private let vcSdJwtJsonSchemaMock = "vcSdJwtJsonSchema".data(using: .utf8)!
   private let keyMock = "testKey"
 
   private func registerMocks() {
     anyCredentialSpy = AnyCredentialSpy()
-    fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForAnyCredentialUseCaseProtocolSpy()
+    fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForCredentialUseCaseProtocolSpy()
     jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
     dispatcherMock = [.vcSdJwt: fetchVcMetadataForVcSdJwtUseCaseSpy]
 
@@ -130,7 +130,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
       anyCredentialSpy.format = CredentialFormat.vcSdJwt.rawValue
       anyCredentialSpy.raw = "vcSdJwtPayload"
       anyCredentialSpy.getClaimsDictionaryReturnValue = [keyMock: "testValue"]
-      fetchVcMetadataForVcSdJwtUseCaseSpy.executeForReturnValue = (vcSdJwtJsonSchemaMock, vcSdJwtOcaBundleMock)
+      fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReturnValue = (vcSdJwtJsonSchemaMock, vcSdJwtOcaBundleMock)
       jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = true
     }
   }

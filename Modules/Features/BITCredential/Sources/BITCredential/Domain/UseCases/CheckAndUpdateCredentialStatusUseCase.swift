@@ -37,7 +37,7 @@ struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseC
 
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
   @Injected(\.statusValidators) private var validators: [AnyStatusType: any AnyStatusCheckValidatorProtocol]
-  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
+  @Injected(\.credentialRepository) private var credentialRepository
   @Injected(\.dateBuffer) private var dateBuffer: TimeInterval
 }
 
@@ -74,7 +74,7 @@ extension CheckAndUpdateCredentialStatusUseCase {
     var credentialCopy = credential
     credentialCopy.status = status
 
-    return try await verifiableCredentialRepository.update(credentialCopy)
+    return try await credentialRepository.update(verifiableCredential: credentialCopy)
   }
 
 }

@@ -45,7 +45,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     let context = FetchCredentialContext(
       format: metadataWrapper.selectedCredential.format,
       selectedCredential: metadataWrapper.selectedCredential,
-      credentialOffers: offer.credentialConfigurationIds,
       credentialIssuer: metadataWrapper.credentialMetadata.credentialIssuer,
       holderBindingContext: holderBindingContext,
       accessToken: accessToken,

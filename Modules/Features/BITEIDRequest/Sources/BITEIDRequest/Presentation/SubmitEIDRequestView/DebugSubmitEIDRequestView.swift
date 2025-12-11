@@ -1,16 +1,11 @@
 import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 
 struct DebugSubmitEIDRequestView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.submitEIDRequestFilesViewModel(router))
-  }
 
   // MARK: Internal
 
@@ -55,11 +50,13 @@ struct DebugSubmitEIDRequestView: View {
         await viewModel.submit()
       }
     }
+    .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: SubmitEIDRequestFilesViewModel
+  @InjectedObject(\.submitEIDRequestFilesViewModel) private var viewModel: SubmitEIDRequestFilesViewModel
+  @Environment(\.navigator) private var navigator
 
   @ViewBuilder
   private func footer() -> some View {
@@ -119,10 +116,14 @@ struct FileUploadRow: View {
         .foregroundColor(.blue)
         .frame(width: 24, height: 24)
 
-      Text(uploadInfo.file.fileName)
-        .font(.body)
-        .fontWeight(.medium)
-        .lineLimit(2)
+      VStack(alignment: .leading) {
+        Text(uploadInfo.file.fileName)
+          .font(.body)
+          .fontWeight(.medium)
+          .lineLimit(2)
+        Text("\(uploadInfo.file.data.sizeInKB) KB")
+          .foregroundStyle(.secondary)
+      }
 
       Spacer()
 
@@ -145,9 +146,6 @@ struct FileUploadRow: View {
             ProgressView()
               .scaleEffect(0.7)
           }
-          ProgressView(value: progress)
-            .frame(width: 60)
-            .scaleEffect(x: 1, y: 0.5)
         }
 
       case .completed:
@@ -155,9 +153,6 @@ struct FileUploadRow: View {
           Image(systemName: "checkmark.circle.fill")
             .foregroundColor(.green)
             .font(.title2)
-          Text("Done")
-            .font(.caption)
-            .foregroundColor(.green)
         }
 
       case .failed(let error):
@@ -171,13 +166,16 @@ struct FileUploadRow: View {
             .font(.caption)
             .foregroundColor(.blue)
           }
-          Text("Failed")
-            .font(.caption)
-            .foregroundColor(.red)
         }
       }
     }
     .padding()
   }
 
+}
+
+extension Data {
+  var sizeInKB: Double {
+    Double(count) / 1024.0
+  }
 }

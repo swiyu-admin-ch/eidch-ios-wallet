@@ -11,9 +11,8 @@ extension MRZ {
 
     static var sampleValues: [String] {
       [
-        "ID<<<I7A<<<<<<7<<<<<<<<<<<<<<<",
-        "1001015X3012316<<<<<<<<<<<<<<2",
-        "MINDERJAEHRIGE<<ANNETTE<<<<<<<",
+        "PM<<<WALLET<TESTER<A<Q<<HELVETIA<<<<<<<<<<<<",
+        "S0A00L12<0<<<9508015X3209251<<<<<<<<<<<<<<04",
       ]
     }
 

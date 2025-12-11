@@ -57,8 +57,8 @@ extension Container {
     self { [] }
   }
 
-  public var declinePresentationUseCase: Factory<DeclinePresentationUseCaseProtocol> {
-    self { DeclinePresentationUseCase() }
+  public var defaultDeferredCredentialInterval: Factory<Int> {
+    self { 5 }
   }
 
   // MARK: Internal
@@ -144,7 +144,7 @@ extension Container {
     }
   }
 
-  var fetchVcMetadataForAnyCredentialDispatcher: Factory<[CredentialFormat: FetchVcMetadataForAnyCredentialUseCaseProtocol]> {
+  var fetchVcMetadataForAnyCredentialDispatcher: Factory<[CredentialFormat: FetchVcMetadataForCredentialUseCaseProtocol]> {
     self {
       [
         CredentialFormat.vcSdJwt: FetchVcMetadataForVcSdJwtUseCase(),
@@ -210,6 +210,14 @@ extension Container {
 
   public var trustRegistryTrustedDids: Factory<[String]> {
     self { [ self.trustRegistryDidIntProd(), self.trustRegistryDidProd() ] }
+  }
+
+  public var trustEnvironmentDidRegex: Factory<Regex<Substring>> {
+    self { #/^did:(?:tdw|webvh):[^:]+:identifier-reg\.trust-infra\.swiyu\.admin\.ch:.*/# }
+  }
+
+  public var demoTrustEnvironmentDidRegex: Factory<Regex<Substring>> {
+    self { #/^did:(?:tdw|webvh):[^:]+:identifier-reg\.trust-infra\.swiyu-int\.admin\.ch:.*/# }
   }
 
   // MARK: Internal

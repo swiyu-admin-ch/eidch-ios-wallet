@@ -20,7 +20,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
     router = MockCredentialOfferRouter()
-    createSuccessState()
 
     viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: trustInformationMock, router: router)
   }
@@ -33,26 +32,38 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.trustInformation, trustInformationMock)
   }
 
-  func testUpdateCredentialViewModel_light_setsViewModel() {
-    viewModel.updateCredentialViewModel(with: themeMock)
-
-    XCTAssertEqual(viewModel.credentialViewModel?.credentialDisplay, .Mock.lightEnglish)
-    XCTAssertEqual(viewModel.credentialViewModel?.credential, credentialMock)
-  }
-
   func testUpdateCredentialViewModel_light_argumentsPassed() {
     viewModel.updateCredentialViewModel(with: themeMock)
 
-    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, themeMock)
-    XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, credentialMock.displays)
+    XCTAssertEqual(viewModel.credential.displays, credentialMock.displays)
   }
 
   func testAccept_loadingStateThencloseCalled() async {
     await viewModel.send(event: .accept)
+
     XCTAssertEqual(viewModel.state, .loading)
-
     try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential + 100_000_000)
+    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
+    XCTAssertTrue(router.closeCalled)
+  }
 
+  func testAccept_unknownTrustIdentity_showsAlert() async {
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: .Mock.unknownIdentity, router: router)
+
+    await viewModel.send(event: .accept)
+    XCTAssertEqual(viewModel.state, .result)
+    XCTAssertTrue(viewModel.isUnknownIssuerAlertShown)
+    XCTAssertFalse(router.closeCalled)
+  }
+
+  func testConfirmAccept_unknownTrustIdentity_loadingStateThenCloseCalled() async {
+    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: .Mock.unknownIdentity, router: router)
+
+    await viewModel.send(event: .confirmAccept)
+
+    XCTAssertEqual(viewModel.state, .loading)
+    try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential + 100_000_000)
+    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
     XCTAssertTrue(router.closeCalled)
   }
 
@@ -102,7 +113,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private var router: MockCredentialOfferRouter!
   private var delayAfterAcceptingCredential: UInt64 = 0
   private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
-  private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
   // swiftlint:enable all
 
   private let issuerDisplaysMock = CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)
@@ -110,12 +120,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private func registerMocks() {
     Container.shared.delayAfterAcceptingCredential.register { self.delayAfterAcceptingCredential }
     Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCaseSpy }
-    Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
     Container.shared.preferredUserLanguageCodes.register { ["de"] }
-  }
-
-  private func createSuccessState() {
-    getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = .Mock.lightEnglish
   }
 
 }

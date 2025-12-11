@@ -1,18 +1,10 @@
-class AVWelcomeViewModel {
+import SwiftUI
 
-  // MARK: Lifecycle
+class AVWelcomeViewModel: ObservableObject {
 
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
-
-  // MARK: Internal
+  @Published var destination: EIDRequestDestinations?
 
   func primaryAction() {
-    router.walletPairing()
+    destination = .walletPairing
   }
-
-  // MARK: Private
-
-  private let router: EIDRequestInternalRoutes
 }

@@ -1,40 +1,26 @@
 import AVFoundation
 import BITEIDRequestShared
+import BITNavigation
+import Factory
 import SwiftUI
 
-class DocumentSelectionViewModel: ObservableObject {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes, cameraPermission: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)) {
-    self.router = router
-    self.cameraPermission = cameraPermission
-
-  }
+class DocumentSelectionViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Internal
 
-  func didSelect(_ type: IdentityType) {
-    router.context.identityType = type
+  @Published var isNavigationCloseTriggered = false
+  @Published var destination: EIDRequestDestinations?
 
-    switch cameraPermission {
-    case .authorized:
-      router.scanDocument()
-    default:
-      router.cameraPermission()
-    }
+  func didSelect(_ type: IdentityType) {
+    context.identityType = type
+    destination = .scanDocument
   }
 
   func mrzMockData() {
-    router.mrzMockData()
-  }
-
-  func close() {
-    router.close()
+    destination = .mrzMockData
   }
 
   // MARK: Private
 
-  private let router: EIDRequestInternalRoutes
-  private let cameraPermission: AVAuthorizationStatus
+  @Injected(\.eidRequestContext) private var context
 }

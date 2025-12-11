@@ -40,6 +40,7 @@ struct OcaClaimGenerator: OcaClaimGeneratorProtocol {
       valueType: valueType?.rawValue ?? ValueType(ocaAttribute).rawValue,
       valueDisplayInfo: valueDisplayInfo,
       order: ocaAttribute.order ?? Int(Int16.max),
+      isSensitive: ocaAttribute.isSensitive,
       displays: createClaimDisplays(from: ocaAttribute, value: value))
   }
 

@@ -1,30 +1,24 @@
 import BITL10n
+import BITNavigation
 import DeviceCheck
 import Spyable
 import SwiftUI
 
-// MARK: - ValidateAttestationsErrorDelegate
-
-@Spyable
-protocol ValidateAttestationsErrorDelegate: AnyObject {
-  func didTapPrimaryAction()
-}
-
 // MARK: - ValidateAttestationsErrorViewModel
 
-class ValidateAttestationsErrorViewModel: ObservableObject {
+class ValidateAttestationsErrorViewModel: ObservableObject, NavigationClosable, NavigationBackable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes, delegate: ValidateAttestationsErrorDelegate, error: Error) {
-    self.router = router
-    self.delegate = delegate
-    self.error = error
+  init(error: ErrorWrapper, callback: @escaping (Void) -> Void) {
+    self.error = error.error
+    self.callback = callback
   }
 
   // MARK: Internal
 
-  weak var delegate: ValidateAttestationsErrorDelegate?
+  @Published var isNavigationCloseTriggered = false
+  @Published var isNavigationBackTriggered = false
 
   var primaryText: String {
     switch error {
@@ -70,17 +64,13 @@ class ValidateAttestationsErrorViewModel: ObservableObject {
   }
 
   func primaryAction() {
-    delegate?.didTapPrimaryAction()
-    router.pop()
-  }
-
-  func secondaryAction() {
-    router.close()
+    callback(Void())
+    isNavigationBackTriggered = true
   }
 
   // MARK: Private
 
+  private var callback: (Void) -> Void
   private let error: Error
-  private let router: EIDRequestInternalRoutes
 
 }

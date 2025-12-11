@@ -37,7 +37,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   public static let reservedClaimNames: Set<String> = [
     "iss", "sub", "aud", "exp", "iat", "nbf", "jti", // JWT
     "_sd_alg", "_sd", // SD-JWT
-    "cnf", "vct", "status", "vct#integrity", // VcSdJwt
+    "cnf", "vct", "status", "vct#integrity", "vct_metadata_uri", "vct_metadata_uri#integrity", // VcSdJwt
   ]
 
   public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy

@@ -2,17 +2,12 @@ import BITL10n
 import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 // MARK: - DocumentSelectionView
 
 struct DocumentSelectionView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.documentSelectionViewModel(router))
-  }
 
   // MARK: Internal
 
@@ -56,16 +51,18 @@ struct DocumentSelectionView: View {
     }
     .scrollContentBackground(.hidden)
     .listStyle(.grouped)
-    .toolbar { CloseButtonToolbar(action: viewModel.close) }
+    .toolbar { CloseButtonToolbar(action: viewModel.navigationClose) }
+    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+    .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: DocumentSelectionViewModel
+  @InjectedObject(\.documentSelectionViewModel) private var viewModel
 }
 
 #Preview {
   NavigationView {
-    DocumentSelectionView(router: EIDRequestRouter())
+    DocumentSelectionView()
   }
 }

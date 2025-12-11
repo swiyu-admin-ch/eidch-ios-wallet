@@ -15,6 +15,7 @@ struct CredentialOfferView: View {
   // MARK: Lifecycle
 
   init(credential: VerifiableCredential, trustInformation: TrustInformation, state: CredentialOfferViewModel.State = .result, router: CredentialOfferInternalRoutes) {
+    self.router = router
     _viewModel = StateObject(wrappedValue: Container.shared.credentialOfferViewModel((credential, trustInformation, state, router)))
   }
 
@@ -34,6 +35,17 @@ struct CredentialOfferView: View {
 
   var body: some View {
     content()
+      .confirmationDialog(L10n.tkReceiveCredentialOfferConfirmIssuancePrimary, isPresented: $viewModel.isUnknownIssuerAlertShown, titleVisibility: .visible) {
+        Button(L10n.tkReceiveCredentialOfferConfirmIssuanceButtonSecondary, role: .destructive) {
+          Task { await viewModel.send(event: .confirmDecline) }
+        }
+        Button(L10n.tkReceiveCredentialOfferConfirmIssuanceButtonPrimary) {
+          Task { await viewModel.send(event: .confirmAccept) }
+        }
+        Button(L10n.tkGlobalCancel, role: .cancel) { }
+      } message: {
+        Text(L10n.tkReceiveCredentialOfferConfirmIssuanceSecondary)
+      }
       .accessibilityAction(named: L10n.tkReceiveCredentialOfferButtonAccept, {
         Task { await viewModel.send(event: .accept) }
       })
@@ -66,6 +78,8 @@ struct CredentialOfferView: View {
   @State private var topInset = CGFloat.zero
 
   @StateObject private var viewModel: CredentialOfferViewModel
+
+  private let router: CredentialOfferInternalRoutes
 
   @Orientation private var orientation
 
@@ -110,8 +124,16 @@ extension CredentialOfferView {
   private func credentialContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
-      if let credentialViewMOdel = viewModel.credentialViewModel {
-        CredentialCard(credentialViewMOdel)
+      if let credentialViewModel = viewModel.credentialViewModel {
+        CredentialCard(
+          name: credentialViewModel.credentialDisplay?.name,
+          summary: credentialViewModel.credentialDisplay?.summary,
+          background: credentialViewModel.credentialDisplay?.backgroundColor,
+          logoBase64: credentialViewModel.credentialDisplay?.logoBase64,
+          environment: credentialViewModel.environment,
+          statusBadgeLabel: credentialViewModel.statusText,
+          statusBadgeImage: credentialViewModel.statusImage,
+          statusBadgeStyle: credentialViewModel.statusBadgeStyle)
           .padding(.horizontal, .x10)
           .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
       }
@@ -143,8 +165,16 @@ extension CredentialOfferView {
   private func loadingContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
-      if let credentialViewMOdel = viewModel.credentialViewModel {
-        CredentialCard(credentialViewMOdel)
+      if let credentialViewModel = viewModel.credentialViewModel {
+        CredentialCard(
+          name: credentialViewModel.credentialDisplay?.name,
+          summary: credentialViewModel.credentialDisplay?.summary,
+          background: credentialViewModel.credentialDisplay?.backgroundColor,
+          logoBase64: credentialViewModel.credentialDisplay?.logoBase64,
+          environment: credentialViewModel.environment,
+          statusBadgeLabel: credentialViewModel.statusText,
+          statusBadgeImage: credentialViewModel.statusImage,
+          statusBadgeStyle: credentialViewModel.statusBadgeStyle)
           .padding(.horizontal, .x10)
           .accessibilityHidden(true)
       }
@@ -203,8 +233,9 @@ extension CredentialOfferView {
   @ViewBuilder
   private func issuerHeader() -> some View {
     if let credentialViewModel = viewModel.credentialViewModel {
-      ActorHeaderView(issuer: credentialViewModel.issuerDisplay, trustInformation: viewModel.trustInformation, topInset: topInset)
-        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+      ActorHeaderView(issuer: credentialViewModel.issuerDisplay, trustInformation: viewModel.trustInformation, topInset: topInset) { badgeType in
+        router.badgeInformation(badgeType: badgeType)
+      }.accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
     }
   }
 
@@ -252,11 +283,9 @@ extension CredentialOfferView {
       Button { Task { await viewModel.send(event: .confirmDecline) } } label: {
         Text(L10n.tkReceiveDeclineOfferPrimaryButton)
           .multilineTextAlignment(.center)
-          .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
           .frame(maxWidth: .infinity)
       }
-      .buttonStyle(.secondaryReversed)
-      .preferredColorScheme(.light)
+      .buttonStyle(.navyBlue)
       .controlSize(.large)
       .accessibilityLabel(L10n.tkReceiveDeclineOfferPrimaryButton)
       .accessibilityIdentifier(AccessibilityIdentifier.confirmDeclineButton.rawValue)
@@ -265,7 +294,6 @@ extension CredentialOfferView {
       Button { Task { await viewModel.send(event: .cancelDecline) } } label: {
         Text(L10n.tkGlobalCancel)
           .multilineTextAlignment(.center)
-          .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
           .frame(maxWidth: .infinity)
       }
       .foregroundStyle(ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor.opacity(0.7))
@@ -360,7 +388,15 @@ extension CredentialOfferView {
       Spacer()
       VStack {
         if let viewModel = viewModel.credentialViewModel {
-          CredentialCard(viewModel)
+          CredentialCard(
+            name: viewModel.credentialDisplay?.name,
+            summary: viewModel.credentialDisplay?.summary,
+            background: viewModel.credentialDisplay?.backgroundColor,
+            logoBase64: viewModel.credentialDisplay?.logoBase64,
+            environment: viewModel.environment,
+            statusBadgeLabel: viewModel.statusText,
+            statusBadgeImage: viewModel.statusImage,
+            statusBadgeStyle: viewModel.statusBadgeStyle)
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
         }

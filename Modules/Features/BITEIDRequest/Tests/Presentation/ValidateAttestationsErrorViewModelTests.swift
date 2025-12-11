@@ -11,15 +11,15 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
 
   @MainActor
   override func setUp() {
-    mockError = NSError(domain: "", code: 0, userInfo: nil)
-    router = MockEIDRequestRouter()
-    delegate = ValidateAttestationsErrorDelegateSpy()
-    viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: mockError)
+    mockError = ErrorWrapper(NSError())
+
+    viewModel = ValidateAttestationsErrorViewModel(error: mockError, callback: { _ in })
   }
 
   @MainActor
   func testInitialState_insufficientKeyStorageResistanceError() {
-    viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: EIDRequestRepository.Error.insufficientKeyStorageResistance)
+    let error = ErrorWrapper(EIDRequestRepository.Error.insufficientKeyStorageResistance)
+    viewModel = ValidateAttestationsErrorViewModel(error: error, callback: { _ in })
 
     XCTAssertFalse(viewModel.isRetryEnabled)
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestClientAttestationInsufficientKeyStorageTitle)
@@ -28,7 +28,8 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_DCErrorTimeoutError() {
-    viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: DCError(.serverUnavailable))
+    let error = ErrorWrapper(DCError(.serverUnavailable))
+    viewModel = ValidateAttestationsErrorViewModel(error: error, callback: { _ in })
 
     XCTAssertTrue(viewModel.isRetryEnabled)
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestClientAttestationDeviceCheckTimeoutTitle)
@@ -37,7 +38,8 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_DCError() {
-    viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: DCError(.invalidInput))
+    let error = ErrorWrapper(DCError(.invalidInput))
+    viewModel = ValidateAttestationsErrorViewModel(error: error, callback: { _ in })
 
     XCTAssertFalse(viewModel.isRetryEnabled)
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestClientAttestationDeviceCheckErrorTitle)
@@ -46,7 +48,8 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_unknownError() {
-    viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: FetchAttestationsUseCaseError.networkError)
+    let error = ErrorWrapper(FetchAttestationsUseCaseError.networkError)
+    viewModel = ValidateAttestationsErrorViewModel(error: error, callback: { _ in })
 
     XCTAssertTrue(viewModel.isRetryEnabled)
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestClientAttestationServiceErrorTitle)
@@ -55,7 +58,7 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_unhandledError() {
-    viewModel = ValidateAttestationsErrorViewModel(router: router, delegate: delegate, error: mockError)
+    viewModel = ValidateAttestationsErrorViewModel(error: mockError, callback: { _ in })
 
     XCTAssertTrue(viewModel.isRetryEnabled)
     XCTAssertEqual(viewModel.primaryText, L10n.tkEidRequestAttestationUnknownErrorPrimary)
@@ -66,22 +69,13 @@ class ValidateAttestationsErrorViewModelTests: XCTestCase {
   func testPrimaryAction() {
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.popCalled)
-    XCTAssertTrue(delegate.didTapPrimaryActionCalled)
-  }
-
-  @MainActor
-  func testSecondaryAction() {
-    viewModel.secondaryAction()
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isNavigationBackTriggered)
   }
 
   // MARK: Private
 
-  private var mockError: Error!
-  private var router: MockEIDRequestRouter!
+  private var mockError: ErrorWrapper!
   private var viewModel: ValidateAttestationsErrorViewModel!
-  private var delegate: ValidateAttestationsErrorDelegateSpy!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping weak_delegate

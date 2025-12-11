@@ -32,11 +32,11 @@ struct HomeView: View {
     content()
       .onAppear {
         UIAccessibility.post(notification: .screenChanged, argument: L10n.tkHomeHomescreenAlt)
+        focus = .scan
+
         Task {
           await viewModel.onAppear()
         }
-
-        focus = .scan
       }
       .accessibilityAction(named: L10n.tkGlobalScanPrimarybutton, {
         viewModel.openScanner()
@@ -46,6 +46,14 @@ struct HomeView: View {
       })
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModels(with: scheme.rawValue)
+      }
+      .popup(isPresented: $viewModel.isCredentialSavedPopupPresented) {
+        savedCredentialPopup()
+      } customize: {
+        $0.type(.floater(verticalPadding: orientation.isPortrait ? 130 : 0))
+          .closeOnTap(true)
+          .autohideIn(5)
+          .appearFrom(.bottomSlide)
       }
       .accessibilityElement(children: .contain)
       .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
@@ -101,10 +109,7 @@ extension HomeView {
       }
     }
     .refreshable {
-      await withTaskGroup(of: Void.self) { group in
-        group.addTask { await viewModel.fetchCredentialStatus() }
-        group.addTask { await viewModel.fetchRequestCaseStatus() }
-      }
+      await viewModel.refresh()
     }
     .listRowSpacing(-10)
     .listStyle(.plain)
@@ -213,11 +218,11 @@ extension HomeView {
 
   @ViewBuilder
   private func credentialsList() -> some View {
-    ForEach(viewModel.credentialViewModels) { credentialViewModel in
-      Button(action: { viewModel.openDetail(for: credentialViewModel.credential) }, label: {
-        CredentialCell(credentialViewModel)
-          .accessibilityIdentifier(AccessibilityIdentifier.credential.rawValue)
+    ForEach(viewModel.credentials, id: \.id) { credentialViewModel in
+      Button(action: { viewModel.openDetail(for: credentialViewModel) }, label: {
+        AnyView(credentialViewModel.view())
       })
+      .accessibilityIdentifier(AccessibilityIdentifier.credential.rawValue)
     }
   }
 
@@ -269,8 +274,13 @@ extension HomeView {
 
   @ViewBuilder
   private func emptyStateView(_ error: Error) -> some View {
-    EmptyStateView(.error(error: error)) { Text(L10n.tkHomeHomescreenEmptyStateButton) } action: { await viewModel.fetchCredentials() }
+    EmptyStateView(.error(error: error)) { Text(L10n.tkHomeHomescreenEmptyStateButton) } action: { await viewModel.refresh() }
       .padding(.horizontal, .x6)
+  }
+
+  @ViewBuilder
+  private func savedCredentialPopup() -> some View {
+    LabelBadge(text: L10n.tkHomeSaveDeferredCredentialPopup, backgroundColor: ThemingAssets.Brand.Bright.firGreen.swiftUIColor, image: "checkmark.circle")
   }
 }
 

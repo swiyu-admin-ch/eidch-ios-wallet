@@ -121,6 +121,30 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
     XCTAssertEqual(expectedFiles.count, filteredFiles.count)
   }
 
+  func testGetFilesByNameAndCategory() async throws {
+    let expectedFiles = EIDRequestCaseFile.Mock.sampleArray
+    let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
+
+    try await repository.save(files: expectedFiles, forRequestCaseId: eIDRequest.id)
+
+    let file = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample.jpg", category: .documentScan)
+
+    XCTAssertEqual(file, expectedFiles.first)
+  }
+
+  func testGetFilesByNameAndCategory_fileNotExisiting_throwsError() async throws {
+    let fileToSave = EIDRequestCaseFile.Mock.sample
+    let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
+
+    try await repository.save(files: [fileToSave], forRequestCaseId: eIDRequest.id)
+
+    do {
+      _ = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample.jpg", category: .documentScan)
+    } catch {
+      XCTAssertEqual(error as? EIDRequestCaseRepositoryError, .notFound)
+    }
+  }
+
   // MARK: Private
 
   private var repository: EIDRequestCaseRepositoryProtocol!

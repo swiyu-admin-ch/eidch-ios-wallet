@@ -4,9 +4,9 @@ import Foundation
 
 extension ActorHeaderView {
 
-  init(verifier: VerifierDisplay, topInset: CGFloat) {
+  init(verifier: VerifierDisplay, topInset: CGFloat, onBadgeTapped: ((BadgeType) -> Void)? = nil) {
     let name = verifier.name ?? L10n.tkPresentVerifierNameUnknown
-    self.init(name: name, trustInformation: verifier.trustInformation, imageData: verifier.logo, topInset: topInset, isIssuance: false)
+    self.init(name: name, trustInformation: verifier.trustInformation, imageData: verifier.logo, topInset: topInset, type: .presentation, onBadgeTapped: onBadgeTapped)
   }
 
 }

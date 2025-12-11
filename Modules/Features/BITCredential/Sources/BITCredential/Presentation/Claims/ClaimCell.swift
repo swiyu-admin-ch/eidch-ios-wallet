@@ -1,4 +1,5 @@
 import BITCredentialShared
+import BITL10n
 import BITTheming
 import Foundation
 import SwiftUI
@@ -19,7 +20,9 @@ public struct ClaimCell: View {
   public var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       if let imageData = viewModel.imageData {
-        KeyValueCustomCell(key: viewModel.nameLabel) {
+        KeyValueCustomCell(key: viewModel.nameLabel, trailingContent: {
+          trailingView
+        }) {
           Image(data: imageData)?
             .resizable()
             .aspectRatio(contentMode: .fit)
@@ -28,8 +31,9 @@ public struct ClaimCell: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, .x6)
       } else {
-        KeyValueCell(key: viewModel.nameLabel, value: viewModel.valueLabel)
-          .padding(.trailing, .x6)
+        KeyValueCell(key: viewModel.nameLabel, value: viewModel.valueLabel) {
+          trailingView
+        }.padding(.trailing, .x6)
           .frame(minHeight: Defaults.minHeight)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
@@ -49,5 +53,15 @@ public struct ClaimCell: View {
 
   private let viewModel: CredentialClaimViewModel
   private let showDivider: Bool
+
+  @ViewBuilder
+  private var trailingView: some View {
+    if viewModel.isSensitive {
+      Badge(label: L10n.tkGlobalSensitiveData)
+        .badgeStyle(.sensitive)
+    } else {
+      EmptyView()
+    }
+  }
 
 }

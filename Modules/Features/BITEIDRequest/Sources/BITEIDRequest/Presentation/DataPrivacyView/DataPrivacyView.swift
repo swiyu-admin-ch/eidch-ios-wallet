@@ -1,15 +1,10 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 struct DataPrivacyView: View {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    viewModel = Container.shared.dataPrivacyViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -22,21 +17,27 @@ struct DataPrivacyView: View {
           primary: L10n.tkEidRequestDataPrivacyTitle,
           secondary: L10n.tkEidRequestDataPrivacyBody,
           tertiary: L10n.tkEidRequestDataPrivacyLinkText,
-          tertiaryAction: viewModel.openHelp)
+          tertiaryAction: { openLink(L10n.tkEidRequestDataPrivacyLinkValue) })
       },
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkEidRequestDataPrivacyPrimaryButton,
-          primaryButtonAction: viewModel.primaryAction)
+          primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.attestation) })
       })
-      .toolbar { CloseButtonToolbar(action: viewModel.close) }
+      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
   }
 
   // MARK: Private
 
-  private var viewModel: DataPrivacyViewModel
+  @Environment(\.navigator) private var navigator
+  @Environment(\.openURL) private var openURL
+
+  private func openLink(_ link: String) {
+    guard let url = URL(string: link) else { return }
+    openURL(url)
+  }
 }
 
 #Preview {
-  DataPrivacyView(router: EIDRequestRouter())
+  DataPrivacyView()
 }

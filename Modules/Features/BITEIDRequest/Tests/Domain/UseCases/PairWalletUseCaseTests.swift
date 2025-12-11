@@ -39,14 +39,13 @@ final class PairWalletUseCaseTests: XCTestCase {
     XCTAssertEqual(validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl, mockWalletPairingResponse.credentialOfferLink)
     XCTAssertEqual(fetchCredentialUseCase.executeFromReceivedOffer, mockCredentialOffer)
 
-    if case .deferred(let credential) = mockFetchCredentialResult {
-      XCTAssertEqual(eIDRequestCaseRepository.getIdReceivedId, caseId)
-      XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.deferredCredential, credential)
-    }
+    XCTAssertEqual(eIDRequestCaseRepository.getIdReceivedId, caseId)
+    XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.deferredCredential, mockFetchCredentialResult.0)
+
   }
 
   func testExecute_receiveCredential_throws() async throws {
-    fetchCredentialUseCase.executeFromReturnValue = .credential(.Mock.sample, .Mock.untrustedIdentity)
+    fetchCredentialUseCase.executeFromReturnValue = (VerifiableCredential.Mock.sample, nil)
 
     do {
       _ = try await useCase.execute(for: caseId)
@@ -115,7 +114,7 @@ final class PairWalletUseCaseTests: XCTestCase {
 
   private let caseId = "caseId"
   private let mockCredentialOffer = CredentialOffer.Mock.sample
-  private var mockFetchCredentialResult: FetchCredentialResult!
+  private var mockFetchCredentialResult: (DeferredCredential, TrustInformation?)!
   private let mockWalletPairingResponse = WalletPairingResponse.Mock.sample
   private let mockEIDRequestCase = EIDRequestCase.Mock.sampleAgentReview
 
@@ -139,7 +138,7 @@ final class PairWalletUseCaseTests: XCTestCase {
   }
 
   private func createSuccessState() {
-    mockFetchCredentialResult = .deferred(.Mock.sample)
+    mockFetchCredentialResult = (DeferredCredential.Mock.sample, nil)
     eIDRequestRepository.pairWalletCaseIdReturnValue = mockWalletPairingResponse
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
     fetchCredentialUseCase.executeFromReturnValue = mockFetchCredentialResult

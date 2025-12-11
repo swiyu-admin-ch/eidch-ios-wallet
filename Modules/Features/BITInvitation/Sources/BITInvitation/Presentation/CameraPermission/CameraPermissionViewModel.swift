@@ -7,8 +7,9 @@ class CameraPermissionViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(initialState: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video), router: InvitationRouterRoutes) {
+  init(initialState: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video), router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
     self.router = router
+    self.delegate = delegate
     cameraPermissionStatus = initialState
 
     if cameraPermissionStatus == .authorized {
@@ -75,11 +76,13 @@ class CameraPermissionViewModel: ObservableObject {
 
   // MARK: Private
 
+  private weak var delegate: InvitationDelegate?
   private var router: InvitationRouterRoutes
+
   @Published private var cameraPermissionStatus: AVAuthorizationStatus
 
   private func openCamera() {
-    router.camera(openingStyle: NavigationPushOpeningStyle())
+    router.camera(openingStyle: NavigationPushOpeningStyle(), delegate: delegate)
   }
 
 }

@@ -4,6 +4,8 @@ import BITCore
 import BITCredential
 import BITCredentialShared
 import BITEIDRequest
+import BITEIDRequestShared
+import BITInvitation
 import BITL10n
 import Combine
 import Factory
@@ -19,8 +21,6 @@ class HomeViewModel: ObservableObject {
 
   init(router: HomeRouterRoutes) {
     self.router = router
-
-    registerNotifications()
   }
 
   // MARK: Internal
@@ -33,7 +33,8 @@ class HomeViewModel: ObservableObject {
 
   @Published var state = State.results
   @Published var requestCases = [RequestCaseViewState]()
-  @Published var credentialViewModels = [CredentialViewModel]()
+  @Published var credentials = [any CredentialViewModelProtocol]()
+  @Published var isCredentialSavedPopupPresented = false
 
   @Injected(\.isEIDRequestFeatureEnabled) var isEIDRequestFeatureEnabled: Bool
 
@@ -44,73 +45,12 @@ class HomeViewModel: ObservableObject {
     }
 
     if isUserLoggedInUseCase.execute() {
-      await withTaskGroup(of: Void.self) { group in
-        group.addTask { await self.fetchCredentials() }
-        group.addTask { await self.getEIDRequestCases() }
-      }
+      await fetchData()
     }
   }
 
-  func fetchCredentials() async {
-    do {
-      let credentials = try await getCredentialListUseCase.execute()
-
-      if credentials.isEmpty {
-        return setState(.empty)
-      }
-
-      setState(.results)
-      withAnimation {
-        self.credentials = credentials
-      }
-    } catch {
-      analytics.log(error)
-
-      if credentials.isEmpty {
-        setState(.error(error))
-      }
-    }
-  }
-
-  func fetchCredentialStatus() async {
-    do {
-      try await checkAndUpdateCredentialStatusUseCase.execute(credentials)
-      await fetchCredentials()
-    } catch {
-      analytics.log(error)
-    }
-  }
-
-  @MainActor
-  func getEIDRequestCases() async {
-    do {
-      requestCases = try await getEIDRequestCaseListUseCase.execute()
-        .compactMap { try? RequestCaseViewState($0, delegate: self) }
-
-      if !requestCases.isEmpty {
-        await fetchRequestCaseStatus()
-      }
-    } catch {
-      requestCases = []
-    }
-  }
-
-  @MainActor
-  func fetchRequestCaseStatus() async {
-    do {
-      requestCases = try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.requestCaseId))
-        .map { try RequestCaseViewState($0, delegate: self) }
-    } catch {
-      // Request cases list is not updated if error
-    }
-  }
-
-  func updateCredentialViewModels(with colorScheme: String) {
-    self.colorScheme = colorScheme
-    credentialViewModels = credentials.map {
-      let display = getCredentialDisplayUseCase.execute(for: $0.displays, colorScheme: colorScheme)
-      return CredentialViewModel(credential: $0, credentialDisplay: display)
-    }
+  func refresh() async {
+    await fetchData()
   }
 
   // MARK: Private
@@ -126,22 +66,14 @@ class HomeViewModel: ObservableObject {
   @Injected(\.enableEIDRequestAfterOnboardingUseCase) private var enableEIDRequestAfterOnboardingUseCase: EnableEIDRequestAfterOnboardingUseCaseProtocol
   @Injected(\.getEIDRequestCaseListUseCase) private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
-  @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
+  @Injected(\.refreshDeferredCredentialUseCase) private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocol
 
-  private var credentials = [VerifiableCredential]() {
-    didSet {
-      updateCredentialViewModels(with: colorScheme)
-    }
-  }
+  private func fetchData() async {
+    await withTaskGroup(of: Void.self) { group in
+      group.addTask { await self.fetchCredentials() }
+      group.addTask { await self.getEIDRequestCases() }
 
-  private func registerNotifications() {
-    NotificationCenter.default.addObserver(forName: .didLogin, object: nil, queue: .main, using: { [weak self] _ in self?.onDidLogin() })
-  }
-
-  private func onDidLogin() {
-    Task {
-      await fetchCredentials()
-      await fetchCredentialStatus()
+      await group.waitForAll()
     }
   }
 
@@ -153,10 +85,12 @@ class HomeViewModel: ObservableObject {
   }
 }
 
+// MARK: - Navigation
+
 extension HomeViewModel {
 
   func openScanner() {
-    router.invitation()
+    router.invitation(delegate: self)
   }
 
   func openSettings() {
@@ -168,8 +102,15 @@ extension HomeViewModel {
     router.openExternalLink(url: url)
   }
 
-  func openDetail(for credential: VerifiableCredential) {
-    router.credentialDetail(credential)
+  func openDetail(for credentialViewModel: any CredentialViewModelProtocol) {
+    guard
+      let viewModel = credentials.first(where: { $0.id == credentialViewModel.id }),
+      let verifiableCredential = viewModel.credential as? VerifiableCredential
+    else {
+      return
+    }
+
+    router.credentialDetail(verifiableCredential)
   }
 
   func openBetaId() {
@@ -179,6 +120,115 @@ extension HomeViewModel {
   func openEIDRequest() {
     router.eIDRequest()
   }
+}
+
+// MARK: - Credentials
+
+extension HomeViewModel {
+
+  // MARK: Internal
+
+  func updateCredentialViewModels(with colorScheme: String) {
+    self.colorScheme = colorScheme
+    credentials = computeViewModels(for: credentials.compactMap { $0.credential as? CredentialProtocol }, with: colorScheme)
+  }
+
+  // MARK: Private
+
+  private func fetchCredentials() async {
+    do {
+      let allCredentials = try await getCredentialListUseCase.execute()
+      updateView(with: allCredentials)
+
+      await refreshCredentials()
+    } catch {
+      analytics.log(error)
+
+      if credentials.isEmpty {
+        setState(.error(error))
+      }
+    }
+  }
+
+  private func refreshCredentials() async {
+    do {
+      let verifiableCredentials = credentials.compactMap { $0.credential as? VerifiableCredential }
+      let deferredCredentials = credentials.compactMap { $0.credential as? DeferredCredential }
+
+      try await withThrowingTaskGroup(of: Void.self) { [weak self] group in
+        guard let self else { return }
+        group.addTask {
+          try await self.checkAndUpdateCredentialStatusUseCase.execute(verifiableCredentials)
+        }
+        group.addTask {
+          try await self.refreshDeferredCredentialUseCase.execute(deferredCredentials)
+        }
+
+        try await group.waitForAll()
+      }
+
+      let credentials = try await getCredentialListUseCase.execute()
+      updateView(with: credentials)
+    } catch {
+      analytics.log(error)
+    }
+  }
+
+  private func updateView(with credentials: [any CredentialProtocol], colorScheme: String = "") {
+    setState(credentials.isEmpty ? .empty : .results)
+
+    withAnimation {
+      self.credentials = computeViewModels(for: credentials, with: colorScheme)
+    }
+  }
+
+  private func computeViewModels(for credentials: [any CredentialProtocol], with colorScheme: String = String()) -> [any CredentialViewModelProtocol] {
+    credentials.compactMap {
+      if let verifiableCredential = $0 as? VerifiableCredential {
+        return VerifiableCredentialViewModel(credential: verifiableCredential, colorScheme: colorScheme)
+      }
+
+      if let deferredCredential = $0 as? DeferredCredential {
+        return DeferredCredentialViewModel(credential: deferredCredential, colorScheme: colorScheme)
+      }
+
+      return nil
+    }
+  }
+
+}
+
+
+extension HomeViewModel {
+
+  @MainActor
+  private func getEIDRequestCases() async {
+    do {
+      let temporaryRequestCases = try await getEIDRequestCaseListUseCase.execute()
+      updateView(with: temporaryRequestCases)
+
+      await refreshRequestCases()
+    } catch {}
+  }
+
+  @MainActor
+  private func refreshRequestCases() async {
+    do {
+      try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.id))
+      let requestCases = try await getEIDRequestCaseListUseCase.execute()
+      updateView(with: requestCases)
+    } catch {
+      // Request cases list is not updated if error
+    }
+  }
+
+  private func updateView(with requestCases: [EIDRequestCase]) {
+    withAnimation {
+      self.requestCases = requestCases
+        .compactMap { try? RequestCaseViewState($0, delegate: self) }
+    }
+  }
+
 }
 
 // MARK: RequestCaseViewStateDelegate
@@ -196,7 +246,7 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 
   func didUpdateRequestCaseState() {
     Task {
-      await fetchRequestCaseStatus()
+      await refreshRequestCases()
     }
   }
 
@@ -206,5 +256,18 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 
   func didOpenExternalLink(url: URL) {
     router.openExternalLink(url: url)
+  }
+
+  func didTapWalletPairing(caseId: String) {
+    router.walletPairing(caseId: caseId)
+  }
+}
+
+// MARK: @preconcurrency InvitationDelegate
+
+extension HomeViewModel: @preconcurrency InvitationDelegate {
+
+  func didSaveDeferredCredential() {
+    isCredentialSavedPopupPresented = true
   }
 }

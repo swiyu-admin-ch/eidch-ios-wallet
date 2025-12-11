@@ -211,12 +211,22 @@ final class CredentialClaimViewModelTests: XCTestCase {
     }
   }
 
+  func testIsSensitive_boolean_returnsBoolean() {
+    for isSensitive in [true, false] {
+      let claim = Self.createClaim(valueType: ValueType.numeric, isSensitive: isSensitive)
+
+      let vm = CredentialClaimViewModel(claim)
+
+      XCTAssertEqual(isSensitive, vm.isSensitive, "Error for: \(isSensitive)")
+    }
+  }
+
   // MARK: Private
 
   private static let mockValue = "value"
 
-  private static func createClaim(key: String = "key", valueType: ValueType = .string, value: String? = mockValue, valueDisplayInfo: String? = nil, displays: [CredentialClaimDisplay] = []) -> CredentialClaim {
-    CredentialClaim(key: key, value: value, valueType: valueType.rawValue, valueDisplayInfo: valueDisplayInfo, displays: displays)
+  private static func createClaim(key: String = "key", valueType: ValueType = .string, value: String? = mockValue, valueDisplayInfo: String? = nil, isSensitive: Bool = false, displays: [CredentialClaimDisplay] = []) -> CredentialClaim {
+    CredentialClaim(key: key, value: value, valueType: valueType.rawValue, valueDisplayInfo: valueDisplayInfo, isSensitive: isSensitive, displays: displays)
   }
 
   private func assertNumericValueLabel(_ language: String, input: String, expected: String) {

@@ -6,6 +6,8 @@ enum MRZError: Error, LocalizedError {
   case malformed(reason: String)
   case invalidLineCount(actual: Int)
 
+  // MARK: Internal
+
   var errorDescription: String? {
     switch self {
     case .malformed(let reason):
@@ -18,7 +20,7 @@ enum MRZError: Error, LocalizedError {
 
 // MARK: - MRZ
 
-struct MRZ: Equatable {
+public struct MRZ: Equatable, Hashable {
 
   // MARK: Lifecycle
 
@@ -55,7 +57,7 @@ struct MRZ: Equatable {
 // MARK: CustomStringConvertible
 
 extension MRZ: CustomStringConvertible {
-  var description: String {
+  public var description: String {
     values.joined(separator: "\n")
   }
 }

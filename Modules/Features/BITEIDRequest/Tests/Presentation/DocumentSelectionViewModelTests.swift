@@ -1,47 +1,38 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
+import AVFoundation
 import Factory
 import XCTest
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
+@MainActor
 class DocumentSelectionViewModelTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
-    router = MockEIDRequestRouter()
-    viewModel = DocumentSelectionViewModel(router: router, cameraPermission: .authorized)
+    context = EIDRequestContext()
+    Container.shared.eidRequestContext.register { self.context }
+    viewModel = DocumentSelectionViewModel()
   }
 
   func testClose() {
-    viewModel.close()
-    XCTAssertTrue(router.closeCalled)
+    viewModel.navigationClose()
+    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   @MainActor
-  func testOpenScannerWithCameraPermission() {
-    viewModel = DocumentSelectionViewModel(router: router, cameraPermission: .authorized)
+  func testOpenScanner() {
     viewModel.didSelect(.identityCard)
 
-    XCTAssertTrue(router.scanDocumentCalled)
-    XCTAssertEqual(router.context.identityType, .identityCard)
-  }
-
-  @MainActor
-  func testOpenScannerWithoutCameraPermission() {
-    viewModel = DocumentSelectionViewModel(router: router, cameraPermission: .notDetermined)
-
-    for identityType in IdentityType.allCases {
-      viewModel.didSelect(identityType)
-      XCTAssertTrue(router.cameraPermissionCalled)
-      XCTAssertEqual(router.context.identityType, identityType)
-    }
+    XCTAssertEqual(viewModel.destination, .scanDocument)
+    XCTAssertEqual(context.identityType, .identityCard)
   }
 
   // MARK: Private
 
-  private var router: MockEIDRequestRouter!
   private var viewModel: DocumentSelectionViewModel!
+  private var context: EIDRequestContext!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping force_try

@@ -1,7 +1,9 @@
+// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import BITNetworking
 import Factory
 import Moya
 import XCTest
+@testable import BITActivity
 @testable import BITAnyCredentialFormat
 @testable import BITCredentialShared
 @testable import BITJWT
@@ -13,6 +15,7 @@ import XCTest
 @testable import BITTestingCore
 @testable import BITVault
 
+@MainActor
 final class SubmitPresentationUseCaseTests: XCTestCase {
 
   // MARK: Internal
@@ -27,12 +30,16 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   func testSubmitPresentation_Success_JustRuns() async throws {
     try await useCase.execute(context: context)
 
-    XCTAssertEqual(spyRepository.submitFromPresentationRequestBodyReceivedArguments?.url, context.requestObject.responseUri)
-    XCTAssertEqual(spyRepository.submitFromPresentationRequestBodyReceivedArguments?.presentationRequestBody, mockPresentationRequestBody)
+    XCTAssertEqual(repositorySpy.submitFromPresentationRequestBodyReceivedArguments?.url, context.requestObject.responseUri)
+    XCTAssertEqual(repositorySpy.submitFromPresentationRequestBodyReceivedArguments?.presentationRequestBody, mockPresentationRequestBody)
 
-    XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
-    XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
-    XCTAssertEqual(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, mockInputDescriptor)
+    XCTAssertEqual(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
+    XCTAssertEqual(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
+    XCTAssertEqual(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, mockInputDescriptor)
+
+    XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
+    XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationAccepted)
+    XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, mockCompatibleCredential.id)
   }
 
   func testSubmitPresentation_NoInputDescriptors_ThrowsException() async throws {
@@ -40,46 +47,52 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
       try await useCase.execute(context: .Mock.vcSdJwtSampleWithoutInputDescriptors)
       XCTFail("Should have thrown an exception")
     } catch BITPresentation.SubmitPresentationError.inputDescriptorsNotFound {
-      XCTAssertFalse(spyRepository.submitFromPresentationRequestBodyCalled)
+      XCTAssertFalse(repositorySpy.submitFromPresentationRequestBodyCalled)
     } catch {
       XCTFail("Not the error expected")
     }
   }
 
   func testSubmitPresentation_NoSelectedCredential_ThrowsException() async throws {
-    context.selectedCredentials = [:]
+    context.selectedCredential = nil
 
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch BITPresentation.SubmitPresentationError.inputDescriptorsNotFound {
-      XCTAssertFalse(spyRepository.submitFromPresentationRequestBodyCalled)
+      XCTAssertFalse(repositorySpy.submitFromPresentationRequestBodyCalled)
     } catch {
       XCTFail("Not the error expected")
     }
   }
 
   func testSubmitPresentation_PresentationRequestBodyGeneratorThrows_ThrowsException() async throws {
-    spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorThrowableError = TestingError.error
+    presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorThrowableError = TestingError.error
 
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorCalled)
+      XCTAssertTrue(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorCalled)
     } catch {
       XCTFail("Not the error expected")
     }
   }
 
+  func testSubmitPresentation_activityServiceThrows_justRuns() async throws {
+    activityServiceSpy.createCredentialIdThrowableError = TestingError.error
+
+    try await useCase.execute(context: context)
+  }
+
   func testSubmitPresentation_RepositoryThrows_ThrowsException() async throws {
-    spyRepository.submitFromPresentationRequestBodyThrowableError = TestingError.error
+    repositorySpy.submitFromPresentationRequestBodyThrowableError = TestingError.error
 
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(spyRepository.submitFromPresentationRequestBodyCalled)
+      XCTAssertTrue(repositorySpy.submitFromPresentationRequestBodyCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -90,31 +103,29 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   private let context = PresentationRequestContext.Mock.vcSdJwtSample
   private var mockPresentationRequestBody = PresentationRequestBody(vpToken: "vpToken", presentationSubmission: PresentationRequestBody.PresentationSubmission(id: "id", definitionId: "definitionId", descriptorMap: []))
 
-  // swiftlint:disable all
   private var mockCompatibleCredential: CompatibleCredential!
   private var mockInputDescriptor: InputDescriptor!
   private var useCase: SubmitPresentationUseCase!
-  private var spyRepository: PresentationRequestRepositoryProtocolSpy!
-  private var spyPresentationRequestBodyGenerator: PresentationRequestBodyGeneratorProtocolSpy!
-
-  // swiftlint:enable all
+  private var repositorySpy: PresentationRequestRepositoryProtocolSpy!
+  private var presentationRequestBodyGeneratorSpy: PresentationRequestBodyGeneratorProtocolSpy!
+  private var activityServiceSpy: ActivityServiceProtocolSpy!
 
   private func setupMocks() {
-    spyRepository = PresentationRequestRepositoryProtocolSpy()
-    spyPresentationRequestBodyGenerator = PresentationRequestBodyGeneratorProtocolSpy()
+    repositorySpy = PresentationRequestRepositoryProtocolSpy()
+    presentationRequestBodyGeneratorSpy = PresentationRequestBodyGeneratorProtocolSpy()
+    activityServiceSpy = ActivityServiceProtocolSpy()
 
-    Container.shared.presentationRequestRepository.register { self.spyRepository }
-    Container.shared.presentationRequestBodyGenerator.register { self.spyPresentationRequestBodyGenerator }
+    Container.shared.presentationRequestRepository.register { self.repositorySpy }
+    Container.shared.presentationRequestBodyGenerator.register { self.presentationRequestBodyGeneratorSpy }
+    Container.shared.activityService.register { self.activityServiceSpy }
 
     mockCompatibleCredential = .Mock.BIT
-    // swiftlint: disable all
     mockInputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first!
-    // swiftlint: enable all
   }
 
   private func success() {
-    context.selectedCredentials[mockInputDescriptor.id] = mockCompatibleCredential
-    spyPresentationRequestBodyGenerator.generateForRequestObjectInputDescriptorReturnValue = mockPresentationRequestBody
+    context.selectedCredential = mockCompatibleCredential
+    presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReturnValue = mockPresentationRequestBody
   }
 
 }

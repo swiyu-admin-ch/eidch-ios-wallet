@@ -1,29 +1,28 @@
+import BITNavigation
 import Factory
 import Foundation
 
-class WalletPairingViewModel {
-
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-  }
+@MainActor
+class WalletPairingViewModel: NavigationClosable {
 
   // MARK: Internal
+
+  @Published var isNavigationCloseTriggered = false
+  @Published var destination: EIDRequestDestinations?
 
   @MainActor
   func primaryAction() async {
     do {
-      guard let caseId = router.context.caseId else {
+      guard let caseId = context.caseId else {
         throw EIDRequestError.missingCaseId
       }
 
       try await startOnlineSessionUseCase.execute(for: caseId)
       try await pairWalletUseCase.execute(for: caseId)
 
-      router.avIdentityCheck()
+      destination = .avIdentityCheck
     } catch EIDRequestRepository.Error.invalidState {
-      router.avIdentityCheck()
+      return destination = .avIdentityCheck
     } catch {
       #warning("TODO: Redirect to error screen")
     }
@@ -32,28 +31,23 @@ class WalletPairingViewModel {
   @MainActor
   func secondaryAction() async {
     do {
-      guard let caseId = router.context.caseId else {
+      guard let caseId = context.caseId else {
         throw EIDRequestError.missingCaseId
       }
 
       try await startOnlineSessionUseCase.execute(for: caseId)
 
-      router.walletPairingList()
+      destination = .walletPairingList
     } catch EIDRequestRepository.Error.invalidState {
-      router.walletPairingList()
+      destination = .walletPairingList
     } catch {
       #warning("TODO: Redirect to error screen")
     }
   }
 
-  func close() {
-    router.close()
-  }
-
   // MARK: Private
 
-  private let router: EIDRequestInternalRoutes
-
+  @Injected(\.eidRequestContext) private var context
   @Injected(\.pairWalletUseCase) private var pairWalletUseCase
   @Injected(\.startOnlineSessionUseCase) private var startOnlineSessionUseCase
 

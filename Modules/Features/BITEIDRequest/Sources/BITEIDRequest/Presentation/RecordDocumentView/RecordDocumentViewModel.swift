@@ -1,26 +1,23 @@
 import BITAVWrapper
 import BITL10n
+import BITNavigation
 import BITNetworking
+import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 // MARK: - RecordDocumentViewModel
 
 @MainActor
-class RecordDocumentViewModel: ObservableObject {
+class RecordDocumentViewModel: ObservableObject, NavigationClosable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestInternalRoutes) {
-    self.router = router
-
+  init() {
     avBeam.messageDelegate = self
     avBeam.recordDocumentDelegate = self
-
-    if avBeam.state == AVBeamState.initialized {
-      state = .ready
-    }
   }
 
   // MARK: Internal
@@ -53,17 +50,19 @@ class RecordDocumentViewModel: ObservableObject {
     }
   }
 
-  enum StateView {
-    case sdkInitializing
-    case ready
-    case error(_ error: Error)
+  enum StateView: Equatable {
+    case loading
+    case camera
   }
 
-  @Published var state = StateView.sdkInitializing
+  @Published var state = StateView.loading
   @Published var introductionPopupState: ScanningState? = .recto
   @Published var isNotificationPresented = false
   @Published var notification: AVBeamNotification? = nil
   @Published var timer: Timer?
+
+  @Published var isNavigationCloseTriggered = false
+  @Published var destination: EIDRequestDestinations?
 
   @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
@@ -74,7 +73,7 @@ class RecordDocumentViewModel: ObservableObject {
   }
 
   var overlayImage: (front: Image, back: Image) {
-    let image: (ImageAsset, ImageAsset) = switch router.context.identityType {
+    let image: (ImageAsset, ImageAsset) = switch context.identityType {
     case .passport:
       (Assets.Camera.passportFront, Assets.Camera.passportBack)
     default:
@@ -89,16 +88,23 @@ class RecordDocumentViewModel: ObservableObject {
 
   func setup() async {
     do {
-      guard let caseId = router.context.caseId else { return }
+      guard let caseId = context.caseId else { return }
 
       let requestCase = try await fetchEIDRequestCaseUseCase.execute(caseId: caseId)
-      router.context.identityType = requestCase.selectedDocumentType
+      context.identityType = .identityCard
+
+      initializeSDK()
     } catch {
       handleError(error)
     }
   }
 
   func initializeSDK() {
+    if avBeam.state == .initialized {
+      startCamera()
+      return
+    }
+
     do {
       let config = AVBeamInitConfig(appId: avBeamAppID)
       try avBeam.initialize(using: config)
@@ -109,23 +115,44 @@ class RecordDocumentViewModel: ObservableObject {
 
   func stop() {
     avBeam.stopRecordDocument()
-    avBeam.shutdown()
   }
 
-  func startRecordDocument() async {
-    Task {
+  func startCamera() {
+    let avBeam = avBeam
+    Task.detached { [weak self] in
       do {
-        let config = AVBeamRecordDocumentConfig(timeout: recordDocumentTimeout)
-        try avBeam.startRecordDocument(config: config)
+        try avBeam.startCamera()
+        await MainActor.run {
+          self?.state = .camera
+        }
       } catch {
-        handleError(error)
+        await MainActor.run {
+          self?.handleError(error)
+        }
+      }
+    }
+  }
+
+  func startRecordDocument() {
+    let config = AVBeamRecordDocumentConfig(timeout: recordDocumentTimeout)
+    let avBeam = avBeam
+    Task.detached { [weak self] in
+      do {
+        try avBeam.startRecordDocument(config: config)
+        await MainActor.run {
+          self?.state = .camera
+        }
+      } catch {
+        await MainActor.run {
+          self?.handleError(error)
+        }
       }
     }
   }
 
   func close() {
     stop()
-    router.close()
+    navigationClose()
   }
 
   func closeIntroductionPopup() {
@@ -134,35 +161,47 @@ class RecordDocumentViewModel: ObservableObject {
 
   // MARK: Private
 
-  private var router: EIDRequestInternalRoutes
-
   @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
   @Injected(\.recordDocumentTimeout) private var recordDocumentTimeout
   @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
   @Injected(\.avBeamAppID) private var avBeamAppID
+  @Injected(\.eidRequestContext) private var context
 
   private func handleError(_ error: Error) {
-    state = .error(error)
+    stop()
+    destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+      self?.reset()
+      self?.startCamera()
+    }))
   }
 
+  private func reset() {
+    scanningState = .recto
+    isNotificationPresented = false
+    notification = nil
+  }
 }
 
 // MARK: AVBeamMessageDelegate
 
-@MainActor
 extension RecordDocumentViewModel: AVBeamMessageDelegate {
 
-  func didReceiveError(error: AVBeamError) {}
+  nonisolated func didReceiveError(error: AVBeamError) {}
 
-  func didReceiveNotification(notification: AVBeamNotification) {
+  nonisolated func didReceiveNotification(notification: AVBeamNotification) {
     Task { @MainActor in
       switch notification {
       case .initialized:
-        self.state = .ready
+        self.startCamera()
+
+      case .streamingStarted:
+        self.startRecordDocument()
+
       case .docRecordingStarted:
-        timer = .scheduledTimer(withTimeInterval: recordDocumentTimeout / 2, repeats: false, block: { @MainActor _ in
+        self.timer = .scheduledTimer(withTimeInterval: self.recordDocumentTimeout / 2, repeats: false, block: { @MainActor _ in
           self.scanningState = .verso
         })
+
       default:
         break
       }
@@ -174,20 +213,18 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
 
 extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
 
-  func didCompleteRecordDocument(packageResult: AVBeamPackageResult) {
+  nonisolated func didCompleteRecordDocument(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       do {
-        guard let caseId = router.context.caseId else { throw EIDRequestError.missingCaseId }
+        try? avBeam.stopCamera()
+        guard let caseId = self.context.caseId else { throw EIDRequestError.missingCaseId }
         let output = RecordDocumentOutput(packageResult)
-        try await saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
-
-        DispatchQueue.main.asyncAfter(deadline: .now()) {
-          self.router.avIntroSelfieVideo()
-        }
+        try await self.saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
+        self.destination = .avIntroSelfieVideo
       } catch {
+        self.handleError(error)
       }
     }
-
   }
 
 }

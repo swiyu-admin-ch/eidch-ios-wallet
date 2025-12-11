@@ -1,7 +1,6 @@
 import BITEIDRequestShared
 import Foundation
 import Spyable
-import SwiftUI
 
 // MARK: - RequestCaseViewStateDelegate
 
@@ -12,6 +11,7 @@ public protocol RequestCaseViewStateDelegate: AnyObject {
   func didUpdateRequestCaseState()
   func didTapObtainConsent(caseId: String)
   func didOpenExternalLink(url: URL)
+  func didTapWalletPairing(caseId: String)
 }
 
 extension RequestCaseViewStateDelegate {
@@ -20,6 +20,7 @@ extension RequestCaseViewStateDelegate {
   func didUpdateRequestCaseState() { }
   func didTapObtainConsent(caseId: String) { }
   func didOpenExternalLink(url: URL) { }
+  func didTapWalletPairing(caseId: String) { }
 }
 
 // MARK: - RequestCaseViewStateError
@@ -31,13 +32,14 @@ enum RequestCaseViewStateError: Error {
 
 // MARK: - RequestCaseViewState
 
-public enum RequestCaseViewState: Identifiable {
+public enum RequestCaseViewState: Identifiable, Hashable {
   case inQueue(InQueueStateViewModel)
   case readyForOnlineSession(ReadyForOnlineSessionStateViewModel)
   case expired(ExpiredStateViewModel)
   case unknown(UnknownStateViewModel)
   case agentReview(AgentReviewStateViewModel)
   case declined(DeclinedStateViewModel)
+  case walletPairing(WalletPairingStateViewModel)
 
   // MARK: Lifecycle
 
@@ -55,8 +57,9 @@ public enum RequestCaseViewState: Identifiable {
       self = try .agentReview(AgentReviewStateViewModel(requestCase: requestCase))
     case .declined:
       self = try .declined(DeclinedStateViewModel(requestCase: requestCase, delegate: delegate))
+    case .inTargetWalletPairing:
+      self = try .walletPairing(WalletPairingStateViewModel(requestCase: requestCase, delegate: delegate))
     case .cancelled,
-         .inTargetWalletPairing,
          .unknown:
       throw RequestCaseViewStateError.unsupportedState
     }
@@ -71,7 +74,8 @@ public enum RequestCaseViewState: Identifiable {
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
-         .unknown(let viewModel as RequestCaseStateBaseViewModel):
+         .unknown(let viewModel as RequestCaseStateBaseViewModel),
+         .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
       viewModel.id
     }
   }
@@ -83,8 +87,9 @@ public enum RequestCaseViewState: Identifiable {
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
-         .unknown(let viewModel as RequestCaseStateBaseViewModel):
-      viewModel.requestCaseId
+         .unknown(let viewModel as RequestCaseStateBaseViewModel),
+         .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
+      viewModel.id
     }
   }
 
@@ -95,38 +100,9 @@ public enum RequestCaseViewState: Identifiable {
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
-         .unknown(let viewModel as RequestCaseStateBaseViewModel):
+         .unknown(let viewModel as RequestCaseStateBaseViewModel),
+         .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
       viewModel.isLegalRepresentantConsentVerified
-    }
-  }
-}
-
-// MARK: Equatable
-
-extension RequestCaseViewState: Equatable {
-  public static func == (lhs: RequestCaseViewState, rhs: RequestCaseViewState) -> Bool {
-    lhs.requestCaseId == rhs.requestCaseId &&
-      lhs.isLegalRepresentantConsentVerified == rhs.isLegalRepresentantConsentVerified
-  }
-}
-
-extension RequestCaseViewState {
-
-  @ViewBuilder
-  func view() -> some View {
-    switch self {
-    case .agentReview(let viewModel):
-      AgentReviewCell(viewModel: viewModel)
-    case .inQueue(let viewModel):
-      InQueueCell(viewModel: viewModel)
-    case .readyForOnlineSession(let viewModel):
-      ReadyForAVCell(viewModel: viewModel)
-    case .expired(let viewModel):
-      ExpiredCell(viewModel: viewModel)
-    case .declined(let viewModel):
-      DeclinedCell(viewModel: viewModel)
-    case .unknown(let viewModel):
-      UnknownCell(viewModel: viewModel)
     }
   }
 }

@@ -11,6 +11,7 @@ extension Container: AutoRegistering {
     pepperKeyVaultOptions.register { .none }
     delayAfterAcceptingCredential.register { 0 }
     loadingDelay.register { 0 }
+    trustEnvironmentDidRegex.register { #/^did:(?:tdw|webvh):[^:]+:identifier-reg-r\.trust-infra\.swiyu\.admin\.ch:.*/# }
 
     openIDRepository.register { MockOpenIDRepository() }
     trustStatementRepository.register { MockTrustStatementRepository() }

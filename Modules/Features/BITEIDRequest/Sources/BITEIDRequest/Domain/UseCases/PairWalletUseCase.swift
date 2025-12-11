@@ -1,4 +1,5 @@
 import BITCredential
+import BITCredentialShared
 import BITOpenID
 import Factory
 import Foundation
@@ -20,9 +21,9 @@ struct PairWalletUseCase: PairWalletUseCaseProtocol {
   func execute(for caseId: String) async throws -> String {
     let walletPairingResponse = try await eIDRequestRepository.pairWallet(caseId: caseId)
     let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(walletPairingResponse.credentialOfferLink)
-    let fetchCredentialResult = try await fetchCredentialUseCase.execute(from: credentialOffer)
+    let (credential, _) = try await fetchCredentialUseCase.execute(from: credentialOffer)
 
-    guard case .deferred(let deferredCredential) = fetchCredentialResult else {
+    guard let deferredCredential = credential as? DeferredCredential else {
       throw FetchCredentialUseCaseError.invalidCredential // Expect only a deferred credential here
     }
 

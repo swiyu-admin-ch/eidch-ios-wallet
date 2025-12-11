@@ -1,0 +1,38 @@
+{
+  "packageData": {
+     "extractedData":{
+        "1":"name"
+     },
+     "errorType":0,
+     "errorCode":0,
+     "errorCodes":[
+
+     ],
+     "status":0,
+     "activeScenario":0,
+     "files":[
+        {
+           "type":31,
+           "description":"description",
+           "data":"bmV3c2luZ2xlb3Vyc2VsdmVzc3RyaWtlZmlmdHlxdWlja2x5Zm9yZWlnbmxpZ2h0aGU="
+        },
+        {
+           "type":40,
+           "description":"description",
+           "data":"bmV3c2luZ2xlb3Vyc2VsdmVzc3RyaWtlZmlmdHlxdWlja2x5Zm9yZWlnbmxpZ2h0aGU="
+        }
+     ]
+  },
+  "url": "https://mock_url",
+  "language": "en",
+  "authToken": "token",
+  "showProgress": true,
+  "popupMessages": {
+    "messages": "messages"
+  },
+  "saveAdditionalFiles": false,
+  "saveAuthResult": false,
+  "saveNfcResult": false,
+  "processId": "processId",
+  "transactionId": "transactionId"
+}

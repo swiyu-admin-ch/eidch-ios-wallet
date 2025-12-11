@@ -30,11 +30,11 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
     didCallExternalSettings = true
   }
 
-  func camera(openingStyle: any OpeningStyle) {
+  func camera(openingStyle: OpeningStyle, delegate: InvitationDelegate?) {
     didCallCamera = true
   }
 
-  func invitation() {
+  func invitation(delegate: InvitationDelegate?) {
     didCallInvitation = true
   }
 

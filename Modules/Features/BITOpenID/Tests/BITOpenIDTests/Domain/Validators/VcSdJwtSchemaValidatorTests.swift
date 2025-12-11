@@ -20,39 +20,31 @@ final class VcSdJwtSchemaValidatorTests: XCTestCase {
   }
 
   func testValidate_argumentsPassed() throws {
-    _ = try validator.validate(claims, schema: schemaCredential)
+    _ = try validator.validate(schema: schemaCredential)
 
-    XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.count, 2)
-    XCTAssertTrue(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary["iss"] as? String == "test")
-    XCTAssertTrue(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary["vct"] as? String == "test")
-    XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.jsonSchema, schemaCredential)
     XCTAssertEqual(jsonSchemaValidatorSpy.validateJsonObjectWithReceivedInvocations.count, 2, "Expected two schema validations to be performed")
   }
 
   func testValidate_schemaValidationPasses_returnsTrue() throws {
-    XCTAssertTrue(try validator.validate(claims, schema: schemaCredential))
-    XCTAssertTrue(jsonSchemaValidatorSpy.validateDictionaryWithCalled)
+    XCTAssertTrue(try validator.validate(schema: schemaCredential))
   }
 
   func testValidate_schemaConformanceFails_returnsFalse() throws {
     jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = false
-    jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = true
 
-    XCTAssertFalse(try validator.validate(claims, schema: schemaCredential))
+    XCTAssertFalse(try validator.validate(schema: schemaCredential))
   }
 
   func testValidate_schemaValidationFails_returnsFalse() throws {
     jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = true
-    jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = false
 
-    XCTAssertFalse(try validator.validate(claims, schema: schemaCredential))
+    XCTAssertTrue(try validator.validate(schema: schemaCredential))
   }
 
   // MARK: Private
 
   private var validator = VcSdJwtSchemaValidator()
 
-  private let claims = VcSdJwtPayload(issuer: "test", vct: "test").asDictionary()
   private let schemaCredential = String.Mock.schemaCredential
 
   private var jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()

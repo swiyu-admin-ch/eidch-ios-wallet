@@ -95,3 +95,18 @@ extension EIDRequestCase: Equatable {
       lhs.deferredCredential == rhs.deferredCredential
   }
 }
+
+// MARK: Hashable
+
+extension EIDRequestCase: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+    hasher.combine(rawMRZ)
+    hasher.combine(lastName)
+    hasher.combine(firstName)
+    hasher.combine(documentNumber)
+    hasher.combine(createdAt)
+    hasher.combine(selectedDocumentType)
+    hasher.combine(state)
+  }
+}

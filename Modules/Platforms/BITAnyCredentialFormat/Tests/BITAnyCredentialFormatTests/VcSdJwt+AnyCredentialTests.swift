@@ -12,7 +12,7 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
 
     let claims = vcSdJwt.getClaimsDictionary(.all)
 
-    XCTAssertEqual(claims.count, 14)
+    XCTAssertEqual(claims.count, 16)
     XCTAssertEqual(claims[claimKeyMock] as? String, claimValueMock)
     XCTAssertTrue(SdJWSDecoder.reservedClaimNames.allSatisfy { claims.keys.contains($0) })
   }

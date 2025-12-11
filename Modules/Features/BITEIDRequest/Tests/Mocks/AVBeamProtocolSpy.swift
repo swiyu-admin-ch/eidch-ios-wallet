@@ -49,6 +49,10 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var startCameraCallsCount = 0
   public var startCameraThrowableError: Error?
 
+  public var startFrontCameraCalled = false
+  public var startFrontCameraCallsCount = 0
+  public var startFrontCameraThrowableError: Error?
+
   public var stopCameraCalled = false
   public var stopCameraCallsCount = 0
   public var stopCameraThrowableError: Error?
@@ -129,6 +133,15 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
     startCameraCallsCount += 1
 
     if let error = startCameraThrowableError {
+      throw error
+    }
+  }
+
+  public func startFrontCamera() throws {
+    startFrontCameraCalled = true
+    startFrontCameraCallsCount += 1
+
+    if let error = startFrontCameraThrowableError {
       throw error
     }
   }

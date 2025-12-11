@@ -1,4 +1,3 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
 import XCTest
 @testable import BITAppAttestation
@@ -7,11 +6,14 @@ import XCTest
 @testable import BITTestingCore
 @testable import BITVault
 
+// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
+
 final class FetchClientAttestationUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
     registerMocks()
     useCase = FetchClientAttestationUseCase()
     createSuccessState()
@@ -48,6 +50,7 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
   }
 
   func testExecute_cached_returnsCached() async throws {
+    Container.shared.currentDate.register { Date(timeIntervalSince1970: 123456789) }
     clientAttestationRepository.getThrowableError = nil
     clientAttestationRepository.getReturnValue = mockClientAttestation
 
@@ -142,6 +145,20 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
     }
   }
 
+  func testExecute_cachedClientAttestationIsExpired_retry() async throws {
+    clientAttestationRepository.getThrowableError = nil
+    clientAttestationRepository.getReturnValue = mockClientAttestation
+
+    _ = try await useCase.execute(context)
+
+    XCTAssertEqual(clientAttestationRepository.deleteCallsCount, 1)
+    XCTAssertEqual(appAttestationRepository.fetchChallengeCallsCount, 1)
+    XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 1)
+    XCTAssertEqual(appAttestationService.generateAttestedKeyWithCallsCount, 1)
+    XCTAssertEqual(appAttestationService.generateAppAssertionForWithCallsCount, 1)
+    XCTAssertEqual(clientAttestationRepository.createCallsCount, 1)
+  }
+
   // MARK: Private
 
   private var context: LAContextProtocolSpy!
@@ -184,8 +201,7 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
     Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
     Container.shared.clientAttestationValidator.register { self.clientAttestationValidator }
     Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
+    Container.shared.currentDate.register { self.mockClientAttestation.payload.expiredAt!.addingTimeInterval(100) }
   }
 
 }
-
-// swiftlint: enable implicitly_unwrapped_optional force_unwrapping

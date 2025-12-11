@@ -1,5 +1,6 @@
 import BITAnyCredentialFormat
 import BITEntities
+import BITOpenID
 import Factory
 import Foundation
 
@@ -12,11 +13,12 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public init(
     id: UUID = UUID(),
     createdAt: Date = Date(),
-    progressionState: ProgressState = .unaccepted,
+    progressionState: ProgressState = .accepted,
     payload: CredentialPayload,
     status: CredentialStatus = .unknown,
     clusters: [CredentialClaimCluster] = [],
     format: String,
+    selectedConfigurationId: String? = nil,
     issuer: String,
     keyBinding: CredentialKeyBinding? = nil,
     rawCredentialData: RawCredentialData? = nil,
@@ -35,15 +37,13 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     self.validFrom = validFrom
     self.validUntil = validUntil
     self.format = format
+    self.selectedConfigurationId = selectedConfigurationId
     self.keyBinding = keyBinding
     self.rawCredentialData = rawCredentialData
     self.issuerDisplays = issuerDisplays
     self.displays = displays
 
-    environment = .none
-    if let regex = try? Regex(demoCredentialPattern), !issuer.matches(of: regex).isEmpty {
-      environment = .demo
-    }
+    environment = TrustEnvironment(did: issuer)
   }
 
   public init(_ entity: CredentialEntity) throws {
@@ -59,6 +59,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
       status: CredentialStatus(verifiableCredential.status),
       clusters: Array(verifiableCredential.clusters.map(CredentialClaimCluster.init)),
       format: entity.format,
+      selectedConfigurationId: entity.selectedConfigurationId,
       issuer: verifiableCredential.issuer,
       keyBinding: entity.keyBinding.flatMap(CredentialKeyBinding.init),
       rawCredentialData: entity.rawCredentialData.flatMap(RawCredentialData.init),
@@ -78,20 +79,22 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public let validUntil: Date?
 
   public var format: String
+  public var selectedConfigurationId: String?
 
   public var keyBinding: CredentialKeyBinding? = nil
   public var issuerDisplays: [CredentialIssuerDisplay]
   public var displays: [CredentialDisplay]
-  public var environment: CredentialEnvironment? = .none
+  public var environment = TrustEnvironment.external
 
   public let id: UUID
   public let createdAt: Date
 
+  public var progressionState: ProgressState
+  public let rawCredentialData: RawCredentialData?
+
   // MARK: Internal
 
   let issuer: String
-  let progressionState: ProgressState
-  let rawCredentialData: RawCredentialData?
 
   // MARK: Private
 
@@ -106,13 +109,12 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     case validFrom
     case validUntil
     case format
+    case selectedConfigurationId
     case keyBinding
     case rawCredentialData
     case issuerDisplays
     case displays
   }
-
-  @Injected(\.demoCredentialPattern) private var demoCredentialPattern: String
 
 }
 
@@ -132,6 +134,7 @@ extension VerifiableCredential: Equatable {
       lhs.keyBinding == rhs.keyBinding &&
       lhs.rawCredentialData == rhs.rawCredentialData &&
       lhs.format == rhs.format &&
+      lhs.selectedConfigurationId == rhs.selectedConfigurationId &&
       lhs.clusters.allSatisfy(rhs.clusters.contains) && rhs.clusters.allSatisfy(lhs.clusters.contains) &&
       lhs.issuerDisplays.allSatisfy(rhs.issuerDisplays.contains) && rhs.issuerDisplays.allSatisfy(lhs.issuerDisplays.contains) &&
       lhs.displays.allSatisfy(rhs.displays.contains) && rhs.displays.allSatisfy(lhs.displays.contains)
@@ -145,6 +148,8 @@ extension VerifiableCredential {
   public enum ProgressState: String, Codable {
     case accepted
     case unaccepted
+
+    // MARK: Lifecycle
 
     init(_ state: VerifiableCredentialEntity.ProgressionState) {
       switch state {

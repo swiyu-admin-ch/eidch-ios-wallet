@@ -1,5 +1,6 @@
 import BITCredentialShared
 import BITHome
+import BITInvitation
 import BITNavigation
 import Foundation
 
@@ -15,17 +16,18 @@ class HomeRouterMock: HomeRouterRoutes {
   var didCallEIDRequest = false
   var didCallAutoVerificationArgument: String?
   var didCallObtainConsentArgument: String?
+  var didCallWalletPairingArgument: String?
 
   func deeplink(url: URL, animated: Bool) -> Bool {
     didCallDeeplink = true
     return true
   }
 
-  func invitation() {
+  func invitation(delegate: InvitationDelegate?) {
     didCallInvitation = true
   }
 
-  func camera(openingStyle: OpeningStyle) {
+  func camera(openingStyle: OpeningStyle, delegate: InvitationDelegate?) {
     didCallCamera = true
   }
 
@@ -55,6 +57,10 @@ class HomeRouterMock: HomeRouterRoutes {
 
   func obtainConsent(caseId: String) {
     didCallObtainConsentArgument = caseId
+  }
+
+  func walletPairing(caseId: String) {
+    didCallWalletPairingArgument = caseId
   }
 
 }

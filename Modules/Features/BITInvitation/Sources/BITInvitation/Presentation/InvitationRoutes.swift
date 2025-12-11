@@ -6,9 +6,9 @@ import UIKit
 // MARK: - InvitationRoutes
 
 public protocol InvitationRoutes {
-  func invitation()
+  func invitation(delegate: InvitationDelegate?)
   func deeplink(url: URL, animated: Bool) -> Bool
-  func camera(openingStyle: OpeningStyle)
+  func camera(openingStyle: OpeningStyle, delegate: InvitationDelegate?)
   func betaId()
 }
 
@@ -46,18 +46,18 @@ extension InvitationRoutes where Self: RouterProtocol {
   }
 
   @MainActor
-  public func invitation() {
+  public func invitation(delegate: InvitationDelegate?) {
     let style = ModalOpeningStyle(modalPresentationStyle: .fullScreen)
     switch AVCaptureDevice.authorizationStatus(for: .video) {
-    case .authorized: camera(openingStyle: style)
+    case .authorized: camera(openingStyle: style, delegate: delegate)
     case .denied,
          .notDetermined,
-         .restricted: cameraPermission()
+         .restricted: cameraPermission(delegate: delegate)
     }
   }
 
-  public func camera(openingStyle style: OpeningStyle) {
-    let module = CameraModule()
+  public func camera(openingStyle style: OpeningStyle, delegate: InvitationDelegate?) {
+    let module = CameraModule(delegate: delegate)
     var viewController = module.viewController
 
     if style is ModalOpeningStyle {
@@ -77,10 +77,10 @@ extension InvitationRoutes where Self: RouterProtocol {
     open(viewController, on: self.viewController, as: style)
   }
 
-  // MARK: Internal
+  // MARK: Private
 
-  func cameraPermission() {
-    let module = CameraPermissionModule()
+  private func cameraPermission(delegate: InvitationDelegate? = nil) {
+    let module = CameraPermissionModule(delegate: delegate)
     let viewController = UINavigationController(rootViewController: module.viewController)
 
     let style = ModalOpeningStyle(modalPresentationStyle: .fullScreen)

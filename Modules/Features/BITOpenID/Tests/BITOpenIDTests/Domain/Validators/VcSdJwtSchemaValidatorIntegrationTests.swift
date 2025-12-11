@@ -11,31 +11,20 @@ final class VcSdJwtSchemaValidatorIntegrationTests: XCTestCase {
   // MARK: Internal
 
   func testValidate_success() throws {
-    let claims = vcSdJwtMock.getClaimsDictionary(.all)
-    XCTAssertTrue(try validator.validate(claims, schema: schemaCredential))
+    XCTAssertTrue(try validator.validate(schema: schemaCredential))
   }
 
   func testValidate_emptySchema_throwsError() throws {
-    let claims = vcSdJwtMock.getClaimsDictionary(.all)
-    XCTAssertThrowsError(try validator.validate(claims, schema: Data()))
+    XCTAssertThrowsError(try validator.validate(schema: Data()))
   }
 
   func testValidate_invalidSchema_returnsFalse() throws {
-    let claims = vcSdJwtMock.getClaimsDictionary(.all)
-    XCTAssertFalse(try validator.validate(claims, schema: schemaMalformed))
-  }
-
-  func testValidate_invalidClaims_returnsFalse() throws {
-    let claims = [String: Any]()
-    XCTAssertFalse(try validator.validate(claims, schema: schemaCredential))
-    let insufficientClaims: [String: Any] = ["vct": "test"]
-    XCTAssertFalse(try validator.validate(insufficientClaims, schema: schemaCredential))
+    XCTAssertFalse(try validator.validate(schema: schemaMalformed))
   }
 
   func testValidate_schemaMissingVcSdJwtSupport_returnsFalse() throws {
-    let claims = vcSdJwtMock.getClaimsDictionary(.all)
     // schema only passes meta-schema, but not vcSdJwt-specific validation
-    XCTAssertFalse(try validator.validate(claims, schema: schemaInsufficient))
+    XCTAssertFalse(try validator.validate(schema: schemaInsufficient))
   }
 
   // MARK: Private

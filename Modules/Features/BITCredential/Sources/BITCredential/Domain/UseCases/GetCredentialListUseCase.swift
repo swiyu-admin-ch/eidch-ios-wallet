@@ -7,18 +7,18 @@ import Spyable
 
 @Spyable
 public protocol GetCredentialListUseCaseProtocol {
-  func execute() async throws -> [VerifiableCredential]
+  func execute() async throws -> [CredentialProtocol]
 }
 
 // MARK: - GetCredentialListUseCase
 
 struct GetCredentialListUseCase: GetCredentialListUseCaseProtocol {
 
-  func execute() async throws -> [VerifiableCredential] {
-    try await verifiableCredentialRepository.getAll()
+  func execute() async throws -> [CredentialProtocol] {
+    try await credentialRepository.getAll()
   }
 
   // MARK: Private
 
-  @Injected(\.verifiableCredentialRepository) private var verifiableCredentialRepository
+  @Injected(\.credentialRepository) private var credentialRepository
 }

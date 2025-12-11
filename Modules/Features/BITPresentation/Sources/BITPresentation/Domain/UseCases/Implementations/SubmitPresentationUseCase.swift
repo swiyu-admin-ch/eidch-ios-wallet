@@ -1,3 +1,4 @@
+import BITActivity
 import BITAnyCredentialFormat
 import BITCredential
 import BITCredentialShared
@@ -31,8 +32,11 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
     #warning("The submit should take in consideration multiple input descriptors in the future. For now it only takes the first one given by the context.")
     guard
       let firstInputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first,
-      let selectedCredential = context.selectedCredentials[firstInputDescriptor.id] else { throw SubmitPresentationError.inputDescriptorsNotFound }
+      let selectedCredential = context.selectedCredential
+    else { throw SubmitPresentationError.inputDescriptorsNotFound }
     let presentationRequestBody = try presentationRequestBodyGenerator.generate(for: selectedCredential, requestObject: context.requestObject, inputDescriptor: firstInputDescriptor)
+    let activity = Activity(context: context, credential: selectedCredential, type: .presentationAccepted)
+    _ = try? activityService.create(activity, credentialId: selectedCredential.id)
 
     do {
       try await repository.submit(from: context.requestObject.responseUri, presentationRequestBody: presentationRequestBody)
@@ -49,5 +53,5 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
 
   @Injected(\.presentationRequestRepository) private var repository
   @Injected(\.presentationRequestBodyGenerator) private var presentationRequestBodyGenerator
-
+  @Injected(\.activityService) private var activityService
 }

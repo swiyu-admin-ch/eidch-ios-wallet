@@ -26,7 +26,6 @@ enum Assets {
   static let lizenzen = ImageAsset(name: "Lizenzen")
   static let backup = ImageAsset(name: "backup")
   static let checkmark = ImageAsset(name: "checkmark")
-  static let chevronRight = ImageAsset(name: "chevronRight")
   static let demo = ImageAsset(name: "demo")
   static let diagnostic = ImageAsset(name: "diagnostic")
   static let external = ImageAsset(name: "external")

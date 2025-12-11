@@ -2,38 +2,51 @@ import BITAVWrapper
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - RecordSelfieView
 
 struct RecordSelfieView: View {
 
-  // MARK: Lifecycle
-
-  init(router: EIDRequestInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.recordSelfieViewModel(router))
-  }
-
   // MARK: Internal
 
   var body: some View {
-    VStack {
+    ZStack {
+      Color.clear
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ThemingAssets.Background.secondary.swiftUIColor)
+        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
+        .ignoresSafeArea(edges: .bottom)
+
       switch viewModel.state {
-      case .sdkInitializing:
+      case .loading:
         loadingView()
-      case .ready:
+          .transition(.opacity)
+          .task {
+            viewModel.initializeSDK()
+          }
+      case .camera:
         cameraView()
-      case .error(let error):
-        Text(error.localizedDescription)
+          .transition(.opacity)
       }
     }
+    .cameraPermission()
+    .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+    .font(.custom.body)
+    .animation(.easeInOut(duration: 0.4), value: viewModel.state)
+    .onDisappear(perform: viewModel.stop)
     .navigationTitle(L10n.tkEidRequestRecordSelfieTitle)
-    .toolbar { CloseButtonToolbar(action: viewModel.close) }
+    .toolbar { CloseButtonToolbar(action: { viewModel.close() }) }
+    .navigate(to: $viewModel.destination)
+    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: RecordSelfieViewModel
+  @Orientation private var orientation
+  @Environment(\.navigator) private var navigator
+  @InjectedObject(\.recordSelfieViewModel) private var viewModel
 
   @ViewBuilder
   private func introductionPopupView() -> some View {
@@ -67,6 +80,7 @@ struct RecordSelfieView: View {
 }
 
 extension RecordSelfieView {
+
   @ViewBuilder
   private func loadingView() -> some View {
     VStack {
@@ -94,13 +108,14 @@ extension RecordSelfieView {
       Assets.selfieOverlay.swiftUIImage
         .aspectRatio(contentMode: .fit)
         .padding(.x4)
+
+      if orientation.isLandscape {
+        HStack {
+          Spacer()
+          RecordingButton(state: $viewModel.buttonState, action: viewModel.startRecordSelfie)
+        }
+      }
     }
-    .task {
-      await viewModel.startRecordSelfie()
-    }
-    .onDisappear(perform: {
-      viewModel.stop()
-    })
     .popup(isPresented: $viewModel.isIntroductionPopupPresented, view: introductionPopupView) {
       $0.appearFrom(.bottomSlide)
         .position(.bottom)
@@ -118,9 +133,14 @@ extension RecordSelfieView {
         .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
     }
     .navigationTitle(L10n.tkEidRequestRecordSelfieTitle)
+    .safeAreaInset(edge: .bottom) {
+      if !orientation.isLandscape {
+        RecordingButton(state: $viewModel.buttonState, action: viewModel.startRecordSelfie)
+      }
+    }
   }
 }
 
 #Preview {
-  RecordSelfieView(router: EIDRequestRouter())
+  RecordSelfieView()
 }

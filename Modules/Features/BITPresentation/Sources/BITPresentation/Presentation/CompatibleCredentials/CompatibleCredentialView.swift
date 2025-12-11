@@ -12,11 +12,10 @@ struct CompatibleCredentialView: View {
 
   init(
     context: PresentationRequestContext,
-    inputDescriptorId: String,
-    compatibleCredentials: [CompatibleCredential],
     router: PresentationInternalRoutes = Container.shared.presentationRouter())
   {
-    _viewModel = StateObject(wrappedValue: Container.shared.compatibleCredentialViewModel((context, inputDescriptorId, compatibleCredentials, router)))
+    self.router = router
+    _viewModel = StateObject(wrappedValue: Container.shared.compatibleCredentialViewModel((context, router)))
   }
 
   // MARK: Internal
@@ -27,8 +26,9 @@ struct CompatibleCredentialView: View {
     GeometryReader { reader in
       List {
         Section {} header: {
-          ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset)
-            .frame(width: reader.size.width)
+          ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { badgeType in
+            router.badgeInformation(badgeType: badgeType)
+          }.frame(width: reader.size.width)
         }
         .textCase(nil)
         .listRowInsets(EdgeInsets(top: .x1, leading: 0, bottom: 0, trailing: 0))
@@ -61,6 +61,8 @@ struct CompatibleCredentialView: View {
   @State private var listBottomPadding: CGFloat = 0
   @State private var topInset: CGFloat = 0
 
+  private let router: PresentationInternalRoutes
+
   private var credentialListSection: some View {
     Section {
       CompatibleCredentialListView(viewModels: viewModel.credentialViewModels) { credentialViewModel in
@@ -75,19 +77,12 @@ struct CompatibleCredentialView: View {
 
   private var footer: some View {
     ButtonSheet(colorConfig: .secondary) {
-      Spacer()
-
       Button(action: viewModel.cancel) {
         Label(L10n.tkGlobalCancel, systemImage: "xmark")
-          .lineLimit(1)
-          .if(sizeCategory.isAccessibilityCategory) {
-            $0.frame(maxWidth: .infinity)
-          }
+          .frame(maxWidth: .infinity)
       }
       .buttonStyle(.primary)
       .controlSize(.large)
-
-      Spacer()
     }
   }
 
@@ -95,6 +90,6 @@ struct CompatibleCredentialView: View {
 
 #if DEBUG
 #Preview {
-  CompatibleCredentialView(context: .Mock.vcSdJwtWithIdentityTrust, inputDescriptorId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", compatibleCredentials: CompatibleCredential.Mock.array)
+  CompatibleCredentialView(context: .Mock.vcSdJwtWithIdentityTrust)
 }
 #endif

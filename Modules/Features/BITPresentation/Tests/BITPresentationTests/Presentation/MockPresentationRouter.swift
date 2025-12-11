@@ -1,4 +1,5 @@
 import Foundation
+@testable import BITCredential
 @testable import BITNavigationTestCore
 @testable import BITPresentation
 
@@ -12,6 +13,7 @@ final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes
   var didCallPresentationReview = false
   var calledPresentationResultState: PresentationRequestResultState?
   var startPresentationContext: PresentationRequestContext?
+  var didCallBadgeInformation = false
 
   func startPresentation(context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws {
     startPresentationContext = context
@@ -27,6 +29,10 @@ final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes
 
   func presentationResultState(with state: BITPresentation.PresentationRequestResultState, context: BITPresentation.PresentationRequestContext) {
     calledPresentationResultState = state
+  }
+
+  func badgeInformation(badgeType: BadgeType) {
+    didCallBadgeInformation = true
   }
 
 }
