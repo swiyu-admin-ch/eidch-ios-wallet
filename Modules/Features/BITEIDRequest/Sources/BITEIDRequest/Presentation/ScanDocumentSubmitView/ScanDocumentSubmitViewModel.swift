@@ -7,7 +7,7 @@ import NavigatorUI
 import SwiftUI
 
 @MainActor
-class ScanDocumentSubmitViewModel: ObservableObject, NavigationClosable {
+class ScanDocumentSubmitViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -30,7 +30,7 @@ class ScanDocumentSubmitViewModel: ObservableObject, NavigationClosable {
       await applyMinimumDelay(startTime: startTime)
 
       guard requestCase.state != nil else {
-        return navigationClose()
+        return close()
       }
 
       let viewState = try RequestCaseViewState(requestCase)
@@ -45,7 +45,7 @@ class ScanDocumentSubmitViewModel: ObservableObject, NavigationClosable {
         destination = .queueInformation(state.onlineSessionStartOpenAt)
       case .readyForOnlineSession:
         destination = .walletPairing
-      default: navigationClose()
+      default: close()
       }
     } catch {
       destination = .error(ErrorDataset(
@@ -69,6 +69,7 @@ class ScanDocumentSubmitViewModel: ObservableObject, NavigationClosable {
 
   @Injected(\.eidRequestContext) private var context
   @Injected(\.applyEIDRequestUseCase) private var applyEIDRequestUseCase
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func openHelp() {
     guard let url = URL(string: L10n.tkEidRequestSubmitErrorTertiaryLink) else { return }
@@ -97,6 +98,11 @@ class ScanDocumentSubmitViewModel: ObservableObject, NavigationClosable {
   private func sleepForDuration(_ duration: TimeInterval) async {
     let nanoseconds = UInt64(duration * 1_000_000_000)
     try? await Task.sleep(nanoseconds: nanoseconds)
+  }
+
+  private func close() {
+    isNavigationCloseTriggered = true
+    coordinator.cleanup()
   }
 
 }

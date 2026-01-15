@@ -19,11 +19,11 @@ extension ClientAttestationProofOfPossession: Mockable {
       bundle: Bundle = Bundle.module)
       -> ClientAttestationProofOfPossession
     {
-      let payload: ClientAttestationProofOfPossessionPayload = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
+      let jwt: ClientAttestationProofOfPossessionJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
       let header = JWSHeader(algorithm: algorithm, type: type)
 
       // swiftlint: enable force_cast force_try
-      return ClientAttestationProofOfPossession(payload: payload, rawPayload: "", rawJWS: "", header: header)
+      return ClientAttestationProofOfPossession(payload: jwt, rawPayload: "", rawJWS: "", header: header)
       // swiftlint: disable force_cast force_try
     }
   }

@@ -87,7 +87,7 @@ struct RequestCaseNotificationView: View {
     Button(action: {
       Task { action() }
     }, label: {
-      Assets.close.swiftUIImage
+      ThemingAssets.close.swiftUIImage
         .accessibilityLabel(L10n.tkEidRequestNotificationCloseButton)
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     })
@@ -101,7 +101,7 @@ struct RequestCaseNotificationView: View {
       Button(action: {
         Task { dismissAction() }
       }, label: {
-        Assets.close.swiftUIImage
+        ThemingAssets.close.swiftUIImage
           .accessibilityLabel(L10n.tkEidRequestNotificationCloseButton)
           .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       })

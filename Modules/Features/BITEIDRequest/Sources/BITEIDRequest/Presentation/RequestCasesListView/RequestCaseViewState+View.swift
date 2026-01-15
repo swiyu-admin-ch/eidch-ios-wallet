@@ -10,6 +10,10 @@ extension RequestCaseViewState {
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
         content: viewModel.notificationContent)
+    case .issuing(let viewModel):
+      RequestCaseNotificationView(
+        title: viewModel.notificationTitle,
+        content: viewModel.notificationContent)
     case .inQueue(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
@@ -59,6 +63,34 @@ extension RequestCaseViewState {
         notificationType: .primary(
           label: viewModel.primaryActionLabel,
           action: viewModel.primaryAction))
+    case .autoVerification(let viewModel):
+      RequestCaseNotificationView(
+        title: viewModel.notificationTitle,
+        content: viewModel.notificationContent,
+        notificationType: .primary(
+          label: viewModel.primaryActionLabel,
+          action: viewModel.primaryAction))
+    case .closed(let viewModel):
+      RequestCaseNotificationView(
+        title: viewModel.notificationTitle,
+        content: viewModel.notificationContent,
+        notificationType: .dismiss {
+          Task {
+            await viewModel.primaryAction()
+          }
+        })
+    case .cancelled(let viewModel):
+      RequestCaseNotificationView(
+        title: viewModel.notificationTitle,
+        content: viewModel.notificationTitle,
+        notificationType: .complete(
+          label: viewModel.primaryActionLabel,
+          action: viewModel.openFAQ,
+          dismissAction: {
+            Task {
+              await viewModel.deleteRequestCase()
+            }
+          }))
     }
   }
 }

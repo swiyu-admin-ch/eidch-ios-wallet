@@ -42,7 +42,6 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(jwsMock, tokenStatusListDecoderSpy.decodeIndexReceivedArguments?.jws)
     XCTAssertEqual(Self.indexMock, tokenStatusListDecoderSpy.decodeIndexReceivedArguments?.index)
     XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedJws as? JWS, jwsMock)
-    XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedDid, jwsMock.payload.issuer)
   }
 
   func testValidate_RevokedCredential_ShouldReturnRevoked() async throws {
@@ -98,7 +97,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
   }
 
   func testValidate_StatusListInvalidSignature_ShouldReturnUnknown() async throws {
-    jwsValidatorMock.validateIssuerDidActivationBufferReturnValue = false
+    jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
@@ -131,7 +130,6 @@ final class TokenStatusListValidatorTests: XCTestCase {
 
   private func success() {
     openIdRepositorySpy.fetchCredentialStatusFromReturnValue = jwsMock
-    jwsValidatorMock.validateIssuerDidActivationBufferReturnValue = true
     tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(0)
   }
   // swiftlint:enable all

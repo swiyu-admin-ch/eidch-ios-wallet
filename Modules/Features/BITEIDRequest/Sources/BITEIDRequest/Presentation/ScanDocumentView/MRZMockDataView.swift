@@ -21,11 +21,7 @@ struct MRZMockDataView: View {
     }
     .scrollContentBackground(.hidden)
     .listStyle(.grouped)
-    .toolbar {
-      CloseButtonToolbar(action: {
-        navigator.dismiss()
-      })
-    }
+    .defaultEidRequestToolbar()
   }
 
   // MARK: Private

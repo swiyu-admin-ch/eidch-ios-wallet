@@ -1,23 +1,18 @@
-import BITCore
 import BITCredential
 import BITCredentialShared
-import BITOpenID
-import Combine
 import Factory
 import SwiftUI
 
-// MARK: - CredentialOfferViewModel
-
 @MainActor
-final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.State, CredentialOfferViewModel.Event> {
+final class CredentialOfferViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation, state: CredentialOfferViewModel.State = .result, router: CredentialOfferInternalRoutes) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation? = nil, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes) {
     self.credential = credential
     self.trustInformation = trustInformation
+    self.state = state
     self.router = router
-    super.init(state)
   }
 
   // MARK: Internal
@@ -29,77 +24,81 @@ final class CredentialOfferViewModel: StateMachine<CredentialOfferViewModel.Stat
     case error
   }
 
-  enum Event {
-    case accept
-    case confirmAccept
-    case decline
-    case openWrongData
-    case confirmDecline
-    case cancelDecline
-    case onError(Error)
-    case close
-
-    case none
-  }
-
   let credential: VerifiableCredential
-  let trustInformation: TrustInformation
+  var trustInformation: TrustInformation?
 
+  @Published var state: State
   @Published var credentialViewModel: VerifiableCredentialViewModel?
   @Published var isUnknownIssuerAlertShown = false
 
-  override func reducer(_ state: inout State, _ event: Event) -> AnyPublisher<Event, Never>? {
-    switch event {
-    case .accept:
-      if trustInformation.identity != .unknown {
-        accept(&state)
-      } else {
-        isUnknownIssuerAlertShown = true
+  func onAppear() async {
+    do {
+      if trustInformation == nil {
+        trustInformation = try await fetchIssuanceTrustInformationUseCase(for: credential)
       }
-    case .confirmAccept:
-      accept(&state)
-    case .decline:
-      state = .decline
-    case .openWrongData:
-      router.wrongData()
-    case .confirmDecline:
-      return AnyPublisher.run {
-        try await self.deleteCredentialUseCase.execute(self.credential)
-      } onSuccess: { _ in
-        .close
-      } onError: { error in
-        .onError(error)
-      }
-    case .cancelDecline:
-      state = .result
-    case .onError(let error):
-      stateError = error
-      state = .error
-    case .close:
-      router.close()
-    default: break
-    }
 
-    return nil
+      state = .result
+    } catch {
+      state = .error
+    }
   }
 
   func updateCredentialViewModel(with colorScheme: String) {
     credentialViewModel = VerifiableCredentialViewModel(credential: credential, colorScheme: colorScheme)
   }
 
+  func confirmAccept() async {
+    do {
+      state = .loading
+
+      try await acceptCredentialUseCase(credential)
+      try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
+      close()
+    } catch {
+      state = .error
+    }
+  }
+
+  func confirmDecline() async {
+    do {
+      try await deleteCredentialUseCase.execute(credential)
+      close()
+    } catch {
+      state = .error
+    }
+  }
+
+  func accept() async {
+    if trustInformation?.identity != .unknown {
+      await confirmAccept()
+    } else {
+      isUnknownIssuerAlertShown = true
+    }
+  }
+
+  func decline() {
+    state = .decline
+  }
+
+  func cancelDecline() {
+    state = .result
+  }
+
+  func openWrongData() {
+    router.wrongData()
+  }
+
   // MARK: Private
 
   private let router: CredentialOfferInternalRoutes
+
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
+  @Injected(\.acceptCredentialUseCase) private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocol
+  @Injected(\.fetchIssuanceTrustInformationUseCase) private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocol
 
-  private func accept(_ state: inout State) {
-    withAnimation {
-      state = .loading
-      Task {
-        try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
-        router.close()
-      }
-    }
+  private func close() {
+    router.close()
   }
+
 }

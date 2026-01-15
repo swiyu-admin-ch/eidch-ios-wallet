@@ -179,12 +179,7 @@ class RecordDocumentViewModelTests: XCTestCase {
     viewModel.stop()
 
     XCTAssertTrue(avBeam.stopRecordDocumentCalled)
-  }
-
-  func testClose_callsStopAndNavigationClose() {
-    viewModel.close()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
+    XCTAssertTrue(avBeam.stopCameraCalled)
   }
 
   // MARK: - AVBeamMessageDelegate Tests

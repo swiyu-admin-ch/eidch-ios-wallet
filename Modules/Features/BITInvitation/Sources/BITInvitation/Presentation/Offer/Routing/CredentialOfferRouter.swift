@@ -11,7 +11,7 @@ final class CredentialOfferRouter: Router<UIViewController>, CredentialOfferInte
 @MainActor
 extension CredentialOfferRoutes where Self: RouterProtocol {
 
-  public func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
+  public func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation? = nil) {
     let module = Container.shared.credentialOfferModule((credential, trustInformation))
     let style = NavigationPushOpeningStyle()
     module.router.current = style

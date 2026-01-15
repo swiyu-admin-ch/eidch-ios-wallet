@@ -25,18 +25,18 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   }
 
   func testExecute_vcSdJwt_returnsVcSchemaAndOcaBundle() async throws {
-    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJwtMock)
+    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJWSMock)
 
     XCTAssertEqual(vcSchema, vcSchemaMock)
     XCTAssertEqual(ocaBundle, ocaBundleMock)
   }
 
   func testExecute_vcSdJwt_argumentsPassed() async throws {
-    _ = try await useCase.execute(anyCredential: vcSdJwtMock)
+    _ = try await useCase.execute(anyCredential: vcSdJWSMock)
 
-    XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.vct, vcSdJwtMock.payload.vct)
-    XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.url.absoluteString, vcSdJwtMock.payload.vct)
-    XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.integrity, vcSdJwtMock.payload.vctIntegrity)
+    XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.vct, vcSdJWSMock.payload.vct)
+    XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.url.absoluteString, vcSdJWSMock.payload.vct)
+    XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.integrity, vcSdJWSMock.payload.vctIntegrity)
     XCTAssertEqual(vcSchemaServiceSpy.fetchForReceivedTypeMetadata, typeMetadataMock)
     XCTAssertEqual(ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, ocaRenderingMock)
   }
@@ -79,7 +79,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   func testExecute_vcSchemaFetchReturnsNil_returnsNilVcSchemaAndOcaBundle() async throws {
     vcSchemaServiceSpy.fetchForReturnValue = nil
 
-    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJwtMock)
+    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJWSMock)
 
     XCTAssertNil(vcSchema)
     XCTAssertEqual(ocaBundle, ocaBundleMock)
@@ -89,7 +89,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     typeMetadataServiceSpy.fetchFromVctThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(anyCredential: vcSdJwtMock)
+      _ = try await useCase.execute(anyCredential: vcSdJWSMock)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -99,7 +99,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   func testExecute_typeMetadataIsNil_returnsNilVcSchemaAndNilOcaBundle() async throws {
     typeMetadataServiceSpy.fetchFromVctReturnValue = nil
 
-    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJwtMock)
+    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJWSMock)
 
     XCTAssertNil(vcSchema)
     XCTAssertNil(ocaBundle)
@@ -109,7 +109,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     vcSchemaServiceSpy.fetchForThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(anyCredential: vcSdJwtMock)
+      _ = try await useCase.execute(anyCredential: vcSdJWSMock)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -120,7 +120,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(anyCredential: vcSdJwtMock)
+      _ = try await useCase.execute(anyCredential: vcSdJWSMock)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -131,7 +131,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     vcSdJwtSchemaValidatorSpy.validateSchemaThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(anyCredential: vcSdJwtMock)
+      _ = try await useCase.execute(anyCredential: vcSdJWSMock)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -142,7 +142,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     vcSdJwtSchemaValidatorSpy.validateSchemaReturnValue = false
 
     do {
-      _ = try await useCase.execute(anyCredential: vcSdJwtMock)
+      _ = try await useCase.execute(anyCredential: vcSdJWSMock)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? FetchAnyVerifiableCredentialError, .invalidVcSchema)
@@ -154,7 +154,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   private static let vctMock = "https://vct.example.com"
   private static let vctIntegrityMock = "vctIntegrity"
 
-  private let vcSdJwtMock = VcSdJwtPayload.Mock.sample
+  private let vcSdJWSMock = VcSdJWS.Mock.sample
   private let vcSdJwtMetadataMock = CredentialMetadata.VcSdJwtCredentialConfigurationSupported(format: "format", vct: vctMock, vctIntegrity: vctIntegrityMock)
   private let ocaBundleMock = "rawOcaBundle".data(using: .utf8)!
   private let vcSchemaMock = "vcSchema".data(using: .utf8)!

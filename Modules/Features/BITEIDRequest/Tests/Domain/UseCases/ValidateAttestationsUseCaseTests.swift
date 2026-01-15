@@ -28,8 +28,8 @@ final class ValidateAttestationsUseCaseTests: XCTestCase {
 
   private var useCase: ValidateAttestationsUseCase!
 
-  private let mockKeyAttestation = KeyAttestationPayload.Mock.sample
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
 
   private var repository: EIDRequestRepositoryProtocolSpy!
 

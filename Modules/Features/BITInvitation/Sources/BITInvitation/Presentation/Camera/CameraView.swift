@@ -86,6 +86,15 @@ struct CameraView: View {
             focus = .camera
           }
       }
+      .alert(isPresented: $viewModel.isSessionTimeoutPresented) {
+        Alert(
+          title: Text(L10n.tkQrscannerSessionTimeoutTitle),
+          message: Text(L10n.tkQrscannerSessionTimeoutBody),
+          primaryButton: .default(Text(L10n.tkQrscannerSessionTimeoutPrimaryButton), action: {
+            Task { viewModel.login() }
+          }),
+          secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
+      }
       .task {
         await viewModel.onAppear()
       }

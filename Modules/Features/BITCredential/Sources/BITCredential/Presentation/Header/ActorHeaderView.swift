@@ -30,7 +30,7 @@ public struct ActorHeaderView: View {
     .padding(.bottom, .x3)
     .padding(.horizontal, .x4)
     .background(ThemingAssets.Background.groupedRow.swiftUIColor)
-    .clipShape(RoundedCorner(radius: .xxl, corners: [.bottomLeft, .bottomRight]))
+    .clipShape(RoundedCorner(radius: .x6, corners: [.bottomLeft, .bottomRight]))
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
@@ -67,19 +67,22 @@ public struct ActorHeaderView: View {
 
   private var badges: some View {
     FlowLayout(verticalSpacing: .x3, horizontalSpacing: .x3) {
-      let identityTrust = trustInformation.identity
-      Button {
-        onBadgeTapped?(.actorInformation(type: identityTrust.actorInformationBadgeType, actorName: name))
-      } label: {
-        ActorInformationBadge(type: identityTrust.actorInformationBadgeType)
+      badgeButton(type: trustInformation.identity.actorInformationBadgeType)
+      if let vcSchemaBadgeType = trustInformation.vcSchema.getActorInformationBadgeType(for: type) {
+        badgeButton(type: vcSchemaBadgeType)
       }
-      if let badgeType = trustInformation.vcSchema.getActorInformationBadgeType(for: type) {
-        Button {
-          onBadgeTapped?(.actorInformation(type: badgeType, actorName: name))
-        } label: {
-          ActorInformationBadge(type: badgeType)
-        }
+      if case .notCompliant(let nonComplianceReason) = trustInformation.actorCompliance, let reason = nonComplianceReason.localized() {
+        badgeButton(type: .notCompliant(reason: reason))
       }
+    }
+  }
+
+  @ViewBuilder
+  private func badgeButton(type: ActorInformationBadgeType) -> some View {
+    Button {
+      onBadgeTapped?(.actorInformation(type: type, actorName: name))
+    } label: {
+      ActorInformationBadge(type: type)
     }
   }
 }

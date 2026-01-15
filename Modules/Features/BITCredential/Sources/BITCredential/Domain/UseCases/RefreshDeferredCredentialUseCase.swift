@@ -1,3 +1,4 @@
+import BITActivity
 import BITAnyCredentialFormat
 import BITCredentialShared
 import BITOpenID
@@ -9,7 +10,7 @@ import Spyable
 // MARK: - RefreshDeferredCredentialUseCaseProtocol
 
 @Spyable
-public protocol RefreshDeferredCredentialUseCaseProtocol {
+protocol RefreshDeferredCredentialUseCaseProtocol {
   func execute(for credential: DeferredCredential) async throws
   func execute(_ credentials: [DeferredCredential]) async throws
 }
@@ -20,22 +21,22 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 
   // MARK: Internal
 
-  func execute(for credential: DeferredCredential) async throws {
-    guard canRefreshCredential(credential) else {
+  func execute(for deferredCredential: DeferredCredential) async throws {
+    guard canRefreshCredential(deferredCredential) else {
       return
     }
 
-    guard let endpoint = URL(string: credential.endpoint) else {
+    guard let endpoint = URL(string: deferredCredential.endpoint) else {
       throw RefreshDeferredCredentialUseCaseError.invalidCredentialUrl
     }
 
-    do {
-      let anyCredential = try await openIDRepository.refreshDeferredCredential(from: endpoint, transactionId: credential.transactionId, acccessToken: credential.accessToken, format: credential.format)
-      try await generateCredential(from: anyCredential, and: credential)
-    } catch OpenIdRepositoryError.credentialIssuancePending(let interval) {
-      try await updateDeferredCredential(credential, interval: interval)
-    } catch {
-      throw error
+    let result = try await openIDRepository.fetchCredential(from: endpoint, transactionId: deferredCredential.transactionId, accessToken: deferredCredential.accessToken, format: deferredCredential.format)
+
+    switch result {
+    case .credential(let anyCredential):
+      try await generateCredential(from: anyCredential, and: deferredCredential)
+    case .deferred(let deferredCredentialRequest):
+      try await updateDeferredCredential(deferredCredential, interval: deferredCredentialRequest.interval)
     }
   }
 
@@ -53,11 +54,13 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 
   // MARK: Private
 
+  @Injected(\.activityService) private var activityService: ActivityServiceProtocol
   @Injected(\.openIDRepository) private var openIDRepository: OpenIDRepositoryProtocol
   @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol
   @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
   @Injected(\.trustInformationService) private var trustInformationService: TrustInformationServiceProtocol
+  @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
 
   private func canRefreshCredential(_ credential: DeferredCredential) -> Bool {
     guard let polledAt = credential.polledAt else {
@@ -92,7 +95,7 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
       keyBinding: deferredCredential.keyBinding,
       rawOcaBundle: rawOcaBundle,
       metadataWrapper: CredentialMetadataWrapper(
-        selectedCredentialSupportedId: selectedConfigurationId,
+        credentialConfigurationId: selectedConfigurationId,
         credentialMetadata: metadata,
         rawData: rawOIDMetadata))
 
@@ -104,11 +107,13 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 
     credential.progressionState = .unaccepted
 
-    try await credentialRepository.create(verifiableCredential: credential)
+    let savedCredential = try await credentialRepository.create(verifiableCredential: credential)
     try await credentialRepository.delete(deferredCredential.id)
+    try await saveActivity(for: savedCredential, trustInformation: trustInformation)
+    _ = try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)
   }
 
-  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: any LocalizedTrustStatement) async throws -> VerifiableCredential {
+  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: IdentityTrustStatementJWT) async throws -> VerifiableCredential {
     var credentialCopy = credential
 
     credentialCopy.issuerDisplays = credentialCopy.issuerDisplays.compactMap { issuerDisplay in
@@ -123,6 +128,11 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     }
 
     return credentialCopy
+  }
+
+  private func saveActivity(for credential: VerifiableCredential, trustInformation: TrustInformation) async throws {
+    let activity = Activity(credential: credential, trustInformation: trustInformation)
+    _ = try? activityService.create(activity, credentialId: credential.id)
   }
 }
 

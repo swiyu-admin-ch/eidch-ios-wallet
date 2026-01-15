@@ -1,7 +1,7 @@
 import BITSdJWT
 import Foundation
 
-extension VcSdJwtPayload {
+extension VcSdJwt {
 
   var typeMetadataUri: TypeMetadataUri? {
     if let vctMetadataUri {

@@ -7,7 +7,7 @@ import XCTest
 @testable import BITOpenID
 @testable import BITTestingCore
 
-final class TrustStatementUrlMapperTests: XCTestCase {
+final class TrustRegistryUrlMapperTests: XCTestCase {
 
   // MARK: Internal
 
@@ -18,7 +18,7 @@ final class TrustStatementUrlMapperTests: XCTestCase {
       Self.baseRegistryDomain: Self.trustRegistryDomain,
       Self.baseRegistryDomainInt: Self.trustRegistryDomainInt,
     ] }
-    mapper = TrustStatementUrlMapper()
+    mapper = TrustRegistryUrlMapper()
   }
 
   func testMap_validDid_returnsURL() async throws {
@@ -37,14 +37,14 @@ final class TrustStatementUrlMapperTests: XCTestCase {
     let subjectDid = "did:tdw:example:example.ch:example"
 
     XCTAssertThrowsError(try mapper.map(did: subjectDid)) { error in
-      XCTAssertEqual(error as? TrustStatementUrlMapperError, .cannotParseTrustRegistryDomain)
+      XCTAssertEqual(error as? TrustRegistryUrlMapperError, .cannotParseTrustRegistryDomain)
     }
   }
 
   func testMap_invalidDid_throwsError() async throws {
     for did in invalidDids {
       XCTAssertThrowsError(try mapper.map(did: did)) { error in
-        XCTAssertEqual(error as? TrustStatementUrlMapperError, .cannotParseTrustRegistryDomain, "Accepted invalid did: \(did)")
+        XCTAssertEqual(error as? TrustRegistryUrlMapperError, .cannotParseTrustRegistryDomain, "Accepted invalid did: \(did)")
       }
     }
   }
@@ -70,5 +70,5 @@ final class TrustStatementUrlMapperTests: XCTestCase {
     "didtdwexample\(baseRegistryDomain)example",
   ]
 
-  private var mapper: TrustStatementUrlMapper!
+  private var mapper: TrustRegistryUrlMapper!
 }

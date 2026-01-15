@@ -26,7 +26,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
 
     XCTAssertEqual(serviceSpy.fetchFromCallsCount, 1)
     XCTAssertEqual(serviceSpy.fetchFromReceivedUrl, urlMock)
-    XCTAssertEqual(serviceSpy.declineForWithCallsCount, 0)
+    XCTAssertEqual(serviceSpy.declineUrlWithCallsCount, 0)
 
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingReceivedRequestObject, Self.requestObjectMock)
@@ -52,7 +52,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
 
     XCTAssertEqual(serviceSpy.fetchFromCallsCount, 1)
     XCTAssertEqual(serviceSpy.fetchFromReceivedUrl, urlMock)
-    XCTAssertEqual(serviceSpy.declineForWithCallsCount, 0)
+    XCTAssertEqual(serviceSpy.declineUrlWithCallsCount, 0)
 
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingReceivedRequestObject, Self.requestObjectMock)
@@ -74,29 +74,29 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
   }
 
   func textExecute_jwtRequestObject_argumentsPassed() async throws {
-    createSuccessState(request: .jwt(jwtRequestObjectMock))
+    createSuccessState(request: .jwt(requestObjectJWSMock))
 
     _ = try await useCase.execute(url: urlMock)
 
     XCTAssertEqual(serviceSpy.fetchFromCallsCount, 1)
     XCTAssertEqual(serviceSpy.fetchFromReceivedUrl, urlMock)
-    XCTAssertEqual(serviceSpy.declineForWithCallsCount, 0)
+    XCTAssertEqual(serviceSpy.declineUrlWithCallsCount, 0)
 
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
     XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingReceivedRequestObject, Self.requestObjectMock)
 
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 1)
-    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, jwtRequestObjectMock.payload.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, requestObjectJWSMock.payload.issuer)
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.type, .verification)
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId, vcSchemaIdMock)
   }
 
   func testExecute_jwtRequestObject_returnsContextWithTrustStatement() async throws {
-    createSuccessState(request: .jwt(jwtRequestObjectMock))
+    createSuccessState(request: .jwt(requestObjectJWSMock))
 
     let context = try await useCase.execute(url: urlMock)
 
-    let requestObject = jwtRequestObjectMock.payload
+    let requestObject = requestObjectJWSMock.payload
     XCTAssertEqual(context.requestObject, requestObject)
     XCTAssertEqual(context.compatibleCredentials, compatibleCredentialsMock)
     XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first!)
@@ -104,12 +104,12 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
   }
 
   func testExecute_jwtRequestObjectWithoutVct_doesNotPassVct() async throws {
-    createSuccessState(request: .jwt(JWTRequestObjectPayload.Mock.noVct))
+    createSuccessState(request: .jwt(RequestObjectJWS.Mock.noVct))
 
     let context = try await useCase.execute(url: urlMock)
 
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 1)
-    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, jwtRequestObjectMock.payload.issuer)
+    XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, requestObjectJWSMock.payload.issuer)
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.type, .verification)
     XCTAssertNil(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId)
     XCTAssertEqual(context.trustInformation, trustInformationMock)
@@ -146,9 +146,9 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
       _ = try await useCase.execute(url: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      XCTAssertEqual(serviceSpy.declineForWithCallsCount, 1)
-      XCTAssertEqual(serviceSpy.declineForWithReceivedArguments?.requestObject, request.requestObject)
-      XCTAssertEqual(serviceSpy.declineForWithReceivedArguments?.error, .invalidRequest)
+      XCTAssertEqual(serviceSpy.declineUrlWithCallsCount, 1)
+      XCTAssertEqual(serviceSpy.declineUrlWithReceivedArguments?.url, request.requestObject.responseUri)
+      XCTAssertEqual(serviceSpy.declineUrlWithReceivedArguments?.error, .invalidRequest)
 
       XCTAssertEqual(error as? FetchPresentationRequestUseCaseError, .invalidRequest)
     }
@@ -227,7 +227,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
   private let urlMock = URL(string: "https://example.com")!
   private let vcSchemaIdMock = "vcSchemaId"
 
-  private let jwtRequestObjectMock: JWTRequestObject = JWTRequestObjectPayload.Mock.sample
+  private let requestObjectJWSMock = RequestObjectJWS.Mock.sample
   private let compatibleCredentialsMock: [CompatibleCredential] = [CompatibleCredential.Mock.BIT]
   private let trustInformationMock = TrustInformation.Mock.trustedIdentity
 

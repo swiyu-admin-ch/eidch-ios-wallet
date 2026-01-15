@@ -12,19 +12,19 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
   // MARK: Internal
 
   func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, fields: [String]) throws -> VpToken {
-    guard let vcSdJwt = credential as? VcSdJwt else {
+    guard let vcSdJWS = credential as? VcSdJWS else {
       throw AnyVpTokenGeneratorError.invalidFormat
     }
-    let sdJwt = vcSdJwt.createSelectiveDisclosure(for: fields)
+    let sdJwt = vcSdJWS.createSelectiveDisclosure(for: fields)
 
     guard
       let key = keyPair,
-      let keyBindingJWT = try generateKeyBindingJWT(from: sdJwt, requestObject: requestObject, keyPair: key)
+      let jws = try generateKeyBindingJWS(from: sdJwt, requestObject: requestObject, keyPair: key)
     else {
       return sdJwt
     }
 
-    return sdJwt + keyBindingJWT
+    return sdJwt + jws
   }
 
   // MARK: Private
@@ -32,15 +32,15 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
   @Injected(\.sha256Hasher) private var sha256Hasher: Hashable
   @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
 
-  private func generateKeyBindingJWT(from sdJwt: String, requestObject: RequestObject, keyPair: VaultKeyPair) throws -> String? {
+  private func generateKeyBindingJWS(from sdJwt: String, requestObject: RequestObject, keyPair: VaultKeyPair) throws -> String? {
     guard let sdJwtData = sdJwt.data(using: .utf8) else {
       return nil
     }
 
     let sdJWTsha256 = sha256Hasher.hash(sdJwtData)
     let sdHash = sdJWTsha256.base64URLEncodedString()
-    let keyBindingPayload = KeyBindingPayload(sdHash: sdHash, audience: requestObject.clientId, nonce: requestObject.nonce)
-    let data = try jwsEncoder.encode(keyBindingPayload, using: keyPair)
+    let jwt = KeyBindingJWT(sdHash: sdHash, audience: requestObject.clientId, nonce: requestObject.nonce)
+    let data = try jwsEncoder.encode(jwt, using: keyPair)
     return String(data: data, encoding: .utf8)
   }
 

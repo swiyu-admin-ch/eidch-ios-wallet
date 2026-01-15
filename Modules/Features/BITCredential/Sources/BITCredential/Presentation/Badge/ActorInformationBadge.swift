@@ -35,6 +35,8 @@ extension ActorInformationBadgeType {
       L10n.tkIssuerNotLegitimate
     case .notLegitimateVerifier:
       L10n.tkVerifierNotLegitimate
+    case .notCompliant:
+      L10n.tkActorNonCompliant
     }
   }
 
@@ -49,9 +51,10 @@ extension ActorInformationBadgeType {
     case .legitimateIssuer,
          .legitimateVerifier:
       Assets.legitimateBadge.swiftUIImage
-    case .notLegitimateIssuer,
+    case .notCompliant,
+         .notLegitimateIssuer,
          .notLegitimateVerifier:
-      Assets.notLegitimateBadge.swiftUIImage
+      Assets.warningBadge.swiftUIImage
     }
   }
 
@@ -64,7 +67,8 @@ extension ActorInformationBadgeType {
       .success
     case .notTrusted:
       .info
-    case .notLegitimateIssuer,
+    case .notCompliant,
+         .notLegitimateIssuer,
          .notLegitimateVerifier,
          .unknownTrust:
       .error
@@ -81,6 +85,7 @@ extension ActorInformationBadgeType {
     ActorInformationBadge(type: .legitimateVerifier)
     ActorInformationBadge(type: .notLegitimateIssuer)
     ActorInformationBadge(type: .notLegitimateVerifier)
+    ActorInformationBadge(type: .notCompliant(reason: "Reason"))
   }
 }
 #endif

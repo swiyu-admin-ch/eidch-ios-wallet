@@ -30,7 +30,7 @@ struct FetchMetadataUseCase: FetchMetadataUseCaseProtocol {
       throw FetchAnyVerifiableCredentialError.selectedCredentialNotFound
     }
 
-    return try CredentialMetadataWrapper(selectedCredentialSupportedId: selectedCredentialId, credentialMetadata: response.metadata, rawData: response.raw)
+    return try CredentialMetadataWrapper(credentialConfigurationId: selectedCredentialId, credentialMetadata: response.metadata, rawData: response.raw)
   }
 
   private func getIssuerUrl(from offer: CredentialOffer) throws -> URL {

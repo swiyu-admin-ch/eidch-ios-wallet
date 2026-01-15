@@ -1,3 +1,4 @@
+import BITActivity
 import BITL10n
 import BITTheming
 import NavigatorUI
@@ -28,22 +29,20 @@ struct NonComplianceCategorySelectionView: View {
 
   @Environment(\.navigator) private var navigator
 
-  let activityId: UUID
-  let credentialId: UUID
+  let activity: Activity
 
-  private let categories = NonComplianceCategory.allCases
+  private var categories: [NonComplianceCategory] {
+    activity.type.nonComplianceCategories
+  }
 
   private var content: some View {
     List {
       Section {
         ForEach(categories) { category in
-          NavigationLink(to: NonComplianceDestinations.info(category: category, activityId: activityId, credentialId: credentialId)) {
+          NavigationLink(to: NonComplianceInternalDestinations.info(category: category, activityId: activity.id)) {
             category.cell
           }
         }
-        .padding(.vertical, .x3)
-        .padding(.horizontal, .x4)
-        .listRowInsets(EdgeInsets())
       } footer: {
         Text(L10n.tkNonComplianceListFooter)
       }

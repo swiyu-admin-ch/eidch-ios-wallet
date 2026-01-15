@@ -33,6 +33,7 @@ extension CredentialEntity {
 
   public func setValues(from credential: VerifiableCredential) {
     verifiableCredential?.status = VerifiableCredentialEntity.CredentialStatus(credential.status)
+    verifiableCredential?.progressionState = VerifiableCredentialEntity.ProgressionState(credential.progressionState)
   }
 
   public func setValues(from credential: DeferredCredential) {

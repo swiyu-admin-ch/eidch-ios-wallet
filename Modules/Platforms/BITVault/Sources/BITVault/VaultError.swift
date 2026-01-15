@@ -2,9 +2,9 @@ import Foundation
 
 public enum VaultError: Error, LocalizedError {
   case keyGenerationError(reason: String)
-  case keyRetrievalError
-  case keyDeletionError
-  case identifierCannotBeCasted
+  case keyRetrievalError(reason: String)
+  case keyDeletionError(reason: String)
+  case identifierCannotBeCasted(identifier: String)
   case publicKeyRetrievalError
   case encryptionError(String)
   case decryptionError(String)
@@ -24,12 +24,12 @@ public enum VaultError: Error, LocalizedError {
     switch self {
     case .keyGenerationError(let reason):
       NSLocalizedString("Failed to generate a key: \(reason)", comment: "Key generation error")
-    case .keyRetrievalError:
-      NSLocalizedString("Failed to retrieve the key.", comment: "Key retrieval error")
-    case .keyDeletionError:
-      NSLocalizedString("Failed to delete the key.", comment: "Key deletion error")
-    case .identifierCannotBeCasted:
-      NSLocalizedString("Failed to cast identifier String to utf8", comment: "Identifier cannot be casted")
+    case .keyRetrievalError(let reason):
+      NSLocalizedString("Failed to retrieve the key: \(reason)", comment: "Key retrieval error")
+    case .keyDeletionError(let reason):
+      NSLocalizedString("Failed to delete the key: \(reason)", comment: "Key deletion error")
+    case .identifierCannotBeCasted(let identifier):
+      NSLocalizedString("Failed to cast identifier '\(identifier)' to utf8", comment: "Identifier cannot be casted")
     case .publicKeyRetrievalError:
       NSLocalizedString("Failed to retrieve the public key.", comment: "Public key retrieval error")
     case .encryptionError(let reason):

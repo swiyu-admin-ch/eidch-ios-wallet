@@ -41,11 +41,13 @@ extension FetchCredentialContext {
       }
 
       return FetchCredentialContext(
+        credentialConfigurationId: "elfa-sdjwt",
         format: format,
         selectedCredential: credentialConfig,
         credentialIssuer: "credential-issuer",
         holderBindingContext: holderBindingContext,
-        accessToken: AccessToken(cNonce: "cNonce", accessToken: "access-token"),
+        accessToken: AccessToken.Mock.sample,
+        nonce: Nonce.Mock.default,
         credentialEndpoint: mockEndpointsUrl,
         deferredCredentialEndpoint: URL(string: "mock_deferred_credential_endpoint"))
     }

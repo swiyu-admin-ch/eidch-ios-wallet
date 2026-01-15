@@ -5,16 +5,10 @@ import XCTest
 
 final class ScanDocumentOutputTests: XCTestCase {
 
-  // MARK: Internal
-
   func testInit() throws {
-    let documentOutput = try ScanDocumentOutput(mockPackageResult, identityType: .passport)
+    let documentOutput = try ScanDocumentOutput(.Mock.sample, identityType: .passport)
 
     XCTAssertEqual(documentOutput.identityType, .passport)
     XCTAssertEqual(documentOutput.files.count, 3)
   }
-
-  // MARK: Private
-
-  private let mockPackageResult = AVBeamPackageResult.Mock.sample
 }

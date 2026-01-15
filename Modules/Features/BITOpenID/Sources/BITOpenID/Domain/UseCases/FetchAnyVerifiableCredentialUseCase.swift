@@ -41,13 +41,16 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     let issuerUrl = try getIssuerUrl(from: offer)
     let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
     let accessToken = try await fetchAccessToken(tokenEndpoint: configuration.tokenEndpoint, credentialOffer: offer)
+    let nonce = try await fetchNonceIfNeeded(from: metadataWrapper, holderBindingContext: holderBindingContext)
 
     let context = FetchCredentialContext(
+      credentialConfigurationId: metadataWrapper.credentialConfigurationId,
       format: metadataWrapper.selectedCredential.format,
       selectedCredential: metadataWrapper.selectedCredential,
       credentialIssuer: metadataWrapper.credentialMetadata.credentialIssuer,
       holderBindingContext: holderBindingContext,
       accessToken: accessToken,
+      nonce: nonce,
       credentialEndpoint: credentialEndpoint,
       deferredCredentialEndpoint: metadataWrapper.credentialMetadata.deferredCredentialEndpoint)
 
@@ -88,5 +91,14 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       guard let err = error as? NetworkError, err.status == .invalidGrant else { throw error }
       throw FetchAnyVerifiableCredentialError.expiredInvitation
     }
+  }
+
+  private func fetchNonceIfNeeded(from metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> Nonce? {
+    guard holderBindingContext != nil else { return nil }
+
+    if let nonceEndpoint = metadataWrapper.credentialMetadata.nonceEndpoint {
+      return try await repository.fetchNonce(from: nonceEndpoint)
+    }
+    return nil
   }
 }

@@ -96,7 +96,7 @@ public struct EmptyStateView<Label>: View where Label: View {
 
   public var body: some View {
     HStack(alignment: .center) {
-      VStack(alignment: .center, spacing: .normal) {
+      VStack(alignment: .center, spacing: .x2_5) {
         if let image = state.image {
           image
             .resizable()

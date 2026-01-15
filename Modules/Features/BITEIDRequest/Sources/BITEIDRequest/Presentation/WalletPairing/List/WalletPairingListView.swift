@@ -144,8 +144,9 @@ struct WalletPairingListView: View {
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.navigationClose, label: {
-        Assets.close.swiftUIImage
+      Button(action: viewModel.close, label: {
+        ThemingAssets
+          .close.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClose)
       .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)

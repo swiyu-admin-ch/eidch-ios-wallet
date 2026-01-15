@@ -28,6 +28,7 @@ struct PresentationRequestReviewView: View {
     Content(
       state: viewModel.state,
       isUnknownAlertPresented: $viewModel.isUnknownVerifierAlertShown,
+      isSessionTimeoutPresented: $viewModel.isSessionTimeoutPresented,
       eventAction: { event in Task { await viewModel.send(event) } },
       badgeAction: { badgeType in router.badgeInformation(badgeType: badgeType) })
       .onColorSchemeChange { scheme in
@@ -52,11 +53,13 @@ extension PresentationRequestReviewView {
     init(
       state: PresentationRequestReviewState,
       isUnknownAlertPresented: Binding<Bool>,
+      isSessionTimeoutPresented: Binding<Bool>,
       eventAction: @escaping (PresentationRequestReviewViewModel.Event) -> Void = { _ in },
       badgeAction: @escaping (BadgeType) -> Void = { _ in })
     {
       self.state = state
       self.isUnknownAlertPresented = isUnknownAlertPresented
+      self.isSessionTimeoutPresented = isSessionTimeoutPresented
       self.eventAction = eventAction
       self.badgeAction = badgeAction
     }
@@ -83,6 +86,7 @@ extension PresentationRequestReviewView {
 
     private let state: PresentationRequestReviewState
     private let isUnknownAlertPresented: Binding<Bool>
+    private let isSessionTimeoutPresented: Binding<Bool>
     private let eventAction: (PresentationRequestReviewViewModel.Event) -> Void
     private let badgeAction: (BadgeType) -> Void
 
@@ -151,6 +155,13 @@ extension PresentationRequestReviewView.Content {
       Button(L10n.tkGlobalCancel, role: .cancel) { }
     } message: {
       Text(L10n.tkPresentReviewConfirmPresentationSecondary)
+    }
+    .alert(isPresented: isSessionTimeoutPresented) {
+      Alert(
+        title: Text(L10n.tkPresentReviewSessionTimeoutTitle),
+        message: Text(L10n.tkPresentReviewSessionTimeoutBody),
+        primaryButton: .default(Text(L10n.tkPresentReviewSessionTimeoutPrimaryButton), action: { eventAction(.login) }),
+        secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
     }
     .accessibilityAction(named: L10n.tkPresentReviewPrimaryButtonAlt) {
       eventAction(.submit(viewState, true))
@@ -243,6 +254,6 @@ extension PresentationRequestReviewView.Content {
 
 #if DEBUG
 #Preview {
-  PresentationRequestReviewView.Content(state: .Mock.result, isUnknownAlertPresented: .constant(false))
+  PresentationRequestReviewView.Content(state: .Mock.result, isUnknownAlertPresented: .constant(false), isSessionTimeoutPresented: .constant(false))
 }
 #endif

@@ -4,7 +4,7 @@ import XCTest
 @testable import BITTestingCore
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
-
+@MainActor
 class AVIdentityCheckViewModelTests: XCTestCase {
 
   // MARK: Internal
@@ -18,14 +18,16 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
     registerMocks()
     viewModel = AVIdentityCheckViewModel()
-    createSuccessState()
   }
 
   func testPrimaryAction_nfcRequired_success() async {
+    startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationNFCResponse
+
     await viewModel.primaryAction()
 
     XCTAssertEqual(viewModel.destination, .nfcScan)
-    XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationResponse)
+    XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationNFCResponse)
+    XCTAssertEqual(context.identityType, .passport)
     XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
     XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
   }
@@ -35,8 +37,9 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
     await viewModel.primaryAction()
 
-    XCTAssertEqual(viewModel.destination, .recordDocument)
+    XCTAssertEqual(viewModel.destination, .recordDocumentInformation)
     XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationResponseRecordDocument)
+    XCTAssertEqual(context.identityType, .identityCard)
     XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
     XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
   }
@@ -46,8 +49,21 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
     await viewModel.primaryAction()
 
-    XCTAssertEqual(viewModel.destination, .scanDocument)
+    XCTAssertEqual(viewModel.destination, .scanDocumentInformation)
     XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationResponseScanDocument)
+    XCTAssertEqual(context.identityType, .identityCard)
+    XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
+  }
+
+  func testPrimaryAction_allBooleanFalse_routeToSelfie() async {
+    startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationAllBooleanFalseSample
+
+    await viewModel.primaryAction()
+
+    XCTAssertEqual(viewModel.destination, .avIntroSelfieVideo)
+    XCTAssertEqual(context.autoVerificationResponse, mockAutoVerificationAllBooleanFalseSample)
+    XCTAssertEqual(context.identityType, .identityCard)
     XCTAssertEqual(startAutoVerificationUseCase.executeForCallsCount, 1)
     XCTAssertEqual(startAutoVerificationUseCase.executeForReceivedCaseId, context.caseId)
   }
@@ -70,9 +86,10 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockAutoVerificationResponse = AutoVerificationResponse.Mock.nfcSample
+  private let mockAutoVerificationNFCResponse = AutoVerificationResponse.Mock.nfcSample
   private let mockAutoVerificationResponseScanDocument = AutoVerificationResponse.Mock.scanDocumentSample
   private let mockAutoVerificationResponseRecordDocument = AutoVerificationResponse.Mock.recordDocumentSample
+  private let mockAutoVerificationAllBooleanFalseSample = AutoVerificationResponse.Mock.allBooleanFalseSample
 
   private var viewModel: AVIdentityCheckViewModel!
   private var startAutoVerificationUseCase: StartAutoVerificationUseCaseProtocolSpy!
@@ -81,9 +98,5 @@ class AVIdentityCheckViewModelTests: XCTestCase {
   private func registerMocks() {
     startAutoVerificationUseCase = StartAutoVerificationUseCaseProtocolSpy()
     Container.shared.startAutoVerificationUseCase.register { self.startAutoVerificationUseCase }
-  }
-
-  private func createSuccessState() {
-    startAutoVerificationUseCase.executeForReturnValue = mockAutoVerificationResponse
   }
 }

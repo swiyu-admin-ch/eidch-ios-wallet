@@ -25,6 +25,7 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
       .Mock.sampleInQueue,
       .Mock.sampleInQueueNoOnlineSessionStart,
       .Mock.sampleWithoutState,
+      .Mock.sampleCancelled,
     ]
 
     let requestCases = try await useCase.execute()
@@ -38,8 +39,7 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
 
     let requestCases = try await useCase.execute()
 
-    XCTAssertEqual(requestCases.count, mockEIDRequestCases.count - 1) // Removal of .cancelled cases
-    XCTAssertTrue(requestCases.allSatisfy( { $0.state?.state != .cancelled }))
+    XCTAssertEqual(requestCases.count, mockEIDRequestCases.count)
   }
 
   func testExecuteWithRepositoryError() async throws {

@@ -25,7 +25,6 @@ struct ValidateAttestationsErrorView: View {
       },
       footer: { footer() })
       .navigationBack(onChangeOf: $viewModel.isNavigationBackTriggered)
-      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .navigationBarBackButtonHidden(true)
       .toolbar(.visible)
   }
@@ -34,6 +33,10 @@ struct ValidateAttestationsErrorView: View {
 
   @StateObject private var viewModel: ValidateAttestationsErrorViewModel
 
+  @Environment(\.navigator) private var navigator
+
+  @Injected(\.eidRequestFlowCoordinator) private var eidRequestFlowCoordinator
+
   @ViewBuilder
   private func footer() -> some View {
     if viewModel.isRetryEnabled {
@@ -41,11 +44,17 @@ struct ValidateAttestationsErrorView: View {
         primaryButtonLabel: L10n.tkEidRequestAttestationUnknownErrorPrimaryButton,
         primaryButtonAction: viewModel.primaryAction,
         secondaryButtonLabel: L10n.tkEidRequestAttestationUnknownErrorSecondaryButton,
-        secondaryButtonAction: viewModel.navigationClose)
+        secondaryButtonAction: {
+          eidRequestFlowCoordinator.cleanup()
+          navigator.dismiss()
+        })
     } else {
       DefaultInformationFooterView(
         primaryButtonLabel: L10n.tkEidRequestAttestationUnknownErrorSecondaryButton,
-        primaryButtonAction: viewModel.navigationClose)
+        primaryButtonAction: {
+          eidRequestFlowCoordinator.cleanup()
+          navigator.dismiss()
+        })
     }
   }
 

@@ -21,7 +21,7 @@ public struct RequestCasesListView: View {
         }
         .padding(.x6)
         .background(ThemingAssets.Background.secondary.swiftUIColor)
-        .cornerRadius(.CornerRadius.m)
+        .cornerRadius(.x5)
       }
     }
   }

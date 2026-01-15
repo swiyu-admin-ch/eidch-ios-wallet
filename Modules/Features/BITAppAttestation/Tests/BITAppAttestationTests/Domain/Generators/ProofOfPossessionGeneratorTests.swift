@@ -92,14 +92,14 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
   private let mockBody = "mock_body"
   private let mockAudience = "did:tdw:example.com"
   private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockChallenge = AttestationChallenge.Response.Mock.sample
   private let mockChallengeData = AttestationChallenge.Response.Mock.sampleData
   private let mockSecKey = VaultKeyPair.Mock.ES256
   private let mockChallengeEndpoint = URL(string: "https://mock_challenge_url")!
 
   private var generator: ProofOfPossessionGenerator!
-  private var jwsEncoder: JWSEncoderMock<ClientAttestationProofOfPossessionPayload>!
+  private var jwsEncoder: JWSEncoderMock<ClientAttestationProofOfPossessionJWT>!
   private var jsonCanonicalizer: JsonCanonicalizerProtocolSpy!
   private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!
   private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy!

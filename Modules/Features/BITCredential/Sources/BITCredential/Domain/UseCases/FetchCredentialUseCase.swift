@@ -59,7 +59,7 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.activityService) private var activityService
 
-  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: any LocalizedTrustStatement) async throws -> VerifiableCredential {
+  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: IdentityTrustStatementJWT) async throws -> VerifiableCredential {
     var credentialCopy = credential
 
     credentialCopy.issuerDisplays = credentialCopy.issuerDisplays.compactMap { issuerDisplay in

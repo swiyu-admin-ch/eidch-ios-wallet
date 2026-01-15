@@ -1,24 +1,43 @@
+import BITL10n
 import SwiftUI
 
-// MARK: - LinkText
+// MARK: - CustomLink
 
-public struct LinkText: View {
+public struct CustomLink: View {
 
-  private let text: String
+  // MARK: Lifecycle
 
-  public init(_ text: String) {
-    self.text = text
+  public init(to url: URL, label: String) {
+    self.label = label
+    self.url = url
   }
 
+  // MARK: Public
+
   public var body: some View {
-    HStack(alignment: .lastTextBaseline, spacing: .x1) {
-      Text(text)
-      Image(systemName: "chevron.right")
-        .font(.caption)
+    Link(destination: url) {
+      HStack(alignment: .lastTextBaseline, spacing: .x1) {
+        Text(label)
+          .font(.custom.footnote)
+        Image(systemName: "chevron.right")
+          .font(.caption)
+      }
+      .multilineTextAlignment(.leading)
+      .foregroundStyle(ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor)
     }
-    .multilineTextAlignment(.leading)
-    .foregroundStyle(ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor)
+    .accessibilityLabel(accessibilityText)
     .accessibilityElement(children: .combine)
+    .accessibilityRemoveTraits(.isLink)
+    .accessibilityRemoveTraits(.isButton)
+  }
+
+  // MARK: Private
+
+  private let label: String
+  private let url: URL
+
+  private var accessibilityText: String {
+    label + ", " + L10n.tkGlobalExternalLinkAlt
   }
 }
 
@@ -37,8 +56,14 @@ public struct ButtonLinkText: View {
 
   public var body: some View {
     Button(action: action, label: {
-      LinkText(text)
+      HStack(alignment: .lastTextBaseline, spacing: .x1) {
+        Text(text)
+        Image(systemName: "chevron.right")
+          .font(.caption)
+      }
+      .multilineTextAlignment(.leading)
     })
+    .accessibilityElement(children: .combine)
     .accessibilityLabel(text)
     .accessibilityRemoveTraits(.isButton)
     .accessibilityAddTraits(.isLink)
@@ -55,6 +80,9 @@ public struct ButtonLinkText: View {
   ButtonLinkText("Test", {})
 }
 
+#if DEBUG
+// swiftlint: disable force_unwrapping
 #Preview {
-  LinkText("Test")
+  CustomLink(to: URL("www.admin.ch")!, label: "Test")
 }
+#endif

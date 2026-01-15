@@ -7,9 +7,7 @@ extension InvitationError {
   var icon: Image {
     switch self {
     case .noConnection: Assets.noWifi.swiftUIImage
-    case .compatibleCredentialNotFound,
-         .emptyWallet,
-         .expiredInvitation,
+    case .expiredInvitation,
          .validationFailed: Assets.credential.swiftUIImage
     case .invalidPresentationRequest,
          .unknownIssuer: Assets.questionmarkSquare.swiftUIImage
@@ -20,8 +18,6 @@ extension InvitationError {
   var primaryText: String {
     switch self {
     case .noConnection: L10n.tkErrorConnectionproblemTitle
-    case .emptyWallet: L10n.tkErrorEmptywalletTitle
-    case .compatibleCredentialNotFound: L10n.tkErrorNosuchcredentialTitle
     case .expiredInvitation: L10n.tkErrorNotusableTitle
     case .unknownIssuer: L10n.tkErrorNotregisteredTitle
     case .validationFailed: L10n.tkErrorInvitationcredentialTitle
@@ -33,8 +29,6 @@ extension InvitationError {
   var secondaryText: String {
     switch self {
     case .noConnection: L10n.tkErrorConnectionproblemBody
-    case .emptyWallet: L10n.tkErrorEmptywalletBody
-    case .compatibleCredentialNotFound: L10n.tkErrorNosuchcredentialBody
     case .expiredInvitation: L10n.tkErrorNotusableBody
     case .unknownIssuer: L10n.tkErrorNotregisteredBody
     case .validationFailed: L10n.tkErrorInvitationcredentialBody

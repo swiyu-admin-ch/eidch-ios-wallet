@@ -3,11 +3,16 @@ import Foundation
 
 
 public struct EIDRequestStatus: Decodable, Equatable {
+
+  // MARK: Public
+
   public let state: State
   public let onlineSessionStartCloseAt: Date?
   public let queueInformation: QueueInformation?
   public let legalRepresentant: LegalRepresentant?
   public let targetWallets: TargetWallet?
+
+  // MARK: Private
 
   private enum CodingKeys: String, CodingKey {
     case state
@@ -29,66 +34,65 @@ extension EIDRequestStatus {
     case expired = "TIMEOUT"
     case unknown = "UNKNOWN"
     case declined = "DECLINED"
-
-    // MARK: Lifecycle
-
-    init(_ state: EIDRequestStatusStateEntity) {
-      switch state {
-      case .inQueue:
-        self = .inQueue
-      case .readyForOnlineSession:
-        self = .readyForOnlineSession
-      case .inTargetWalletPairing:
-        self = .inTargetWalletPairing
-      case .cancelled:
-        self = .cancelled
-      case .expired:
-        self = .expired
-      case .unknown:
-        self = .unknown
-      case .agentReview:
-        self = .agentReview
-      case .declined:
-        self = .declined
-      }
-    }
+    case autoVerification = "IN_AUTO_VERIFICATION"
+    case closed = "CLOSED"
+    case issuing = "IN_ISSUANCE"
   }
 
   public struct QueueInformation: Decodable, Equatable {
+
+    // MARK: Public
+
     public let onlineSessionStartOpenAt: Date
 
-    private let position: Int
-    private let total: Int
+    // MARK: Private
 
     private enum CodingKeys: String, CodingKey {
       case onlineSessionStartOpenAt = "expectedOnlineSessionStart"
       case position = "positionInQueue"
       case total = "totalInQueue"
     }
+
+    private let position: Int
+    private let total: Int
+
   }
 
   public struct LegalRepresentant: Decodable, Equatable {
+
+    // MARK: Public
+
     public let isVerified: Bool
-    private let verificationLink: String
+
+    // MARK: Private
 
     private enum CodingKeys: String, CodingKey {
       case isVerified = "verified"
       case verificationLink
     }
+
+    private let verificationLink: String
+
   }
 
   public struct TargetWallet: Decodable, Equatable {
-    public let limitReached: Bool
-    public let pairedWallets: [PairedWallet]
-
     public struct PairedWallet: Decodable, Equatable {
+
+      // MARK: Public
+
       public let pairedAt: Date
       public var collectingAt: Date? = nil
+
+      // MARK: Private
 
       private enum CodingKeys: String, CodingKey {
         case pairedAt = "timestampPairing"
         case collectingAt = "timestampCollecting"
       }
     }
+
+    public let limitReached: Bool
+    public let pairedWallets: [PairedWallet]
+
   }
 }

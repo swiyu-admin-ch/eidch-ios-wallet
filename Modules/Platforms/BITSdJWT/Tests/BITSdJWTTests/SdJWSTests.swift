@@ -20,27 +20,27 @@ final class SdJWSTests: XCTestCase {
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringAllKeys_ReturnsWhole() throws {
-    let sdJwt = TestSdJWTPayload.Mock.flat
+    let sdJwt = TestSdJWT.Mock.flat
     let keys = [Self.key1, Self.key2, Self.key3]
 
     let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
-    let expected = String(data: TestSdJWTPayload.Mock.flatJwtData, encoding: .utf8)!
+    let expected = String(data: TestSdJWT.Mock.flatJwtData, encoding: .utf8)!
     XCTAssertEqual(expected, newSdJwt)
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringSomeKeys_ReturnsJwtWithRequiredDisclosures() throws {
-    let sdJwt = TestSdJWTPayload.Mock.flat
+    let sdJwt = TestSdJWT.Mock.flat
     let keys = [Self.key2]
 
     let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
-    let expected = [sdJwt.rawJWS, TestSdJWTPayload.Mock.disclosure2, ""].joined(separator: SdJWSDecoder.sdJWTSeparator)
+    let expected = [sdJwt.rawJWS, TestSdJWT.Mock.disclosure2, ""].joined(separator: SdJWSDecoder.sdJWTSeparator)
     XCTAssertEqual(expected, newSdJwt)
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringNoKeys_ReturnsJwt() throws {
-    let sdJwt = TestSdJWTPayload.Mock.flat
+    let sdJwt = TestSdJWT.Mock.flat
     let keys = [String]()
 
     let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
@@ -49,7 +49,7 @@ final class SdJWSTests: XCTestCase {
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringOtherKeys_ReturnsJwt() throws {
-    let sdJwt = TestSdJWTPayload.Mock.flat
+    let sdJwt = TestSdJWT.Mock.flat
     let keys: [String] = ["otherKey", "otherKey2"]
 
     let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)

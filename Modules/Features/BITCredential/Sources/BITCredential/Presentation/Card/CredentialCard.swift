@@ -19,6 +19,7 @@ public struct CredentialCard<Header: View>: View {
     statusBadgeLabel: String? = nil,
     statusBadgeImage: Image? = nil,
     statusBadgeStyle: (any BadgeStyle)? = nil,
+    style: Style = .verifiable,
     @ViewBuilder header: () -> Header? = { EmptyView() })
   {
     self.name = name
@@ -29,6 +30,7 @@ public struct CredentialCard<Header: View>: View {
     self.statusBadgeLabel = statusBadgeLabel
     self.statusBadgeImage = statusBadgeImage
     self.statusBadgeStyle = statusBadgeStyle
+    self.style = style
     self.header = header()
   }
 
@@ -49,6 +51,22 @@ public struct CredentialCard<Header: View>: View {
         }
       }
       .overlay {
+        if style == .deferred {
+          RoundedRectangle(cornerRadius: cornerRadius)
+            .fill(ThemingAssets.Background.groupedRow.swiftUIColor)
+            .opacity(deferredCredentialOverlayOpacity)
+        }
+      }
+      .overlay {
+        if style == .deferred {
+          RoundedRectangle(cornerRadius: cornerRadius)
+            .inset(by: 0.5)
+            .stroke(
+              backgroundColor ?? ThemingAssets.Background.fallback.swiftUIColor,
+              style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+        }
+      }
+      .overlay {
         if environment == .swiyuInt {
           (controlSize < .regular ? Assets.credentialDemoPatternSmall.swiftUIImage : Assets.credentialDemoPattern.swiftUIImage)
             .opacity(0.5)
@@ -57,6 +75,8 @@ public struct CredentialCard<Header: View>: View {
         }
       }
       content()
+        .colorScheme(cardColorScheme)
+        .foregroundStyle(cardColorScheme.standardColor())
     }
     .frame(minWidth: minWidth, maxWidth: maxWidth, minHeight: minHeight, maxHeight: maxHeight)
     .if(ratio != nil, transform: {
@@ -64,8 +84,6 @@ public struct CredentialCard<Header: View>: View {
     })
     .background(backgroundColor ?? ThemingAssets.Background.fallback.swiftUIColor)
     .clipShape(.rect(cornerRadius: cornerRadius))
-    .colorScheme(cardColorScheme)
-    .foregroundStyle(cardColorScheme.standardColor())
   }
 
   // MARK: Private
@@ -82,10 +100,12 @@ public struct CredentialCard<Header: View>: View {
   private var statusBadgeLabel: String?
   private var statusBadgeImage: Image?
   private var statusBadgeStyle: (any BadgeStyle)?
+  private var style: CredentialCard.Style
 
   private let header: Header?
 
   private let secondaryTextOpacity = 0.7
+  private let deferredCredentialOverlayOpacity = 0.6
   private let defaultText = "n/a"
 
   private var cardColorScheme: ColorScheme {
@@ -322,6 +342,16 @@ extension CredentialCard {
     }
   }
 
+}
+
+// MARK: CredentialCard.Style
+
+extension CredentialCard {
+
+  public enum Style {
+    case verifiable
+    case deferred
+  }
 }
 
 #if DEBUG

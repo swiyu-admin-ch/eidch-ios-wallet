@@ -218,9 +218,9 @@ extension HomeView {
 
   @ViewBuilder
   private func credentialsList() -> some View {
-    ForEach(viewModel.credentials, id: \.id) { credentialViewModel in
-      Button(action: { viewModel.openDetail(for: credentialViewModel) }, label: {
-        AnyView(credentialViewModel.view())
+    ForEach(viewModel.credentials, id: \.id) { credential in
+      Button(action: { viewModel.openCredential(credential) }, label: {
+        AnyView(credential.view())
       })
       .accessibilityIdentifier(AccessibilityIdentifier.credential.rawValue)
     }

@@ -30,14 +30,16 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
 
       guard
         keyAttestation.payload.expiredAt != nil,
-        attestationServiceTrustedDids.contains(keyAttestation.payload.issuer),
+        let issuer = keyAttestation.payload.issuer,
+        attestationServiceTrustedDids.contains(issuer),
         supportedKeyStorageSecurityLevel.contains(keyAttestation.payload.keyStorage),
         try hasValidAttestedKey(keyPair, keyAttestation.payload.attestedKeys)
       else {
         throw ClientAttestationValidatorError.invalidPayload
       }
 
-      return try await jwsValidator.validate(keyAttestation, issuerDid: keyAttestation.payload.issuer)
+      try await jwsValidator.validate(keyAttestation)
+      return true
     } catch {
       return false
     }

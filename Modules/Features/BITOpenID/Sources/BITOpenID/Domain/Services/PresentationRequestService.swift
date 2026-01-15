@@ -8,7 +8,7 @@ import Spyable
 @Spyable
 public protocol PresentationRequestServiceProtocol {
   func fetch(from url: URL) async throws -> PresentationRequest
-  func decline(for requestObject: RequestObject, with error: PresentationErrorRequestBody.ErrorType) async throws
+  func decline(url: URL, with error: PresentationErrorRequestBody.ErrorType) async throws
 }
 
 // MARK: - PresentationRequestService
@@ -22,15 +22,15 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     let request = try await repository.fetch(from: requestURL.url)
     guard
       validateClientId(url: requestURL, requestObject: request.requestObject),
-      await validateRequest(request)
+      try await validateRequest(request)
     else {
       throw FetchPresentationRequestError.invalid(request: request)
     }
     return request
   }
 
-  func decline(for requestObject: RequestObject, with error: PresentationErrorRequestBody.ErrorType) async throws {
-    try await repository.decline(url: requestObject.responseUri, with: error)
+  func decline(url: URL, with error: PresentationErrorRequestBody.ErrorType) async throws {
+    try await repository.decline(url: url, with: error)
   }
 
   // MARK: Private
@@ -49,19 +49,23 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     return true
   }
 
-  private func validateRequest(_ presentationRequest: PresentationRequest) async -> Bool {
+  private func validateRequest(_ presentationRequest: PresentationRequest) async throws -> Bool {
     if case .jwt(let jwtRequestObject) = presentationRequest {
-      guard await validateJWS(of: jwtRequestObject) else {
+      guard try await validateJWS(of: jwtRequestObject) else {
         return false
       }
     }
     return requestObjectValidator.validate(presentationRequest.requestObject)
   }
 
-  private func validateJWS(of jwtRequestObject: JWTRequestObject) async -> Bool {
+  private func validateJWS(of jws: RequestObjectJWS) async throws -> Bool {
     guard
-      jwtRequestObject.header.algorithm == JWTAlgorithm.ES256,
-      jwtRequestObject.payload.clientId == jwtRequestObject.payload.issuer else { return false }
-    return (try? await jwsValidator.validate(jwtRequestObject, issuerDid: jwtRequestObject.payload.issuer)) ?? false
+      jws.header.algorithm == JWTAlgorithm.ES256,
+      jws.payload.clientId == jws.payload.issuer else
+    {
+      return false
+    }
+    try await jwsValidator.validate(jws)
+    return true
   }
 }

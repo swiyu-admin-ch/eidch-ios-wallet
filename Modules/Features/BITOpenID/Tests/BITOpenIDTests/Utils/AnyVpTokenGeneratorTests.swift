@@ -43,10 +43,10 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
   private static let mockJwtString = "jwtString"
   private static let mockJwtData = mockJwtString.data(using: .utf8)!
 
-  private var jwsEncoderMock: JWSEncoderMock<KeyBindingPayload>!
+  private var jwsEncoderMock: JWSEncoderMock<KeyBindingJWT>!
   private var generator: AnyVpTokenGenerator!
   private var sha256HasherSpy = HashableSpy()
-  private var mockCredential = VcSdJwtPayload.Mock.sample
+  private var mockCredential = VcSdJWS.Mock.sample
   private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   private func asserts(_ vpToken: VpToken, nbOfDisclosures: Int, hasKeyBinding: Bool) {

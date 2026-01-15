@@ -3,7 +3,7 @@ import XCTest
 @testable import BITOpenID
 @testable import BITSdJWT
 
-final class VcSdJwtPayloadTypeMetadataUriTests: XCTestCase {
+final class VcSdJwtTypeMetadataUriTests: XCTestCase {
 
   // MARK: Internal
 
@@ -53,9 +53,9 @@ final class VcSdJwtPayloadTypeMetadataUriTests: XCTestCase {
   private let vctMetadataUriMock = "https://vct-metadata.example.com"
   private let vctMetadataUriIntegrityMock = "vctMetadataUriIntegrity"
 
-  private func createVcSdJwt(vct: String, vctIntegrity: String? = nil, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil) -> VcSdJwtPayload {
-    VcSdJwtPayload(
-      issuer: "issuer",
+  private func createVcSdJwt(vct: String, vctIntegrity: String? = nil, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil) -> VcSdJwt {
+    VcSdJwt(
+      requiredIssuer: "issuer",
       vct: vct,
       vctIntegrity: vctIntegrity,
       vctMetadataUri: vctMetadataUri,

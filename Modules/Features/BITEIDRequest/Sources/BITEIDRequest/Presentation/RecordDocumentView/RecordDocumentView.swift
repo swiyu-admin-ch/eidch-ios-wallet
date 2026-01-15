@@ -41,12 +41,10 @@ struct RecordDocumentView: View {
     .onDisappear(perform: {
       Task { await viewModel.stop() }
     })
-    .toolbar { CloseButtonToolbar(action: { viewModel.close() }) }
+    .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
-  @Environment(\.navigator) private var navigator
   @InjectedObject(\.recordDocumentViewModel) private var viewModel
 
   // MARK: Private

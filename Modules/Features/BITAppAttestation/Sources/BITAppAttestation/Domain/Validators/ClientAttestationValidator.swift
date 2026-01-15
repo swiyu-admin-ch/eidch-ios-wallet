@@ -30,9 +30,10 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
       }
 
       guard
+        let issuer = clientAttestation.payload.issuer,
         clientAttestation.payload.expiredAt != nil,
         clientAttestation.payload.activatedAt != nil,
-        attestationServiceTrustedDids.contains(clientAttestation.payload.issuer),
+        attestationServiceTrustedDids.contains(issuer),
         hasValidSubject(clientAttestation),
         hasValidWalletName(clientAttestation),
         hasValidBindingKey(clientAttestation.payload.bindingKey.jwk)
@@ -40,7 +41,8 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
         throw ClientAttestationValidatorError.invalidPayload
       }
 
-      return try await jwsValidator.validate(clientAttestation, issuerDid: clientAttestation.payload.issuer)
+      try await jwsValidator.validate(clientAttestation)
+      return true
     } catch {
       return false
     }

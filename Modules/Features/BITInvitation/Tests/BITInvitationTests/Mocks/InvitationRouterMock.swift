@@ -1,3 +1,4 @@
+import BITAppAuth
 import BITCredential
 import BITCredentialShared
 import BITInvitation
@@ -7,8 +8,7 @@ import BITPresentation
 import Foundation
 @testable import BITNavigationTestCore
 
-class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, ExternalRoutes {
-
+class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, ExternalRoutes, LoginRoutes {
   var didCallCredentialOffer = false
   var didCallDeeplink = false
   var didCallInvitation = false
@@ -21,6 +21,7 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
   var didCallWrongData = false
   var didCallBetaId = false
   var didCallStartPresentation = false
+  var didCallLogin = false
 
   func startPresentation(context: PresentationRequestContext, delegate: (any PresentationFinishDelegate)?) throws {
     didCallStartPresentation = true
@@ -38,7 +39,7 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
     didCallInvitation = true
   }
 
-  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?) {
     didCallCredentialOffer = true
   }
 
@@ -60,4 +61,7 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
     onComplete?()
   }
 
+  func login(animated: Bool) {
+    didCallLogin = true
+  }
 }

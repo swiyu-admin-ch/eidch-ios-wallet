@@ -59,14 +59,13 @@ class HomeViewModel: ObservableObject {
   private let router: HomeRouterRoutes
 
   @Injected(\.getCredentialListUseCase) private var getCredentialListUseCase: GetCredentialListUseCaseProtocol
-  @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.isUserLoggedInUseCase) private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocol
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.isEIDRequestAfterOnboardingEnabledUseCase) private var isEIDRequestAfterOnboardingEnabledUseCase: IsEIDRequestAfterOnboardingEnabledUseCaseProtocol
   @Injected(\.enableEIDRequestAfterOnboardingUseCase) private var enableEIDRequestAfterOnboardingUseCase: EnableEIDRequestAfterOnboardingUseCaseProtocol
   @Injected(\.getEIDRequestCaseListUseCase) private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
-  @Injected(\.refreshDeferredCredentialUseCase) private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocol
+  @Injected(\.refreshCredentialsUseCase) private var refreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol
 
   private func fetchData() async {
     await withTaskGroup(of: Void.self) { group in
@@ -102,15 +101,17 @@ extension HomeViewModel {
     router.openExternalLink(url: url)
   }
 
-  func openDetail(for credentialViewModel: any CredentialViewModelProtocol) {
-    guard
-      let viewModel = credentials.first(where: { $0.id == credentialViewModel.id }),
-      let verifiableCredential = viewModel.credential as? VerifiableCredential
-    else {
+  func openCredential(_ credentialViewModel: any CredentialViewModelProtocol) {
+    guard let verifiableCredential = credentialViewModel.credential as? VerifiableCredential else {
       return
     }
 
-    router.credentialDetail(verifiableCredential)
+    switch verifiableCredential.progressionState {
+    case .accepted:
+      router.credentialDetail(verifiableCredential)
+    case .unaccepted:
+      router.credentialOffer(credential: verifiableCredential)
+    }
   }
 
   func openBetaId() {
@@ -152,22 +153,7 @@ extension HomeViewModel {
 
   private func refreshCredentials() async {
     do {
-      let verifiableCredentials = credentials.compactMap { $0.credential as? VerifiableCredential }
-      let deferredCredentials = credentials.compactMap { $0.credential as? DeferredCredential }
-
-      try await withThrowingTaskGroup(of: Void.self) { [weak self] group in
-        guard let self else { return }
-        group.addTask {
-          try await self.checkAndUpdateCredentialStatusUseCase.execute(verifiableCredentials)
-        }
-        group.addTask {
-          try await self.refreshDeferredCredentialUseCase.execute(deferredCredentials)
-        }
-
-        try await group.waitForAll()
-      }
-
-      let credentials = try await getCredentialListUseCase.execute()
+      let credentials = try await refreshCredentialsUseCase()
       updateView(with: credentials)
     } catch {
       analytics.log(error)
@@ -260,6 +246,10 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 
   func didTapWalletPairing(caseId: String) {
     router.walletPairing(caseId: caseId)
+  }
+
+  func didTapIdentityCheck(caseId: String) {
+    router.identityCheck(caseId: caseId)
   }
 }
 

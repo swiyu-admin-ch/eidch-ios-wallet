@@ -1,18 +1,12 @@
 import Factory
 import Foundation
 import SwiftUI
-import UIKit
 
-// MARK: - CompatibleCredentialsModule
-
-public class CompatibleCredentialsModule {
+final class CompatibleCredentialsModule: PresentationModuleProtocol {
 
   // MARK: Lifecycle
 
-  public init(
-    context: PresentationRequestContext,
-    router: PresentationRouter = Container.shared.presentationRouter()) throws
-  {
+  init(context: PresentationRequestContext, router: PresentationRouter = Container.shared.presentationRouter()) {
     self.router = router
 
     let viewController = UIHostingController(rootView: CompatibleCredentialView(context: context, router: router))
@@ -20,8 +14,8 @@ public class CompatibleCredentialsModule {
     self.viewController = viewController
   }
 
-  // MARK: Public
+  // MARK: Internal
 
-  public let viewController: UIViewController
-  public var router: PresentationRouter
+  let viewController: UIViewController
+  var router: PresentationRouter
 }

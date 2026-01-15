@@ -4,7 +4,7 @@ import NavigatorUI
 import SwiftUI
 
 @MainActor
-class LegalRepresentantConsentModule {
+class LegalRepresentantConsentModule: EIDRequestModule {
 
   // MARK: Lifecycle
 

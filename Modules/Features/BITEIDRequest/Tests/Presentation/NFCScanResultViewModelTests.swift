@@ -9,6 +9,7 @@ import XCTest
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
+@MainActor
 final class NFCScanResultViewModelTests: XCTestCase {
 
   // MARK: Internal
@@ -19,8 +20,30 @@ final class NFCScanResultViewModelTests: XCTestCase {
     createSuccesState()
   }
 
-  func testPrimaryAction() {
+  func testPrimaryAction_documentRecordingRequired_routeToDocumentRecording() {
+    mockContext = EIDRequestContext.Mock.documentRecordingSample
+
+    Container.shared.eidRequestContext.register { self.mockContext }
+    viewModel = NFCScanResultViewModel(package: mockAVBeamPackageResult)
+
     viewModel.primaryAction()
+
+    XCTAssertEqual(viewModel.destination, .recordDocumentInformation)
+  }
+
+  func testPrimaryAction_noAutoVerificationResponse_routeToSelfie() {
+    mockContext = EIDRequestContext()
+
+    viewModel.primaryAction()
+
+    XCTAssertEqual(viewModel.destination, .avIntroSelfieVideo)
+  }
+
+  func testPrimaryAction_documentRecordingIsNotRequired_routeToSelfie() {
+    mockContext = EIDRequestContext.Mock.sample
+
+    viewModel.primaryAction()
+
     XCTAssertEqual(viewModel.destination, .avIntroSelfieVideo)
   }
 

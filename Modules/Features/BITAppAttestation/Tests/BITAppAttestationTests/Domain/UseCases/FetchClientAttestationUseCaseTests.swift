@@ -174,7 +174,7 @@ final class FetchClientAttestationUseCaseTests: XCTestCase {
   private let mockChallengeResponse = AttestationChallenge.Response.Mock.sample
   private let mockClientDataObject = ClientDataObject.Mock.sample
   private let mockClientAttestationResponse = ClientAttestationResponse.Mock.sample
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   private func createSuccessState() {

@@ -1,6 +1,7 @@
 // swiftlint:disable force_unwrapping implicitly_unwrapped_optional
 import Factory
 import XCTest
+@testable import BITAppAuth
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITOpenID
@@ -105,7 +106,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
       if case .processing = viewModel.state {
         XCTAssertEqual(submitPresentationUseCase.executeContextCallsCount, 1)
         XCTAssertEqual(submitPresentationUseCase.executeContextReceivedContext?.requestObject, context.requestObject)
-        XCTAssertFalse(declinePresentationUseCase.executeContextCalled)
+        XCTAssertFalse(declinePresentationUseCase.callAsFunctionContextCalled)
         return
       }
     }
@@ -122,7 +123,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
       if case .result = viewModel.state {
         XCTAssertTrue(viewModel.isUnknownVerifierAlertShown)
         XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
-        XCTAssertFalse(declinePresentationUseCase.executeContextCalled)
+        XCTAssertFalse(declinePresentationUseCase.callAsFunctionContextCalled)
         return
       }
     }
@@ -183,23 +184,50 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     }
   }
 
+  func testSubmitPresentation_useCaseThrowsUserNotLoggedIn_navigatesToLogin() async throws {
+    if case .result(let oldViewState) = viewModel.state {
+      submitPresentationUseCase.executeContextThrowableError = UserSessionError.notLoggedIn
+
+      await viewModel.send(.submit(oldViewState, false))
+
+      XCTAssertFalse(router.didCallLogin)
+      if case .result(let viewState) = viewModel.state {
+        XCTAssertTrue(viewModel.isSessionTimeoutPresented)
+        XCTAssertEqual(viewState, oldViewState)
+        XCTAssertFalse(viewModel.isUnknownVerifierAlertShown)
+        XCTAssertFalse(declinePresentationUseCase.callAsFunctionContextCalled)
+        return
+      }
+    } else {
+      XCTFail("Wrong state: \(viewModel.state)")
+    }
+  }
+
   func testDeny_success_navigatesToDeny() async throws {
     await viewModel.send(.deny)
     try await viewModel.denyTask?.value
 
     XCTAssertEqual(router.calledPresentationResultState, .deny)
-    XCTAssertEqual(declinePresentationUseCase.executeContextCallsCount, 1)
-    XCTAssertEqual(declinePresentationUseCase.executeContextReceivedContext?.requestObject, context.requestObject)
+    XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextCallsCount, 1)
+    XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextReceivedContext?.requestObject, context.requestObject)
     XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
   }
 
   func testDeny_useCaseThrowsError_navigatesToDeny() async throws {
-    declinePresentationUseCase.executeContextThrowableError = TestingError.error
+    declinePresentationUseCase.callAsFunctionContextThrowableError = TestingError.error
 
     await viewModel.send(.deny)
     try await viewModel.denyTask?.value
 
     XCTAssertEqual(router.calledPresentationResultState, .deny)
+  }
+
+  func testLogin_success_navigatesToLogin() async throws {
+    await viewModel.send(.login)
+
+    XCTAssertTrue(router.didCallLogin)
+    XCTAssertFalse(declinePresentationUseCase.callAsFunctionContextCalled)
+    XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
   }
 
   // MARK: Private

@@ -12,7 +12,7 @@ import UIKit
 // MARK: - ScanDocumentViewModel
 
 @MainActor
-class ScanDocumentViewModel: ObservableObject, NavigationClosable {
+class ScanDocumentViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -60,7 +60,6 @@ class ScanDocumentViewModel: ObservableObject, NavigationClosable {
   @Published var introductionPopupState: ScanningState? = .recto
   @Published var isNotificationPresented = false
   @Published var notification: AVBeamNotification? = nil
-  @Published var isNavigationCloseTriggered = false
 
   @Published var destination: EIDRequestDestinations?
 
@@ -103,6 +102,7 @@ class ScanDocumentViewModel: ObservableObject, NavigationClosable {
 
   func stop() {
     avBeam.stopScanDocument()
+    try? avBeam.stopCamera()
   }
 
   func startCamera() {
@@ -135,22 +135,22 @@ class ScanDocumentViewModel: ObservableObject, NavigationClosable {
     }
   }
 
-  func close() {
-    stop()
-    navigationClose()
-  }
-
   // MARK: Private
 
   @Injected(\.avBeamAppID) private var avBeamAppID
   @Injected(\.eidRequestContext) private var context
+  @Injected(\.compareScanDocumentOutputUseCase) private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocol
   @Injected(\.updateEIDRequestCaseFilesUseCase) private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocol
 
   private func handleError(_ error: Error) {
-    destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+    stop()
+    let dataset = ErrorDataset.retry(error) { [weak self] navigator in
       self?.reset()
       self?.startCamera()
-    }))
+      navigator.pop()
+    }
+
+    destination = .error(dataset)
   }
 
   private func reset() {
@@ -164,8 +164,21 @@ class ScanDocumentViewModel: ObservableObject, NavigationClosable {
       return destination = .scanDocumentSubmit(output)
     }
 
+    guard await compareScanDocumentOutputUseCase(for: caseId, with: output) else {
+      let errorDataset = ErrorDataset([
+        .title(L10n.tkEidRequestDocumentScanWrongDocumentPrimary),
+        .body(L10n.tkEidRequestDocumentScanWrongDocumentSecondary),
+      ], actions: [
+        .primary(L10n.tkEidRequestDocumentScanWrongDocumentButton, { navigator in
+          navigator.returnToCheckpoint(EIDRequestCheckpoints.scanDocumentInformation)
+        }),
+      ])
+
+      return destination = .error(errorDataset)
+    }
+
     try await updateEIDRequestCaseFilesUseCase(for: caseId, scanDocumentOutput: output)
-    destination = autoVerificationResponse.isNFCRequired ? .nfcScan : .recordDocument
+    destination = autoVerificationResponse.isDocumentVideoRecordingRequired ? .recordDocumentInformation : .avIntroSelfieVideo
   }
 }
 
@@ -212,6 +225,10 @@ extension ScanDocumentViewModel: AVBeamScanDocumentDelegate {
   nonisolated func didCompleteScanDocument(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       do {
+        guard packageResult.data.errorCode == .none else {
+          return self.handleError(packageResult.data.errorCode)
+        }
+
         try? avBeam.stopCamera()
         self.isNotificationPresented = false
         self.notification = nil

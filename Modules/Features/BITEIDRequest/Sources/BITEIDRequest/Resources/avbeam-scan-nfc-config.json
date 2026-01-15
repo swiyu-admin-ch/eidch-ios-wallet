@@ -8,6 +8,7 @@
      "errorCodes":[
 
      ],
+     "nfcError": 0,
      "status":0,
      "activeScenario":0,
      "files":[

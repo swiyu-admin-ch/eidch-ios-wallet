@@ -33,10 +33,11 @@ public struct NetworkError: Error, LocalizedError {
       }
 
       switch underlyingCode {
-      case -1003:
+      case URLError.cannotFindHost.rawValue:
         self.init(status: .hostnameNotFound, response: response)
-      case -1009,
-           -1020:
+      case URLError.dataNotAllowed.rawValue,
+           URLError.notConnectedToInternet.rawValue,
+           URLError.timedOut.rawValue:
         self.init(status: .noConnection, response: response)
       default:
         if let afError = error.asAFError, afError.isServerTrustEvaluationError {

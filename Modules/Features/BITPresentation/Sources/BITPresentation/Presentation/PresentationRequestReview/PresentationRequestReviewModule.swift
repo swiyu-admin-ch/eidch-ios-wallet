@@ -1,15 +1,12 @@
 import Factory
 import Foundation
 import SwiftUI
-import UIKit
 
-// MARK: - PresentationRequestReviewModule
-
-public class PresentationRequestReviewModule {
+final class PresentationRequestReviewModule: PresentationModuleProtocol {
 
   // MARK: Lifecycle
 
-  public init(context: PresentationRequestContext, router: PresentationRouter = Container.shared.presentationRouter()) {
+  init(context: PresentationRequestContext, router: PresentationRouter = Container.shared.presentationRouter()) {
     self.router = router
 
     let view = PresentationRequestReviewView(context: context, router: router)
@@ -19,8 +16,8 @@ public class PresentationRequestReviewModule {
     self.viewController = viewController
   }
 
-  // MARK: Public
+  // MARK: Internal
 
-  public let viewController: UIViewController
-  public var router: PresentationRouter
+  let viewController: UIViewController
+  var router: PresentationRouter
 }

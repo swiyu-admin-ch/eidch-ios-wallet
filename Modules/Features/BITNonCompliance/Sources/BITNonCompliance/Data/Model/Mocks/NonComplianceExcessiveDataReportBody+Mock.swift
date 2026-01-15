@@ -1,0 +1,24 @@
+#if DEBUG
+import Foundation
+@testable import BITActivity
+@testable import BITCore
+@testable import BITCredentialShared
+@testable import BITTestingCore
+
+extension NonComplianceExcessiveDataReportBody: Mockable {
+  public struct Mock {
+    public static let `default` = NonComplianceExcessiveDataReportBody(
+      description: String(repeating: "x", count: 20),
+      email: "admin@example.com",
+      metadata: NonComplianceExcessiveDataReportBody.Metadata(
+        verifierDid: "did:example:verifier",
+        verifierUrl: "https://example.com",
+        presentationActionCreatedAt: Date(timeIntervalSince1970: 0),
+        presentedCredentialIssuerDid: "did:example:issuer",
+        presentationRequestJwt: "jwt",
+        presentationRequestFields: [
+          NonComplianceExcessiveDataReportBody.Field(name: "field", constraint: "const"),
+        ]))
+  }
+}
+#endif

@@ -18,7 +18,7 @@ enum SdJWSDecoderError: Error, Equatable {
 // MARK: - SdJWSDecoderProtocol
 
 public protocol SdJWSDecoderProtocol {
-  func decode<T>(_ type: T.Type, from data: Data) throws -> SdJWS<T> where T: JWTPayload & Decodable
+  func decode<T>(_ type: T.Type, from data: Data) throws -> SdJWS<T> where T: JWT
 }
 
 // MARK: - SdJWSDecoder
@@ -43,7 +43,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
   public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
   public var strictPayloadDecoding: Bool
 
-  public func decode<T>(_ type: T.Type, from data: Data) throws -> SdJWS<T> where T: JWTPayload & Decodable {
+  public func decode<T>(_ type: T.Type, from data: Data) throws -> SdJWS<T> where T: JWT {
     guard
       let rawSdJWT = String(data: data, encoding: .utf8),
       let match = try Self.sdJWTPattern.wholeMatch(in: rawSdJWT)
@@ -102,7 +102,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
 
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
 
-  private func decodeSdJwt<T>(_ jwtData: Data, disclosures: String, rawSdJWT: String) throws -> SdJWS<T> where T: JWTPayload & Decodable {
+  private func decodeSdJwt<T>(_ jwtData: Data, disclosures: String, rawSdJWT: String) throws -> SdJWS<T> where T: JWT {
     let jws: JWS<T> = try jwsDecoder.decode(T.self, from: jwtData)
     guard
       let jwtPayloadData = jws.rawPayload.data(using: .utf8),
@@ -182,7 +182,7 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     return resolvedPayload
   }
 
-  private func decodeUndisclosedSdJwt<T>(_ data: Data, rawSdJWT: String) throws -> SdJWS<T> where T: JWTPayload & Decodable {
+  private func decodeUndisclosedSdJwt<T>(_ data: Data, rawSdJWT: String) throws -> SdJWS<T> where T: JWT {
     let jws = try jwsDecoder.decode(T.self, from: data)
     guard
       let payloadData = jws.rawPayload.data(using: .utf8),

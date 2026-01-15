@@ -1,13 +1,9 @@
-import BITCredentialShared
 import BITL10n
-import BITOpenID
 import BITTheming
-import Factory
 import SwiftUI
 
-// MARK: - CredentialCell
+// MARK: - DeferredCredentialCell
 
-#warning("Update this view in a follow-up story. For now c/c of VerifiableCredentialCell")
 public struct DeferredCredentialCell: View {
 
   // MARK: Lifecycle
@@ -31,7 +27,8 @@ public struct DeferredCredentialCell: View {
             environment: viewModel.environment,
             statusBadgeLabel: viewModel.statusText,
             statusBadgeImage: viewModel.statusImage,
-            statusBadgeStyle: viewModel.statusBadgeStyle)
+            statusBadgeStyle: viewModel.statusBadgeStyle,
+            style: .deferred)
             .controlSize(.small)
         }
 

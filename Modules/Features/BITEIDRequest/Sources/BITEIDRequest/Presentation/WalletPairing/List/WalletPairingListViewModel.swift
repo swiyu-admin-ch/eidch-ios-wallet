@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - WalletPairingListViewModel
 
 @MainActor
-class WalletPairingListViewModel: ObservableObject, NavigationClosable {
+class WalletPairingListViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -79,7 +79,8 @@ class WalletPairingListViewModel: ObservableObject, NavigationClosable {
 
   func close() {
     walletPairingPollingManager.stopPolling()
-    navigationClose()
+    isNavigationCloseTriggered = true
+    coordinator.cleanup()
   }
 
   func didPairWallet() {
@@ -96,9 +97,11 @@ class WalletPairingListViewModel: ObservableObject, NavigationClosable {
       let status = try await fetchEIDRequestStatusUseCase.execute(for: caseId)
       handleStatus(status)
     } catch {
-      destination = .error(ErrorDataset(error, primaryAction: {
-        self.navigationClose()
-      }))
+      destination = .error(ErrorDataset(error, [
+        .primary(L10n.tkGlobalClose, { _ in
+          self.close()
+        }),
+      ]))
     }
   }
 
@@ -118,6 +121,7 @@ class WalletPairingListViewModel: ObservableObject, NavigationClosable {
   @Injected(\.fetchEIDRequestStatusUseCase) private var fetchEIDRequestStatusUseCase
   @Injected(\.eidRequestContext) private var context
   @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func handleStatus(_ status: EIDRequestStatus) {
     switch status.state {

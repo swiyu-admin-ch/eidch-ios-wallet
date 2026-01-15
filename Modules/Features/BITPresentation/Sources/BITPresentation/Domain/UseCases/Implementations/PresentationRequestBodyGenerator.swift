@@ -48,6 +48,7 @@ struct PresentationRequestBodyGenerator: PresentationRequestBodyGeneratorProtoco
       userSession.isLoggedIn,
       let context = userSession.context
     else {
+      userSession.endSession()
       throw UserSessionError.notLoggedIn
     }
 

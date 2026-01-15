@@ -1,4 +1,5 @@
 import BITJWT
+import BITNonCompliance
 import BITOpenID
 import Foundation
 
@@ -7,44 +8,19 @@ import Foundation
 public struct TrustInformation: Equatable {
   public let identity: IdentityTrust
   public let vcSchema: VcSchemaTrust
+  public let actorCompliance: ActorCompliance?
 
-  public init(identity: IdentityTrust, vcSchema: VcSchemaTrust) {
+  public init(identity: IdentityTrust, vcSchema: VcSchemaTrust, actorCompliance: ActorCompliance? = nil) {
     self.identity = identity
     self.vcSchema = vcSchema
+    self.actorCompliance = actorCompliance
   }
 }
 
 // MARK: - IdentityTrust
 
 public enum IdentityTrust: Equatable {
-  case trusted(any LocalizedTrustStatement)
+  case trusted(IdentityTrustStatementJWT)
   case untrusted
   case unknown
-
-  // MARK: Public
-
-  public static func == (lhs: IdentityTrust, rhs: IdentityTrust) -> Bool {
-    switch (lhs, rhs) {
-    case (.untrusted, .untrusted):
-      return true
-    case (.unknown, .unknown):
-      return true
-    case (.trusted(let lhsStmt), .trusted(let rhsStmt)):
-      if
-        let lhsEquatable = lhsStmt as? MetadataTrustStatementPayload,
-        let rhsEquatable = rhsStmt as? MetadataTrustStatementPayload
-      {
-        return lhsEquatable == rhsEquatable
-      }
-      if
-        let lhsEquatable = lhsStmt as? IdentityTrustStatementPayload,
-        let rhsEquatable = rhsStmt as? IdentityTrustStatementPayload
-      {
-        return lhsEquatable == rhsEquatable
-      }
-      return false
-    default:
-      return false
-    }
-  }
 }

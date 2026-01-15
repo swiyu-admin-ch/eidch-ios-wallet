@@ -28,14 +28,13 @@ struct LegalRepresentantView: View {
           secondaryButtonAction: { viewModel.action(false) })
       })
       .navigationBarBackButtonHidden()
-      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+      .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
   @InjectedObject(\.legalRepresentantViewModel) private var viewModel
-  @Environment(\.navigator) private var navigator
 }
 
 #Preview {

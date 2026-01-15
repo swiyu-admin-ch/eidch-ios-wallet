@@ -6,7 +6,7 @@ import Spyable
 
 @Spyable
 public protocol FetchVersionEnforcementUseCaseProtocol {
-  func execute(withTimeout: UInt64) async throws -> VersionEnforcement?
+  func execute() async throws -> VersionEnforcement?
 }
 
 // MARK: - FetchVersionEnforcementUseCase
@@ -22,24 +22,9 @@ struct FetchVersionEnforcementUseCase: FetchVersionEnforcementUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(withTimeout: UInt64) async throws -> VersionEnforcement? {
-    let getVersionEnforcementStateTask = Task {
-      let versionEnforcements = try await repository.fetchVersionEnforcements()
-      let taskResult = try getVersionEnforcement(for: versionEnforcements)
-      try Task.checkCancellation()
-
-      return taskResult
-    }
-
-    let timeoutTask = Task {
-      try? await Task.sleep(nanoseconds: withTimeout)
-      getVersionEnforcementStateTask.cancel()
-    }
-
-    let state = try await getVersionEnforcementStateTask.value
-    timeoutTask.cancel()
-
-    return state
+  func execute() async throws -> VersionEnforcement? {
+    let versionEnforcements = try await repository.fetchVersionEnforcements()
+    return try getVersionEnforcement(for: versionEnforcements)
   }
 
   // MARK: Private

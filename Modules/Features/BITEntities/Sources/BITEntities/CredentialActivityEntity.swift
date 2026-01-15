@@ -13,4 +13,7 @@ public class CredentialActivityEntity: Object {
 
   @Persisted public var claims = List<ActivityClaimEntity>()
   @Persisted public var actorDisplays = List<ActivityActorDisplayEntity>()
+
+  @Persisted(originProperty: "activities")
+  public var credential: LinkingObjects<CredentialEntity>
 }

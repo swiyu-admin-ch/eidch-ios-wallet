@@ -117,7 +117,7 @@ struct PresentationRequestResultStateView: View {
     })
     .background(ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
     .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
-    .clipShape(.rect(cornerRadius: .CornerRadius.xs))
+    .clipShape(.rect(cornerRadius: .x2))
     .accessibilityIdentifier(AccessibilityIdentifier.successContent.rawValue)
   }
 
@@ -140,7 +140,7 @@ struct PresentationRequestResultStateView: View {
     })
     .background(ThemingAssets.Background.primary.swiftUIColor)
     .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-    .clipShape(.rect(cornerRadius: .CornerRadius.xs))
+    .clipShape(.rect(cornerRadius: .x2))
   }
 
   @ViewBuilder

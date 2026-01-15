@@ -1,5 +1,6 @@
 import Factory
 import XCTest
+@testable import BITActivity
 @testable import BITAnyCredentialFormat
 @testable import BITAnyCredentialFormatMocks
 @testable import BITCredential
@@ -25,21 +26,23 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   func testExecute_generateCredentialAssertCount_success() async throws {
     try await useCase.execute(for: mockDeferredCredential)
 
-    XCTAssertEqual(openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatCallsCount, 1)
+    XCTAssertEqual(openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatCallsCount, 1)
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 1)
     XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperCallsCount, 1)
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdCallsCount, 1)
     XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 1)
     XCTAssertEqual(credentialRepository.deleteCallsCount, 1)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(activityService.createCredentialIdCallsCount, 1)
   }
 
   func testExecute_generateCredentialAssertParameters_success() async throws {
     try await useCase.execute(for: mockDeferredCredential)
 
-    XCTAssertEqual(openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatReceivedArguments?.transactionId, mockDeferredCredential.transactionId)
-    XCTAssertEqual(openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatReceivedArguments?.acccessToken, mockDeferredCredential.accessToken)
-    XCTAssertEqual(openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatReceivedArguments?.format, mockDeferredCredential.format)
-    XCTAssertEqual(openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatReceivedArguments?.url.absoluteString, mockDeferredCredential.endpoint)
+    XCTAssertEqual(openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReceivedArguments?.transactionId, mockDeferredCredential.transactionId)
+    XCTAssertEqual(openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReceivedArguments?.accessToken, mockDeferredCredential.accessToken)
+    XCTAssertEqual(openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReceivedArguments?.format, mockDeferredCredential.format)
+    XCTAssertEqual(openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReceivedArguments?.url.absoluteString, mockDeferredCredential.endpoint)
 
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialReceivedAnyCredential?.raw, anyCredential.raw)
 
@@ -54,10 +57,15 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
 
     XCTAssertEqual(credentialRepository.createVerifiableCredentialReceivedVerifiableCredential?.id, generatedCredential.id)
     XCTAssertEqual(credentialRepository.deleteReceivedId, mockDeferredCredential.id)
+
+    XCTAssertEqual(activityService.createCredentialIdReceivedArguments?.activity.type, .issuance)
+    XCTAssertEqual(activityService.createCredentialIdReceivedArguments?.credentialId, repositoryCredential.id)
+
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
   }
 
   func testExecute_updateDeferredCredentialAssertCount_success() async throws {
-    openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatThrowableError = OpenIdRepositoryError.credentialIssuancePending(interval: 1000)
+    openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReturnValue = .deferred(DeferredCredentialRequest(transactionId: "id", accessToken: "token", endpoint: "endpoint", format: "format", interval: 1000))
 
     try await useCase.execute(for: mockDeferredCredential)
 
@@ -66,7 +74,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_updateDeferredCredentialAssertParameters_success() async throws {
-    openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatThrowableError = OpenIdRepositoryError.credentialIssuancePending(interval: 1000)
+    openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReturnValue = .deferred(DeferredCredentialRequest(transactionId: "id", accessToken: "token", endpoint: "endpoint", format: "format", interval: 1000))
 
     try await useCase.execute(for: mockDeferredCredential)
 
@@ -76,7 +84,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   func testExecute_cannotRefreshCredential_success() async throws {
     try await useCase.execute(for: .Mock.sampleIncorrectInterval)
 
-    XCTAssertFalse(openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatCalled)
+    XCTAssertFalse(openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatCalled)
     XCTAssertFalse(fetchVcMetadataUseCase.executeAnyCredentialCalled)
     XCTAssertFalse(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperCalled)
     XCTAssertFalse(trustInformationService.fetchForTypeVcSchemaIdCalled)
@@ -109,7 +117,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_refreshDeferredCredentialFails_throws() async throws {
-    openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatThrowableError = TestingError.error
+    openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatThrowableError = TestingError.error
 
     do {
       try await useCase.execute(for: mockDeferredCredential)
@@ -163,6 +171,17 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     }
   }
 
+  func testExecute_checkAndUpdateCredentialStatusFailure() async throws {
+    checkAndUpdateCredentialStatusUseCase.executeForThrowableError = TestingError.error
+
+    do {
+      try await useCase.execute(for: mockDeferredCredential)
+      XCTAssertTrue(true)
+    } catch {
+      XCTFail("Expected no exception")
+    }
+  }
+
   // MARK: Private
 
   private var useCase: RefreshDeferredCredentialUseCase!
@@ -172,6 +191,8 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocolSpy!
   private var credentialGenerator: CredentialGeneratorProtocolSpy!
   private var trustInformationService: TrustInformationServiceProtocolSpy!
+  private var activityService: ActivityServiceProtocolSpy!
+  private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
 
   private let mockDeferredCredential = DeferredCredential.Mock.sample
   private let updatedDeferredCredential = DeferredCredential(
@@ -186,6 +207,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   private let mockTrustInformation = TrustInformation.Mock.trustedIdentity
   private let anyCredential: AnyCredential = MockAnyCredential()
   private let metadataWrapper: CredentialMetadataWrapper = .Mock.sample
+  private let updatedCredential: VerifiableCredential = .Mock.sampleDisplaysEmpty
   private let keyPairRawRepresentationMock = ("publicKeyData".data(using: .utf8)!, "privateKeyData".data(using: .utf8)!)
 
   private func registerMocks() {
@@ -194,21 +216,26 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     trustInformationService = TrustInformationServiceProtocolSpy()
     credentialRepository = CredentialRepositoryProcotolSpy()
     openIDRepository = OpenIDRepositoryProtocolSpy()
+    activityService = ActivityServiceProtocolSpy()
+    checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
 
     Container.shared.fetchVcMetadataUseCase.register { self.fetchVcMetadataUseCase }
     Container.shared.credentialGenerator.register { self.credentialGenerator }
     Container.shared.trustInformationService.register { self.trustInformationService }
     Container.shared.openIDRepository.register { self.openIDRepository }
     Container.shared.credentialRepository.register { self.credentialRepository }
+    Container.shared.activityService.register { self.activityService }
+    Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
   }
 
   private func createSuccessState() {
-    openIDRepository.refreshDeferredCredentialFromTransactionIdAcccessTokenFormatReturnValue = anyCredential
+    openIDRepository.fetchCredentialFromTransactionIdAccessTokenFormatReturnValue = .credential(anyCredential)
     fetchVcMetadataUseCase.executeAnyCredentialReturnValue = rawOcaBundleMock
     credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReturnValue = generatedCredential
     credentialRepository.createVerifiableCredentialReturnValue = repositoryCredential
     credentialRepository.updateDeferredCredentialReturnValue = updatedDeferredCredential
     trustInformationService.fetchForTypeVcSchemaIdReturnValue = mockTrustInformation
+    checkAndUpdateCredentialStatusUseCase.executeForReturnValue = updatedCredential
   }
 
 }

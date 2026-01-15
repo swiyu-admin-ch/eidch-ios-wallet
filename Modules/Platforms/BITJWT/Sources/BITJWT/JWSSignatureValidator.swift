@@ -6,7 +6,7 @@ import JOSESwift
 // MARK: - JWSSignatureValidatorProtocol
 
 public protocol JWSSignatureValidatorProtocol {
-  func validate(_ jws: JWS<some Codable & Equatable>, issuerDid: String) async throws -> Bool
+  func validate(_ jws: JWS<some JWT>, issuerDid: String) async throws
 }
 
 // MARK: - JWSSignatureValidatorError
@@ -14,6 +14,7 @@ public protocol JWSSignatureValidatorProtocol {
 public enum JWSSignatureValidatorError: Error {
   case cannotResolveDid(_ error: Error)
   case invalidKeyIdentifier
+  case invalidSignature
 }
 
 // MARK: - JWSSignatureValidator
@@ -22,9 +23,11 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   // MARK: Public
 
-  public func validate(_ jws: JWS<some Codable & Equatable>, issuerDid: String) async throws -> Bool {
+  public func validate(_ jws: JWS<some JWT>, issuerDid: String) async throws {
     let jwks = try await getJwks(from: issuerDid, keyIdentifier: jws.header.keyIdentifier)
-    return jwks.contains { validateJwtSignature(for: jws, jwk: $0) }
+    guard jwks.contains(where: { validateJwtSignature(for: jws, jwk: $0) }) else {
+      throw JWSSignatureValidatorError.invalidSignature
+    }
   }
 
   // MARK: Private
@@ -41,7 +44,7 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
     }
   }
 
-  private func validateJwtSignature(for jws: JWS<some Codable & Equatable>, jwk: BITCrypto.JWK) -> Bool {
+  private func validateJwtSignature(for jws: JWS<some JWT>, jwk: BITCrypto.JWK) -> Bool {
     do {
       guard let verifier = try createVerifier(for: jwk, algorithm: jws.header.algorithm) else { return false }
       let jws = try JOSESwift.JWS(compactSerialization: jws.rawJWS)
@@ -56,5 +59,22 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
     guard let secKey = try ECPublicKey.getSecKey(curve: jwk.crv, x: jwk.x, y: jwk.y) else { return nil }
     let signatureAlgorithm = try SignatureAlgorithm(from: algorithm)
     return Verifier(verifyingAlgorithm: signatureAlgorithm, key: secKey)
+  }
+}
+
+// MARK: - JWSSignatureValidatorError + Equatable
+
+extension JWSSignatureValidatorError: Equatable {
+  public static func == (lhs: JWSSignatureValidatorError, rhs: JWSSignatureValidatorError) -> Bool {
+    switch (lhs, rhs) {
+    case (.cannotResolveDid, .cannotResolveDid):
+      true
+    case (.invalidKeyIdentifier, .invalidKeyIdentifier):
+      true
+    case (.invalidSignature, .invalidSignature):
+      true
+    default:
+      false
+    }
   }
 }

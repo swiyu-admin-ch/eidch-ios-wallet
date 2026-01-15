@@ -8,4 +8,5 @@ public enum ActorInformationBadgeType {
   case legitimateVerifier
   case notLegitimateIssuer
   case notLegitimateVerifier
+  case notCompliant(reason: String)
 }

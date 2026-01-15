@@ -3,20 +3,20 @@ import BITJWT
 import BITSdJWT
 import Foundation
 
-public typealias VcSchemaTrustStatement = SdJWS<VcSchemaTrustStatementPayload>
+public typealias VcSchemaTrustStatement = SdJWS<VcSchemaTrustStatementJWT>
 
-// MARK: - VcSchemaTrustStatementPayload
+// MARK: - VcSchemaTrustStatementJWT
 
-public struct VcSchemaTrustStatementPayload: TrustStatement, Codable, Equatable {
+public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
 
   // MARK: Lifecycle
 
   public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     vct = try container.decode(String.self, forKey: .vct)
-    issuer = try container.decode(String.self, forKey: .issuer)
+    issuer = try container.decodeIfPresent(String.self, forKey: .issuer)
     subject = try container.decodeIfPresent(String.self, forKey: .subject)
-    issuedAt = try container.decode(Date.self, forKey: .issuedAt)
+    issuedAt = try container.decodeIfPresent(Date.self, forKey: .issuedAt)
     statusList = try container.decode(VcSdJwtTokenStatusList.self, forKey: .statusList)
     activatedAt = try container.decodeIfPresent(Date.self, forKey: .activatedAt)
     expiredAt = try container.decodeIfPresent(Date.self, forKey: .expiredAt)
@@ -28,9 +28,9 @@ public struct VcSchemaTrustStatementPayload: TrustStatement, Codable, Equatable 
   public let type: String? = "vc+sd-jwt"
 
   public let vct: String
-  public let issuer: String
+  public let issuer: String?
   public let subject: String?
-  public let issuedAt: Date
+  public let issuedAt: Date?
   public let statusList: VcSdJwtTokenStatusList
 
   public let activatedAt: Date?
@@ -64,5 +64,10 @@ public struct VcSchemaTrustStatementPayload: TrustStatement, Codable, Equatable 
     }
     return try container.decodeIfPresent(URL.self, forKey: .canVerify)
   }
+}
 
+extension VcSchemaTrustStatementJWT {
+  public var audience: String? {
+    nil
+  }
 }

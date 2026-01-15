@@ -10,7 +10,6 @@ struct ActivityCredentialViewModel {
 
   init(credential: VerifiableCredential, activity: Activity) {
     let credentialViewModel = VerifiableCredentialViewModel(credential: credential)
-    credentialId = credential.id
     name = credentialViewModel.credentialDisplay?.name
     summary = credentialViewModel.credentialDisplay?.summary
     backgroundColor = credentialViewModel.credentialDisplay?.backgroundColor
@@ -23,7 +22,6 @@ struct ActivityCredentialViewModel {
 
   // MARK: Internal
 
-  let credentialId: UUID
   let name: String?
   let summary: String?
   let backgroundColor: String?

@@ -32,6 +32,10 @@ struct ActivityDetailView: View {
     .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
     .navigationTitle(L10n.tkActivityActivityDetailTitle)
     .navigationBarTitleDisplayMode(.inline)
+    .navigationCheckpoint(ActivityCheckpoints.activityDetail) { submitted in
+      guard submitted else { return }
+      viewModel.showNonComplianceReportSent()
+    }
     .task {
       await viewModel.fetchCredential()
     }
@@ -45,6 +49,10 @@ struct ActivityDetailView: View {
         }),
         secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
     }
+    .toastMessage(
+      isPresented: $viewModel.isToastPresented,
+      message: viewModel.toastMessage,
+      clearAction: viewModel.clearToast)
   }
 
   // MARK: Private
@@ -93,17 +101,14 @@ struct ActivityDetailView: View {
         }
       }
       SectionView(minHeight: nil, hasContentPadding: false) {
-        if viewModel.isNonComplianceEnabled, viewModel.activity.type != .issuance, let credentialViewModel {
+        if viewModel.isNonComplianceEnabled {
           ButtonCell(
             icon: Assets.flag.swiftUIImage,
-            title: L10n.tkActivityActivityDetailReportIssuerButton,
+            title: viewModel.activity.type.reportActorButtonTitle,
             role: .destructive,
             hasDivider: true)
           {
-            navigator.navigate(to: NonComplianceDestinations.categories(
-              activityId: viewModel.activity.id,
-              credentialId: credentialViewModel.credentialId)
-            )
+            navigator.navigate(to: NonComplianceDestinations.categories(activity: viewModel.activity))
           }
         }
         ButtonCell(

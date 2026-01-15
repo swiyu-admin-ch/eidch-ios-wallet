@@ -36,8 +36,10 @@ public struct EIDRequestState: Codable {
     self.legalRepresentantConsent = legalRepresentantConsent
   }
 
-  public init(_ entity: EIDRequestStateEntity) {
-    let state = EIDRequestStatus.State(entity.state)
+  public init(_ entity: EIDRequestStateEntity) throws {
+    guard let state = EIDRequestStatus.State(rawValue: entity.state) else {
+      throw EIDRequestStateError.invalidState
+    }
 
     self.init(
       id: entity.id,

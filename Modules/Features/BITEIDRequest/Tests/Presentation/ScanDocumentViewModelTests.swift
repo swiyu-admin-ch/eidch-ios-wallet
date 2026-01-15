@@ -24,11 +24,13 @@ class ScanDocumentViewModelTests: XCTestCase {
     context = EIDRequestContext()
     avBeam = AVBeamProtocolSpy()
     updateEIDRequestCaseFilesUseCase = UpdateEIDRequestCaseFilesUseCaseProtocolSpy()
+    compareScanDocumentOutputUseCase = CompareScanDocumentOutputUseCaseProtocolSpy()
 
     Container.shared.eidRequestContext.register { self.context }
     Container.shared.avBeam.register { self.avBeam }
     Container.shared.avBeamAppID.register { self.appId }
     Container.shared.updateEIDRequestCaseFilesUseCase.register { self.updateEIDRequestCaseFilesUseCase }
+    Container.shared.compareScanDocumentOutputUseCase.register { self.compareScanDocumentOutputUseCase }
 
     success()
   }
@@ -184,12 +186,6 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertTrue(avBeam.stopScanDocumentCalled)
   }
 
-  func testClose_callsStopAndNavigationClose() {
-    viewModel.close()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
   // MARK: - AVBeamMessageDelegate Tests
 
   func testDidReceiveNotification_initialized_startsCamera() {
@@ -257,12 +253,77 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.notification, testNotification)
   }
 
+  func testDidCompleteScanDocument_noAuthenticationReponse_routeToSubmitDocument() async {
+    viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
+
+    await Task.yield()
+
+    XCTAssertTrue(avBeam.stopCameraCalled)
+    XCTAssertFalse(viewModel.isNotificationPresented)
+    XCTAssertNil(viewModel.notification)
+    XCTAssertNil(viewModel.introductionPopupState)
+
+    if case .scanDocumentSubmit(let scanOutput) = viewModel.destination {
+      XCTAssertEqual(scanOutput.identityType, context.identityType)
+      XCTAssertEqual(scanOutput.files.count, AVBeamPackageResult.Mock.sample.files.count + 1)
+    }
+  }
+
+  func testDidCompleteScanDocument_videoRecordingRequired_routeToVideoRecording() async {
+    context = EIDRequestContext.Mock.documentRecordingSample
+
+    Container.shared.eidRequestContext.register { self.context }
+    viewModel = ScanDocumentViewModel()
+
+    viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
+
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    XCTAssertEqual(viewModel.destination, .recordDocumentInformation)
+    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithCallsCount, 1)
+    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithReceivedArguments?.caseId, "caseId")
+  }
+
+  func testDidCompleteScanDocument_videoRecordingNotRequired_routeToSelfieVideo() async {
+    context = EIDRequestContext.Mock.sample
+
+    Container.shared.eidRequestContext.register { self.context }
+    viewModel = ScanDocumentViewModel()
+
+    viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
+
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    XCTAssertEqual(viewModel.destination, .avIntroSelfieVideo)
+    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithCallsCount, 1)
+    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithReceivedArguments?.caseId, "caseId")
+  }
+
+  func testDidCompleteScanDocument_videoRecordingNotRequiredComparisonDocumentsFails_routeToError() async {
+    context = EIDRequestContext.Mock.sample
+
+    Container.shared.eidRequestContext.register { self.context }
+    viewModel = ScanDocumentViewModel()
+    compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = false
+
+    viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
+
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    if case .error(let dataSet) = viewModel.destination {
+      XCTAssertEqual(dataSet.contents.count, 2)
+      XCTAssertEqual(dataSet.actions.count, 1)
+      XCTAssertFalse(updateEIDRequestCaseFilesUseCase.callAsFunctionForScanDocumentOutputCalled)
+    }
+  }
+
   // MARK: Private
 
   private var context: EIDRequestContext!
   private var viewModel: ScanDocumentViewModel!
   private var avBeam: AVBeamProtocolSpy!
   private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocolSpy!
+  private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocolSpy!
 
   private let appId = "test-app-id"
 
@@ -271,8 +332,7 @@ class ScanDocumentViewModelTests: XCTestCase {
     context.identityType = .identityCard
     viewModel = ScanDocumentViewModel()
     XCTAssertEqual(viewModel.state, .loading)
+    compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = true
   }
 
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

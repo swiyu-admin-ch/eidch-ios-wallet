@@ -37,22 +37,26 @@ struct ScanDocumentView: View {
     .animation(.easeInOut(duration: 0.4), value: viewModel.state)
     .readSize { size in
       self.size = size
+      let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+      viewModel.scanFrame = frame
     }
     .onDisappear(perform: {
       viewModel.stop()
     })
-    .toolbar { CloseButtonToolbar(action: viewModel.navigationClose) }
+    .defaultEidRequestToolbar()
+    .navigationBarBackButtonHidden()
     .navigate(to: $viewModel.destination)
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
-  @State private var size = CGSize.zero
+  @Orientation private var orientation
 
+  @State private var size = CGSize.zero
   @State private var rotationAngle: Double = 0
   @State private var currentDisplayState = ScanDocumentViewModel.ScanningState.recto
   @State private var scale = 1.0
+  @State private var scaleAnimationTask: Task<Void, Never>?
 
   @InjectedObject(\.scanDocumentViewModel) private var viewModel: ScanDocumentViewModel
 
@@ -60,10 +64,13 @@ struct ScanDocumentView: View {
   private let axis: (x: CGFloat, y: CGFloat, z: CGFloat) = (x: 0, y: 1, z: 0)
   private let animationDuration: TimeInterval = 0.4
   private let animatedScale: CGFloat = 0.95
-  private let animatedRotationAngle: Double = 90
   private let oppositeRotationAngle: Double = 180
   private let defaultRotationAngle: Double = 0
-  private let rotationVisibilityRange: Range<Double> = 90..<270
+  private let cameraBlur = 50.0
+
+  private var isBackOverlayVisible: Bool {
+    rotationAngle > 90 && rotationAngle < 270
+  }
 
   @ViewBuilder
   private func loadingView() -> some View {
@@ -79,52 +86,13 @@ struct ScanDocumentView: View {
       GLViewWrapper(viewModel.avBeam.getGLView)
         .background(ThemingAssets.Background.secondary.swiftUIColor)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+        .ignoresSafeArea()
+        .blur(radius: orientation.isLandscape ? 0 : cameraBlur)
 
-      ZStack {
-        viewModel.overlayImage.front
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .padding(.x4)
-          .scaleEffect(scale)
-          .rotation3DEffect(
-            .degrees(rotationAngle),
-            axis: axis)
-          .opacity(rotationVisibilityRange.contains(rotationAngle) ? 0 : 1)
-
-        viewModel.overlayImage.back
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .padding(.x4)
-          .scaleEffect(scale)
-          .rotation3DEffect(
-            .degrees(rotationAngle + oppositeRotationAngle),
-            axis: axis)
-          .opacity(rotationVisibilityRange.contains(rotationAngle) ? 1 : 0)
-      }
-      .onReceive(viewModel.$scanningState) { newState in
-        if newState != currentDisplayState {
-          currentDisplayState = newState
-
-          withAnimation(.easeInOut(duration: animationDuration * 2)) {
-            rotationAngle = (newState == .verso) ? oppositeRotationAngle : defaultRotationAngle
-            scale = animatedScale
-          }
-
-          DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-            withAnimation(.easeInOut(duration: animationDuration)) {
-              scale = defaultScale
-            }
-          }
-        }
-      }
+      cameraOverlay()
     }
-    .task {
-      let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-      viewModel.scanFrame = frame
-    }
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+    .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
+    .ignoresSafeArea(edges: [.bottom, .horizontal])
     .popup(item: $viewModel.introductionPopupState, itemView: introductionPopupView) {
       $0.appearFrom(.bottomSlide)
         .position(.bottom)
@@ -142,6 +110,68 @@ struct ScanDocumentView: View {
         .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
     }
     .navigationTitle(viewModel.title)
+  }
+
+  @ViewBuilder
+  private func cameraOverlay() -> some View {
+    if orientation.isLandscape {
+      cameraLandscapeOverlay()
+    } else {
+      VStack(spacing: .x1) {
+        Assets.cameraRotate.swiftUIImage
+          .resizable()
+          .frame(width: 180, height: 180)
+        Text(L10n.tkEidRequestDocumentScanRotateCameraHint)
+          .font(.custom.bodyEmphasized)
+          .foregroundStyle(.white)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func cameraLandscapeOverlay() -> some View {
+    ZStack {
+      viewModel.overlayImage.front
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .padding(.x4)
+        .scaleEffect(scale)
+        .rotation3DEffect(
+          .degrees(rotationAngle),
+          axis: axis)
+        .opacity(isBackOverlayVisible ? 0 : 1)
+
+      viewModel.overlayImage.back
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .padding(.x4)
+        .scaleEffect(scale)
+        .rotation3DEffect(
+          .degrees(rotationAngle + 180),
+          axis: axis)
+        .opacity(isBackOverlayVisible ? 1 : 0)
+    }
+    .onReceive(viewModel.$scanningState) { newState in
+      if newState != currentDisplayState {
+        currentDisplayState = newState
+
+        scaleAnimationTask?.cancel()
+        withAnimation(.easeInOut(duration: animationDuration * 2)) {
+          rotationAngle = (newState == .verso) ? oppositeRotationAngle : defaultRotationAngle
+          scale = animatedScale
+        }
+
+        scaleAnimationTask = Task {
+          // Buy some time to let the previous animation to reach its end
+          try? await Task.sleep(nanoseconds: UInt64(animationDuration * 1_000_000_000))
+
+          guard !Task.isCancelled else { return }
+          withAnimation(.easeInOut(duration: animationDuration)) {
+            scale = defaultScale
+          }
+        }
+      }
+    }
   }
 
 }
@@ -179,6 +209,8 @@ extension ScanDocumentView {
 
 }
 
+#if DEBUG
 #Preview {
   ScanDocumentView()
 }
+#endif

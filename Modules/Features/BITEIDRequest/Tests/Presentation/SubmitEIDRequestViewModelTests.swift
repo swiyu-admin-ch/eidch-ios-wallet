@@ -264,12 +264,6 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
     XCTAssertTrue(submitEIDRequestUseCase.callAsFunctionCaseIdAuthJwtCalled)
   }
 
-  func testSubmitEidRequest_validContext_closesRouter() async {
-    await viewModel.submitEidRequest()
-
-//    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
   func testSubmitEidRequest_noCaseId_doesNotClose() async {
     context.caseId = nil
 

@@ -1,15 +1,24 @@
 import Factory
 import Foundation
 
+// MARK: - JWSValidatorError
+
+enum JWSValidatorError: Error, Equatable {
+  case notYetActivated
+  case issuedAtInFuture
+  case expired
+  case invalidKeyIdentifier
+}
+
 // MARK: - JWSValidatorProtocol
 
 public protocol JWSValidatorProtocol {
-  func validate(_ jws: JWS<some JWTValidityPayload>, issuerDid: String, activationBuffer: TimeInterval) async throws -> Bool
+  func validate(_ jws: JWS<some JWT>, activationBuffer: TimeInterval) async throws
 }
 
 extension JWSValidatorProtocol {
-  public func validate(_ jws: JWS<some JWTValidityPayload>, issuerDid: String, activationBuffer: TimeInterval = 0) async throws -> Bool {
-    try await validate(jws, issuerDid: issuerDid, activationBuffer: activationBuffer)
+  public func validate(_ jws: JWS<some JWT>, activationBuffer: TimeInterval = 0) async throws {
+    try await validate(jws, activationBuffer: activationBuffer)
   }
 }
 
@@ -19,18 +28,38 @@ public struct JWSValidator: JWSValidatorProtocol {
 
   // MARK: Public
 
-  public func validate(_ jws: JWS<some JWTValidityPayload>, issuerDid: String, activationBuffer: TimeInterval) async throws -> Bool {
+  public func validate(_ jws: JWS<some JWT>, activationBuffer: TimeInterval) async throws {
     let currentDate = Container.shared.currentDate()
     if let activatedAt = jws.payload.activatedAt, activatedAt > currentDate.addingTimeInterval(activationBuffer) {
-      return false
+      throw JWSValidatorError.notYetActivated
     }
-    if let expiredAt = jws.payload.expiredAt, expiredAt < currentDate {
-      return false
+    if let issuedAt = jws.payload.issuedAt, issuedAt >= currentDate.addingTimeInterval(activationBuffer) {
+      throw JWSValidatorError.issuedAtInFuture
     }
-    return try await jwsSignatureValidator.validate(jws, issuerDid: issuerDid)
+    if jws.payload.isExpired {
+      throw JWSValidatorError.expired
+    }
+
+    let keyIdentifierDid = try getIssuerDid(from: jws.header.keyIdentifier)
+    if let issuer = jws.payload.issuer {
+      guard issuer == keyIdentifierDid else { throw JWSValidatorError.invalidKeyIdentifier }
+      try await jwsSignatureValidator.validate(jws, issuerDid: issuer)
+    } else {
+      try await jwsSignatureValidator.validate(jws, issuerDid: keyIdentifierDid)
+    }
   }
 
   // MARK: Private
 
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
+
+  private func getIssuerDid(from keyIdentifier: String?) throws -> String {
+    guard
+      let keyIdentifier,
+      let issuerDid = keyIdentifier.split(separator: "#").first else
+    {
+      throw JWSValidatorError.invalidKeyIdentifier
+    }
+    return String(issuerDid)
+  }
 }

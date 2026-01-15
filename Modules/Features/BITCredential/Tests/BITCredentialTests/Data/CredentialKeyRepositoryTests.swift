@@ -37,19 +37,19 @@ final class CredentialKeyRepositoryTests: XCTestCase {
     XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.algorithm, try VaultAlgorithm(fromSignatureAlgorithm: mockAlgorithm))
     XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.options, vaultOptions)
     XCTAssertEqual((keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecUseAuthenticationContext as String] as? LAContextProtocolSpy)?.localizedReason, mockReason) // Compare reason cause cannot compare LAContextProtocol
-    XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecAttrAccessControl as String] as! SecAccessControl, SecKeyTestsHelper.createAccessControl(accessControlFlags: .privateKeyUsage, protection: mockProtection))
+    XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecAttrAccessControl as String] as! SecAccessControl, SecKeyTestsHelper.createAccessControl(accessControlFlags: [.privateKeyUsage], protection: mockProtection))
   }
 
   func testCreate_hardwareBound_setsPrivateKeyUsageAccessControl() throws {
     _ = try repository.create(algorithm: mockAlgorithm, isHardwareBound: true)
 
-    XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecAttrAccessControl as String] as! SecAccessControl, SecKeyTestsHelper.createAccessControl(accessControlFlags: .privateKeyUsage, protection: mockProtection))
+    XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecAttrAccessControl as String] as! SecAccessControl, SecKeyTestsHelper.createAccessControl(accessControlFlags: [.privateKeyUsage], protection: mockProtection))
   }
 
   func testCreate_notHardwareBound_setsUserPresenceAccessControl() throws {
     _ = try repository.create(algorithm: mockAlgorithm, isHardwareBound: false)
 
-    XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecAttrAccessControl as String] as! SecAccessControl, SecKeyTestsHelper.createAccessControl(accessControlFlags: .userPresence, protection: mockProtection))
+    XCTAssertEqual(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReceivedArguments?.query?[kSecAttrAccessControl as String] as! SecAccessControl, SecKeyTestsHelper.createAccessControl(accessControlFlags: [], protection: mockProtection))
   }
 
   func testCreate_unknownAlgorithm_throwsError() throws {
@@ -57,7 +57,17 @@ final class CredentialKeyRepositoryTests: XCTestCase {
 
     XCTAssertThrowsError(try repository.create(algorithm: mockAlgorithm, isHardwareBound: false)) { error in
       XCTAssertEqual(error as? CredentialKeyRepository.CredentialKeyRepositoryError, .invalidAlgorithm)
-      XCTAssertFalse(keyManagerProtocolSpy.getKeyPairWithIdentifierAlgorithmQueryCalled)
+      XCTAssertFalse(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryCalled)
+    }
+  }
+
+  func testCreate_userNotLoggedIn_throwsError() throws {
+    userSession.isLoggedIn = false
+
+    XCTAssertThrowsError(try repository.create(algorithm: mockAlgorithm, isHardwareBound: false)) { error in
+      XCTAssertEqual(error as? UserSessionError, .notLoggedIn)
+      XCTAssertEqual(userSession.endSessionCallsCount, 1)
+      XCTAssertFalse(keyManagerProtocolSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryCalled)
     }
   }
 

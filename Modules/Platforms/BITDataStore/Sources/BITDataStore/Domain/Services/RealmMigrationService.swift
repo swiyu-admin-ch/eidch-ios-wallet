@@ -25,6 +25,10 @@ struct RealmMigrationService: MigrationServiceProtocol {
     if oldVersion < 11 && newVersion >= 11 {
       return migrateFromSchema10(migration)
     }
+
+    if oldVersion < 15 && newVersion >= 15 {
+      return migrateCredentialProgressionState(migration)
+    }
   }
 
   // MARK: Private
@@ -82,6 +86,16 @@ struct RealmMigrationService: MigrationServiceProtocol {
     }
   }
 
+  /**
+   * Version 5.0 (schema 11) (no schema change)
+   * Fixes the progressionState = unaccepted for issued credentials created with MetadataCredentialGenerator
+   */
+  private func migrateCredentialProgressionState(_ migration: Migration) {
+    migration.enumerateObjects(ofType: "VerifiableCredentialEntity") { _, newCredential in
+      newCredential?["progressionState"] = "accepted"
+    }
+  }
+
   private func createVerifiableCredential(from oldCredential: MigrationObject?, in migration: Migration) -> MigrationObject? {
     guard
       let status = oldCredential?["status"] as? String,
@@ -100,8 +114,14 @@ struct RealmMigrationService: MigrationServiceProtocol {
       "issuer": issuer,
       "createdAt": createdAt,
       "validFrom": oldCredential?["validFrom"] as? Date,
-      "validUntil": oldCredential?["validUntil"] as? Date,
     ])
+
+    // Check if validUntil exist before trying to set it. Version 3.2 users do not have that property
+    if oldCredential?.objectSchema.properties.first(where: { $0.name == "validUntil" }) != nil {
+      verifiableCredential["validUntil"] = oldCredential?["validUntil"] as? Date
+    } else {
+      verifiableCredential["validUntil"] = nil
+    }
 
     return verifiableCredential
   }

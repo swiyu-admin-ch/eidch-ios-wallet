@@ -21,8 +21,8 @@ extension VaultOptions {
   public var secAccessControl: SecAccessControlCreateFlags {
     switch self {
     case .secureEnclave,
-         .secureEnclavePermanently: .privateKeyUsage
-    default: .userPresence
+         .secureEnclavePermanently: [.privateKeyUsage]
+    default: []
     }
   }
 }

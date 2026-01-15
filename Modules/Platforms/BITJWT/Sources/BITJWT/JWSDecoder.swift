@@ -5,7 +5,7 @@ import JOSESwift
 // MARK: - JWSDecoderProtocol
 
 public protocol JWSDecoderProtocol {
-  func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWTPayload & Decodable
+  func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWT
 }
 
 // MARK: - JWSDecoderError
@@ -30,7 +30,7 @@ public struct JWSDecoder: JWSDecoderProtocol {
 
   public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
 
-  public func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWTPayload & Decodable {
+  public func decode<T>(_ type: T.Type, from data: Data) throws -> JWS<T> where T: JWT {
     let jws = try JOSESwift.JWS(compactSerialization: data)
     let payload: T = try decodePayload(from: jws.payload.data())
     let rawPayload = try decodeRawPayload(from: jws.payload.data())

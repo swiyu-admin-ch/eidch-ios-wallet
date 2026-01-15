@@ -21,7 +21,7 @@ final class FetchVersionEnforcementUseCaseTests: XCTestCase {
 
     appVersionUseCase.executeReturnValue = mockAppVersion
 
-    let versionEnforcement = try await useCase.execute(withTimeout: mockTimeout)
+    let versionEnforcement = try await useCase.execute()
 
     XCTAssertNil(versionEnforcement)
     XCTAssertTrue(repository.fetchVersionEnforcementsCalled)
@@ -35,7 +35,7 @@ final class FetchVersionEnforcementUseCaseTests: XCTestCase {
 
     appVersionUseCase.executeReturnValue = mockAppVersion
 
-    let versionEnforcement = try await useCase.execute(withTimeout: mockTimeout)
+    let versionEnforcement = try await useCase.execute()
 
     XCTAssertNil(versionEnforcement)
     XCTAssertTrue(repository.fetchVersionEnforcementsCalled)
@@ -49,7 +49,7 @@ final class FetchVersionEnforcementUseCaseTests: XCTestCase {
 
     appVersionUseCase.executeReturnValue = mockAppVersion
 
-    let versionEnforcement = try await useCase.execute(withTimeout: mockTimeout)
+    let versionEnforcement = try await useCase.execute()
 
     XCTAssertNotNil(versionEnforcement)
     XCTAssertTrue(repository.fetchVersionEnforcementsCalled)
@@ -64,7 +64,7 @@ final class FetchVersionEnforcementUseCaseTests: XCTestCase {
     appVersionUseCase.executeReturnValue = mockAppVersion
 
     do {
-      _ = try await useCase.execute(withTimeout: mockTimeout)
+      _ = try await useCase.execute()
       XCTFail("High platform should be supported")
     } catch FetchVersionEnforcementUseCase.FetchVersionEnforcementUseCaseError.noValidVersionEnforcement {
       XCTAssertTrue(repository.fetchVersionEnforcementsCalled)
@@ -82,31 +82,13 @@ final class FetchVersionEnforcementUseCaseTests: XCTestCase {
     appVersionUseCase.executeReturnValue = mockAppVersion
 
     do {
-      _ = try await useCase.execute(withTimeout: mockTimeout)
+      _ = try await useCase.execute()
       XCTFail("iOS platform should be supported")
     } catch FetchVersionEnforcementUseCase.FetchVersionEnforcementUseCaseError.noValidVersionEnforcement {
       XCTAssertTrue(repository.fetchVersionEnforcementsCalled)
       XCTAssertFalse(appVersionUseCase.executeCalled)
     } catch {
       XCTFail("Unexpected error")
-    }
-  }
-
-  func testGetVersionEnforcement_timeout() async throws {
-    repository.fetchVersionEnforcementsClosure = {
-      try? await Task.sleep(nanoseconds: self.mockTimeout)
-
-      return [.Mock.sample]
-    }
-
-    appVersionUseCase.executeReturnValue = mockAppVersion
-
-    do {
-      _ = try await useCase.execute(withTimeout: 500_000_000)
-      XCTFail("Timeout issue should occured")
-    } catch is CancellationError {
-      XCTAssertTrue(repository.fetchVersionEnforcementsCalled)
-      XCTAssertTrue(appVersionUseCase.executeCalled)
     }
   }
 
@@ -117,6 +99,5 @@ final class FetchVersionEnforcementUseCaseTests: XCTestCase {
   private var useCase: FetchVersionEnforcementUseCase!
   private var appVersionUseCase: GetAppVersionUseCaseProtocolSpy!
   private let mockAppVersion = AppVersion("1.0.0")
-  private let mockTimeout: UInt64 = 1_000_000_000
   // swiftlint:enable all
 }

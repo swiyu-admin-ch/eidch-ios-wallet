@@ -1,11 +1,12 @@
 import Foundation
+@testable import BITAppAuth
 @testable import BITCredential
 @testable import BITNavigationTestCore
 @testable import BITPresentation
 
 // MARK: - MockPresentationRouter
 
-final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes, PresentationInternalRoutes {
+final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes, PresentationInternalRoutes, LoginRoutes {
 
   weak var delegate: PresentationFinishDelegate?
 
@@ -14,6 +15,7 @@ final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes
   var calledPresentationResultState: PresentationRequestResultState?
   var startPresentationContext: PresentationRequestContext?
   var didCallBadgeInformation = false
+  var didCallLogin = false
 
   func startPresentation(context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws {
     startPresentationContext = context
@@ -35,6 +37,9 @@ final class MockPresentationRouter: ClosableRoutesMock, PresentationRouterRoutes
     didCallBadgeInformation = true
   }
 
+  func login(animated: Bool) {
+    didCallLogin = true
+  }
 }
 
 // MARK: - MockPresentationFinishDelegate

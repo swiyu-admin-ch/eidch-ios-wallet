@@ -32,7 +32,7 @@ let package = Package(
     .package(url: "https://github.com/hmlongco/Navigator", exact: "1.3.1"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
-    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", branch: "main"),
+    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", exact: "0.17.1"),
   ],
   targets: [
     .target(

@@ -58,7 +58,7 @@ public struct Card<Content>: View where Content: View {
   private let background: CardBackground
 
   private let minWidthContent: CGFloat = 80
-  private let maxWidthContent: CGFloat = 120
+  private let maxWidthContent: CGFloat = 300
   private let minHeightContent: CGFloat = 80
   private let maxHeightContent: CGFloat = 180
 

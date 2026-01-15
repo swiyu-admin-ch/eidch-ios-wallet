@@ -13,7 +13,7 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
   func fetch(from url: URL) async throws -> PresentationRequest {
     do {
       let data = try await networkService.request(PresentationEndpoint.requestObject(url: url)).data
-      guard let jws = try? jwsDecoder.decode(JWTRequestObjectPayload.self, from: data) else {
+      guard let jws = try? jwsDecoder.decode(RequestObjectJWT.self, from: data) else {
         let object = try decoder.decode(RequestObject.self, from: data)
         object.raw = data
         return .plain(object)

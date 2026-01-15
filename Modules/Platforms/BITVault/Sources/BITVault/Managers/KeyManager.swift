@@ -12,7 +12,7 @@ public struct KeyManager: KeyManagerProtocol {
 
   public func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOptions, query: Query?) throws -> VaultKeyPair {
     guard let dataIdentifier = identifier.data(using: .utf8) else {
-      throw VaultError.identifierCannotBeCasted
+      throw VaultError.identifierCannotBeCasted(identifier: identifier)
     }
 
     var privateKeyAttributes: [String: Any] = [
@@ -49,7 +49,7 @@ public struct KeyManager: KeyManagerProtocol {
 
   public func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> VaultKeyPair {
     guard let dataIdentifier = identifier.data(using: .utf8) else {
-      throw VaultError.identifierCannotBeCasted
+      throw VaultError.identifierCannotBeCasted(identifier: identifier)
     }
 
     let defaultQuery: [String: Any] = [
@@ -66,7 +66,7 @@ public struct KeyManager: KeyManagerProtocol {
     let status = SecItemCopyMatching(finalQuery as CFDictionary, &item)
 
     guard status == errSecSuccess, item != nil else {
-      throw VaultError.keyRetrievalError
+      throw VaultError.keyRetrievalError(reason: "Received OSStatus: \(status)")
     }
 
     // swiftlint:disable force_cast
@@ -78,7 +78,7 @@ public struct KeyManager: KeyManagerProtocol {
 
   public func deleteKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws {
     guard let dataIdentifier = identifier.data(using: .utf8) else {
-      throw VaultError.identifierCannotBeCasted
+      throw VaultError.identifierCannotBeCasted(identifier: identifier)
     }
 
     let defaultQuery: [String: Any] = [
@@ -89,7 +89,7 @@ public struct KeyManager: KeyManagerProtocol {
 
     let status = SecItemDelete(defaultQuery as CFDictionary)
     guard [errSecSuccess, errSecItemNotFound].contains(status) else {
-      throw VaultError.keyDeletionError
+      throw VaultError.keyDeletionError(reason: "Received OSStatus: \(status)")
     }
   }
 
@@ -100,11 +100,11 @@ public struct KeyManager: KeyManagerProtocol {
     }
 
     guard let rawPublicKey = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
-      throw VaultError.keyRetrievalError
+      throw VaultError.keyRetrievalError(reason: error?.takeRetainedValue().localizedDescription ?? "Unknown error")
     }
 
     guard let rawPrivateKey = SecKeyCopyExternalRepresentation(privateKey, &error) as Data? else {
-      throw VaultError.keyRetrievalError
+      throw VaultError.keyRetrievalError(reason: error?.takeRetainedValue().localizedDescription ?? "Unknown error")
     }
     return (rawPublicKey, rawPrivateKey)
   }

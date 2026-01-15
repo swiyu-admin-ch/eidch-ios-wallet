@@ -18,13 +18,20 @@ extension Container {
     self { PresentationRequestResultStateViewModel(state: $0, context: $1, router: $2) }
   }
 
+  var declinePresentationUseCase: Factory<DeclinePresentationUseCaseProtocol> {
+    self { DeclinePresentationUseCase() }
+  }
+
   var submitPresentationUseCase: Factory<SubmitPresentationUseCaseProtocol> {
     self { SubmitPresentationUseCase() }
   }
 
-  var declinePresentationUseCase: Factory<DeclinePresentationUseCaseProtocol> {
-    self { DeclinePresentationUseCase() }
+  var declinePresentationViewModel: ParameterFactory<(PresentationRequestContext, PresentationInternalRoutes), DeclinePresentationViewModel> {
+    self {
+      DeclinePresentationViewModel(context: $0, router: $1)
+    }
   }
+
 }
 
 extension Container {
@@ -52,4 +59,5 @@ extension Container {
   // MARK: Internal
 
   var loadingMessageDelay: Factory<Double> { self { 5 } }
+  var declinePresentationRequestDelay: Factory<UInt64> { self { 1_000_000_000 } }
 }

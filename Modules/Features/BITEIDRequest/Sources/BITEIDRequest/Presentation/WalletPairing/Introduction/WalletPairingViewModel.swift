@@ -3,11 +3,10 @@ import Factory
 import Foundation
 
 @MainActor
-class WalletPairingViewModel: NavigationClosable {
+class WalletPairingViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published var isNavigationCloseTriggered = false
   @Published var destination: EIDRequestDestinations?
 
   @MainActor

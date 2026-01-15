@@ -78,7 +78,7 @@ public struct CustomButton: View {
         $0.clipShape(.capsule)
       }
       .if(sizeCategory.isAccessibilityCategory) {
-        $0.clipShape(RoundedRectangle(cornerRadius: .xxl))
+        $0.clipShape(RoundedRectangle(cornerRadius: .x6))
       }
       .scaleEffect(configuration.isPressed ? CGSize(width: 0.95, height: 0.95) : CGSize(width: 1.0, height: 1.0))
       .animation(.interactiveSpring, value: configuration.isPressed)

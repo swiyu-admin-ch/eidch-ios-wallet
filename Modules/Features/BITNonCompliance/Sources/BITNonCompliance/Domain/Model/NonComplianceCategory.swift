@@ -1,8 +1,8 @@
 import Foundation
 
 #warning("More categories added in upcoming stories")
-public enum NonComplianceCategory: Int, Identifiable, CaseIterable {
-  case excessiveDataRequest
+public enum NonComplianceCategory: String, Identifiable, CaseIterable, Codable {
+  case excessiveDataRequest = "ExcessiveDataRequest"
 
-  public var id: Int { rawValue }
+  public var id: String { rawValue }
 }

@@ -46,7 +46,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
 
   func submit() async {
     guard let caseId = context.caseId else {
-      return destination = .error(ErrorDataset(EidRequestError.missingContextInformations, primaryAction: { [weak self] in
+      return destination = .error(.retry(EidRequestError.missingContextInformations, { [weak self] _ in
         self?.retryAction()
       }))
     }
@@ -59,7 +59,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
         await submitEidRequest()
       }
     } catch {
-      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+      destination = .error(.retry(error, { [weak self] _ in
         self?.retryAction()
       }))
     }
@@ -93,7 +93,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
 
   func submitEidRequest() async {
     guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else {
-      return destination = .error(ErrorDataset(EidRequestError.missingContextInformations, primaryAction: { [weak self] in
+      return destination = .error(.retry(EidRequestError.missingContextInformations, { [weak self] _ in
         self?.retryAction()
       }))
     }
@@ -105,7 +105,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
       Container.shared.eidRequestContext.reset()
       destination = .success
     } catch {
-      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+      destination = .error(.retry(error, { [weak self] _ in
         Task {
           await self?.submitEidRequest()
         }
@@ -130,7 +130,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
 
   private func sendFiles(_ files: [EIDRequestCaseFile]) async {
     guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else {
-      return destination = .error(ErrorDataset(EidRequestError.missingContextInformations, primaryAction: { [weak self] in
+      return destination = .error(.retry(EidRequestError.missingContextInformations, { [weak self] _ in
         self?.retryAction()
       }))
     }

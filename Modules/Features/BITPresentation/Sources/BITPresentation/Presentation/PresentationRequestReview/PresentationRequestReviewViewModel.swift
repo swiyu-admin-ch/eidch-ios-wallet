@@ -1,5 +1,6 @@
 import BITActivity
 import BITAnalytics
+import BITAppAuth
 import BITCore
 import BITCredential
 import BITCredentialShared
@@ -30,10 +31,12 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   enum Event {
     case submit(PresentationRequestReviewState.Result, Bool)
     case deny
+    case login
   }
 
   @Published private(set) var state = PresentationRequestReviewState.loading
   @Published var isUnknownVerifierAlertShown = false
+  @Published var isSessionTimeoutPresented = false
 
   private(set) var denyTask: Task<Void, Error>?
 
@@ -43,6 +46,8 @@ public class PresentationRequestReviewViewModel: ObservableObject {
       await deny()
     case .submit(let result, let force):
       await submit(result, force: force)
+    case .login:
+      router.login(animated: true)
     }
   }
 
@@ -107,8 +112,12 @@ public class PresentationRequestReviewViewModel: ObservableObject {
 
   private func handleSubmitError(_ error: Error, processing: PresentationRequestReviewState.Processing) {
     analytics.log(error)
-    let resultState = PresentationRequestResultState(error: error, claims: credential.requestedClusteredClaims.flatMap(\.claims))
-    router.presentationResultState(with: resultState, context: context)
+    if error as? UserSessionError == .notLoggedIn {
+      isSessionTimeoutPresented = true
+    } else {
+      let resultState = PresentationRequestResultState(error: error, claims: credential.requestedClusteredClaims.flatMap(\.claims))
+      router.presentationResultState(with: resultState, context: context)
+    }
     let viewModel = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: processing.credential.colorScheme)
     state = .result(viewModel)
   }
@@ -116,7 +125,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   private func deny() async {
     denyTask = Task.detached(priority: .background) { [weak self] in
       guard let self else { return }
-      try? await declinePresentationUseCase.execute(context: context)
+      try? await declinePresentationUseCase(context: context)
     }
     router.presentationResultState(with: .deny, context: context)
   }

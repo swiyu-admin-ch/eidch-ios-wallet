@@ -12,6 +12,7 @@ public protocol RequestCaseViewStateDelegate: AnyObject {
   func didTapObtainConsent(caseId: String)
   func didOpenExternalLink(url: URL)
   func didTapWalletPairing(caseId: String)
+  func didTapIdentityCheck(caseId: String)
 }
 
 extension RequestCaseViewStateDelegate {
@@ -21,6 +22,7 @@ extension RequestCaseViewStateDelegate {
   func didTapObtainConsent(caseId: String) { }
   func didOpenExternalLink(url: URL) { }
   func didTapWalletPairing(caseId: String) { }
+  func didTapIdentityCheck(caseId: String) { }
 }
 
 // MARK: - RequestCaseViewStateError
@@ -40,6 +42,10 @@ public enum RequestCaseViewState: Identifiable, Hashable {
   case agentReview(AgentReviewStateViewModel)
   case declined(DeclinedStateViewModel)
   case walletPairing(WalletPairingStateViewModel)
+  case autoVerification(AutoVerificationStateViewModel)
+  case closed(ClosedStateViewModel)
+  case issuing(IssuingStateViewModel)
+  case cancelled(CancelledStateViewModel)
 
   // MARK: Lifecycle
 
@@ -59,8 +65,15 @@ public enum RequestCaseViewState: Identifiable, Hashable {
       self = try .declined(DeclinedStateViewModel(requestCase: requestCase, delegate: delegate))
     case .inTargetWalletPairing:
       self = try .walletPairing(WalletPairingStateViewModel(requestCase: requestCase, delegate: delegate))
-    case .cancelled,
-         .unknown:
+    case .autoVerification:
+      self = try .autoVerification(AutoVerificationStateViewModel(requestCase: requestCase, delegate: delegate))
+    case .closed:
+      self = try .closed(ClosedStateViewModel(requestCase: requestCase, delegate: delegate))
+    case .issuing:
+      self = try .issuing(IssuingStateViewModel(requestCase: requestCase))
+    case .cancelled:
+      self = try .cancelled(CancelledStateViewModel(requestCase: requestCase))
+    case .unknown:
       throw RequestCaseViewStateError.unsupportedState
     }
   }
@@ -70,9 +83,13 @@ public enum RequestCaseViewState: Identifiable, Hashable {
   public var id: String {
     switch self {
     case .agentReview(let viewModel as RequestCaseStateBaseViewModel),
+         .autoVerification(let viewModel as RequestCaseStateBaseViewModel),
+         .cancelled(let viewModel as RequestCaseStateBaseViewModel),
+         .closed(let viewModel as RequestCaseStateBaseViewModel),
          .declined(let viewModel as RequestCaseStateBaseViewModel),
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
+         .issuing(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
          .unknown(let viewModel as RequestCaseStateBaseViewModel),
          .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
@@ -83,9 +100,13 @@ public enum RequestCaseViewState: Identifiable, Hashable {
   public var requestCaseId: String {
     switch self {
     case .agentReview(let viewModel as RequestCaseStateBaseViewModel),
+         .autoVerification(let viewModel as RequestCaseStateBaseViewModel),
+         .cancelled(let viewModel as RequestCaseStateBaseViewModel),
+         .closed(let viewModel as RequestCaseStateBaseViewModel),
          .declined(let viewModel as RequestCaseStateBaseViewModel),
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
+         .issuing(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
          .unknown(let viewModel as RequestCaseStateBaseViewModel),
          .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
@@ -96,9 +117,13 @@ public enum RequestCaseViewState: Identifiable, Hashable {
   public var isLegalRepresentantConsentVerified: Bool {
     switch self {
     case .agentReview(let viewModel as RequestCaseStateBaseViewModel),
+         .autoVerification(let viewModel as RequestCaseStateBaseViewModel),
+         .cancelled(let viewModel as RequestCaseStateBaseViewModel),
+         .closed(let viewModel as RequestCaseStateBaseViewModel),
          .declined(let viewModel as RequestCaseStateBaseViewModel),
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
+         .issuing(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
          .unknown(let viewModel as RequestCaseStateBaseViewModel),
          .walletPairing(let viewModel as RequestCaseStateBaseViewModel):

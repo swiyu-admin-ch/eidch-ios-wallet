@@ -68,22 +68,6 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
     }
   }
 
-  func testFinish_updateRequestCaseFails_close() async {
-    updateEIDRequestCaseStatusUseCase.executeForThrowableError = TestingError.error
-
-    await viewModel.finish()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
-  func testFinish_unknownState_close() async throws {
-    updateEIDRequestCaseStatusUseCase.executeForReturnValue = EIDRequestCase.Mock.sampleWithoutState
-
-    await viewModel.finish()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
   // MARK: Private
 
   private let mockCaseId = "caseId"

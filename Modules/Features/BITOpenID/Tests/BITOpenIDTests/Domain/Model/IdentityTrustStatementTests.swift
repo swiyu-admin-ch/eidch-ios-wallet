@@ -16,7 +16,7 @@ final class IdentityTrustStatementTests: XCTestCase {
   }
 
   func testDecode_allFields() throws {
-    let trustStatement = IdentityTrustStatementPayload.Mock.allFields
+    let trustStatement = IdentityTrustStatementJWT.Mock.allFields
 
     let payload = trustStatement.payload
 
@@ -47,7 +47,7 @@ final class IdentityTrustStatementTests: XCTestCase {
   }
 
   func testGetLocalizedEntityName_multipleLanguages_returnsFirstValidLanguage() throws {
-    let trustStatement = IdentityTrustStatementPayload.Mock.validSample
+    let trustStatement = IdentityTrustStatementJWT.Mock.validSample
 
     let clientName = trustStatement.resolvedPayload.getLocalizedEntityName(considering: ["cz", "de", "en"])
 
@@ -55,7 +55,7 @@ final class IdentityTrustStatementTests: XCTestCase {
   }
 
   func testGetLocalizedEntityName_noLanguages_returnsFirstValidLanguage() throws {
-    let trustStatement = IdentityTrustStatementPayload.Mock.validSample
+    let trustStatement = IdentityTrustStatementJWT.Mock.validSample
 
     let clientName = trustStatement.resolvedPayload.getLocalizedEntityName(considering: [])
 

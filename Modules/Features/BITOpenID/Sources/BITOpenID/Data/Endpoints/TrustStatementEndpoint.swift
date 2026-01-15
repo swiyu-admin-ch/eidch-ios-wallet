@@ -5,7 +5,6 @@ import Moya
 // MARK: - TrustStatementEndpoint
 
 enum TrustStatementEndpoint {
-  case metadata(url: URL, subjectDid: String)
   case identity(url: URL, subjectDid: String)
   case vcSchema(url: URL, type: VcSchemaTrustStatementType, vcSchemaId: String)
 }
@@ -24,7 +23,6 @@ extension TrustStatementEndpoint: TargetType {
   var baseURL: URL {
     switch self {
     case .identity(let baseUrl, _),
-         .metadata(let baseUrl, _),
          .vcSchema(let baseUrl, _, _):
       baseUrl
     }
@@ -32,8 +30,6 @@ extension TrustStatementEndpoint: TargetType {
 
   var path: String {
     switch self {
-    case .metadata(_, let did):
-      "api/v1/truststatements/\(did)"
     case .identity(_, let did):
       "api/v1/truststatements/identity/\(did)"
     case .vcSchema(_, let type, _):
@@ -44,7 +40,6 @@ extension TrustStatementEndpoint: TargetType {
   var method: Moya.Method {
     switch self {
     case .identity,
-         .metadata,
          .vcSchema:
       .get
     }
@@ -52,8 +47,7 @@ extension TrustStatementEndpoint: TargetType {
 
   var task: Task {
     switch self {
-    case .identity,
-         .metadata:
+    case .identity:
       .requestPlain
     case .vcSchema(_, _, let vcSchemaId):
       .requestParameters(parameters: ["vcSchemaId": vcSchemaId], encoding: URLEncoding.default)
@@ -63,7 +57,6 @@ extension TrustStatementEndpoint: TargetType {
   var headers: [String: String]? {
     switch self {
     case .identity,
-         .metadata,
          .vcSchema:
       NetworkHeader.standard.raw
     }

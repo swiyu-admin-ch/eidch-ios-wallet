@@ -9,7 +9,7 @@ import NavigatorUI
 // MARK: - LegalRepresentantVerificationViewModel
 
 @MainActor
-class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosable, NavigationBackable {
+class LegalRepresentantVerificationViewModel: ObservableObject, NavigationBackable {
 
   // MARK: Lifecycle
 
@@ -20,8 +20,8 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosab
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
-  @Published var isNavigationCloseTriggered = false
+  @Published private(set) var destination: EIDRequestDestinations?
+  @Published private(set) var isNavigationCloseTriggered = false
   @Published var isNavigationBackTriggered = false
 
   func startVerification() async {
@@ -32,7 +32,7 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosab
     } catch EIDRequestRepository.Error.legalRepresentantNotRequired {
       await openConsentState()
     } catch {
-      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+      destination = .error(.retry(error, { [weak self] _ in
         self?.errorCallback(error)
       }))
     }
@@ -45,6 +45,7 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosab
 
   @Injected(\.getLegalRepresentantPresentationRequestContextUseCase) private var getLegalRepresentantPresentationRequestContextUseCase
   @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func openConsentState() async {
     do {
@@ -52,12 +53,12 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosab
       let state = try RequestCaseViewState(requestCase)
 
       if case .unknown = state {
-        return isNavigationCloseTriggered = true
+        return close()
       }
 
       destination = .legalRepresentantConsentState(state: state)
     } catch {
-      destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+      destination = .error(.retry(error, { [weak self] _ in
         self?.errorCallback(error)
       }))
     }
@@ -65,14 +66,20 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosab
 
   private func errorCallback(_ error: Error) {
     switch error {
-    case CompatibleCredentialsError.compatibleCredentialNotFound,
-         CompatibleCredentialsError.emptyWallet:
-      destination = .introduction
     case EIDRequestRepository.Error.unknownError:
-      isNavigationBackTriggered = true
+      back()
     default:
-      isNavigationCloseTriggered = true
+      close()
     }
+  }
+
+  private func close() {
+    isNavigationCloseTriggered = true
+    coordinator.cleanup()
+  }
+
+  private func back() {
+    isNavigationBackTriggered = true
   }
 
 }
@@ -81,17 +88,17 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationClosab
 
 extension LegalRepresentantVerificationViewModel: @preconcurrency PresentationFinishDelegate {
   func retry() {
-    isNavigationBackTriggered = true
+    back()
   }
 
   func cancel() {
-    isNavigationCloseTriggered = true
+    close()
   }
 
   func finish(with state: PresentationRequestResultState) async {
     switch state {
     case .success: await openConsentState()
-    default: isNavigationCloseTriggered = true
+    default: close()
     }
   }
 }

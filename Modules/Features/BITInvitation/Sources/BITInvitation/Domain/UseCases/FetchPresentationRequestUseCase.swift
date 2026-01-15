@@ -42,7 +42,7 @@ public struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCasePr
       case .expired:
         throw FetchPresentationRequestUseCaseError.expiredRequest
       case .invalid(let request):
-        try? await presentationRequestService.decline(for: request.requestObject, with: .invalidRequest) // ignore errors as it's fire-and-forget
+        try? await presentationRequestService.decline(url: request.requestObject.responseUri, with: .invalidRequest) // ignore errors as it's fire-and-forget
         throw FetchPresentationRequestUseCaseError.invalidRequest
       case .notFound:
         throw FetchPresentationRequestUseCaseError.invalidRequest
@@ -69,7 +69,7 @@ enum FetchPresentationRequestUseCaseError: Error {
   case expiredRequest
 }
 
-extension JWTRequestObjectPayload {
+extension RequestObjectJWT {
 
   // MARK: Fileprivate
 
@@ -85,7 +85,7 @@ extension JWTRequestObjectPayload {
   // MARK: Private
 
   private var vcSchemaIdPaths: [String] {
-    [VcSdJwtPayload.vctPath]
+    [VcSdJwt.vctPath]
   }
 
 }

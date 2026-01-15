@@ -1,3 +1,4 @@
+import BITAppAuth
 import BITCredential
 import BITNavigation
 import SwiftUI
@@ -8,22 +9,36 @@ public protocol PresentationRoutes {
   func startPresentation(context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws
 }
 
-extension PresentationRoutes where Self: RouterProtocol {
-  public func startPresentation(context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws {
-    let viewController: UIViewController
-    let style = NavigationPushOpeningStyle()
+// MARK: - PresentationModuleProtocol
 
-    if context.compatibleCredentials.count > 1 {
-      let module = try CompatibleCredentialsModule(context: context)
-      module.router.current = style
-      module.router.delegate = delegate
-      viewController = module.viewController
+protocol PresentationModuleProtocol: AnyObject {
+  var viewController: UIViewController { get }
+  var router: PresentationRouter { get }
+}
+
+extension PresentationRoutes where Self: RouterProtocol {
+
+  // MARK: Public
+
+  public func startPresentation(context: PresentationRequestContext, delegate: PresentationFinishDelegate?) throws {
+    var module: PresentationModuleProtocol = if context.compatibleCredentials.isEmpty {
+      DeclinePresentationModule(context: context)
+    } else if context.compatibleCredentials.count > 1 {
+      CompatibleCredentialsModule(context: context)
     } else {
-      let module = PresentationRequestReviewModule(context: context)
-      module.router.current = style
-      module.router.delegate = delegate
-      viewController = module.viewController
+      PresentationRequestReviewModule(context: context)
     }
+
+    openModule(module, delegate: delegate)
+  }
+
+  // MARK: Private
+
+  private func openModule(_ module: PresentationModuleProtocol, delegate: PresentationFinishDelegate?) {
+    let style = NavigationPushOpeningStyle()
+    module.router.current = style
+    module.router.delegate = delegate
+    let viewController = module.viewController
 
     open(viewController, on: self.viewController, as: style)
   }
@@ -31,7 +46,7 @@ extension PresentationRoutes where Self: RouterProtocol {
 
 // MARK: - PresentationInternalRoutes
 
-protocol PresentationInternalRoutes: ClosableRoutes {
+protocol PresentationInternalRoutes: ClosableRoutes & LoginRoutes {
   var delegate: PresentationFinishDelegate? { get set }
 
   func badgeInformation(badgeType: BadgeType)

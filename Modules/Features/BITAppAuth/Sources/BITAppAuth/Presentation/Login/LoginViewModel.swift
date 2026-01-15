@@ -95,7 +95,6 @@ public class LoginViewModel: ObservableObject {
   @Injected(\.lockDelay) private var lockDelay: TimeInterval
   @Injected(\.loadingDelay) private var loadingDelay: UInt64
   @Injected(\.pinCodeSize) private var pinCodeSize: Int
-  @Injected(\.versionEnforcementLoginTimeout) private var versionEnforcementTimeout: UInt64
 
   private var timer: Timer?
   private let router: LoginRouterRoutes
@@ -271,7 +270,7 @@ extension LoginViewModel {
 
 extension LoginViewModel {
   private func checkVersionEnforcement() async -> VersionEnforcement? {
-    try? await useCases.fetchVersionEnforcementUseCase.execute(withTimeout: versionEnforcementTimeout)
+    try? await useCases.fetchVersionEnforcementUseCase.execute()
   }
 }
 

@@ -24,7 +24,7 @@ extension Container: AutoRegistering {
     hasDevicePinUseCase.register { MockHasDevicePinUseCase(true) }
     loginPinCodeUseCase.register { MockLoginPinCodeUseCase() }
     homeRouter.register { MockHomeRouter() }
-    jwsSignatureValidator.register { MockJWSSignatureValidator(true) }
+    jwsSignatureValidator.register { MockJWSSignatureValidator() }
 
     userSession.register { MockUserSession() }
     keyManager.register { MockKeyManager() }

@@ -42,10 +42,10 @@ struct DidResolverHelper: DidResolverHelperProtocol {
   @Injected(\.didResolverRepository) private var didResolverRepository: DidResolverRepositoryProtocol
 
   private func resolve(didRaw: String) async throws -> DidDoc {
-    let did = try Did(didTdw: didRaw)
+    let did = try Did(did: didRaw)
     guard let url = try URL(string: did.getUrl()) else { throw DidResolverHelperError.invalidDidUrl }
     let didLog = try await didResolverRepository.fetchDidLog(from: url)
-    return try did.resolve(didTdwLog: didLog)
+    return try did.resolve(didLog: didLog)
   }
 
 }

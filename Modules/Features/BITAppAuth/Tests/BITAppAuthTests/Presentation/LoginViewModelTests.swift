@@ -1,3 +1,4 @@
+import BITNetworking
 import Combine
 import Factory
 import Foundation
@@ -38,7 +39,7 @@ final class LoginViewModelTests: XCTestCase {
     mockGetBiometricTypeUseCase.executeReturnValue = .faceID
 
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = 0
-    mockFetchVersionEnforcementUseCase.executeWithTimeoutReturnValue = nil
+    mockFetchVersionEnforcementUseCase.executeReturnValue = nil
 
     mockUseCases = LoginUseCasesProtocolSpy()
     mockUseCases.hasBiometricAuth = mockHasBiometricAuthUseCase
@@ -158,7 +159,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
     XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeKindCalled)
     XCTAssertFalse(mockLockWalletUseCase.executeCalled)
-    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   @MainActor
@@ -187,7 +188,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
     XCTAssertTrue(mockResetLoginAttemptCounterUseCase.executeCalled)
     XCTAssertFalse(mockLockWalletUseCase.executeCalled)
-    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   @MainActor
@@ -281,7 +282,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
     XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
     XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   @MainActor
@@ -350,7 +351,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
     XCTAssertTrue(mockLoginBiometricUseCase.executeCalled)
     XCTAssertEqual(1, mockLoginBiometricUseCase.executeCallsCount) // because of the configure in init
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   @MainActor
@@ -478,59 +479,59 @@ final class LoginViewModelTests: XCTestCase {
 
   @MainActor
   func testBiometricLoginWithVersionEnforcementBlock() async throws {
-    mockFetchVersionEnforcementUseCase.executeWithTimeoutReturnValue = mockVersionEnforcement
+    mockFetchVersionEnforcementUseCase.executeReturnValue = mockVersionEnforcement
 
     try await testBiometricAuthHappyPath()
 
     XCTAssertFalse(mockRouter.closeWithCompletionCalled)
     XCTAssertTrue(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
     XCTAssertEqual(mockRouter.versionEnforcement, mockVersionEnforcement)
   }
 
   @MainActor
   func testBiometricLoginWithoutVersionEnforcementBlock() async throws {
-    mockFetchVersionEnforcementUseCase.executeWithTimeoutReturnValue = nil
+    mockFetchVersionEnforcementUseCase.executeReturnValue = nil
 
     try await testBiometricAuthHappyPath()
 
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   @MainActor
   func testPinLoginWithoutVersionEnforcementBlock() async throws {
-    mockFetchVersionEnforcementUseCase.executeWithTimeoutReturnValue = nil
+    mockFetchVersionEnforcementUseCase.executeReturnValue = nil
 
     await testPinCodeHappyPath()
 
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   @MainActor
   func testPinLoginWithVersionEnforcementBlock() async throws {
-    mockFetchVersionEnforcementUseCase.executeWithTimeoutReturnValue = mockVersionEnforcement
+    mockFetchVersionEnforcementUseCase.executeReturnValue = mockVersionEnforcement
 
     await testPinCodeHappyPath()
 
     XCTAssertFalse(mockRouter.closeWithCompletionCalled)
     XCTAssertTrue(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
     XCTAssertEqual(mockRouter.versionEnforcement, mockVersionEnforcement)
   }
 
   @MainActor
-  func testVersionEnforcementSilentFail() async throws {
-    mockFetchVersionEnforcementUseCase.executeWithTimeoutThrowableError = TestingError.error
+  func testVersionEnforcementGenericErrorSilentFail() async throws {
+    mockFetchVersionEnforcementUseCase.executeThrowableError = TestingError.error
 
     await testPinCodeHappyPath()
 
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 
   // MARK: Private
@@ -639,6 +640,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
     XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
     XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeWithTimeoutCalled)
+    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeCalled)
   }
 }

@@ -19,11 +19,7 @@ struct AVWelcomeView: View {
           primaryButtonAction: viewModel.primaryAction)
       })
       .navigate(to: $viewModel.destination)
-      .toolbar {
-        CloseButtonToolbar(action: {
-          navigator.dismiss()
-        })
-      }
+      .defaultEidRequestToolbar()
   }
 
   // MARK: Private
@@ -34,8 +30,6 @@ struct AVWelcomeView: View {
     case tertiaryText
     case tertiaryTipText
   }
-
-  @Environment(\.navigator) private var navigator: Navigator
 
   @InjectedObject(\.avWelcomeViewModel) private var viewModel
 

@@ -16,16 +16,11 @@ class DocumentSelectionViewModelTests: XCTestCase {
     viewModel = DocumentSelectionViewModel()
   }
 
-  func testClose() {
-    viewModel.navigationClose()
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
   @MainActor
   func testOpenScanner() {
     viewModel.didSelect(.identityCard)
 
-    XCTAssertEqual(viewModel.destination, .scanDocument)
+    XCTAssertEqual(viewModel.destination, .scanDocumentInformation)
     XCTAssertEqual(context.identityType, .identityCard)
   }
 

@@ -155,7 +155,7 @@ final class HolderBindingContextGeneratorTests: XCTestCase {
   private let mockpreferredKeyBindingAlgorithmsOrdered: [JWTAlgorithm] = [.ES256]
   private let mockKeyPair = VaultKeyPair.Mock.ES256
   private let mockSupportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel] = [.iso18045High]
-  private let mockKeyAttestation = KeyAttestationPayload.Mock.sample
+  private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
 
   private var fetchKeyAttestationUseCase = FetchKeyAttestationUseCaseProtocolSpy()
   private var credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()

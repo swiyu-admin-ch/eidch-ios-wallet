@@ -40,11 +40,8 @@ final class HomeViewModelTests: XCTestCase {
 
     XCTAssertEqual(enableEIDRequestAfterOnboardingUseCase.executeReceivedEnable, false)
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials?.count, mockCrendentials.compactMap({ $0 as? DeferredCredential }).count)
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 2)
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
@@ -56,6 +53,7 @@ final class HomeViewModelTests: XCTestCase {
 
   func testOnAppear_noCredential_stateEmpty() async {
     getCredentialListUseCase.executeReturnValue = []
+    refreshCredentialsUseCase.callAsFunctionReturnValue = []
 
     await viewModel.onAppear()
 
@@ -80,9 +78,9 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallEIDRequest)
     XCTAssertTrue(enableEIDRequestAfterOnboardingUseCase.executeCalled)
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
     XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 2)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(viewModel.state, .results)
   }
@@ -108,6 +106,7 @@ final class HomeViewModelTests: XCTestCase {
   func testOnAppear_noData_stateEmpty() async {
     getEIDRequestCaseListUseCase.executeReturnValue = []
     getCredentialListUseCase.executeReturnValue = []
+    refreshCredentialsUseCase.callAsFunctionReturnValue = []
 
     await viewModel.onAppear()
 
@@ -120,11 +119,8 @@ final class HomeViewModelTests: XCTestCase {
   func testRefresh_containResults() async {
     await viewModel.refresh()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials?.count, mockCrendentials.compactMap({ $0 as? DeferredCredential }).count)
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 2)
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
@@ -139,14 +135,12 @@ final class HomeViewModelTests: XCTestCase {
 
     getEIDRequestCaseListUseCase.executeReturnValue = []
     getCredentialListUseCase.executeReturnValue = []
+    refreshCredentialsUseCase.callAsFunctionReturnValue = []
 
     await viewModel.refresh()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 4)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 2)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReturnValue.count, mockCrendentials.count)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 2)
-    XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials?.count, mockCrendentials.compactMap({ $0 as? DeferredCredential }).count)
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 2)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.executeCallsCount, 4)
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 2)
@@ -176,10 +170,22 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallExternalLinkUrl)
   }
 
-  func testOpenCredentialDetail_deferredCredential_doNothing() {
-    viewModel.openDetail(for: DeferredCredentialViewModel(credential: .Mock.sample))
+  func testOpenCredential_deferredCredential_doNothing() {
+    viewModel.openCredential(DeferredCredentialViewModel(credential: .Mock.sample))
 
     XCTAssertFalse(mockRouter.didCallOpenCredentialDetail)
+  }
+
+  func testOpenCredential_unacceptedCredential_routeToOffer() {
+    viewModel.openCredential(VerifiableCredentialViewModel(credential: VerifiableCredential(progressionState: .unaccepted, payload: Data(), format: "format", issuer: "issuer")))
+
+    XCTAssertTrue(mockRouter.didCallCredentialOffer)
+  }
+
+  func testOpenCredential_acceptedCredential_routeToDetails() {
+    viewModel.openCredential(VerifiableCredentialViewModel(credential: .Mock.sample))
+
+    XCTAssertTrue(mockRouter.didCallOpenCredentialDetail)
   }
 
   func testOpenBetaId() {
@@ -215,6 +221,7 @@ final class HomeViewModelTests: XCTestCase {
   func testUpdateCredentialViewModels_argumentsPassed() async {
     let credentialMocks: [VerifiableCredential] = [.Mock.diploma, .Mock.sample]
     getCredentialListUseCase.executeReturnValue = credentialMocks
+    refreshCredentialsUseCase.callAsFunctionReturnValue = credentialMocks
 
     await viewModel.onAppear() // set up credentials which will already trigger an updateCredentialViewModels
 
@@ -222,6 +229,14 @@ final class HomeViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.credentials[0].credential.displays, credentialMocks[0].displays)
     XCTAssertEqual(viewModel.credentials[1].credential.displays, credentialMocks[1].displays)
+  }
+
+  func testOnAppear_refreshThrowsError_silentFails() async {
+    refreshCredentialsUseCase.callAsFunctionThrowableError = TestingError.error
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
   }
 
   func testDidSavedDeferredCredential_success() {
@@ -236,13 +251,19 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(mockRouter.didCallWalletPairingArgument, mockCaseId)
   }
 
+  func testDidTapIdentityCheck() {
+    viewModel.didTapIdentityCheck(caseId: mockCaseId)
+
+    XCTAssertEqual(mockRouter.didCallIdentityCheckArgument, mockCaseId)
+  }
+
   // MARK: Private
 
   private let mockCaseId = "caseId"
   private let mockCrendentials = VerifiableCredential.Mock.array
   private let themeMock = "light"
   private var getCredentialListUseCase: GetCredentialListUseCaseProtocolSpy!
-  private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
+  private var refreshCredentialsUseCase: RefreshCredentialsUseCaseProtocolSpy!
   private var isEIDRequestAfterOnboardingEnabledUseCase: IsEIDRequestAfterOnboardingEnabledUseCaseProtocolSpy!
   private var enableEIDRequestAfterOnboardingUseCase: EnableEIDRequestAfterOnboardingUseCaseProtocolSpy!
   private var deleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocolSpy!
@@ -250,31 +271,28 @@ final class HomeViewModelTests: XCTestCase {
   private var mockRouter: HomeRouterMock!
   private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocolSpy!
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
-  private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocolSpy!
   private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
 
   private func registerMocks() {
     getCredentialListUseCase = GetCredentialListUseCaseProtocolSpy()
-    checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
+    refreshCredentialsUseCase = RefreshCredentialsUseCaseProtocolSpy()
     isEIDRequestAfterOnboardingEnabledUseCase = IsEIDRequestAfterOnboardingEnabledUseCaseProtocolSpy()
     enableEIDRequestAfterOnboardingUseCase = EnableEIDRequestAfterOnboardingUseCaseProtocolSpy()
     getEIDRequestCaseListUseCase = GetEIDRequestCaseListUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
     deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
     isUserLoggedInUseCase = IsUserLoggedInUseCaseProtocolSpy()
-    refreshDeferredCredentialUseCase = RefreshDeferredCredentialUseCaseProtocolSpy()
 
     Container.shared.getEIDRequestCaseListUseCase.register { self.getEIDRequestCaseListUseCase }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCase }
     Container.shared.deleteEIDRequestCaseUseCase.register { self.deleteEIDRequestCaseUseCase }
     Container.shared.isUserLoggedInUseCase.register { self.isUserLoggedInUseCase }
     Container.shared.getCredentialListUseCase.register { self.getCredentialListUseCase }
-    Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
+    Container.shared.refreshCredentialsUseCase.register { self.refreshCredentialsUseCase }
     Container.shared.isEIDRequestAfterOnboardingEnabledUseCase.register { self.isEIDRequestAfterOnboardingEnabledUseCase }
     Container.shared.enableEIDRequestAfterOnboardingUseCase.register { self.enableEIDRequestAfterOnboardingUseCase }
     Container.shared.isEIDRequestFeatureEnabled.register { true }
-    Container.shared.refreshDeferredCredentialUseCase.register { self.refreshDeferredCredentialUseCase }
   }
 
   private func createSuccesState() {
@@ -282,7 +300,7 @@ final class HomeViewModelTests: XCTestCase {
     isUserLoggedInUseCase.executeReturnValue = true
     getCredentialListUseCase.executeReturnValue = mockCrendentials
     getEIDRequestCaseListUseCase.executeReturnValue = mockEIDRequestCases
-    checkAndUpdateCredentialStatusUseCase.executeReturnValue = mockCrendentials
+    refreshCredentialsUseCase.callAsFunctionReturnValue = mockCrendentials
   }
 }
 

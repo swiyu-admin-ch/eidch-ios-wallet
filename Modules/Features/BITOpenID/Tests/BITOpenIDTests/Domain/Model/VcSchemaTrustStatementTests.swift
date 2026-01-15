@@ -16,17 +16,17 @@ final class VcSchemaTrustStatementTests: XCTestCase {
   }
 
   func testDecode_issuance() throws {
-    let rawSdJwt = VcSchemaTrustStatementPayload.Mock.issuanceRawSdJwtData
+    let rawSdJwt = VcSchemaTrustStatementJWT.Mock.issuanceRawSdJwtData
 
-    let trustStatement = try decoder.decode(VcSchemaTrustStatementPayload.self, from: rawSdJwt)
+    let trustStatement = try decoder.decode(VcSchemaTrustStatementJWT.self, from: rawSdJwt)
 
     assertTrustStatement(trustStatement.payload, vct: "TrustStatementIssuanceV1")
   }
 
   func testDecode_verification() throws {
-    let rawSdJwt = VcSchemaTrustStatementPayload.Mock.verificationRawSdJwtData
+    let rawSdJwt = VcSchemaTrustStatementJWT.Mock.verificationRawSdJwtData
 
-    let trustStatement = try decoder.decode(VcSchemaTrustStatementPayload.self, from: rawSdJwt)
+    let trustStatement = try decoder.decode(VcSchemaTrustStatementJWT.self, from: rawSdJwt)
 
     assertTrustStatement(trustStatement.payload, vct: "TrustStatementVerificationV1")
   }
@@ -35,7 +35,7 @@ final class VcSchemaTrustStatementTests: XCTestCase {
 
   private var decoder = SdJWSDecoder()
 
-  private func assertTrustStatement(_ trustStatement: VcSchemaTrustStatementPayload, vct: String) {
+  private func assertTrustStatement(_ trustStatement: VcSchemaTrustStatementJWT, vct: String) {
     let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 30, uri: "status_list_uri"))
     XCTAssertEqual(trustStatement.vct, vct)
     XCTAssertEqual(trustStatement.issuer, "issuer")

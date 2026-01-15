@@ -6,7 +6,7 @@ extension EIDRequestStateEntity {
   convenience init(_ eIDRequestState: EIDRequestState) {
     self.init()
     id = eIDRequestState.id
-    state = EIDRequestStatusStateEntity(eIDRequestState.state)
+    state = eIDRequestState.state.rawValue
     lastPolledAt = eIDRequestState.lastPolledAt
     onlineSessionStartOpenAt = eIDRequestState.onlineSessionStartOpenAt
     onlineSessionStartTimeoutAt = eIDRequestState.onlineSessionStartTimeoutAt

@@ -24,7 +24,6 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
   }
 
   func testInitialState() {
-    XCTAssertFalse(viewModel.isNavigationCloseTriggered)
     XCTAssertNil(viewModel.destination)
   }
 
@@ -55,14 +54,6 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
     if case .inQueue(let inQueueStateViewModel) = viewState {
       XCTAssertEqual(viewModel.destination, .queueInformation(inQueueStateViewModel.onlineSessionStartOpenAt))
     }
-  }
-
-  func testSubmit_noState_close() async throws {
-    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = EIDRequestCase.Mock.sampleWithoutState
-
-    await viewModel.submit()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   func testSubmit_inQueueStateNotVerified_routeToLegalRepresentantConsent() async throws {
@@ -114,21 +105,6 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
 
     let elapsedTime = endTime.timeIntervalSince(startTime)
     XCTAssertGreaterThanOrEqual(elapsedTime, 1.8)
-  }
-
-  func testSubmit_defaultCase_closesWhenNoMatchingState() async throws {
-    let mockEidRequestCase = EIDRequestCase.Mock.sampleExpired
-    applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
-
-    await viewModel.submit()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
-  @MainActor
-  func testClose() {
-    viewModel.navigationClose()
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private

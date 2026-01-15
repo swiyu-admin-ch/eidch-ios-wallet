@@ -25,11 +25,7 @@ struct IntroductionView: View {
           secondaryButtonLabel: L10n.tkEidRequestIntroSecondaryButton,
           secondaryButtonAction: { navigator.dismiss() })
       })
-      .toolbar {
-        CloseButtonToolbar(action: {
-          navigator.dismiss()
-        })
-      }
+      .defaultEidRequestToolbar()
   }
 
   // MARK: Private

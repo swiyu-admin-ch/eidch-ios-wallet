@@ -51,10 +51,7 @@ public struct LicencesListView: View {
           .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
 
         if let url = URL(string: L10n.tkSettingsLicencesLinkValue) {
-          Link(destination: url) {
-            LinkText(L10n.tkSettingsLicencesLinkText)
-              .font(.custom.footnote)
-          }
+          CustomLink(to: url, label: L10n.tkSettingsLicencesLinkText)
         }
       }
       .padding(.vertical, .x4)

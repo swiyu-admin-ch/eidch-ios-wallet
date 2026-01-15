@@ -7,7 +7,7 @@ import Foundation
 
 // swiftlint:disable force_try force_cast force_unwrapping
 
-extension VcSchemaTrustStatementPayload: Mockable {
+extension VcSchemaTrustStatementJWT: Mockable {
   struct Mock {
 
     // MARK: Internal
@@ -20,7 +20,7 @@ extension VcSchemaTrustStatementPayload: Mockable {
     static let invalidVct: VcSchemaTrustStatement = encodePayload(fromFile: "issuance-trust-statement-invalid-vct")
 
     static func encodePayload(fromFile filename: String, jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256, bundle: Bundle = Bundle.module) -> VcSchemaTrustStatement {
-      let trustStatement: VcSchemaTrustStatementPayload = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
+      let trustStatement: VcSchemaTrustStatementJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
       let payloadData = getData(fromFile: filename, ofType: "json", bundle: bundle)!
       let payload = try! JSONSerialization.jsonObject(with: payloadData) as! [String: Any]
       return createSdJWSMock(from: trustStatement, rawPayload: payload, jwtAlgorithm: jwtAlgorithm)
@@ -28,7 +28,7 @@ extension VcSchemaTrustStatementPayload: Mockable {
 
     // MARK: Private
 
-    private static func createSdJWSMock(from trustStatement: VcSchemaTrustStatementPayload, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> VcSchemaTrustStatement {
+    private static func createSdJWSMock(from trustStatement: VcSchemaTrustStatementJWT, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> VcSchemaTrustStatement {
       let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
       return VcSchemaTrustStatement(jws: jws, payload: trustStatement, resolvedPayload: rawPayload, rawSdJWS: "rawSdJWS", disclosableClaims: [])
     }

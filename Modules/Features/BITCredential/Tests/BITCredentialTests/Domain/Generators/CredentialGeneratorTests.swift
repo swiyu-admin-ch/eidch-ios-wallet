@@ -96,7 +96,7 @@ final class CredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withOcaAndNoIssuerMetadata_returnsEmptyIssuerDisplays() throws {
-    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
+    let emptyMetadata = try! CredentialMetadataWrapper(credentialConfigurationId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
 
     _ = try generator.generate(for: anyCredentialMock, keyBinding: Self.softwareKeyBinding, rawOcaBundle: rawOcaBundleMock, metadataWrapper: emptyMetadata)
 
@@ -106,7 +106,7 @@ final class CredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutOcaAndNoIssuerMetadata_returnsEmptyIssuerDisplays() throws {
-    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
+    let emptyMetadata = try! CredentialMetadataWrapper(credentialConfigurationId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
 
     _ = try generator.generate(for: anyCredentialMock, keyBinding: Self.softwareKeyBinding, rawOcaBundle: nil, metadataWrapper: emptyMetadata)
 
@@ -200,7 +200,7 @@ final class CredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerateDeferredCredential_withOcaAndNoIssuerMetadata_returnsEmptyIssuerDisplays() throws {
-    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
+    let emptyMetadata = try! CredentialMetadataWrapper(credentialConfigurationId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
 
     _ = try generator.generateDeferred(mockDeferredCredentialRequest, keyBinding: Self.softwareKeyBinding, rawOcaBundle: rawOcaBundleMock, metadataWrapper: emptyMetadata)
 
@@ -210,7 +210,7 @@ final class CredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerateDeferredCredential_withoutOcaAndNoIssuerMetadata_returnsEmptyIssuerDisplays() throws {
-    let emptyMetadata = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
+    let emptyMetadata = try! CredentialMetadataWrapper(credentialConfigurationId: "credentialName", credentialMetadata: .Mock.simpleSampleWithoutDisplays, rawData: CredentialMetadata.Mock.simpleSampleWithoutDisplaysData)
 
     _ = try generator.generateDeferred(mockDeferredCredentialRequest, keyBinding: Self.softwareKeyBinding, rawOcaBundle: nil, metadataWrapper: emptyMetadata)
 
@@ -249,7 +249,7 @@ final class CredentialGeneratorTests: XCTestCase {
   private static let keyPairRawRepresentationMock = ("publicKeyData".data(using: .utf8)!, "privateKeyData".data(using: .utf8)!)
 
   private let anyCredentialMock = MockAnyCredential()
-  private let metadataWrapperMock = try! CredentialMetadataWrapper(selectedCredentialSupportedId: "credentialName", credentialMetadata: .Mock.simpleSample, rawData: CredentialMetadata.Mock.simpleSampleData)
+  private let metadataWrapperMock = try! CredentialMetadataWrapper(credentialConfigurationId: "credentialName", credentialMetadata: .Mock.simpleSample, rawData: CredentialMetadata.Mock.simpleSampleData)
   private let ocaBundleMock: OcaBundle = .Mock.simpleSample
   private let rawOcaBundleMock: RawOcaBundle = OcaBundle.Mock.simpleSampleData
   private let mockDeferredCredentialRequest: DeferredCredentialRequest = .Mock.sample

@@ -7,7 +7,7 @@ import Foundation
 
 // swiftlint:disable force_try force_cast force_unwrapping
 
-extension IdentityTrustStatementPayload: Mockable {
+extension IdentityTrustStatementJWT: Mockable {
   struct Mock {
 
     // MARK: Internal
@@ -22,7 +22,7 @@ extension IdentityTrustStatementPayload: Mockable {
     static let validSampleItalian: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-valid-sample-italian")
 
     static func encodePayload(fromFile filename: String, jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256, bundle: Bundle = Bundle.module) -> IdentityTrustStatement {
-      let trustStatement: IdentityTrustStatementPayload = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
+      let trustStatement: IdentityTrustStatementJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
       let payloadData = getData(fromFile: filename, ofType: "json", bundle: bundle)!
       let payload = try! JSONSerialization.jsonObject(with: payloadData) as! [String: Any]
       return createSdJWSMock(from: trustStatement, rawPayload: payload, jwtAlgorithm: jwtAlgorithm)
@@ -30,7 +30,7 @@ extension IdentityTrustStatementPayload: Mockable {
 
     // MARK: Private
 
-    private static func createSdJWSMock(from trustStatement: IdentityTrustStatementPayload, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> IdentityTrustStatement {
+    private static func createSdJWSMock(from trustStatement: IdentityTrustStatementJWT, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> IdentityTrustStatement {
       let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
       return IdentityTrustStatement(jws: jws, payload: trustStatement, resolvedPayload: rawPayload, rawSdJWS: "rawSdJWS", disclosableClaims: [])
     }

@@ -13,7 +13,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public init(
     id: UUID = UUID(),
     createdAt: Date = Date(),
-    progressionState: ProgressState = .accepted,
+    progressionState: ProgressState = .unaccepted,
     payload: CredentialPayload,
     status: CredentialStatus = .unknown,
     clusters: [CredentialClaimCluster] = [],
@@ -92,9 +92,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public var progressionState: ProgressState
   public let rawCredentialData: RawCredentialData?
 
-  // MARK: Internal
-
-  let issuer: String
+  public let issuer: String
 
   // MARK: Private
 

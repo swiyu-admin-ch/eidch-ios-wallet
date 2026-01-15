@@ -51,8 +51,7 @@ struct DocumentSelectionView: View {
     }
     .scrollContentBackground(.hidden)
     .listStyle(.grouped)
-    .toolbar { CloseButtonToolbar(action: viewModel.navigationClose) }
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+    .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
   }
 

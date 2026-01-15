@@ -31,6 +31,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
 
     return VerifiableCredential(
       id: context.credentialId,
+      progressionState: .unaccepted,
       payload: payload,
       status: .unknown,
       clusters: clusters,

@@ -10,7 +10,7 @@ public struct PrimaryViewModifier: ViewModifier {
       .padding()
       .frame(maxWidth: .infinity)
       .background(ThemingAssets.accentColor.swiftUIColor)
-      .cornerRadius(.standard)
+      .cornerRadius(.x2)
       .foregroundColor(.white)
       .progressViewStyle(CircularProgressViewStyle(tint: .white))
   }

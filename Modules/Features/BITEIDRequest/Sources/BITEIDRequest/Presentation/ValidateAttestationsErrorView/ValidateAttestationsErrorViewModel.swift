@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - ValidateAttestationsErrorViewModel
 
-class ValidateAttestationsErrorViewModel: ObservableObject, NavigationClosable, NavigationBackable {
+class ValidateAttestationsErrorViewModel: ObservableObject, NavigationBackable {
 
   // MARK: Lifecycle
 
@@ -17,7 +17,6 @@ class ValidateAttestationsErrorViewModel: ObservableObject, NavigationClosable, 
 
   // MARK: Internal
 
-  @Published var isNavigationCloseTriggered = false
   @Published var isNavigationBackTriggered = false
 
   var primaryText: String {

@@ -3,11 +3,13 @@ import XCTest
 @testable import BITAVWrapper
 @testable import BITEIDRequest
 @testable import BITTestingCore
+@testable import BITTheming
 
 // MARK: - NFCScanViewModelTests
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
+@MainActor
 class NFCScanViewModelTests: XCTestCase {
 
   // MARK: Internal
@@ -18,37 +20,40 @@ class NFCScanViewModelTests: XCTestCase {
     createSuccessCase()
   }
 
-  func testInitState_sdkNotInitialized_stateIsInitilizating() {
+  func testInitialState() {
+    XCTAssertNotNil(avBeam.messageDelegate)
+    XCTAssertNotNil(avBeam.nfcDelegate)
+    XCTAssertEqual(viewModel.state, .sdkInitializing)
+    XCTAssertNil(viewModel.destination)
+  }
+
+  func testInitializateSDK_notInitialized_callInitialize() {
     avBeam.state = .notInitialized
 
-    viewModel = NFCScanViewModel()
+    viewModel.initializeSDK()
 
-    XCTAssertEqual(viewModel.state, .sdkInitializing)
-    XCTAssertNotNil(avBeam.messageDelegate)
-    XCTAssertNotNil(avBeam.nfcDelegate)
+    XCTAssertEqual(avBeam.initializeUsingCallsCount, 1)
   }
 
-  func testInitState_sdkInitialized_stateIsReady() {
+  func testInitializateSDK_initialized_stateIsReady() {
     avBeam.state = .initialized
 
-    viewModel = NFCScanViewModel()
+    viewModel.initializeSDK()
 
     XCTAssertEqual(viewModel.state, .ready)
-    XCTAssertNotNil(avBeam.messageDelegate)
-    XCTAssertNotNil(avBeam.nfcDelegate)
   }
 
-  func testInitializateSDK_success() {
-    viewModel.initializeSDK()
-    XCTAssertTrue(avBeam.initializeUsingCalled)
-  }
-
-  func testInitializateSDK_initializeThrowsError() {
+  func testInitializateSDK_initializeThrowsError_routeToError() {
+    avBeam.state = .notInitialized
     avBeam.initializeUsingThrowableError = TestingError.error
 
     viewModel.initializeSDK()
 
-    XCTAssertEqual(viewModel.state, .error(TestingError.error))
+    if case .error = viewModel.destination {
+      XCTAssertTrue(true)
+    } else {
+      XCTFail("viewModel.destination should be .error")
+    }
   }
 
   func testStartNFCScan_success() async {
@@ -62,20 +67,28 @@ class NFCScanViewModelTests: XCTestCase {
     XCTAssertEqual(avBeamNFCConfigurator.configureForAuthenticationTokenReceivedArguments?.caseId, mockCaseId)
   }
 
-  func testStartNFCScan_caseIdMissing_throwsError() async {
+  func testStartNFCScan_missingCaseId_routeToError() async {
     mockContext.caseId = nil
 
     await viewModel.startNFCScan()
 
-    XCTAssertEqual(viewModel.state, .error(EIDRequestError.missingCaseId))
+    if case .error = viewModel.destination {
+      XCTAssertTrue(true)
+    } else {
+      XCTFail("viewModel.destination should be .error")
+    }
   }
 
-  func testStartNFCScan_authenticationTokenMissing_throwsError() async {
+  func testStartNFCScan_missingAuhtenticationToken_routeToError() async {
     mockContext.autoVerificationResponse = nil
 
     await viewModel.startNFCScan()
 
-    XCTAssertEqual(viewModel.state, .error(EIDRequestError.missingAuthenticationToken))
+    if case .error = viewModel.destination {
+      XCTAssertTrue(true)
+    } else {
+      XCTFail("viewModel.destination should be .error")
+    }
   }
 
   func testStartNFCScan_fetchConfigurationFails_throwsError() async {
@@ -83,26 +96,53 @@ class NFCScanViewModelTests: XCTestCase {
 
     await viewModel.startNFCScan()
 
-    XCTAssertEqual(viewModel.state, .error(TestingError.error))
+    if case .error = viewModel.destination {
+      XCTAssertTrue(true)
+    } else {
+      XCTFail("viewModel.destination should be .error")
+    }
   }
 
-  func testStartNFCScan_startNFCScanFails_throwsError() async {
-    avBeam.startNfcScanConfigThrowableError = TestingError.error
-
-    await viewModel.startNFCScan()
-
-    XCTAssertEqual(viewModel.state, .error(TestingError.error))
-  }
-
-  func testDidReceiveNotification_initialized_setsReadyState() {
+  func testDidReceiveNotification_initialized_setsReadyState() async {
     viewModel.didReceiveNotification(notification: .initialized)
+
+    await Task.yield()
 
     XCTAssertEqual(viewModel.state, .ready)
   }
 
-  func testDidCompleteNFCScan_routeToScanResult() {
-    avBeam.nfcDelegate?.didCompleteNfcScan(packageResult: mockPackageResult)
+  func testDidCompleteNfcScan_successfully_routeToNfcResult() async {
+    viewModel.didCompleteNfcScan(packageResult: .Mock.sample)
+
+    try? await Task.sleep(nanoseconds: 100_000)
+
     XCTAssertEqual(viewModel.destination, .nfcScanResult(mockPackageResult))
+  }
+
+  func testDidCompleteNfcScan_nfcError_routeToError() async {
+    mockContext = EIDRequestContext.Mock.scanDocumentSample
+
+    Container.shared.eidRequestContext.register { self.mockContext }
+    viewModel = NFCScanViewModel()
+
+    viewModel.didCompleteNfcScan(packageResult: .Mock.with(nfcError: .nfcTechnicalError))
+
+    try? await Task.sleep(nanoseconds: 100_000)
+
+    XCTAssertEqual(viewModel.destination, .error(.retry(AVBeamError.nfcTechnicalError, { _ in })))
+  }
+
+  func testDidCompleteNfcScan_avError_routeToError() async {
+    mockContext = EIDRequestContext.Mock.scanDocumentSample
+
+    Container.shared.eidRequestContext.register { self.mockContext }
+    viewModel = NFCScanViewModel()
+
+    viewModel.didCompleteNfcScan(packageResult: .Mock.with(errorCode: .faceCaptureGeneric))
+
+    try? await Task.sleep(nanoseconds: 100_000)
+
+    XCTAssertEqual(viewModel.destination, .error(.retry(AVBeamError.faceCaptureGeneric, { _ in })))
   }
 
   // MARK: Private
@@ -144,8 +184,6 @@ extension NFCScanViewModel.State: Equatable {
       true
     case (.ready, .ready):
       true
-    case (.error(let lhsError), .error(let rhsError)):
-      lhsError.localizedDescription == rhsError.localizedDescription
     default:
       false
     }

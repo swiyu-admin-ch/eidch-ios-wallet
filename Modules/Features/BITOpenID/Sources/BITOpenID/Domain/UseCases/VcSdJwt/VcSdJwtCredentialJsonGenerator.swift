@@ -13,8 +13,8 @@ enum VcSdJwtCredentialJsonGeneratorError: Error {
 struct VcSdJwtCredentialJsonGenerator: AnyCredentialJsonGeneratorProtocol {
 
   func generate(for anyCredential: any AnyCredential) throws -> String {
-    guard let vcSdJwt = anyCredential as? VcSdJwt else { throw CredentialFormatError.formatNotSupported }
-    let data = try JSONSerialization.data(withJSONObject: vcSdJwt.resolvedPayloadDictionary)
+    guard let vcSdJWS = anyCredential as? VcSdJWS else { throw CredentialFormatError.formatNotSupported }
+    let data = try JSONSerialization.data(withJSONObject: vcSdJWS.resolvedPayloadDictionary)
     guard let json = String(data: data, encoding: .utf8) else { throw VcSdJwtCredentialJsonGeneratorError.invalidJsonData }
     return json
   }

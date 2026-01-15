@@ -26,7 +26,7 @@ public struct ButtonSheet<Content: View>: View {
       .background(
         backgroundColor
           .clipShape(
-            RoundedCorner(radius: .xxl, corners: [.topLeft, .topRight])
+            RoundedCorner(radius: .x6, corners: [.topLeft, .topRight])
           )
           .ignoresSafeArea(edges: .bottom)
       )

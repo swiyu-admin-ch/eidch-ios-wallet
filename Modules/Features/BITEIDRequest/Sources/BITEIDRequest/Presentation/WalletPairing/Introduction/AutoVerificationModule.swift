@@ -5,7 +5,7 @@ import NavigatorUI
 import SwiftUI
 
 @MainActor
-class AutoVerificationModule {
+class AutoVerificationModule: EIDRequestModule {
 
   // MARK: Lifecycle
 

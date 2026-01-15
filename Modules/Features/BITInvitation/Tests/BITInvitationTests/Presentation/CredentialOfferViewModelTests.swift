@@ -5,10 +5,9 @@ import XCTest
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITInvitation
-@testable import BITOpenID
 @testable import BITTestingCore
 
-// MARK: - CredentialOfferViewModelTests
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
 @MainActor
 final class CredentialOfferViewModelTests: XCTestCase {
@@ -19,107 +18,161 @@ final class CredentialOfferViewModelTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
     registerMocks()
-    router = MockCredentialOfferRouter()
 
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: trustInformationMock, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router)
   }
 
   func testInit_ValuesWithTrustStatement() async {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: trustInformationMock, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router)
 
-    XCTAssertEqual(viewModel.credential, credentialMock)
+    XCTAssertEqual(viewModel.credential, mockCredential)
+    XCTAssertEqual(viewModel.state, .loading)
+    XCTAssertEqual(viewModel.trustInformation, mockTrustInformation)
+    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
+    XCTAssertNil(viewModel.credentialViewModel)
+  }
+
+  func testInit_withoutTrustInformation() async {
+    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router)
+
+    XCTAssertEqual(viewModel.credential, mockCredential)
+    XCTAssertEqual(viewModel.state, .loading)
+    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
+    XCTAssertNil(viewModel.credentialViewModel)
+    XCTAssertNil(viewModel.trustInformation)
+  }
+
+  func testOnAppear_withTrustInformation_stateIsResult() async {
+    await viewModel.onAppear()
+
     XCTAssertEqual(viewModel.state, .result)
-    XCTAssertEqual(viewModel.trustInformation, trustInformationMock)
+    XCTAssertFalse(fetchIssuanceTrustInformationUseCase.callAsFunctionForCalled)
+  }
+
+  func testOnAppear_withoutTrustInformation_fetchTrust() async {
+    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router)
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(viewModel.state, .result)
+    XCTAssertEqual(viewModel.trustInformation, mockTrustInformation)
+    XCTAssertEqual(fetchIssuanceTrustInformationUseCase.callAsFunctionForCallsCount, 1)
+    XCTAssertEqual(fetchIssuanceTrustInformationUseCase.callAsFunctionForReceivedCredential, mockCredential)
+  }
+
+  func testOnAppear_fetchTrustInformationFails_stateIsError() async {
+    fetchIssuanceTrustInformationUseCase.callAsFunctionForThrowableError = TestingError.error
+
+    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router)
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(viewModel.state, .error)
+    XCTAssertNil(viewModel.trustInformation)
   }
 
   func testUpdateCredentialViewModel_light_argumentsPassed() {
     viewModel.updateCredentialViewModel(with: themeMock)
 
-    XCTAssertEqual(viewModel.credential.displays, credentialMock.displays)
+    XCTAssertEqual(viewModel.credential.displays, mockCredential.displays)
   }
 
-  func testAccept_loadingStateThencloseCalled() async {
-    await viewModel.send(event: .accept)
+  func testConfirmAccept() async {
+    await viewModel.confirmAccept()
 
-    XCTAssertEqual(viewModel.state, .loading)
-    try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential + 100_000_000)
-    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
     XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(viewModel.state, .loading)
+  }
+
+  func testConfirmAccept_acceptCredentialFails_stateIsError() async {
+    acceptCredentialUseCase.callAsFunctionThrowableError = TestingError.error
+
+    await viewModel.confirmAccept()
+
+    XCTAssertEqual(viewModel.state, .error)
+  }
+
+  func testConfirmDecline() async {
+    await viewModel.confirmDecline()
+
+    XCTAssertEqual(deleteCredentialUseCase.executeReceivedCredential, mockCredential)
+    XCTAssertEqual(deleteCredentialUseCase.executeCallsCount, 1)
+    XCTAssertTrue(router.closeCalled)
+  }
+
+  func testConfirmDecline_deleteCredentialFails_stateIsError() async {
+    deleteCredentialUseCase.executeThrowableError = TestingError.error
+
+    await viewModel.confirmDecline()
+
+    XCTAssertEqual(viewModel.state, .error)
+  }
+
+  func testAccept() async {
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router)
+
+    await viewModel.accept()
+
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(viewModel.state, .loading)
   }
 
   func testAccept_unknownTrustIdentity_showsAlert() async {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: .Mock.unknownIdentity, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: .Mock.unknownIdentity, router: router)
 
-    await viewModel.send(event: .accept)
-    XCTAssertEqual(viewModel.state, .result)
+    await viewModel.accept()
+
     XCTAssertTrue(viewModel.isUnknownIssuerAlertShown)
-    XCTAssertFalse(router.closeCalled)
   }
 
-  func testConfirmAccept_unknownTrustIdentity_loadingStateThenCloseCalled() async {
-    viewModel = CredentialOfferViewModel(credential: credentialMock, trustInformation: .Mock.unknownIdentity, router: router)
-
-    await viewModel.send(event: .confirmAccept)
-
-    XCTAssertEqual(viewModel.state, .loading)
-    try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential + 100_000_000)
-    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
-    XCTAssertTrue(router.closeCalled)
-  }
-
-  func testDecline_setsDeclineState() async {
-    await viewModel.send(event: .decline)
+  func testDecline_success() {
+    viewModel.decline()
 
     XCTAssertEqual(viewModel.state, .decline)
   }
 
-  func testDeclineConfirmation_correctCalls() async {
-    await viewModel.send(event: .confirmDecline)
+  func testCancelDecline_success() {
+    viewModel.cancelDecline()
 
-    XCTAssertTrue(deleteCredentialUseCaseSpy.executeCalled)
-    XCTAssertEqual(deleteCredentialUseCaseSpy.executeCallsCount, 1)
-    XCTAssertTrue(router.closeCalled)
-  }
-
-  func testSend_declineConfirmation_setsErrorState() async {
-    deleteCredentialUseCaseSpy.executeThrowableError = TestingError.error
-
-    await viewModel.send(event: .confirmDecline)
-
-    XCTAssertTrue(deleteCredentialUseCaseSpy.executeCalled)
-    XCTAssertEqual(deleteCredentialUseCaseSpy.executeCallsCount, 1)
-    XCTAssertFalse(router.closeCalled)
-    XCTAssertEqual(viewModel.state, .error)
-    XCTAssertNotNil(viewModel.stateError)
-  }
-
-  func testSend_declineCancellation_setsResultState() async {
-    await viewModel.send(event: .cancelDecline)
     XCTAssertEqual(viewModel.state, .result)
   }
 
-  func testSend_openWrongData_correctCalls() async {
-    await viewModel.send(event: .openWrongData)
+  func testOpenWrongData_success() {
+    viewModel.openWrongData()
     XCTAssertTrue(router.wrongDataCalled)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
   private var viewModel: CredentialOfferViewModel!
-  private var credentialMock = VerifiableCredential.Mock.sample
-  private var trustInformationMock = TrustInformation.Mock.trustedIdentity
+
+  private var mockCredential = VerifiableCredential.Mock.sample
+  private var mockTrustInformation = TrustInformation.Mock.trustedIdentity
   private let themeMock = "light"
   private var router: MockCredentialOfferRouter!
   private var delayAfterAcceptingCredential: UInt64 = 0
-  private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
-  // swiftlint:enable all
 
-  private let issuerDisplaysMock = CredentialIssuerDisplay(id: UUID(), credentialId: nil, image: nil)
+  private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocolSpy!
+  private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocolSpy!
+  private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocolSpy!
 
   private func registerMocks() {
+    router = MockCredentialOfferRouter()
+
+    deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
+    acceptCredentialUseCase = AcceptCredentialUseCaseProtocolSpy()
+    acceptCredentialUseCase.callAsFunctionReturnValue = mockCredential
+    fetchIssuanceTrustInformationUseCase = FetchIssuanceTrustInformationUseCaseProtocolSpy()
+    fetchIssuanceTrustInformationUseCase.callAsFunctionForReturnValue = mockTrustInformation
+
     Container.shared.delayAfterAcceptingCredential.register { self.delayAfterAcceptingCredential }
-    Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCaseSpy }
+    Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCase }
+    Container.shared.acceptCredentialUseCase.register { self.acceptCredentialUseCase }
+    Container.shared.fetchIssuanceTrustInformationUseCase.register { self.fetchIssuanceTrustInformationUseCase }
     Container.shared.preferredUserLanguageCodes.register { ["de"] }
   }
 

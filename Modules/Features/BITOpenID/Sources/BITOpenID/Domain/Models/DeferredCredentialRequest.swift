@@ -5,5 +5,5 @@ public struct DeferredCredentialRequest: Codable, Equatable {
   public let accessToken: String
   public let endpoint: String
   public let format: String
-  public let interval: Int?
+  public let interval: Int
 }

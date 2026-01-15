@@ -46,12 +46,12 @@ final class AppAttestationRepositoryTests: XCTestCase {
   // MARK: - FetchClientAttestation
 
   func testFetchClientAttestation_success() async throws {
-    let jwsDecoderMock = JWSDecoderMock(payload: ClientAttestationPayload.Mock.samplePayload, rawPayload: "rawPayload")
+    let jwsDecoderMock = JWSDecoderMock(jwt: ClientAttestationJWT.Mock.sampleJWT, rawPayload: "rawPayload")
     Container.shared.jwsDecoder.register { jwsDecoderMock }
 
     repository = AppAttestationRepository()
 
-    let expectedResponse = ClientAttestationPayload.Mock.sample
+    let expectedResponse = ClientAttestationJWT.Mock.sample
     mockResponse(code: 200, data: ClientAttestationResponse.Mock.sampleData)
 
     let response = try await repository.fetchClientAttestation(mockClientAttestationRequestBody)
@@ -73,12 +73,12 @@ final class AppAttestationRepositoryTests: XCTestCase {
   // MARK: - FetchKeyAttestation
 
   func testFetchKeyAttestation_success() async throws {
-    let jwsDecoderMock = JWSDecoderMock(payload: KeyAttestationPayload.Mock.samplePayload, rawPayload: "rawPayload")
+    let jwsDecoderMock = JWSDecoderMock(jwt: KeyAttestationJWT.Mock.sampleJWT, rawPayload: "rawPayload")
     Container.shared.jwsDecoder.register { jwsDecoderMock }
 
     repository = AppAttestationRepository()
 
-    let expectedResponse = KeyAttestationPayload.Mock.sample
+    let expectedResponse = KeyAttestationJWT.Mock.sample
     mockResponse(code: 200, data: KeyAttestationResponse.Mock.sampleData)
 
     let response = try await repository.fetchKeyAttestation(body: mockKeyAttestationRequestBody, clientAttestation: mockClientAttestation)
@@ -113,7 +113,7 @@ final class AppAttestationRepositoryTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
   private let mockClientAttestationRequestBody = ClientAttestationRequestBody.Mock.sample
   private let mockKeyAttestationRequestBody = KeyAttestationRequestBody.Mock.sample

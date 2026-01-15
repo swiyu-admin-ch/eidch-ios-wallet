@@ -7,6 +7,7 @@ import XCTest
 @testable import BITAnalyticsMocks
 @testable import BITAnyCredentialFormat
 @testable import BITAnyCredentialFormatMocks
+@testable import BITAppAuth
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITInvitation
@@ -213,10 +214,6 @@ final class CameraViewModelTests: XCTestCase {
   @MainActor
   func testValidateCredentialOfferUnknownIssuer() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
-    guard let mockOfferIssuerUrl = URL(string: mockCredentialOffer.issuer) else {
-      XCTFail("unexpected URL format of the credential offer issuer URL")
-      return
-    }
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
@@ -252,6 +249,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.error, .expiredInvitation)
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
+    XCTAssertFalse(viewModel.isSessionTimeoutPresented)
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)
 
@@ -264,6 +262,22 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
     XCTAssertFalse(fetchPresentationRequestUseCase.executeUrlCalled)
     XCTAssertFalse(getCompatibleCredentialsUseCase.executeUsingCalled)
+  }
+
+  @MainActor
+  func testFetchCredential_userNotLoggedIn_presentsSessionTimeout() async throws {
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
+    validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample
+    fetchCredentialUseCase.executeFromThrowableError = UserSessionError.notLoggedIn
+
+    await viewModel.setMetadataUrl(url)
+
+    XCTAssertTrue(viewModel.isSessionTimeoutPresented)
+    XCTAssertFalse(router.didCallLogin)
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
+    XCTAssertNil(viewModel.error)
+    XCTAssertFalse(router.didCallCredentialOffer)
+    XCTAssertFalse(viewModel.isTorchEnabled)
   }
 
   // MARK: - Presentation
@@ -321,6 +335,7 @@ final class CameraViewModelTests: XCTestCase {
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
     XCTAssertFalse(viewModel.isTipPresented)
+    XCTAssertFalse(viewModel.isSessionTimeoutPresented)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
     XCTAssertEqual(1, checkInvitationTypeUseCase.executeUrlCallsCount)
@@ -357,6 +372,7 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isErrorPopupPresented)
     XCTAssertEqual(viewModel.error, .noConnection)
     XCTAssertFalse(router.didCallStartPresentation)
+    XCTAssertFalse(viewModel.isSessionTimeoutPresented)
     XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertTrue(checkInvitationTypeUseCase.executeUrlCalled)
@@ -432,6 +448,13 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isTipPresented)
   }
 
+  @MainActor
+  func testLogin_navigateToLogin() async {
+    viewModel.login()
+
+    XCTAssertTrue(router.didCallLogin)
+  }
+
   // MARK: Private
 
   // swiftlint: disable all
@@ -476,6 +499,8 @@ extension CameraViewModelTests {
     XCTAssertTrue(viewModel.isErrorPopupPresented)
     XCTAssertEqual(viewModel.error, .noConnection)
     XCTAssertFalse(router.didCallStartPresentation)
+    XCTAssertFalse(viewModel.isSessionTimeoutPresented)
+    XCTAssertFalse(router.didCallLogin)
     XCTAssertFalse(viewModel.isTorchEnabled)
 
     XCTAssertEqual(url, validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl)

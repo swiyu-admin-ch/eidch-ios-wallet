@@ -7,7 +7,7 @@ import Foundation
 
 /// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html
 
-open class SdJWS<T: Codable & Equatable>: JWS<T> {
+open class SdJWS<T: JWT>: JWS<T> {
 
   // MARK: Lifecycle
 

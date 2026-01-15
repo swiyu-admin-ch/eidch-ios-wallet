@@ -67,16 +67,14 @@ extension Container {
 
 extension Container {
 
+  // MARK: Public
+
   public var getCredentialListUseCase: Factory<GetCredentialListUseCaseProtocol> {
     self { GetCredentialListUseCase() }
   }
 
   public var getCredentialUseCase: Factory<GetCredentialUseCaseProtocol> {
     self { GetCredentialUseCase() }
-  }
-
-  public var checkAndUpdateCredentialStatusUseCase: Factory<CheckAndUpdateCredentialStatusUseCaseProtocol> {
-    self { CheckAndUpdateCredentialStatusUseCase() }
   }
 
   public var deleteCredentialUseCase: Factory<DeleteCredentialUseCaseProtocol> {
@@ -95,9 +93,28 @@ extension Container {
     self { SaveDeferredCredentialUseCase() }
   }
 
-  public var refreshDeferredCredentialUseCase: Factory<RefreshDeferredCredentialUseCaseProtocol> {
+  public var refreshCredentialsUseCase: Factory<RefreshCredentialsUseCaseProtocol> {
+    self { RefreshCredentialsUseCase() }
+  }
+
+  public var fetchIssuanceTrustInformationUseCase: Factory<FetchIssuanceTrustInformationUseCaseProtocol> {
+    self { FetchIssuanceTrustInformationUseCase() }
+  }
+
+  public var acceptCredentialUseCase: Factory<AcceptCredentialUseCaseProtocol> {
+    self { AcceptCredentialUseCase() }
+  }
+
+  // MARK: Internal
+
+  var checkAndUpdateCredentialStatusUseCase: Factory<CheckAndUpdateCredentialStatusUseCaseProtocol> {
+    self { CheckAndUpdateCredentialStatusUseCase() }
+  }
+
+  var refreshDeferredCredentialUseCase: Factory<RefreshDeferredCredentialUseCaseProtocol> {
     self { RefreshDeferredCredentialUseCase() }
   }
+
 }
 
 // MARK: - Repositories

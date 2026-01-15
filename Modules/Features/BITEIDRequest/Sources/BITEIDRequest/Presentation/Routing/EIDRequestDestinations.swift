@@ -27,23 +27,29 @@ enum EIDRequestDestinations: NavigationDestination {
   case documentSelection
   case mrzMockData
 
+  // Document scan
+  case scanDocumentInformation
   case scanDocument
   case scanDocumentSubmit(_ output: ScanDocumentOutput)
 
+  // Wallet pairing
   case walletPairing
   case walletPairingList
-
-  case avIdentityCheck
   case walletPairingOffer(_ completionHandler: Callback<Void>)
   case walletPairingOfferRejected(_ onRetry: Callback<Void>)
 
+  case avIdentityCheck
+
+  // NFC
   case nfcScan
   case nfcScanResult(_ packageResult: AVBeamPackageResult)
-
   case nfcHelp
   case nfcHelpFailure
+
+  case recordDocumentInformation
   case recordDocument
 
+  // Selfie
   case avIntroSelfieVideo
   case recordSelfie
 
@@ -90,6 +96,8 @@ enum EIDRequestDestinations: NavigationDestination {
       DocumentSelectionView()
     case .mrzMockData:
       MRZMockDataView()
+    case .scanDocumentInformation:
+      ScanDocumentInformationView()
     case .scanDocument:
       ScanDocumentView()
     case .scanDocumentSubmit(let output):
@@ -107,6 +115,8 @@ enum EIDRequestDestinations: NavigationDestination {
       WalletPairingOfferRejected(onRetry: onRetry.handler)
     case .nfcScan:
       NFCScanView()
+    case .recordDocumentInformation:
+      RecordDocumentInformationView()
     case .recordDocument:
       RecordDocumentView()
     case .nfcHelp:

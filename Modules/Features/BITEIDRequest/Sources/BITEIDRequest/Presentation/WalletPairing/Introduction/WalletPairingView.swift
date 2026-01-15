@@ -22,8 +22,7 @@ struct WalletPairingView: View {
       },
       footer: footer)
       .navigationBarBackButtonHidden(true)
-      .toolbar { CloseButtonToolbar(action: viewModel.navigationClose) }
-      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+      .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)
   }
 

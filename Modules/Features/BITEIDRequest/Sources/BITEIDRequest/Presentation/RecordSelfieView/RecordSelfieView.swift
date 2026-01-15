@@ -2,7 +2,6 @@ import BITAVWrapper
 import BITL10n
 import BITTheming
 import Factory
-import NavigatorUI
 import SwiftUI
 
 // MARK: - RecordSelfieView
@@ -37,15 +36,14 @@ struct RecordSelfieView: View {
     .animation(.easeInOut(duration: 0.4), value: viewModel.state)
     .onDisappear(perform: viewModel.stop)
     .navigationTitle(L10n.tkEidRequestRecordSelfieTitle)
-    .toolbar { CloseButtonToolbar(action: { viewModel.close() }) }
+    .defaultEidRequestToolbar()
+    .navigationBarBackButtonHidden(true)
     .navigate(to: $viewModel.destination)
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
   @Orientation private var orientation
-  @Environment(\.navigator) private var navigator
   @InjectedObject(\.recordSelfieViewModel) private var viewModel
 
   @ViewBuilder
@@ -58,10 +56,12 @@ struct RecordSelfieView: View {
       closeAction: {
         viewModel.closeIntroductionPopup()
       },
-      background: ThemingAssets.Background.secondary.swiftUIColor, closeButtonStyle: .secondary)
+      background: ThemingAssets.Background.secondary.swiftUIColor,
+      closeButtonStyle: .secondary)
       .padding(.horizontal, .x3)
       .padding(.vertical, .x2)
       .frame(maxWidth: 480)
+      .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
   }
 
   @ViewBuilder
@@ -91,9 +91,6 @@ extension RecordSelfieView {
     .background(ThemingAssets.Background.secondary.swiftUIColor)
     .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
     .ignoresSafeArea(edges: .bottom)
-    .task {
-      viewModel.initializeSDK()
-    }
   }
 
   @ViewBuilder
@@ -108,11 +105,14 @@ extension RecordSelfieView {
       Assets.selfieOverlay.swiftUIImage
         .aspectRatio(contentMode: .fit)
         .padding(.x4)
+        .accessibilityPriorityFocus()
+        .accessibilityLabel(L10n.tkEidRequestRecordSelfiePictureFrameAlt)
+        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
       if orientation.isLandscape {
         HStack {
           Spacer()
-          RecordingButton(state: $viewModel.buttonState, action: viewModel.startRecordSelfie)
+          recordButtonView()
         }
       }
     }
@@ -135,9 +135,16 @@ extension RecordSelfieView {
     .navigationTitle(L10n.tkEidRequestRecordSelfieTitle)
     .safeAreaInset(edge: .bottom) {
       if !orientation.isLandscape {
-        RecordingButton(state: $viewModel.buttonState, action: viewModel.startRecordSelfie)
+        recordButtonView()
       }
     }
+  }
+
+  @ViewBuilder
+  private func recordButtonView() -> some View {
+    RecordingButton(state: $viewModel.buttonState, action: viewModel.startRecordSelfie)
+      .accessibilityLabel(L10n.tkEidRequestRecordSelfieRecordButtonAlt)
+      .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
 }
 

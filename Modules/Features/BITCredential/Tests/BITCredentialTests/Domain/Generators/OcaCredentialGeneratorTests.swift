@@ -49,6 +49,7 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     XCTAssertNotNil(credential.createdAt)
     XCTAssertEqual(credential.issuerDisplays, mockCredentialGeneratorContext.issuerDisplays)
     XCTAssertEqual(credential.clusters.count, 1)
+    XCTAssertEqual(credential.progressionState, .unaccepted)
 
     let claims = credential.clusters.first!.claims
     XCTAssertEqual(claims.count, 1)

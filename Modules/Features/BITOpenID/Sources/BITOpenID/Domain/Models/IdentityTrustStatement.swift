@@ -3,21 +3,20 @@ import BITJWT
 import BITSdJWT
 import Foundation
 
-public typealias IdentityTrustStatement = SdJWS<IdentityTrustStatementPayload>
+public typealias IdentityTrustStatement = SdJWS<IdentityTrustStatementJWT>
 
-// MARK: - IdentityTrustStatementPayload
+// MARK: - IdentityTrustStatementJWT
 
-public struct IdentityTrustStatementPayload: LocalizedTrustStatement, Codable, Equatable {
+public struct IdentityTrustStatementJWT: TrustStatement, Codable, Equatable {
 
   // MARK: Public
 
   public let type: String? = "vc+sd-jwt"
 
   public let vct: String
-  public let issuer: String
-  #warning("Make subject required when metadata trust statements are gone")
+  public let issuer: String?
   public let subject: String?
-  public let issuedAt: Date
+  public let issuedAt: Date?
   public let statusList: VcSdJwtTokenStatusList
 
   public let activatedAt: Date?
@@ -65,11 +64,17 @@ public struct IdentityTrustStatementPayload: LocalizedTrustStatement, Codable, E
   }
 }
 
-// MARK: IdentityTrustStatementPayload.RegistryId
+// MARK: IdentityTrustStatementJWT.RegistryId
 
-extension IdentityTrustStatementPayload {
+extension IdentityTrustStatementJWT {
   public struct RegistryId: Codable, Equatable {
     public let type: String
     public let value: String
+  }
+}
+
+extension IdentityTrustStatementJWT {
+  public var audience: String? {
+    nil
   }
 }

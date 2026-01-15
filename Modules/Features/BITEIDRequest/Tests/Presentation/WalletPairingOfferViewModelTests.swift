@@ -93,7 +93,6 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
     sut.close()
 
     XCTAssertEqual(pollingManager.stopPollingCallsCount, 1)
-    XCTAssertTrue(sut.isNavigationCloseTriggered)
   }
 
   func testRetryFetching_ShouldCallFetchPairingQRCode() async {
@@ -120,7 +119,6 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
 
     XCTAssertTrue(didCallHandler)
     XCTAssertEqual(pollingManager.stopPollingCallsCount, 1)
-    XCTAssertTrue(sut.isNavigationCloseTriggered)
   }
 
   func testPollingManagerDidUpdateState_WhenRejected_ShouldHandleRejection() {
@@ -144,7 +142,6 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
 
     XCTAssertFalse(didCallHandler)
     XCTAssertEqual(pollingManager.stopPollingCallsCount, 0)
-    XCTAssertFalse(sut.isNavigationCloseTriggered)
   }
 
   func testPollingManagerDidUpdateState_WhenError_ShouldHandleError() {
@@ -155,7 +152,6 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
 
     XCTAssertFalse(didCallHandler)
     XCTAssertEqual(pollingManager.stopPollingCallsCount, 1)
-    XCTAssertTrue(sut.isNavigationCloseTriggered)
   }
 
   func testSetState_ShouldUpdateStateWithAnimation() async {

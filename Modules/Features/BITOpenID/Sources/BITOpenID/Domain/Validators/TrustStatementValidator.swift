@@ -16,11 +16,11 @@ struct TrustStatementValidator: TrustStatementValidatorProtocol {
   // MARK: Internal
 
   func validate(_ trustStatement: SdJWS<some TrustStatement & Decodable>, for subject: String) async -> Bool {
-    let issuer = trustStatement.payload.issuer
     guard
+      let issuer = trustStatement.payload.issuer,
       trustStatement.resolvedPayload.subject == subject,
       trustStatement.header.algorithm == JWTAlgorithm.ES256,
-      (try? await jwsValidator.validate(trustStatement, issuerDid: issuer)) == true
+      (try? await jwsValidator.validate(trustStatement)) != nil
     else { return false }
     return await tokenStatusListValidator.validate(trustStatement.payload.statusList, issuer: issuer) == .valid
   }

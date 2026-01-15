@@ -253,7 +253,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
   private let mockeIDRequestResponse: EIDRequestResponse = .Mock.sample
   private let mockValidateAttestationsRequestBody: ValidateAttestationsRequestBody = .Mock.sample
 
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
 
   private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!

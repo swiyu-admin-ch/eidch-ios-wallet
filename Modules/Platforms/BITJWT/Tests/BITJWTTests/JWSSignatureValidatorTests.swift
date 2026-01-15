@@ -29,36 +29,46 @@ final class JWSSignatureValidatorTests: XCTestCase {
     XCTAssertEqual(didResolverSpy.getJWKSFromKeyIdentifierReceivedArguments?.keyIdentifier, jwsMock.header.keyIdentifier)
   }
 
-  func testValidate_jwsWithOneValidPublicKey_returnsTrue() async throws {
+  func testValidate_jwsWithOneValidPublicKey_doesNotThrow() async throws {
     didResolverSpy.getJWKSFromKeyIdentifierReturnValue = [.Mock.validSample]
 
-    let result = try await validator.validate(jwsMock, issuerDid: issuer)
-
-    XCTAssertTrue(result)
+    do {
+      try await validator.validate(jwsMock, issuerDid: issuer)
+    } catch {
+      XCTFail("Expected not to throw an error")
+    }
   }
 
-  func testValidate_jwsWithMultipleJWKsOneValid_returnsTrue() async throws {
+  func testValidate_jwsWithMultipleJWKsOneValid_doesNotThrow() async throws {
     didResolverSpy.getJWKSFromKeyIdentifierReturnValue = [.Mock.invalidSample, .Mock.invalidSample, .Mock.validSample]
 
-    let result = try await validator.validate(jwsMock, issuerDid: issuer)
-
-    XCTAssertTrue(result)
+    do {
+      try await validator.validate(jwsMock, issuerDid: issuer)
+    } catch {
+      XCTFail("Expected not to throw an error")
+    }
   }
 
-  func testValidate_jwsWithNoValidPublicKey_returnsFalse() async throws {
+  func testValidate_jwsWithNoValidPublicKey_throwsInvalidSignature() async throws {
     didResolverSpy.getJWKSFromKeyIdentifierReturnValue = [.Mock.invalidSample, .Mock.invalidSample, .Mock.invalidSample]
 
-    let result = try await validator.validate(jwsMock, issuerDid: issuer)
-
-    XCTAssertFalse(result)
+    do {
+      try await validator.validate(jwsMock, issuerDid: issuer)
+      XCTFail("Expected to throw an error")
+    } catch {
+      XCTAssertEqual(error as? JWSSignatureValidatorError, .invalidSignature)
+    }
   }
 
-  func testValidate_jwsWithNoPublicKey_returnFalse() async throws {
+  func testValidate_jwsWithNoPublicKey_throwsInvalidSignature() async throws {
     didResolverSpy.getJWKSFromKeyIdentifierReturnValue = []
 
-    let result = try await validator.validate(jwsMock, issuerDid: issuer)
-
-    XCTAssertFalse(result)
+    do {
+      try await validator.validate(jwsMock, issuerDid: issuer)
+      XCTFail("Expected to throw an error")
+    } catch {
+      XCTAssertEqual(error as? JWSSignatureValidatorError, .invalidSignature)
+    }
   }
 
   func testValidate_didResolverThrows_throwsError() async throws {
@@ -72,19 +82,22 @@ final class JWSSignatureValidatorTests: XCTestCase {
     }
   }
 
-  func testValidate_didDocumentDeactivated_returnsFalse() async throws {
+  func testValidate_didDocumentDeactivated_throwsInvalidSignature() async throws {
     didResolverSpy.getJWKSFromKeyIdentifierThrowableError = DidResolverHelperError.didDocumentDeactivated
 
-    let result = try await validator.validate(jwsMock, issuerDid: issuer)
-
-    XCTAssertFalse(result)
+    do {
+      try await validator.validate(jwsMock, issuerDid: issuer)
+      XCTFail("Expected to throw an error")
+    } catch {
+      XCTAssertEqual(error as? JWSSignatureValidatorError, .invalidSignature)
+    }
   }
 
   // MARK: Private
 
   private let issuer = "did:example:123456789"
   private let kid = "did:example:123456789#key-01"
-  private let jwsMock = JWTRegisteredPayload.Mock.sample
+  private let jwsMock = RegisteredClaimsJWT.Mock.sample
 
   private var didResolverSpy: DidResolverHelperProtocolSpy!
 

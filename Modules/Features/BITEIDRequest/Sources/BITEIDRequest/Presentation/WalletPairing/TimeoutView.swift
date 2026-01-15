@@ -1,5 +1,6 @@
 import BITL10n
 import BITTheming
+import Factory
 import Foundation
 import NavigatorUI
 import SwiftUI
@@ -19,16 +20,16 @@ struct TimeoutView: View {
     } footer: {
       DefaultInformationFooterView(
         primaryButtonLabel: L10n.tkEidRequestTimeoutButtonRestart,
-        primaryButtonAction: {
-          navigator.dismiss()
-        })
+        primaryButtonAction: close)
     }
-    .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+    .defaultEidRequestToolbar(onClose: close)
     .navigationBarBackButtonHidden(true)
   }
 
   // MARK: Private
 
   @Environment(\.navigator) private var navigator
+
+  private func close() {}
 
 }

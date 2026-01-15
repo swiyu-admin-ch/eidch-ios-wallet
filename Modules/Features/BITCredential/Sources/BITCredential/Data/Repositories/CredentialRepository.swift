@@ -20,6 +20,7 @@ public protocol CredentialRepositoryProcotol {
   @discardableResult
   func update(verifiableCredential: VerifiableCredential) async throws -> VerifiableCredential
   func getAllVerifiableCredentials() async throws -> [VerifiableCredential]
+  func getAllAcceptedVerifiableCredentials() async throws -> [VerifiableCredential]
 
   @discardableResult
   func create(verifiableCredential: VerifiableCredential) async throws -> VerifiableCredential
@@ -31,6 +32,7 @@ public protocol CredentialRepositoryProcotol {
 
   @discardableResult
   func update(deferredCredential: DeferredCredential) async throws -> DeferredCredential
+  func getAllDeferredCredentials() async throws -> [DeferredCredential]
 }
 
 // MARK: - CredentialRepositoryError
@@ -115,6 +117,14 @@ extension CredentialRepository {
     return try entities.map { try VerifiableCredential($0) }
   }
 
+  func getAllAcceptedVerifiableCredentials() async throws -> [VerifiableCredential] {
+    let results = try database.get(CredentialEntity.self)
+    let entities = results
+      .filter { $0.verifiableCredential != nil && $0.verifiableCredential?.progressionState == .accepted }
+      .sorted { $0.createdAt < $1.createdAt }
+    return try entities.map { try VerifiableCredential($0) }
+  }
+
   func count() throws -> Int {
     try database.get(CredentialEntity.self)
       .filter { $0.verifiableCredential != nil }
@@ -139,6 +149,14 @@ extension CredentialRepository {
     })
 
     return try DeferredCredential(entity)
+  }
+
+  func getAllDeferredCredentials() async throws -> [DeferredCredential] {
+    let results = try database.get(CredentialEntity.self)
+    let entities = results
+      .filter { $0.deferredCredential != nil }
+      .sorted { $0.createdAt < $1.createdAt }
+    return try entities.map { try DeferredCredential($0) }
   }
 
 }

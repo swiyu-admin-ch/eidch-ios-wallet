@@ -26,7 +26,6 @@ final class ClientAttestationValidatorTests: XCTestCase {
 
     XCTAssertTrue(result)
 
-    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferReceivedDid, mockClientAttestation.payload.issuer)
     XCTAssertEqual(appAttestationKeyRepository.getForReceivedType, .client)
     XCTAssertTrue(appIdentifierRepository.getCalled)
   }
@@ -40,55 +39,55 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_unsupportedAlgorithm_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleUnsupportedAlgorithm)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleUnsupportedAlgorithm)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_notTrustedDid_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleNotTrusted)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleNotTrusted)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_missingExpiredAt_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleMissingExpiredAt)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleMissingExpiredAt)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_missingActivatedAt_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleMissingActivatedAt)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleMissingActivatedAt)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectWalletName_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleIncorrectName)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectName)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectBindingKey_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleIncorrectBindingKey)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectBindingKey)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectKid_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleIncorrectKid)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectKid)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectSub_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationPayload.Mock.sampleIncorrectSub)
+    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectSub)
 
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsValidatorReturnsFalse_returnsFalse() async {
-    jwsValidator.validateIssuerDidActivationBufferReturnValue = false
+  func testValidate_jwsValidatorThrows_returnsFalse() async {
+    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(mockClientAttestation)
 
@@ -118,13 +117,12 @@ final class ClientAttestationValidatorTests: XCTestCase {
   private var supportedAlgorithms: [JWTAlgorithm]!
   private var mockClientAttestation: ClientAttestation!
   private var validator: ClientAttestationValidator!
-  private var jwsValidator: JWSValidatorMock<ClientAttestationPayload>!
+  private var jwsValidator: JWSValidatorMock<ClientAttestationJWT>!
   private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy!
   private var jsonCanonicalizer: JsonCanonicalizerProtocolSpy!
   private var appIdentifierRepository: AppIdentifierRepositoryProtocolSpy!
 
   private func createSuccessState() throws {
-    jwsValidator.validateIssuerDidActivationBufferReturnValue = true
     let key = try ECPublicKey.getSecKey(curve: mockJWK.crv, x: mockJWK.x, y: mockJWK.y)!
     let keyPair = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
     appAttestationKeyRepository.getForReturnValue = keyPair
@@ -133,7 +131,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   private func registerMocks() {
-    mockClientAttestation = ClientAttestationPayload.Mock.sample
+    mockClientAttestation = ClientAttestationJWT.Mock.sample
     trustedDids = [ "did:tdw:example.com" ]
     supportedAlgorithms = [ .ES256 ]
     jwsValidator = JWSValidatorMock()

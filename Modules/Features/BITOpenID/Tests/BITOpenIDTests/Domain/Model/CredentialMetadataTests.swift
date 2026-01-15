@@ -76,6 +76,13 @@ final class CredentialMetadataTests: XCTestCase {
     }
   }
 
+  func testDecodeMetadata_WithUnsupportedNonceEndpoint_ThrowsError() async throws {
+    let credentialMetadataData = CredentialMetadata.Mock.chasseralIssuerUnsupportedNonceData
+    XCTAssertThrowsError(try JSONDecoder().decode(CredentialMetadata.self, from: credentialMetadataData)) { error in
+      XCTAssertNotNil(error as? DecodingError)
+    }
+  }
+
   func testDecodeUnknownMetadataFormat() async throws {
     let credentialMetadataData = CredentialMetadata.Mock.sampleWithUnknownFormatData
     let credentialMetadata = try JSONDecoder().decode(CredentialMetadata.self, from: credentialMetadataData)

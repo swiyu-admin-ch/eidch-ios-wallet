@@ -76,16 +76,6 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.destination, .avIdentityCheck)
   }
 
-  func testPrimaryAction_inQueueState_close() throws {
-    let requestCase = EIDRequestCase.Mock.sampleInQueue
-    let requestCaseViewState = try RequestCaseViewState(requestCase)
-
-    viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
-    viewModel.primaryAction()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
   // MARK: Private
 
   private var viewModel: LegalRepresentantConsentStateViewModel!

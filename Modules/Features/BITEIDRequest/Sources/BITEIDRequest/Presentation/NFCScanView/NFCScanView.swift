@@ -11,14 +11,22 @@ struct NFCScanView: View {
   // MARK: Internal
 
   var body: some View {
-    VStack {
+    ZStack {
+      Color.clear
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ThemingAssets.Background.secondary.swiftUIColor)
+        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
+        .ignoresSafeArea(edges: .bottom)
+
       switch viewModel.state {
       case .sdkInitializing:
         loadingView()
+          .transition(.opacity)
+          .task {
+            viewModel.initializeSDK()
+          }
       case .ready:
         nfcScanView()
-      case .error(let error):
-        Text(error.localizedDescription)
       }
     }
     .navigate(to: $viewModel.destination)
@@ -29,6 +37,7 @@ struct NFCScanView: View {
   // MARK: Private
 
   @InjectedObject(\.nfcScanViewModel) private var viewModel: NFCScanViewModel
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator: EIDRequestFlowCoordinatorProtocol
   @Environment(\.navigator) private var navigator
 
   private let imageMinWidth: CGFloat = 80
@@ -44,28 +53,10 @@ extension NFCScanView {
 
   @ViewBuilder
   private func loadingView() -> some View {
-    AdaptiveColumnsView(
-      primaryContent: {
-        Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) {
-          InfiniteProgressBar(image: ThemingAssets.Gradient.gradient3.swiftUIImage)
-        }
-        .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
-      },
-      secondaryContent: {
-        Text(L10n.tkEidRequestSdkInitializationPrimary)
-          .font(.custom.title)
-          .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-          .multilineTextAlignment(.leading)
-          .accessibilityAddTraits(.isHeader)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(.horizontal, .x6)
-      })
-      .onFirstAppear {
-        Task {
-          viewModel.initializeSDK()
-        }
-      }
-
+    VStack {
+      ProgressView()
+      Text(L10n.tkEidRequestSdkInitializationPrimary)
+    }
   }
 
   @ViewBuilder
@@ -108,9 +99,10 @@ extension NFCScanView {
       .accessibilityLabel(L10n.tkEidRequestNfcScanTertiary)
 
       Button(action: {
+        coordinator.cleanup()
         navigator.dismiss()
       }, label: {
-        Assets.close.swiftUIImage
+        ThemingAssets.close.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClose)
     }

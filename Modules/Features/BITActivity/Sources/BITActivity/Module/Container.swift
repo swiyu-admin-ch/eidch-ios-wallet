@@ -14,6 +14,10 @@ extension Container {
     self { GetCredentialActivitiesUseCase() }
   }
 
+  public var getActivityUseCase: Factory<GetActivityUseCaseProtocol> {
+    self { GetActivityUseCase() }
+  }
+
   public var deleteActivityUseCase: Factory<DeleteActivityUseCaseProtocol> {
     self { DeleteActivityUseCase() }
   }

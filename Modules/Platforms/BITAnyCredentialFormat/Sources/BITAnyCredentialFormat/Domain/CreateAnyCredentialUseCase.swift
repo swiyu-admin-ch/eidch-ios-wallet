@@ -28,7 +28,7 @@ struct CreateAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol {
     switch credentialFormat {
     case .vcSdJwt:
       let data = rawCredential.data(using: .utf8) ?? Data()
-      return try sdJwsDecoder.decode(VcSdJwtPayload.self, from: data)
+      return try sdJwsDecoder.decode(VcSdJwt.self, from: data)
     }
   }
 

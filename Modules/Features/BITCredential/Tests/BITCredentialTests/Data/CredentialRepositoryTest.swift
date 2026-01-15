@@ -87,6 +87,18 @@ final class CredentialRepositoryTest: XCTestCase {
     XCTAssertEqual(credential.status, updated.status)
   }
 
+  func getAllAcceptedVerifiableCredentials() async throws {
+    _ = try await repository.create(verifiableCredential: .Mock.sample)
+    _ = try await repository.create(verifiableCredential: .Mock.diploma)
+    _ = try await repository.create(deferredCredential: .Mock.sample)
+    _ = try await repository.create(verifiableCredential: VerifiableCredential(progressionState: .unaccepted, payload: Data(), format: "format", issuer: "issuer"))
+
+    let credentials = try await repository.getAllVerifiableCredentials()
+
+    XCTAssertEqual(credentials, [VerifiableCredential.Mock.sample, VerifiableCredential.Mock.diploma])
+    XCTAssertTrue(credentials.allSatisfy({ $0.progressionState == .accepted }))
+  }
+
   // MARK: - Deferred Credentials
 
   func testCreateDeferredCredential() async throws {
@@ -94,6 +106,16 @@ final class CredentialRepositoryTest: XCTestCase {
     let savedCredential = try await repository.get(id: credential.id)
 
     XCTAssertEqual(credential, savedCredential as? DeferredCredential)
+  }
+
+  func testGetAllDeferredCredentials() async throws {
+    _ = try await repository.create(deferredCredential: .Mock.sample)
+    _ = try await repository.create(deferredCredential: .Mock.sampleWithoutMetadata)
+    _ = try await repository.create(verifiableCredential: .Mock.sample)
+
+    let credentials = try await repository.getAllDeferredCredentials()
+
+    XCTAssertEqual(credentials, [DeferredCredential.Mock.sample, DeferredCredential.Mock.sampleWithoutMetadata])
   }
 
   // MARK: Private

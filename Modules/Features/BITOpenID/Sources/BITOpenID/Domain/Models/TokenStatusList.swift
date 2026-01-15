@@ -4,14 +4,14 @@ import Foundation
 // MARK: - TokenStatusList
 
 /// This class contains all registered claims which are specified by https://www.ietf.org/archive/id/draft-ietf-oauth-status-list-03.html#name-status-list-token
-public struct TokenStatusList: JWTValidityPayload, Codable, Equatable {
+public struct TokenStatusList: JWT, Codable, Equatable {
 
   // MARK: Lifecycle
 
   public init(
-    issuer: String,
-    subject: String,
-    issuedAt: Date,
+    issuer: String?,
+    subject: String?,
+    issuedAt: Date?,
     expiredAt: Date? = nil,
     timeToLive: UInt? = nil,
     statusList: StatusList)
@@ -28,9 +28,9 @@ public struct TokenStatusList: JWTValidityPayload, Codable, Equatable {
 
   public let type: String? = "statuslist+jwt"
 
-  public let issuer: String
-  public let subject: String
-  public let issuedAt: Date
+  public let issuer: String?
+  public let subject: String?
+  public let issuedAt: Date?
   public let expiredAt: Date?
   public let timeToLive: UInt?
   public let statusList: StatusList
@@ -61,5 +61,15 @@ extension TokenStatusList {
       case list = "lst"
       case aggregationUri = "aggregation_uri"
     }
+  }
+}
+
+extension TokenStatusList {
+  public var audience: String? {
+    nil
+  }
+
+  public var activatedAt: Date? {
+    nil
   }
 }

@@ -1,5 +1,5 @@
 import Foundation
-import JsonSchemaValidatorSources
+import JsonSchemaValidator
 import Spyable
 
 // MARK: - JsonSchemaValidator

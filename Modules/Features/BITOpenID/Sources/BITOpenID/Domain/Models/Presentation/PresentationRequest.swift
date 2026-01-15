@@ -3,7 +3,7 @@ import Foundation
 
 public enum PresentationRequest: Equatable {
   case plain(RequestObject)
-  case jwt(JWTRequestObject)
+  case jwt(RequestObjectJWS)
 
   public var requestObject: RequestObject {
     switch self {

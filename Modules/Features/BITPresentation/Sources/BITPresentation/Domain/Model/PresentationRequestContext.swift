@@ -26,6 +26,10 @@ public class PresentationRequestContext {
 
   public let compatibleCredentials: [CompatibleCredential]
 
+  public var responseUri: URL {
+    requestObject.responseUri
+  }
+
   // MARK: Internal
 
   let presentationRequest: PresentationRequest
@@ -54,7 +58,7 @@ public class PresentationRequestContext {
 
   // MARK: Private
 
-  private func getIdentityTrustDisplays(_ trustStatement: any LocalizedTrustStatement) -> [VerifierDisplay] {
+  private func getIdentityTrustDisplays(_ trustStatement: IdentityTrustStatementJWT) -> [VerifierDisplay] {
     let logos = requestObject.clientMetadata?.logoUri?.getAllDisplays() ?? [:]
     let locales = Set(trustStatement.entityNames.keys)
       .union(logos.keys.filter { !$0.isEmpty })

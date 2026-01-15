@@ -19,7 +19,7 @@ struct TokenStatusListDecoder: TokenStatusListDecoderProtocol {
     guard let listData = Data(base64URLEncoded: statusList.list) else {
       throw DecoderError.invalidStatusJWT
     }
-    return try tokenStatusListByteDecoder.decode(listData.decompressed(), bits: statusList.bits, index: index)
+    return try tokenStatusListByteDecoder.decode(listData.decompressedWithLimit(), bits: statusList.bits, index: index)
   }
 
   // MARK: Private

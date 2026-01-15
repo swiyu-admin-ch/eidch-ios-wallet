@@ -31,7 +31,7 @@ public struct SectionView<Content: View>: View {
       .padding(.vertical, hasContentPadding ? .x2 : 0)
       .frame(minHeight: minHeight)
       .background(ThemingAssets.Background.groupedRow.swiftUIColor)
-      .clipShape(.rect(cornerRadius: .CornerRadius.m))
+      .clipShape(.rect(cornerRadius: .x5))
       .accessibilityElement(children: .contain)
     }
     .padding(.horizontal, .x4)

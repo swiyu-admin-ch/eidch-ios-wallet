@@ -15,11 +15,7 @@ struct AVIdentityCheckView: View {
       content: { content() },
       footer: { footer() })
       .navigationBarBackButtonHidden(true)
-      .toolbar {
-        CloseButtonToolbar(action: {
-          navigator.dismiss()
-        })
-      }
+      .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)
   }
 
@@ -33,7 +29,6 @@ struct AVIdentityCheckView: View {
   }
 
   @InjectedObject(\.avIdentityCheckViewModel) private var viewModel
-  @Environment(\.navigator) private var navigator
 
   @ViewBuilder
   private func footer() -> some View {

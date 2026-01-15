@@ -100,8 +100,8 @@ final class FetchAttestationsUseCaseTests: XCTestCase {
 
   private var useCase = FetchAttestationsUseCase()
 
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
-  private let mockKeyAttestation = KeyAttestationPayload.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
+  private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
   private let mockKeyPair = VaultKeyPair.Mock.ES256
   private let mockReason = "mockReason"
 

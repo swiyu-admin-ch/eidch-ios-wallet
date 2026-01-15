@@ -6,50 +6,34 @@ import Foundation
 
 struct MockTrustStatementRepository: TrustStatementRepositoryProtocol {
 
-  func fetchMetadataTrustStatements(from url: URL, for subjectDid: String) async throws -> [MetadataTrustStatement] {
-    try MetadataTrustStatementPayload.Mock.validSample()
-  }
-
   func fetchIdentityTrustStatements(from url: URL, for subjectDid: String) async throws -> [IdentityTrustStatement] {
-    try IdentityTrustStatementPayload.Mock.validSample()
+    try IdentityTrustStatementJWT.Mock.validSample()
   }
 
   func fetchVcSchemaTrustStatements(from url: URL, for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async throws -> [VcSchemaTrustStatement] {
-    try VcSchemaTrustStatementPayload.Mock.validSample()
+    try VcSchemaTrustStatementJWT.Mock.validSample()
   }
 }
 
-// MARK: - IdentityTrustStatementPayload.Mock
+// MARK: - IdentityTrustStatementJWT.Mock
 
-extension IdentityTrustStatementPayload {
+extension IdentityTrustStatementJWT {
   struct Mock {
     static func validSample() throws -> [IdentityTrustStatement] {
       let trustStatementData: Data = Mocker.getData(fromFile: "identity-trust-statement-ui-mocks", ofType: "txt") ?? Data()
-      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(IdentityTrustStatementPayload.self, from: trustStatementData)
+      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(IdentityTrustStatementJWT.self, from: trustStatementData)
       return [trustStatement]
     }
   }
 }
 
-// MARK: - MetadataTrustStatementPayload.Mock
+// MARK: - VcSchemaTrustStatementJWT.Mock
 
-extension MetadataTrustStatementPayload {
-  struct Mock {
-    static func validSample() throws -> [MetadataTrustStatement] {
-      let trustStatementData: Data = Mocker.getData(fromFile: "metadata-trust-statement-ui-mocks", ofType: "txt") ?? Data()
-      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(MetadataTrustStatementPayload.self, from: trustStatementData)
-      return [trustStatement]
-    }
-  }
-}
-
-// MARK: - VcSchemaTrustStatementPayload.Mock
-
-extension VcSchemaTrustStatementPayload {
+extension VcSchemaTrustStatementJWT {
   struct Mock {
     static func validSample() throws -> [VcSchemaTrustStatement] {
       let trustStatementData: Data = Mocker.getData(fromFile: "vc-schema-trust-statement-ui-mocks", ofType: "txt") ?? Data()
-      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(VcSchemaTrustStatementPayload.self, from: trustStatementData)
+      let trustStatement = try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(VcSchemaTrustStatementJWT.self, from: trustStatementData)
       return [trustStatement]
     }
   }

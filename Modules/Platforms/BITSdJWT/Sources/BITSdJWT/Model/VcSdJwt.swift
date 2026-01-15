@@ -2,13 +2,13 @@ import BITCrypto
 import BITJWT
 import Foundation
 
-public typealias VcSdJwt = SdJWS<VcSdJwtPayload>
+public typealias VcSdJWS = SdJWS<VcSdJwt>
 
-// MARK: - VcSdJwtPayload
+// MARK: - VcSdJwt
 
 /// https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html
 
-public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
+public struct VcSdJwt: JWT, Codable, Equatable {
 
   // MARK: Public
 
@@ -16,9 +16,7 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
 
   public let type: String? = "vc+sd-jwt"
 
-  /// registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
-
-  public var issuer: String
+  public var requiredIssuer: String
 
   public var activatedAt: Date?
 
@@ -40,10 +38,14 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
 
   public var vctMetadataUriIntegrity: String?
 
+  /// registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
+
+  public var issuer: String? { requiredIssuer }
+
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case issuer = "iss"
+    case requiredIssuer = "iss"
     case activatedAt = "nbf"
     case expiredAt = "exp"
     case keyBinding = "cnf"
@@ -58,11 +60,17 @@ public struct VcSdJwtPayload: JWTPayload, Codable, Equatable {
 
 }
 
-// MARK: VcSdJwtPayload.KeyBinding
+// MARK: VcSdJwt.KeyBinding
 
-extension VcSdJwtPayload {
+extension VcSdJwt {
 
   public struct KeyBinding: Codable, Equatable {
     let jwk: JWK
+  }
+}
+
+extension VcSdJwt {
+  public var audience: String? {
+    nil
   }
 }

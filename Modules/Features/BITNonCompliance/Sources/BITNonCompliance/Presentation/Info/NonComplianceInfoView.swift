@@ -9,10 +9,9 @@ struct NonComplianceInfoView: View {
 
   // MARK: Lifecycle
 
-  init(category: NonComplianceCategory, activityId: UUID, credentialId: UUID) {
+  init(category: NonComplianceCategory, activityId: UUID) {
     self.category = category
     self.activityId = activityId
-    self.credentialId = credentialId
   }
 
   // MARK: Internal
@@ -40,7 +39,6 @@ struct NonComplianceInfoView: View {
 
   private let category: NonComplianceCategory
   private let activityId: UUID
-  private let credentialId: UUID
 
   private var content: some View {
     List {
@@ -64,9 +62,11 @@ struct NonComplianceInfoView: View {
       VStack(spacing: .x1) {
         Assets.lightbulb.swiftUIImage
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+          .accessibilityHidden(true)
         Text(L10n.tkNonComplianceReportInfoTitle)
           .font(.custom.bodyEmphasized)
           .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
+          .accessibilityAddTraits(.isHeader)
         Text(L10n.tkNonComplianceReportInfoBody)
           .multilineTextAlignment(.center)
           .font(.custom.subheadline)
@@ -83,22 +83,16 @@ struct NonComplianceInfoView: View {
   private var moreInfoLink: some View {
     if let url = URL(string: L10n.tkNonComplianceReportInfoMoreInformationLinkValue) {
       HStack(spacing: 0) {
-        Link(destination: url) {
-          LinkText(L10n.tkNonComplianceReportInfoMoreInformationLinkText)
-            .font(.custom.footnote)
-            .multilineTextAlignment(.leading)
-        }
+        CustomLink(to: url, label: L10n.tkNonComplianceReportInfoMoreInformationLinkText)
         Spacer()
       }
-      .padding(.x4)
-      .listRowInsets(EdgeInsets())
     }
   }
 
   private var button: some View {
     ButtonSheet(colorConfig: .secondary) {
       Button {
-        navigator.navigate(to: NonComplianceDestinations.form(category: category, activityId: activityId, credentialId: credentialId))
+        navigator.navigate(to: NonComplianceInternalDestinations.form(category: category, activityId: activityId))
       } label: {
         Text(L10n.tkGlobalContinue)
           .frame(maxWidth: .infinity)

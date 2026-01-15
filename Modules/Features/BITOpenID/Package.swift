@@ -27,7 +27,7 @@ let package = Package(
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.33"),
-    .package(url: "https://github.com/swiyu-admin-ch/jsonschema-swift.git", exact: "0.30.0"),
+    .package(url: "https://github.com/swiyu-admin-ch/jsonschema-swift.git", exact: "0.37.1"),
   ],
   targets: [
     .target(

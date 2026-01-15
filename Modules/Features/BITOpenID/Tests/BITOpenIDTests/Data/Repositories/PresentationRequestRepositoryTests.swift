@@ -32,14 +32,14 @@ final class PresentationRequestRepositoryTests: XCTestCase {
     }
   }
 
-  func testFetch_jwtRequestObject_returnsJWTRequestObjectResponse() async throws {
-    let expectedRequestObject = JWTRequestObjectPayload.Mock.sampleData
+  func testFetch_jwtRequestObject_returnsRequestObjectJWSResponse() async throws {
+    let expectedRequestObject = RequestObjectJWS.Mock.sampleData
     mockResponse(code: 200, data: expectedRequestObject)
 
     let response = try await repository.fetch(from: mockUrl)
 
-    if case .jwt(let jwt) = response {
-      XCTAssertEqual(jwt.payload, JWTRequestObjectPayload.Mock.samplePayload)
+    if case .jwt(let jws) = response {
+      XCTAssertEqual(jws.payload, RequestObjectJWS.Mock.sampleJWT)
     } else {
       XCTFail("Wrong request object response type")
     }

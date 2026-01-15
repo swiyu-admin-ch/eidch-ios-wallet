@@ -257,6 +257,14 @@
         "identifier" : "BITThemingTests",
         "name" : "BITThemingTests"
       }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Modules\/Features\/BITNonCompliance",
+        "identifier" : "BITNonComplianceTests",
+        "name" : "BITNonComplianceTests"
+      }
     }
   ],
   "version" : 1

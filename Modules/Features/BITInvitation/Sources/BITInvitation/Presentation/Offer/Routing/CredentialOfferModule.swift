@@ -8,7 +8,7 @@ class CredentialOfferModule {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation, router: CredentialOfferRouter = Container.shared.credentialOfferRouter()) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation?, router: CredentialOfferRouter = Container.shared.credentialOfferRouter()) {
     self.router = router
     let viewController = UIHostingController(rootView: CredentialOfferView(credential: credential, trustInformation: trustInformation, router: router))
     router.viewController = viewController

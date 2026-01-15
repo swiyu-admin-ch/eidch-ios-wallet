@@ -62,16 +62,6 @@ extension NetworkContainer {
     self { [.wifi, .cellular] }
   }
 
-  public var timetoutInterval: Factory<TimeInterval> {
-    self { 15 }
-  }
-
-  public var session: Factory<Session> {
-    self {
-      Session(configuration: self.sessionConfiguration(), serverTrustManager: self.serverTrustManager())
-    }
-  }
-
   public var logger: Factory<Logger> {
     self { Logger(subsystem: "BITNetworking", category: "Network") }.cached
   }
@@ -86,22 +76,33 @@ extension NetworkContainer {
     self { URLSession.shared }
   }
 
-  // MARK: Private
-
-  private var sessionConfiguration: Factory<URLSessionConfiguration> {
-    self {
-      let configuration = URLSessionConfiguration.default
-      let timetoutInterval = self.timetoutInterval()
-      configuration.timeoutIntervalForRequest = timetoutInterval
-      configuration.headers = .default
-      configuration.requestCachePolicy = .useProtocolCachePolicy
-      configuration.urlCache = self.sessionConfigurationCache()
-      return configuration
-    }
+  public var timeoutIntervalBetweenDataPackages: Factory<TimeInterval> {
+    self { 30 }
   }
+
+  public var timeoutIntervalForTotalRequest: Factory<TimeInterval> {
+    self { 60 }
+  }
+
+  public func session(timeout: TimeInterval? = nil) -> Session {
+    let configuration = initSessionConfiguration(timeout: timeout)
+    return Session(configuration: configuration, serverTrustManager: serverTrustManager())
+  }
+
+  // MARK: Private
 
   private var sessionConfigurationCache: Factory<URLCache> {
     self { URLCache(memoryCapacity: 0, diskCapacity: 0, diskPath: nil) }
+  }
+
+  private func initSessionConfiguration(timeout: TimeInterval? = nil) -> URLSessionConfiguration {
+    let configuration = URLSessionConfiguration.default
+    configuration.timeoutIntervalForRequest = timeoutIntervalBetweenDataPackages()
+    configuration.timeoutIntervalForResource = timeout ?? timeoutIntervalForTotalRequest()
+    configuration.headers = .default
+    configuration.requestCachePolicy = .useProtocolCachePolicy
+    configuration.urlCache = sessionConfigurationCache()
+    return configuration
   }
 
 }

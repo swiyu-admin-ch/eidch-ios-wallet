@@ -37,7 +37,6 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertTrue(walletPairingPollingManager.delegate === viewModel)
     XCTAssertFalse(viewModel.isBackButtonHidden)
     XCTAssertNil(viewModel.destination)
-    XCTAssertFalse(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: - Pair Device Tests
@@ -128,7 +127,6 @@ class WalletPairingListViewModelTests: XCTestCase {
     viewModel.close()
 
     XCTAssertTrue(walletPairingPollingManager.stopPollingCalled)
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: - Toast Tests
@@ -192,7 +190,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     await viewModel.fetchStatus()
 
     if case .error(let dataset) = viewModel.destination {
-      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error, [.primary(L10n.tkGlobalClose) { _ in }]))
     } else {
       XCTFail("Expected .error destination")
     }
@@ -204,7 +202,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     await viewModel.fetchStatus()
 
     if case .error(let dataset) = viewModel.destination {
-      XCTAssertEqual(dataset, ErrorDataset(TestingError.error))
+      XCTAssertEqual(dataset, ErrorDataset(TestingError.error, [.primary(L10n.tkGlobalClose) { _ in }]))
     } else {
       XCTFail("Expected .error destination")
     }

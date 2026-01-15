@@ -14,17 +14,10 @@ public struct ErrorView: View {
   // MARK: Public
 
   public var body: some View {
-    InformationView(
+    InformationView2(
       image: ThemingAssets.closeCircle.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: dataset.primary,
-          secondary: dataset.secondary,
-          tertiary: dataset.tertiary,
-          tertiaryAction: dataset.tertiaryAction)
-      },
-      footer: { footerView })
+      contents: dataset.contents,
+      actions: dataset.actions)
       .navigationBarBackButtonHidden(true)
       .toolbar {
         CloseButtonToolbar {
@@ -38,37 +31,5 @@ public struct ErrorView: View {
   @Environment(\.navigator) private var navigator
 
   private let dataset: ErrorDataset
-
-  @ViewBuilder
-  private var footerView: some View {
-    ButtonSheet {
-      if let primaryAction = dataset.primaryAction, let primaryActionLabel = dataset.primaryActionLabel {
-        VStack(spacing: .x4) {
-          Button(action: {
-            navigator.pop()
-            primaryAction()
-          }) {
-            Text(primaryActionLabel)
-              .multilineTextAlignment(.leading)
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.primary)
-          .controlSize(.large)
-          .accessibilityLabel(primaryActionLabel)
-        }
-
-        if let secondaryAction = dataset.secondaryAction, let secondaryActionLabel = dataset.secondaryActionLabel {
-          Button(action: { secondaryAction() }) {
-            Text(secondaryActionLabel)
-              .multilineTextAlignment(.leading)
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.secondary)
-          .controlSize(.large)
-          .accessibilityLabel(secondaryActionLabel)
-        }
-      }
-    }
-  }
 
 }

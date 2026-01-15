@@ -15,8 +15,6 @@ enum InvitationError: Error {
   case expiredInvitation
   case unknownIssuer
   case validationFailed
-  case emptyWallet
-  case compatibleCredentialNotFound
 
   // Presentation related errors
   case invalidPresentationRequest
@@ -51,15 +49,6 @@ extension InvitationError {
            .unsupportedKeyStorage,
            .vctMismatch:
         return .invalidQRCode
-      }
-    }
-
-    if let credentialsError = error as? CompatibleCredentialsError {
-      switch credentialsError {
-      case .emptyWallet:
-        return .emptyWallet
-      case .compatibleCredentialNotFound:
-        return .compatibleCredentialNotFound
       }
     }
 

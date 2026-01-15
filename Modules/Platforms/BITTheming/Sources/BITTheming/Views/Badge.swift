@@ -18,7 +18,7 @@ public struct Badge: View {
 
   public var body: some View {
     style.resolved(with: configuration)
-      .clipShape(.rect(cornerRadius: .CornerRadius.s))
+      .clipShape(.rect(cornerRadius: .x4))
   }
 
   // MARK: Internal
@@ -108,7 +108,6 @@ public struct DefaultBadgeStyle: BadgeStyle {
         .font(.custom.footnote)
         .lineLimit(1)
     }
-    .padding(.horizontal, .x3)
     .padding(.vertical, .x2)
   }
 }
@@ -118,6 +117,7 @@ public struct DefaultBadgeStyle: BadgeStyle {
 public struct InfoBadgeStyle: BadgeStyle {
   public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
     DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .padding(.horizontal, .x3)
       .background(ThemingAssets.Brand.Bright.navyBlue.swiftUIColor)
       .foregroundStyle(ThemingAssets.Brand.Bright.navyBlueLabel.swiftUIColor)
   }
@@ -132,6 +132,7 @@ extension BadgeStyle where Self == InfoBadgeStyle {
 public struct SuccessBadgeStyle: BadgeStyle {
   public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
     DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .padding(.horizontal, .x3)
       .background(ThemingAssets.Brand.Bright.firGreen.swiftUIColor)
       .foregroundStyle(ThemingAssets.Brand.Bright.firGreenLabel.swiftUIColor)
   }
@@ -146,6 +147,7 @@ extension BadgeStyle where Self == SuccessBadgeStyle {
 public struct ErrorBadgeStyle: BadgeStyle {
   public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
     DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .padding(.horizontal, .x3)
       .background(ThemingAssets.Brand.Bright.swissRed.swiftUIColor)
       .foregroundColor(ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor)
   }
@@ -160,6 +162,7 @@ extension BadgeStyle where Self == ErrorBadgeStyle {
 public struct SensitiveBadgeStyle: BadgeStyle {
   public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
     DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .padding(.horizontal, .x3)
       .background(ThemingAssets.Component.Pill.brightPurple.swiftUIColor)
       .foregroundColor(ThemingAssets.Component.Pill.brightPurpleLabel.swiftUIColor)
   }
@@ -174,6 +177,7 @@ extension BadgeStyle where Self == SensitiveBadgeStyle {
 public struct OutlineBadgeStyle: BadgeStyle {
   public func makeBody(configuration: Configuration, badgeIconWidth: CGFloat) -> some View {
     DefaultBadgeStyle().makeBody(configuration: configuration, badgeIconWidth: badgeIconWidth)
+      .padding(.horizontal, .x3)
       .overlay {
         RoundedRectangle(cornerRadius: 50)
           .stroke(ThemingAssets.Brand.Core.black.swiftUIColor.opacity(0.5), lineWidth: 1)

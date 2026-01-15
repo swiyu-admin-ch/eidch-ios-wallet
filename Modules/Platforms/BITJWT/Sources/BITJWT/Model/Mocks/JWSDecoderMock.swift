@@ -9,15 +9,15 @@ enum JWSDecoderMockError: Error {
 
 // MARK: - JWSDecoderMock
 
-struct JWSDecoderMock<U: Codable & Equatable>: JWSDecoderProtocol {
+struct JWSDecoderMock<U: JWT>: JWSDecoderProtocol {
 
-  var payload: U?
+  var jwt: U?
   var rawPayload: String?
   var header = JWSHeader(algorithm: JWTAlgorithm.ES256)
   var expectedInput: String?
   var throwingError: Error?
 
-  func decode<T: JWTPayload & Decodable>(_ type: T.Type, from data: Data) throws -> JWS<T> {
+  func decode<T: JWT>(_ type: T.Type, from data: Data) throws -> JWS<T> {
     if let throwingError {
       throw throwingError
     }
@@ -25,7 +25,7 @@ struct JWSDecoderMock<U: Codable & Equatable>: JWSDecoderProtocol {
     if let input = expectedInput, input != rawString {
       throw JWSDecoderMockError.unexpectedInput(input: rawString, expected: input)
     }
-    let jws = JWS(payload: payload!, rawPayload: rawPayload ?? "rawPayload", rawJWS: rawString, header: header)
+    let jws = JWS(payload: jwt!, rawPayload: rawPayload ?? "rawPayload", rawJWS: rawString, header: header)
     return jws as! JWS<T>
   }
 }

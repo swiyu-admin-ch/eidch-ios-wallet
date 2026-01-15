@@ -8,22 +8,31 @@ import Spyable
 
 @Spyable
 public protocol DeclinePresentationUseCaseProtocol {
-  func execute(context: PresentationRequestContext) async throws
+  func callAsFunction(context: PresentationRequestContext) async throws
+  func callAsFunction(url: URL) async throws
 }
 
 // MARK: - DeclinePresentationUseCase
 
 struct DeclinePresentationUseCase: DeclinePresentationUseCaseProtocol {
 
-  func execute(context: PresentationRequestContext) async throws {
+  // MARK: Internal
+
+  func callAsFunction(context: PresentationRequestContext) async throws {
     guard let credential = context.selectedCredential else {
       assertionFailure("No credential selected")
       return
     }
     let activity = Activity(context: context, credential: credential, type: .presentationDeclined)
     _ = try? activityService.create(activity, credentialId: credential.id)
-    try await presentationRequestService.decline(for: context.requestObject, with: .clientRejected)
+    try await presentationRequestService.decline(url: context.requestObject.responseUri, with: .clientRejected)
   }
+
+  func callAsFunction(url: URL) async throws {
+    try await presentationRequestService.decline(url: url, with: .clientRejected)
+  }
+
+  // MARK: Private
 
   @Injected(\.presentationRequestService) private var presentationRequestService
   @Injected(\.activityService) private var activityService

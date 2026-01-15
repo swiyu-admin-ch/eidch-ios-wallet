@@ -5,7 +5,7 @@ import BITTheming
 import Factory
 import SwiftUI
 
-// MARK: - CredentialCell
+// MARK: - VerifiableCredentialCellV1
 
 public struct VerifiableCredentialCellV1: View {
 
@@ -44,22 +44,7 @@ public struct VerifiableCredentialCellV1: View {
               .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           }
 
-          HStack(spacing: .x3) {
-            if viewModel.environment == .swiyuInt {
-              Badge(label: L10n.tkCredentialStatusDemo)
-                .badgeStyle(.info)
-            }
-
-            HStack(spacing: .x1) {
-              viewModel.statusImage
-                .aspectRatio(contentMode: .fit)
-              Text(viewModel.statusText)
-            }
-            .foregroundStyle(viewModel.statusColor)
-          }
-          .font(.custom.caption1)
-          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-          .padding(.top, 2)
+          badges
         }
       }
 
@@ -106,4 +91,29 @@ public struct VerifiableCredentialCellV1: View {
     return parts.joined(separator: ", ")
   }
 
+}
+
+// MARK: - Components
+
+extension VerifiableCredentialCellV1 {
+
+  @ViewBuilder
+  private var badges: some View {
+    HStack(spacing: .x3) {
+      if viewModel.environment == .swiyuInt {
+        Badge(label: L10n.tkCredentialStatusDemo)
+          .badgeStyle(.info)
+      }
+
+      switch viewModel.credential.progressionState {
+      case .accepted:
+        Badge(label: viewModel.statusText, image: viewModel.statusImage)
+      case .unaccepted:
+        CredentialStatusBadge(label: L10n.tkCredentialProgressionStateUnaccepted, image: Image(systemName: "clock"), style: .success)
+      }
+    }
+    .font(.custom.caption1)
+    .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+    .padding(.top, 2)
+  }
 }

@@ -49,7 +49,7 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
 
   func getAll() throws -> [EIDRequestCase] {
     try database.get(EIDRequestCaseEntity.self)
-      .filter { $0.state?.state != .cancelled }
+      .filter { $0.state?.state != EIDRequestStatus.State.cancelled.rawValue }
       .sorted { $0.createdAt > $1.createdAt }
       .map(EIDRequestCase.init)
   }

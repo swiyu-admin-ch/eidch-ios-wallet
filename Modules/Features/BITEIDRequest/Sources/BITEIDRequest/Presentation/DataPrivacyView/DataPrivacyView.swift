@@ -24,7 +24,7 @@ struct DataPrivacyView: View {
           primaryButtonLabel: L10n.tkEidRequestDataPrivacyPrimaryButton,
           primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.attestation) })
       })
-      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+      .defaultEidRequestToolbar()
   }
 
   // MARK: Private

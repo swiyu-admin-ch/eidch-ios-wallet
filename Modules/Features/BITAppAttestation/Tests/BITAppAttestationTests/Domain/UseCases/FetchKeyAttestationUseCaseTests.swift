@@ -86,8 +86,8 @@ final class FetchKeyAttestationUseCaseTests: XCTestCase {
   private var keyAttestationValidator: KeyAttestationValidatorProtocolSpy!
 
   private var mockKeyAttestationRequestBody: KeyAttestationRequestBody!
-  private let mockKeyAttestation = KeyAttestationPayload.Mock.sample
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockKeyPair = VaultKeyPair.Mock.ES256
 
   private func createSuccessState() {

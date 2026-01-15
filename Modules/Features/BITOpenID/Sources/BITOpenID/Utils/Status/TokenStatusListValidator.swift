@@ -44,7 +44,8 @@ struct TokenStatusListValidator: AnyStatusCheckValidatorProtocol {
     else {
       return false
     }
-    return try await jwsValidator.validate(jws, issuerDid: issuer)
+    try await jwsValidator.validate(jws)
+    return true
   }
 }
 

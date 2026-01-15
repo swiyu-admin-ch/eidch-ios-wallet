@@ -1,5 +1,5 @@
 import Foundation
-import JsonSchemaValidatorSources
+import JsonSchemaValidator
 import XCTest
 @testable import BITOpenID
 @testable import BITSdJWT
@@ -31,7 +31,6 @@ final class VcSdJwtSchemaValidatorIntegrationTests: XCTestCase {
 
   private let validator = VcSdJwtSchemaValidator()
 
-  private let vcSdJwtMock = VcSdJwtPayload.Mock.sample
   private let schemaCredential = String.Mock.schemaCredential
   private let schemaMalformed = String.Mock.schemaMalformed
   private let schemaInsufficient = String.Mock.schemaInsufficient

@@ -10,7 +10,7 @@ import SwiftUI
 
 // MARK: - ValidateAttestationsViewModel
 
-class ValidateAttestationsViewModel: ObservableObject, NavigationClosable {
+class ValidateAttestationsViewModel: ObservableObject {
 
   // MARK: Internal
 
@@ -73,25 +73,11 @@ class ValidateAttestationsViewModel: ObservableObject, NavigationClosable {
 
     switch error {
     case EIDRequestRepository.Error.invalidClientAttestation:
-      return destination = .error(ErrorDataset(
-        primary: L10n.tkEidRequestClientAttestationErrorPrimary,
-        secondary: L10n.tkEidRequestClientAttestationErrorSecondary,
-        tertiary: L10n.tkEidRequestClientAttestationErrorTertiary,
-        primaryAction: { self.openLink(L10n.tkGlobalStoreLink) },
-        primaryActionLabel: L10n.tkEidRequestClientAttestationErrorPrimaryButton,
-        secondaryAction: {
-          self.isNavigationCloseTriggered = true
-        },
-        secondaryActionLabel: L10n.tkEidRequestClientAttestationErrorSecondaryButton,
-        tertiaryAction: { self.openLink(L10n.tkEidRequestClientAttestationErrorHelpLink) }))
+      return destination = .error(.clientAttestation)
     case EIDRequestRepository.Error.invalidKeyAttestation:
-      return destination = .error(ErrorDataset(
-        primary: L10n.tkEidRequestKeyAttestationErrorPrimary,
-        secondary: L10n.tkEidRequestKeyAttestationErrorSecondary,
-        tertiary: L10n.tkEidRequestKeyAttestationErrorTertiary,
-        primaryActionLabel: L10n.tkEidRequestKeyAttestationErrorPrimaryButton))
+      return destination = .error(.keyAttestation)
     default:
-      return destination = .error(ErrorDataset(error, primaryAction: { self.handleCallback() }))
+      return destination = .error(.retry(error, { _ in self.handleCallback() }))
     }
   }
 
@@ -101,7 +87,46 @@ class ValidateAttestationsViewModel: ObservableObject, NavigationClosable {
     }
   }
 
-  private func openLink(_ link: String) {
+}
+
+extension ErrorDataset {
+
+  // MARK: Internal
+
+  @MainActor
+  static var keyAttestation: Self {
+    ErrorDataset([
+      .title(L10n.tkEidRequestKeyAttestationErrorPrimary),
+      .body(L10n.tkEidRequestKeyAttestationErrorSecondary),
+      .caption(L10n.tkEidRequestKeyAttestationErrorTertiary),
+    ], actions: [
+      .primary(L10n.tkEidRequestKeyAttestationErrorPrimaryButton, { navigator in
+        navigator.dismiss()
+      }),
+    ])
+  }
+
+  @MainActor
+  static var clientAttestation: Self {
+    ErrorDataset([
+      .title(L10n.tkEidRequestClientAttestationErrorPrimary),
+      .body(L10n.tkEidRequestClientAttestationErrorSecondary),
+      .captionButton(L10n.tkEidRequestClientAttestationErrorTertiary, { _ in
+        self.openLink(L10n.tkEidRequestClientAttestationErrorHelpLink)
+      }),
+    ], actions: [
+      .primary(L10n.tkEidRequestClientAttestationErrorPrimaryButton, { _ in
+        self.openLink(L10n.tkGlobalStoreLink)
+      }),
+      .secondary(L10n.tkEidRequestClientAttestationErrorSecondaryButton, { navigator in
+        navigator.dismiss()
+      }),
+    ])
+  }
+
+  // MARK: Private
+
+  private static func openLink(_ link: String) {
     guard let url = URL(string: link) else { return }
     UIApplication.shared.open(url)
   }

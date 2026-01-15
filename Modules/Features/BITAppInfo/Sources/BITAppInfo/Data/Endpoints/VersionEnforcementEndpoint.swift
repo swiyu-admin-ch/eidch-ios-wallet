@@ -56,3 +56,14 @@ extension VersionEnforcementEndpoint: TargetType {
   #endif
 
 }
+
+// MARK: TimeoutConfigurable
+
+extension VersionEnforcementEndpoint: TimeoutConfigurable {
+  var timeoutInterval: TimeInterval {
+    switch self {
+    case .configuration:
+      2.0
+    }
+  }
+}

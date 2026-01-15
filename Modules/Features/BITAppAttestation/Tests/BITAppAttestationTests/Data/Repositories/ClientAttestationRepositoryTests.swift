@@ -50,6 +50,6 @@ final class ClientAttestationRepositoryTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockClientAttestation = ClientAttestationPayload.Mock.sample
+  private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private var repository: ClientAttestationRepositoryProtocol!
 }

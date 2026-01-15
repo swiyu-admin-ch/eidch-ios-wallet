@@ -1,3 +1,4 @@
+import BITAppAuth
 import BITDeeplink
 import BITNavigation
 import BITPresentation
@@ -6,7 +7,7 @@ import UIKit
 
 // MARK: - InvitationRouterRoutes
 
-public protocol InvitationRouterRoutes: ClosableRoutes & CredentialOfferRoutes & ExternalRoutes & InvitationRoutes & PresentationRoutes {}
+public protocol InvitationRouterRoutes: ClosableRoutes & CredentialOfferRoutes & ExternalRoutes & InvitationRoutes & PresentationRoutes & LoginRoutes {}
 
 // MARK: - InvitationRouter
 

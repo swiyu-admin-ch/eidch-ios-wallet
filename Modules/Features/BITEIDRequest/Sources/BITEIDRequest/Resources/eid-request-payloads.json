@@ -38,6 +38,31 @@
         }
     },
     {
+        "displayName": "Jordy - Rothenbühler Caroline (18+, SWISS_PASS)",
+        "identityType": "SWISS_PASS",
+        "payload": {
+            "legalRepresentant": false,
+            "email": null,
+            "mrz": [
+              "PMCHEROTHENBUEHLER<<CAROLINE<<<<<<<<<<<<<<<<",
+              "T0A21T58<8CHE7801088F3507016<<<<<<<<<<<<<<00"
+            ]
+        }
+    },
+    {
+        "displayName": "Jordy - TEPA E-ID (18+, FOREIGNER_PERMIT)",
+        "identityType": "FOREIGNER_PERMIT",
+        "payload": {
+            "legalRepresentant": false,
+            "email": null,
+            "mrz": [
+              "ARCHESE00018016231168667<<<<<<",
+              "0002211F2602279FIN<<<<<<<<<<<0",
+              "TEPA<E<ID<<EINUNDZWANZIG<<<<<<"
+            ]
+        }
+    },
+    {
         "displayName": "Wallet Tester B (PASSPORT) Q",
         "identityType": "SWISS_PASS",
         "payload": {

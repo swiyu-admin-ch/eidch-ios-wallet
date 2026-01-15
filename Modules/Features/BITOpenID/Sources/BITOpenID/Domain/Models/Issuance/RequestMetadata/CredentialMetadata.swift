@@ -15,6 +15,7 @@ public struct CredentialMetadata: Decodable {
     credentialEndpoint: String,
     credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported],
     display: [CredentialMetadataDisplay]?,
+    nonceEndpoint: URL? = nil,
     deferredCredentialEndpoint: URL? = nil)
   {
     self.credentialIssuer = credentialIssuer
@@ -22,6 +23,7 @@ public struct CredentialMetadata: Decodable {
     self.credentialConfigurationsSupported = credentialConfigurationsSupported
     self.display = display
     preferredDisplay = display?.findDisplayWithFallback()
+    self.nonceEndpoint = nonceEndpoint
     self.deferredCredentialEndpoint = deferredCredentialEndpoint
   }
 
@@ -30,12 +32,25 @@ public struct CredentialMetadata: Decodable {
     let credentialIssuer = try container.decode(String.self, forKey: .credentialIssuer)
     let credentialEndpoint = try container.decode(String.self, forKey: .credentialEndpoint)
     let display = try container.decode([CredentialMetadataDisplay].self, forKey: .display)
+    var nonceEndpoint: URL?
+    if let endpoint = try container.decodeIfPresent(URL.self, forKey: .nonceEndpoint) {
+      guard endpoint.isValidHttpUrl else {
+        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [CodingKeys.nonceEndpoint], debugDescription: "Nonce endpoint not a valid HTTP URL"))
+      }
+      nonceEndpoint = endpoint
+    }
     let deferredCredentialEndpoint = try container.decodeIfPresent(URL.self, forKey: .deferredCredentialEndpoint)
 
     let decodedAnyCredentialConfigurationsSupported = try container.decode([String: CredentialConfigurationSupportedWrapper].self, forKey: .credentialConfigurationsSupported)
     let anyCredentialConfigurationsSupported = decodedAnyCredentialConfigurationsSupported.compactMapValues { $0.anyCredentialConfigurationSupported }
 
-    self.init(credentialIssuer: credentialIssuer, credentialEndpoint: credentialEndpoint, credentialConfigurationsSupported: anyCredentialConfigurationsSupported, display: display, deferredCredentialEndpoint: deferredCredentialEndpoint)
+    self.init(
+      credentialIssuer: credentialIssuer,
+      credentialEndpoint: credentialEndpoint,
+      credentialConfigurationsSupported: anyCredentialConfigurationsSupported,
+      display: display,
+      nonceEndpoint: nonceEndpoint,
+      deferredCredentialEndpoint: deferredCredentialEndpoint)
   }
 
   // MARK: Public
@@ -52,11 +67,13 @@ public struct CredentialMetadata: Decodable {
     case credentialConfigurationsSupported = "credential_configurations_supported"
     case display
     case preferredDisplay
+    case nonceEndpoint = "nonce_endpoint"
     case deferredCredentialEndpoint = "deferred_credential_endpoint"
   }
 
   let credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported]
   let preferredDisplay: CredentialMetadataDisplay?
+  let nonceEndpoint: URL?
   let deferredCredentialEndpoint: URL?
 
 }
@@ -297,5 +314,43 @@ extension CredentialMetadata {
     public let name: String
     public let locale: String?
     public let logo: CredentialSupportedDisplayLogo?
+  }
+}
+
+// MARK: Equatable
+
+extension CredentialMetadata: Equatable {
+
+  // MARK: Public
+
+  public static func == (lhs: CredentialMetadata, rhs: CredentialMetadata) -> Bool {
+    lhs.credentialEndpoint == rhs.credentialEndpoint
+      && lhs.credentialIssuer == rhs.credentialIssuer
+      && areCredentialConfigurationsSupportedEqual(lhs.credentialConfigurationsSupported, rhs.credentialConfigurationsSupported)
+      && lhs.display == rhs.display
+      && lhs.preferredDisplay == rhs.preferredDisplay
+      && lhs.deferredCredentialEndpoint == rhs.deferredCredentialEndpoint
+  }
+
+  // MARK: Private
+
+  private static func areCredentialConfigurationsSupportedEqual(_ lhs: [String: any AnyCredentialConfigurationSupported], _ rhs: [String: any AnyCredentialConfigurationSupported]) -> Bool {
+    guard lhs.count == rhs.count else { return false }
+
+    for (key, lhsConfig) in lhs {
+      guard let rhsConfig = rhs[key] else { return false }
+      guard areCredentialConfigurationSupportedEqual(lhsConfig, rhsConfig) else { return false }
+    }
+
+    return true
+  }
+
+  private static func areCredentialConfigurationSupportedEqual(_ lhs: any AnyCredentialConfigurationSupported, _ rhs: any AnyCredentialConfigurationSupported) -> Bool {
+    compare(lhs, rhs)
+  }
+
+  private static func compare<T: AnyCredentialConfigurationSupported & Equatable>(_ lhs: T, _ rhs: any AnyCredentialConfigurationSupported) -> Bool {
+    guard let rhs = rhs as? T else { return false }
+    return lhs == rhs
   }
 }

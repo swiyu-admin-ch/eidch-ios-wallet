@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - RecordSelfieViewModel
 
 @MainActor
-class RecordSelfieViewModel: ObservableObject, NavigationClosable {
+class RecordSelfieViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -36,7 +36,6 @@ class RecordSelfieViewModel: ObservableObject, NavigationClosable {
   @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
   @Published var destination: EIDRequestDestinations?
-  @Published var isNavigationCloseTriggered = false
 
   func initializeSDK() {
     if avBeam.state == .initialized {
@@ -97,11 +96,6 @@ class RecordSelfieViewModel: ObservableObject, NavigationClosable {
     }
   }
 
-  func close() {
-    stop()
-    navigationClose()
-  }
-
   func closeIntroductionPopup() {
     isIntroductionPopupPresented = false
   }
@@ -116,9 +110,11 @@ class RecordSelfieViewModel: ObservableObject, NavigationClosable {
   @Injected(\.captureFaceDelay) private var captureFaceDelay
 
   private func handleError(_ error: Error) {
-    destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+    stop()
+    destination = .error(.retry(error, { [weak self] navigator in
       self?.reset()
       self?.startCamera()
+      navigator.pop()
     }))
   }
 
@@ -162,10 +158,13 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
 
   nonisolated func didCompleteCaptureFace(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
+      guard packageResult.data.errorCode == .none else {
+        return self.handleError(packageResult.data.errorCode)
+      }
+
       self.buttonState = .loading
 
       do {
-        try? avBeam.stopCamera()
         guard let caseId = self.context.caseId else { throw EIDRequestError.missingCaseId }
         let output = RecordSelfieOutput(packageResult)
         try await self.saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
@@ -175,6 +174,7 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
         try await Task.sleep(nanoseconds: captureFaceDelay)
 
         self.stop()
+        try? avBeam.stopCamera()
         self.destination = .submitEidRequest
       } catch {
         self.handleError(error)

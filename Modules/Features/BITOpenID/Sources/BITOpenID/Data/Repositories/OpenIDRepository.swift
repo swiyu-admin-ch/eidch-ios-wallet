@@ -24,15 +24,17 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
   }
 
   func fetchMetadata(from issuerUrl: URL) async throws -> CredentialMetadataResponse {
-    let response: NetworkResponse<CredentialMetadata> = try await networkService.request(OpenIDEndpoint.metadata(fromIssuerUrl: issuerUrl))
-    return CredentialMetadataResponse(metadata: response.object, raw: response.data)
+    let response = try await networkService.request(OpenIDEndpoint.metadata(fromIssuerUrl: issuerUrl))
+    return try await parseMetadataResponse(response, from: issuerUrl)
   }
 
   func fetchOpenIdConfiguration(from issuerURL: URL) async throws -> OpenIdConfiguration {
     do {
-      return try await networkService.request(OpenIDEndpoint.openIdConfiguration(issuerURL: issuerURL))
+      let response = try await networkService.request(OpenIDEndpoint.openIdConfiguration(issuerURL: issuerURL))
+      return try await parseOpenIdConfigurationResponse(response, from: issuerURL)
     } catch let error as NetworkError where error.status == .notFound {
-      return try await networkService.request(OpenIDEndpoint.fallbackOpenIdConfiguration(issuerUrl: issuerURL))
+      let response = try await networkService.request(OpenIDEndpoint.fallbackOpenIdConfiguration(issuerUrl: issuerURL))
+      return try await parseOpenIdConfigurationResponse(response, from: issuerURL)
     } catch {
       throw error
     }
@@ -46,27 +48,34 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.accessToken(fromTokenUrl: url, preAuthorizedCode: preAuthorizedCode))
   }
 
-  func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult {
-    let result: (credentialResponse: CredentialResponse, response: Response) = try await networkService.request(
-      OpenIDEndpoint.credential(
-        url: context.credentialEndpoint,
-        body: credentialRequestBody,
-        acccessToken: context.accessToken.accessToken)
-    )
+  func fetchNonce(from url: URL) async throws -> Nonce {
+    try await networkService.request(OpenIDEndpoint.nonce(url: url))
+  }
 
-    // A deferred credential is expected when http status code is 202 (see RFC 9110 §15.3.3)
+  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequest) async throws -> FetchAnyCredentialResult {
+    let endpoint = OpenIDEndpoint.credential(
+      url: context.credentialEndpoint,
+      body: credentialRequest,
+      accessToken: context.accessToken)
 
-    var credential: FetchAnyCredentialResult
+    return try await fetchCredential(
+      endpoint: endpoint,
+      accessToken: context.accessToken.accessToken,
+      format: context.format,
+      deferredCredentialEndpoint: context.deferredCredentialEndpoint)
+  }
 
-    if result.response.statusCode == 202 {
-      credential = try .deferred(getDeferredCredential(from: result.credentialResponse, context: context))
-    } else if result.response.statusCode == 200 {
-      credential = try .credential(getCredential(from: result.credentialResponse))
-    } else {
-      throw OpenIdRepositoryError.unsupportedCredentialStatusCode
-    }
+  func fetchCredential(from deferredCredentialEndpoint: URL, transactionId: String, accessToken: String, format: String) async throws -> FetchAnyCredentialResult {
+    let endpoint = OpenIDEndpoint.deferredCredential(
+      url: deferredCredentialEndpoint,
+      transactionId: transactionId,
+      accessToken: accessToken)
 
-    return credential
+    return try await fetchCredential(
+      endpoint: endpoint,
+      accessToken: accessToken,
+      format: format,
+      deferredCredentialEndpoint: deferredCredentialEndpoint)
   }
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
@@ -74,62 +83,86 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     return try jwsDecoder.decode(TokenStatusList.self, from: response.data)
   }
 
-  func refreshDeferredCredential(from url: URL, transactionId: String, acccessToken: String, format: String) async throws -> AnyCredential {
-    let authPlugin = AccessTokenPlugin(tokenClosure: { _ in acccessToken })
-
-    do {
-      let credentialResponse: CredentialResponse = try await networkService.request(OpenIDEndpoint.deferredCredential(url: url, transactionId: transactionId), plugins: [authPlugin])
-
-      return try getCredential(from: credentialResponse)
-    } catch let error as NetworkError where error.status == .badRequest {
-      throw try parseDeferredCredentialError(error)
-    } catch {
-      throw error
-    }
-  }
-
   // MARK: Private
 
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
-  @Injected(\.defaultDeferredCredentialInterval) private var defaultDeferredCredentialInterval: Int
+  @Injected(\NetworkContainer.decoder) private var jsonDecoder: JSONDecoder
+  @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
 
-  private func getDeferredCredential(from credentialResponse: CredentialResponse, context: FetchCredentialContext) throws -> DeferredCredentialRequest {
-    guard
-      let transactionId = credentialResponse.transactionId,
-      let endpoint = context.deferredCredentialEndpoint?.absoluteString
-    else {
-      throw OpenIdRepositoryError.credentialResponseValidationFailed
+  private func parseMetadataResponse(_ response: Response, from endpoint: URL) async throws -> CredentialMetadataResponse {
+    switch ContentType(response.response) {
+    case .json:
+      let metadata = try jsonDecoder.decode(CredentialMetadata.self, from: response.data)
+      return CredentialMetadataResponse(metadata: metadata, raw: response.data)
+    case .jwt:
+      let jws = try jwsDecoder.decode(CredentialMetadataJWT.self, from: response.data)
+      try await jwsValidator.validate(jws)
+      guard jws.payload.subject == endpoint.absoluteString else {
+        throw OpenIdRepositoryError.invalidCredentialMetadataJWT
+      }
+      let metadata = jws.payload.credentialMetadata
+
+      guard let rawPayloadData = jws.rawPayload.data(using: .utf8) else {
+        throw OpenIdRepositoryError.invalidCredentialMetadata
+      }
+      return CredentialMetadataResponse(metadata: metadata, raw: rawPayloadData)
+    }
+  }
+
+  private func parseOpenIdConfigurationResponse(_ response: Response, from endpoint: URL) async throws -> OpenIdConfiguration {
+    switch ContentType(response.response) {
+    case .json:
+      return try jsonDecoder.decode(OpenIdConfiguration.self, from: response.data)
+    case .jwt:
+      let jws = try jwsDecoder.decode(OpenIdConfigurationJWT.self, from: response.data)
+      try await jwsValidator.validate(jws)
+      guard jws.payload.subject == endpoint.absoluteString else {
+        throw OpenIdRepositoryError.invalidOpenIdConfigurationJWT
+      }
+      return jws.payload.openIdConfiguration
+    }
+  }
+
+  private func fetchCredential(endpoint: OpenIDEndpoint, accessToken: String, format: String, deferredCredentialEndpoint: URL?) async throws -> FetchAnyCredentialResult {
+    let response = try await networkService.request(endpoint)
+
+    var credential: FetchAnyCredentialResult
+
+    if response.statusCode == 202 { // see RFC 9110 §15.3.3 for status codes
+      let deferred = try JSONDecoder().decode(CredentialResponseDeferred.self, from: response.data)
+      credential = try .deferred(getDeferredCredential(from: deferred, accessToken: accessToken, format: format, deferredCredentialEndpoint: deferredCredentialEndpoint))
+    } else if response.statusCode == 200 {
+      let immediate = try JSONDecoder().decode(CredentialResponseImmediate.self, from: response.data)
+      // batch issuance to be implemented, just taking first for now
+      credential = try .credential(getAnyCredential(from: immediate.credentials.first))
+    } else {
+      throw OpenIdRepositoryError.unsupportedCredentialStatusCode
+    }
+
+    return credential
+  }
+
+  private func getDeferredCredential(from credentialResponse: CredentialResponseDeferred, accessToken: String, format: String, deferredCredentialEndpoint: URL?) throws -> DeferredCredentialRequest {
+    guard let endpoint = deferredCredentialEndpoint?.absoluteString else {
+      throw OpenIdRepositoryError.missingDeferredCredentialEndpoint
     }
 
     return DeferredCredentialRequest(
-      transactionId: transactionId,
-      accessToken: context.accessToken.accessToken,
+      transactionId: credentialResponse.transactionId,
+      accessToken: accessToken,
       endpoint: endpoint,
-      format: context.format,
-      interval: credentialResponse.interval ?? defaultDeferredCredentialInterval)
+      format: format,
+      interval: credentialResponse.interval)
   }
 
-  private func getCredential(from credentialResponse: CredentialResponse) throws -> AnyCredential {
-    guard
-      let rawCredential = credentialResponse.rawCredential,
-      let credentialData = rawCredential.data(using: .utf8)
-    else {
-      throw OpenIdRepositoryError.credentialResponseValidationFailed
+  private func getAnyCredential(from raw: CredentialResponseImmediate.Credential?) throws -> AnyCredential {
+    guard let raw, let credentialData = raw.credential.data(using: .utf8) else {
+      throw OpenIdRepositoryError.missingImmediateCredentialData
     }
 
-    return try sdJwsDecoder.decode(VcSdJwtPayload.self, from: credentialData)
-  }
-
-  private func parseDeferredCredentialError(_ error: NetworkError) throws -> Error {
-    let errorResponse = try JSONDecoder().decode(DeferredCredentialErrorResponse.self, from: error.response?.data ?? Data())
-
-    guard errorResponse.error == .issuancePending else {
-      throw error
-    }
-
-    throw OpenIdRepositoryError.credentialIssuancePending(interval: errorResponse.interval ?? defaultDeferredCredentialInterval)
+    return try sdJwsDecoder.decode(VcSdJwt.self, from: credentialData)
   }
 }
 
@@ -138,7 +171,12 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
 public enum OpenIdRepositoryError: Error, Equatable {
   case presentationProcessClosed
   case authorizationRequestObjectNotFound
-  case credentialResponseValidationFailed
   case unsupportedCredentialStatusCode
   case credentialIssuancePending(interval: Int)
+  case missingDeferredCredentialEndpoint
+  case missingImmediateCredentialData
+  case credentialResponseImmediateDecodingError
+  case invalidCredentialMetadata
+  case invalidCredentialMetadataJWT
+  case invalidOpenIdConfigurationJWT
 }

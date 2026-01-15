@@ -30,8 +30,9 @@
 "tk_activity_latestActivities_title" = "Activitads retschas";
 "tk_activity_presentationAccepted_title" = "Infurmaziuns cundivididas";
 "tk_activity_presentationDeclined_title" = "Refusada";
+"tk_actor_nonCompliant" = "Avertiment";
 "tk_badgeInformation_furtherInformation_link_text" = "Ulteriuras infurmaziuns";
-"tk_badgeInformation_furtherInformation_link_value" = "https://www.eid.admin.ch/de";
+"tk_badgeInformation_furtherInformation_link_value" = "https://www.eid.admin.ch/de/swiyu-informiert-signalisiert-und-alarmiert";
 "tk_badgeInformation_inBaseRegistry_primary" = "%@ è registrà be en il register da basa e betg en il register da confidenza.";
 "tk_badgeInformation_inBaseRegistry_secondary" = "Sin basa da questas infurmaziuns na po la Confederaziun betg verifitgar, schebain i sa tracta efectivamain da %1$@.\n\nRemartga: Cundivida Vossas datas mo, sche Vus avais fidanza en %1$@. Sche Vus avais l’impressiun che %1$@ dumonda memia bleras datas, pudais far ina communicaziun. L’Uffizi federal da giustia avra lura ina procedura da controlla ed emprenda, sche necessari, ulteriuras mesiras.";
 "tk_badgeInformation_inTrustRegistry_primary" = "%@ è registrà en il register da basa e da confidenza.";
@@ -205,9 +206,12 @@
 "tk_eidRequest_notification_legalRepresentantPendingConsent_readyForAV_primary" = "Obtegnair il consentiment";
 "tk_eidRequest_notification_legalRepresentantPendingConsent_readyForAV_secondary" = "Verifitgain per plaschair Vossa identitad enfin %@, autramain vegn Vossa ordinaziun annullada.\n\nIl consentiment da Voss geniturs u da Voss tutelader legal manca anc.";
 "tk_eidRequest_notification_walletPairing_button" = "Avanzar";
+"tk_eidRequest_notification_walletPairing_primary" = "Ultims pass da preparar per l’e-ID";
+"tk_eidRequest_notification_walletPairing_secondary" = "Tschernei Voss apparats e verifitgai Vossa identitad per terminar l’empustaziun d’e-ID.";
 "tk_eidRequest_queuing_body" = "Pervi da la gronda dumonda na po Vossa empustaziun deplorablamain betg vegnir elavurada subit.\nCura che Vus essas vidlonder, survegnis Vus in messadi tras l’app.";
 "tk_eidRequest_queuing_body2_ios" = "Termin previs:";
 "tk_eidRequest_queuing_title" = "Retards tar l’elavuraziun";
+"tk_eidRequest_recordDocument_information_button_primary" = "Avanzar";
 "tk_eidRequest_recordDocument_notification_recto_primary" = "Scannescha la vart davant da Voss document";
 "tk_eidRequest_recordDocument_notification_recto_secondary" = "Metta Voss document sin ina surfatscha planiva ed enramai la vart davant. Assegurai che jau haja avunda glisch.";
 "tk_eidRequest_recordDocument_notification_verso_primary" = "Scannescha la vart davos da Voss document";
@@ -217,6 +221,7 @@
 "tk_eidRequest_recordSelfie_notification_primary" = "Registrar Voss selfie";
 "tk_eidRequest_recordSelfie_notification_secondary" = "Posiziunescha Vossa fatscha entaifer la quadro. Stei davant in fund neutral cun avunda glisch.";
 "tk_eidRequest_recordSelfie_title" = "Registrar selfie";
+"tk_eidRequest_scanDocument_information_button_primary" = "Avanzar";
 "tk_eidRequest_sdk_initialization_primary" = "Inicialisar ambient…";
 "tk_eidRequest_submitError_primaryButton" = "Empruvar anc ina giada";
 "tk_eidRequest_submitError_tertiary" = "Agid e FAQ";
@@ -234,13 +239,17 @@
 "tk_eidRequest_walletPairing_currentDevice_sectionTitle" = "Quest apparat";
 "tk_eidRequest_walletPairing_offer_rejected_button_primary" = "Empruvar anc ina giada";
 "tk_eidRequest_walletPairing_offer_rejected_tertiary" = "Agid e FAQ";
-"tk_eidRequest_walletPairing_primary" = "Tscherna nua che Vus vulais retschaiver Vossa e-ID";
-"tk_eidRequest_walletPairing_secondary" = "Configurai Vossa e-ID sin quest apparat u sin ulteriurs apparats. Quai na po betg vegnir midà pli tard.";
+"tk_eidRequest_walletPairing_primary" = "Tschernei, nua che Vus vulais retschaiver l’e-ID";
+"tk_eidRequest_walletPairing_secondary" = "Installai l’e-ID sin quest apparat u sin ulteriurs apparats. Ina midada pli tard n’è betg pussaivla.";
 "tk_errorView_default_primaryButton" = "Empruvar da nov";
 "tk_error_connectionproblem_body" = "Tscherna nua che Vus vulais retschaiver Vossa e-ID";
 "tk_error_connectionproblem_title" = "Configurai Vossa e-ID sin quest apparat u sin ulteriurs apparats. Quai na po betg vegnir midà pli tard.";
 "tk_error_emptywallet_body" = "En vossa swiyu app n’hai anc naginas cumprovas.";
 "tk_error_emptywallet_title" = "swiyu app vida";
+"tk_error_generic_button_primary" = "Empruvar da nov";
+"tk_error_generic_helpLink_label" = "Agid e FAQ";
+"tk_error_generic_helpLink_value" = "https://www.eid.admin.ch/de/hilfe";
+"tk_error_generic_primary" = "Insatge n’è ì mal";
 "tk_error_invalidrequest_body" = "Questa verificaziun na po betg vegnir exequida.";
 "tk_error_invalidrequest_title" = "Verificaziun betg valaivla";
 "tk_error_invitationcredential_body" = "Questa cumprova na po betg vegnir agiuntada a la swiyu app.";
@@ -263,6 +272,7 @@
 "tk_global_closedetails_alt" = "Serrar ils detagls";
 "tk_global_continue" = "Vinavant";
 "tk_global_delete" = "Stizzar";
+"tk_global_externalLink_alt" = "Link per bandunar la swiyu app";
 "tk_global_finish" = "Finir";
 "tk_global_getbetaid_primarybutton" = "Crear ina Beta-ID";
 "tk_global_invisible_alt" = "Mussar il pled-clav";
@@ -280,7 +290,7 @@
 "tk_global_welcomeback" = "Bainvegni enavos";
 "tk_global_wrongdata" = "Rapportar infurmaziuns incorrectas";
 "tk_home_homescreen_alt" = "Pagina iniziala da la swiyu app";
-"tk_home_saveDeferredCredential_popup" = "Cumprova memorisada";
+"tk_home_saveDeferredCredential_popup" = "Cumprova è vegnì agiuntà.";
 "tk_issuer_legitimate" = "Emissiun autorisada";
 "tk_issuer_notInSystem" = "Nunenconuschent";
 "tk_issuer_notLegitimate" = "Emissiun betg autorisada";
@@ -303,6 +313,7 @@
 "tk_menu_homeList_orderEid" = "Ordinaziun d’e-ID";
 "tk_menu_homeList_settings" = "Configuraziuns";
 "tk_nonCompliance_report_info_body" = "En il pass proxim registreschan Vus Vossa communicaziun per l’autoritad responsabla. Inditges er tge datas che èn vegnidas dumandadas senza autorisaziun.";
+"tk_nonCompliance_report_info_moreInformation_link_text" = "Mussar dapli cussegls";
 "tk_nonCompliance_report_info_moreInformation_link_value" = "https://www.eid.admin.ch/de/swiyu-privacy";
 "tk_nonCompliance_report_info_title" = "Procedura recumandada";
 "tk_onboarding_analytics_button_primary" = "Lubir";
@@ -370,12 +381,14 @@
 "tk_present_review_confirmPresentation_button_secondary" = "Refusar da cundivider datas";
 "tk_present_review_confirmPresentation_primary" = "Vulais cundivider Vossas datas cun in verifitgar betg enconuschent?";
 "tk_present_review_confirmPresentation_secondary" = "Quest verifitgar na fa betg part da l’ecosistem da swiyu. La confidenza na po betg vegnir garantida. Vulais cuntinuar?";
+"tk_present_review_credential_dataSection_primary" = "infurmaziuns cundivididas";
 "tk_present_review_loading" = "Spetgar per plaschair";
 "tk_present_review_loading_alt" = "Spetgar per plaschair. Vossas infurmaziuns vegnan transmessas.";
 "tk_present_review_primaryButton" = "Lubir";
 "tk_present_review_primaryButton_alt" = "Cundivider infurmaziuns";
 "tk_present_review_secondaryButton" = "Refusar";
 "tk_present_review_secondaryButton_alt" = "Refusar";
+"tk_present_review_sessionTimeout_primaryButton" = "Login";
 "tk_present_verifier_name_unknown" = "Examinatur nunenconuschent";
 "tk_qrscanner_button_close_alt" = "Serrar il scanner da codes QR";
 "tk_qrscanner_lightoff_label" = "Lampa da fiffa spenta. Smatgai duas giadas per l’activar";
@@ -384,6 +397,7 @@
 "tk_qrscanner_processing_alt" = "Il code QR è vegnì scannà";
 "tk_qrscanner_scanning_body" = "Per s’identifitgar u agiuntar permiss e documents d’identitad.";
 "tk_qrscanner_scanning_title" = "Scannar il code QR";
+"tk_qrscanner_sessionTimeout_primaryButton" = "Login";
 "tk_receive_cameraaccessneeded1_body" = "La camera ha ina funcziun impurtanta. Senza la camera na pudais Vus registrar nagins permiss e documents d’identitad ni As identifitgar.";
 "tk_receive_cameraaccessneeded1_title" = "Lubir l’access a la camera";
 "tk_receive_cameraaccessneeded3_body" = "Per plaschair lubi l’access en las configuraziuns.\n\nSenza camera na pudais Vus registrar nagins permiss e documents d’identitad ni As identifitgar.";
@@ -411,7 +425,7 @@
 "tk_settings_general_feedback_link_value" = "https://findmind.ch/c/feedback_public_beta_en";
 "tk_settings_general_help_link_text" = "Agid e contact";
 "tk_settings_general_help_link_value" = "https://www.eid.admin.ch/de/hilfe";
-"tk_settings_general_imprint" = "Impressum";
+"tk_settings_general_imprint" = "Infurmaziuns legalas";
 "tk_settings_general_licences" = "Licenzas";
 "tk_settings_general_sectionTitle" = "General";
 "tk_settings_imprint_appInformation_appVersion" = "Versiun da l’app";
@@ -426,7 +440,7 @@
 "tk_settings_imprint_publisher_link_text" = "www.bit.admin.ch";
 "tk_settings_imprint_publisher_link_value" = "https://www.bit.admin.ch/en";
 "tk_settings_imprint_publisher_sectionTitle" = "Emettur, realisaziun ed exploitaziun";
-"tk_settings_imprint_title" = "Impressum";
+"tk_settings_imprint_title" = "Infurmaziuns legalas";
 "tk_settings_licences_body" = "Qua chatta Vus ina survista da las licenzas da software utilisadas da l’app swiyu.\nLas licenzas correspundan a las directivas da protecziun da datas da l’UFIT ed als pli novs standards da segirezza. Cun questa glista vulain nus crear transparenza per las persunas che fan diever da l’app.";
 "tk_settings_licences_emptyState" = "L’app na fa actualmain diever da naginas bibliotecas externas.";
 "tk_settings_licences_link_text" = "Ulteriuras infurmaziuns";

@@ -1,4 +1,4 @@
-import JsonSchemaValidatorSources
+import JsonSchemaValidator
 import XCTest
 @testable import BITOpenID
 @testable import BITTestingCore

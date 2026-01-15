@@ -33,6 +33,7 @@ extension EIDRequestCase: Mockable {
     static let sampleAVReadyNoOnlineSessionTimeout: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-without-online-session-timeout", bundle: Bundle.module)
     static let sampleWithoutState: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-without-state", bundle: Bundle.module)
     static let sampleWalletPairing: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-wallet-pairing", bundle: Bundle.module)
+    static let sampleAutoVerification: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-auto-verification", bundle: Bundle.module)
 
   }
 }

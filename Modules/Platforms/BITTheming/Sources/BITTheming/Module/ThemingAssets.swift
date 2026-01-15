@@ -99,6 +99,10 @@ public enum ThemingAssets {
   }
 
   public enum Component {
+    public enum Link {
+      public static let label = ColorAsset(name: "Component/Link/label")
+    }
+
     public enum Pill {
       public static let brightPurpleLabel = ColorAsset(name: "Component/Pill/Bright Purple Label")
       public static let brightPurple = ColorAsset(name: "Component/Pill/Bright Purple")

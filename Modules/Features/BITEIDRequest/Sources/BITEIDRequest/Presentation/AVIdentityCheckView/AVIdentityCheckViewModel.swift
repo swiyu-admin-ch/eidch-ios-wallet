@@ -1,3 +1,4 @@
+import BITNavigation
 import Factory
 import SwiftUI
 
@@ -16,6 +17,7 @@ class AVIdentityCheckViewModel: ObservableObject {
 
       let response = try await startAutoVerificationUseCase.execute(for: caseId)
       context.autoVerificationResponse = response
+      context.identityType = response.isNFCRequired ? .passport : .identityCard
 
       destination = getNextDestination(from: response)
     } catch {
@@ -29,12 +31,16 @@ class AVIdentityCheckViewModel: ObservableObject {
   @Injected(\.startAutoVerificationUseCase) private var startAutoVerificationUseCase
 
   private func getNextDestination(from response: AutoVerificationResponse) -> EIDRequestDestinations {
-    if response.isScanDocumentRequired {
-      .scanDocument
-    } else if response.isNFCRequired {
-      .nfcScan
-    } else {
-      .recordDocument
+    if response.isNFCRequired {
+      return .nfcScan
     }
+    if response.isScanDocumentRequired {
+      return .scanDocumentInformation
+    }
+    if response.isDocumentVideoRecordingRequired {
+      return .recordDocumentInformation
+    }
+
+    return .avIntroSelfieVideo
   }
 }

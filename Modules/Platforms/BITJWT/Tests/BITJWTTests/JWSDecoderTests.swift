@@ -17,22 +17,22 @@ final class JWSDecoderTests: XCTestCase {
   }
 
   func testDecode_ValidJWS_ReturnsJWS() throws {
-    let data = JWTRegisteredPayload.Mock.sampleData
+    let data = RegisteredClaimsJWT.Mock.sampleData
 
-    let jws = try decoder.decode(JWTRegisteredPayload.self, from: data)
+    let jws = try decoder.decode(RegisteredClaimsJWT.self, from: data)
 
-    let expectedData = JWTRegisteredPayload.Mock.registeredPayload
+    let expectedData = RegisteredClaimsJWT.Mock.registeredClaims
     XCTAssertEqual(jws.payload, expectedData)
     try assertRawPayload(jws.rawPayload, expectedData: expectedData)
 
     XCTAssertEqual(jws.header.algorithm, JWTAlgorithm.ES512)
     XCTAssertEqual(jws.header.type, "jwt")
     XCTAssertEqual(jws.header.keyIdentifier, "keyIdentifier")
-    XCTAssertEqual(jws.header.jwk, JWTRegisteredPayload.Mock.jwk)
+    XCTAssertEqual(jws.header.jwk, RegisteredClaimsJWT.Mock.jwk)
   }
 
   func testDecode_ValidJWSWithIsoDate_ReturnsJWS() throws {
-    let data = JWTRegisteredPayload.Mock.sampleIsoDate
+    let data = RegisteredClaimsJWT.Mock.sampleIsoDate
     decoder.dateDecodingStrategy = .iso8601
 
     let jws = try decoder.decode(TestDatePayload.self, from: data)
@@ -45,7 +45,7 @@ final class JWSDecoderTests: XCTestCase {
   }
 
   func testDecode_ValidJWSWithNoType_ReturnsJWS() throws {
-    let data = JWTRegisteredPayload.Mock.noTypeData
+    let data = RegisteredClaimsJWT.Mock.noTypeData
 
     let jws = try decoder.decode(TestEmptyPayload.self, from: data)
 
@@ -58,31 +58,31 @@ final class JWSDecoderTests: XCTestCase {
   func testDecode_InvalidJWS_ThrowsError() throws {
     let data = "invalid".data(using: .utf8)!
 
-    XCTAssertThrowsError(try decoder.decode(JWTRegisteredPayload.self, from: data)) { error in
+    XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
       XCTAssertTrue(error is JOSESwiftError)
     }
   }
 
   func testDecode_NoneAlgorithm_ThrowsError() throws {
-    let data = JWTRegisteredPayload.Mock.noneAlgorithmData
+    let data = RegisteredClaimsJWT.Mock.noneAlgorithmData
 
-    XCTAssertThrowsError(try decoder.decode(JWTRegisteredPayload.self, from: data)) { error in
+    XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
       XCTAssertTrue(error is JOSESwiftError)
     }
   }
 
   func testDecode_InvalidAlgorithm_ThrowsError() throws {
-    let data = JWTRegisteredPayload.Mock.invalidAlgorithmData
+    let data = RegisteredClaimsJWT.Mock.invalidAlgorithmData
 
-    XCTAssertThrowsError(try decoder.decode(JWTRegisteredPayload.self, from: data)) { error in
+    XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
       XCTAssertEqual(error as? JWSDecoderError, .algorithmNotFound)
     }
   }
 
   func testDecode_InvalidType_ThrowsError() throws {
-    let data = JWTRegisteredPayload.Mock.invalidTypeData
+    let data = RegisteredClaimsJWT.Mock.invalidTypeData
 
-    XCTAssertThrowsError(try decoder.decode(JWTRegisteredPayload.self, from: data)) { error in
+    XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
       XCTAssertEqual(error as? JWSDecoderError, .invalidType)
     }
   }
@@ -91,16 +91,16 @@ final class JWSDecoderTests: XCTestCase {
 
   private var decoder = JWSDecoder()
 
-  private func assertRawPayload(_ rawPayload: String, expectedData: JWTRegisteredPayload) throws {
+  private func assertRawPayload(_ rawPayload: String, expectedData: RegisteredClaimsJWT) throws {
     let rawPayloadData = rawPayload.data(using: .utf8)!
     let payload = try JSONSerialization.jsonObject(with: rawPayloadData, options: []) as! [String: Any]
     XCTAssertEqual(payload.count, 7)
-    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.issuer.rawValue] as? String, expectedData.issuer)
-    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.subject.rawValue] as? String, expectedData.subject)
-    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.audience.rawValue] as? String, expectedData.audience)
-    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.expiredAt.rawValue] as? TimeInterval, expectedData.expiredAt?.timeIntervalSince1970)
-    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.activatedAt.rawValue] as? TimeInterval, expectedData.activatedAt?.timeIntervalSince1970)
-    XCTAssertEqual(payload[JWTRegisteredPayload.CodingKeys.issuedAt.rawValue] as? TimeInterval, expectedData.issuedAt?.timeIntervalSince1970)
+    XCTAssertEqual(payload[RegisteredClaimsJWT.CodingKeys.issuer.rawValue] as? String, expectedData.issuer)
+    XCTAssertEqual(payload[RegisteredClaimsJWT.CodingKeys.subject.rawValue] as? String, expectedData.subject)
+    XCTAssertEqual(payload[RegisteredClaimsJWT.CodingKeys.audience.rawValue] as? String, expectedData.audience)
+    XCTAssertEqual(payload[RegisteredClaimsJWT.CodingKeys.expiredAt.rawValue] as? TimeInterval, expectedData.expiredAt?.timeIntervalSince1970)
+    XCTAssertEqual(payload[RegisteredClaimsJWT.CodingKeys.activatedAt.rawValue] as? TimeInterval, expectedData.activatedAt?.timeIntervalSince1970)
+    XCTAssertEqual(payload[RegisteredClaimsJWT.CodingKeys.issuedAt.rawValue] as? TimeInterval, expectedData.issuedAt?.timeIntervalSince1970)
     XCTAssertEqual(payload["test"] as? String, "value")
   }
 
@@ -108,28 +108,59 @@ final class JWSDecoderTests: XCTestCase {
 
 // MARK: - TestDatePayload
 
-private struct TestDatePayload: JWTPayload & Codable & Equatable {
+private struct TestDatePayload: JWT {
 
-  let type: String? = "test"
-  private let date: Date
+  // MARK: Lifecycle
 
   init(date: Date) {
     self.date = date
   }
 
+  // MARK: Internal
+
   enum CodingKeys: String, CodingKey {
     case date
   }
+
+  let type: String? = "test"
+
+  var issuer: String? { nil }
+
+  var audience: String? { nil }
+
+  var subject: String? { nil }
+
+  var issuedAt: Date? { nil }
+
+  var expiredAt: Date? { nil }
+
+  var activatedAt: Date? { nil }
+
+  // MARK: Private
+
+  private let date: Date
 
 }
 
 // MARK: - TestEmptyPayload
 
-private struct TestEmptyPayload: JWTPayload & Codable & Equatable {
+private struct TestEmptyPayload: JWT {
 
   let type: String? = nil
 
   enum CodingKeys: CodingKey {}
+
+  var issuer: String? { nil }
+
+  var audience: String? { nil }
+
+  var subject: String? { nil }
+
+  var issuedAt: Date? { nil }
+
+  var expiredAt: Date? { nil }
+
+  var activatedAt: Date? { nil }
 
 }
 

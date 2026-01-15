@@ -3,7 +3,7 @@ import NavigatorUI
 import SwiftUI
 
 @MainActor
-class IntroductionModule {
+class IntroductionModule: EIDRequestModule {
 
   // MARK: Lifecycle
 

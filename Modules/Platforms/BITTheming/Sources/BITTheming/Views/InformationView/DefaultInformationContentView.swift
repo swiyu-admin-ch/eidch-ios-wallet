@@ -50,7 +50,7 @@ public struct DefaultInformationContentView: View {
         if let tertiaryAction {
           ButtonLinkText(tertiary, { tertiaryAction() })
             .font(.custom.footnote)
-            .foregroundColor(ThemingAssets.Brand.Core.swissRedLabel.swiftUIColor)
+            .foregroundColor(ThemingAssets.Component.Link.label.swiftUIColor)
             .accessibilityLabel(tertiary)
         } else {
           Text(tertiary)

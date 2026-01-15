@@ -16,7 +16,7 @@ final class VcSdJwtCredentialJsonGeneratorTests: XCTestCase {
   }
 
   func testGenerate_happyPath() throws {
-    let mockCredential = VcSdJwtPayload.Mock.sample
+    let mockCredential = VcSdJWS.Mock.sample
 
     let json = try generator.generate(for: mockCredential)
 

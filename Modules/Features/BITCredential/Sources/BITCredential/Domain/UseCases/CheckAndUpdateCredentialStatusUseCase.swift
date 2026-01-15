@@ -3,6 +3,16 @@ import BITCredentialShared
 import BITOpenID
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - CheckAndUpdateCredentialStatusUseCaseProtocol
+
+@Spyable
+protocol CheckAndUpdateCredentialStatusUseCaseProtocol {
+  @discardableResult
+  func execute(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential]
+  func execute(for credential: VerifiableCredential) async throws -> VerifiableCredential
+}
 
 // MARK: - CheckAndUpdateCredentialStatusUseCase
 

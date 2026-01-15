@@ -55,7 +55,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   }
 
   func testGenerate_noKeyBinding() throws {
-    let mockCredentialNoKeyBinding = VcSdJwtPayload.Mock.noKeyBinding
+    let mockCredentialNoKeyBinding = VcSdJWS.Mock.noKeyBinding
     let requestedClaims = [ "firstName" ]
 
     let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredentialNoKeyBinding, keyPair: nil, fields: requestedClaims)
@@ -83,10 +83,10 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
 
   private let mockKeyPair = VaultKeyPair.Mock.ES256
 
-  private var jwsEncoderMock: JWSEncoderMock<KeyBindingPayload>!
+  private var jwsEncoderMock: JWSEncoderMock<KeyBindingJWT>!
   private var generator: VcSdJwtVpTokenGenerator!
   private var sha256HasherSpy = HashableSpy()
-  private var mockCredential = VcSdJwtPayload.Mock.sample
+  private var mockCredential = VcSdJWS.Mock.sample
 
   private func asserts(_ vpToken: VpToken, nbOfDisclosures: Int, hasKeyBinding: Bool) {
     XCTAssertFalse(vpToken.isEmpty)

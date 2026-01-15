@@ -3,7 +3,7 @@ import Factory
 import Foundation
 
 @MainActor
-class LegalRepresentantQRCodeViewModel: ObservableObject, NavigationClosable {
+class LegalRepresentantQRCodeViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -33,7 +33,7 @@ class LegalRepresentantQRCodeViewModel: ObservableObject, NavigationClosable {
       let state = try RequestCaseViewState(requestCase)
 
       if case .unknown = state {
-        return isNavigationCloseTriggered = true
+        return close()
       }
 
       destination = .legalRepresentantConsentState(state: state)
@@ -58,6 +58,13 @@ class LegalRepresentantQRCodeViewModel: ObservableObject, NavigationClosable {
 
   private let caseId: String
 
-  @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
-  @Injected(\.getLegalRepresentantVerificationQRCodeUseCase) private var getLegalRepresentantVerificationQRCodeUseCase: GetLegalRepresentantVerificationQRCodeUseCaseProtocol
+  @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase
+  @Injected(\.getLegalRepresentantVerificationQRCodeUseCase) private var getLegalRepresentantVerificationQRCodeUseCase
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+
+  private func close() {
+    isNavigationCloseTriggered = true
+    coordinator.cleanup()
+  }
+
 }

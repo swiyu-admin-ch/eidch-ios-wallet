@@ -18,11 +18,11 @@ final class JWSEncoderTests: XCTestCase {
   }
 
   func testEncode_EncodePayloadAndDecode_PayloadAndHeaderFieldsMatch() throws {
-    let payload = JWTRegisteredPayload.Mock.registeredPayload
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
 
     let jws = try encoder.encode(payload, using: mockKeyPair)
 
-    let decoded = try JWSDecoder().decode(JWTRegisteredPayload.self, from: jws)
+    let decoded = try JWSDecoder().decode(RegisteredClaimsJWT.self, from: jws)
     XCTAssertEqual(decoded.payload, payload)
     XCTAssertEqual(decoded.header.algorithm.rawValue, mockKeyPair.algorithm.rawValue)
     XCTAssertNil(decoded.header.keyIdentifier)
@@ -37,12 +37,12 @@ final class JWSEncoderTests: XCTestCase {
   }
 
   func testEncode_EncodePayloadAndDecodeNoneKeyEncodingStrategy_PayloadAndHeaderFieldsMatch() throws {
-    let payload = JWTRegisteredPayload.Mock.registeredPayload
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
     encoder.keyEncodingStrategy = .none
 
     let jws = try encoder.encode(payload, using: mockKeyPair)
 
-    let decoded = try JWSDecoder().decode(JWTRegisteredPayload.self, from: jws)
+    let decoded = try JWSDecoder().decode(RegisteredClaimsJWT.self, from: jws)
     XCTAssertEqual(decoded.payload, payload)
     XCTAssertEqual(decoded.header.algorithm.rawValue, mockKeyPair.algorithm.rawValue)
     XCTAssertNil(decoded.header.keyIdentifier)
@@ -51,14 +51,14 @@ final class JWSEncoderTests: XCTestCase {
   }
 
   func testEncode_EncodePayloadAndDecodeIsoDateEncodingStrategy_PayloadAndHeaderFieldsMatch() throws {
-    let payload = JWTRegisteredPayload.Mock.registeredPayload
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
     encoder.keyEncodingStrategy = .none
     encoder.dateEncodingStrategy = .iso8601
     let decoder = JWSDecoder(dateDecodingStrategy: .iso8601)
 
     let jws = try encoder.encode(payload, using: mockKeyPair)
 
-    let decoded = try decoder.decode(JWTRegisteredPayload.self, from: jws)
+    let decoded = try decoder.decode(RegisteredClaimsJWT.self, from: jws)
     XCTAssertEqual(decoded.payload, payload)
     XCTAssertEqual(decoded.header.algorithm.rawValue, mockKeyPair.algorithm.rawValue)
     XCTAssertNil(decoded.header.keyIdentifier)
@@ -67,7 +67,7 @@ final class JWSEncoderTests: XCTestCase {
   }
 
   func testEncode_JwkCannotBeCreated_ThrowsError() throws {
-    let payload = JWTRegisteredPayload.Mock.registeredPayload
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
     let privateKey = SecKeyTestsHelper.createPrivateKey(type: kSecAttrKeyTypeRSA as String)
     let invalidKeyPair = VaultKeyPair(
       identifier: UUID().uuidString,
@@ -80,7 +80,7 @@ final class JWSEncoderTests: XCTestCase {
   }
 
   func testEncode_withAdditionalHeaderParameter_encodes() throws {
-    let payload = JWTRegisteredPayload.Mock.registeredPayload
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
     let additionalHeaderParameters: [String: Any] = ["key_attestation": "key_attestation_value"]
 
     let jws = try encoder.encode(payload, using: mockKeyPair, additionalHeaderParameters: additionalHeaderParameters)
@@ -94,7 +94,7 @@ final class JWSEncoderTests: XCTestCase {
   }
 
   func testEncode_withMultipleAdditionalHeaderParameter_merges() throws {
-    let payload = JWTRegisteredPayload.Mock.registeredPayload
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
     let additionalHeaderParameters: [String: Any] = [
       "key_attestation": "key_attestation_value",
       "foo": 1234,

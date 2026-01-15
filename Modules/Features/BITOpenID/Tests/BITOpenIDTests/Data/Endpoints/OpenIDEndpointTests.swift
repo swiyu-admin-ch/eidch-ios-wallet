@@ -1,3 +1,4 @@
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import BITCore
 import Moya
 import XCTest
@@ -5,25 +6,21 @@ import XCTest
 
 final class OpenIDEndpointTests: XCTestCase {
 
+  // MARK: Internal
+
   func testMetadata() throws {
-    let baseUrl = "https://example.com"
     let expectedEndpoint = ".well-known/openid-credential-issuer"
 
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
+    let endpoint = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: urlMock))
 
-    let endpoint = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url))
-    XCTAssertEqual("\(baseUrl)/\(expectedEndpoint)", endpoint.absoluteString)
+    XCTAssertEqual("\(Self.baseURLMock)/\(expectedEndpoint)", endpoint.absoluteString)
   }
 
   func testMetadata_multipleUrlFormats() throws {
-    let expectedBaseUrl = "https://example.com"
     let expectedEndpoint = ".well-known/openid-credential-issuer"
-    let baseUrl1 = expectedBaseUrl
-    let baseUrl2 = "\(expectedBaseUrl)/"
-    let baseUrl3 = "\(expectedBaseUrl)/?param=1"
+    let baseUrl1 = Self.baseURLMock
+    let baseUrl2 = "\(Self.baseURLMock)/"
+    let baseUrl3 = "\(Self.baseURLMock)/?param=1"
 
     guard let url1 = URL(string: baseUrl1) else {
       XCTFail("Error while trying to build URL")
@@ -42,73 +39,98 @@ final class OpenIDEndpointTests: XCTestCase {
     let endpoint2 = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url2))
     let endpoint3 = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url3))
 
-    let expectedAbsoluteUrlString = "\(expectedBaseUrl)/\(expectedEndpoint)"
+    let expectedAbsoluteUrlString = "\(Self.baseURLMock)/\(expectedEndpoint)"
     XCTAssertEqual(expectedAbsoluteUrlString, endpoint1.absoluteString)
     XCTAssertEqual(expectedAbsoluteUrlString, endpoint2.absoluteString)
     XCTAssertEqual("\(expectedAbsoluteUrlString)?param=1", endpoint3.absoluteString, "parameters are expected at the end anyway")
   }
 
   func testOpenIdConfiguration() throws {
-    let baseUrl = "https://example.com"
     let expectedEndpoint = ".well-known/oauth-authorization-server"
 
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
+    let endpoint = URL(target: OpenIDEndpoint.openIdConfiguration(issuerURL: urlMock))
+    XCTAssertEqual("\(Self.baseURLMock)/\(expectedEndpoint)", endpoint.absoluteString)
+  }
 
-    let endpoint = URL(target: OpenIDEndpoint.openIdConfiguration(issuerURL: url))
-    XCTAssertEqual("\(baseUrl)/\(expectedEndpoint)", endpoint.absoluteString)
+  func testMetadataHeaders() throws {
+    let endpoint = OpenIDEndpoint.metadata(fromIssuerUrl: urlMock)
+
+    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
+  }
+
+  func testOpenIdConfigurationHeaders() throws {
+    let endpoint = OpenIDEndpoint.openIdConfiguration(issuerURL: urlMock)
+
+    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
+  }
+
+  func testFallbackOpenIdConfigurationHeaders() throws {
+    let endpoint = OpenIDEndpoint.fallbackOpenIdConfiguration(issuerUrl: urlMock)
+
+    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
   }
 
   func testAccessToken() throws {
-    let baseUrl = "https://example.com"
     let code = "12345678-9ABC-ABCD-ABCD-ABCDEFGHIJKLMN"
 
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
+    let endpoint = URL(target: OpenIDEndpoint.accessToken(fromTokenUrl: urlMock, preAuthorizedCode: code))
 
-    let endpoint = URL(target: OpenIDEndpoint.accessToken(fromTokenUrl: url, preAuthorizedCode: code))
-    XCTAssertEqual("\(baseUrl)", endpoint.absoluteString)
+    XCTAssertEqual(urlMock, endpoint)
+  }
+
+  func testNonce() throws {
+    let endpoint = URL(target: OpenIDEndpoint.nonce(url: urlMock))
+
+    XCTAssertEqual(urlMock, endpoint)
   }
 
   func testCredential() throws {
-    let baseUrl = "https://example.com"
-    let token = "12345678-9ABC-ABCD-ABCD-ABCDEFGHIJKLMN"
+    let token = AccessToken.Mock.sample
 
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
+    let endpoint = URL(target: OpenIDEndpoint.credential(url: urlMock, body: .Mock.sample, accessToken: token))
 
-    let endpoint = URL(target: OpenIDEndpoint.credential(url: url, body: .Mock.sample, acccessToken: token))
-    XCTAssertEqual("\(baseUrl)", endpoint.absoluteString)
+    XCTAssertEqual(urlMock, endpoint)
   }
 
   func testPublicKeyInfo() throws {
-    let baseUrl = "https://example.com"
+    let endpoint = URL(target: OpenIDEndpoint.publicKeyInfo(jwksUrl: urlMock))
 
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
-
-    let endpoint = URL(target: OpenIDEndpoint.publicKeyInfo(jwksUrl: url))
-    XCTAssertEqual("\(baseUrl)", endpoint.absoluteString)
+    XCTAssertEqual(urlMock, endpoint)
   }
 
   func testStatus() throws {
-    let baseUrl = "https://example.com"
+    let endpoint = URL(target: OpenIDEndpoint.status(url: urlMock))
 
-    guard let url = URL(string: baseUrl) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
-
-    let endpoint = URL(target: OpenIDEndpoint.status(url: url))
-    XCTAssertEqual("\(baseUrl)", endpoint.absoluteString)
+    XCTAssertEqual(urlMock, endpoint)
   }
 
+  func testCredentialHeaders() throws {
+    let token = AccessToken.Mock.sample
+
+    let endpoint = OpenIDEndpoint.credential(url: urlMock, body: .Mock.sample, accessToken: token)
+
+    XCTAssertEqual(endpoint.headers?["SWIYU-API-Version"], "2")
+    XCTAssertEqual(endpoint.headers?["authorization"], "\(token.tokenType.rawValue) \(token.accessToken)")
+  }
+
+  func testDeferredCredentialHeaders() throws {
+    let accessToken = "token"
+
+    let endpoint = OpenIDEndpoint.deferredCredential(url: urlMock, transactionId: "tx", accessToken: accessToken)
+
+    XCTAssertEqual(endpoint.headers?["SWIYU-API-Version"], "2")
+    XCTAssertEqual(endpoint.headers?["authorization"], "Bearer \(accessToken)")
+  }
+
+  func testAccessTokenHeaders() throws {
+    let endpoint = OpenIDEndpoint.accessToken(fromTokenUrl: urlMock, preAuthorizedCode: "code")
+
+    XCTAssertEqual(endpoint.headers?["SWIYU-API-Version"], "2")
+  }
+
+  // MARK: Private
+
+  private static let baseURLMock = "https://example.com"
+
+  private let urlMock = URL(string: baseURLMock)!
 }

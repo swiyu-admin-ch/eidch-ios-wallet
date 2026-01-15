@@ -110,6 +110,9 @@ public struct NetworkService {
     var registeredPlugins = NetworkContainer.shared.plugins()
     registeredPlugins.append(contentsOf: plugins)
 
+    let timeout = target.defaultTimeoutInterval
+    let session = NetworkContainer.shared.session(timeout: timeout)
+
     if NetworkContainer.shared.endpointClosure() != nil {
       let endpointClosure = { (target: T) -> Endpoint in
         Endpoint(
@@ -122,12 +125,12 @@ public struct NetworkService {
       return MoyaProvider<T>(
         endpointClosure: endpointClosure,
         stubClosure: NetworkContainer.shared.stubClosure(),
-        session: NetworkContainer.shared.session(),
+        session: session,
         plugins: registeredPlugins)
     }
     return MoyaProvider<T>(
       stubClosure: NetworkContainer.shared.stubClosure(),
-      session: NetworkContainer.shared.session(),
+      session: session,
       plugins: registeredPlugins)
   }
 

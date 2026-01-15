@@ -29,7 +29,7 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
     let response = try await networkService.request(AttestationServiceEndpoint.clientAttestation(requestBody))
     let clientAttestationResponse = try JSONDecoder().decode(ClientAttestationResponse.self, from: response.data)
 
-    return try jwsDecoder.decode(ClientAttestationPayload.self, from: clientAttestationResponse.clientAttestation.data(using: .utf8) ?? Data())
+    return try jwsDecoder.decode(ClientAttestationJWT.self, from: clientAttestationResponse.clientAttestation.data(using: .utf8) ?? Data())
   }
 
   func fetchKeyAttestation(body: KeyAttestationRequestBody, clientAttestation: ClientAttestation) async throws -> KeyAttestation {
@@ -46,7 +46,7 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
           proofOfPossession: proofOfPossession.rawJWS),
       ])
 
-    return try jwsDecoder.decode(KeyAttestationPayload.self, from: result.keyAttestationResponse.keyAttestation.data(using: .utf8) ?? Data())
+    return try jwsDecoder.decode(KeyAttestationJWT.self, from: result.keyAttestationResponse.keyAttestation.data(using: .utf8) ?? Data())
   }
 
   // MARK: Private

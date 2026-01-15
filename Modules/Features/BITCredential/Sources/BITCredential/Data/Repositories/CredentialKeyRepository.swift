@@ -27,8 +27,8 @@ struct CredentialKeyRepository: CredentialKeyRepositoryProtocol {
     guard
       userSession.isLoggedIn,
       let context = userSession.context
-
     else {
+      userSession.endSession()
       throw UserSessionError.notLoggedIn
     }
 

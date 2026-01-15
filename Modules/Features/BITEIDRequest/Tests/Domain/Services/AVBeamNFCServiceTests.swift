@@ -4,7 +4,7 @@ import XCTest
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping init_with_name
 
 final class AVBeamNFCServiceTests: XCTestCase {
 
@@ -18,7 +18,9 @@ final class AVBeamNFCServiceTests: XCTestCase {
   }
 
   func testFetchResult_success() throws {
-    let result = try service.fetchResult(for: mockCaseId, packageResult: mockAvBeamPackageResult)
+    let result = try service.fetchResult(for: mockCaseId, packageResult: .Mock.with(
+      extractedData: AVBeamPackageResult.Mock.defaultExtractedData,
+      files: [.init(type: .jpg, description: "images/id_document_nfc/NFCAvatar.jpg", data: Data())]))
 
     XCTAssertEqual(result.facePicture, mockAvBeamPackageResult.files.first?.data)
     XCTAssertEqual(result.surname, mockAvBeamPackageResult.data.extractedData[AVBeamNFCService.ExtractedDataIndex.surname.rawValue])

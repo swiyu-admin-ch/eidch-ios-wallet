@@ -4,16 +4,15 @@ import BITNavigation
 import Factory
 import SwiftUI
 
-class DocumentSelectionViewModel: ObservableObject, NavigationClosable {
+class DocumentSelectionViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published var isNavigationCloseTriggered = false
   @Published var destination: EIDRequestDestinations?
 
   func didSelect(_ type: IdentityType) {
     context.identityType = type
-    destination = .scanDocument
+    destination = .scanDocumentInformation
   }
 
   func mrzMockData() {

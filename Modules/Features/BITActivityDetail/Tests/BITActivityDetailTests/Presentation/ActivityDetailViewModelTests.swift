@@ -5,6 +5,7 @@ import XCTest
 @testable import BITActivityDetail
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITL10n
 @testable import BITTestingCore
 
 @MainActor
@@ -96,6 +97,25 @@ final class ActivityDetailViewModelTests: XCTestCase {
     viewModel.deleteActivity()
 
     XCTAssertFalse(viewModel.isDeleteConfirmationPresented)
+  }
+
+  func testShowNonComplianceReportSent_setsToast() {
+    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertFalse(viewModel.isToastPresented)
+
+    viewModel.showNonComplianceReportSent()
+
+    XCTAssertEqual(viewModel.toastMessage, L10n.tkActivityActivityListNonComplianceReportSentTitle)
+    XCTAssertTrue(viewModel.isToastPresented)
+  }
+
+  func testClearToast_resetsToastState() {
+    viewModel.showNonComplianceReportSent()
+
+    viewModel.clearToast()
+
+    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertFalse(viewModel.isToastPresented)
   }
 
   // MARK: Private

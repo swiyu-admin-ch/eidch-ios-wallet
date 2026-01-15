@@ -1,5 +1,7 @@
 import BITL10n
 import Foundation
+import NavigatorUI
+import SwiftUI
 
 // MARK: - ErrorDataset
 
@@ -12,63 +14,119 @@ public struct ErrorDataset {
     secondary: String,
     tertiary: String? = nil,
     primaryAction: (() -> Void)? = nil,
-    primaryActionLabel: String? = nil,
+    primaryActionLabel: String? = L10n.tkErrorViewDefaultPrimaryButton,
     secondaryAction: (() -> Void)? = nil,
     secondaryActionLabel: String? = nil,
     tertiaryAction: (() -> Void)? = nil)
   {
-    self.primary = primary
-    self.secondary = secondary
-    self.tertiary = tertiary
-    self.tertiaryAction = tertiaryAction
-    self.primaryAction = primaryAction
-    self.primaryActionLabel = primaryActionLabel
-    self.secondaryAction = secondaryAction
-    self.secondaryActionLabel = secondaryActionLabel
+    var contents = [InformationView2.ContentType]()
+    var actions = [InformationView2.ActionType]()
+
+    contents.append(.title(primary))
+    contents.append(.body(secondary))
+    if let tertiary {
+      if let tertiaryAction {
+        contents.append(.captionButton(tertiary, { _ in tertiaryAction() }))
+      } else {
+        contents.append(.caption(tertiary))
+      }
+    }
+
+    if let primaryAction, let primaryActionLabel {
+      actions.append(.primary(primaryActionLabel, { _ in
+        primaryAction()
+      }))
+    }
+    if let secondaryAction, let secondaryActionLabel {
+      actions.append(.secondary(secondaryActionLabel, { _ in
+        secondaryAction()
+      }))
+    }
+
+    self.init(contents, actions: actions)
   }
 
-  public init(_ error: Error, primaryAction: (() -> Void)? = nil) {
-    primary = L10n.emptyStateErrorTitle
-    secondary = error.localizedDescription
-    tertiary = nil
-    tertiaryAction = nil
-    self.primaryAction = primaryAction
-    primaryActionLabel = nil
-    secondaryAction = nil
-    secondaryActionLabel = nil
+  public init(_ contents: [InformationView2.ContentType], actions: [InformationView2.ActionType] = []) {
+    self.contents = contents
+    self.actions = actions
+  }
+
+  public init(_ error: Error, _ actions: [InformationView2.ActionType]) {
+    self.init([
+      .title(L10n.tkErrorGenericPrimary),
+      .body(L10n.tkErrorGenericSecondary),
+      .captionButton(L10n.tkErrorGenericHelpLinkLabel, { _ in
+        guard let url = URL(string: L10n.tkErrorGenericHelpLinkValue) else { return }
+        UIApplication.shared.open(url)
+      }),
+      .caption("\(String(describing: error))\n\(error.localizedDescription)"),
+    ], actions: actions)
+  }
+
+  @MainActor
+  public init(_ error: Error) {
+    self.init([
+      .title(L10n.tkErrorGenericPrimary),
+      .body(L10n.tkErrorGenericSecondary),
+      .captionButton(L10n.tkErrorGenericHelpLinkLabel, { _ in
+        guard let url = URL(string: L10n.tkErrorGenericHelpLinkValue) else { return }
+        UIApplication.shared.open(url)
+      }),
+      .caption("\(String(describing: error))\n\(error.localizedDescription)"),
+    ], actions: [
+      .primary(L10n.tkErrorGenericButtonPrimary) { $0.pop() },
+    ])
   }
 
   // MARK: Internal
 
-  let primary: String
-  let secondary: String
-  let tertiary: String?
-  let tertiaryAction: (() -> Void)?
+  let contents: [InformationView2.ContentType]
+  let actions: [InformationView2.ActionType]
 
-  let primaryAction: (() -> Void)?
-  let primaryActionLabel: String?
-  let secondaryAction: (() -> Void)?
-  let secondaryActionLabel: String?
+}
 
+extension ErrorDataset {
+  public static func retry(_ error: Error, _ action: @escaping (Navigator) -> Void) -> Self {
+    ErrorDataset(error, [.primary(L10n.tkErrorGenericButtonPrimary, action)])
+  }
 }
 
 // MARK: Hashable
 
 extension ErrorDataset: Hashable {
 
+  // MARK: Public
+
   public static func == (lhs: ErrorDataset, rhs: ErrorDataset) -> Bool {
-    lhs.primary == rhs.primary &&
-      lhs.secondary == rhs.secondary &&
-      lhs.tertiary == rhs.tertiary &&
-      lhs.primaryActionLabel == rhs.primaryActionLabel &&
-      lhs.secondaryActionLabel == rhs.secondaryActionLabel
+    lhs.contentLabels == rhs.contentLabels && lhs.actionLabels == rhs.actionLabels
   }
 
   public func hash(into hasher: inout Hasher) {
-    hasher.combine(primary)
-    hasher.combine(secondary)
-    hasher.combine(tertiary)
-    hasher.combine(primaryActionLabel)
-    hasher.combine(secondaryActionLabel)
+    hasher.combine(contentLabels)
+    hasher.combine(actionLabels)
+  }
+
+  // MARK: Private
+
+  private var contentLabels: [String] {
+    contents.compactMap { content in
+      switch content {
+      case .body(let label, _, _),
+           .caption(let label, _, _),
+           .captionButton(let label, _, _, _),
+           .title(let label, _, _):
+        label
+      }
+    }
+  }
+
+  private var actionLabels: [String] {
+    actions.compactMap { action in
+      switch action {
+      case .primary(let label, _, _, _),
+           .secondary(let label, _, _, _):
+        label
+      }
+    }
   }
 }

@@ -8,9 +8,9 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
   // MARK: Internal
 
   func testGetClaimsDictionary_all_returnsAll() throws {
-    let vcSdJwt = VcSdJwtPayload.Mock.reservedClaimsWithOneClaim
+    let jws = VcSdJWS.Mock.reservedClaimsWithOneClaim
 
-    let claims = vcSdJwt.getClaimsDictionary(.all)
+    let claims = jws.getClaimsDictionary(.all)
 
     XCTAssertEqual(claims.count, 16)
     XCTAssertEqual(claims[claimKeyMock] as? String, claimValueMock)
@@ -18,9 +18,9 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
   }
 
   func testGetClaimsDictionary_nonTechnical_returnsClaimsWithoutReservedNames() throws {
-    let vcSdJwt = VcSdJwtPayload.Mock.reservedClaimsWithOneClaim
+    let jws = VcSdJWS.Mock.reservedClaimsWithOneClaim
 
-    let claims = vcSdJwt.getClaimsDictionary(.nonTechnical)
+    let claims = jws.getClaimsDictionary(.nonTechnical)
 
     XCTAssertEqual(claims.count, 1)
     XCTAssertEqual(claims[claimKeyMock] as? String, claimValueMock)

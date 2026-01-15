@@ -24,7 +24,9 @@ extension Color {
 
   typealias SRGB = (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat)
 
-  func contrastRatio(with color: Color) -> CGFloat? {
+  // MARK: Private
+
+  private func contrastRatio(with color: Color) -> CGFloat? {
     guard
       let currentColorComponents = getSRGBComponents(),
       let colorComponents = color.getSRGBComponents() else
@@ -50,7 +52,7 @@ extension Color {
     return brightnessDifference + colorDifference
   }
 
-  func getSRGBComponents() -> SRGB? {
+  private func getSRGBComponents() -> SRGB? {
     let uiColor = UIColor(self)
     var red: CGFloat = 0
     var green: CGFloat = 0

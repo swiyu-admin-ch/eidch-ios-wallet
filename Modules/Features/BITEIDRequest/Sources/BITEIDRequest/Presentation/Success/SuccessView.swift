@@ -1,4 +1,5 @@
 import BITTheming
+import Factory
 import Foundation
 import NavigatorUI
 import SwiftUI
@@ -12,10 +13,12 @@ struct SuccessView: View {
         .frame(width: 80)
         .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
       Button("Back home") {
+        coordinator.cleanup()
         navigator.dismiss()
       }
     }
   }
 
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
   @Environment(\.navigator) private var navigator
 }

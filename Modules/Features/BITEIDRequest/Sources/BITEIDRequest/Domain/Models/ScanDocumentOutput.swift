@@ -40,6 +40,18 @@ public struct ScanDocumentOutput: Equatable, Hashable {
 
   // MARK: Internal
 
+  struct ExtractedData: Codable {
+    struct Step: Codable {
+      struct Summary: Codable {
+        let documentNumber: String
+      }
+
+      let summary: Summary
+    }
+
+    let steps: [Step]
+  }
+
   static let extractedDataFileName = "extractedData.json"
 
   private(set) var files: [EIDRequestCaseFile]

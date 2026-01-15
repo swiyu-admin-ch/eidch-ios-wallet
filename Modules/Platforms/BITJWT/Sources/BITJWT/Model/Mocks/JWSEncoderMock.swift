@@ -12,7 +12,7 @@ enum JWSEncoderMockError: Error {
 
 // MARK: - JWSEncoderMock
 
-class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
+class JWSEncoderMock<U: JWT>: JWSEncoderProtocol {
 
   var encodeUsingReturnValue: Data?
   var receivedKeyPair: VaultKeyPair?
@@ -21,7 +21,7 @@ class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
   var encodeUsingThrowableError: Error?
   var encodeReturnValue: JWS<U>?
 
-  func encode(_ value: some JWTPayload & Encodable, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data {
+  func encode(_ value: some JWT, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data {
     if let encodeUsingThrowableError {
       throw encodeUsingThrowableError
     }
@@ -32,7 +32,7 @@ class JWSEncoderMock<U: Codable & Equatable>: JWSEncoderProtocol {
     return data
   }
 
-  func encode<T>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> where T: JWTPayload, T: Decodable, T: Encodable, T: Equatable {
+  func encode<T>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> where T: JWT, T: Decodable, T: Encodable, T: Equatable {
     if let encodeUsingThrowableError {
       throw encodeUsingThrowableError
     }

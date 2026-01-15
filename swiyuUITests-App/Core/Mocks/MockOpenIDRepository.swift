@@ -35,16 +35,20 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     AccessToken.Mock.sample
   }
 
-  func fetchCredential(with context: FetchCredentialContext, credentialRequestBody: VcSdJwtCredentialRequestBody) async throws -> FetchAnyCredentialResult {
-    try .credential(VcSdJwtPayload.Mock.validSample())
+  func fetchNonce(from url: URL) async throws -> Nonce {
+    Nonce.Mock.sample
+  }
+
+  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequest) async throws -> FetchAnyCredentialResult {
+    try .credential(VcSdJWS.Mock.validSample())
+  }
+
+  func fetchCredential(from url: URL, transactionId: String, accessToken: String, format: String) async throws -> FetchAnyCredentialResult {
+    try .credential(VcSdJWS.Mock.validSample())
   }
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
     try TokenStatusList.Mock.credentialStatusSample()
-  }
-
-  func refreshDeferredCredential(from url: URL, transactionId: String, acccessToken: String, format: String) async throws -> any AnyCredential {
-    try VcSdJwtPayload.Mock.validSample()
   }
 
 }
@@ -76,13 +80,21 @@ extension AccessToken {
   }
 }
 
-// MARK: - VcSdJwtPayload.Mock
+// MARK: - Nonce.Mock
 
-extension VcSdJwtPayload {
+extension Nonce {
   struct Mock {
-    static func validSample() throws -> VcSdJwt {
+    static let sample = Nonce(cNonce: "502b8c3c-5343-4e13-8a72-963fc53d2ea1")
+  }
+}
+
+// MARK: - VcSdJWS.Mock
+
+extension VcSdJWS {
+  struct Mock {
+    static func validSample() throws -> VcSdJWS {
       let data = Mocker.getData(fromFile: "vc-sd-jwt-credential-ui-mocks", ofType: "txt") ?? Data()
-      return try SdJWSDecoder(dateDecodingStrategy: .secondsSince1970).decode(VcSdJwtPayload.self, from: data)
+      return try SdJWSDecoder().decode(VcSdJwt.self, from: data)
     }
   }
 }

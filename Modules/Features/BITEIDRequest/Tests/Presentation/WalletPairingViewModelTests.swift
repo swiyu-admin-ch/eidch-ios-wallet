@@ -83,11 +83,6 @@ final class WalletPairingViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.destination, .walletPairingList)
   }
 
-  func testClose() {
-    viewModel.navigationClose()
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
-  }
-
   // MARK: Private
 
   private let mockPairingId = "mockPairingId"

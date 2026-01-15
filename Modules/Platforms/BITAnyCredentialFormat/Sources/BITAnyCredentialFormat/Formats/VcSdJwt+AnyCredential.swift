@@ -1,9 +1,9 @@
 import BITSdJWT
 import Foundation
 
-// MARK: - VcSdJwt + AnyCredential
+// MARK: - VcSdJWS + AnyCredential
 
-extension VcSdJwt: AnyCredential {
+extension VcSdJWS: AnyCredential {
 
   public var raw: String {
     rawSdJWS
@@ -14,7 +14,7 @@ extension VcSdJwt: AnyCredential {
   }
 
   public var issuer: String {
-    payload.issuer
+    payload.requiredIssuer
   }
 
   public var claims: [any AnyClaim] {

@@ -5,7 +5,7 @@ import Factory
 import SwiftUI
 
 @MainActor
-class LegalRepresentantConsentStateViewModel: ObservableObject, NavigationClosable {
+class LegalRepresentantConsentStateViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -24,8 +24,12 @@ class LegalRepresentantConsentStateViewModel: ObservableObject, NavigationClosab
     case .inQueue: Assets.timer.swiftUIImage
     case .readyForOnlineSession: getReadyForAutoVerificationImage()
     case .agentReview,
+         .autoVerification,
+         .cancelled,
+         .closed,
          .declined,
          .expired,
+         .issuing,
          .unknown,
          .walletPairing: Assets.closeCircle.swiftUIImage
     }
@@ -37,7 +41,11 @@ class LegalRepresentantConsentStateViewModel: ObservableObject, NavigationClosab
     case .readyForOnlineSession: getReadyForAVStatePrimaryText()
     case .expired: L10n.tkEidRequestLegalRepresentantPendingConsentExpiredPrimary
     case .agentReview,
+         .autoVerification,
+         .cancelled,
+         .closed,
          .declined,
+         .issuing,
          .unknown,
          .walletPairing: ""
     }
@@ -48,7 +56,11 @@ class LegalRepresentantConsentStateViewModel: ObservableObject, NavigationClosab
     case .inQueue: getInQueueStateSecondaryText()
     case .expired: L10n.tkEidRequestLegalRepresentantPendingConsentExpiredSecondary
     case .agentReview,
+         .autoVerification,
+         .cancelled,
+         .closed,
          .declined,
+         .issuing,
          .readyForOnlineSession,
          .unknown,
          .walletPairing: ""
@@ -66,11 +78,19 @@ class LegalRepresentantConsentStateViewModel: ObservableObject, NavigationClosab
     switch state {
     case .readyForOnlineSession where state.isLegalRepresentantConsentVerified:
       destination = .avIdentityCheck
-    default: isNavigationCloseTriggered = true
+    default:
+      close()
     }
   }
 
   // MARK: Private
+
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+
+  private func close() {
+    coordinator.cleanup()
+    isNavigationCloseTriggered = true
+  }
 
   private func getReadyForAutoVerificationImage() -> Image {
     state.isLegalRepresentantConsentVerified ? Assets.check.swiftUIImage : Assets.timer.swiftUIImage

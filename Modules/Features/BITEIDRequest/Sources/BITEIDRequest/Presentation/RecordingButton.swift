@@ -76,6 +76,7 @@ struct RecordingButton: View {
         .scaleEffect(1.5)
     case .success:
       Image(systemName: "checkmark")
+        .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
         .font(.system(size: 30, weight: .bold))
     }
   }

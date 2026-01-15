@@ -8,11 +8,11 @@ extension Container {
 
   // MARK: - Credential offer
 
-  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes), CredentialOfferViewModel> {
+  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes), CredentialOfferViewModel> {
     self { CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2, router: $3) }
   }
 
-  var credentialOfferModule: ParameterFactory<(VerifiableCredential, TrustInformation), CredentialOfferModule> {
+  var credentialOfferModule: ParameterFactory<(VerifiableCredential, TrustInformation?), CredentialOfferModule> {
     self { CredentialOfferModule(credential: $0, trustInformation: $1) }
   }
 

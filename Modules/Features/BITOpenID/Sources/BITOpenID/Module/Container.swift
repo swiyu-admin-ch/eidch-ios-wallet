@@ -57,10 +57,6 @@ extension Container {
     self { [] }
   }
 
-  public var defaultDeferredCredentialInterval: Factory<Int> {
-    self { 5 }
-  }
-
   // MARK: Internal
 
   var typeMetadataService: Factory<TypeMetadataServiceProtocol> {
@@ -187,10 +183,6 @@ extension Container {
 
   // MARK: Public
 
-  public var isIdentityTrustStatementEnabled: Factory<Bool> {
-    self { false }
-  }
-
   public var trustStatementService: Factory<TrustStatementServiceProtocol> {
     self { TrustStatementService() }
   }
@@ -208,8 +200,13 @@ extension Container {
     }
   }
 
-  public var trustRegistryTrustedDids: Factory<[String]> {
-    self { [ self.trustRegistryDidIntProd(), self.trustRegistryDidProd() ] }
+  public var trustRegistryTrustedDids: Factory<[String: [String]]> {
+    self {
+      [
+        self.trustRegistry(): [self.trustRegistryDidProd()],
+        self.trustRegistryInt(): [self.trustRegistryDidIntProd()],
+      ]
+    }
   }
 
   public var trustEnvironmentDidRegex: Factory<Regex<Substring>> {
@@ -220,14 +217,14 @@ extension Container {
     self { #/^did:(?:tdw|webvh):[^:]+:identifier-reg\.trust-infra\.swiyu-int\.admin\.ch:.*/# }
   }
 
+  public var trustRegistryUrlMapper: Factory<TrustRegistryUrlMapperProtocol> {
+    self { TrustRegistryUrlMapper() }
+  }
+
   // MARK: Internal
 
   var trustStatementValidator: Factory<TrustStatementValidatorProtocol> {
     self { TrustStatementValidator() }
-  }
-
-  var trustStatementUrlMapper: Factory<TrustStatementUrlMapperProtocol> {
-    self { TrustStatementUrlMapper() }
   }
 
   // MARK: Private

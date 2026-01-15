@@ -36,11 +36,7 @@ struct NFCScanResultView: View {
       footer()
         .padding(.horizontal, .x4)
     }
-    .toolbar {
-      CloseButtonToolbar(action: {
-        navigator.dismiss()
-      })
-    }
+    .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
     .toolbarBackground(ThemingAssets.Background.secondary.swiftUIColor)
     .navigationBarBackButtonHidden(true)
@@ -48,7 +44,6 @@ struct NFCScanResultView: View {
 
   // MARK: Private
 
-  @Environment(\.navigator) private var navigator
   @StateObject private var viewModel: NFCScanResultViewModel
 
   @ViewBuilder

@@ -36,6 +36,8 @@ class ActivityDetailViewModel: ObservableObject {
 
   @Published private(set) var state: State
   @Published var isDeleteConfirmationPresented = false
+  @Published var isToastPresented = false
+  @Published private(set) var toastMessage: String?
 
   @Injected(\.isNonComplianceEnabled) var isNonComplianceEnabled
 
@@ -76,6 +78,16 @@ class ActivityDetailViewModel: ObservableObject {
   func deleteActivity() {
     isDeleteConfirmationPresented = false
     try? deleteActivityUseCase(activity.id)
+  }
+
+  func showNonComplianceReportSent() {
+    toastMessage = L10n.tkActivityActivityListNonComplianceReportSentTitle
+    isToastPresented = true
+  }
+
+  func clearToast() {
+    isToastPresented = false
+    toastMessage = nil
   }
 
   // MARK: Private

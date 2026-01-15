@@ -6,7 +6,7 @@ import Foundation
 /// This class represents a signed JWT (JWS) which is specified by https://www.rfc-editor.org/rfc/rfc7515.html
 /// The payload is generic and can consist of registered, public and private claims (see specifications for more details).
 
-open class JWS<T: Codable & Equatable>: Equatable {
+open class JWS<T: JWT>: Equatable {
 
   // MARK: Lifecycle
 

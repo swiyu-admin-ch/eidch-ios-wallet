@@ -10,12 +10,13 @@ enum OpenIDEndpoint {
   case metadata(fromIssuerUrl: URL)
   #warning("TODO: Delete this case after contract updated on OMNI side")
   case fallbackOpenIdConfiguration(issuerUrl: URL)
-  case credential(url: URL, body: VcSdJwtCredentialRequestBody, acccessToken: String)
+  case credential(url: URL, body: CredentialRequest, accessToken: AccessToken)
   case accessToken(fromTokenUrl: URL, preAuthorizedCode: String)
+  case nonce(url: URL)
   case openIdConfiguration(issuerURL: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
-  case deferredCredential(url: URL, transactionId: String)
+  case deferredCredential(url: URL, transactionId: String, accessToken: String)
 }
 
 // MARK: TargetType
@@ -28,9 +29,10 @@ extension OpenIDEndpoint: TargetType {
     switch self {
     case .accessToken(let baseUrl, _),
          .credential(let baseUrl, _, _),
-         .deferredCredential(let baseUrl, _),
+         .deferredCredential(let baseUrl, _, _),
          .fallbackOpenIdConfiguration(let baseUrl),
          .metadata(let baseUrl),
+         .nonce(let baseUrl),
          .openIdConfiguration(let baseUrl),
          .publicKeyInfo(let baseUrl),
          .status(let baseUrl),
@@ -51,6 +53,7 @@ extension OpenIDEndpoint: TargetType {
     case .accessToken,
          .credential,
          .deferredCredential,
+         .nonce,
          .publicKeyInfo,
          .status,
          .typeMetadata,
@@ -71,7 +74,8 @@ extension OpenIDEndpoint: TargetType {
       .get
     case .accessToken,
          .credential,
-         .deferredCredential:
+         .deferredCredential,
+         .nonce:
       .post
     }
   }
@@ -80,6 +84,7 @@ extension OpenIDEndpoint: TargetType {
     switch self {
     case .fallbackOpenIdConfiguration,
          .metadata,
+         .nonce,
          .openIdConfiguration,
          .publicKeyInfo,
          .status,
@@ -87,7 +92,7 @@ extension OpenIDEndpoint: TargetType {
          .vcSchema:
       .requestPlain
 
-    case .deferredCredential(_, let transactionId):
+    case .deferredCredential(_, let transactionId, _):
       .requestParameters(
         parameters: ["transaction_id": transactionId],
         encoding: JSONEncoding.default)
@@ -107,16 +112,35 @@ extension OpenIDEndpoint: TargetType {
 
   var headers: [String: String]? {
     switch self {
-    case .accessToken,
-         .deferredCredential,
-         .fallbackOpenIdConfiguration,
-         .metadata,
-         .openIdConfiguration,
+    case .nonce,
          .publicKeyInfo,
          .typeMetadata:
       NetworkHeader.standard.raw
-    case .credential(_, _, let token):
-      NetworkHeader.authorization(token).raw
+    case .fallbackOpenIdConfiguration,
+         .metadata,
+         .openIdConfiguration: [
+        Self.keyAccept: [
+          Self.valueApplicationJWT,
+          Self.valueApplicationJson,
+        ].joined(separator: ", "),
+      ]
+    case .credential(_, _, let accessToken):
+      [
+        NetworkHeader.authorization(value: "\(accessToken.tokenType.rawValue) \(accessToken.accessToken)"),
+        NetworkHeader.swiyuAPIVersion("2"),
+      ].raw
+    case .accessToken:
+      [
+        NetworkHeader.standard,
+        NetworkHeader.swiyuAPIVersion("2"),
+      ].raw
+    case .deferredCredential(_, _, let accessToken):
+      // OAuth 2.0 access token to be implemented with batch issuance feature
+      [
+        NetworkHeader.standard,
+        NetworkHeader.authorization(value: "Bearer \(accessToken)"),
+        NetworkHeader.swiyuAPIVersion("2"),
+      ].raw
     case .status: [ Self.keyAccept: Self.valueApplicationStatusList ]
     case .vcSchema: [
         Self.keyAccept: [
@@ -139,7 +163,7 @@ extension OpenIDEndpoint: TargetType {
     case .accessToken:
       AccessToken.Mock.sampleData
     case .credential:
-      CredentialResponse.Mock.sampleData
+      CredentialResponseImmediate.Mock.sampleData
     default: Data()
     }
   }
@@ -151,6 +175,7 @@ extension OpenIDEndpoint: TargetType {
   private static let valueApplicationStatusList = "application/statuslist+jwt"
 
   private static let valueApplicationJson = "application/json"
+  private static let valueApplicationJWT = "application/jwt"
   private static let valueApplicationFormUrlEncoded = "application/x-www-form-urlencoded"
   private static let valueApplicationVcSchema = "application/schema+json"
   private static let valueApplicationVcSchemaInstance = "application/schema-instance+json"

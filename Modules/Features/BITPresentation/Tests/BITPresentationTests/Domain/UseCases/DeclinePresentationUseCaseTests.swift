@@ -20,22 +20,40 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
   }
 
   func testExecute_passesArguments() async throws {
-    try await useCase.execute(context: contextMock)
+    try await useCase(context: contextMock)
 
-    XCTAssertEqual(presentationRequestServiceSpy.declineForWithCallsCount, 1)
-    XCTAssertEqual(presentationRequestServiceSpy.declineForWithReceivedArguments?.requestObject, contextMock.requestObject)
-    XCTAssertEqual(presentationRequestServiceSpy.declineForWithReceivedArguments?.error, .clientRejected)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithCallsCount, 1)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url, contextMock.requestObject.responseUri)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error, .clientRejected)
 
     XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
   }
 
+  func testExecuteWithUrl_success() async throws {
+    try await useCase(url: contextMock.responseUri)
+
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithCallsCount, 1)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url, contextMock.requestObject.responseUri)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error, .clientRejected)
+  }
+
   func testExecute_serviceThrows_throwsError() async throws {
-    presentationRequestServiceSpy.declineForWithThrowableError = TestingError.error
+    presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(context: contextMock)
+      try await useCase(context: contextMock)
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testExecuteWithUrl_serviceThrows_throwsError() async throws {
+    presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
+
+    do {
+      try await useCase(url: contextMock.responseUri)
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
     }

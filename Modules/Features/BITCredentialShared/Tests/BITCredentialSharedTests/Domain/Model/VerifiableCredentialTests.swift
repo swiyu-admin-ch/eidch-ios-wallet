@@ -22,7 +22,7 @@ final class VerifiableCredentialTests: XCTestCase {
     for didMethod in ["tdw", "webvh"] {
       let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:123"
 
-      let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+      let credential = VerifiableCredential(progressionState: .accepted, payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
 
       XCTAssertEqual(credential.environment, .swiyu, "didMethod: \(didMethod)")
     }
@@ -32,7 +32,7 @@ final class VerifiableCredentialTests: XCTestCase {
     for didMethod in ["tdw", "webvh"] {
       let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:123"
 
-      let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+      let credential = VerifiableCredential(progressionState: .accepted, payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
 
       XCTAssertEqual(credential.environment, .swiyuInt, "didMethod: \(didMethod)")
     }
@@ -41,7 +41,7 @@ final class VerifiableCredentialTests: XCTestCase {
   func testInit_externalDid_returnsExternalCredential() {
     let issuer = "did:tdw:mock=:identifier-reg.trust-infra.example.ch:api:v1:did:123"
 
-    let credential = VerifiableCredential(payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+    let credential = VerifiableCredential(progressionState: .accepted, payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
 
     XCTAssertEqual(credential.environment, .external)
   }

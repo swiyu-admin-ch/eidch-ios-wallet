@@ -30,7 +30,6 @@ enum Assets {
   static let legitimateBadge = ImageAsset(name: "LegitimateBadge")
   static let menu = ImageAsset(name: "Menu")
   static let noActivities = ImageAsset(name: "NoActivities")
-  static let notLegitimateBadge = ImageAsset(name: "NotLegitimateBadge")
   static let notTrustedBadge = ImageAsset(name: "NotTrustedBadge")
   static let sensitiveBadge = ImageAsset(name: "SensitiveBadge")
   static let statusInvalid = ImageAsset(name: "StatusInvalid")
@@ -42,6 +41,7 @@ enum Assets {
   static let unknownIcon = ImageAsset(name: "UnknownIcon")
   static let unknownTrustBadge = ImageAsset(name: "UnknownTrustBadge")
   static let warning = ImageAsset(name: "Warning")
+  static let warningBadge = ImageAsset(name: "WarningBadge")
   static let federalLogo = ImageAsset(name: "federal-logo")
   static let xmarkCircle = ImageAsset(name: "xmark-circle")
 }

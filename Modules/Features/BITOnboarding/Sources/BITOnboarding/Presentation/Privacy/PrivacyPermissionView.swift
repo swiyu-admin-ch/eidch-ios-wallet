@@ -64,7 +64,7 @@ extension PrivacyPermissionView {
         viewModel.openPrivacyPolicy()
       })
       .font(.custom.footnote)
-      .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+      .foregroundStyle(ThemingAssets.Component.Link.label.swiftUIColor)
       .multilineTextAlignment(.leading)
       .accessibilityLabel(L10n.tkOnboardingAnalyticsTertiaryLinkText)
     }

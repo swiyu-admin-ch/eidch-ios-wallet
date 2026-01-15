@@ -26,13 +26,9 @@ public struct ImprintView: View {
           SettingsItem(title: L10n.tkSettingsImprintAppInformationBuildNumber, detail: viewModel.buildNumber)
           SettingsItem(title: L10n.tkSettingsImprintAppInformationAppVersion, detail: viewModel.appVersion)
           if let url = URL(string: L10n.tkSettingsImprintAppInformationGithubLinkValue) {
-            Link(destination: url, label: {
-              LinkText(L10n.tkSettingsImprintAppInformationGithubLinkText)
-                .font(.custom.footnote)
-                .multilineTextAlignment(.leading)
-                .padding(.top, .x4)
-            })
-            .padding(.horizontal, .x6)
+            CustomLink(to: url, label: L10n.tkSettingsImprintAppInformationGithubLinkText)
+              .padding(.top, .x4)
+              .padding(.horizontal, .x6)
           }
         }
         .padding(.vertical, .x4)
@@ -45,11 +41,7 @@ public struct ImprintView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityLabel("") // This prevents VoiceOver to read out image name as it magically reads the text in the image
           if let url = URL(string: L10n.tkSettingsImprintPublisherLinkValue) {
-            Link(destination: url, label: {
-              LinkText(L10n.tkSettingsImprintPublisherLinkText)
-                .font(.custom.footnote)
-                .multilineTextAlignment(.leading)
-            })
+            CustomLink(to: url, label: L10n.tkSettingsImprintPublisherLinkText)
           }
         }
         .padding(.vertical, .x4)
@@ -61,7 +53,7 @@ public struct ImprintView: View {
             image: Assets.terms.swiftUIImage,
             title: L10n.tkSettingsImprintLegalTermsOfUseLinkText,
             type: .link(L10n.tkSettingsImprintLegalTermsOfUseLinkValue))
-            .padding(.bottom, .normal)
+            .padding(.bottom, .x2_5)
           Text(L10n.tkSettingsImprintLegalDisclaimerPrimary)
             .multilineTextAlignment(.leading)
             .font(.custom.body)

@@ -23,7 +23,7 @@ struct AVIntroSelfieVideoView: View {
           primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.recordSelfie) })
       })
       .navigationBarBackButtonHidden(true)
-      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+      .defaultEidRequestToolbar()
   }
 
   // MARK: Private

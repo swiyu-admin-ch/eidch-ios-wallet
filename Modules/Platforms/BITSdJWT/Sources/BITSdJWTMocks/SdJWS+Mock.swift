@@ -4,7 +4,7 @@ import Foundation
 @testable import BITSdJWT
 @testable import BITTestingCore
 
-struct TestSdJWTPayload: JWTPayload, Codable, Equatable {
+struct TestSdJWT: JWT, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -34,15 +34,15 @@ struct TestSdJWTPayload: JWTPayload, Codable, Equatable {
 
 }
 
-extension TestSdJWTPayload: Mockable {
+extension TestSdJWT: Mockable {
 
   struct Mock {
 
     // MARK: Internal
 
-    static let samplePayload = TestSdJWTPayload(testValue1: "test_value_1", testValue2: "test_value_2", testValue3: "test_value_3")
+    static let sampleJWT = TestSdJWT(testValue1: "test_value_1", testValue2: "test_value_2", testValue3: "test_value_3")
 
-    static let flat: SdJWS<TestSdJWTPayload> = createSdJWT(from: flatJwtData)
+    static let flat: SdJWS<TestSdJWT> = createSdJWS(from: flatJwtData)
     static let flatJwtData: Data = getData(fromFile: "sd-jwt-flat", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let flatJwtPayload: String = getString(fromFile: "sd-jwt-flat-payload", ofType: "json", bundle: Bundle.module)
     static let flatJwtWithIsoDateData: Data = getData(fromFile: "sd-jwt-flat-with-iso-date", ofType: "txt", bundle: Bundle.module) ?? Data()
@@ -79,11 +79,37 @@ extension TestSdJWTPayload: Mockable {
 
     // MARK: Private
 
-    private static func createSdJWT(from data: Data) -> SdJWS<TestSdJWTPayload> {
+    private static func createSdJWS(from data: Data) -> SdJWS<TestSdJWT> {
       // swiftlint: disable force_try
-      try! SdJWSDecoder().decode(TestSdJWTPayload.self, from: data)
+      try! SdJWSDecoder().decode(TestSdJWT.self, from: data)
       // swiftlint: enable force_try
     }
+  }
+}
+
+extension TestSdJWT {
+  var issuer: String? {
+    nil
+  }
+
+  var audience: String? {
+    nil
+  }
+
+  var subject: String? {
+    nil
+  }
+
+  var issuedAt: Date? {
+    nil
+  }
+
+  var expiredAt: Date? {
+    nil
+  }
+
+  var activatedAt: Date? {
+    nil
   }
 }
 #endif

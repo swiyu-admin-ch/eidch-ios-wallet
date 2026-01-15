@@ -73,20 +73,27 @@ run = 'xcodegen'
 description = 'Danger swift'
 run = ['swift build', 'swift run danger-swift ci']
 
+[tasks.bundler]
+description = 'Install bundler dependencies'
+run = 'bundle install'
+
 [tasks.deploy]
 description = 'Deploy'
-run = 'bundle exec fastlane deploy env:{{option(name="environment", default="ref")}}'
+run = ['bundle install', 'bundle exec fastlane deploy env:{{option(name="environment", default="ref")}}']
 
 [tasks.deploy-ref]
 description = 'Deploy REF (updraft)'
+depends = ['bundler']
 run = 'mise run deploy --environment ref'
 
 [tasks.deploy-abn]
 description = 'Deploy ABN (updraft)'
+depends = ['bundler']
 run = 'mise run deploy --environment abn'
 
 [tasks.deploy-prod]
 description = 'Deploy PROD (testflight, appstoreconnect)'
+depends = ['bundler']
 run = 'mise run deploy --environment prod'
 
 [tasks.refresh-all-profiles]
@@ -95,6 +102,7 @@ run = ['mise refresh-profiles-appstore', 'mise refresh-profiles-enterprise']
 
 [tasks.refresh-profiles-appstore]
 description = 'Refresh AppStore provisonning profiles (all envs)'
+depends = ['bundler']
 run = [
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:dev',
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
@@ -104,10 +112,16 @@ run = [
 
 [tasks.refresh-profiles-enterprise]
 description = 'Refresh Enterprise provisonning profiles (all envs)'
+depends = ['bundler']
 run = [
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn',
 ]
+
+[tasks.sonar]
+description = 'Run sonar lane (dev)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_sonar env:dev']
 
 [tasks.ci]
 description = 'Run CI lane (dev)'

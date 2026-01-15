@@ -30,7 +30,7 @@ struct GetEIDRequestCaseFilesUseCase: GetEIDRequestCaseFilesUseCaseProtocol {
   private func generateMetadataBinary(files: [EIDRequestCaseFile], caseId: String) throws -> EIDRequestCaseFile {
     let metadataJsonFiles = files.filter { $0.mime == .json && $0.fileName.hasPrefix("metadata-") }
     let records: [MotionRecord] = try metadataJsonFiles.map { try JSONDecoder().decode([MotionRecord].self, from: $0.data) }.flatMap { $0 }
-    let header = MotionHeader(transactionCode: 123456789, processId: 0, recordsCount: records.count)
+    let header = MotionHeader(processId: 0, recordsCount: records.count)
     let motionMetadata = MotionMetadata(header: header, records: records)
 
     return EIDRequestCaseFile(fileName: "metadata.bin", mime: .bin, data: motionMetadata.asData(), category: .other)

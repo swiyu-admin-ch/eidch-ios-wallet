@@ -17,12 +17,12 @@ public struct CredentialMetadataWrapper {
   public var credentialMetadata: CredentialMetadata
   public var selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported
   public var rawData: Data
-  public var selectedCredentialSupportedId: String
+  public var credentialConfigurationId: String
 
-  public init(selectedCredentialSupportedId: String, credentialMetadata: CredentialMetadata, rawData: Data) throws {
+  public init(credentialConfigurationId: String, credentialMetadata: CredentialMetadata, rawData: Data) throws {
     self.credentialMetadata = credentialMetadata
-    self.selectedCredentialSupportedId = selectedCredentialSupportedId
-    guard let selectedCredential = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == selectedCredentialSupportedId })?.value else {
+    self.credentialConfigurationId = credentialConfigurationId
+    guard let selectedCredential = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == credentialConfigurationId })?.value else {
       throw CredentialMetadataWrapperErrorTest.selectedCredentialNotFound
     }
     self.selectedCredential = selectedCredential

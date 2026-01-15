@@ -111,7 +111,7 @@ targets:
         SDKROOT: iphoneos
         IPHONEOS_DEPLOYMENT_TARGET: 16.0
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: 0.1
+        MARKETING_VERSION: 100.0 # avoids version enforcement for local builds
         SWIFT_VERSION: 5.7
         PRODUCT_NAME: swiyu
 

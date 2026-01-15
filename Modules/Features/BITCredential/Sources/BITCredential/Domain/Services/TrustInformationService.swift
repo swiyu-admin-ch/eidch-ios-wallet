@@ -1,4 +1,5 @@
 import BITCore
+import BITNonCompliance
 import BITOpenID
 import Factory
 import Foundation
@@ -28,21 +29,20 @@ struct TrustInformationService: TrustInformationServiceProtocol {
     } else {
       .notProtected
     }
-    return TrustInformation(identity: identityTrust, vcSchema: vcSchemaTrust)
+
+    let actorCompliance = await fetchActorCompliance(for: subjectDid)
+
+    return TrustInformation(identity: identityTrust, vcSchema: vcSchemaTrust, actorCompliance: actorCompliance)
   }
 
   // MARK: Private
 
   @Injected(\.trustStatementService) private var trustStatementService
-  @Injected(\.isIdentityTrustStatementEnabled) private var isIdentityTrustStatementEnabled: Bool
+  @Injected(\.nonComplianceRepository) private var nonComplianceRepository: NonComplianceRepositoryProtocol
 
   private func fetchIdentityTrust(for subjectDid: String) async -> IdentityTrust {
     do {
-      let statement: (any LocalizedTrustStatement) = if isIdentityTrustStatementEnabled {
-        try await trustStatementService.fetchIdentity(for: subjectDid).resolvedPayload
-      } else {
-        try await trustStatementService.fetchMetadata(for: subjectDid).resolvedPayload
-      }
+      let statement = try await trustStatementService.fetchIdentity(for: subjectDid).resolvedPayload
       return .trusted(statement)
     } catch { // errors here should not stop flow of caller
       return .untrusted
@@ -58,5 +58,11 @@ struct TrustInformationService: TrustInformationServiceProtocol {
     } catch { // errors here should not stop flow of caller
       return .notProtected
     }
+  }
+
+  private func fetchActorCompliance(for subjectDid: String) async -> ActorCompliance {
+    // errors or empty should not display warning badge
+    guard let actor = try? await nonComplianceRepository.fetchNonCompliantActor(for: subjectDid) else { return .compliant }
+    return .notCompliant(LocalizedNonComplianceReason(values: actor.reason))
   }
 }

@@ -66,7 +66,7 @@ extension DeeplinkLoadingView {
       ThemingAssets.Gradient.gradient2.swiftUIImage
         .resizable()
         .frame(maxWidth: Defaults.innerGradientMaxWidth, maxHeight: Defaults.innerGradientMaxHeight)
-        .clipShape(.rect(cornerRadius: .CornerRadius.l))
+        .clipShape(.rect(cornerRadius: .x7))
         .accessibilityHidden(true)
 
       ProgressView()

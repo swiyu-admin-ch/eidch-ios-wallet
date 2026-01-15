@@ -106,5 +106,4 @@ extension InformationView {
         .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
     }
   }
-
 }

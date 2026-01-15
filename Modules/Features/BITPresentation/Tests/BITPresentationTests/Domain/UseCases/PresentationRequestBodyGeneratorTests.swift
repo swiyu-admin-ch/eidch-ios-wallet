@@ -95,6 +95,7 @@ final class PresentationRequestBodyGeneratorTests: XCTestCase {
 
     XCTAssertThrowsError(try generator.generate(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
       XCTAssertEqual(error as? UserSessionError, .notLoggedIn)
+      XCTAssertEqual(userSession.endSessionCallsCount, 1)
       XCTAssertEqual(analyticsProvider.logCounter, 0)
     }
   }

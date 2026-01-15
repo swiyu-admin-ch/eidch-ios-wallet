@@ -1,5 +1,6 @@
 import BITAVWrapper
 import BITL10n
+import BITNavigation
 import Factory
 import Foundation
 
@@ -28,7 +29,7 @@ class NFCScanResultViewModel: ObservableObject {
   @Published var destination: EIDRequestDestinations?
 
   func primaryAction() {
-    destination = .avIntroSelfieVideo
+    destination = getNextDestination()
   }
 
   @MainActor
@@ -60,4 +61,12 @@ class NFCScanResultViewModel: ObservableObject {
 
   @Injected(\.eidRequestContext) private var context
   @Injected(\.fetchNFCScanResultUseCase) private var fetchNFCScanResultUseCase: FetchNFCScanResultUseCaseProtocol
+
+  private func getNextDestination() -> EIDRequestDestinations {
+    if context.autoVerificationResponse?.isDocumentVideoRecordingRequired == true {
+      return .recordDocumentInformation
+    }
+
+    return .avIntroSelfieVideo
+  }
 }

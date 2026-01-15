@@ -3,13 +3,13 @@ import Foundation
 @testable import BITJWT
 @testable import BITTestingCore
 
-extension ClientAttestationPayload: Mockable {
+extension ClientAttestationJWT: Mockable {
   struct Mock {
 
     // MARK: Internal
 
     static let sample: ClientAttestation = decodeClientAttestation(fromFile: "client-attestation")
-    static let samplePayload: ClientAttestationPayload = Mocker.decode(fromFile: "client-attestation-payload", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    static let sampleJWT: ClientAttestationJWT = Mocker.decode(fromFile: "client-attestation-payload", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let sampleUnsupportedAlgorithm: ClientAttestation = decodeClientAttestation(fromFile: "client-attestation-unsupported-algorithm")
     static let sampleMissingExpiredAt: ClientAttestation = encodePayload(fromFile: "client-attestation-missing-expired-at")
     static let sampleMissingActivatedAt: ClientAttestation = encodePayload(fromFile: "client-attestation-missing-activated-at")
@@ -25,7 +25,7 @@ extension ClientAttestationPayload: Mockable {
     private static func decodeClientAttestation(fromFile filename: String) -> ClientAttestation {
       let data = getData(fromFile: filename, ofType: "txt", bundle: Bundle.module) ?? Data()
       // swiftlint: disable force_cast force_try
-      return try! JWSDecoder().decode(ClientAttestationPayload.self, from: data)
+      return try! JWSDecoder().decode(ClientAttestationJWT.self, from: data)
       // swiftlint: enable force_cast force_try
     }
 
@@ -37,14 +37,9 @@ extension ClientAttestationPayload: Mockable {
       bundle: Bundle = Bundle.module)
       -> ClientAttestation
     {
-      let clientAttestation: ClientAttestationPayload = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
-
+      let jwt: ClientAttestationJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
       let header = JWSHeader(algorithm: algorithm, type: type, keyIdentifier: kid)
-
-      // swiftlint: enable force_cast force_try
-      let payload = JWS(payload: clientAttestation, rawPayload: "", rawJWS: "", header: header)
-      return ClientAttestation(payload: payload.payload, rawPayload: payload.rawPayload, rawJWS: payload.rawJWS, header: header)
-      // swiftlint: disable force_cast force_try
+      return ClientAttestation(payload: jwt, rawPayload: "", rawJWS: "", header: header)
     }
   }
 }

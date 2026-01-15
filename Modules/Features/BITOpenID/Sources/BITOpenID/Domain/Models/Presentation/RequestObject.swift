@@ -286,7 +286,7 @@ public struct Field: Codable, Equatable {
   }
 
   func isMatching(_ value: Any) -> Bool {
-    guard path.contains(VcSdJwtPayload.vctPath) else { return true } // we ignore filters for paths that are not vct
+    guard path.contains(VcSdJwt.vctPath) else { return true } // we ignore filters for paths that are not vct
     return filter?.isMatching(value) ?? true
   }
 

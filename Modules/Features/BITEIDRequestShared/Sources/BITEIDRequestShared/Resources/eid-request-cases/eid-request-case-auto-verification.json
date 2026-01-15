@@ -1,0 +1,16 @@
+{
+  "caseId": "12328f91-a8b2-4ccc-974k-2b1d22172349",
+  "rawMRZ": "ID<<<I7G<<<<<<3<<<<<<<<<<<<<<<;1001015X3012316<<<<<<<<<<<<<<0;MINDERJAEHRIGE<<ANNETTE<<<<<<<",
+  "documentNumber": "A123456789",
+  "selectedDocumentType": "SWISS_IDK",
+  "firstName": "John",
+  "lastName": "Do",
+  "createdAt": "1997-07-06T19:20:30+01:00",
+  "state": {
+    "id": "3e3da175-443c-41ba-8b42-f209b7517c17",
+    "state": "IN_AUTO_VERIFICATION",
+    "lastPolledAt": "1997-07-16T19:20:30+01:00",
+    "onlineSessionStartTimeoutAt": "1997-07-16T19:20:30+01:00",
+    "legalRepresentantConsent": "VERIFIED"
+  }
+}

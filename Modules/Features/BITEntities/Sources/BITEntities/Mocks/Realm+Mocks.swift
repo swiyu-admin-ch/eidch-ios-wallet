@@ -9,9 +9,11 @@ import RealmSwift
 extension Realm {
 
   public struct Mock {
+    public static let version1Snapshot: URL = Bundle.module.url(forResource: "version1Snapshot", withExtension: "realm")!
     public static let version4Snapshot: URL = Bundle.module.url(forResource: "version4Snapshot", withExtension: "realm")!
     public static let version5Snapshot: URL = Bundle.module.url(forResource: "version5Snapshot", withExtension: "realm")!
     public static let version10Snapshot: URL = Bundle.module.url(forResource: "version10Snapshot", withExtension: "realm")!
+    public static let version14Snapshot: URL = Bundle.module.url(forResource: "version14Snapshot", withExtension: "realm")!
   }
 }
 // swiftlint:enable all

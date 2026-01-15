@@ -16,7 +16,12 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../BITActivity"),
-    .package(path: "../BITCredential"),
+    .package(path: "../BITAppAuth"),
+    .package(path: "../BITCredentialShared"),
+    .package(path: "../BITAppAttestation"),
+    .package(path: "../BITOpenID"),
+    .package(path: "../../Platforms/BITNetworking"),
+    .package(path: "../../Platforms/BITJWT"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITTheming"),
@@ -29,7 +34,12 @@ let package = Package(
       name: "BITNonCompliance",
       dependencies: [
         .product(name: "BITActivity", package: "BITActivity"),
-        .product(name: "BITCredential", package: "BITCredential"),
+        .product(name: "BITAppAuth", package: "BITAppAuth"),
+        .product(name: "BITCredentialShared", package: "BITCredentialShared"),
+        .product(name: "BITAppAttestation", package: "BITAppAttestation"),
+        .product(name: "BITNetworking", package: "BITNetworking"),
+        .product(name: "BITJWT", package: "BITJWT"),
+        .product(name: "BITOpenID", package: "BITOpenID"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "Factory", package: "Factory"),
@@ -41,6 +51,10 @@ let package = Package(
       name: "BITNonComplianceTests",
       dependencies: [
         "BITNonCompliance",
+        .product(name: "BITAppAttestation", package: "BITAppAttestation"),
+        .product(name: "BITCredentialShared", package: "BITCredentialShared"),
+        .product(name: "BITOpenID", package: "BITOpenID"),
+        .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

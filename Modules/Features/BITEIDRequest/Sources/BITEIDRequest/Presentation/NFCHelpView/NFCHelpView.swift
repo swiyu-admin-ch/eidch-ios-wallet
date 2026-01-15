@@ -37,11 +37,7 @@ struct NFCHelpView: View {
       .navigationDestination(EIDRequestDestinations.self)
       .navigationTitle(L10n.tkEidRequestNfcScanHelpTitle)
       .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        CloseButtonToolbar {
-          navigator.dismiss()
-        }
-      }
+      .defaultEidRequestToolbar()
   }
 
   // MARK: Private

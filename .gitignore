@@ -111,3 +111,6 @@ Modules/**/.build/*
 
 ### VSCode ###
 .vscode
+
+# Ignore SwiftPM lockfiles inside modules
+Modules/**/Package.resolved

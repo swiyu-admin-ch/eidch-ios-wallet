@@ -1,3 +1,4 @@
+import BITL10n
 import Foundation
 import SwiftUI
 
@@ -101,10 +102,11 @@ public struct Notification: View {
       CircleButton(action: { closeAction() }, imageSystemName: "xmark")
         .buttonStyle(closeButtonStyle)
         .padding(.top, .x2)
+        .accessibilityLabel(L10n.tkGlobalClose)
     }
     .frame(maxWidth: horizontalSizeClass == .regular && verticalSizeClass == .compact ? (sizeCategory.isAccessibilityCategory ? .infinity : 350) : .infinity)
     .background(background)
-    .cornerRadius(.CornerRadius.m)
+    .cornerRadius(.x5)
   }
 
   // MARK: Internal

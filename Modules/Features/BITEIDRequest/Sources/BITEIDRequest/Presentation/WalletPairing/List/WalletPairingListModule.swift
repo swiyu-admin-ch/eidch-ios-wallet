@@ -4,7 +4,7 @@ import NavigatorUI
 import SwiftUI
 
 @MainActor
-class WalletPairingListModule {
+class WalletPairingListModule: EIDRequestModule {
 
   // MARK: Lifecycle
 

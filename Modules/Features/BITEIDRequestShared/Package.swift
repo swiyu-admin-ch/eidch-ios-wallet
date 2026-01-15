@@ -18,7 +18,7 @@ let package = Package(
     .package(path: "../BITEntities"),
     .package(path: "../BITCredentialShared"),
     .package(path: "../../Platforms/BITCore"),
-    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", branch: "main"),
+    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", exact: "0.17.1"),
   ],
   targets: [
     .target(

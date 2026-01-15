@@ -1,3 +1,4 @@
+import BITCredentialShared
 import BITEntities
 import Foundation
 
@@ -9,6 +10,7 @@ public struct Activity: Identifiable, Codable {
 
   public init(
     id: UUID = UUID(),
+    credential: VerifiableCredential? = nil,
     type: ActivityType,
     createdAt: Date = Date(),
     actorTrust: ActorTrust,
@@ -18,6 +20,7 @@ public struct Activity: Identifiable, Codable {
     actorDisplays: [ActivityActorDisplay] = [])
   {
     self.id = id
+    self.credential = credential
     self.type = type
     self.createdAt = createdAt
     self.actorTrust = actorTrust
@@ -28,8 +31,13 @@ public struct Activity: Identifiable, Codable {
   }
 
   public init(_ entity: CredentialActivityEntity) {
+    var credential: VerifiableCredential?
+    if let credentialEntity = entity.credential.first {
+      credential = try? VerifiableCredential(credentialEntity)
+    }
     self.init(
       id: entity.id,
+      credential: credential,
       type: ActivityType(rawValue: entity.type) ?? .issuance,
       createdAt: entity.createdAt,
       actorTrust: ActorTrust(rawValue: entity.actorTrust) ?? .unknown,
@@ -42,6 +50,7 @@ public struct Activity: Identifiable, Codable {
   // MARK: Public
 
   public var id: UUID
+  public var credential: VerifiableCredential?
   public var type: ActivityType
   public var createdAt: Date
   public var actorTrust: ActorTrust
@@ -71,6 +80,7 @@ extension Activity: Equatable {
 
   public static func == (lhs: Activity, rhs: Activity) -> Bool {
     lhs.id == rhs.id &&
+      lhs.credential == rhs.credential &&
       lhs.type == rhs.type &&
       lhs.createdAt == rhs.createdAt &&
       lhs.actorTrust == rhs.actorTrust &&

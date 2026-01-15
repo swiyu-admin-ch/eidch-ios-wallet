@@ -1,17 +1,14 @@
 import AVFoundation
 import BITAnalytics
-import BITAnyCredentialFormat
+import BITAppAuth
 import BITCore
 import BITCredential
 import BITCredentialShared
-import BITL10n
-import BITNetworking
 import BITOpenID
 import BITPresentation
 import BITQRCode
 import Combine
 import Factory
-import SwiftUI
 
 // MARK: - CameraViewModel
 
@@ -50,6 +47,8 @@ class CameraViewModel: ObservableObject, Vibrating {
   var cameraManager = CameraManager()
   var session = AVCaptureSession()
 
+  @Published var isSessionTimeoutPresented = false
+
   @Published var isTorchEnabled = false {
     didSet {
       isTorchEnabled ? cameraManager.flashlight.turnOn() : cameraManager.flashlight.turnOff()
@@ -84,6 +83,10 @@ class CameraViewModel: ObservableObject, Vibrating {
     } catch {
       handleError(error)
     }
+  }
+
+  func login() {
+    router.login(animated: true)
   }
 
   // MARK: Private
@@ -152,10 +155,14 @@ class CameraViewModel: ObservableObject, Vibrating {
     if error as? CheckInvitationTypeError != .wrongScheme {
       analytics.log(error)
     }
-
     let invitationError = InvitationError.from(error)
-    self.error = invitationError
-    isErrorPopupPresented = true
+    if error as? UserSessionError == .notLoggedIn {
+      isSessionTimeoutPresented = true
+    } else {
+      self.error = invitationError
+      isErrorPopupPresented = true
+    }
+
     isScanEnabled = true
     isLoading = false
 

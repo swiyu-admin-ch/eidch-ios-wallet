@@ -97,6 +97,10 @@ extension Container {
     self { NFCScanResultViewModel(package: $0) }
   }
 
+  var eidRequestFlowCoordinator: Factory<EIDRequestFlowCoordinatorProtocol> {
+    self { EIDRequestFlowCoordinator() }.singleton
+  }
+
 }
 
 extension Container {
@@ -335,6 +339,10 @@ extension Container {
 
   var updateEIDRequestCaseFilesUseCase: Factory<UpdateEIDRequestCaseFilesUseCaseProtocol> {
     self { UpdateEIDRequestCaseFilesUseCase() }
+  }
+
+  var compareScanDocumentOutputUseCase: Factory<CompareScanDocumentOutputUseCaseProtocol> {
+    self { CompareScanDocumentOutputUseCase() }
   }
 }
 

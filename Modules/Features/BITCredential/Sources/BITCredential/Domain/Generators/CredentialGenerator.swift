@@ -53,7 +53,7 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
     let ocaBundle = rawOcaBundle.flatMap { try? ocaBundler.createOcaBundle($0) }
     let rawCredentialData = RawCredentialData(rawOIDMetadata: metadataWrapper.rawData, rawOcaBundle: rawOcaBundle)
 
-    return (CredentialGeneratorContext(credentialId: id, selectedCredentialSupportedId: metadataWrapper.selectedCredentialSupportedId, keyBinding: keyBinding, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData), ocaBundle)
+    return (CredentialGeneratorContext(credentialId: id, credentialConfigurationId: metadataWrapper.credentialConfigurationId, keyBinding: keyBinding, issuerDisplays: issuerDisplays, rawCredentialData: rawCredentialData), ocaBundle)
   }
 
   private func createIssuerDisplays(from displays: [CredentialMetadata.CredentialMetadataDisplay]?, credentialId: UUID) -> [CredentialIssuerDisplay] {

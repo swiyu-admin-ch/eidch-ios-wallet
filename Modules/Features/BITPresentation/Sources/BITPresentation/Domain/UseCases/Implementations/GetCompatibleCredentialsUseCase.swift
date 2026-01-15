@@ -12,13 +12,6 @@ public protocol GetCompatibleCredentialsUseCaseProtocol {
   func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential]
 }
 
-// MARK: - CompatibleCredentialsError
-
-public enum CompatibleCredentialsError: Error {
-  case emptyWallet
-  case compatibleCredentialNotFound
-}
-
 // MARK: - GetCompatibleCredentialsUseCase
 
 /// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
@@ -29,15 +22,8 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
 
   func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential] {
     guard let inputDescriptor = requestObject.firstInputDescriptor else { return [] }
-    let credentials = try await credentialRepository.getAllVerifiableCredentials()
-    if credentials.isEmpty {
-      throw CompatibleCredentialsError.emptyWallet
-    }
-    let compatibleCredentials = filter(credentials: credentials, withInputDescriptor: inputDescriptor)
-    if compatibleCredentials.isEmpty {
-      throw CompatibleCredentialsError.compatibleCredentialNotFound
-    }
-    return compatibleCredentials
+    let credentials = try await credentialRepository.getAllAcceptedVerifiableCredentials()
+    return filter(credentials: credentials, withInputDescriptor: inputDescriptor)
   }
 
   // MARK: Private

@@ -15,9 +15,7 @@ protocol FetchAnyCredentialUseCaseProtocol {
 // MARK: - FetchVcSdJwtCredentialUseCaseError
 
 enum FetchVcSdJwtCredentialUseCaseError: Error {
-  case unsupportedMetadataType
   case invalidRawJWS
-  case invalidTransactionId
 }
 
 // MARK: - FetchVcSdJwtCredentialUseCase
@@ -27,10 +25,9 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   // MARK: Internal
 
   func execute(for context: FetchCredentialContext) async throws -> FetchAnyCredentialResult {
-    let proof = try createProof(using: context)
-    guard let vcSdJwtMetadata = context.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported else { throw FetchVcSdJwtCredentialUseCaseError.unsupportedMetadataType }
-    let credentialBody = VcSdJwtCredentialRequestBody(format: context.format, proof: proof, vct: vcSdJwtMetadata.vct)
-    let fetchCredentialResult = try await repository.fetchCredential(with: context, credentialRequestBody: credentialBody)
+    let proofs = try createProofs(using: context)
+    let requestBody = CredentialRequest(credentialConfigurationId: context.credentialConfigurationId, proofs: proofs)
+    let fetchCredentialResult = try await repository.fetchCredential(with: context, credentialRequest: requestBody)
 
     if case .credential(let anyCredential) = fetchCredentialResult {
       return try await validateCredential(anyCredential)
@@ -45,35 +42,32 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
 
-  private func createProof(using context: FetchCredentialContext) throws -> VcSdJwtCredentialRequestBody.Proof? {
+  private func createProofs(using context: FetchCredentialContext) throws -> CredentialRequest.Proofs? {
     guard let holderBindingContext = context.holderBindingContext else { return nil }
 
-    let payload = JWTProofPayload(
+    let jwt = ProofJWT(
       audience: context.credentialIssuer,
-      nonce: context.accessToken.cNonce,
-      issuedAt: UInt64(context.createdAt.timeIntervalSince1970))
+      nonce: context.nonce?.cNonce,
+      issuedAt: context.createdAt)
     let additionalHeaderParameters: [String: Any] = holderBindingContext.keyAttestationJWS
-      .map { [JWTProofPayload.AdditionalHeaderParameter.keyAttestation.rawValue: $0] } ?? [:]
+      .map { [ProofJWT.AdditionalHeaderParameter.keyAttestation.rawValue: $0] } ?? [:]
     let jwtData = try jwsEncoder.encode(
-      payload,
+      jwt,
       using: holderBindingContext.keyPair,
       additionalHeaderParameters: additionalHeaderParameters)
 
     guard let rawJws = String(data: jwtData, encoding: .utf8) else { throw FetchVcSdJwtCredentialUseCaseError.invalidRawJWS }
 
-    return VcSdJwtCredentialRequestBody.Proof(jwt: rawJws)
+    return CredentialRequest.Proofs(jwt: [rawJws])
   }
 
   private func validateCredential(_ anyCredential: AnyCredential) async throws -> FetchAnyCredentialResult {
     do {
-      guard
-        let vcSdJwt = anyCredential as? VcSdJwt,
-        try await jwsSignatureValidator.validate(vcSdJwt, issuerDid: vcSdJwt.payload.issuer)
-      else {
+      guard let vcSdJWS = anyCredential as? VcSdJWS else {
         throw FetchAnyVerifiableCredentialError.validationFailed
       }
-
-      return .credential(vcSdJwt)
+      try await jwsSignatureValidator.validate(vcSdJWS, issuerDid: vcSdJWS.payload.requiredIssuer)
+      return .credential(vcSdJWS)
     } catch JWSSignatureValidatorError.cannotResolveDid(_) {
       throw FetchAnyVerifiableCredentialError.unknownIssuer
     } catch {

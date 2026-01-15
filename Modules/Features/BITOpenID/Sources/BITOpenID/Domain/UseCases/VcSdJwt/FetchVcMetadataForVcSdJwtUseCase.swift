@@ -21,8 +21,8 @@ struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForCredentialUseCaseProt
   // MARK: Internal
 
   func execute(anyCredential: AnyCredential) async throws -> (VcSchema?, RawOcaBundle?) {
-    guard let vcSdJwt = anyCredential as? VcSdJwt else { throw CredentialFormatError.formatNotSupported }
-    return try await fetchMetadata(from: vcSdJwt.payload.typeMetadataUri, vct: vcSdJwt.payload.vct)
+    guard let vcSdJWS = anyCredential as? VcSdJWS else { throw CredentialFormatError.formatNotSupported }
+    return try await fetchMetadata(from: vcSdJWS.payload.typeMetadataUri, vct: vcSdJWS.payload.vct)
   }
 
   func execute(metadata: any CredentialMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?) {

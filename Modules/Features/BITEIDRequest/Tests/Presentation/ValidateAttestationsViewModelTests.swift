@@ -72,12 +72,7 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertEqual(viewModel.destination, .error(ErrorDataset(
-      primary: L10n.tkEidRequestClientAttestationErrorPrimary,
-      secondary: L10n.tkEidRequestClientAttestationErrorSecondary,
-      tertiary: L10n.tkEidRequestClientAttestationErrorTertiary,
-      primaryActionLabel: L10n.tkEidRequestClientAttestationErrorPrimaryButton,
-      secondaryActionLabel: L10n.tkEidRequestClientAttestationErrorSecondaryButton)))
+    XCTAssertEqual(viewModel.destination, .error(.clientAttestation))
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
@@ -90,11 +85,7 @@ final class ValidateAttestationsViewModelTests: XCTestCase {
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertEqual(viewModel.destination, .error(ErrorDataset(
-      primary: L10n.tkEidRequestKeyAttestationErrorPrimary,
-      secondary: L10n.tkEidRequestKeyAttestationErrorSecondary,
-      tertiary: L10n.tkEidRequestKeyAttestationErrorTertiary,
-      primaryActionLabel: L10n.tkEidRequestKeyAttestationErrorPrimaryButton)))
+    XCTAssertEqual(viewModel.destination, .error(.keyAttestation))
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 

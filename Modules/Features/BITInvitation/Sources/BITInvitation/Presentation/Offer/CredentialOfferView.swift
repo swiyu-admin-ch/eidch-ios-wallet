@@ -1,12 +1,9 @@
 import BITCredential
 import BITCredentialShared
 import BITL10n
-import BITOpenID
 import BITTheming
 import Factory
-import Foundation
 import SwiftUI
-import UIKit
 
 // MARK: - CredentialOfferView
 
@@ -14,7 +11,7 @@ struct CredentialOfferView: View {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation, state: CredentialOfferViewModel.State = .result, router: CredentialOfferInternalRoutes) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes) {
     self.router = router
     _viewModel = StateObject(wrappedValue: Container.shared.credentialOfferViewModel((credential, trustInformation, state, router)))
   }
@@ -34,31 +31,41 @@ struct CredentialOfferView: View {
   }
 
   var body: some View {
-    content()
+    Content(
+      declineAction: viewModel.decline,
+      acceptAction: {
+        Task { await viewModel.accept() }
+      },
+      wrongDataAction: viewModel.openWrongData,
+      cancelDeclineAction: viewModel.cancelDecline,
+      confirmDeclineAction: {
+        Task { await viewModel.confirmDecline() }
+      },
+      badgeAction: { badgeType in
+        router.badgeInformation(badgeType: badgeType)
+      },
+      clusters: viewModel.credential.clusters,
+      credentialViewModel: viewModel.credentialViewModel,
+      state: viewModel.state,
+      trustInformation: viewModel.trustInformation)
       .confirmationDialog(L10n.tkReceiveCredentialOfferConfirmIssuancePrimary, isPresented: $viewModel.isUnknownIssuerAlertShown, titleVisibility: .visible) {
         Button(L10n.tkReceiveCredentialOfferConfirmIssuanceButtonSecondary, role: .destructive) {
-          Task { await viewModel.send(event: .confirmDecline) }
+          Task { await viewModel.confirmDecline() }
         }
         Button(L10n.tkReceiveCredentialOfferConfirmIssuanceButtonPrimary) {
-          Task { await viewModel.send(event: .confirmAccept) }
+          Task { await viewModel.confirmAccept() }
         }
         Button(L10n.tkGlobalCancel, role: .cancel) { }
       } message: {
         Text(L10n.tkReceiveCredentialOfferConfirmIssuanceSecondary)
       }
       .accessibilityAction(named: L10n.tkReceiveCredentialOfferButtonAccept, {
-        Task { await viewModel.send(event: .accept) }
+        Task { await viewModel.accept() }
       })
-      .accessibilityAction(named: L10n.tkReceiveCredentialOfferButtonDecline, {
-        Task { await viewModel.send(event: .decline) }
-      })
-      .ignoresSafeArea(edges: .top)
-      .readSize(onChange: { size in
-        compression = UICompressionStyle(height: size.height)
-      })
-      .readSafeAreaInsets(onChange: { insets in
-        topInset = insets.top
-      })
+      .accessibilityAction(named: L10n.tkReceiveCredentialOfferButtonDecline, viewModel.decline)
+      .task {
+        await viewModel.onAppear()
+      }
       .navigationBarHidden(true)
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModel(with: scheme.rawValue)
@@ -70,18 +77,85 @@ struct CredentialOfferView: View {
 
   // MARK: Private
 
-  @Environment(\.sizeCategory) private var sizeCategory
-  @Environment(\.accessibilityVoiceOverEnabled) private var isVoiceOverEnabled
-
-  @State private var compression = UICompressionStyle.normal
-  @State private var viewport = CGRect.zero
-  @State private var topInset = CGFloat.zero
-
   @StateObject private var viewModel: CredentialOfferViewModel
 
   private let router: CredentialOfferInternalRoutes
 
-  @Orientation private var orientation
+}
+
+// MARK: CredentialOfferView.Content
+
+extension CredentialOfferView {
+
+  fileprivate struct Content: View {
+
+    // MARK: Lifecycle
+
+    init(
+      declineAction: @escaping () -> Void = { },
+      acceptAction: @escaping () -> Void = { },
+      wrongDataAction: @escaping () -> Void = { },
+      cancelDeclineAction: @escaping () -> Void = { },
+      confirmDeclineAction: @escaping () -> Void = { },
+      badgeAction: @escaping (BadgeType) -> Void = { _ in },
+      clusters: [CredentialClaimCluster],
+      credentialViewModel: VerifiableCredentialViewModel?,
+      state: CredentialOfferViewModel.State,
+      trustInformation: TrustInformation?)
+    {
+      self.declineAction = declineAction
+      self.acceptAction = acceptAction
+      self.wrongDataAction = wrongDataAction
+      self.cancelDeclineAction = cancelDeclineAction
+      self.confirmDeclineAction = confirmDeclineAction
+      self.badgeAction = badgeAction
+      self.clusters = clusters
+      self.credentialViewModel = credentialViewModel
+      self.state = state
+      self.trustInformation = trustInformation
+    }
+
+    // MARK: Internal
+
+    var body: some View {
+      content()
+        .readSize(onChange: { size in
+          compression = UICompressionStyle(height: size.height)
+        })
+        .ignoresSafeArea(edges: .top)
+        .readSafeAreaInsets(onChange: { insets in
+          topInset = insets.top
+        })
+    }
+
+    // MARK: Private
+
+    @Environment(\.sizeCategory) private var sizeCategory
+    @Environment(\.accessibilityVoiceOverEnabled) private var isVoiceOverEnabled
+
+    @State private var compression = UICompressionStyle.normal
+    @State private var viewport = CGRect.zero
+    @State private var topInset = CGFloat.zero
+
+    @Orientation private var orientation
+
+    private let declineAction: () -> Void
+    private let acceptAction: () -> Void
+    private let wrongDataAction: () -> Void
+    private let cancelDeclineAction: () -> Void
+    private let confirmDeclineAction: () -> Void
+    private let badgeAction: (BadgeType) -> Void
+    private let clusters: [CredentialClaimCluster]
+    private let credentialViewModel: VerifiableCredentialViewModel?
+    private let state: CredentialOfferViewModel.State
+    private let trustInformation: TrustInformation?
+
+  }
+}
+
+// MARK: - Components
+
+extension CredentialOfferView.Content {
 
   @ViewBuilder
   private func content() -> some View {
@@ -91,11 +165,6 @@ struct CredentialOfferView: View {
       landscapeLayout()
     }
   }
-}
-
-// MARK: - Components
-
-extension CredentialOfferView {
 
   @ViewBuilder
   private func resultContainer() -> some View {
@@ -110,21 +179,21 @@ extension CredentialOfferView {
   @ViewBuilder
   private func claimsList() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
-      ClaimClusterList(viewModel.credential.clusters)
+      ClaimClusterList(clusters)
       wrongDataSection()
     }
     .padding(.vertical, .x4)
     .background(ThemingAssets.Background.secondary.swiftUIColor)
-    .clipShape(.rect(cornerRadius: .CornerRadius.xl))
+    .clipShape(.rect(cornerRadius: .x9))
     .accessibilityElement(children: .contain)
-    .accessibilityIdentifier(AccessibilityIdentifier.claimsList.rawValue)
+    .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.claimsList.rawValue)
   }
 
   @ViewBuilder
   private func credentialContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
-      if let credentialViewModel = viewModel.credentialViewModel {
+      if let credentialViewModel {
         CredentialCard(
           name: credentialViewModel.credentialDisplay?.name,
           summary: credentialViewModel.credentialDisplay?.summary,
@@ -135,12 +204,12 @@ extension CredentialOfferView {
           statusBadgeImage: credentialViewModel.statusImage,
           statusBadgeStyle: credentialViewModel.statusBadgeStyle)
           .padding(.horizontal, .x10)
-          .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+          .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.card.rawValue)
       }
     }
     .padding(.x6)
     .background(ThemingAssets.Background.groupedRow.swiftUIColor)
-    .clipShape(.rect(cornerRadius: .CornerRadius.xl))
+    .clipShape(.rect(cornerRadius: .x9))
     .accessibilityElement(children: .contain)
     .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
@@ -151,13 +220,10 @@ extension CredentialOfferView {
       IconCell(
         image: Assets.warning.swiftUIImage,
         text: L10n.tkReceiveCredentialOfferWrongDataSectionCellPrimary,
-        disclosureIndicator: .navigation)
-      {
-        Task { await viewModel.send(event: .openWrongData) }
-      }
-      .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-      .padding(.horizontal, .x6)
-      .accessibilityIdentifier(AccessibilityIdentifier.wrongData.rawValue)
+        disclosureIndicator: .navigation, onTap: wrongDataAction)
+        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .padding(.horizontal, .x6)
+        .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.wrongData.rawValue)
     }
   }
 
@@ -165,7 +231,7 @@ extension CredentialOfferView {
   private func loadingContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
-      if let credentialViewModel = viewModel.credentialViewModel {
+      if let credentialViewModel {
         CredentialCard(
           name: credentialViewModel.credentialDisplay?.name,
           summary: credentialViewModel.credentialDisplay?.summary,
@@ -227,14 +293,14 @@ extension CredentialOfferView {
     .background(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
     .clipShape(RoundedCorner(radius: .x8, corners: [.topLeft, .topRight]))
     .accessibilityElement(children: .contain)
-    .accessibilityIdentifier(AccessibilityIdentifier.confirmDeclineContent.rawValue)
+    .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.confirmDeclineContent.rawValue)
   }
 
   @ViewBuilder
   private func issuerHeader() -> some View {
-    if let credentialViewModel = viewModel.credentialViewModel {
-      ActorHeaderView(issuer: credentialViewModel.issuerDisplay, trustInformation: viewModel.trustInformation, topInset: topInset) { badgeType in
-        router.badgeInformation(badgeType: badgeType)
+    if let credentialViewModel, let trustInformation {
+      ActorHeaderView(issuer: credentialViewModel.issuerDisplay, trustInformation: trustInformation, topInset: topInset) { badgeType in
+        badgeAction(badgeType)
       }.accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
     }
   }
@@ -251,7 +317,7 @@ extension CredentialOfferView {
   private func footerButtons() -> some View {
     ButtonSheet(colorConfig: .secondary) {
       AdaptiveButtonStack {
-        Button { Task { await viewModel.send(event: .accept) } } label: {
+        Button { acceptAction() } label: {
           Label(L10n.tkReceiveCredentialOfferButtonAccept, systemImage: "checkmark")
             .multilineTextAlignment(.center)
             .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
@@ -259,10 +325,10 @@ extension CredentialOfferView {
         }
         .buttonStyle(.tertiary)
         .controlSize(.large)
-        .accessibilityIdentifier(AccessibilityIdentifier.acceptButton.rawValue)
+        .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.acceptButton.rawValue)
         .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
       } secondary: {
-        Button { Task { await viewModel.send(event: .decline) } } label: {
+        Button(action: declineAction) {
           Label(L10n.tkReceiveCredentialOfferButtonDecline, systemImage: "xmark")
             .multilineTextAlignment(.center)
             .lineLimit(sizeCategory.isAccessibilityCategory ? 0 : 1)
@@ -271,7 +337,7 @@ extension CredentialOfferView {
         .buttonStyle(.primary)
         .controlSize(.large)
         .accessibilityLabel(L10n.credentialOfferRefuseButton)
-        .accessibilityIdentifier(AccessibilityIdentifier.declineButton.rawValue)
+        .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.declineButton.rawValue)
         .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
       }
     }
@@ -280,7 +346,7 @@ extension CredentialOfferView {
   @ViewBuilder
   private func declineButtons() -> some View {
     AdaptiveButtonStack {
-      Button { Task { await viewModel.send(event: .confirmDecline) } } label: {
+      Button { confirmDeclineAction() } label: {
         Text(L10n.tkReceiveDeclineOfferPrimaryButton)
           .multilineTextAlignment(.center)
           .frame(maxWidth: .infinity)
@@ -288,10 +354,10 @@ extension CredentialOfferView {
       .buttonStyle(.navyBlue)
       .controlSize(.large)
       .accessibilityLabel(L10n.tkReceiveDeclineOfferPrimaryButton)
-      .accessibilityIdentifier(AccessibilityIdentifier.confirmDeclineButton.rawValue)
+      .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.confirmDeclineButton.rawValue)
       .accessibilitySortPriority(AccessibilityPriority.x1.rawValue + AccessibilityPriority.x3.rawValue)
     } secondary: {
-      Button { Task { await viewModel.send(event: .cancelDecline) } } label: {
+      Button(action: cancelDeclineAction) {
         Text(L10n.tkGlobalCancel)
           .multilineTextAlignment(.center)
           .frame(maxWidth: .infinity)
@@ -300,7 +366,7 @@ extension CredentialOfferView {
       .buttonStyle(.plain)
       .controlSize(.large)
       .accessibilityLabel(L10n.tkGlobalCancel)
-      .accessibilityIdentifier(AccessibilityIdentifier.cancelDeclineButton.rawValue)
+      .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.cancelDeclineButton.rawValue)
       .accessibilitySortPriority(AccessibilityPriority.x1.rawValue + AccessibilityPriority.x4.rawValue)
     }
     .frame(maxWidth: 450)
@@ -309,13 +375,13 @@ extension CredentialOfferView {
 
 // MARK: - Portrait
 
-extension CredentialOfferView {
+extension CredentialOfferView.Content {
   @ViewBuilder
   private func portraitLayout() -> some View {
     VStack(alignment: .leading, spacing: .x4) {
       issuerHeader()
 
-      switch viewModel.state {
+      switch state {
       case .result:
         resultContainer()
       case .loading:
@@ -327,12 +393,12 @@ extension CredentialOfferView {
       }
     }
     .applyScrollViewIfNeeded()
-    .if(viewModel.state == .result) {
+    .if(state == .result) {
       $0.safeAreaInset(edge: .bottom) {
         footerButtons()
       }
     }
-    .if(viewModel.state != .result) {
+    .if(state != .result) {
       $0.ignoresSafeArea(edges: .bottom)
     }
   }
@@ -340,13 +406,13 @@ extension CredentialOfferView {
 
 // MARK: - Landscape
 
-extension CredentialOfferView {
+extension CredentialOfferView.Content {
   @ViewBuilder
   private func landscapeLayout() -> some View {
-    switch viewModel.state {
+    switch state {
     case .loading,
          .result:
-      credentialLandscapeContainer(isLoading: viewModel.state == .loading)
+      credentialLandscapeContainer(isLoading: state == .loading)
     case .decline:
       declineLandscapeContainer()
         .padding(.horizontal, .x3)
@@ -387,7 +453,7 @@ extension CredentialOfferView {
     VStack {
       Spacer()
       VStack {
-        if let viewModel = viewModel.credentialViewModel {
+        if let viewModel = credentialViewModel {
           CredentialCard(
             name: viewModel.credentialDisplay?.name,
             summary: viewModel.credentialDisplay?.summary,
@@ -398,12 +464,12 @@ extension CredentialOfferView {
             statusBadgeImage: viewModel.statusImage,
             statusBadgeStyle: viewModel.statusBadgeStyle)
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-            .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+            .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.card.rawValue)
         }
       }
       .padding(.x5)
       .background(Color(uiColor: .secondarySystemBackground))
-      .clipShape(.rect(cornerRadius: .CornerRadius.xl))
+      .clipShape(.rect(cornerRadius: .x9))
       .accessibilityElement(children: .contain)
 
       Spacer()
@@ -428,6 +494,13 @@ extension CredentialOfferView {
 
 #if DEBUG
 #Preview {
-  CredentialOfferView(credential: .Mock.sample, trustInformation: .Mock.trustedIdentity, state: .result, router: CredentialOfferRouter())
+  CredentialOfferView
+    .Content(
+      clusters: CredentialClaimCluster.Mock.arrayWithDisplay,
+      credentialViewModel: VerifiableCredentialViewModel(
+        credential: .Mock.sample,
+        colorScheme: "light"),
+      state: .result,
+      trustInformation: .Mock.fullyTrusted)
 }
 #endif

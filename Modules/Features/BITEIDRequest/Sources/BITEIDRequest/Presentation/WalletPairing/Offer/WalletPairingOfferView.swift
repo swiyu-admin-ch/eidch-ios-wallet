@@ -30,14 +30,9 @@ struct WalletPairingOfferView: View {
       await viewModel.fetchPairingQRCode()
     }
     .toolbar(.visible)
-    .toolbar(content: toolbarContent)
+    .defaultEidRequestToolbar(onClose: viewModel.close)
     .toolbarBackground(ThemingAssets.Background.primary.swiftUIColor, for: .navigationBar)
     .navigate(to: $viewModel.destination)
-    .onChange(of: viewModel.isNavigationCloseTriggered) { newValue in
-      if newValue {
-        navigator.dismiss()
-      }
-    }
     .navigationCheckpoint(EIDRequestCheckpoints.walletPairingOffer)
   }
 
@@ -128,17 +123,6 @@ extension WalletPairingOfferView {
       }
     }
   }
-
-  @ToolbarContentBuilder
-  private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
-        Assets.close.swiftUIImage
-      })
-      .accessibilityLabel(L10n.tkGlobalClose)
-    }
-  }
-
 }
 
 #Preview {

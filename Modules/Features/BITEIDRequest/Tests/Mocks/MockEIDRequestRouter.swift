@@ -23,6 +23,7 @@ final class MockEIDRequestRouter: EIDRequestRouterRoutes, EIDRequestInternalRout
   var autoVerificationArgument: String?
   var optainConsentArgument: String?
   var walletPairingArgument: String?
+  var identityCheckArgument: String?
 
   var legalRepresentantConsentStateArgument: RequestCaseViewState?
   var eIDRequestError: Error?
@@ -80,6 +81,10 @@ extension MockEIDRequestRouter: EIDRequestRoutes {
 
   func walletPairing(caseId: String) {
     walletPairingArgument = caseId
+  }
+
+  func identityCheck(caseId: String) {
+    identityCheckArgument = caseId
   }
 }
 

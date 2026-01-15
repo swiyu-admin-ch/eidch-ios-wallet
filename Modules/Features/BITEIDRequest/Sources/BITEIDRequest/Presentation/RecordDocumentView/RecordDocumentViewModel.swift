@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - RecordDocumentViewModel
 
 @MainActor
-class RecordDocumentViewModel: ObservableObject, NavigationClosable {
+class RecordDocumentViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
@@ -61,7 +61,6 @@ class RecordDocumentViewModel: ObservableObject, NavigationClosable {
   @Published var notification: AVBeamNotification? = nil
   @Published var timer: Timer?
 
-  @Published var isNavigationCloseTriggered = false
   @Published var destination: EIDRequestDestinations?
 
   @Injected(\.avBeam) var avBeam: AVBeamProtocol
@@ -115,6 +114,7 @@ class RecordDocumentViewModel: ObservableObject, NavigationClosable {
 
   func stop() {
     avBeam.stopRecordDocument()
+    try? avBeam.stopCamera()
   }
 
   func startCamera() {
@@ -150,11 +150,6 @@ class RecordDocumentViewModel: ObservableObject, NavigationClosable {
     }
   }
 
-  func close() {
-    stop()
-    navigationClose()
-  }
-
   func closeIntroductionPopup() {
     introductionPopupState = nil
   }
@@ -169,9 +164,10 @@ class RecordDocumentViewModel: ObservableObject, NavigationClosable {
 
   private func handleError(_ error: Error) {
     stop()
-    destination = .error(ErrorDataset(error, primaryAction: { [weak self] in
+    destination = .error(.retry(error, { [weak self] navigator in
       self?.reset()
       self?.startCamera()
+      navigator.pop()
     }))
   }
 
@@ -216,6 +212,10 @@ extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
   nonisolated func didCompleteRecordDocument(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       do {
+        guard packageResult.data.errorCode == .none else {
+          return self.handleError(packageResult.data.errorCode)
+        }
+
         try? avBeam.stopCamera()
         guard let caseId = self.context.caseId else { throw EIDRequestError.missingCaseId }
         let output = RecordDocumentOutput(packageResult)

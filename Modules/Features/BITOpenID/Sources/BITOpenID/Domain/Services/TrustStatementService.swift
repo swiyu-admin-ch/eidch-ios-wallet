@@ -9,7 +9,6 @@ import Spyable
 
 @Spyable
 public protocol TrustStatementServiceProtocol {
-  func fetchMetadata(for subjectDid: String) async throws -> MetadataTrustStatement
   func fetchIdentity(for subjectDid: String) async throws -> IdentityTrustStatement
   func fetchVcSchema(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async throws -> VcSchemaTrustStatement?
 }
@@ -26,24 +25,11 @@ struct TrustStatementService: TrustStatementServiceProtocol {
 
   // MARK: Internal
 
-  func fetchMetadata(for subjectDid: String) async throws -> MetadataTrustStatement {
-    let trustStatementURL = try urlMapper.map(did: subjectDid)
-    let trustStatements = try await trustStatementRepository.fetchMetadataTrustStatements(from: trustStatementURL, for: subjectDid)
-      .filter { trustStatement in
-        trustStatement.payload.vct == Self.trustStatementMetadataVct && trustedDids.contains(trustStatement.payload.issuer)
-      }
-    let validTrustStatements = await trustStatements.asyncFilter { trustStatement in
-      await trustStatementValidator.validate(trustStatement, for: subjectDid)
-    }
-    guard validTrustStatements.count == 1, let statement = validTrustStatements.first else { throw TrustStatementServiceError.validationFailed }
-    return statement
-  }
-
   func fetchIdentity(for subjectDid: String) async throws -> IdentityTrustStatement {
-    let trustStatementURL = try urlMapper.map(did: subjectDid)
-    let trustStatements = try await trustStatementRepository.fetchIdentityTrustStatements(from: trustStatementURL, for: subjectDid)
+    let trustRegistryURL = try urlMapper.map(did: subjectDid)
+    let trustStatements = try await trustStatementRepository.fetchIdentityTrustStatements(from: trustRegistryURL, for: subjectDid)
       .filter { trustStatement in
-        trustStatement.payload.vct == Self.trustStatementIdentityVct && trustedDids.contains(trustStatement.payload.issuer)
+        trustStatement.payload.vct == Self.trustStatementIdentityVct && isTrustedDid(trustStatement.payload.issuer, for: trustRegistryURL)
       }
     let validTrustStatements = await trustStatements.asyncFilter { trustStatement in
       await trustStatementValidator.validate(trustStatement, for: subjectDid)
@@ -53,10 +39,10 @@ struct TrustStatementService: TrustStatementServiceProtocol {
   }
 
   func fetchVcSchema(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async throws -> VcSchemaTrustStatement? {
-    let trustStatementURL = try urlMapper.map(did: subjectDid)
-    let trustStatements = try await trustStatementRepository.fetchVcSchemaTrustStatements(from: trustStatementURL, for: subjectDid, type: type, vcSchemaId: vcSchemaId)
+    let trustRegistryURL = try urlMapper.map(did: subjectDid)
+    let trustStatements = try await trustStatementRepository.fetchVcSchemaTrustStatements(from: trustRegistryURL, for: subjectDid, type: type, vcSchemaId: vcSchemaId)
       .filter { trustStatement in
-        trustStatement.payload.vct == type.vct && trustedDids.contains(trustStatement.payload.issuer)
+        trustStatement.payload.vct == type.vct && isTrustedDid(trustStatement.payload.issuer, for: trustRegistryURL)
       }
     guard !trustStatements.isEmpty else { return nil }
     let validTrustStatements = await trustStatements.asyncFilter { trustStatement in
@@ -69,13 +55,18 @@ struct TrustStatementService: TrustStatementServiceProtocol {
 
   // MARK: Private
 
-  private static let trustStatementMetadataVct = "TrustStatementMetadataV1"
   private static let trustStatementIdentityVct = "TrustStatementIdentityV1"
 
-  @Injected(\.trustStatementUrlMapper) private var urlMapper
+  @Injected(\.trustRegistryUrlMapper) private var urlMapper
   @Injected(\.trustStatementRepository) private var trustStatementRepository
-  @Injected(\.trustRegistryTrustedDids) private var trustedDids: [String]
+  @Injected(\.trustRegistryTrustedDids) private var trustedDids: [String: [String]]
   @Injected(\.trustStatementValidator) private var trustStatementValidator
+
+  private func isTrustedDid(_ did: String?, for url: URL) -> Bool {
+    guard let did else { return false }
+    let baseUrl = url.absoluteString.replacing("https://", with: "")
+    return trustedDids[baseUrl]?.contains(did) ?? false
+  }
 }
 
 extension VcSchemaTrustStatementType {

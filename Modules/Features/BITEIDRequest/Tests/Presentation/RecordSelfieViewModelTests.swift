@@ -1,4 +1,3 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping init_with_name
 import BITL10n
 import Factory
 import Spyable
@@ -10,6 +9,8 @@ import XCTest
 @testable import BITEIDRequestShared
 @testable import BITTestingCore
 @testable import BITTheming
+
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping init_with_name
 
 // MARK: - RecordSelfieViewModelTests
 
@@ -136,12 +137,7 @@ class RecordSelfieViewModelTests: XCTestCase {
     viewModel.stop()
 
     XCTAssertTrue(avBeam.stopCaptureFaceCalled)
-  }
-
-  func testClose_callsStopAndNavigationClose() {
-    viewModel.close()
-
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
+    XCTAssertFalse(avBeam.stopCameraCalled) // Stop with a dedicated button must NOT stop the camera
   }
 
   // MARK: - AVBeamMessageDelegate Tests

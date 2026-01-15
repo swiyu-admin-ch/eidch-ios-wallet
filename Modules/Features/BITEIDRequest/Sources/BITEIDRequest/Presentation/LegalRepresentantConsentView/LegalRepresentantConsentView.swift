@@ -34,14 +34,13 @@ struct LegalRepresentantConsentView: View {
           secondaryButtonAction: viewModel.continueAsParent)
       })
       .navigationBarBackButtonHidden(true)
-      .toolbar { CloseButtonToolbar(action: { navigator.dismiss() }) }
+      .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
   @StateObject private var viewModel: LegalRepresentantConsentViewModel
-  @Environment(\.navigator) private var navigator
 }
 
 #Preview {

@@ -1,3 +1,4 @@
+import BITCredential
 import BITCredentialShared
 import BITHome
 import BITInvitation
@@ -14,9 +15,11 @@ class HomeRouterMock: HomeRouterRoutes {
   var didCallOpenCredentialDetail = false
   var didCallBetaId = false
   var didCallEIDRequest = false
+  var didCallCredentialOffer = false
   var didCallAutoVerificationArgument: String?
   var didCallObtainConsentArgument: String?
   var didCallWalletPairingArgument: String?
+  var didCallIdentityCheckArgument: String?
 
   func deeplink(url: URL, animated: Bool) -> Bool {
     didCallDeeplink = true
@@ -61,6 +64,14 @@ class HomeRouterMock: HomeRouterRoutes {
 
   func walletPairing(caseId: String) {
     didCallWalletPairingArgument = caseId
+  }
+
+  func identityCheck(caseId: String) {
+    didCallIdentityCheckArgument = caseId
+  }
+
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?) {
+    didCallCredentialOffer = true
   }
 
 }

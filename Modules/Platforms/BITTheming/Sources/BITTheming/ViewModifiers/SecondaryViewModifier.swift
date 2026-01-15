@@ -11,7 +11,7 @@ public struct SecondaryViewModifier: ViewModifier {
       .frame(maxWidth: .infinity)
       .background(ThemingAssets.accentColor.swiftUIColor.opacity(0.1))
       .foregroundColor(ThemingAssets.accentColor.swiftUIColor)
-      .cornerRadius(.standard)
+      .cornerRadius(.x2)
       .progressViewStyle(CircularProgressViewStyle(tint: .white))
   }
 
