@@ -41,7 +41,11 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     let issuerUrl = try getIssuerUrl(from: offer)
     let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
     let accessToken = try await fetchAccessToken(tokenEndpoint: configuration.tokenEndpoint, credentialOffer: offer)
-    let nonce = try await fetchNonceIfNeeded(from: metadataWrapper, holderBindingContext: holderBindingContext)
+    let nonce = if let nonceString = accessToken.nonce {
+      Nonce(cNonce: nonceString)
+    } else {
+      try await fetchNonceIfNeeded(from: metadataWrapper, holderBindingContext: holderBindingContext)
+    }
 
     let context = FetchCredentialContext(
       credentialConfigurationId: metadataWrapper.credentialConfigurationId,
