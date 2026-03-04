@@ -41,7 +41,9 @@ public struct KeyPadButton: View {
   // MARK: Internal
 
   enum ActionKey: EnvironmentKey {
-    static var defaultValue: (KeyPadKey) -> Void { { _ in } }
+    static var defaultValue: (KeyPadKey) -> Void {
+      { _ in }
+    }
   }
 
 }

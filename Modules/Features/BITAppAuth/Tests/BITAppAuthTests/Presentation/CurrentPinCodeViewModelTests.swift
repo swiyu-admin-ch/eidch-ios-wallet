@@ -54,7 +54,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testCurrentPinCode_success() throws {
+  func testCurrentPinCode_success() {
     let router = ChangePinRouterMock()
 
     getUniquePassphraseUseCase.executeFromReturnValue = Data()
@@ -73,7 +73,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testCurrentPinCode_error() throws {
+  func testCurrentPinCode_error() {
     let router = ChangePinRouterMock()
 
     getUniquePassphraseUseCase.executeFromThrowableError = PinCodeError.wrongPinCode
@@ -92,7 +92,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testCurrentPinCode_lockWallet() throws {
+  func testCurrentPinCode_lockWallet() {
     let logoutExpectation = XCTNSNotificationExpectation(name: .logout)
     let router = ChangePinRouterMock()
 

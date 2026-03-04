@@ -35,7 +35,6 @@ public struct RecentActivitiesWidget: View {
   private let activities: [ActivityCellViewModel]
   private let credentialId: UUID
 
-  @ViewBuilder
   private var recentHistoryItems: some View {
     VStack {
       ForEach(activities) { viewModel in
@@ -53,8 +52,7 @@ public struct RecentActivitiesWidget: View {
   private var entireHistoryLink: some View {
     Button(action: {
       navigator.navigate(
-        to: ActivityDestinations.activities(credentialId: credentialId)
-      )
+        to: ActivityDestinations.activities(credentialId: credentialId))
     }) {
       HStack {
         Text(L10n.tkActivityLatestActivitiesEntireHistory)

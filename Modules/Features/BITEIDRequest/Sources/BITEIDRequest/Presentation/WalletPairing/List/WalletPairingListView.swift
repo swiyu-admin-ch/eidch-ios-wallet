@@ -50,7 +50,6 @@ struct WalletPairingListView: View {
 
   @InjectedObject(\.walletPairingListViewModel) private var viewModel
 
-  @ViewBuilder
   private func header() -> some View {
     Section {
       VStack(alignment: .leading, spacing: .x6) {
@@ -71,7 +70,6 @@ struct WalletPairingListView: View {
     .listSectionSeparator(.hidden)
   }
 
-  @ViewBuilder
   private func sectionAdditionalDevices() -> some View {
     Section {
       if viewModel.pairedDevicesCounter > 0 {
@@ -112,7 +110,6 @@ struct WalletPairingListView: View {
     }
   }
 
-  @ViewBuilder
   private func footer() -> some View {
     ButtonSheet {
       Button(action: viewModel.primaryAction, label: {
@@ -126,7 +123,6 @@ struct WalletPairingListView: View {
     }
   }
 
-  @ViewBuilder
   private func sectionHeader(_ text: String) -> some View {
     Text(text)
       .font(.custom.footnoteEmphasized)
@@ -135,7 +131,6 @@ struct WalletPairingListView: View {
       .padding(.bottom, .x1)
   }
 
-  @ViewBuilder
   private func checkmark() -> some View {
     Image(systemName: "checkmark.circle.fill")
       .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
@@ -159,7 +154,6 @@ struct WalletPairingListView: View {
 
 extension WalletPairingListView {
 
-  @ViewBuilder
   private func sectionCurrentDevice() -> some View {
     Section {
       VStack {
@@ -174,7 +168,6 @@ extension WalletPairingListView {
     header: { sectionHeader(L10n.tkEidRequestWalletPairingCurrentDeviceSectionTitle) }
   }
 
-  @ViewBuilder
   private func pairingCurrentDeviceButton() -> some View {
     Button {
       Task {
@@ -187,7 +180,6 @@ extension WalletPairingListView {
     .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
 
-  @ViewBuilder
   private func pairingCurrentDeviceProgressView() -> some View {
     HStack {
       ProgressView()
@@ -199,7 +191,6 @@ extension WalletPairingListView {
     }
   }
 
-  @ViewBuilder
   private func pairingCurrentDeviceResultView(date: String) -> some View {
     HStack {
       #warning("Update the name of the device")

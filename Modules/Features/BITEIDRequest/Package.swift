@@ -22,6 +22,7 @@ let package = Package(
     .package(path: "../BITCredential"),
     .package(path: "../BITEIDRequestShared"),
     .package(path: "../BITInvitation"),
+    .package(path: "../../Platforms/BITAnalytics"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITNavigation"),
@@ -32,12 +33,13 @@ let package = Package(
     .package(url: "https://github.com/hmlongco/Navigator", exact: "1.3.1"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
-    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", exact: "0.17.1"),
+    .package(url: "https://github.com/swiyu-admin-ch/eidch-ios-av-lib.git", exact: "0.18.1"),
   ],
   targets: [
     .target(
       name: "BITEIDRequest",
       dependencies: [
+        .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITEIDRequestShared", package: "BITEIDRequestShared"),
         .product(name: "BITOpenID", package: "BITOpenID"),
@@ -46,16 +48,17 @@ let package = Package(
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITInvitation", package: "BITInvitation"),
         .product(name: "BITTestingCore", package: "BITCore"),
-        .product(name: "Factory", package: "Factory"),
-        .product(name: "NavigatorUI", package: "Navigator"),
         .product(name: "BITQRCode", package: "BITQRCode"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITNavigation", package: "BITNavigation"),
         .product(name: "BITTheming", package: "BITTheming"),
-        .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITAVWrapper", package: "eidch-ios-av-lib"),
+        .product(name: "Factory", package: "Factory"),
+        .product(name: "PopupView", package: "PopupView"),
+        .product(name: "NavigatorUI", package: "Navigator"),
+        .product(name: "Spyable", package: "swift-spyable"),
       ],
       resources: [.process("Resources")]),
     .testTarget(

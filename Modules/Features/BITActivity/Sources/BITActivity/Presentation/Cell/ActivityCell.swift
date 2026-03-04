@@ -43,7 +43,6 @@ public struct ActivityCell: View {
   private let configuration: Configuration
   private let onTap: (() -> Void)?
 
-  @ViewBuilder
   private var content: some View {
     VStack(spacing: 0) {
       HStack(spacing: 0) {
@@ -59,7 +58,6 @@ public struct ActivityCell: View {
     }
   }
 
-  @ViewBuilder
   private var leadingIcon: some View {
     viewModel.icon
       .resizable()
@@ -68,7 +66,6 @@ public struct ActivityCell: View {
       .accessibilityHidden(true)
   }
 
-  @ViewBuilder
   private var texts: some View {
     VStack(alignment: .leading, spacing: 0) {
       Text(viewModel.title)
@@ -90,7 +87,6 @@ public struct ActivityCell: View {
     }
   }
 
-  @ViewBuilder
   private var trailingIcon: some View {
     ThemingAssets.chevronRight.swiftUIImage
       .resizable()

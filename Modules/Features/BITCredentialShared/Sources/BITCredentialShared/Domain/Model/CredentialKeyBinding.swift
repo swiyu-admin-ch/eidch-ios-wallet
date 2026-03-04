@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - CredentialKeyBinding
 
-public struct CredentialKeyBinding: Codable {
+public struct CredentialKeyBinding: Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -51,16 +51,4 @@ public struct CredentialKeyBinding: Codable {
   public let bindingType: KeyBindingType
   public let publicKey: Data?
   public let privateKey: Data?
-}
-
-// MARK: Equatable
-
-extension CredentialKeyBinding: Equatable {
-  public static func == (lhs: CredentialKeyBinding, rhs: CredentialKeyBinding) -> Bool {
-    lhs.id == rhs.id &&
-      lhs.algorithm == rhs.algorithm &&
-      lhs.bindingType == rhs.bindingType &&
-      lhs.publicKey == rhs.publicKey &&
-      lhs.privateKey == rhs.privateKey
-  }
 }

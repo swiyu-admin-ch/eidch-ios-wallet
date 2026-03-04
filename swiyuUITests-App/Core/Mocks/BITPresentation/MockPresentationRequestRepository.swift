@@ -10,7 +10,7 @@ struct MockPresentationRequestRepository: PresentationRequestRepositoryProtocol 
     .plain(RequestObject.Mock.sample)
   }
 
-  func submit(from url: URL, presentationRequestBody: PresentationRequestBody) async throws {
+  func submit(authorizationResponse: AuthorizationResponseBody, to url: URL) async throws {
     // mock
   }
 

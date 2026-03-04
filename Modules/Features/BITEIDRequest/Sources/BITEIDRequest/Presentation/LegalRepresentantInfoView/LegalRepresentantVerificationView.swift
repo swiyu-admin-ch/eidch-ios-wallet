@@ -14,25 +14,18 @@ struct LegalRepresentantVerificationView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.idCheck.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkEidRequestGuardianVerificationPrimary,
-          secondary: L10n.tkEidRequestGuardianVerificationSecondary,
-          tertiary: L10n.tkEidRequestGuardianVerificationTertiary)
-      },
-      footer: {
-        ButtonSheet {
-          AsyncButton(action: viewModel.startVerification) {
-            Text(L10n.tkEidRequestGuardianVerificationButtonStart)
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.primary)
-          .controlSize(.large)
-        }
-      })
+      contents: [
+        .title(L10n.tkEidRequestGuardianVerificationPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestGuardianVerificationSecondary, identifier: "secondaryText"),
+        .caption(L10n.tkEidRequestGuardianVerificationTertiary, identifier: "tertiaryText"),
+      ],
+      actions: [
+        .primaryAsync(L10n.tkEidRequestGuardianVerificationButtonStart, identifier: "primaryButton", { _ in
+          await viewModel.startVerification()
+        }),
+      ])
       .toolbar(.visible)
   }
 

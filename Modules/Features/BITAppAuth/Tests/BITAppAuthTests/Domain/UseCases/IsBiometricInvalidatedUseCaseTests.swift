@@ -22,7 +22,7 @@ final class IsBiometricInvalidatedUseCaseTests: XCTestCase {
     useCase = IsBiometricInvalidatedUseCase()
   }
 
-  func testBiometricAreValid() throws {
+  func testBiometricAreValid() {
     uniquePassphraseManager.existsForReturnValue = true
     isBiometricUsageAllowed.executeReturnValue = true
     hasBiometricAuth.executeReturnValue = true
@@ -34,7 +34,7 @@ final class IsBiometricInvalidatedUseCaseTests: XCTestCase {
     XCTAssertTrue(hasBiometricAuth.executeCalled)
   }
 
-  func testBiometricInvalid_uniquePassphraseMissing() throws {
+  func testBiometricInvalid_uniquePassphraseMissing() {
     uniquePassphraseManager.existsForReturnValue = false
     isBiometricUsageAllowed.executeReturnValue = true
     hasBiometricAuth.executeReturnValue = true
@@ -46,7 +46,7 @@ final class IsBiometricInvalidatedUseCaseTests: XCTestCase {
     XCTAssertTrue(hasBiometricAuth.executeCalled)
   }
 
-  func testBiometricAreValid_isBiometricUsageForbidden() throws {
+  func testBiometricAreValid_isBiometricUsageForbidden() {
     uniquePassphraseManager.existsForReturnValue = true
     isBiometricUsageAllowed.executeReturnValue = false
     hasBiometricAuth.executeReturnValue = true
@@ -58,7 +58,7 @@ final class IsBiometricInvalidatedUseCaseTests: XCTestCase {
     XCTAssertFalse(hasBiometricAuth.executeCalled)
   }
 
-  func testBiometricAreValid_hasNoBiometricAuth() throws {
+  func testBiometricAreValid_hasNoBiometricAuth() {
     uniquePassphraseManager.existsForReturnValue = true
     isBiometricUsageAllowed.executeReturnValue = true
     hasBiometricAuth.executeReturnValue = false

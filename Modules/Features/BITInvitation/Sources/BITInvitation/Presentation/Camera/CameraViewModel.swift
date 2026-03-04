@@ -13,11 +13,11 @@ import Factory
 // MARK: - CameraViewModel
 
 @MainActor
-class CameraViewModel: ObservableObject, Vibrating {
+public class CameraViewModel: ObservableObject, Vibrating {
 
   // MARK: Lifecycle
 
-  init(router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
+  public init(router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
     self.router = router
     self.delegate = delegate
     configureBindings()
@@ -25,7 +25,7 @@ class CameraViewModel: ObservableObject, Vibrating {
     try? cameraManager.configure()
   }
 
-  init(url: URL, router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
+  public init(url: URL, router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
     self.router = router
     self.delegate = delegate
     scannerDelay = 0
@@ -36,26 +36,32 @@ class CameraViewModel: ObservableObject, Vibrating {
     cameraManager.stop()
   }
 
-  // MARK: Internal
+  // MARK: Public
 
-  @Published var error: InvitationError?
-  @Published var isTipPresented = false
-  @Published var isLoading = false
-  @Published var isErrorPopupPresented = false
-  @Published var isScanEnabled = true
+  @Published public var isTipPresented = false
+  @Published public var isLoading = false
+  @Published public var isErrorPopupPresented = false
+  @Published public var isScanEnabled = true
+  public var cameraManager = CameraManager()
+  public var session = AVCaptureSession()
 
-  var cameraManager = CameraManager()
-  var session = AVCaptureSession()
+  @Published public var isSessionTimeoutPresented = false
 
-  @Published var isSessionTimeoutPresented = false
-
-  @Published var isTorchEnabled = false {
+  @Published public var isTorchEnabled = false {
     didSet {
       isTorchEnabled ? cameraManager.flashlight.turnOn() : cameraManager.flashlight.turnOff()
     }
   }
 
-  func onAppear() async {
+  public var currentError: Error? {
+    error
+  }
+
+  public var currentInvitationURL: URL? {
+    invitationURL
+  }
+
+  public func onAppear() async {
     cameraManager.start()
     isTipPresented = (try? await getCredentialsCountUseCase.execute() == 0) ?? true
 
@@ -65,7 +71,7 @@ class CameraViewModel: ObservableObject, Vibrating {
     }
   }
 
-  func setMetadataUrl(_ url: URL) async {
+  public func setMetadataUrl(_ url: URL) async {
     do {
       isLoading = true
       isScanEnabled = false
@@ -85,9 +91,13 @@ class CameraViewModel: ObservableObject, Vibrating {
     }
   }
 
-  func login() {
+  public func login() {
     router.login(animated: true)
   }
+
+  // MARK: Internal
+
+  @Published var error: Error?
 
   // MARK: Private
 
@@ -104,6 +114,7 @@ class CameraViewModel: ObservableObject, Vibrating {
 
   @Injected(\.scannerDelay) private var scannerDelay: UInt64
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @Injected(\.invitationErrorMapper) private var invitationErrorMapper: InvitationErrorMapping
   @Injected(\.fetchCredentialUseCase) private var fetchCredentialUseCase: FetchCredentialUseCaseProtocol
   @Injected(\.fetchPresentationRequestUseCase) private var fetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol
   @Injected(\.getCredentialsCountUseCase) private var getCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol
@@ -155,18 +166,18 @@ class CameraViewModel: ObservableObject, Vibrating {
     if error as? CheckInvitationTypeError != .wrongScheme {
       analytics.log(error)
     }
-    let invitationError = InvitationError.from(error)
+    let mappedError = invitationErrorMapper(error)
     if error as? UserSessionError == .notLoggedIn {
       isSessionTimeoutPresented = true
     } else {
-      self.error = invitationError
+      self.error = mappedError
       isErrorPopupPresented = true
     }
 
     isScanEnabled = true
     isLoading = false
 
-    if case .invalidQRCode = invitationError {
+    if case .invalidQRCode = mappedError as? InvitationError {
       invitationURL = nil // Keep the torch enabled
     } else {
       resetTorchAndInvitation()
@@ -176,14 +187,14 @@ class CameraViewModel: ObservableObject, Vibrating {
   private func openCredentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
     isTorchEnabled = false
     cameraManager.stop()
-    router.credentialOffer(credential: credential, trustInformation: trustInformation)
+    router.credentialOffer(credential: credential, trustInformation: trustInformation, delegate: delegate)
   }
 
   private func saveDeferredCredential(_ deferredCredential: DeferredCredential) async throws {
     try await saveDeferredCredentialUseCase.execute(for: deferredCredential)
 
     router.close { [weak self] in
-      self?.delegate?.didSaveDeferredCredential()
+      self?.delegate?.didSaveCredential()
     }
   }
 }
@@ -192,8 +203,10 @@ class CameraViewModel: ObservableObject, Vibrating {
 
 extension CameraViewModel {
 
-  func didMoveFocusArea(to object: AVMetadataMachineReadableCodeObject) {
+  public func didMoveFocusArea(to object: AVMetadataMachineReadableCodeObject) {
     guard
+      isScanEnabled,
+      !isLoading,
       let urlString = object.stringValue,
       urlString != previousUrl,
       let url = URL(string: urlString)
@@ -219,21 +232,21 @@ extension CameraViewModel {
 
 extension CameraViewModel {
 
-  func close() {
+  public func close() {
     router.close()
   }
 
-  func closeErrorView() {
+  public func closeErrorView() {
     error = nil
     isErrorPopupPresented = false
     isScanEnabled = true
   }
 
-  func closeTipView() {
+  public func closeTipView() {
     isTipPresented = false
   }
 
-  func toggleTorch() {
+  public func toggleTorch() {
     isTorchEnabled.toggle()
   }
 }
@@ -241,15 +254,15 @@ extension CameraViewModel {
 // MARK: PresentationFinishDelegate
 
 extension CameraViewModel: PresentationFinishDelegate {
-  func retry() {
+  public func retry() {
     router.pop()
   }
 
-  func cancel() {
+  public func cancel() {
     router.close()
   }
 
-  func finish(with state: PresentationRequestResultState) async {
+  public func finish(with state: PresentationRequestResultState) async {
     router.close()
   }
 }

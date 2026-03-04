@@ -15,7 +15,6 @@ struct ScanDocumentView: View {
     ZStack {
       Color.clear
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(ThemingAssets.Background.secondary.swiftUIColor)
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .ignoresSafeArea(edges: .bottom)
 
@@ -24,7 +23,12 @@ struct ScanDocumentView: View {
         scannerView()
           .transition(.opacity)
       case .loading:
-        loadingView()
+        LoadingView(
+          primary: L10n.tkLoaderInitializationPrimary,
+          secondary: L10n.tkLoaderInitializationSecondary,
+          action: LoadingView.Action(
+            action: viewModel.cancelInitialization,
+            buttonText: L10n.tkGlobalCancel))
           .transition(.opacity)
           .task {
             viewModel.initializeSDK()
@@ -32,6 +36,7 @@ struct ScanDocumentView: View {
       }
     }
     .cameraPermission()
+    .disablePhoneLock()
     .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
     .font(.custom.body)
     .animation(.easeInOut(duration: 0.4), value: viewModel.state)
@@ -50,13 +55,13 @@ struct ScanDocumentView: View {
 
   // MARK: Private
 
-  @Orientation private var orientation
-
   @State private var size = CGSize.zero
   @State private var rotationAngle: Double = 0
   @State private var currentDisplayState = ScanDocumentViewModel.ScanningState.recto
   @State private var scale = 1.0
   @State private var scaleAnimationTask: Task<Void, Never>?
+
+  @Orientation private var orientation
 
   @InjectedObject(\.scanDocumentViewModel) private var viewModel: ScanDocumentViewModel
 
@@ -72,15 +77,6 @@ struct ScanDocumentView: View {
     rotationAngle > 90 && rotationAngle < 270
   }
 
-  @ViewBuilder
-  private func loadingView() -> some View {
-    VStack {
-      ProgressView()
-      Text(L10n.tkEidRequestSdkInitializationPrimary)
-    }
-  }
-
-  @ViewBuilder
   private func scannerView() -> some View {
     ZStack(alignment: .center) {
       GLViewWrapper(viewModel.avBeam.getGLView)
@@ -93,13 +89,6 @@ struct ScanDocumentView: View {
     }
     .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
     .ignoresSafeArea(edges: [.bottom, .horizontal])
-    .popup(item: $viewModel.introductionPopupState, itemView: introductionPopupView) {
-      $0.appearFrom(.bottomSlide)
-        .position(.bottom)
-        .closeOnTap(false)
-        .closeOnTapOutside(false)
-        .type(.floater(verticalPadding: 0, horizontalPadding: 0, useSafeAreaInset: true))
-    }
     .popup(isPresented: $viewModel.isNotificationPresented, view: {
       popupView(viewModel.notification)
     }) {
@@ -128,7 +117,6 @@ struct ScanDocumentView: View {
     }
   }
 
-  @ViewBuilder
   private func cameraLandscapeOverlay() -> some View {
     ZStack {
       viewModel.overlayImage.front
@@ -150,6 +138,12 @@ struct ScanDocumentView: View {
           .degrees(rotationAngle + 180),
           axis: axis)
         .opacity(isBackOverlayVisible ? 1 : 0)
+
+      RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startScan, onTapRecord: viewModel.stopScan)
+        .accessibilityLabel(L10n.tkEidRequestScanDocumentRecordButtonAlt)
+        .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal, .x10)
     }
     .onReceive(viewModel.$scanningState) { newState in
       if newState != currentDisplayState {
@@ -173,31 +167,13 @@ struct ScanDocumentView: View {
       }
     }
   }
-
 }
 
 extension ScanDocumentView {
-
-  @ViewBuilder
-  private func introductionPopupView(_ state: ScanDocumentViewModel.ScanningState) -> some View {
-    Notification(
-      title: state.popupTitle,
-      titleColor: ThemingAssets.Label.primary.swiftUIColor,
-      content: state.popupContent,
-      contentColor: ThemingAssets.Label.primary.swiftUIColor,
-      closeAction: {
-        viewModel.introductionPopupState = nil
-      },
-      background: ThemingAssets.Background.secondary.swiftUIColor, closeButtonStyle: .secondary)
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .frame(maxWidth: 480)
-  }
-
   @ViewBuilder
   private func popupView(_ notification: AVBeamNotification?) -> some View {
-    if let recoverySuggestion = notification?.recoverySuggestion {
-      Text(recoverySuggestion)
+    if let message = notification?.localizedDescription, !message.isEmpty {
+      Text(message)
         .font(.custom.subheadline)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .padding(.horizontal, .x2)
@@ -206,7 +182,6 @@ extension ScanDocumentView {
         .clipShape(.capsule)
     }
   }
-
 }
 
 #if DEBUG

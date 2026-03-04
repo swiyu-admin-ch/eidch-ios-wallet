@@ -8,6 +8,7 @@ extension CredentialGeneratorContext {
   struct Mock {
     static let sample = CredentialGeneratorContext(
       credentialId: UUID(),
+      issuerUrl: "https://issuer",
       credentialConfigurationId: "elfa-sdjwt",
       keyBinding: CredentialKeyBinding(
         id: UUID(),
@@ -21,6 +22,7 @@ extension CredentialGeneratorContext {
 
     static let sampleWithoutKeyBinding = CredentialGeneratorContext(
       credentialId: UUID(),
+      issuerUrl: "https://issuer",
       credentialConfigurationId: "elfa-sdjwt",
       keyBinding: nil,
       issuerDisplays: [CredentialIssuerDisplay(

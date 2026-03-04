@@ -46,7 +46,6 @@ struct RequestCaseNotificationView: View {
   private let content: String
   private let notificationType: NotificationType
 
-  @ViewBuilder
   private func mainContent() -> some View {
     VStack(alignment: .leading) {
       Text(title)
@@ -91,9 +90,9 @@ struct RequestCaseNotificationView: View {
         .accessibilityLabel(L10n.tkEidRequestNotificationCloseButton)
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     })
+    .buttonStyle(.borderless)
   }
 
-  @ViewBuilder
   private func completeCellView(primaryActionLabel: String, primaryAction: @escaping () -> Void, dismissAction: @escaping () -> Void, buttonStyle: CustomButtonStyle) -> some View {
     HStack(alignment: .top, spacing: .x4) {
       primaryCellView(label: primaryActionLabel, action: primaryAction, buttonStyle: buttonStyle)

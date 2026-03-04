@@ -27,9 +27,10 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.id, mockCredentialGeneratorContext.credentialId)
     XCTAssertEqual(credential.status, .unknown)
     XCTAssertEqual(credential.keyBinding, mockCredentialGeneratorContext.keyBinding)
-    XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
+    XCTAssertEqual(String(data: credential.payload, encoding: .utf8), rawPayloadMock)
     XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContext.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
+    XCTAssertEqual(credential.issuerUrl, mockCredentialGeneratorContext.issuerUrl)
     XCTAssertEqual(credential.issuer, issuerMock)
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)
@@ -47,9 +48,10 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.id, mockCredentialGeneratorContextWithoutKeyBinding.credentialId)
     XCTAssertEqual(credential.status, .unknown)
     XCTAssertNil(credential.keyBinding)
-    XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
+    XCTAssertEqual(String(data: credential.payload, encoding: .utf8), rawPayloadMock)
     XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContextWithoutKeyBinding.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
+    XCTAssertEqual(credential.issuerUrl, mockCredentialGeneratorContextWithoutKeyBinding.issuerUrl)
     XCTAssertEqual(credential.issuer, issuerMock)
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertNotNil(credential.createdAt)
@@ -61,7 +63,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutClaimsOrder_returnsCredentialWithMaxOrder() throws {
-    let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutOrder.credentialConfigurationsSupported.first!.value
+    let selectedCredential = try XCTUnwrap(CredentialMetadata.Mock.simpleSampleWithoutOrder.credentialConfigurationsSupported.first?.value)
 
     let credential = try generator.generate(for: anyCredentialSpy, selectedCredential: selectedCredential, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
@@ -70,7 +72,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutValueType_returnsCredentialWithStringValue() throws {
-    let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutValueType.credentialConfigurationsSupported.first!.value
+    let selectedCredential = try XCTUnwrap(CredentialMetadata.Mock.simpleSampleWithoutValueType.credentialConfigurationsSupported.first?.value)
 
     let credential = try generator.generate(for: anyCredentialSpy, selectedCredential: selectedCredential, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
@@ -79,7 +81,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutClaimDisplay_returnsCredentialClaimWithoutDisplay() throws {
-    let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first!.value
+    let selectedCredential = try XCTUnwrap(CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first?.value)
 
     let credential = try generator.generate(for: anyCredentialSpy, selectedCredential: selectedCredential, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
@@ -90,7 +92,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   }
 
   func testGenerate_withoutCredentialDisplay_returnsCredentialWithoutCredentialDisplays() throws {
-    let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first!.value
+    let selectedCredential = try XCTUnwrap(CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first?.value)
 
     let credential = try generator.generate(for: anyCredentialSpy, selectedCredential: selectedCredential, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
@@ -100,21 +102,21 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   // MARK: - Generate Deferred credential
 
   func testGenerateDeferredCredential_withKeyPair_returnsCredential() throws {
-    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, selectedCredential: selectedCredentialMock, context: mockCredentialGeneratorContext)
+    let credential = try generator.generateDeferred(mockDeferredCredentialContext, selectedCredential: selectedCredentialMock, context: mockCredentialGeneratorContext)
 
     assertDeferredCredential(credential, context: mockCredentialGeneratorContext)
   }
 
   func testGenerateDeferredCredential_withoutKeyPair_returnsCredential() throws {
-    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, selectedCredential: selectedCredentialMock, context: mockCredentialGeneratorContextWithoutKeyBinding)
+    let credential = try generator.generateDeferred(mockDeferredCredentialContext, selectedCredential: selectedCredentialMock, context: mockCredentialGeneratorContextWithoutKeyBinding)
 
     assertDeferredCredential(credential, context: mockCredentialGeneratorContextWithoutKeyBinding)
   }
 
   func testGenerateDeferredCredential_withoutCredentialDisplay_returnsCredentialWithoutCredentialDisplays() throws {
-    let selectedCredential = CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first!.value
+    let selectedCredential = try XCTUnwrap(CredentialMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first?.value)
 
-    let credential = try generator.generateDeferred(mockDeferredCredentialRequest, selectedCredential: selectedCredential, context: mockCredentialGeneratorContext)
+    let credential = try generator.generateDeferred(mockDeferredCredentialContext, selectedCredential: selectedCredential, context: mockCredentialGeneratorContext)
 
     XCTAssertTrue(credential.displays.isEmpty)
   }
@@ -130,7 +132,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   private let validUntilMock = Date()
   private let selectedCredentialMock = CredentialMetadata.Mock.simpleSample.credentialConfigurationsSupported.first!.value
 
-  private let mockDeferredCredentialRequest = DeferredCredentialRequest.Mock.sample
+  private let mockDeferredCredentialContext = DeferredCredentialContext.Mock.sample
 
   private let mockCredentialGeneratorContext = CredentialGeneratorContext.Mock.sample
   private let mockCredentialGeneratorContextWithoutKeyBinding = CredentialGeneratorContext.Mock.sampleWithoutKeyBinding
@@ -144,10 +146,11 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   private var generator = MetadataCredentialGenerator()
 
   private func assertDeferredCredential(_ deferredCredential: DeferredCredential, context: CredentialGeneratorContext) {
-    XCTAssertEqual(deferredCredential.transactionId, mockDeferredCredentialRequest.transactionId)
-    XCTAssertEqual(deferredCredential.accessToken, mockDeferredCredentialRequest.accessToken)
-    XCTAssertEqual(deferredCredential.endpoint, mockDeferredCredentialRequest.endpoint)
-    XCTAssertEqual(deferredCredential.format, mockDeferredCredentialRequest.format)
+    XCTAssertEqual(deferredCredential.transactionId, mockDeferredCredentialContext.transactionId)
+    XCTAssertEqual(deferredCredential.accessToken, mockDeferredCredentialContext.accessToken)
+    XCTAssertEqual(deferredCredential.endpoint, mockDeferredCredentialContext.endpoint)
+    XCTAssertEqual(deferredCredential.format, mockDeferredCredentialContext.format)
+    XCTAssertEqual(deferredCredential.issuerUrl, context.issuerUrl)
     XCTAssertEqual(deferredCredential.keyBinding, context.keyBinding)
     XCTAssertEqual(deferredCredential.rawCredentialData, context.rawCredentialData)
     XCTAssertEqual(deferredCredential.issuerDisplays, context.issuerDisplays)

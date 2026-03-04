@@ -32,21 +32,21 @@ final class IdentityTrustStatementTests: XCTestCase {
     XCTAssertEqual(payload.expiredAt, Date(timeIntervalSince1970: 2209014000))
 
     XCTAssertEqual(payload.entityNames.count, 2)
-    let deCHEntityName = payload.entityNames.first { $0.key == "de-CH" }!
+    let deCHEntityName = try XCTUnwrap(payload.entityNames.first { $0.key == "de-CH" })
     XCTAssertEqual(deCHEntityName.value, "de-CH entityName")
-    let enEntityName = payload.entityNames.first { $0.key == "en" }!
+    let enEntityName = try XCTUnwrap(payload.entityNames.first { $0.key == "en" })
     XCTAssertEqual(enEntityName.value, "EN entityName")
 
     XCTAssertEqual(payload.registryIds.count, 2)
-    let registryId1 = payload.registryIds.first { $0.type == "registryId1" }!
+    let registryId1 = try XCTUnwrap(payload.registryIds.first { $0.type == "registryId1" })
     XCTAssertEqual(registryId1.value, "registryId1Value")
-    let registryId2 = payload.registryIds.first { $0.type == "registryId1" }!
+    let registryId2 = try XCTUnwrap(payload.registryIds.first { $0.type == "registryId1" })
     XCTAssertEqual(registryId2.value, "registryId1Value")
 
     XCTAssertEqual(payload.isStateActor, true)
   }
 
-  func testGetLocalizedEntityName_multipleLanguages_returnsFirstValidLanguage() throws {
+  func testGetLocalizedEntityName_multipleLanguages_returnsFirstValidLanguage() {
     let trustStatement = IdentityTrustStatementJWT.Mock.validSample
 
     let clientName = trustStatement.resolvedPayload.getLocalizedEntityName(considering: ["cz", "de", "en"])
@@ -54,7 +54,7 @@ final class IdentityTrustStatementTests: XCTestCase {
     XCTAssertEqual(clientName, "de-CH entityName")
   }
 
-  func testGetLocalizedEntityName_noLanguages_returnsFirstValidLanguage() throws {
+  func testGetLocalizedEntityName_noLanguages_returnsFirstValidLanguage() {
     let trustStatement = IdentityTrustStatementJWT.Mock.validSample
 
     let clientName = trustStatement.resolvedPayload.getLocalizedEntityName(considering: [])

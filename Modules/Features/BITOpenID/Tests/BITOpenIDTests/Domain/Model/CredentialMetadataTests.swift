@@ -6,23 +6,23 @@ import XCTest
 
 final class CredentialMetadataTests: XCTestCase {
 
-  func testDecodeMetadata() async throws {
+  func testDecodeMetadata() throws {
     let credentialMetadata = CredentialMetadata.Mock.sample
 
     XCTAssertFalse(credentialMetadata.credentialConfigurationsSupported.isEmpty)
     XCTAssertFalse(credentialMetadata.display?.isEmpty == true)
 
-    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })!.value
+    let credentialSupported = try XCTUnwrap(credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value)
 
     XCTAssertNotNil(credentialSupported.cryptographicBindingMethodsSupported)
     XCTAssertNotNil(credentialSupported.display)
     XCTAssertNotNil(credentialSupported.orderClaims)
     XCTAssertNotNil(credentialSupported.credentialSigningAlgValuesSupported)
     XCTAssertNotNil(credentialSupported.proofTypesSupported)
-    XCTAssertFalse(credentialSupported.cryptographicBindingMethodsSupported!.isEmpty)
-    XCTAssertFalse(credentialSupported.display!.isEmpty)
-    XCTAssertFalse(credentialSupported.orderClaims!.isEmpty)
-    XCTAssertFalse(credentialSupported.credentialSigningAlgValuesSupported!.isEmpty)
+    XCTAssertFalse(try XCTUnwrap(credentialSupported.cryptographicBindingMethodsSupported?.isEmpty))
+    XCTAssertFalse(try XCTUnwrap(credentialSupported.display?.isEmpty))
+    XCTAssertFalse(try XCTUnwrap(credentialSupported.orderClaims?.isEmpty))
+    XCTAssertFalse(try XCTUnwrap(credentialSupported.credentialSigningAlgValuesSupported?.isEmpty))
     XCTAssertEqual(credentialSupported.proofTypesSupported.count, 1)
     if case .jwt(let type) = credentialSupported.proofTypesSupported.first {
       XCTAssertEqual(type.supportedAlgorithms.count, 2)
@@ -37,24 +37,24 @@ final class CredentialMetadataTests: XCTestCase {
     }
   }
 
-  func testDecodeMetadata_WithoutProofTypes_ReturnsMetadataWithoutProofTypes() async throws {
+  func testDecodeMetadata_WithoutProofTypes_ReturnsMetadataWithoutProofTypes() throws {
     let credentialMetadata = CredentialMetadata.Mock.sampleWithoutProofTypes
-    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })!.value
+    let credentialSupported = try XCTUnwrap(credentialMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value)
 
     XCTAssertTrue(credentialSupported.proofTypesSupported.isEmpty)
   }
 
-  func testDecodeMetadata_WithVctUrl_ReturnsMetadataWithVctUrl() async throws {
+  func testDecodeMetadata_WithVctUrl_ReturnsMetadataWithVctUrl() throws {
     let credentialMetadata = CredentialMetadata.Mock.vctUrl
-    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first!.value as! CredentialMetadata.VcSdJwtCredentialConfigurationSupported
+    let credentialSupported = try XCTUnwrap(credentialMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
 
     XCTAssertEqual(credentialSupported.vct, "https://vct.example.com")
     XCTAssertEqual(credentialSupported.vctIntegrity, "vctIntegrity")
   }
 
-  func testDecodeMetadata_WithVctMetadataUri_ReturnsMetadataWithVctMetadataUri() async throws {
+  func testDecodeMetadata_WithVctMetadataUri_ReturnsMetadataWithVctMetadataUri() throws {
     let credentialMetadata = CredentialMetadata.Mock.vctMetadataUri
-    let credentialSupported = credentialMetadata.credentialConfigurationsSupported.first!.value as! CredentialMetadata.VcSdJwtCredentialConfigurationSupported
+    let credentialSupported = try XCTUnwrap(credentialMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
 
     XCTAssertEqual(credentialSupported.vct, "vct")
     XCTAssertNil(credentialSupported.vctIntegrity)
@@ -62,28 +62,28 @@ final class CredentialMetadataTests: XCTestCase {
     XCTAssertEqual(credentialSupported.vctMetadataUriIntegrity, "vctMetadataUriIntegrity")
   }
 
-  func testDecodeMetadata_WithUnsupportedProofTypeAlgorithm_ThrowsError() async throws {
+  func testDecodeMetadata_WithUnsupportedProofTypeAlgorithm_ThrowsError() throws {
     let credentialMetadataData = CredentialMetadata.Mock.sampleUnsupportedProofTypeAlgorithmData
     XCTAssertThrowsError(try JSONDecoder().decode(CredentialMetadata.self, from: credentialMetadataData)) { error in
       XCTAssertEqual(error as? CredentialMetadata.AnyCredentialConfigurationSupportedError, .invalidProofType)
     }
   }
 
-  func testDecodeMetadata_WithUnsupportedCryptographicBindingMethod_ThrowsError() async throws {
+  func testDecodeMetadata_WithUnsupportedCryptographicBindingMethod_ThrowsError() throws {
     let credentialMetadataData = CredentialMetadata.Mock.sampleUnsupportedCryptographicBindingMethodData
     XCTAssertThrowsError(try JSONDecoder().decode(CredentialMetadata.self, from: credentialMetadataData)) { error in
       XCTAssertEqual(error as? CredentialMetadata.AnyCredentialConfigurationSupportedError, .invalidCryptographicBindingMethod)
     }
   }
 
-  func testDecodeMetadata_WithUnsupportedNonceEndpoint_ThrowsError() async throws {
+  func testDecodeMetadata_WithUnsupportedNonceEndpoint_ThrowsError() throws {
     let credentialMetadataData = CredentialMetadata.Mock.chasseralIssuerUnsupportedNonceData
     XCTAssertThrowsError(try JSONDecoder().decode(CredentialMetadata.self, from: credentialMetadataData)) { error in
       XCTAssertNotNil(error as? DecodingError)
     }
   }
 
-  func testDecodeUnknownMetadataFormat() async throws {
+  func testDecodeUnknownMetadataFormat() throws {
     let credentialMetadataData = CredentialMetadata.Mock.sampleWithUnknownFormatData
     let credentialMetadata = try JSONDecoder().decode(CredentialMetadata.self, from: credentialMetadataData)
     XCTAssertFalse(credentialMetadata.credentialConfigurationsSupported.isEmpty)

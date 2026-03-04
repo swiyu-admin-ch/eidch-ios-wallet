@@ -23,7 +23,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCrypto"),
     .package(path: "../../Platforms/BITAnalytics"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
-    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "2.4.0"),
+    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "3.0.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [

@@ -9,7 +9,7 @@ public struct AsyncButton<Label: View>: View {
 
   public init(
     action: @escaping () async -> Void,
-    actionOptions: Set<ActionOption> = Set(ActionOption.allCases),
+    actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases),
     @ViewBuilder label: @escaping () -> Label)
   {
     self.action = action
@@ -53,7 +53,7 @@ public struct AsyncButton<Label: View>: View {
   // MARK: Internal
 
   var action: () async -> Void
-  var actionOptions = Set(ActionOption.allCases)
+  var actionOptions = Set(AsyncActionOption.allCases)
 
   @ViewBuilder var label: () -> Label
 
@@ -64,12 +64,10 @@ public struct AsyncButton<Label: View>: View {
 
 }
 
-// MARK: AsyncButton.ActionOption
+// MARK: - AsyncActionOption
 
-extension AsyncButton {
-  public enum ActionOption: CaseIterable {
-    case disableButton
-    case showProgressView
-    case handleError
-  }
+public enum AsyncActionOption: CaseIterable {
+  case disableButton
+  case showProgressView
+  case handleError
 }

@@ -77,7 +77,6 @@ public struct ActorHeaderView: View {
     }
   }
 
-  @ViewBuilder
   private func badgeButton(type: ActorInformationBadgeType) -> some View {
     Button {
       onBadgeTapped?(.actorInformation(type: type, actorName: name))

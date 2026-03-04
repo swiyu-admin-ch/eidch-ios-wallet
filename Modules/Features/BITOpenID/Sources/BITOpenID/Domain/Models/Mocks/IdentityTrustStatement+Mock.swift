@@ -20,6 +20,7 @@ extension IdentityTrustStatementJWT: Mockable {
     static let wrongSubject: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-wrong-subject")
     static let wrongAlgorithm: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-valid-sample", jwtAlgorithm: JWTAlgorithm.ES384)
     static let validSampleItalian: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-valid-sample-italian")
+    static let localeVariants: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-locale-variants")
 
     static func encodePayload(fromFile filename: String, jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256, bundle: Bundle = Bundle.module) -> IdentityTrustStatement {
       let trustStatement: IdentityTrustStatementJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)

@@ -1,0 +1,69 @@
+targets:
+  swiyuUITests-App:
+    templates:
+      - ios-app-base
+      - swiyu-feature-deps
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: ../../../swiyuUITests-App
+        excludes:
+          - "**/*.sh"
+    info:
+      path: ../../../swiyuUITests-App/Info.plist
+      properties:
+        LSHasLocalizedDisplayName: true
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
+        CFBundleDisplayName: $(APP_NAME)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: '6.0'
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIApplicationSupportsIndirectInputEvents: true
+        UILaunchScreen:
+          UIColorName: Launchscreen-background
+          UIImageName: Launchscreen-logo
+          UIImageRespectsSafeAreaInsets: false
+        UIRequiredDeviceCapabilities:
+          - armv7
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: openid-credential-offer
+            CFBundleURLSchemes:
+              - openid-credential-offer
+              - swiyu
+        UILaunchStoryboardName:
+          LaunchScreen.storyboard
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default Configuration
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        NSCameraUsageDescription: 'swiyuUITests-App app would like to use your camera to scan QRCodes.'
+        NSFaceIDUsageDescription: 'swiyuUITests-App app would like to use your biometric references to access secured resources.'
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu-uitests-app.dev
+        CODE_SIGN_IDENTITY: iPhone Developer
+        PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu-uitests-app.dev
+        IPHONEOS_DEPLOYMENT_TARGET: 16.0
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1
+        PRODUCT_NAME: swiyuUITests-App
+      configs:
+        Test (debug): {}
+        Test (release):
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu-uitests-app.dev

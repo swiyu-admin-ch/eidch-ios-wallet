@@ -27,7 +27,7 @@ final class PinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testEnterValidPinCode() async {
+  func testEnterValidPinCode() {
     let pinCode = "12345678"
     viewModel.pinCode = pinCode
 
@@ -44,7 +44,7 @@ final class PinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testEnterLongPinCode_noDelegate() async {
+  func testEnterLongPinCode_noDelegate() {
     let pinCode = "123456789qwertzuiop"
     viewModel.pinCode = pinCode
 
@@ -59,7 +59,7 @@ final class PinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testEnterShortPinCode() async {
+  func testEnterShortPinCode() {
     validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
     viewModel.pinCode = "1234"
 

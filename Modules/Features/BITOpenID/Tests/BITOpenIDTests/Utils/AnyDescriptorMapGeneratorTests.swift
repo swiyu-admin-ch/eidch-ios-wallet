@@ -20,8 +20,14 @@ final class AnyDescriptorMapGeneratorTests: XCTestCase {
 
   // MARK: Private
 
+  private let inputDescriptor: InputDescriptor = {
+    guard let descriptor = RequestObject.Mock.VcSdJwt.sample.presentationDefinition?.inputDescriptors.first else {
+      fatalError("Missing input descriptor fixture")
+    }
+    return descriptor
+  }()
+
   // swiftlint:disable all
-  private let inputDescriptor: InputDescriptor = RequestObject.Mock.VcSdJwt.sample.presentationDefinition.inputDescriptors.first!
   private var generator: AnyDescriptorMapGenerator!
   // swiftlint:enable all
 

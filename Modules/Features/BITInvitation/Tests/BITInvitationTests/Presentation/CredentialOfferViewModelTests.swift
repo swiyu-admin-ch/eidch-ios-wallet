@@ -1,3 +1,4 @@
+// swiftlint: disable all
 import Factory
 import Foundation
 import Spyable
@@ -6,8 +7,6 @@ import XCTest
 @testable import BITCredentialShared
 @testable import BITInvitation
 @testable import BITTestingCore
-
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 
 @MainActor
 final class CredentialOfferViewModelTests: XCTestCase {
@@ -19,11 +18,11 @@ final class CredentialOfferViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
 
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router, delegate: mockDelegate)
   }
 
-  func testInit_ValuesWithTrustStatement() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router)
+  func testInit_ValuesWithTrustStatement() {
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router, delegate: mockDelegate)
 
     XCTAssertEqual(viewModel.credential, mockCredential)
     XCTAssertEqual(viewModel.state, .loading)
@@ -32,8 +31,8 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.credentialViewModel)
   }
 
-  func testInit_withoutTrustInformation() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router)
+  func testInit_withoutTrustInformation() {
+    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router, delegate: mockDelegate)
 
     XCTAssertEqual(viewModel.credential, mockCredential)
     XCTAssertEqual(viewModel.state, .loading)
@@ -50,7 +49,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testOnAppear_withoutTrustInformation_fetchTrust() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router, delegate: mockDelegate)
 
     await viewModel.onAppear()
 
@@ -63,7 +62,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   func testOnAppear_fetchTrustInformationFails_stateIsError() async {
     fetchIssuanceTrustInformationUseCase.callAsFunctionForThrowableError = TestingError.error
 
-    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router, delegate: mockDelegate)
 
     await viewModel.onAppear()
 
@@ -82,6 +81,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
     XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
     XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertTrue(mockDelegate.didSaveCredentialCalled)
     XCTAssertTrue(router.closeCalled)
     XCTAssertEqual(viewModel.state, .loading)
   }
@@ -97,8 +97,9 @@ final class CredentialOfferViewModelTests: XCTestCase {
   func testConfirmDecline() async {
     await viewModel.confirmDecline()
 
-    XCTAssertEqual(deleteCredentialUseCase.executeReceivedCredential, mockCredential)
+    XCTAssertEqual(deleteCredentialUseCase.executeReceivedCredential?.id, mockCredential.id)
     XCTAssertEqual(deleteCredentialUseCase.executeCallsCount, 1)
+    XCTAssertTrue(mockDelegate.didDeclineCredentialCalled)
     XCTAssertTrue(router.closeCalled)
   }
 
@@ -111,7 +112,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testAccept() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router, delegate: mockDelegate)
 
     await viewModel.accept()
 
@@ -122,7 +123,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testAccept_unknownTrustIdentity_showsAlert() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: .Mock.unknownIdentity, router: router)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: .Mock.unknownIdentity, router: router, delegate: mockDelegate)
 
     await viewModel.accept()
 
@@ -159,6 +160,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocolSpy!
   private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocolSpy!
   private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocolSpy!
+  private let mockDelegate = InvitationDelegateSpy()
 
   private func registerMocks() {
     router = MockCredentialOfferRouter()

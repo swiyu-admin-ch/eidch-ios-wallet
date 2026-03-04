@@ -17,7 +17,7 @@ final class ActivityCredentialViewModelTests: XCTestCase {
     Container.shared.reset()
   }
 
-  func testInit_activityWithClaims_clustersAvailable() async throws {
+  func testInit_activityWithClaims_clustersAvailable() throws {
     viewModel = ActivityCredentialViewModel(credential: credentialMock, activity: activityMock)
 
     XCTAssertNotNil(viewModel.name)
@@ -27,13 +27,13 @@ final class ActivityCredentialViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.environment, .external)
 
     XCTAssertEqual(viewModel.clusters.count, 1)
-    let cluster = viewModel.clusters.first!
+    let cluster = try XCTUnwrap(viewModel.clusters.first)
     XCTAssertEqual(cluster.claims.count, 1)
     XCTAssertEqual(cluster.claims.first?.id.uuidString, "416A2EC2-213B-438C-B9DA-47A2FF596A0C")
     XCTAssertTrue(cluster.childClusters.isEmpty)
   }
 
-  func testInit_activityNoClaims_noClusters() async throws {
+  func testInit_activityNoClaims_noClusters() {
     let activityMock = Activity.Mock.presentationAcceptedTrusted
     viewModel = ActivityCredentialViewModel(credential: credentialMock, activity: activityMock)
 

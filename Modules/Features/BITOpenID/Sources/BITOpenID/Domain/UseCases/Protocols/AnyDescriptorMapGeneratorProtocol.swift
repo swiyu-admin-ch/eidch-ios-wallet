@@ -5,5 +5,5 @@ import Spyable
 
 @Spyable
 public protocol AnyDescriptorMapGeneratorProtocol {
-  func generate(using inputDescriptor: InputDescriptor, vcFormat: String) throws -> [PresentationRequestBody.DescriptorMap]
+  func generate(using inputDescriptor: InputDescriptor, vcFormat: String) throws -> [AuthorizationResponse.DescriptorMap]
 }

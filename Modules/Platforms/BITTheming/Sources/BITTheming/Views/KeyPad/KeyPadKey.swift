@@ -42,5 +42,7 @@ public enum KeyPadKey: String, Identifiable {
     }
   }
 
-  public var id: String { rawValue }
+  public var id: String {
+    rawValue
+  }
 }

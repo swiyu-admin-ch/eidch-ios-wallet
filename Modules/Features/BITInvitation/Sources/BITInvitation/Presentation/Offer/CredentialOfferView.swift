@@ -11,9 +11,9 @@ struct CredentialOfferView: View {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes, delegate: InvitationDelegate?) {
     self.router = router
-    _viewModel = StateObject(wrappedValue: Container.shared.credentialOfferViewModel((credential, trustInformation, state, router)))
+    _viewModel = StateObject(wrappedValue: Container.shared.credentialOfferViewModel((credential, trustInformation, state, router, delegate)))
   }
 
   // MARK: Internal
@@ -166,7 +166,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func resultContainer() -> some View {
     VStack(alignment: .leading, spacing: .x4) {
       subtitle()
@@ -176,7 +175,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func claimsList() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
       ClaimClusterList(clusters)
@@ -189,7 +187,6 @@ extension CredentialOfferView.Content {
     .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.claimsList.rawValue)
   }
 
-  @ViewBuilder
   private func credentialContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
@@ -214,7 +211,6 @@ extension CredentialOfferView.Content {
     .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
 
-  @ViewBuilder
   private func wrongDataSection() -> some View {
     SectionView {
       IconCell(
@@ -227,7 +223,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func loadingContainer() -> some View {
     VStack {
       Spacer(minLength: compression.isCompressed ? .x4 : .x12)
@@ -256,7 +251,6 @@ extension CredentialOfferView.Content {
     .accessibilityElement(children: .contain)
   }
 
-  @ViewBuilder
   private func declineContainer() -> some View {
     VStack {
       Spacer()
@@ -305,7 +299,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func subtitle() -> some View {
     Text(L10n.tkReceiveCredentialOfferHeaderSectionSecondary)
       .font(.custom.subheadline)
@@ -313,7 +306,6 @@ extension CredentialOfferView.Content {
       .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
   }
 
-  @ViewBuilder
   private func footerButtons() -> some View {
     ButtonSheet(colorConfig: .secondary) {
       AdaptiveButtonStack {
@@ -343,7 +335,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func declineButtons() -> some View {
     AdaptiveButtonStack {
       Button { confirmDeclineAction() } label: {
@@ -376,7 +367,6 @@ extension CredentialOfferView.Content {
 // MARK: - Portrait
 
 extension CredentialOfferView.Content {
-  @ViewBuilder
   private func portraitLayout() -> some View {
     VStack(alignment: .leading, spacing: .x4) {
       issuerHeader()
@@ -421,7 +411,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func credentialLandscapeContainer(isLoading: Bool) -> some View {
     HStack(spacing: .x5) {
       credentialCard()
@@ -448,7 +437,6 @@ extension CredentialOfferView.Content {
     }
   }
 
-  @ViewBuilder
   private func credentialCard() -> some View {
     VStack {
       Spacer()
@@ -477,7 +465,6 @@ extension CredentialOfferView.Content {
     .padding(.leading)
   }
 
-  @ViewBuilder
   private func declineLandscapeContainer() -> some View {
     VStack(spacing: 0) {
       issuerHeader()

@@ -32,8 +32,7 @@ public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel 
         .year()
         .hour(.defaultDigits(amPM: .wide))
         .minute()
-        .locale(.current)
-    )
+        .locale(.current))
   }
 
   var notificationTitle: String {

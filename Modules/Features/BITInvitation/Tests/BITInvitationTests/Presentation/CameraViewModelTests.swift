@@ -46,7 +46,7 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testWithInitialData() async {
+  func testWithInitialData() {
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isLoading)
     XCTAssertFalse(viewModel.isTipPresented)
@@ -93,7 +93,7 @@ final class CameraViewModelTests: XCTestCase {
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(router.closeWithCompletionCalled)
-    XCTAssertTrue(mockDelegate.didSaveDeferredCredentialCalled)
+    XCTAssertTrue(mockDelegate.didSaveCredentialCalled)
     XCTAssertEqual(saveDeferredCredentialUseCase.executeForCallsCount, 1)
     XCTAssertEqual(saveDeferredCredentialUseCase.executeForReceivedDeferredCredential, DeferredCredential.Mock.sample)
   }
@@ -165,7 +165,11 @@ final class CameraViewModelTests: XCTestCase {
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .invalidQRCode)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .invalidQRCode)
+    } else {
+      XCTFail("Expected InvitationError.invalidQRCode")
+    }
     XCTAssertTrue(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
@@ -194,7 +198,11 @@ final class CameraViewModelTests: XCTestCase {
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .validationFailed)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .validationFailed)
+    } else {
+      XCTFail("Expected InvitationError.validationFailed")
+    }
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
@@ -222,7 +230,11 @@ final class CameraViewModelTests: XCTestCase {
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .unknownIssuer)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .unknownIssuer)
+    } else {
+      XCTFail("Expected InvitationError.unknownIssuer")
+    }
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
 
@@ -246,7 +258,11 @@ final class CameraViewModelTests: XCTestCase {
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .expiredInvitation)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .expiredInvitation)
+    } else {
+      XCTFail("Expected InvitationError.expiredInvitation")
+    }
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isTipPresented)
     XCTAssertFalse(viewModel.isSessionTimeoutPresented)
@@ -265,7 +281,7 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testFetchCredential_userNotLoggedIn_presentsSessionTimeout() async throws {
+  func testFetchCredential_userNotLoggedIn_presentsSessionTimeout() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample
     fetchCredentialUseCase.executeFromThrowableError = UserSessionError.notLoggedIn
@@ -283,7 +299,7 @@ final class CameraViewModelTests: XCTestCase {
   // MARK: - Presentation
 
   @MainActor
-  func testValidatePresentationWithOneCredentialSuccess() async throws {
+  func testValidatePresentationWithOneCredentialSuccess() async {
     let bundle = PresentationRequestContext.Mock.vcSdJwtSample
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
@@ -305,7 +321,7 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testValidatePresentationWithMultipleCredentialSuccess() async throws {
+  func testValidatePresentationWithMultipleCredentialSuccess() async {
     let context = PresentationRequestContext.Mock.vcSdJwtSample
 
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
@@ -363,14 +379,18 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testSubmitPresentationFailed_networkError() async throws {
+  func testSubmitPresentationFailed_networkError() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
     fetchPresentationRequestUseCase.executeUrlThrowableError = NetworkError(status: .noConnection)
 
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .noConnection)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .noConnection)
+    } else {
+      XCTFail("Expected InvitationError.noConnection")
+    }
     XCTAssertFalse(router.didCallStartPresentation)
     XCTAssertFalse(viewModel.isSessionTimeoutPresented)
     XCTAssertFalse(viewModel.isTorchEnabled)
@@ -382,25 +402,29 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testCheckInvitationTypeFailed_wrongScheme() async throws {
+  func testCheckInvitationTypeFailed_wrongScheme() async {
     checkInvitationTypeUseCase.executeUrlThrowableError = CheckInvitationTypeError.wrongScheme
 
     await viewModel.setMetadataUrl(url)
 
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .invalidQRCode)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .invalidQRCode)
+    } else {
+      XCTFail("Expected InvitationError.invalidQRCode")
+    }
     XCTAssertEqual(analyticsProvider.logCounter, 0)
   }
 
   @MainActor
-  func testClose() async {
+  func testClose() {
     viewModel.close()
 
     XCTAssertTrue(router.closeCalled)
   }
 
   @MainActor
-  func testCloseErrorView() async {
+  func testCloseErrorView() {
     viewModel.closeErrorView()
 
     XCTAssertFalse(viewModel.isErrorPopupPresented)
@@ -408,14 +432,14 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testCloseTipView() async {
+  func testCloseTipView() {
     viewModel.closeTipView()
 
     XCTAssertFalse(viewModel.isTipPresented)
   }
 
   @MainActor
-  func testToggleTorch() async {
+  func testToggleTorch() {
     let initialState = viewModel.isTorchEnabled
     viewModel.toggleTorch()
     XCTAssertEqual(viewModel.isTorchEnabled, !initialState)
@@ -449,7 +473,7 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testLogin_navigateToLogin() async {
+  func testLogin_navigateToLogin() {
     viewModel.login()
 
     XCTAssertTrue(router.didCallLogin)
@@ -497,7 +521,11 @@ extension CameraViewModelTests {
   @MainActor
   private func assertsNoInternetConnexion() {
     XCTAssertTrue(viewModel.isErrorPopupPresented)
-    XCTAssertEqual(viewModel.error, .noConnection)
+    if let error = viewModel.error as? InvitationError {
+      XCTAssertEqual(error, .noConnection)
+    } else {
+      XCTFail("Expected InvitationError.noConnection")
+    }
     XCTAssertFalse(router.didCallStartPresentation)
     XCTAssertFalse(viewModel.isSessionTimeoutPresented)
     XCTAssertFalse(router.didCallLogin)

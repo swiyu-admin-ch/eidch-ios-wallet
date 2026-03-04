@@ -18,15 +18,15 @@ final class CESRHashValidatorIntegrationTests: XCTestCase {
     validator = OcaCESRHashValidator()
   }
 
-  func testValidator_validOCABundleInputs_returnsTrue() {
+  func testValidator_validOCABundleInputs_returnsTrue() throws {
     for oca in OCACaptureBaseMocks.validInputs {
-      let data = oca.data(using: .utf8)!
+      let data = try XCTUnwrap(oca.data(using: .utf8))
       XCTAssertTrue(validator.validate(data: data))
     }
   }
 
-  func testValidator_invalidDigest_returnsFalse() {
-    let data = OCACaptureBaseMocks.wrongDigest.data(using: .utf8)!
+  func testValidator_invalidDigest_returnsFalse() throws {
+    let data = try XCTUnwrap(OCACaptureBaseMocks.wrongDigest.data(using: .utf8))
     XCTAssertFalse(validator.validate(data: data))
   }
 

@@ -9,7 +9,7 @@ final class ActivityIssuanceTests: XCTestCase {
 
   // MARK: Internal
 
-  func testInit_mapsDataCorrectly() async throws {
+  func testInit_mapsDataCorrectly() throws {
     let activity = Activity(credential: credentialMock, trustInformation: trustInformationMock)
 
     XCTAssertEqual(activity.type, .issuance)
@@ -19,7 +19,7 @@ final class ActivityIssuanceTests: XCTestCase {
 
     XCTAssertEqual(activity.actorDisplays.count, credentialMock.issuerDisplays.count)
     for display in activity.actorDisplays {
-      let issuerDisplay = credentialMock.issuerDisplays.first { $0.locale == display.locale }!
+      let issuerDisplay = try XCTUnwrap(credentialMock.issuerDisplays.first { $0.locale == display.locale })
       XCTAssertEqual(display.name, issuerDisplay.name)
       XCTAssertEqual(display.image, issuerDisplay.image)
     }

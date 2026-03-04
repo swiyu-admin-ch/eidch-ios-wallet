@@ -21,19 +21,19 @@ final class TrustRegistryUrlMapperTests: XCTestCase {
     mapper = TrustRegistryUrlMapper()
   }
 
-  func testMap_validDid_returnsURL() async throws {
+  func testMap_validDid_returnsURL() throws {
     let result = try mapper.map(did: "did:tdw:example:\(Self.baseRegistryDomain):example")
 
     XCTAssertEqual(result.absoluteString, "https://\(Self.trustRegistryDomain)")
   }
 
-  func testMap_validIntDid_returnsURL() async throws {
+  func testMap_validIntDid_returnsURL() throws {
     let result = try mapper.map(did: "did:tdw:example:\(Self.baseRegistryDomainInt):example:other:api")
 
     XCTAssertEqual(result.absoluteString, "https://\(Self.trustRegistryDomainInt)")
   }
 
-  func testMap_notRegisteredBaseRegistry_throwsError() async throws {
+  func testMap_notRegisteredBaseRegistry_throwsError() throws {
     let subjectDid = "did:tdw:example:example.ch:example"
 
     XCTAssertThrowsError(try mapper.map(did: subjectDid)) { error in
@@ -41,7 +41,7 @@ final class TrustRegistryUrlMapperTests: XCTestCase {
     }
   }
 
-  func testMap_invalidDid_throwsError() async throws {
+  func testMap_invalidDid_throwsError() throws {
     for did in invalidDids {
       XCTAssertThrowsError(try mapper.map(did: did)) { error in
         XCTAssertEqual(error as? TrustRegistryUrlMapperError, .cannotParseTrustRegistryDomain, "Accepted invalid did: \(did)")

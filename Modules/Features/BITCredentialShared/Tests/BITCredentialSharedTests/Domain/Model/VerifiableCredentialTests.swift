@@ -18,30 +18,30 @@ final class VerifiableCredentialTests: XCTestCase {
     Container.shared.reset()
   }
 
-  func testInit_swiyuDid_returnsSwiyuCredential() {
+  func testInit_swiyuDid_returnsSwiyuCredential() throws {
     for didMethod in ["tdw", "webvh"] {
       let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:123"
 
-      let credential = VerifiableCredential(progressionState: .accepted, payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+      let credential = try VerifiableCredential(progressionState: .accepted, payload: XCTUnwrap("payload".data(using: .utf8)), format: "format", issuerUrl: "issuerUrl", issuer: issuer)
 
       XCTAssertEqual(credential.environment, .swiyu, "didMethod: \(didMethod)")
     }
   }
 
-  func testInit_swiyuIntDid_returnsSwiyuIntCredential() {
+  func testInit_swiyuIntDid_returnsSwiyuIntCredential() throws {
     for didMethod in ["tdw", "webvh"] {
       let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:123"
 
-      let credential = VerifiableCredential(progressionState: .accepted, payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+      let credential = try VerifiableCredential(progressionState: .accepted, payload: XCTUnwrap("payload".data(using: .utf8)), format: "format", issuerUrl: "issuerUrl", issuer: issuer)
 
       XCTAssertEqual(credential.environment, .swiyuInt, "didMethod: \(didMethod)")
     }
   }
 
-  func testInit_externalDid_returnsExternalCredential() {
+  func testInit_externalDid_returnsExternalCredential() throws {
     let issuer = "did:tdw:mock=:identifier-reg.trust-infra.example.ch:api:v1:did:123"
 
-    let credential = VerifiableCredential(progressionState: .accepted, payload: "payload".data(using: .utf8)!, format: "format", issuer: issuer)
+    let credential = try VerifiableCredential(progressionState: .accepted, payload: XCTUnwrap("payload".data(using: .utf8)), format: "format", issuerUrl: "issuerUrl", issuer: issuer)
 
     XCTAssertEqual(credential.environment, .external)
   }

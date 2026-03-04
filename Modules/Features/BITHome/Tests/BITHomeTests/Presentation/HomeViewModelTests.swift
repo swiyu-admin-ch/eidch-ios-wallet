@@ -28,7 +28,7 @@ final class HomeViewModelTests: XCTestCase {
 
   func testInitialValues() {
     XCTAssertEqual(viewModel.state, .results)
-    XCTAssertFalse(viewModel.isCredentialSavedPopupPresented)
+    XCTAssertFalse(viewModel.isToastPresented)
     XCTAssertTrue(viewModel.requestCases.isEmpty)
     XCTAssertTrue(viewModel.credentials.isEmpty)
   }
@@ -170,14 +170,14 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.didCallExternalLinkUrl)
   }
 
-  func testOpenCredential_deferredCredential_doNothing() {
+  func testOpenCredential_deferredCredential_routeToDetails() {
     viewModel.openCredential(DeferredCredentialViewModel(credential: .Mock.sample))
 
-    XCTAssertFalse(mockRouter.didCallOpenCredentialDetail)
+    XCTAssertTrue(mockRouter.didCallOpenCredentialDetail)
   }
 
   func testOpenCredential_unacceptedCredential_routeToOffer() {
-    viewModel.openCredential(VerifiableCredentialViewModel(credential: VerifiableCredential(progressionState: .unaccepted, payload: Data(), format: "format", issuer: "issuer")))
+    viewModel.openCredential(VerifiableCredentialViewModel(credential: VerifiableCredential(progressionState: .unaccepted, payload: Data(), format: "format", issuerUrl: "issuerUrl", issuer: "issuer")))
 
     XCTAssertTrue(mockRouter.didCallCredentialOffer)
   }
@@ -212,8 +212,8 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(mockRouter.didCallObtainConsentArgument, mockCaseId)
   }
 
-  func testDidOpenExternalLink() {
-    viewModel.didOpenExternalLink(url: URL(string: "mock_url")!)
+  func testDidOpenExternalLink() throws {
+    try viewModel.didOpenExternalLink(url: XCTUnwrap(URL(string: "mock_url")))
 
     XCTAssertEqual(mockRouter.didCallExternalLinkUrl, true)
   }
@@ -239,10 +239,33 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
   }
 
-  func testDidSavedDeferredCredential_success() {
-    viewModel.didSaveDeferredCredential()
+  func testDidSavedCredential_success() {
+    viewModel.didSaveCredential()
 
-    XCTAssertTrue(viewModel.isCredentialSavedPopupPresented)
+    XCTAssertTrue(viewModel.isToastPresented)
+  }
+
+  func testDidDeclineCredential_success() {
+    viewModel.didDeclineCredential()
+
+    XCTAssertTrue(viewModel.isToastPresented)
+  }
+
+  func testOnCredentialDeleted_success() {
+    viewModel.onCredentialDeleted()
+
+    XCTAssertTrue(viewModel.isToastPresented)
+  }
+
+  func testClearToast_toastIsHidden() {
+    viewModel.onCredentialDeleted()
+    XCTAssertNotNil(viewModel.toastMessage)
+    XCTAssertTrue(viewModel.isToastPresented)
+
+    viewModel.clearToast()
+
+    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertFalse(viewModel.isToastPresented)
   }
 
   func testDidTapWalletPairing() {

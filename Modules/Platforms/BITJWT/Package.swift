@@ -22,7 +22,7 @@ let package = Package(
     .package(path: "../../Platforms/BITNetworking"),
     .package(url: "https://github.com/swiyu-admin-ch/didresolver-swift.git", exact: "2.4.0"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
-    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "2.4.0"),
+    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "3.0.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
@@ -46,6 +46,11 @@ let package = Package(
       name: "BITJWTTests",
       dependencies: [
         "BITJWT",
+        .product(name: "BITCrypto", package: "BITCrypto"),
+        .product(name: "BITNetworking", package: "BITNetworking"),
+        .product(name: "BITVault", package: "BITVault"),
+        .product(name: "Factory", package: "Factory"),
+        .product(name: "JOSESwift", package: "JOSESwift"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

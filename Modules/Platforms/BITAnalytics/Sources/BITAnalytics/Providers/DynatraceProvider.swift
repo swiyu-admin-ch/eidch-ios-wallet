@@ -31,9 +31,11 @@ public final class DynatraceProvider: AnalyticsProviderProtocol {
     let provider = Self.self
     let name = errorEvent.name(provider)
     let parameters = errorEvent.parameters(provider)
+    let error = errorEvent.error()
 
     let action = DTXAction.enter(withName: name)
     action?.setParameters(parameters)
+    action?.reportError(withName: name, error: error)
     action?.leave()
   }
 

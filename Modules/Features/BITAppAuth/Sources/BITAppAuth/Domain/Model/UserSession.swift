@@ -60,7 +60,9 @@ public class UserSession: Session {
 
   public private(set) var context: (any LAContextProtocol)?
 
-  public var isLoggedIn: Bool { context?.isCredentialSet(.applicationPassword) ?? false }
+  public var isLoggedIn: Bool {
+    context?.isCredentialSet(.applicationPassword) ?? false
+  }
 
   @discardableResult
   public func startSession(

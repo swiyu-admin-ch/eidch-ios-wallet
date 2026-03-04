@@ -30,16 +30,28 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
   /// The supports of multiple input descriptor has to be defined.
   public func execute(context: PresentationRequestContext) async throws {
     #warning("The submit should take in consideration multiple input descriptors in the future. For now it only takes the first one given by the context.")
-    guard
-      let firstInputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first,
-      let selectedCredential = context.selectedCredential
-    else { throw SubmitPresentationError.inputDescriptorsNotFound }
-    let presentationRequestBody = try presentationRequestBodyGenerator.generate(for: selectedCredential, requestObject: context.requestObject, inputDescriptor: firstInputDescriptor)
+
+    guard let selectedCredential = context.selectedCredential else {
+      throw SubmitPresentationError.inputDescriptorsNotFound
+    }
+
+    // Record activity
     let activity = Activity(context: context, credential: selectedCredential, type: .presentationAccepted)
     _ = try? activityService.create(activity, credentialId: selectedCredential.id)
 
+    let authorizationResponseBody: AuthorizationResponseBody
+
     do {
-      try await repository.submit(from: context.requestObject.responseUri, presentationRequestBody: presentationRequestBody)
+      authorizationResponseBody = try authorizationResponseBodyGenerator(
+        for: selectedCredential,
+        requestObject: context.requestObject,
+        inputDescriptor: context.requestObject.firstInputDescriptor)
+    } catch RequestObjectError.invalidPayload {
+      throw SubmitPresentationError.inputDescriptorsNotFound
+    }
+
+    do {
+      try await repository.submit(authorizationResponse: authorizationResponseBody, to: context.requestObject.responseUri)
     } catch BITOpenID.SubmitPresentationError.presentationFailed {
       throw SubmitPresentationError.presentationFailed
     } catch BITOpenID.SubmitPresentationError.processClosed {
@@ -52,6 +64,7 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
   // MARK: Private
 
   @Injected(\.presentationRequestRepository) private var repository
-  @Injected(\.presentationRequestBodyGenerator) private var presentationRequestBodyGenerator
+  @Injected(\.authorizationResponseBodyGenerator) private var authorizationResponseBodyGenerator
   @Injected(\.activityService) private var activityService
+
 }

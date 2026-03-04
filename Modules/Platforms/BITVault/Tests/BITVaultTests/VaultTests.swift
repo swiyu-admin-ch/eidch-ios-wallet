@@ -1,7 +1,7 @@
 import XCTest
 
 final class BITVaultTests: XCTestCase {
-  func testExample() throws {
+  func testExample() {
     XCTAssertTrue(true)
   }
 }

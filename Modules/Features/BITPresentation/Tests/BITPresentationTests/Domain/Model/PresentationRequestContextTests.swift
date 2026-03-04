@@ -10,7 +10,7 @@ final class PresentationRequestContextTests: XCTestCase {
 
     let display = context.getPreferredVerifierDisplay(considering: ["en"])
 
-    XCTAssertEqual(String(data: display.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(display.name, "EN entityName")
     if case .trusted(let statement) = display.trustInformation.identity {
       XCTAssertEqual(statement as? IdentityTrustStatementJWT, IdentityTrustStatementJWT.Mock.validSample.resolvedPayload)
@@ -22,7 +22,7 @@ final class PresentationRequestContextTests: XCTestCase {
 
     let display = context.getPreferredVerifierDisplay(considering: ["de", "en"])
 
-    XCTAssertEqual(String(data: display.logo!, encoding: .utf8)!, "DE_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "DE_logoUri")
     XCTAssertEqual(display.name, "de-CH entityName")
   }
 
@@ -31,7 +31,7 @@ final class PresentationRequestContextTests: XCTestCase {
 
     let display = context.getPreferredVerifierDisplay(considering: [])
 
-    XCTAssertEqual(String(data: display.logo!, encoding: .utf8)!, "logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "logoUri")
     XCTAssertEqual(display.name, "entityName")
   }
 
@@ -40,7 +40,7 @@ final class PresentationRequestContextTests: XCTestCase {
 
     let display = context.getPreferredVerifierDisplay(considering: ["en"])
 
-    XCTAssertEqual(String(data: display.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(display.name, "EN Verifier")
     XCTAssertEqual(display.trustInformation.identity, .untrusted)
   }
@@ -50,7 +50,7 @@ final class PresentationRequestContextTests: XCTestCase {
 
     let display = context.getPreferredVerifierDisplay(considering: ["de", "en"])
 
-    XCTAssertEqual(String(data: display.logo!, encoding: .utf8)!, "DE_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "DE_logoUri")
     XCTAssertEqual(display.name, "DE Verifier")
   }
 
@@ -59,29 +59,29 @@ final class PresentationRequestContextTests: XCTestCase {
 
     let display = context.getPreferredVerifierDisplay(considering: [])
 
-    XCTAssertEqual(String(data: display.logo!, encoding: .utf8)!, "logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "logoUri")
     XCTAssertEqual(display.name, "Verifier")
   }
 
-  func testVerifierDisplays_returnsAllLocalizedDisplays() {
+  func testVerifierDisplays_returnsAllLocalizedDisplays() throws {
     let context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
 
     let displays = context.verifierDisplays
     XCTAssertEqual(displays.count, 3)
 
     // display from clientMetadata merged with trust statement identity de-CH
-    let display1 = displays.first { $0.locale == "de" }!
+    let display1 = try XCTUnwrap(displays.first { $0.locale == "de" })
     XCTAssertEqual(display1.name, "de-CH entityName")
-    XCTAssertEqual(String(data: display1.logo!, encoding: .utf8)!, "DE_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display1.logo), encoding: .utf8), "DE_logoUri")
 
     // display from trust statement identity merged with logo from client metadata
-    let display2 = displays.first { $0.locale == "de-CH" }!
+    let display2 = try XCTUnwrap(displays.first { $0.locale == "de-CH" })
     XCTAssertEqual(display2.name, "de-CH entityName")
-    XCTAssertEqual(String(data: display2.logo!, encoding: .utf8)!, "logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display2.logo), encoding: .utf8), "logoUri")
 
     // display from trust statement identity merged with logo from client metadata
-    let display3 = displays.first { $0.locale == "en" }!
+    let display3 = try XCTUnwrap(displays.first { $0.locale == "en" })
     XCTAssertEqual(display3.name, "EN entityName")
-    XCTAssertEqual(String(data: display3.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(display3.logo), encoding: .utf8), "EN_logoUri")
   }
 }

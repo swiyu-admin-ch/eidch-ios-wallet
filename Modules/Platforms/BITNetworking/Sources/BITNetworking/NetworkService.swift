@@ -1,4 +1,5 @@
 import Alamofire
+import BITAnalytics
 import Factory
 import Foundation
 import Moya
@@ -11,52 +12,28 @@ public struct NetworkService {
 
   // MARK: Public
 
-  public func request<D>(
+  public func request<D: Decodable>(
     _ target: some TargetType,
     decoder: JSONDecoder = NetworkContainer.shared.decoder(),
     plugins: [PluginType] = [],
     _ progress: ProgressBlock? = nil) async throws
-    -> (D) where D: Decodable
+    -> (D)
   {
-    try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins, progress: progress) { result in
-        switch result {
-        case .success(let response):
-          do {
-            let decodedObject = try decoder.decode(D.self, from: response.data)
-            continuation.resume(returning: decodedObject)
-          } catch {
-            continuation.resume(throwing: error)
-          }
-        case .failure(let error):
-          continuation.resume(throwing: error)
-        }
-      }
-    })
+    let response = try await fetch(target, plugins: plugins, progress: progress)
+    return try decoder.decode(D.self, from: response.data)
   }
 
-  public func request<D>(
+  @discardableResult
+  public func request<D: Decodable>(
     _ target: some TargetType,
     decoder: JSONDecoder = NetworkContainer.shared.decoder(),
     plugins: [PluginType] = [],
     _ progress: ProgressBlock? = nil) async throws
-    -> (D, Response) where D: Decodable
+    -> (D, Response)
   {
-    try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins, progress: progress) { result in
-        switch result {
-        case .success(let response):
-          do {
-            let decodedObject = try decoder.decode(D.self, from: response.data)
-            continuation.resume(returning: (decodedObject, response))
-          } catch {
-            continuation.resume(throwing: error)
-          }
-        case .failure(let error):
-          continuation.resume(throwing: error)
-        }
-      }
-    })
+    let response = try await fetch(target, plugins: plugins, progress: progress)
+    let decodedObject = try decoder.decode(D.self, from: response.data)
+    return (decodedObject, response)
   }
 
   @discardableResult
@@ -66,47 +43,12 @@ public struct NetworkService {
     _ progress: ProgressBlock? = nil) async throws
     -> Response
   {
-    try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins, progress: progress) { result in
-        switch result {
-        case .success(let response):
-          continuation.resume(returning: response)
-        case .failure(let error):
-          continuation.resume(throwing: error)
-        }
-      }
-    })
-  }
-
-  @discardableResult
-  public func request<D>(
-    _ target: some TargetType,
-    decoder: JSONDecoder = NetworkContainer.shared.decoder(),
-    plugins: [PluginType] = [],
-    _ progress: ProgressBlock? = nil) async throws
-    -> NetworkResponse<D> where D: Decodable
-  {
-    try await withCheckedThrowingContinuation({ continuation in
-      fetch(target, plugins: plugins, progress: progress) { result in
-        switch result {
-        case .success(let response):
-          do {
-            let decodedObject = try decoder.decode(D.self, from: response.data)
-            let networkResponse = NetworkResponse(object: decodedObject, data: response.data)
-            continuation.resume(returning: networkResponse)
-          } catch {
-            continuation.resume(throwing: error)
-          }
-        case .failure(let error):
-          continuation.resume(throwing: error)
-        }
-      }
-    })
+    try await fetch(target, plugins: plugins, progress: progress)
   }
 
   // MARK: Private
 
-  private func makeProvider<T>(_ target: T, plugins: [PluginType] = []) -> MoyaProvider<T> where T: TargetType {
+  private func makeProvider<T: TargetType>(_ target: T, plugins: [PluginType] = []) -> MoyaProvider<T> {
     var registeredPlugins = NetworkContainer.shared.plugins()
     registeredPlugins.append(contentsOf: plugins)
 
@@ -134,19 +76,27 @@ public struct NetworkService {
       plugins: registeredPlugins)
   }
 
-  private func fetch(_ target: some TargetType, plugins: [PluginType], progress: ProgressBlock? = nil, _ completion: @escaping (Result<Response, Error>) -> Void) {
+  private func fetch(_ target: some TargetType, plugins: [PluginType], progress: ProgressBlock? = nil) async throws -> Response {
     let provider = makeProvider(target, plugins: plugins)
+    return try await provider.request(target, progress: progress)
+  }
+}
 
-    provider.request(target, progress: progress) { result in
-      switch result {
-      case .success(let response):
-        guard response.isSuccessful else { return completion(.failure(NetworkError(response: response))) }
-        return completion(.success(response))
-      case .failure(let error):
-        guard let networkError = NetworkError(moyaError: error) else { return completion(.failure(error)) }
-        return completion(.failure(networkError))
+extension MoyaProvider {
+  fileprivate func request(_ target: Target, progress: ProgressBlock? = nil) async throws -> Response {
+    try await withCheckedThrowingContinuation { continuation in
+      request(target, progress: progress) { result in
+        switch result {
+        case .success(let response):
+          guard response.isSuccessful else {
+            return continuation.resume(throwing: NetworkError(response: response))
+          }
+          return continuation.resume(returning: response)
+        case .failure(let error):
+          guard let networkError = NetworkError(moyaError: error) else { return continuation.resume(throwing: error) }
+          return continuation.resume(throwing: networkError)
+        }
       }
     }
   }
-
 }

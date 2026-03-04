@@ -102,7 +102,6 @@ extension PresentationRequestReviewView {
       }
     }
 
-    @ViewBuilder
     private func loadingView() -> some View {
       VStack {
         Spacer()
@@ -112,7 +111,6 @@ extension PresentationRequestReviewView {
       }
     }
 
-    @ViewBuilder
     private func actorHeader(_ verifierDisplay: VerifierDisplay) -> some View {
       ActorHeaderView(verifier: verifierDisplay, topInset: topInset, onBadgeTapped: badgeAction)
     }
@@ -122,7 +120,6 @@ extension PresentationRequestReviewView {
 // MARK: - Result
 
 extension PresentationRequestReviewView.Content {
-  @ViewBuilder
   private func resultView(_ viewState: PresentationRequestReviewState.Result) -> some View {
     VStack(alignment: .leading, spacing: .x4) {
       actorHeader(viewState.verifierDisplay)
@@ -171,7 +168,6 @@ extension PresentationRequestReviewView.Content {
     }
   }
 
-  @ViewBuilder
   private func footerButtons(submitAction: @escaping (Bool) -> Void, denyAction: @escaping () -> Void) -> some View {
     ButtonSheet(colorConfig: .secondary) {
       AdaptiveButtonStack {
@@ -205,7 +201,6 @@ extension PresentationRequestReviewView.Content {
 
 extension PresentationRequestReviewView.Content {
 
-  @ViewBuilder
   private func processingView(_ viewState: PresentationRequestReviewState.Processing) -> some View {
     VStack {
       actorHeader(viewState.verifierDisplay)
@@ -236,7 +231,6 @@ extension PresentationRequestReviewView.Content {
     .ignoresSafeArea(edges: .bottom)
   }
 
-  @ViewBuilder
   private func loader(isMessagePresented: Bool) -> some View {
     VStack(spacing: .x3) {
       ProgressView()

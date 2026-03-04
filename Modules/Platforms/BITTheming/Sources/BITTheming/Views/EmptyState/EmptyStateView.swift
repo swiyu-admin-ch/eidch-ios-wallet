@@ -4,7 +4,7 @@ import UIKit
 
 // MARK: - EmptyStateView
 
-public struct EmptyStateView<Label>: View where Label: View {
+public struct EmptyStateView<Label: View>: View {
 
   // MARK: Lifecycle
 

@@ -11,8 +11,13 @@ extension NonCompliantActorsResponse: Mockable {
     ])
     public static let empty = NonCompliantActorsResponse(nonCompliantActors: [])
 
-    public static var defaultData: Data { try! JSONEncoder().encode(Mock.default) }
-    public static var emptyData: Data { try! JSONEncoder().encode(Mock.empty) }
+    public static var defaultData: Data {
+      try! JSONEncoder().encode(Mock.default)
+    }
+
+    public static var emptyData: Data {
+      try! JSONEncoder().encode(Mock.empty)
+    }
   }
 }
 #endif

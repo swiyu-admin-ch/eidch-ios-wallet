@@ -134,7 +134,8 @@ extension NetworkErrorStatus: LocalizedError {
          .serviceUnavailable:
       "Server not available"
 
-    case .gatewayTimeout:
+    case .gatewayTimeout,
+         .timeout:
       "Timeout"
 
     case .hostnameNotFound:

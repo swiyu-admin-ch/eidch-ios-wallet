@@ -49,7 +49,6 @@ struct DeeplinkLoadingView: View {
 
 extension DeeplinkLoadingView {
 
-  @ViewBuilder
   private func progressView() -> some View {
     ZStack {
       Rectangle()
@@ -57,8 +56,7 @@ extension DeeplinkLoadingView {
           ThemingAssets.Gradient.gradient4.swiftUIImage
             .resizable()
             .scaledToFill()
-            .clipped()
-        )
+            .clipped())
         .clipped()
         .ignoresSafeArea()
         .accessibilityHidden(true)
@@ -77,23 +75,24 @@ extension DeeplinkLoadingView {
   }
 
   @ViewBuilder
-  private func errorView(_ error: InvitationError) -> some View {
+  private func errorView(_ error: Error) -> some View {
+    let invitationError = error as? InvitationError ?? .invalidQRCode
     VStack(spacing: .x1) {
       Spacer()
 
-      error.icon
+      invitationError.icon
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(width: 56, height: 56)
         .accessibilityHidden(true)
 
-      Text(error.primaryText)
+      Text(invitationError.primaryText)
         .font(.custom.title)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .multilineTextAlignment(.center)
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
-      Text(error.secondaryText)
+      Text(invitationError.secondaryText)
         .font(.custom.body)
         .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
         .multilineTextAlignment(.center)

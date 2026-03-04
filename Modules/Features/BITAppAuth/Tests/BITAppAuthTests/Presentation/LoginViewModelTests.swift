@@ -77,7 +77,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testWithInitialData_withBiometricsTypeNone() async {
+  func testWithInitialData_withBiometricsTypeNone() {
     mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
     mockHasBiometricAuthUseCase.executeReturnValue = true
     mockGetBiometricTypeUseCase.executeReturnValue = BiometricType.none
@@ -105,7 +105,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testWithInitialData_withBiometricsAvailable() async {
+  func testWithInitialData_withBiometricsAvailable() {
     mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
     mockHasBiometricAuthUseCase.executeReturnValue = true
 
@@ -136,7 +136,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testInitLockWithExceededAttempts() async {
+  func testInitLockWithExceededAttempts() {
     let attemptLimit = 2
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
     mockGetLockedWalletTimeLeftUseCase.executeReturnValue = 10
@@ -163,7 +163,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testInitLockWithExceededAttemptsButLockTimeIsDone() async {
+  func testInitLockWithExceededAttemptsButLockTimeIsDone() {
     let attemptLimit = 2
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
     mockGetLockedWalletTimeLeftUseCase.executeReturnValue = -10
@@ -192,7 +192,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testRestartTimerAfterRebootWithTooManyAttempts() async {
+  func testRestartTimerAfterRebootWithTooManyAttempts() {
     let attemptLimit = 2
     let lockDelay: TimeInterval = 10
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
@@ -224,7 +224,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testRestartTimerAfterReboot() async {
+  func testRestartTimerAfterReboot() {
     let attemptLimit = 2
     let lockDelay: TimeInterval = 10
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
@@ -328,7 +328,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testBiometricAuthHappyPath() async throws {
+  func testBiometricAuthHappyPath() async {
     mockHasBiometricAuthUseCase.executeReturnValue = true
     mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
     mockIsBiometricInvalidatedUseCase.executeReturnValue = false
@@ -501,7 +501,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testPinLoginWithoutVersionEnforcementBlock() async throws {
+  func testPinLoginWithoutVersionEnforcementBlock() async {
     mockFetchVersionEnforcementUseCase.executeReturnValue = nil
 
     await testPinCodeHappyPath()
@@ -512,7 +512,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testPinLoginWithVersionEnforcementBlock() async throws {
+  func testPinLoginWithVersionEnforcementBlock() async {
     mockFetchVersionEnforcementUseCase.executeReturnValue = mockVersionEnforcement
 
     await testPinCodeHappyPath()
@@ -524,7 +524,7 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testVersionEnforcementGenericErrorSilentFail() async throws {
+  func testVersionEnforcementGenericErrorSilentFail() async {
     mockFetchVersionEnforcementUseCase.executeThrowableError = TestingError.error
 
     await testPinCodeHappyPath()

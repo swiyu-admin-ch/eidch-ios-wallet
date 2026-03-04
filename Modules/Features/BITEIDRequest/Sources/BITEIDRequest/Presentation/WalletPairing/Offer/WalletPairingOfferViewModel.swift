@@ -25,6 +25,7 @@ class WalletPairingOfferViewModel: ObservableObject {
 
   @Published var state = QRCodeViewState.loading
   @Published var destination: EIDRequestDestinations?
+  @Published var isNavigationCloseTriggered = false
 
   @Injected(\.walletPairingPollingManager) var walletPairingPollingManager
 
@@ -50,6 +51,7 @@ class WalletPairingOfferViewModel: ObservableObject {
 
   func close() {
     walletPairingPollingManager.stopPolling()
+    isNavigationCloseTriggered = true
   }
 
   func retryFetching() async {
@@ -63,7 +65,9 @@ class WalletPairingOfferViewModel: ObservableObject {
   @Injected(\.eidRequestContext) private var context
   @Injected(\.fetchWalletPairingOfferUseCase) private var fetchWalletPairingOfferUseCase
 
-  private var caseId: String? { context.caseId }
+  private var caseId: String? {
+    context.caseId
+  }
 
   private func setState(_ state: QRCodeViewState) {
     withAnimation {

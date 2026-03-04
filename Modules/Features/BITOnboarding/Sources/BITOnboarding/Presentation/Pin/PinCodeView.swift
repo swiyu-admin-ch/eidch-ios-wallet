@@ -58,7 +58,6 @@ struct PinCodeView: View {
 
   @Orientation private var orientation
 
-  @ViewBuilder
   private func content() -> some View {
     ScrollView {
       VStack {
@@ -80,7 +79,6 @@ struct PinCodeView: View {
     }
   }
 
-  @ViewBuilder
   private func landscapeLayout() -> some View {
     VStack(alignment: .leading) {
       HStack {
@@ -108,7 +106,6 @@ struct PinCodeView: View {
     Spacer()
   }
 
-  @ViewBuilder
   private func footerView() -> some View {
     HStack {
       Spacer()
@@ -120,7 +117,6 @@ struct PinCodeView: View {
     .padding(.bottom, .x4)
   }
 
-  @ViewBuilder
   private func secureField() -> some View {
     SecureTextField(
       text: $viewModel.pinCode,
@@ -149,7 +145,6 @@ struct PinCodeView: View {
     .secureTextFieldAccessibilityIdentifier(AccessibilityIdentifier.pinField.rawValue)
   }
 
-  @ViewBuilder
   private func continueButton() -> some View {
     Button {
       viewModel.validate()
@@ -163,7 +158,6 @@ struct PinCodeView: View {
     .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)
   }
 
-  @ViewBuilder
   private func inputFieldMessage(_ message: String) -> some View {
     Text(message)
       .font(.custom.footnote)

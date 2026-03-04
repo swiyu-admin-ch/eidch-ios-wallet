@@ -70,13 +70,7 @@ extension Container {
 
   // MARK: Internal
 
-  var autoHideErrorDelay: Factory<Double> { self { 5 } }
-
-  var onboardingSuccessRepository: Factory<OnboardingSuccessRepositoryProtocol> {
-    self { UserDefaultsOnboardingSuccessRepository() }
-  }
-
-  var onboardingSuccessUseCase: Factory<OnboardingSuccessUseCaseProtocol> {
-    self { OnboardingSuccessUseCase() }
+  var autoHideErrorDelay: Factory<Double> {
+    self { 5 }
   }
 }

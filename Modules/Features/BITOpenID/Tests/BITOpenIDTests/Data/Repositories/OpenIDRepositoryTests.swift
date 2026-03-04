@@ -3,11 +3,13 @@ import BITNetworking
 import Factory
 import Foundation
 import XCTest
+@testable import BITCrypto
 @testable import BITJWT
 @testable import BITOpenID
 @testable import BITSdJWT
 @testable import BITSdJWTMocks
 @testable import BITTestingCore
+@testable import BITVault
 
 // MARK: - OpenIDRepository
 
@@ -19,7 +21,9 @@ final class OpenIDRepositoryTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
+    registerMocks()
     repository = OpenIDRepository()
+    success()
 
     NetworkContainer.shared.reset()
     NetworkContainer.shared.stubClosure.register {
@@ -46,7 +50,7 @@ final class OpenIDRepositoryTests: XCTestCase {
     XCTAssertEqual(expectedTypeMetadata.schemaUrl, typeMetadata.schemaUrl)
     XCTAssertEqual(expectedTypeMetadata.schemaIntegrity, typeMetadata.schemaIntegrity)
     XCTAssertEqual(expectedTypeMetadata.schema, typeMetadata.schema)
-    XCTAssertEqual(dataMock, response.data)
+    XCTAssertEqual(dataMock, response.response.data)
   }
 
   func testFetchMetadataSuccess() async throws {
@@ -270,7 +274,7 @@ final class OpenIDRepositoryTests: XCTestCase {
   func testFetchCredentialWithContext_success_returnsCredential() async throws {
     mockResponse(code: 200, data: mockCredentialResponseData)
 
-    let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: credentialRequest)
+    let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: .json(credentialRequest))
 
     if case .credential(let credential) = result {
       XCTAssertEqual(credential.raw, mockCredentialResponse.credentials.first?.credential)
@@ -280,12 +284,47 @@ final class OpenIDRepositoryTests: XCTestCase {
   func testFetchCredentialWithContext_success_returnsDeferredCredential() async throws {
     mockResponse(code: 202, data: mockCredentialResponseDeferredData)
 
-    let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: credentialRequest)
+    let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: .json(credentialRequest))
 
-    if case .deferred(let deferredCredentialRequest) = result {
-      XCTAssertEqual(deferredCredentialRequest.transactionId, mockCredentialResponseDeferred.transactionId)
-      XCTAssertEqual(deferredCredentialRequest.accessToken, mockFetchCredentialContext.accessToken.accessToken)
-      XCTAssertEqual(deferredCredentialRequest.format, mockFetchCredentialContext.format)
+    if case .deferred(let deferredCredentialContext) = result {
+      XCTAssertEqual(deferredCredentialContext.transactionId, mockCredentialResponseDeferred.transactionId)
+      XCTAssertEqual(deferredCredentialContext.accessToken, mockFetchCredentialContext.accessToken.accessToken)
+      XCTAssertEqual(deferredCredentialContext.format, mockFetchCredentialContext.format)
+    }
+  }
+
+  func testFetchCredentialWithContext_encryptionContext_success() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData, headers: ["Content-Type": "application/jwt"])
+
+    let result = try await repository.fetchCredential(with: FetchCredentialContext.Mock.sampleCredentialEncryption, credentialRequest: .jwe(jweMock))
+
+    if case .credential(let credential) = result {
+      XCTAssertEqual(credential.raw, mockCredentialResponse.credentials.first?.credential)
+    }
+  }
+
+  func testFetchCredentialWithContext_encryptionContextMissingPrivatekey_throwsMissingCredentialResponsePrivateKey() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData, headers: ["Content-Type": "application/jwt"])
+
+    do {
+      _ = try await repository.fetchCredential(with: FetchCredentialContext.Mock.sampleCredentialEncryptionNoResponseEncryption, credentialRequest: .jwe(jweMock))
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? OpenIdRepositoryError, .missingCredentialResponsePrivateKey)
+    }
+  }
+
+  func testFetchCredentialWithContext_jweDecrypterThrows_throws() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData, headers: ["Content-Type": "application/jwt"])
+
+    jweDecrypterMock.decryptPayloadPrivateKeyThrowableError = TestingError.error
+    repository = OpenIDRepository()
+
+    do {
+      _ = try await repository.fetchCredential(with: FetchCredentialContext.Mock.sampleCredentialEncryption, credentialRequest: .jwe(jweMock))
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
@@ -293,17 +332,39 @@ final class OpenIDRepositoryTests: XCTestCase {
     mockResponse(code: 201, data: mockCredentialResponseDeferredData)
 
     do {
-      _ = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: credentialRequest)
+      _ = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: .json(credentialRequest))
       XCTFail("Should have thrown an error")
     } catch {
       XCTAssertEqual(error as? OpenIdRepositoryError, .unsupportedCredentialStatusCode)
     }
   }
 
-  func testFetchCredentialFromDeferredEndpoint_success() async throws {
+  func testFetchCredentialFromDeferredEndpoint_nonEncrypted_success() async throws {
     mockResponse(code: 200, data: mockCredentialResponseData)
 
-    let result = try await repository.fetchCredential(from: mockUrl, transactionId: "transactionId", accessToken: "accessToken", format: "format")
+    let result = try await repository.fetchCredential(
+      from: mockUrl,
+      requestBody: deferredCredentialRequestBody,
+      accessToken: "accessToken",
+      format: "format",
+      privateKey: nil)
+
+    if case .credential(let credential) = result {
+      XCTAssertEqual(credential.raw, mockCredentialResponse.credentials.first?.credential)
+    } else {
+      XCTFail("Expected credential result")
+    }
+  }
+
+  func testFetchCredentialFromDeferredEndpoint_encryptedResponse_success() async throws {
+    mockResponse(code: 200, data: Data(jweMock.utf8), headers: mockJWTHeaders)
+
+    let result = try await repository.fetchCredential(
+      from: mockUrl,
+      requestBody: deferredCredentialRequestBody,
+      accessToken: "accessToken",
+      format: "format",
+      privateKey: VaultKeyPair.Mock.ES256.privateKey)
 
     if case .credential(let credential) = result {
       XCTAssertEqual(credential.raw, mockCredentialResponse.credentials.first?.credential)
@@ -315,7 +376,12 @@ final class OpenIDRepositoryTests: XCTestCase {
   func testFetchCredentialFromDeferredEndpoint_returnsDeferredCredential() async throws {
     mockResponse(code: 202, data: mockCredentialResponseDeferredData)
 
-    let result = try await repository.fetchCredential(from: mockUrl, transactionId: "transactionId", accessToken: "accessToken", format: "format")
+    let result = try await repository.fetchCredential(
+      from: mockUrl,
+      requestBody: deferredCredentialRequestBody,
+      accessToken: "accessToken",
+      format: "format",
+      privateKey: nil)
 
     if case .deferred(let deferred) = result {
       XCTAssertEqual(deferred.transactionId, mockCredentialResponseDeferred.transactionId)
@@ -331,10 +397,26 @@ final class OpenIDRepositoryTests: XCTestCase {
     mockResponse(code: 201, data: mockCredentialResponseDeferredData)
 
     do {
-      _ = try await repository.fetchCredential(from: mockUrl, transactionId: "transactionId", accessToken: "accessToken", format: "format")
+      _ = try await repository.fetchCredential(
+        from: mockUrl,
+        requestBody: deferredCredentialRequestBody,
+        accessToken: "accessToken",
+        format: "format",
+        privateKey: nil)
       XCTFail("Should have thrown an error")
     } catch {
       XCTAssertEqual(error as? OpenIdRepositoryError, .unsupportedCredentialStatusCode)
+    }
+  }
+
+  func testFetchCredentialFromDeferredEndpoint_credentialRequestDenied_throwsInvalidCredential() async throws {
+    mockResponse(code: 400, data: mockCredentialResponseError)
+
+    do {
+      _ = try await repository.fetchCredential(from: mockUrl, requestBody: deferredCredentialRequestBody, accessToken: "accessToken", format: "format", privateKey: nil)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? OpenIdRepositoryError, .invalidCredential)
     }
   }
 
@@ -390,13 +472,29 @@ final class OpenIDRepositoryTests: XCTestCase {
   private let mockCredentialResponseData = CredentialResponseImmediate.Mock.sampleData
   private let mockCredentialResponseDeferred = CredentialResponseDeferred.Mock.sample
   private let mockCredentialResponseDeferredData = CredentialResponseDeferred.Mock.sampleData
+  private let mockCredentialResponseError = CredentialResponseError.Mock.sampleData
   private let mockFetchCredentialContext = FetchCredentialContext.Mock.sample
   private let credentialRequest = CredentialRequest.Mock.sample
+  private let deferredCredentialRequestBody = DeferredCredentialRequestBody.json(
+    DeferredCredentialRequest(
+      transactionId: "transactionId",
+      credentialResponseEncryption: nil))
   private let mockJWTHeaders = ["Content-Type": "application/jwt"]
   private let jwtResponseMock = "jwt"
+  private let jweMock = "jwe"
 
-  // swiftlint: enable all
   private var repository = OpenIDRepository()
+  private var jweDecrypterMock = JWEDecrypterProtocolSpy()
+
+  private func registerMocks() {
+    jweDecrypterMock = JWEDecrypterProtocolSpy()
+
+    Container.shared.jweDecrypter.register { self.jweDecrypterMock }
+  }
+
+  private func success() {
+    jweDecrypterMock.decryptPayloadPrivateKeyReturnValue = mockCredentialResponseData
+  }
 
   private func credentialMetadataJwtMocks(
     validatorError: Error? = nil)

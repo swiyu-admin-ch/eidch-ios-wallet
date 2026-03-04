@@ -1,5 +1,19 @@
 include:
-  - Project/project.yml
-  - Project/packages.yml
-  - Project/targets.yml
-  - Project/schemes.yml
+  - .config/Projects/project.yml
+  - .config/Projects/packages.yml
+  - .config/Projects/base-settings.yml
+
+  - .config/Projects/swiyu/schemes.yml
+  - .config/Projects/swiyu/plist.yml
+  - .config/Projects/swiyu/base-settings.yml
+  - .config/Projects/swiyu/configs.yml
+  - .config/Projects/swiyu/dependencies.yml
+  - .config/Projects/swiyu/entitlements.yml
+  - .config/Projects/swiyu/app.yml
+  - .config/Projects/swiyu/tests.yml
+
+  - .config/Projects/uitests/dependencies.yml
+  - .config/Projects/uitests/app.yml
+
+  - .config/Projects/debugger/dependencies.yml
+  - .config/Projects/debugger/app.yml

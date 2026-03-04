@@ -24,7 +24,7 @@ class PinCodeViewModel: ObservableObject, Vibrating {
   @Published var isErrorPresented = false
   @Published var inputFieldMessage: String = L10n.tkOnboardingPasswordInputSubtitle
 
-  // attempts allows us to have the ShakeEffect on the inputField
+  /// attempts allows us to have the ShakeEffect on the inputField
   @Published var attempts = 0
 
   @Injected(\.pinCodeErrorAuthHideDelay) var autoHideErrorDelay: Double

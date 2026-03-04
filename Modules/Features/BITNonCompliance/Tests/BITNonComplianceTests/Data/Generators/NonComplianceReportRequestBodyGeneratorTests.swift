@@ -40,7 +40,7 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
   }
 
   func testGenerate_plainRequestObject_returnsBody() throws {
-    let nonComplianceData = String(data: RequestObject.Mock.VcSdJwt.sampleData, encoding: .utf8)!
+    let nonComplianceData = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.sampleData, encoding: .utf8))
     activityMock.nonComplianceData = nonComplianceData
     jwsDecoder.throwingError = TestingError.error
     generator = NonComplianceReportRequestBodyGenerator()

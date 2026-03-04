@@ -24,6 +24,10 @@ public struct NetworkError: Error, LocalizedError {
       self.init(response: response)
 
     case .underlying(let error, let response):
+      if let networkError = error as? NetworkError {
+        self.init(status: networkError.status, response: networkError.response)
+        return
+      }
       let underlyingCode: Int = if let underlyingError = (error as? AFError)?.underlyingError {
         (underlyingError as NSError).code
       } else if let alamofireError = error as? Alamofire.AFError {
@@ -36,9 +40,10 @@ public struct NetworkError: Error, LocalizedError {
       case URLError.cannotFindHost.rawValue:
         self.init(status: .hostnameNotFound, response: response)
       case URLError.dataNotAllowed.rawValue,
-           URLError.notConnectedToInternet.rawValue,
-           URLError.timedOut.rawValue:
+           URLError.notConnectedToInternet.rawValue:
         self.init(status: .noConnection, response: response)
+      case URLError.timedOut.rawValue:
+        self.init(status: .timeout, response: response)
       default:
         if let afError = error.asAFError, afError.isServerTrustEvaluationError {
           self.init(status: .pinning, response: response)

@@ -19,7 +19,8 @@ public struct CredentialCard<Header: View>: View {
     statusBadgeLabel: String? = nil,
     statusBadgeImage: Image? = nil,
     statusBadgeStyle: (any BadgeStyle)? = nil,
-    style: Style = .verifiable,
+    colorSchemeOverride: ColorScheme? = nil,
+    style: CredentialCardStyle = .verifiable,
     @ViewBuilder header: () -> Header? = { EmptyView() })
   {
     self.name = name
@@ -30,6 +31,7 @@ public struct CredentialCard<Header: View>: View {
     self.statusBadgeLabel = statusBadgeLabel
     self.statusBadgeImage = statusBadgeImage
     self.statusBadgeStyle = statusBadgeStyle
+    self.colorSchemeOverride = colorSchemeOverride
     self.style = style
     self.header = header()
   }
@@ -40,7 +42,7 @@ public struct CredentialCard<Header: View>: View {
     ZStack {
       Group {
         linearGradient()
-        if controlSize > .small {
+        if controlSize > .small && style == .verifiable {
           radialBackground()
         }
       }
@@ -75,8 +77,10 @@ public struct CredentialCard<Header: View>: View {
         }
       }
       content()
-        .colorScheme(cardColorScheme)
         .foregroundStyle(cardColorScheme.standardColor())
+        .if(style == .verifiable, transform: {
+          $0.colorScheme(cardColorScheme)
+        })
     }
     .frame(minWidth: minWidth, maxWidth: maxWidth, minHeight: minHeight, maxHeight: maxHeight)
     .if(ratio != nil, transform: {
@@ -100,7 +104,8 @@ public struct CredentialCard<Header: View>: View {
   private var statusBadgeLabel: String?
   private var statusBadgeImage: Image?
   private var statusBadgeStyle: (any BadgeStyle)?
-  private var style: CredentialCard.Style
+  private var style: CredentialCardStyle
+  private var colorSchemeOverride: ColorScheme?
 
   private let header: Header?
 
@@ -109,7 +114,7 @@ public struct CredentialCard<Header: View>: View {
   private let defaultText = "n/a"
 
   private var cardColorScheme: ColorScheme {
-    backgroundColor?.suggestedColorScheme() ?? .light
+    colorSchemeOverride ?? backgroundColor?.suggestedColorScheme() ?? .light
   }
 
   private var backgroundColor: Color? {
@@ -155,7 +160,6 @@ public struct CredentialCard<Header: View>: View {
     }
   }
 
-  @ViewBuilder
   private func contentRegular() -> some View {
     VStack(alignment: .leading) {
 
@@ -186,7 +190,6 @@ public struct CredentialCard<Header: View>: View {
     .padding(.x5)
   }
 
-  @ViewBuilder
   private func contentLarge() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
       header
@@ -234,12 +237,10 @@ public struct CredentialCard<Header: View>: View {
     .padding(.x5)
   }
 
-  @ViewBuilder
   private func contentMini() -> some View {
     image()
   }
 
-  @ViewBuilder
   private func linearGradient() -> some View {
     LinearGradient(
       colors: [.black, Color.clear],
@@ -248,7 +249,6 @@ public struct CredentialCard<Header: View>: View {
       .opacity(0.25)
   }
 
-  @ViewBuilder
   private func radialBackground() -> some View {
     EllipticalGradient(
       colors: [.black, .black, .clear],
@@ -342,16 +342,6 @@ extension CredentialCard {
     }
   }
 
-}
-
-// MARK: CredentialCard.Style
-
-extension CredentialCard {
-
-  public enum Style {
-    case verifiable
-    case deferred
-  }
 }
 
 #if DEBUG

@@ -9,12 +9,21 @@ struct AVIdentityCheckView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.idCheck.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: { content() },
-      footer: { footer() })
-      .navigationBarBackButtonHidden(true)
+      contents: [
+        .title(L10n.tkEidRequestAutoVerificationIdentityCheckPrimary, identifier: AccessibilityIdentifier.primaryText.rawValue),
+        .body(L10n.tkEidRequestAutoVerificationIdentityCheckSecondary, identifier: AccessibilityIdentifier.secondaryText.rawValue),
+        .spacer(),
+        .bodyBold(L10n.tkEidRequestAutoVerificationIdentityCheckTertiaryTip, identifier: AccessibilityIdentifier.tertiaryTipText.rawValue),
+        .caption(L10n.tkEidRequestAutoVerificationIdentityCheckTertiary, identifier: AccessibilityIdentifier.tertiaryText.rawValue),
+      ],
+      actions: [
+        .primaryAsync(L10n.tkEidRequestAutoVerificationIdentityCheckButton, actionOptions: [.showProgressView], { _ in
+          await viewModel.primaryAction()
+        }),
+      ])
+      .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)
   }
@@ -30,59 +39,6 @@ struct AVIdentityCheckView: View {
 
   @InjectedObject(\.avIdentityCheckViewModel) private var viewModel
 
-  @ViewBuilder
-  private func footer() -> some View {
-    ButtonSheet {
-      AsyncButton(
-        action: { await viewModel.primaryAction() },
-        actionOptions: [.showProgressView],
-        label: {
-          Text(L10n.tkEidRequestAutoVerificationIdentityCheckButton)
-            .multilineTextAlignment(.leading)
-        })
-        .buttonStyle(.primary)
-        .controlSize(.large)
-    }
-  }
-
-  @ViewBuilder
-  private func content() -> some View {
-    VStack(alignment: .leading, spacing: .x6) {
-      Text(L10n.tkEidRequestAutoVerificationIdentityCheckPrimary)
-        .font(.custom.title)
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        .multilineTextAlignment(.leading)
-        .minimumScaleFactor(0.5)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier(AccessibilityIdentifier.primaryText.rawValue)
-        .accessibilityAddTraits(.isHeader)
-
-      Text(L10n.tkEidRequestAutoVerificationIdentityCheckSecondary)
-        .font(.custom.body)
-        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-        .multilineTextAlignment(.leading)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier(AccessibilityIdentifier.secondaryText.rawValue)
-
-      VStack(spacing: 0) {
-        Text(L10n.tkEidRequestAutoVerificationIdentityCheckTertiaryTip)
-          .font(.custom.bodyBold)
-          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-          .multilineTextAlignment(.leading)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityIdentifier(AccessibilityIdentifier.tertiaryTipText.rawValue)
-
-        Text(L10n.tkEidRequestAutoVerificationIdentityCheckTertiary)
-          .font(.custom.footnote)
-          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-          .multilineTextAlignment(.leading)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityIdentifier(AccessibilityIdentifier.tertiaryText.rawValue)
-      }
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .padding(.bottom)
-  }
 }
 
 #Preview {

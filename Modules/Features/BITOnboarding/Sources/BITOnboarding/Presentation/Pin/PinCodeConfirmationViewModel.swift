@@ -62,7 +62,9 @@ public class PinCodeConfirmationViewModel: ObservableObject {
 
   @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
 
-  private var attemptLeft: Int { attemptsLimit - attempts }
+  private var attemptLeft: Int {
+    attemptsLimit - attempts
+  }
 
   private func validatePinCodeRuleCompliance() throws {
     try validatePinCodeRuleUseCase.execute(pinCode)

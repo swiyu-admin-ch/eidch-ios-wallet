@@ -64,8 +64,7 @@ public struct JsonPath: Equatable, Decodable {
       CharacterClass(
         .anyOf("_"),
         "a"..."z",
-        "A"..."Z")
-    )
+        "A"..."Z"))
     ZeroOrMore(.word)
   }
 

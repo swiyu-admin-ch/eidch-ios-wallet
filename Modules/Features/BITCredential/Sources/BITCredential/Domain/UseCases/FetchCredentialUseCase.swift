@@ -31,8 +31,8 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
       switch result {
       case .credential(let credential):
         anyCredential = credential
-      case .deferred(let deferredCredentialRequest):
-        let deferredCredential = try await generateDeferredCredential(from: deferredCredentialRequest, metadata: metadataWrapper, holderBindingContext: holderBindingContext)
+      case .deferred(let deferredCredentialContext):
+        let deferredCredential = try await generateDeferredCredential(from: deferredCredentialContext, metadata: metadataWrapper, holderBindingContext: holderBindingContext)
         return (deferredCredential, nil)
       }
     } catch {
@@ -59,33 +59,21 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.activityService) private var activityService
 
-  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: IdentityTrustStatementJWT) async throws -> VerifiableCredential {
-    var credentialCopy = credential
-
-    credentialCopy.issuerDisplays = credentialCopy.issuerDisplays.compactMap { issuerDisplay in
-      guard let locale = issuerDisplay.locale else { return nil }
-      let entityNames = trustStatement.entityNames
-      return CredentialIssuerDisplay(
-        id: issuerDisplay.id,
-        locale: issuerDisplay.locale,
-        name: entityNames[locale] ?? issuerDisplay.name,
-        credentialId: issuerDisplay.credentialId,
-        image: issuerDisplay.image)
-    }
-
-    return credentialCopy
-  }
-
   private func generateCredential(from anyCredential: AnyCredential, metadata: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> (VerifiableCredential, TrustInformation?) {
+    let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
+    var trustStatement: IdentityTrustStatementJWT?
+    if case .trusted(let statement) = trustInformation.identity {
+      trustStatement = statement
+    }
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(anyCredential: anyCredential)
     let keyBinding = try createKeyBinding(from: holderBindingContext?.keyPair)
 
-    var credential = try credentialGenerator.generate(for: anyCredential, keyBinding: keyBinding, rawOcaBundle: rawOcaBundle, metadataWrapper: metadata)
-    let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
-
-    if case .trusted(let trustStatement) = trustInformation.identity {
-      credential = try await updateCredentialIssuerDisplays(credential: credential, with: trustStatement)
-    }
+    let credential = try credentialGenerator.generate(
+      for: anyCredential,
+      keyBinding: keyBinding,
+      rawOcaBundle: rawOcaBundle,
+      metadataWrapper: metadata,
+      trustStatement: trustStatement)
 
     let savedCredential = try await credentialRepository.create(verifiableCredential: credential)
     let activity = Activity(credential: savedCredential, trustInformation: trustInformation)
@@ -94,11 +82,11 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
     return (updatedCredential, trustInformation)
   }
 
-  private func generateDeferredCredential(from deferredCredentialRequest: DeferredCredentialRequest, metadata: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> DeferredCredential {
+  private func generateDeferredCredential(from deferredCredentialContext: DeferredCredentialContext, metadata: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> DeferredCredential {
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(metadata: metadata.selectedCredential)
     let keyBinding = try createKeyBinding(from: holderBindingContext?.keyPair)
 
-    return try credentialGenerator.generateDeferred(deferredCredentialRequest, keyBinding: keyBinding, rawOcaBundle: rawOcaBundle, metadataWrapper: metadata)
+    return try credentialGenerator.generateDeferred(deferredCredentialContext, keyBinding: keyBinding, rawOcaBundle: rawOcaBundle, metadataWrapper: metadata)
   }
 
   private func createKeyBinding(from keyPair: VaultKeyPair?) throws -> CredentialKeyBinding? {

@@ -17,7 +17,7 @@ extension Activity {
 
 extension CompatibleCredential {
   fileprivate var uniqueClaimIds: Set<UUID> {
-    let allClaims = requestedClusteredClaims.flatMap(\.allClaims)
+    let allClaims = requestedClaimClusters.flatMap(\.allClaims)
     return Set(allClaims.map(\.id))
   }
 }

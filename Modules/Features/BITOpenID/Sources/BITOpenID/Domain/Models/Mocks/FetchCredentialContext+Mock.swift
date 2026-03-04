@@ -1,4 +1,5 @@
 #if DEBUG
+import BITCrypto
 import Foundation
 @testable import BITTestingCore
 @testable import BITVault
@@ -14,6 +15,8 @@ extension FetchCredentialContext {
     static let vcSdJwtUnsupportedMetadataType = make(format: "vc+sd-jwt", selectedCredential: MockAnyCredentialConfigurationSupported())
     static let sampleVcSdJwtWithoutHolderBinding = make(format: "vc+sd-jwt", holderBindingContext: nil)
     static let sampleVcSdJwtWithoutKeyAttestation = make(format: "vc+sd-jwt", holderBindingContext: HolderBindingContext.Mock.softwareKey)
+    static let sampleCredentialEncryption = make(format: "vc+sd-jwt", credentialEncryptionContext: makeCredentialEncryptionContext())
+    static let sampleCredentialEncryptionNoResponseEncryption = make(format: "vc+sd-jwt", credentialEncryptionContext: makeCredentialEncryptionContext(responseKeyPair: nil))
 
     // MARK: Private
 
@@ -27,7 +30,8 @@ extension FetchCredentialContext {
       format: String,
       invalid: Bool = false,
       selectedCredential: (any CredentialMetadata.AnyCredentialConfigurationSupported)? = nil,
-      holderBindingContext: HolderBindingContext? = .Mock.attestedHardwareKey)
+      holderBindingContext: HolderBindingContext? = .Mock.attestedHardwareKey,
+      credentialEncryptionContext: CredentialEncryptionContext? = nil)
       -> FetchCredentialContext
     {
       let credentialConfig: any CredentialMetadata.AnyCredentialConfigurationSupported
@@ -49,7 +53,20 @@ extension FetchCredentialContext {
         accessToken: AccessToken.Mock.sample,
         nonce: Nonce.Mock.default,
         credentialEndpoint: mockEndpointsUrl,
+        credentialEncryptionContext: credentialEncryptionContext,
         deferredCredentialEndpoint: URL(string: "mock_deferred_credential_endpoint"))
+    }
+
+    private static func makeCredentialEncryptionContext(responseKeyPair: VaultKeyPair? = VaultKeyPair.Mock.ES256) -> CredentialEncryptionContext {
+      let issuerPublicKey = JWK.Mock.validSample
+
+      return CredentialEncryptionContext(
+        issuerPublicKey: issuerPublicKey,
+        credentialRequestEncryptionAlgorithm: .A128GCM,
+        credentialRequestEncryptionZipValue: .deflate,
+        responseKeyPair: responseKeyPair,
+        credentialResponseEncryptionAlgorithm: .A128GCM,
+        credentialResponseEncryptionZipValue: .deflate)
     }
   }
 }

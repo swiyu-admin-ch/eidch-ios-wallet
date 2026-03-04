@@ -3,7 +3,7 @@ import BITEntities
 import Foundation
 
 
-public struct EIDRequestCase: Codable, Identifiable {
+public struct EIDRequestCase: Codable, Identifiable, Equatable {
 
   // MARK: Lifecycle
 
@@ -78,22 +78,6 @@ public struct EIDRequestCase: Codable, Identifiable {
 
   private static let mrzSeparator = ";"
 
-}
-
-// MARK: Equatable
-
-extension EIDRequestCase: Equatable {
-  public static func == (lhs: EIDRequestCase, rhs: EIDRequestCase) -> Bool {
-    lhs.id == rhs.id &&
-      lhs.rawMRZ == rhs.rawMRZ &&
-      lhs.lastName == rhs.lastName &&
-      lhs.state == rhs.state &&
-      lhs.documentNumber == rhs.documentNumber &&
-      lhs.createdAt == rhs.createdAt &&
-      lhs.firstName == rhs.firstName &&
-      lhs.selectedDocumentType == rhs.selectedDocumentType &&
-      lhs.deferredCredential == rhs.deferredCredential
-  }
 }
 
 // MARK: Hashable

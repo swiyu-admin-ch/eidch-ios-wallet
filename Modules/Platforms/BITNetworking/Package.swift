@@ -16,6 +16,8 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../BITCore"),
+    .package(path: "../BITAnalytics"),
+    .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.6.0"),
     .package(url: "https://github.com/Moya/Moya.git", from: "15.0.3"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
   ],
@@ -24,10 +26,16 @@ let package = Package(
       name: "BITNetworking",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "Moya", package: "Moya"),
         .product(name: "Factory", package: "Factory"),
       ]),
     .testTarget(
       name: "BITNetworkingTests",
-      dependencies: ["BITNetworking"]),
+      dependencies: [
+        "BITNetworking",
+        .product(name: "Alamofire", package: "Alamofire"),
+        .product(name: "Factory", package: "Factory"),
+        .product(name: "Moya", package: "Moya"),
+      ]),
   ])

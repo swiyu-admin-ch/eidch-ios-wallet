@@ -23,18 +23,18 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() {
+  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
     Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
     viewModel = CompatibleCredentialViewModel(context: Self.contextMock, router: router)
 
     XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
-    XCTAssertEqual(String(data: viewModel.verifierDisplay.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(viewModel.verifierDisplay.trustInformation, Self.contextMock.trustInformation)
   }
 
   @MainActor
-  func testDidSelect_navigatesAndSelectsCredential() async throws {
+  func testDidSelect_navigatesAndSelectsCredential() {
     let selectedCredential = CompatibleCredential.Mock.diploma
     let context = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: [.Mock.BIT, selectedCredential], trustInformation: .Mock.trustedIdentity)
     XCTAssertNil(context.selectedCredential)

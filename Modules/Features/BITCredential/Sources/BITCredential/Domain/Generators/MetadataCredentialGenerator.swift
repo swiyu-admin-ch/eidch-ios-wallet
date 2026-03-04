@@ -11,7 +11,7 @@ import Spyable
 @Spyable
 protocol MetadataCredentialGeneratorProtocol {
   func generate(for anyCredential: AnyCredential, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential
-  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential
+  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential
 }
 
 // MARK: - MetadataCredentialGenerator
@@ -34,6 +34,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
       status: .unknown,
       clusters: [cluster],
       format: anyCredential.format,
+      issuerUrl: context.issuerUrl,
       selectedConfigurationId: context.credentialConfigurationId,
       issuer: anyCredential.issuer,
       keyBinding: context.keyBinding,
@@ -44,14 +45,15 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
       validUntil: anyCredential.validUntil)
   }
 
-  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential {
+  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential {
     let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: context.credentialId)
 
     return DeferredCredential(
-      transactionId: deferredCredentialRequest.transactionId,
-      accessToken: deferredCredentialRequest.accessToken,
-      endpoint: deferredCredentialRequest.endpoint,
-      format: deferredCredentialRequest.format,
+      transactionId: deferredCredentialContext.transactionId,
+      accessToken: deferredCredentialContext.accessToken,
+      endpoint: deferredCredentialContext.endpoint,
+      format: deferredCredentialContext.format,
+      issuerUrl: context.issuerUrl,
       selectedConfigurationId: context.credentialConfigurationId,
       issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,

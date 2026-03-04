@@ -24,28 +24,30 @@ struct RecordDocumentView: View {
         cameraView()
           .transition(.opacity)
       case .loading:
-        loadingView()
+        LoadingView(
+          primary: L10n.tkLoaderInitializationPrimary,
+          secondary: L10n.tkLoaderInitializationSecondary,
+          action: LoadingView.Action(
+            action: viewModel.cancelInitialization,
+            buttonText: L10n.tkGlobalCancel))
           .transition(.opacity)
           .task {
-            await viewModel.setup()
+            viewModel.initializeSDK()
           }
       }
     }
     .cameraPermission()
+    .disablePhoneLock()
     .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
     .font(.custom.body)
     .animation(.easeInOut(duration: 0.4), value: viewModel.state)
     .readSize { size in
       self.size = size
     }
-    .onDisappear(perform: {
-      Task { await viewModel.stop() }
-    })
+    .onDisappear(perform: viewModel.stop)
     .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
   }
-
-  @InjectedObject(\.recordDocumentViewModel) private var viewModel
 
   // MARK: Private
 
@@ -53,6 +55,10 @@ struct RecordDocumentView: View {
   @State private var rotationAngle: Double = 0
   @State private var currentDisplayState = RecordDocumentViewModel.ScanningState.recto
   @State private var scale = 1.0
+
+  @InjectedObject(\.recordDocumentViewModel) private var viewModel
+
+  @Orientation private var orientation
 
   private let defaultScale = 1.0
   private let axis: (x: CGFloat, y: CGFloat, z: CGFloat) = (x: 0, y: 1, z: 0)
@@ -62,19 +68,9 @@ struct RecordDocumentView: View {
   private let oppositeRotationAngle: Double = 180
   private let rotationVisibilityRange: Range<Double> = 90..<270
   private let defaultRotationAngle: Double = 0
-
 }
 
 extension RecordDocumentView {
-  @ViewBuilder
-  private func loadingView() -> some View {
-    VStack {
-      ProgressView()
-      Text(L10n.tkEidRequestSdkInitializationPrimary)
-    }
-  }
-
-  @ViewBuilder
   private func cameraView() -> some View {
     ZStack(alignment: .center) {
       GLViewWrapper(viewModel.avBeam.getGLView)
@@ -103,6 +99,12 @@ extension RecordDocumentView {
             .degrees(rotationAngle + oppositeRotationAngle),
             axis: axis)
           .opacity(rotationVisibilityRange.contains(rotationAngle) ? 1 : 0)
+
+        if orientation.isLandscape {
+          recordButtonView()
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.horizontal, .x4)
+        }
       }
       .onReceive(viewModel.$scanningState) { newState in
         if newState != currentDisplayState {
@@ -121,13 +123,6 @@ extension RecordDocumentView {
         }
       }
     }
-    .popup(item: $viewModel.introductionPopupState, itemView: introductionPopupView) {
-      $0.appearFrom(.bottomSlide)
-        .position(.bottom)
-        .closeOnTap(false)
-        .closeOnTapOutside(false)
-        .type(.floater(verticalPadding: 0, horizontalPadding: 0, useSafeAreaInset: true))
-    }
     .popup(isPresented: $viewModel.isNotificationPresented, view: {
       popupView(viewModel.notification)
     }) {
@@ -138,29 +133,25 @@ extension RecordDocumentView {
         .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
     }
     .navigationTitle(viewModel.title)
+    .safeAreaInset(edge: .bottom) {
+      if !orientation.isLandscape {
+        recordButtonView()
+      }
+    }
+  }
+
+  private func recordButtonView() -> some View {
+    RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startRecordDocument, onTapRecord: viewModel.stopRecordDocument)
+      .accessibilityLabel(L10n.tkEidRequestRecordDocumentRecordButtonAlt)
+      .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
 }
 
 extension RecordDocumentView {
-
-  @ViewBuilder
-  private func introductionPopupView(_ state: RecordDocumentViewModel.ScanningState) -> some View {
-    Notification(
-      title: state.popupTitle,
-      titleColor: ThemingAssets.Label.primary.swiftUIColor,
-      content: state.popupContent,
-      contentColor: ThemingAssets.Label.primary.swiftUIColor,
-      closeAction: viewModel.closeIntroductionPopup,
-      background: ThemingAssets.Background.secondary.swiftUIColor, closeButtonStyle: .secondary)
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .frame(maxWidth: 480)
-  }
-
   @ViewBuilder
   private func popupView(_ notification: AVBeamNotification?) -> some View {
-    if let recoverySuggestion = notification?.recoverySuggestion {
-      Text(recoverySuggestion)
+    if let message = notification?.localizedDescription, !message.isEmpty {
+      Text(message)
         .font(.custom.subheadline)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .padding(.horizontal, .x2)
@@ -169,7 +160,6 @@ extension RecordDocumentView {
         .clipShape(.capsule)
     }
   }
-
 }
 
 #Preview {

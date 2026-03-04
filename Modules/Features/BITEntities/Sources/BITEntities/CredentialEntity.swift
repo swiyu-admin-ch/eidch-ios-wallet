@@ -5,6 +5,7 @@ public class CredentialEntity: Object {
 
   @Persisted(primaryKey: true) public var id: UUID
   @Persisted public var format: String
+  @Persisted public var issuerUrl: String
   @Persisted public var selectedConfigurationId: String?
   @Persisted public var createdAt = Date()
 

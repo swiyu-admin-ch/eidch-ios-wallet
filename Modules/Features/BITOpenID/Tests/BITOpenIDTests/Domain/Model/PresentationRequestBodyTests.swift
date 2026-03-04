@@ -6,7 +6,7 @@ final class PresentationRequestBodyTests: XCTestCase {
   // MARK: Internal
 
   func test_acceptPresentation() {
-    let presentationRequestBody = PresentationRequestBody(vpToken: vpToken, presentationSubmission: presentationSubmission)
+    let presentationRequestBody = AuthorizationResponse(vpToken: vpToken, presentationSubmission: presentationSubmission)
     let dictionary = presentationRequestBody.asDictionary()
 
     XCTAssertFalse(dictionary.isEmpty)
@@ -18,6 +18,17 @@ final class PresentationRequestBodyTests: XCTestCase {
     XCTAssertTrue(dictionary["presentation_submission"] is String)
   }
 
+  func test_acceptPresentation_dcql() {
+    let response = AuthorizationResponse(vpTokenByCredentialQueryId: vpTokenByCredentialQueryId)
+    let dictionary = response.asDictionary()
+
+    XCTAssertFalse(dictionary.isEmpty)
+    XCTAssertEqual(dictionary.count, 1)
+    XCTAssertTrue(dictionary.contains(where: { $0.key == "vp_token" }))
+
+    XCTAssertEqual(dictionary["vp_token"] as? String, dcqlVpToken)
+  }
+
   // MARK: Private
 
   private static let definitionId = UUID().uuidString
@@ -25,6 +36,8 @@ final class PresentationRequestBodyTests: XCTestCase {
   private static let id = UUID().uuidString
 
   private let vpToken = "vpToken"
-  private let presentationSubmission = PresentationRequestBody.PresentationSubmission(id: id, definitionId: definitionId, descriptorMap: [])
+  private let dcqlVpToken = "{\"query_1\":[\"vpToken\"]}"
+  private let vpTokenByCredentialQueryId = ["query_1": ["vpToken"]]
+  private let presentationSubmission = AuthorizationResponse.PresentationSubmission(id: id, definitionId: definitionId, descriptorMap: [])
 
 }

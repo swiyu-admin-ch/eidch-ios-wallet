@@ -1,0 +1,56 @@
+targets:
+  swiyu-debugger:
+    templates:
+      - ios-app-base
+      - swiyu-debugger-deps
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: ../../../swiyuDebugger
+        excludes:
+          - "**/*.sh"
+    info:
+      path: ../../../swiyuDebugger/Info.plist
+      properties:
+        LSHasLocalizedDisplayName: true
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
+        CFBundleDisplayName: $(APP_NAME)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: '6.0'
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIApplicationSupportsIndirectInputEvents: true
+        UIRequiredDeviceCapabilities:
+          - armv7
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: openid-credential-offer
+            CFBundleURLSchemes:
+              - openid-credential-offer
+              - swiyu
+        UILaunchStoryboardName:
+          LaunchScreen.storyboard
+        NSCameraUsageDescription: 'swiyu-debugger app would like to use your camera to scan QRCodes.'
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu-debugger
+        CODE_SIGN_IDENTITY: iPhone Developer
+        PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu-debugger
+        IPHONEOS_DEPLOYMENT_TARGET: 26.0
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1
+        PRODUCT_NAME: swiyu-debugger
+      configs:
+        Dev (debug): {}
+        Dev (release):
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu-debugger

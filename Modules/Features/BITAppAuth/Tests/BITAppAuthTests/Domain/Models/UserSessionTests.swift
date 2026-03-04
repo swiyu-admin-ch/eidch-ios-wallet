@@ -43,8 +43,8 @@ final class UserSessionTests: XCTestCase {
     XCTAssertThrowsError(
       try session.startSession(
         passphrase: passphrase,
-        credentialType: .applicationPassword)
-    ) { error in
+        credentialType: .applicationPassword))
+    { error in
       guard let authError = error as? AuthError else {
         XCTFail("Expected AuthError but got: \(error)")
         return

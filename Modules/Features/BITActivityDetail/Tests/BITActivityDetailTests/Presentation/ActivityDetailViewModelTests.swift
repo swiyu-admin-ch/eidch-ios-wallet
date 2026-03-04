@@ -21,7 +21,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     createSuccessState()
   }
 
-  func testFetchCredential_activityWithClaims_stateIsResultWithCredential() async throws {
+  func testFetchCredential_activityWithClaims_stateIsResultWithCredential() async {
     await viewModel.fetchCredential()
 
     if case .result(let activity, let credential) = viewModel.state {
@@ -33,7 +33,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchCredential_activityNoClaims_stateIsResultWithCredentialAndNoClusters() async throws {
+  func testFetchCredential_activityNoClaims_stateIsResultWithCredentialAndNoClusters() async {
     let activityMock = Activity.Mock.presentationAcceptedTrusted
     viewModel = ActivityDetailViewModel(activityMock, credentialId: credentialIdMock)
 
@@ -48,7 +48,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchCredential_deferredCredential_stateIsError() async throws {
+  func testFetchCredential_deferredCredential_stateIsError() async {
     getCredentialUseCaseSpy.callAsFunctionIdReturnValue = DeferredCredential.Mock.sample
 
     await viewModel.fetchCredential()
@@ -60,7 +60,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchCredential_useCaseThrowsError_stateIsError() async throws {
+  func testFetchCredential_useCaseThrowsError_stateIsError() async {
     getCredentialUseCaseSpy.callAsFunctionIdThrowableError = TestingError.error
 
     await viewModel.fetchCredential()
@@ -72,7 +72,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     }
   }
 
-  func testShowDeleteActivityConfirmation_deleteConfirmationPresented() async throws {
+  func testShowDeleteActivityConfirmation_deleteConfirmationPresented() {
     XCTAssertFalse(viewModel.isDeleteConfirmationPresented)
 
     viewModel.showDeleteActivityConfirmation()
@@ -80,7 +80,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isDeleteConfirmationPresented)
   }
 
-  func testDeleteActivity_success_hidesDeleteConfirmation() async throws {
+  func testDeleteActivity_success_hidesDeleteConfirmation() {
     viewModel.isDeleteConfirmationPresented = true
 
     viewModel.deleteActivity()
@@ -90,7 +90,7 @@ final class ActivityDetailViewModelTests: XCTestCase {
     XCTAssertEqual(deleteActivityUseCaseSpy.callAsFunctionReceivedActivityId, activityMock.id)
   }
 
-  func testDeleteActivity_useCaseThrowsError_justRuns() async throws {
+  func testDeleteActivity_useCaseThrowsError_justRuns() {
     viewModel.isDeleteConfirmationPresented = true
     deleteActivityUseCaseSpy.callAsFunctionThrowableError = TestingError.error
 

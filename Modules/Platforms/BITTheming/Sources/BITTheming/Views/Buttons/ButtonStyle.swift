@@ -10,5 +10,7 @@ public struct FlatLinkStyle: ButtonStyle {
 }
 
 extension ButtonStyle where Self == FlatLinkStyle {
-  public static var flatLink: FlatLinkStyle { Self() }
+  public static var flatLink: FlatLinkStyle {
+    Self()
+  }
 }

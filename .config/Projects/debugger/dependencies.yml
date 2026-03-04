@@ -1,0 +1,19 @@
+targetTemplates:
+  swiyu-debugger-deps:
+    dependencies:
+      - package: Factory
+      - package: BITCore
+      - package: BITCrypto
+      - package: BITQRCode
+      - package: BITTheming
+      - package: BITInvitation
+      - package: BITCredential
+      - package: BITCredentialShared
+      - package: BITDeeplink
+      - package: BITPresentation
+      - package: BITJWT
+      - package: BITSdJWT
+      - package: BITHome
+      - package: BITEntities
+      - package: BITOpenID
+      - package: BITAnyCredentialFormat

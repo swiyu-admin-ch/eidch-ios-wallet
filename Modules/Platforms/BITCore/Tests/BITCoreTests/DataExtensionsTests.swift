@@ -9,7 +9,7 @@ final class DataExtensionsTests: XCTestCase {
 
   func testCompression_stringCompressionAndDecompression_returnsSameString() throws {
     let string = "some random string to compress with ä, è, \u{1234} or even 👍"
-    let data = string.data(using: .utf8)!
+    let data = try XCTUnwrap(string.data(using: .utf8))
 
     let resultData = try data.compressed().decompressed(ignoreHeaderBytes: false)
 
@@ -18,7 +18,7 @@ final class DataExtensionsTests: XCTestCase {
 
   func testCompression_stringCompressionAndDecompressionWithLimit_returnsSameString() throws {
     let string = "some random string to compress with ä, è, \u{1234} or even 👍"
-    let data = string.data(using: .utf8)!
+    let data = try XCTUnwrap(string.data(using: .utf8))
 
     let resultData = try data.compressed().decompressedWithLimit(data.count, ignoreHeaderBytes: false)
 

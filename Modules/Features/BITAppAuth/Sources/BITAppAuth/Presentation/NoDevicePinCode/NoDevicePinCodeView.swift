@@ -28,7 +28,6 @@ struct NoDevicePinCodeView: View {
   private let overlayDimming = 0.21
   private var viewModel: NoDevicePinCodeViewModel
 
-  @ViewBuilder
   private func content() -> some View {
     VStack {
       Spacer()
@@ -45,7 +44,6 @@ struct NoDevicePinCodeView: View {
 
 extension NoDevicePinCodeView {
 
-  @ViewBuilder
   private func background() -> some View {
     Rectangle()
       .overlay(
@@ -53,32 +51,30 @@ extension NoDevicePinCodeView {
           .resizable()
           .scaledToFill()
           .clipped()
-          .overlay(.black.opacity(overlayDimming))
-      )
+          .overlay(.black.opacity(overlayDimming)))
       .clipped()
       .ignoresSafeArea()
       .accessibilityHidden(true)
   }
 
-  @ViewBuilder
   private func mainContent() -> some View {
     VStack(alignment: .center, spacing: .x6) {
       Assets.shield.swiftUIImage
         .accessibilityHidden(true)
 
       VStack(alignment: .center, spacing: .x2) {
-        Text(L10n.tkUnsafedeviceUnsafeTitle)
+        Text(L10n.tkUnsecuredDevicePrimary)
           .font(.custom.title)
           .foregroundColor(ThemingAssets.Grays.white.swiftUIColor)
           .multilineTextAlignment(.center)
 
-        Text(L10n.tkUnsafedeviceUnsafeBody)
+        Text(L10n.tkUnsecuredDeviceSecondary)
           .font(.custom.body)
           .foregroundColor(.white)
           .multilineTextAlignment(.center)
       }
 
-      Text(L10n.tkUnsafedeviceUnsafeSmallbody)
+      Text(L10n.tkUnsecuredDeviceTertiary)
         .font(.custom.body)
         .foregroundColor(.white)
         .multilineTextAlignment(.center)
@@ -86,10 +82,9 @@ extension NoDevicePinCodeView {
     .padding(.horizontal, .x6)
   }
 
-  @ViewBuilder
   private func footer() -> some View {
     Button(action: viewModel.openSettings) {
-      Text(L10n.tkUnsafedeviceUnsafePrimaryButton)
+      Text(L10n.tkUnsecuredDeviceButtonSettings)
     }
     .controlSize(.large)
     .buttonStyle(.primary)

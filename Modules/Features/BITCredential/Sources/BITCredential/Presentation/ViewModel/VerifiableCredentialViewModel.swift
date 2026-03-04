@@ -8,7 +8,7 @@ import SwiftUI
 
 // MARK: - VerifiableCredentialViewModel
 
-public struct VerifiableCredentialViewModel: CredentialCellViewModelProtocol, CredentialViewModelProtocol {
+public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, CredentialViewModelProtocol {
 
   // MARK: Lifecycle
 
@@ -81,6 +81,10 @@ public struct VerifiableCredentialViewModel: CredentialCellViewModelProtocol, Cr
     }
   }
 
+  public var cardStatusBadgeStyle: any BadgeStyle {
+    statusBadgeStyle
+  }
+
   public var statusBadgeStyle: any BadgeStyle {
     switch credential.status {
     case .unknown,
@@ -91,6 +95,10 @@ public struct VerifiableCredentialViewModel: CredentialCellViewModelProtocol, Cr
          .revoked,
          .suspended: .error
     }
+  }
+
+  public var cardStyle: CredentialCardStyle {
+    .verifiable
   }
 
   public func view() -> some View {

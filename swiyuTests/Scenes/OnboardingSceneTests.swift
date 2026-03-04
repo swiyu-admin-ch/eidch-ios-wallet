@@ -33,7 +33,7 @@ final class OnboardingSceneTests: XCTestCase {
   }
 
   @MainActor
-  func testHappyPath_completion() async {
+  func testHappyPath_completion() {
     let mock = MockOnboardingCompletion()
     mock.delegate = scene
 

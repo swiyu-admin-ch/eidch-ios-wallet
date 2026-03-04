@@ -51,12 +51,18 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     if let fetchArguments = repositorySpy.fetchCredentialWithCredentialRequestReceivedArguments {
       XCTAssertEqual(fetchArguments.context.credentialEndpoint, fetchCredentialContextMock.credentialEndpoint)
       XCTAssertEqual(fetchArguments.context.accessToken, fetchCredentialContextMock.accessToken)
-      XCTAssertEqual(fetchArguments.credentialRequest.credentialConfigurationId, fetchCredentialContextMock.credentialConfigurationId)
-      XCTAssertEqual(fetchArguments.credentialRequest.proofs?.jwt.first, Self.jwtStringMock)
+      guard case .json(let request) = fetchArguments.credentialRequest else {
+        XCTFail("Expected json credential request body")
+        return
+      }
+      XCTAssertEqual(request.credentialConfigurationId, fetchCredentialContextMock.credentialConfigurationId)
+      XCTAssertEqual(request.proofs?.jwt.first, Self.jwtStringMock)
     } else {
       XCTFail("fetchCredential no arguments received")
     }
 
+    XCTAssertTrue(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.context === fetchCredentialContextMock)
+    XCTAssertEqual(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.proofs?.jwt.first, Self.jwtStringMock)
     XCTAssertEqual(jwsEncoderMock.receivedKeyPair, fetchCredentialContextMock.holderBindingContext?.keyPair)
     XCTAssertEqual(jwsEncoderMock.receivedAdditionalHeaderParameters["key_attestation"] as? String, fetchCredentialContextMock.holderBindingContext?.keyAttestationJWS)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.audience, fetchCredentialContextMock.credentialIssuer)
@@ -77,18 +83,29 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
   func testExecute_withoutHolderBinding_argumentsPassed() async throws {
     let context = FetchCredentialContext.Mock.sampleVcSdJwtWithoutHolderBinding
+    credentialRequestBodyGeneratorSpy.generateForProofsReturnValue = .json(
+      CredentialRequest(
+        credentialConfigurationId: fetchCredentialContextMock.credentialConfigurationId,
+        proofs: nil,
+        credentialResponseEncryption: nil))
 
     _ = try await useCase.execute(for: context)
 
     if let fetchArguments = repositorySpy.fetchCredentialWithCredentialRequestReceivedArguments {
       XCTAssertEqual(fetchArguments.context.credentialEndpoint, context.credentialEndpoint)
       XCTAssertEqual(fetchArguments.context.accessToken, context.accessToken)
-      XCTAssertEqual(fetchArguments.credentialRequest.credentialConfigurationId, context.credentialConfigurationId)
-      XCTAssertNil(fetchArguments.credentialRequest.proofs)
+      guard case .json(let request) = fetchArguments.credentialRequest else {
+        XCTFail("Expected json credential request body")
+        return
+      }
+      XCTAssertEqual(request.credentialConfigurationId, context.credentialConfigurationId)
+      XCTAssertNil(request.proofs)
     } else {
       XCTFail("fetchCredential no arguments received")
     }
 
+    XCTAssertTrue(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.context === context)
+    XCTAssertNil(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.proofs)
     XCTAssertNil(jwsEncoderMock.receivedKeyPair)
     XCTAssertTrue(jwsEncoderMock.receivedAdditionalHeaderParameters.isEmpty)
     XCTAssertNil(jwsEncoderMock.receivedValue?.audience)
@@ -109,7 +126,6 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
   func testExecute_proofEncodingFailure_throwsError() async throws {
     jwsEncoderMock.encodeUsingThrowableError = TestingError.error
-    useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
       _ = try await useCase.execute(for: fetchCredentialContextMock)
@@ -130,9 +146,19 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     }
   }
 
+  func testExecute_credentialRequestBodyGeneratorFailure_throwsError() async throws {
+    credentialRequestBodyGeneratorSpy.generateForProofsThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(for: fetchCredentialContextMock)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
   func testExecute_validationReturnsFalse_throwsError() async throws {
     jwsSignatureValidatorMock.validateIssuerDidThrowableError = TestingError.error
-    useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
       _ = try await useCase.execute(for: fetchCredentialContextMock)
@@ -144,7 +170,6 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
   func testExecute_validationFailure_throwsError() async throws {
     jwsSignatureValidatorMock.validateIssuerDidThrowableError = TestingError.error
-    useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
       _ = try await useCase.execute(for: fetchCredentialContextMock)
@@ -156,7 +181,6 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
   func testExecute_cannotResolveDid_throwsErrors() async throws {
     jwsSignatureValidatorMock.validateIssuerDidThrowableError = JWSSignatureValidatorError.cannotResolveDid(TestingError.error)
-    useCase = FetchVcSdJwtCredentialUseCase()
 
     do {
       _ = try await useCase.execute(for: fetchCredentialContextMock)
@@ -177,7 +201,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   private let credentialResponseMock = CredentialResponseImmediate.Mock.sample
   private var fetchCredentialContextMock: FetchCredentialContext = .Mock.sampleVcSdJwt
 
-  private let mockDeferredCrendentialRequest = DeferredCredentialRequest(
+  private let mockDeferredCrendentialRequest = DeferredCredentialContext(
     transactionId: "transactionId",
     accessToken: "accessToken",
     endpoint: "endpoint",
@@ -188,20 +212,28 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   private var jwsEncoderMock = JWSEncoderMock<ProofJWT>()
   private var repositorySpy = OpenIDRepositoryProtocolSpy()
   private var jwsSignatureValidatorMock: JWSSignatureValidatorMock<VcSdJwt>!
+  private var credentialRequestBodyGeneratorSpy = CredentialRequestBodyGeneratorProtocolSpy()
 
   private func registerMocks() {
     jwsEncoderMock = JWSEncoderMock()
     repositorySpy = OpenIDRepositoryProtocolSpy()
     jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+    credentialRequestBodyGeneratorSpy = CredentialRequestBodyGeneratorProtocolSpy()
 
     Container.shared.jwsEncoder.register { self.jwsEncoderMock }
     Container.shared.openIDRepository.register { self.repositorySpy }
     Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
+    Container.shared.credentialRequestBodyGenerator.register { self.credentialRequestBodyGeneratorSpy }
   }
 
   private func success() {
     jwsEncoderMock.encodeUsingReturnValue = Self.jwtDataMock
     repositorySpy.fetchCredentialWithCredentialRequestReturnValue = .credential(vcSdJWSMock)
+    credentialRequestBodyGeneratorSpy.generateForProofsReturnValue = .json(
+      CredentialRequest(
+        credentialConfigurationId: fetchCredentialContextMock.credentialConfigurationId,
+        proofs: CredentialRequest.Proofs(jwt: [Self.jwtStringMock]),
+        credentialResponseEncryption: nil))
   }
 }
 

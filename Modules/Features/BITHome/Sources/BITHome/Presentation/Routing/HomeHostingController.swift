@@ -3,7 +3,7 @@ import UIKit
 
 // MARK: - HomeHostingController
 
-class HomeHostingController<Content>: UIHostingController<Content> where Content: View {
+class HomeHostingController<Content: View>: UIHostingController<Content> {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)

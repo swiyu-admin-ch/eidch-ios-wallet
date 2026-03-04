@@ -30,14 +30,6 @@ final class RequestObjectValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidationWithUnsupportedResponseMode() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.unsupportedResponseModeSample
-
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
-  }
-
   func testValidationWithUnsupportedClientIdScheme() {
     let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithUnsupportedClientIdScheme
 

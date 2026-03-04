@@ -47,7 +47,6 @@ struct CameraPermissionModifier: ViewModifier {
     }
   }
 
-  @ViewBuilder
   private func deniedView() -> some View {
     InformationView(
       image: ThemingAssets.camera.swiftUIImage,
@@ -64,7 +63,6 @@ struct CameraPermissionModifier: ViewModifier {
       })
   }
 
-  @ViewBuilder
   private func notDeterminedView() -> some View {
     InformationView(
       image: ThemingAssets.camera.swiftUIImage,

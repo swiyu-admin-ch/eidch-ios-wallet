@@ -1,7 +1,6 @@
 import BITL10n
 import BITTheming
 import Factory
-import Foundation
 import SwiftUI
 
 struct ScanDocumentSubmitView: View {
@@ -15,25 +14,22 @@ struct ScanDocumentSubmitView: View {
   // MARK: Internal
 
   var body: some View {
-    AdaptiveColumnsView(
-      primaryContent: {
-        Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor), content: {
-          ProgressBar(image: ThemingAssets.Gradient.gradient3.swiftUIImage, sequence: .infiniteRandomSequence)
-        })
-        .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
-        .accessibilityHidden(true)
-      },
-      secondaryContent: {
-        DefaultInformationContentView(
-          primary: "Processing data...",
-          secondary: "Your MRZ data is being prepared and sent for validation.")
-          .padding(.horizontal, .x6)
-          .accessibilityPriorityFocus()
-      })
+    InformationView2(
+      contents: [
+        .heroCard {
+          Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) {
+            ProgressBar(image: ThemingAssets.Gradient.gradient3.swiftUIImage, sequence: .infiniteRandomSequence)
+          }
+          .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
+          .accessibilityHidden(true)
+        },
+        .title(L10n.tkEidRequestScanDocumentInitializationPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestScanDocumentInitializationSecondary, identifier: "secondaryText"),
+      ])
       .task {
         await viewModel.submit()
       }
-      .navigationBarBackButtonHidden(true)
+      .navigationBarBackButtonHidden()
       .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .navigate(to: $viewModel.destination)
       .toolbar(.visible)

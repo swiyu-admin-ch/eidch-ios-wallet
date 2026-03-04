@@ -1,0 +1,22 @@
+targetTemplates:
+  ios-app-base:
+    platform: iOS
+    type: application
+    settings:
+      base:
+        DEVELOPMENT_TEAM: 2NG6YF3PM2
+        TARGETED_DEVICE_FAMILY: 1
+        CODE_SIGN_STYLE: Manual
+        SDKROOT: iphoneos
+        SWIFT_VERSION: 5.7
+        ENABLE_TESTING_SEARCH_PATHS: YES
+        ENABLE_BITCODE: NO
+    preBuildScripts:
+      - path: ../../.resources/scripts/swiftlint.sh
+        name: SwiftLint
+        outputFiles:
+          - "/tmp/$(TARGET_NAME)DummyOutputFileSwiftLint.txt"
+      - path: ../../.resources/scripts/swiftformat.sh
+        name: SwiftFormat
+        outputFiles:
+          - "/tmp/$(TARGET_NAME)DummyOutputFileSwiftFormat.txt"

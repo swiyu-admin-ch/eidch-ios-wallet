@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: - SdJWS
 
-/// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html
+// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html
 
 open class SdJWS<T: JWT>: JWS<T> {
 

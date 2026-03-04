@@ -30,24 +30,46 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   func testSubmitPresentation_Success_JustRuns() async throws {
     try await useCase.execute(context: context)
 
-    XCTAssertEqual(repositorySpy.submitFromPresentationRequestBodyReceivedArguments?.url, context.requestObject.responseUri)
-    XCTAssertEqual(repositorySpy.submitFromPresentationRequestBodyReceivedArguments?.presentationRequestBody, mockPresentationRequestBody)
+    XCTAssertEqual(repositorySpy.submitAuthorizationResponseToReceivedArguments?.url, context.requestObject.responseUri)
+    guard let submittedBody = repositorySpy.submitAuthorizationResponseToReceivedArguments?.authorizationResponse as? AuthorizationResponseBody else {
+      XCTFail("Expected AuthorizationResponseBody")
+      return
+    }
+    if case .json(let payload, _) = submittedBody {
+      XCTAssertEqual(payload as? AuthorizationResponse, authorizationResponseMock)
+    } else {
+      XCTFail("Expected json authorization response body")
+    }
 
-    XCTAssertEqual(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
-    XCTAssertEqual(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
-    XCTAssertEqual(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, mockInputDescriptor)
+    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
+    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
+    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, mockInputDescriptor)
 
     XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationAccepted)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, mockCompatibleCredential.id)
   }
 
+  func testSubmitPresentation_DcqlPreferredOverDif_UsesDcqlGenerator() async throws {
+    let requestObject = RequestObject.Mock.VcSdJwt.sampleWithDcqlQuery
+    let contextWithDcql = PresentationRequestContext(
+      requestObject: requestObject,
+      compatibleCredentials: [mockCompatibleCredential])
+
+    try await useCase.execute(context: contextWithDcql)
+
+    XCTAssertTrue(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorCalled)
+    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, requestObject.firstInputDescriptor)
+  }
+
   func testSubmitPresentation_NoInputDescriptors_ThrowsException() async throws {
+    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorThrowableError = RequestObjectError.invalidPayload
+
     do {
       try await useCase.execute(context: .Mock.vcSdJwtSampleWithoutInputDescriptors)
       XCTFail("Should have thrown an exception")
     } catch BITPresentation.SubmitPresentationError.inputDescriptorsNotFound {
-      XCTAssertFalse(repositorySpy.submitFromPresentationRequestBodyCalled)
+      XCTAssertFalse(repositorySpy.submitAuthorizationResponseToCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -60,20 +82,20 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch BITPresentation.SubmitPresentationError.inputDescriptorsNotFound {
-      XCTAssertFalse(repositorySpy.submitFromPresentationRequestBodyCalled)
+      XCTAssertFalse(repositorySpy.submitAuthorizationResponseToCalled)
     } catch {
       XCTFail("Not the error expected")
     }
   }
 
-  func testSubmitPresentation_PresentationRequestBodyGeneratorThrows_ThrowsException() async throws {
-    presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorThrowableError = TestingError.error
+  func testSubmitPresentation_AuthorizationResponseBodyGeneratorThrows_ThrowsException() async throws {
+    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorThrowableError = TestingError.error
 
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorCalled)
+      XCTAssertTrue(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -86,13 +108,13 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   }
 
   func testSubmitPresentation_RepositoryThrows_ThrowsException() async throws {
-    repositorySpy.submitFromPresentationRequestBodyThrowableError = TestingError.error
+    repositorySpy.submitAuthorizationResponseToThrowableError = TestingError.error
 
     do {
       try await useCase.execute(context: context)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(repositorySpy.submitFromPresentationRequestBodyCalled)
+      XCTAssertTrue(repositorySpy.submitAuthorizationResponseToCalled)
     } catch {
       XCTFail("Not the error expected")
     }
@@ -101,31 +123,34 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   // MARK: Private
 
   private let context = PresentationRequestContext.Mock.vcSdJwtSample
-  private var mockPresentationRequestBody = PresentationRequestBody(vpToken: "vpToken", presentationSubmission: PresentationRequestBody.PresentationSubmission(id: "id", definitionId: "definitionId", descriptorMap: []))
+  private var authorizationResponseMock = AuthorizationResponse(vpToken: "vpToken", presentationSubmission: AuthorizationResponse.PresentationSubmission(id: "id", definitionId: "definitionId", descriptorMap: []))
 
   private var mockCompatibleCredential: CompatibleCredential!
   private var mockInputDescriptor: InputDescriptor!
   private var useCase: SubmitPresentationUseCase!
   private var repositorySpy: PresentationRequestRepositoryProtocolSpy!
-  private var presentationRequestBodyGeneratorSpy: PresentationRequestBodyGeneratorProtocolSpy!
+  private var authorizationResponseBodyGeneratorSpy: AuthorizationResponseBodyGeneratorProtocolSpy!
   private var activityServiceSpy: ActivityServiceProtocolSpy!
 
   private func setupMocks() {
     repositorySpy = PresentationRequestRepositoryProtocolSpy()
-    presentationRequestBodyGeneratorSpy = PresentationRequestBodyGeneratorProtocolSpy()
+    authorizationResponseBodyGeneratorSpy = AuthorizationResponseBodyGeneratorProtocolSpy()
     activityServiceSpy = ActivityServiceProtocolSpy()
 
     Container.shared.presentationRequestRepository.register { self.repositorySpy }
-    Container.shared.presentationRequestBodyGenerator.register { self.presentationRequestBodyGeneratorSpy }
+    Container.shared.authorizationResponseBodyGenerator.register { self.authorizationResponseBodyGeneratorSpy }
     Container.shared.activityService.register { self.activityServiceSpy }
 
     mockCompatibleCredential = .Mock.BIT
-    mockInputDescriptor = context.requestObject.presentationDefinition.inputDescriptors.first!
+    guard let descriptor = context.requestObject.presentationDefinition?.inputDescriptors.first else {
+      fatalError("Missing input descriptor fixture")
+    }
+    mockInputDescriptor = descriptor
   }
 
   private func success() {
     context.selectedCredential = mockCompatibleCredential
-    presentationRequestBodyGeneratorSpy.generateForRequestObjectInputDescriptorReturnValue = mockPresentationRequestBody
+    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReturnValue = .json(authorizationResponseMock, .dif)
   }
 
 }

@@ -36,7 +36,7 @@ final class OCABundleServiceTests: XCTestCase {
 
     let rawOcaBundle = try await service.fetchVcSdJwtOcaBundle(from: mockDataOca)
 
-    XCTAssertEqual(rawOcaBundle, Data(base64Encoded: String(mockDataOca.uri.split(separator: ",").last!)))
+    XCTAssertEqual(rawOcaBundle, try Data(base64Encoded: String(XCTUnwrap(mockDataOca.uri.split(separator: ",").last))))
     XCTAssertEqual(sriValidator.validateWithReceivedArguments?.data, mockDataOca.uri.data(using: .utf8))
     XCTAssertEqual(sriValidator.validateWithReceivedArguments?.integrity, mockDataOca.uriIntegrity)
   }

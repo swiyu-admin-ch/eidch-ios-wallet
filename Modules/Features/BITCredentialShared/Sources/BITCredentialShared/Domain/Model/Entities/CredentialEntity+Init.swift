@@ -21,6 +21,7 @@ extension CredentialEntity {
     self.init()
     id = credential.id
     format = credential.format
+    issuerUrl = credential.issuerUrl
     selectedConfigurationId = credential.selectedConfigurationId
     createdAt = credential.createdAt
     issuerDisplays.append(objectsIn: credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init))
@@ -37,7 +38,14 @@ extension CredentialEntity {
   }
 
   public func setValues(from credential: DeferredCredential) {
-    deferredCredential?.polledAt = credential.polledAt
+    deferredCredential?.progressState = credential.progressionState.rawValue
+    deferredCredential?.accessToken = credential.accessToken
+    deferredCredential?.endpoint = credential.endpoint
     deferredCredential?.pollingInterval = credential.pollingInterval
+    deferredCredential?.polledAt = credential.polledAt
+    issuerDisplays.removeAll()
+    issuerDisplays.append(objectsIn: credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init))
+    displays.removeAll()
+    displays.append(objectsIn: credential.displays.map(CredentialDisplayEntity.init))
   }
 }

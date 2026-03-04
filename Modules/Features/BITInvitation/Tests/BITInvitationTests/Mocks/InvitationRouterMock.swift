@@ -39,7 +39,7 @@ class InvitationRouterMock: ClosableRoutesMock, InvitationRouterRoutes, External
     didCallInvitation = true
   }
 
-  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?) {
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?, delegate: InvitationDelegate?) {
     didCallCredentialOffer = true
   }
 

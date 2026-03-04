@@ -1332,6 +1332,7 @@
         {
           "kty": "EC",
           "crv": "P-256",
+          "alg": "ECDH-ES",
           "kid": "7a722cd8-fddd-4aa6-b37f-3dac90f8717e",
           "x": "K0V_OyaeTfmZn2aXZqYR7dXqxiC5pWPQ07Iq60h6ojM",
           "y": "-zQgjYrRLT4WihjiPdSPzrdby9zCvKwcv4RV0whBkMg"

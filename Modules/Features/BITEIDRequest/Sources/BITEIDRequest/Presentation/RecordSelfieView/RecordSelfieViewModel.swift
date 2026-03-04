@@ -1,3 +1,4 @@
+import BITAnalytics
 import BITAVWrapper
 import BITL10n
 import BITNavigation
@@ -30,7 +31,6 @@ class RecordSelfieViewModel: ObservableObject {
   @Published var state = StateView.loading
   @Published var buttonState = RecordingButton.State.initial
   @Published var isNotificationPresented = false
-  @Published var isIntroductionPopupPresented = true
   @Published var notification: AVBeamNotification? = nil
 
   @Injected(\.avBeam) var avBeam: AVBeamProtocol
@@ -72,11 +72,6 @@ class RecordSelfieViewModel: ObservableObject {
   }
 
   func startRecordSelfie() {
-    if buttonState == .record {
-      reset()
-      return stop()
-    }
-
     let config = AVBeamCaptureFaceConfig(files: [], duration: recordSelfieTimeout)
     let avBeam = avBeam
 
@@ -96,20 +91,29 @@ class RecordSelfieViewModel: ObservableObject {
     }
   }
 
-  func closeIntroductionPopup() {
-    isIntroductionPopupPresented = false
+  func stopRecordSelfie() {
+    reset()
+    stop()
+  }
+
+  func cancelInitialization() {
+    avBeam.shutdown()
+    navigatorRoot.returnToCheckpoint(EIDRequestCheckpoints.recordSelfieInformation)
   }
 
   // MARK: Private
 
+  @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.eidRequestContext) private var context
 
   @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
   @Injected(\.recordSelfieTimeout) private var recordSelfieTimeout
   @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.captureFaceDelay) private var captureFaceDelay
+  @Injected(\.navigatorRoot) private var navigatorRoot
+  @Injected(\.scanDelay) private var scanDelay
 
   private func handleError(_ error: Error) {
+    analytics.log(error)
     stop()
     destination = .error(.retry(error, { [weak self] navigator in
       self?.reset()
@@ -120,7 +124,6 @@ class RecordSelfieViewModel: ObservableObject {
 
   private func reset() {
     isNotificationPresented = false
-    isIntroductionPopupPresented = true
     notification = nil
     buttonState = .initial
   }
@@ -131,7 +134,11 @@ class RecordSelfieViewModel: ObservableObject {
 
 extension RecordSelfieViewModel: AVBeamMessageDelegate {
 
-  nonisolated func didReceiveError(error: AVBeamError) {}
+  nonisolated func didReceiveError(error: AVBeamError) {
+    Task { @MainActor in
+      analytics.log(error)
+    }
+  }
 
   nonisolated func didReceiveNotification(notification: AVBeamNotification) {
     Task { @MainActor in
@@ -141,7 +148,6 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
       case .faceCapturingStopped:
         self.isNotificationPresented = false
         self.notification = nil
-        self.isIntroductionPopupPresented = false
       case .faceCapturingStarted:
         buttonState = .record
       default:
@@ -169,9 +175,9 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
         let output = RecordSelfieOutput(packageResult)
         try await self.saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
 
-        try await Task.sleep(nanoseconds: captureFaceDelay)
+        try? await Task.sleep(nanoseconds: scanDelay)
         self.buttonState = .success
-        try await Task.sleep(nanoseconds: captureFaceDelay)
+        try? await Task.sleep(nanoseconds: scanDelay)
 
         self.stop()
         try? avBeam.stopCamera()

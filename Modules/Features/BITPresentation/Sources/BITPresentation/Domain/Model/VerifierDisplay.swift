@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - VerifierDisplay
 
-public struct VerifierDisplay {
+public struct VerifierDisplay: Equatable {
 
   init(name: String?, locale: UserLocale? = nil, logo: Data?, trustInformation: TrustInformation) {
     self.name = name
@@ -22,17 +22,6 @@ public struct VerifierDisplay {
   var logo: Data?
   var trustInformation: TrustInformation
 
-}
-
-// MARK: Equatable
-
-extension VerifierDisplay: Equatable {
-  public static func == (lhs: VerifierDisplay, rhs: VerifierDisplay) -> Bool {
-    lhs.name == rhs.name &&
-      lhs.locale == rhs.locale &&
-      lhs.logo == rhs.logo &&
-      lhs.trustInformation == rhs.trustInformation
-  }
 }
 
 #if DEBUG

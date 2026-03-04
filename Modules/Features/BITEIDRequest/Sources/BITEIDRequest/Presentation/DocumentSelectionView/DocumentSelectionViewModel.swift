@@ -12,7 +12,7 @@ class DocumentSelectionViewModel: ObservableObject {
 
   func didSelect(_ type: IdentityType) {
     context.identityType = type
-    destination = .scanDocumentInformation
+    destination = .scanDocumentInformation(isBackEnabled: true)
   }
 
   func mrzMockData() {

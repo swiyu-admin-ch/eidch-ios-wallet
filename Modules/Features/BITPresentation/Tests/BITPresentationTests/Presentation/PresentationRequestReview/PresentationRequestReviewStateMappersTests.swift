@@ -25,7 +25,7 @@ class PresentationRequestReviewStateMappersTests: XCTestCase {
     XCTAssertEqual(result.claimBadges[1].name, "Last name")
     XCTAssertEqual(result.claimBadges[1].isSensitive, false)
 
-    XCTAssertEqual(result.clusters, compatibleCredentialMock.requestedClusteredClaims)
+    XCTAssertEqual(result.clusters, compatibleCredentialMock.requestedClaimClusters)
   }
 
   func testResultInit_sensitiveClaim_rightOrder() {

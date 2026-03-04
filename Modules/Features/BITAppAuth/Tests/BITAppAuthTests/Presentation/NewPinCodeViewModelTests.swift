@@ -45,7 +45,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testPinCode_success() throws {
+  func testPinCode_success() {
     let viewModel = NewPinCodeViewModel(router: router)
 
     viewModel.submit()
@@ -60,7 +60,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testPinCode_error() throws {
+  func testPinCode_error() {
     validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
     let viewModel = NewPinCodeViewModel(router: router)
 
@@ -76,7 +76,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testPinCode_didRequestValidation() throws {
+  func testPinCode_didRequestValidation() {
     validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
     let viewModel = Container.shared.newPinCodeViewModel(router)
 

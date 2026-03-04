@@ -13,14 +13,14 @@ protocol EnvironmentAutoRegistering {
 
 extension EnvironmentAutoRegistering {
   func registerEnvironmentValues() {
-    /// Use this function to override any registered values per environment
-    /// For example:
-    /// ```
-    /// #if DEV
-    /// Container.shared.versionEnforcementUrl.register {
-    ///   URL(string: "https://custom.enforcement.url")!
-    /// }
-    /// #endif
-    /// ``
+    // Use this function to override any registered values per environment
+    // For example:
+    // ```
+    // #if DEV
+    // Container.shared.versionEnforcementUrl.register {
+    //   URL(string: "https://custom.enforcement.url")!
+    // }
+    // #endif
+    // ``
   }
 }

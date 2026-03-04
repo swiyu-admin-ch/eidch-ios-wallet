@@ -91,7 +91,7 @@ final class CredentialRepositoryTest: XCTestCase {
     _ = try await repository.create(verifiableCredential: .Mock.sample)
     _ = try await repository.create(verifiableCredential: .Mock.diploma)
     _ = try await repository.create(deferredCredential: .Mock.sample)
-    _ = try await repository.create(verifiableCredential: VerifiableCredential(progressionState: .unaccepted, payload: Data(), format: "format", issuer: "issuer"))
+    _ = try await repository.create(verifiableCredential: VerifiableCredential(progressionState: .unaccepted, payload: Data(), format: "format", issuerUrl: "https://issuer", issuer: "issuer"))
 
     let credentials = try await repository.getAllVerifiableCredentials()
 

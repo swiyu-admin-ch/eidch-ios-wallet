@@ -19,13 +19,13 @@ final class TrustStatementValidatorTests: XCTestCase {
     createSuccessState()
   }
 
-  func testValidate_valid_returnsTrue() async throws {
+  func testValidate_valid_returnsTrue() async {
     let result = await validator.validate(trustStatementMock, for: subjectMock)
 
     XCTAssertTrue(result)
   }
 
-  func testValidate_valid_argumentsPassed() async throws {
+  func testValidate_valid_argumentsPassed() async {
     _ = await validator.validate(trustStatementMock, for: subjectMock)
 
     XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferCallsCount, 1)
@@ -36,7 +36,7 @@ final class TrustStatementValidatorTests: XCTestCase {
     XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.issuer, trustStatementMock.payload.issuer)
   }
 
-  func testValidate_wrongSubject_returnsFalse() async throws {
+  func testValidate_wrongSubject_returnsFalse() async {
     let trustStatement = IdentityTrustStatementJWT.Mock.wrongSubject
 
     let result = await validator.validate(trustStatement, for: subjectMock)
@@ -44,7 +44,7 @@ final class TrustStatementValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_wrongAlgorithm_returnsFalse() async throws {
+  func testValidate_wrongAlgorithm_returnsFalse() async {
     let trustStatement = IdentityTrustStatementJWT.Mock.wrongAlgorithm
 
     let result = await validator.validate(trustStatement, for: subjectMock)
@@ -52,7 +52,7 @@ final class TrustStatementValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsValidatorReturnsFalse_returnsFalse() async throws {
+  func testValidate_jwsValidatorReturnsFalse_returnsFalse() async {
     jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(trustStatementMock, for: subjectMock)
@@ -60,7 +60,7 @@ final class TrustStatementValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_jwsValidatorError_returnsFalse() async throws {
+  func testValidate_jwsValidatorError_returnsFalse() async {
     jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(trustStatementMock, for: subjectMock)
@@ -68,7 +68,7 @@ final class TrustStatementValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_notValidStatus_returnsFalse() async throws {
+  func testValidate_notValidStatus_returnsFalse() async {
     for status in [VcStatus.revoked, VcStatus.suspended, VcStatus.unknown, VcStatus.unsupported] {
       tokenStatusListValidatorSpy.validateIssuerReturnValue = status
 

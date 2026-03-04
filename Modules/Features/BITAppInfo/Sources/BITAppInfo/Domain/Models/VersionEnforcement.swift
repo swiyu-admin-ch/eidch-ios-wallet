@@ -10,10 +10,6 @@ public struct VersionEnforcement: Codable, Equatable {
   let criteria: Criteria
   let displays: [Display]
 
-  public static func == (lhs: VersionEnforcement, rhs: VersionEnforcement) -> Bool {
-    lhs.id == rhs.id && lhs.platform == rhs.platform && lhs.priority == rhs.priority && lhs.created == rhs.created && lhs.criteria == rhs.criteria && lhs.displays == rhs.displays
-  }
-
 }
 
 extension VersionEnforcement {

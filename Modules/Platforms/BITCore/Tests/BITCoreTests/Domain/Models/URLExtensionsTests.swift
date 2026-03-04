@@ -7,7 +7,7 @@ final class URLExtensionsTests: XCTestCase {
   // MARK: Internal
 
   func testDataURL_validPng_returnsBase64DataAndType() throws {
-    let dataUrl = URL(string: "data:\(Self.pngType);base64,\(Self.dataMock)")!
+    let dataUrl = try XCTUnwrap(URL(string: "data:\(Self.pngType);base64,\(Self.dataMock)"))
 
     XCTAssertTrue(dataUrl.isDataURL)
     XCTAssertEqual(dataUrl.dataURLDataString, Self.dataMock)
@@ -16,7 +16,7 @@ final class URLExtensionsTests: XCTestCase {
   }
 
   func testDataURL_noBase64_returnsDataAndType() throws {
-    let dataUrl = URL(string: "data:\(Self.pngType),\(Self.dataMock)")!
+    let dataUrl = try XCTUnwrap(URL(string: "data:\(Self.pngType),\(Self.dataMock)"))
 
     XCTAssertTrue(dataUrl.isDataURL)
     XCTAssertEqual(dataUrl.dataURLDataString, Self.dataMock)
@@ -25,7 +25,7 @@ final class URLExtensionsTests: XCTestCase {
   }
 
   func testDataURL_noMediaType_returnsBase64DataAndNilType() throws {
-    let dataUrl = URL(string: "data:;base64,\(Self.dataMock)")!
+    let dataUrl = try XCTUnwrap(URL(string: "data:;base64,\(Self.dataMock)"))
 
     XCTAssertTrue(dataUrl.isDataURL)
     XCTAssertEqual(dataUrl.dataURLDataString, Self.dataMock)
@@ -34,7 +34,7 @@ final class URLExtensionsTests: XCTestCase {
   }
 
   func testDataURL_noMediaTypeAndNoBase64_returnsDataAndNilType() throws {
-    let dataUrl = URL(string: "data:,\(Self.dataMock)")!
+    let dataUrl = try XCTUnwrap(URL(string: "data:,\(Self.dataMock)"))
 
     XCTAssertTrue(dataUrl.isDataURL)
     XCTAssertEqual(dataUrl.dataURLDataString, Self.dataMock)
@@ -43,7 +43,7 @@ final class URLExtensionsTests: XCTestCase {
   }
 
   func testDataURL_noMediaTypeNoBase64EmptyData_returnsEmptyDataAndNilType() throws {
-    let dataUrl = URL(string: "data:,")!
+    let dataUrl = try XCTUnwrap(URL(string: "data:,"))
 
     XCTAssertTrue(dataUrl.isDataURL)
     XCTAssertEqual(dataUrl.dataURLDataString, "")
@@ -52,7 +52,7 @@ final class URLExtensionsTests: XCTestCase {
   }
 
   func testDataURL_malformed_returnsNil() throws {
-    let dataUrl = URL(string: "malformed")!
+    let dataUrl = try XCTUnwrap(URL(string: "malformed"))
 
     XCTAssertFalse(dataUrl.isDataURL)
     XCTAssertNil(dataUrl.dataURLDataString)
@@ -60,7 +60,7 @@ final class URLExtensionsTests: XCTestCase {
     XCTAssertNil(dataUrl.mediaType)
   }
 
-  func testDataURL_emptyString_returnsNil() throws {
+  func testDataURL_emptyString_returnsNil() {
     let dataUrl = URL(string: "")
 
     XCTAssertNil(dataUrl)
@@ -68,7 +68,7 @@ final class URLExtensionsTests: XCTestCase {
 
   func testDataURL_invalidDataURL_returnsNil() throws {
     for url in Self.invalidDataURLs {
-      let dataUrl = URL(string: url)!
+      let dataUrl = try XCTUnwrap(URL(string: url))
 
       XCTAssertFalse(dataUrl.isDataURL)
       XCTAssertNil(dataUrl.dataURLDataString)

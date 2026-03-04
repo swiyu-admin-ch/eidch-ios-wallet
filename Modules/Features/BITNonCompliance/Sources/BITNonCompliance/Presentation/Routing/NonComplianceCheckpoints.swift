@@ -3,7 +3,9 @@ import NavigatorUI
 // MARK: - NonComplianceCheckpoints
 
 struct NonComplianceCheckpoints: NavigationCheckpoints {
-  static var form: NavigationCheckpoint<NonComplianceFormCheckpointUpdate> { checkpoint() }
+  static var form: NavigationCheckpoint<NonComplianceFormCheckpointUpdate> {
+    checkpoint()
+  }
 }
 
 // MARK: - NonComplianceFormCheckpointUpdate

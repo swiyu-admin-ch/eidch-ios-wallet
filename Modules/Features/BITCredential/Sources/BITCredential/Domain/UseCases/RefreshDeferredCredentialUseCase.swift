@@ -2,7 +2,6 @@ import BITActivity
 import BITAnyCredentialFormat
 import BITCredentialShared
 import BITOpenID
-import BITVault
 import Factory
 import Foundation
 import Spyable
@@ -22,21 +21,22 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
   // MARK: Internal
 
   func execute(for deferredCredential: DeferredCredential) async throws {
-    guard canRefreshCredential(deferredCredential) else {
+    guard deferredCredential.progressionState != .invalid, canRefreshCredential(deferredCredential) else {
       return
     }
 
-    guard let endpoint = URL(string: deferredCredential.endpoint) else {
-      throw RefreshDeferredCredentialUseCaseError.invalidCredentialUrl
-    }
-
-    let result = try await openIDRepository.fetchCredential(from: endpoint, transactionId: deferredCredential.transactionId, accessToken: deferredCredential.accessToken, format: deferredCredential.format)
-
-    switch result {
-    case .credential(let anyCredential):
-      try await generateCredential(from: anyCredential, and: deferredCredential)
-    case .deferred(let deferredCredentialRequest):
-      try await updateDeferredCredential(deferredCredential, interval: deferredCredentialRequest.interval)
+    do {
+      let (metadataResponse, anyCredentialResult) = try await fetchDeferredCredentialService(for: deferredCredential)
+      switch anyCredentialResult {
+      case .credential(let anyCredential):
+        try await generateCredential(from: anyCredential, deferredCredential: deferredCredential, metadataResponse: metadataResponse)
+      case .deferred(let deferredCredentialContext):
+        try await updateDeferredCredential(deferredCredential, metadataResponse: metadataResponse, interval: deferredCredentialContext.interval)
+      }
+    } catch OpenIdRepositoryError.invalidCredential {
+      return try await invalidateDeferredCredential(deferredCredential)
+    } catch {
+      throw error
     }
   }
 
@@ -54,8 +54,8 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 
   // MARK: Private
 
+  @Injected(\.fetchDeferredCredentialService) private var fetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol
   @Injected(\.activityService) private var activityService: ActivityServiceProtocol
-  @Injected(\.openIDRepository) private var openIDRepository: OpenIDRepositoryProtocol
   @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol
   @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
@@ -71,39 +71,25 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     return Date() >= polledAt.addingTimeInterval(interval)
   }
 
-  private func updateDeferredCredential(_ deferredCredential: DeferredCredential, interval: Int) async throws {
-    var credential = deferredCredential
-    credential.polledAt = Date()
-    credential.pollingInterval = interval
-
-    try await credentialRepository.update(deferredCredential: credential)
-  }
-
-  private func generateCredential(from anyCredential: AnyCredential, and deferredCredential: DeferredCredential) async throws {
-    guard
-      let selectedConfigurationId = deferredCredential.selectedConfigurationId,
-      let rawOIDMetadata = deferredCredential.rawCredentialData?.rawOIDMetadata,
-      let metadata = try? JSONDecoder().decode(CredentialMetadata.self, from: rawOIDMetadata)
-    else {
-      throw RefreshDeferredCredentialUseCaseError.invalidCredentialMetadata
-    }
-
+  private func generateCredential(
+    from anyCredential: AnyCredential,
+    deferredCredential: DeferredCredential,
+    metadataResponse: CredentialMetadataResponse) async throws
+  {
+    let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataResponse: metadataResponse)
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(anyCredential: anyCredential)
+    let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
+    var trustStatement: IdentityTrustStatementJWT?
+    if case .trusted(let statement) = trustInformation.identity {
+      trustStatement = statement
+    }
 
     var credential = try credentialGenerator.generate(
       for: anyCredential,
       keyBinding: deferredCredential.keyBinding,
       rawOcaBundle: rawOcaBundle,
-      metadataWrapper: CredentialMetadataWrapper(
-        credentialConfigurationId: selectedConfigurationId,
-        credentialMetadata: metadata,
-        rawData: rawOIDMetadata))
-
-    let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
-
-    if case .trusted(let trustStatement) = trustInformation.identity {
-      credential = try await updateCredentialIssuerDisplays(credential: credential, with: trustStatement)
-    }
+      metadataWrapper: metadataWrapper,
+      trustStatement: trustStatement)
 
     credential.progressionState = .unaccepted
 
@@ -113,32 +99,64 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     _ = try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)
   }
 
-  private func updateCredentialIssuerDisplays(credential: VerifiableCredential, with trustStatement: IdentityTrustStatementJWT) async throws -> VerifiableCredential {
-    var credentialCopy = credential
+  private func updateDeferredCredential(
+    _ deferredCredential: DeferredCredential,
+    metadataResponse: CredentialMetadataResponse,
+    interval: Int) async throws
+  {
+    let context = DeferredCredentialContext(
+      transactionId: deferredCredential.transactionId,
+      accessToken: deferredCredential.accessToken,
+      endpoint: deferredCredential.endpoint,
+      format: deferredCredential.format,
+      interval: interval)
 
-    credentialCopy.issuerDisplays = credentialCopy.issuerDisplays.compactMap { issuerDisplay in
-      guard let locale = issuerDisplay.locale else { return nil }
-      let entityNames = trustStatement.entityNames
-      return CredentialIssuerDisplay(
-        id: issuerDisplay.id,
-        locale: issuerDisplay.locale,
-        name: entityNames[locale] ?? issuerDisplay.name,
-        credentialId: issuerDisplay.credentialId,
-        image: issuerDisplay.image)
+    let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataResponse: metadataResponse)
+    let rawOcaBundle = try await fetchVcMetadataUseCase.execute(metadata: metadataWrapper.selectedCredential)
+
+    var credential = try credentialGenerator.generateDeferred(
+      context,
+      keyBinding: deferredCredential.keyBinding,
+      rawOcaBundle: rawOcaBundle,
+      metadataWrapper: metadataWrapper)
+    credential.polledAt = Date()
+    credential.pollingInterval = interval
+    credential.id = deferredCredential.id
+
+    try await credentialRepository.update(deferredCredential: credential)
+  }
+
+  private func createMetadataWrapper(for deferredCredential: DeferredCredential, metadataResponse: CredentialMetadataResponse) throws -> CredentialMetadataWrapper {
+    guard let selectedConfigurationId = deferredCredential.selectedConfigurationId else {
+      throw RefreshDeferredCredentialUseCaseError.invalidConfigurationId
     }
 
-    return credentialCopy
+    do {
+      return try CredentialMetadataWrapper(
+        credentialConfigurationId: selectedConfigurationId,
+        credentialMetadata: metadataResponse.metadata,
+        rawData: metadataResponse.raw)
+    } catch {
+      throw RefreshDeferredCredentialUseCaseError.invalidCredentialMetadata
+    }
   }
 
   private func saveActivity(for credential: VerifiableCredential, trustInformation: TrustInformation) async throws {
     let activity = Activity(credential: credential, trustInformation: trustInformation)
     _ = try? activityService.create(activity, credentialId: credential.id)
   }
+
+  private func invalidateDeferredCredential(_ deferredCredential: DeferredCredential) async throws {
+    var credential = deferredCredential
+    credential.progressionState = .invalid
+
+    try await credentialRepository.update(deferredCredential: credential)
+  }
 }
 
 // MARK: - RefreshDeferredCredentialUseCaseError
 
 enum RefreshDeferredCredentialUseCaseError: Error {
-  case invalidCredentialUrl
+  case invalidConfigurationId
   case invalidCredentialMetadata
 }

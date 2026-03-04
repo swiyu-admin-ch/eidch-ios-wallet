@@ -71,7 +71,7 @@ final class UniquePassphraseRepositoryTests: XCTestCase {
     XCTAssertEqual(AuthMethod.biometric.identifierKey, secretManagerSpy.removeObjectForKeyQueryReceivedArguments?.key)
   }
 
-  func testHasUniquePassphrase_appPin() throws {
+  func testHasUniquePassphrase_appPin() {
     secretManagerSpy.existsKeyQueryReturnValue = true
     let hasSecret = repository.hasUniquePassphraseSaved(forAuthMethod: .appPin)
     XCTAssertTrue(hasSecret)
@@ -79,7 +79,7 @@ final class UniquePassphraseRepositoryTests: XCTestCase {
     XCTAssertEqual(AuthMethod.appPin.identifierKey, secretManagerSpy.existsKeyQueryReceivedArguments?.key)
   }
 
-  func testHasUniquePassphrase_biometric() throws {
+  func testHasUniquePassphrase_biometric() {
     secretManagerSpy.existsKeyQueryReturnValue = true
     let hasSecret = repository.hasUniquePassphraseSaved(forAuthMethod: .biometric)
     XCTAssertTrue(hasSecret)
@@ -87,7 +87,7 @@ final class UniquePassphraseRepositoryTests: XCTestCase {
     XCTAssertEqual(AuthMethod.biometric.identifierKey, secretManagerSpy.existsKeyQueryReceivedArguments?.key)
   }
 
-  func testHasNotUniquePassphrase_appPin() throws {
+  func testHasNotUniquePassphrase_appPin() {
     secretManagerSpy.existsKeyQueryReturnValue = false
     let hasSecret = repository.hasUniquePassphraseSaved(forAuthMethod: .appPin)
     XCTAssertFalse(hasSecret)
@@ -95,7 +95,7 @@ final class UniquePassphraseRepositoryTests: XCTestCase {
     XCTAssertEqual(AuthMethod.appPin.identifierKey, secretManagerSpy.existsKeyQueryReceivedArguments?.key)
   }
 
-  func testHasNotUniquePassphrase_biometric() throws {
+  func testHasNotUniquePassphrase_biometric() {
     secretManagerSpy.existsKeyQueryReturnValue = false
     let hasSecret = repository.hasUniquePassphraseSaved(forAuthMethod: .biometric)
     XCTAssertFalse(hasSecret)

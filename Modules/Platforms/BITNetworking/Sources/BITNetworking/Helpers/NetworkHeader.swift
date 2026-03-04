@@ -7,6 +7,8 @@ public enum NetworkHeader {
   case authorization(value: String)
   case form
   case swiyuAPIVersion(String)
+  case contentType(String)
+  case accept(String)
 
   // MARK: Private
 
@@ -38,12 +40,22 @@ extension NetworkHeader {
     case .swiyuAPIVersion(let version): [
         Self.swiyuAPIVersion: version,
       ]
+    case .contentType(let value): [
+        Self.keyContentType: value,
+      ]
+    case .accept(let value): [
+        Self.keyAccept: value,
+      ]
     }
   }
 }
 
 extension [NetworkHeader] {
   public var raw: [String: String] {
-    Dictionary(uniqueKeysWithValues: flatMap(\.raw))
+    reduce(into: [:]) { dict, header in
+      for (key, value) in header.raw {
+        dict[key] = value
+      }
+    }
   }
 }

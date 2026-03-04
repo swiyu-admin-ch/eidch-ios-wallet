@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - JWT
 
-/// https://www.rfc-editor.org/rfc/rfc7519
+// https://www.rfc-editor.org/rfc/rfc7519
 
 public protocol JWT: Codable, Equatable {
   var type: String? { get }

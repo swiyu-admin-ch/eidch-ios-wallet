@@ -13,7 +13,7 @@ final class TokenStatusListByteDecoderTests: XCTestCase {
     decoder = TokenStatusListByteDecoder()
   }
 
-  func testTokenStatusListWith3BytesAnd2Bits() async throws {
+  func testTokenStatusListWith3BytesAnd2Bits() throws {
     var value = try decoder.decode(Data(fromArray: BYTES), bits: 2, index: 0)
     XCTAssertEqual(value, 1)
 
@@ -27,7 +27,7 @@ final class TokenStatusListByteDecoderTests: XCTestCase {
     XCTAssertEqual(value, 3)
   }
 
-  func testTokenStatusListWith1ByteAnd1Bits() async throws {
+  func testTokenStatusListWith1ByteAnd1Bits() throws {
     let startIndex = BIT_STRING_SHORT.startIndex
     for index in BIT_STRING_SHORT.indices {
       let value = try decoder.decode(Data(fromArray: BYTES_SHORT), bits: 1, index: BIT_STRING_SHORT.distance(from: startIndex, to: index))
@@ -36,7 +36,7 @@ final class TokenStatusListByteDecoderTests: XCTestCase {
     }
   }
 
-  func testTokenStatusListWith1ByteAnd4Bits() async throws {
+  func testTokenStatusListWith1ByteAnd4Bits() throws {
     var value = try decoder.decode(Data(fromArray: BYTES_SHORT), bits: 4, index: 0)
     XCTAssertEqual(value, 9)
 
@@ -44,12 +44,12 @@ final class TokenStatusListByteDecoderTests: XCTestCase {
     XCTAssertEqual(value, 12)
   }
 
-  func testTokenStatusListWith1ByteAnd8Bits() async throws {
+  func testTokenStatusListWith1ByteAnd8Bits() throws {
     let value = try decoder.decode(Data(fromArray: BYTES_SHORT), bits: 8, index: 0)
     XCTAssertEqual(value, 201)
   }
 
-  func testTokenStatusListWithIndexOutOfBounds() async throws {
+  func testTokenStatusListWithIndexOutOfBounds() throws {
     XCTAssertThrowsError(try decoder.decode(Data(fromArray: BYTES_SHORT), bits: 2, index: 1000)) { error in
       XCTAssertEqual(error as? TokenStatusListByteDecoder.DecoderError, .indexOutOfBounds)
     }

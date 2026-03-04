@@ -6,7 +6,7 @@ final class CharacterEncodingOverlayTests: XCTestCase {
 
   // MARK: Internal
 
-  func testDecode_utf8_returnsOverlayWithUTF8() throws {
+  func testDecode_utf8_returnsOverlayWithUTF8() {
     for encoding in ["UTF-8", "utf-8"] {
       let jsonData = createJson(for: encoding)
 
@@ -18,7 +18,7 @@ final class CharacterEncodingOverlayTests: XCTestCase {
     }
   }
 
-  func testDecode_base64_returnsOverlayWithBase64() throws {
+  func testDecode_base64_returnsOverlayWithBase64() {
     for encoding in ["Base64", "base64"] {
       let jsonData = createJson(for: encoding)
 
@@ -30,7 +30,7 @@ final class CharacterEncodingOverlayTests: XCTestCase {
     }
   }
 
-  func testDecode_unknown_returnsOverlayWithUnknown() throws {
+  func testDecode_unknown_returnsOverlayWithUnknown() {
     let unknownEncoding = "unknown"
     let jsonData = createJson(for: unknownEncoding)
 

@@ -11,19 +11,33 @@ setup: .install-mise .configure-mise .install-mise-tools .bundler .list-tools .l
 	@printf "$(BLUE)=> Opening up swiyu$(RESET)\n"
 	@printf "$(BLUE)=> Note: From now on, you can simply use make to open the project$(RESET)\n"
 
-setup-ci: .install-mise .install-mise-tools
+setup-ci: .install-mise-github-action .install-mise-tools
 	@printf "$(GREEN)=> Setup CI completed successfully!$(RESET)\n"
 
 # Check if mise is installed, install if not
 .install-mise:
 	@if command -v mise >/dev/null 2>&1; then \
 		printf "$(BLUE)=> Mise is already installed, skipping installation$(RESET)\n"; \
-		mise self-update; \
+		mise self-update -y || true; \
 	else \
 		printf "$(GREEN)=> Installing mise$(RESET)\n"; \
 		curl https://mise.run | sh; \
 		echo 'eval "$$(~/.local/bin/mise activate zsh)"' >> ~/.zshrc; \
 		exec zsh; \
+		mise doctor; \
+		printf "$(GREEN)=> Mise installed successfully!$(RESET)\n"; \
+	fi
+
+# Check if mise is installed, install if not
+.install-mise-github-action:
+	@if command -v mise >/dev/null 2>&1; then \
+		printf "$(BLUE)=> Mise is already installed, skipping installation$(RESET)\n"; \
+		mise self-update -y || true; \
+	else \
+		printf "$(GREEN)=> Installing mise$(RESET)\n"; \
+		curl https://mise.run | sh; \
+		echo 'eval "$$(~/.local/bin/mise activate bash)"' >> ~/.bashrc; \
+		exec bash; \
 		mise doctor; \
 		printf "$(GREEN)=> Mise installed successfully!$(RESET)\n"; \
 	fi

@@ -16,7 +16,7 @@ final class ActivityListViewModelTests: XCTestCase {
     viewModel = ActivityListViewModel(credentialIdMock)
   }
 
-  func testFetchActivites_activities_stateIsResultWithActivities() async throws {
+  func testFetchActivites_activities_stateIsResultWithActivities() async {
     await viewModel.fetchActivities()
 
     if case .result(let activities) = viewModel.state {
@@ -26,7 +26,7 @@ final class ActivityListViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchActivites_noActivities_stateIsResultWithoutActivities() async throws {
+  func testFetchActivites_noActivities_stateIsResultWithoutActivities() async {
     getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReturnValue = []
 
     await viewModel.fetchActivities()
@@ -38,7 +38,7 @@ final class ActivityListViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchActivites_useCaseThrowsError_stateIsError() async throws {
+  func testFetchActivites_useCaseThrowsError_stateIsError() async {
     getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitThrowableError = TestingError.error
 
     await viewModel.fetchActivities()
@@ -50,7 +50,7 @@ final class ActivityListViewModelTests: XCTestCase {
     }
   }
 
-  func testShowActivityDeleted_toastIsPresented() async throws {
+  func testShowActivityDeleted_toastIsPresented() {
     XCTAssertNil(viewModel.toastMessage)
     XCTAssertFalse(viewModel.isToastPresented)
 
@@ -60,7 +60,7 @@ final class ActivityListViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isToastPresented)
   }
 
-  func testClearToast_toastIsHidden() async throws {
+  func testClearToast_toastIsHidden() {
     viewModel.showActivityDeleted()
     XCTAssertNotNil(viewModel.toastMessage)
     XCTAssertTrue(viewModel.isToastPresented)

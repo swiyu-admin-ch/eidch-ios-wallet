@@ -34,10 +34,10 @@ extension Color {
       return nil
     }
 
-    ///
-    /// Compute perceived brightness difference
-    /// https://www.w3.org/TR/AERT/#color-contrast
-    ///
+    //
+    // Compute perceived brightness difference
+    // https://www.w3.org/TR/AERT/#color-contrast
+    //
     let brightness1 = (0.299 * currentColorComponents.red + 0.587 * currentColorComponents.green + 0.114 * currentColorComponents.blue)
     let brightness2 = (0.299 * colorComponents.red + 0.587 * colorComponents.green + 0.114 * colorComponents.blue)
 

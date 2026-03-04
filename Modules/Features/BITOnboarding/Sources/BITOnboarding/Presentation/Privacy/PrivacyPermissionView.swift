@@ -43,7 +43,6 @@ struct PrivacyPermissionView: View {
 
 extension PrivacyPermissionView {
 
-  @ViewBuilder
   private func main() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
       Text(L10n.tkOnboardingAnalyticsPrimary)
@@ -73,7 +72,6 @@ extension PrivacyPermissionView {
     .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
-  @ViewBuilder
   private func footer() -> some View {
     DefaultInformationFooterView(
       primaryButtonLabel: L10n.tkOnboardingAnalyticsButtonPrimary,

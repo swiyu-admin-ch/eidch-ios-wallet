@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Card
 
-public struct Card<Content>: View where Content: View {
+public struct Card<Content: View>: View {
 
   // MARK: Lifecycle
 
@@ -29,7 +29,7 @@ public struct Card<Content>: View where Content: View {
           image
             .resizable()
             .scaledToFit()
-            .frame(minWidth: minWidthContent, maxWidth: maxWidthContent, minHeight: minHeightContent, idealHeight: maxHeightContent, maxHeight: maxHeightContent)
+            .frame(width: maxWidthContent, height: maxHeightContent)
             .colorScheme(colorScheme)
         }
       }
@@ -38,8 +38,8 @@ public struct Card<Content>: View where Content: View {
     .frame(maxWidth: .infinity, minHeight: minHeightCard, idealHeight: idealHeightCard, maxHeight: maxHeightCard)
     .background(background.view)
     .cornerRadius(.x9)
-    .if(sizeCategory.isAccessibilityCategory && orientation.isPortrait || orientation.isFlat) {
-      $0.frame(maxHeight: 150)
+    .if(((sizeCategory.isAccessibilityCategory && orientation.isPortrait) || orientation.isFlat) && cardAccessibilityMaxHeight != nil) {
+      $0.frame(maxHeight: cardAccessibilityMaxHeight)
     }
   }
 
@@ -47,6 +47,7 @@ public struct Card<Content>: View where Content: View {
 
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.sizeCategory) var sizeCategory
+  @Environment(\.cardAccessibilityMaxHeight) var cardAccessibilityMaxHeight
 
   // MARK: Private
 
@@ -108,6 +109,25 @@ extension Card where Content == EmptyView {
     self.background = background
   }
 
+}
+
+// MARK: - CardAccessibilityMaxHeightKey
+
+private struct CardAccessibilityMaxHeightKey: EnvironmentKey {
+  static let defaultValue: CGFloat? = 150
+}
+
+extension EnvironmentValues {
+  var cardAccessibilityMaxHeight: CGFloat? {
+    get { self[CardAccessibilityMaxHeightKey.self] }
+    set { self[CardAccessibilityMaxHeightKey.self] = newValue }
+  }
+}
+
+extension Card {
+  public func disableAXResizing(_ disabled: Bool = true) -> some View {
+    environment(\.cardAccessibilityMaxHeight, disabled ? nil : CardAccessibilityMaxHeightKey.defaultValue)
+  }
 }
 
 // MARK: - CardBackground

@@ -124,7 +124,9 @@ public struct InfoBadgeStyle: BadgeStyle {
 }
 
 extension BadgeStyle where Self == InfoBadgeStyle {
-  public static var info: InfoBadgeStyle { InfoBadgeStyle() }
+  public static var info: InfoBadgeStyle {
+    InfoBadgeStyle()
+  }
 }
 
 // MARK: - SuccessBadgeStyle
@@ -139,7 +141,9 @@ public struct SuccessBadgeStyle: BadgeStyle {
 }
 
 extension BadgeStyle where Self == SuccessBadgeStyle {
-  public static var success: SuccessBadgeStyle { SuccessBadgeStyle() }
+  public static var success: SuccessBadgeStyle {
+    SuccessBadgeStyle()
+  }
 }
 
 // MARK: - ErrorBadgeStyle
@@ -154,7 +158,9 @@ public struct ErrorBadgeStyle: BadgeStyle {
 }
 
 extension BadgeStyle where Self == ErrorBadgeStyle {
-  public static var error: ErrorBadgeStyle { ErrorBadgeStyle() }
+  public static var error: ErrorBadgeStyle {
+    ErrorBadgeStyle()
+  }
 }
 
 // MARK: - SensitiveBadgeStyle
@@ -169,7 +175,9 @@ public struct SensitiveBadgeStyle: BadgeStyle {
 }
 
 extension BadgeStyle where Self == SensitiveBadgeStyle {
-  public static var sensitive: SensitiveBadgeStyle { SensitiveBadgeStyle() }
+  public static var sensitive: SensitiveBadgeStyle {
+    SensitiveBadgeStyle()
+  }
 }
 
 // MARK: - OutlineBadgeStyle
@@ -186,5 +194,7 @@ public struct OutlineBadgeStyle: BadgeStyle {
 }
 
 extension BadgeStyle where Self == OutlineBadgeStyle {
-  public static var outline: OutlineBadgeStyle { OutlineBadgeStyle() }
+  public static var outline: OutlineBadgeStyle {
+    OutlineBadgeStyle()
+  }
 }

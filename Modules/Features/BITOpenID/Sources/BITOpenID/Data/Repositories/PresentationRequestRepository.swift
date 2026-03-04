@@ -26,9 +26,9 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
     }
   }
 
-  func submit(from url: URL, presentationRequestBody: PresentationRequestBody) async throws {
+  func submit(authorizationResponse: AuthorizationResponseBody, to url: URL) async throws {
     do {
-      try await networkService.request(PresentationEndpoint.submission(url: url, presentationBody: presentationRequestBody))
+      try await networkService.request(PresentationEndpoint.submission(url: url, authorizationResponse: authorizationResponse))
     } catch {
       try handleError(error)
     }

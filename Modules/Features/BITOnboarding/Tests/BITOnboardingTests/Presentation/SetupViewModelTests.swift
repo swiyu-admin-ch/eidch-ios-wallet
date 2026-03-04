@@ -1,8 +1,10 @@
+// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
 import Factory
 import Foundation
 import Spyable
 import SwiftUI
 import XCTest
+@testable import BITActivity
 @testable import BITAppAuth
 @testable import BITOnboarding
 @testable import BITSettings
@@ -17,13 +19,7 @@ final class SetupViewModelTests: XCTestCase {
   @MainActor
   override func setUp() {
     super.setUp()
-
-    registerPinCodeUseCase = RegisterPinCodeUseCaseProtocolSpy()
-    updateAnalyticsStatusUseCase = UpdateAnalyticStatusUseCaseProtocolSpy()
-
-    Container.shared.registerPinCodeUseCase.register { self.registerPinCodeUseCase }
-    Container.shared.updateAnalyticsStatusUseCase.register { self.updateAnalyticsStatusUseCase }
-
+    registerMocks()
     isOnboardingEnabled = true
     router = MockOnboardingInternalRoutes()
     viewModel = SetupViewModel(router: router)
@@ -36,12 +32,15 @@ final class SetupViewModelTests: XCTestCase {
 
     await viewModel.run()
 
-    XCTAssertTrue(registerPinCodeUseCase.executePinCodeCalled)
     XCTAssertEqual(registerPinCodeUseCase.executePinCodeCallsCount, 1)
     XCTAssertEqual(registerPinCodeUseCase.executePinCodeReceivedPinCode, router.context.pincode)
-    XCTAssertEqual(updateAnalyticsStatusUseCase.executeIsAllowedReceivedIsAllowed, router.context.analyticsOptIn)
-    XCTAssertTrue(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+
     XCTAssertEqual(updateAnalyticsStatusUseCase.executeIsAllowedCallsCount, 1)
+    XCTAssertEqual(updateAnalyticsStatusUseCase.executeIsAllowedReceivedIsAllowed, router.context.analyticsOptIn)
+
+    XCTAssertEqual(setActivityHistoryEnabledUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(setActivityHistoryEnabledUseCase.callAsFunctionReceivedIsEnabled, true)
+
     XCTAssertTrue(router.completedCalled)
     XCTAssertFalse(viewModel.isOnboardingEnabled)
   }
@@ -54,6 +53,7 @@ final class SetupViewModelTests: XCTestCase {
 
     XCTAssertFalse(registerPinCodeUseCase.executePinCodeCalled)
     XCTAssertFalse(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+    XCTAssertFalse(setActivityHistoryEnabledUseCase.callAsFunctionCalled)
 
     XCTAssertFalse(router.completedCalled)
     XCTAssertTrue(router.setupErrorCalled)
@@ -70,6 +70,7 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertTrue(registerPinCodeUseCase.executePinCodeCalled)
     XCTAssertEqual(registerPinCodeUseCase.executePinCodeCallsCount, 1)
     XCTAssertFalse(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+    XCTAssertFalse(setActivityHistoryEnabledUseCase.callAsFunctionCalled)
     XCTAssertFalse(router.completedCalled)
     XCTAssertTrue(router.setupErrorCalled)
     XCTAssertTrue(viewModel.isOnboardingEnabled)
@@ -85,6 +86,7 @@ final class SetupViewModelTests: XCTestCase {
 
     XCTAssertTrue(registerPinCodeUseCase.executePinCodeCalled)
     XCTAssertTrue(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+    XCTAssertTrue(setActivityHistoryEnabledUseCase.callAsFunctionCalled)
 
     XCTAssertFalse(viewModel.isOnboardingEnabled)
 
@@ -94,11 +96,19 @@ final class SetupViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
   private var viewModel: SetupViewModel!
   private var router: MockOnboardingInternalRoutes!
   private var registerPinCodeUseCase: RegisterPinCodeUseCaseProtocolSpy!
   private var updateAnalyticsStatusUseCase: UpdateAnalyticStatusUseCaseProtocolSpy!
-  // swiftlint:enable all
+  private var setActivityHistoryEnabledUseCase: SetActivityHistoryEnabledUseCaseProtocolSpy!
 
+  private func registerMocks() {
+    registerPinCodeUseCase = RegisterPinCodeUseCaseProtocolSpy()
+    updateAnalyticsStatusUseCase = UpdateAnalyticStatusUseCaseProtocolSpy()
+    setActivityHistoryEnabledUseCase = SetActivityHistoryEnabledUseCaseProtocolSpy()
+
+    Container.shared.registerPinCodeUseCase.register { self.registerPinCodeUseCase }
+    Container.shared.updateAnalyticsStatusUseCase.register { self.updateAnalyticsStatusUseCase }
+    Container.shared.setActivityHistoryEnabledUseCase.register { self.setActivityHistoryEnabledUseCase }
+  }
 }

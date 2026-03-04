@@ -14,13 +14,17 @@ struct RecordSelfieView: View {
     ZStack {
       Color.clear
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(ThemingAssets.Background.secondary.swiftUIColor)
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .ignoresSafeArea(edges: .bottom)
 
       switch viewModel.state {
       case .loading:
-        loadingView()
+        LoadingView(
+          primary: L10n.tkLoaderInitializationPrimary,
+          secondary: L10n.tkLoaderInitializationSecondary,
+          action: LoadingView.Action(
+            action: viewModel.cancelInitialization,
+            buttonText: L10n.tkGlobalCancel))
           .transition(.opacity)
           .task {
             viewModel.initializeSDK()
@@ -31,13 +35,14 @@ struct RecordSelfieView: View {
       }
     }
     .cameraPermission()
+    .disablePhoneLock()
     .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
     .font(.custom.body)
     .animation(.easeInOut(duration: 0.4), value: viewModel.state)
     .onDisappear(perform: viewModel.stop)
     .navigationTitle(L10n.tkEidRequestRecordSelfieTitle)
     .defaultEidRequestToolbar()
-    .navigationBarBackButtonHidden(true)
+    .navigationBarBackButtonHidden()
     .navigate(to: $viewModel.destination)
   }
 
@@ -47,27 +52,9 @@ struct RecordSelfieView: View {
   @InjectedObject(\.recordSelfieViewModel) private var viewModel
 
   @ViewBuilder
-  private func introductionPopupView() -> some View {
-    Notification(
-      title: L10n.tkEidRequestRecordSelfieNotificationPrimary,
-      titleColor: ThemingAssets.Label.primary.swiftUIColor,
-      content: L10n.tkEidRequestRecordSelfieNotificationSecondary,
-      contentColor: ThemingAssets.Label.primary.swiftUIColor,
-      closeAction: {
-        viewModel.closeIntroductionPopup()
-      },
-      background: ThemingAssets.Background.secondary.swiftUIColor,
-      closeButtonStyle: .secondary)
-      .padding(.horizontal, .x3)
-      .padding(.vertical, .x2)
-      .frame(maxWidth: 480)
-      .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
-  }
-
-  @ViewBuilder
   private func popupView(_ notification: AVBeamNotification?) -> some View {
-    if let recoverySuggestion = notification?.recoverySuggestion {
-      Text(recoverySuggestion)
+    if let message = notification?.localizedDescription, !message.isEmpty {
+      Text(message)
         .font(.custom.subheadline)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .padding(.horizontal, .x2)
@@ -81,19 +68,6 @@ struct RecordSelfieView: View {
 
 extension RecordSelfieView {
 
-  @ViewBuilder
-  private func loadingView() -> some View {
-    VStack {
-      ProgressView()
-      Text(L10n.tkEidRequestSdkInitializationPrimary)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(ThemingAssets.Background.secondary.swiftUIColor)
-    .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-    .ignoresSafeArea(edges: .bottom)
-  }
-
-  @ViewBuilder
   private func cameraView() -> some View {
     ZStack(alignment: .center) {
       GLViewWrapper(viewModel.avBeam.getGLView)
@@ -116,13 +90,6 @@ extension RecordSelfieView {
         }
       }
     }
-    .popup(isPresented: $viewModel.isIntroductionPopupPresented, view: introductionPopupView) {
-      $0.appearFrom(.bottomSlide)
-        .position(.bottom)
-        .closeOnTap(false)
-        .closeOnTapOutside(false)
-        .type(.floater(verticalPadding: 0, horizontalPadding: 0, useSafeAreaInset: true))
-    }
     .popup(isPresented: $viewModel.isNotificationPresented, view: {
       popupView(viewModel.notification)
     }) {
@@ -140,9 +107,8 @@ extension RecordSelfieView {
     }
   }
 
-  @ViewBuilder
   private func recordButtonView() -> some View {
-    RecordingButton(state: $viewModel.buttonState, action: viewModel.startRecordSelfie)
+    RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startRecordSelfie, onTapRecord: viewModel.stopRecordSelfie)
       .accessibilityLabel(L10n.tkEidRequestRecordSelfieRecordButtonAlt)
       .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }

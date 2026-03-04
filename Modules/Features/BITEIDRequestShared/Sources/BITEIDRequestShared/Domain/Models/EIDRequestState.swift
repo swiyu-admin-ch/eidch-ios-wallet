@@ -7,7 +7,7 @@ enum EIDRequestStateError: Error {
 }
 
 
-public struct EIDRequestState: Codable {
+public struct EIDRequestState: Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -86,19 +86,6 @@ public struct EIDRequestState: Codable {
 
   let id: UUID
   let lastPolledAt: Date
-}
-
-// MARK: Equatable
-
-extension EIDRequestState: Equatable {
-  public static func == (lhs: EIDRequestState, rhs: EIDRequestState) -> Bool {
-    lhs.id == rhs.id &&
-      lhs.state == rhs.state &&
-      lhs.lastPolledAt == rhs.lastPolledAt &&
-      lhs.onlineSessionStartOpenAt == rhs.onlineSessionStartOpenAt &&
-      lhs.onlineSessionStartTimeoutAt == rhs.onlineSessionStartTimeoutAt &&
-      lhs.legalRepresentantConsent == rhs.legalRepresentantConsent
-  }
 }
 
 // MARK: Hashable

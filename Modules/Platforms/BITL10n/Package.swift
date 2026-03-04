@@ -20,7 +20,4 @@ let package = Package(
       resources: [
         .process("Resources"),
       ]),
-    .testTarget(
-      name: "BITL10nTests",
-      dependencies: ["BITL10n"]),
   ])

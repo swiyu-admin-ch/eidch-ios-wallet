@@ -17,23 +17,27 @@ struct WalletPairingOfferView: View {
   // MARK: Internal
 
   var body: some View {
-    AdaptiveColumnsView(primaryContent: card) {
-      DefaultInformationContentView(
-        primary: L10n.tkWalletPairingDevicePairingQRCodePrimary,
-        secondary: L10n.tkWalletPairingDevicePairingQRCodeSecondary)
-        .padding(.horizontal, .x6)
-    } footer: {
-      viewFooter()
-    }
-    .background(ThemingAssets.Background.primary.swiftUIColor)
-    .task {
-      await viewModel.fetchPairingQRCode()
-    }
-    .toolbar(.visible)
-    .defaultEidRequestToolbar(onClose: viewModel.close)
-    .toolbarBackground(ThemingAssets.Background.primary.swiftUIColor, for: .navigationBar)
-    .navigate(to: $viewModel.destination)
-    .navigationCheckpoint(EIDRequestCheckpoints.walletPairingOffer)
+    InformationView2(
+      contents: [
+        .heroCard { card() },
+        .title(L10n.tkWalletPairingDevicePairingQRCodePrimary, identifier: "primaryText"),
+        .body(L10n.tkWalletPairingDevicePairingQRCodeSecondary, identifier: "secondaryText"),
+      ],
+      actions: actions)
+      .background(ThemingAssets.Background.primary.swiftUIColor)
+      .task {
+        await viewModel.fetchPairingQRCode()
+      }
+      .toolbar(.visible)
+      .toolbar(content: {
+        CloseButtonToolbar(accessibilityIdentifier: "closeButton") {
+          navigator.dismiss()
+        }
+      })
+      .toolbarBackground(ThemingAssets.Background.primary.swiftUIColor, for: .navigationBar)
+      .navigate(to: $viewModel.destination)
+      .navigationCheckpoint(EIDRequestCheckpoints.walletPairingOffer)
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
@@ -48,6 +52,20 @@ struct WalletPairingOfferView: View {
 extension WalletPairingOfferView {
 
   @ViewBuilder
+  private var actions: [InformationView2.ActionType] {
+    var actions = [InformationView2.ActionType]()
+
+    if viewModel.walletPairingPollingManager.isPolling {
+      actions.append(.anyView { pollingStatusView() })
+    }
+
+    actions.append(.secondary(L10n.tkGlobalClose, { _ in
+      viewModel.close()
+    }))
+
+    return actions
+  }
+
   private func card() -> some View {
     Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) {
       switch viewModel.state {
@@ -56,9 +74,9 @@ extension WalletPairingOfferView {
       case .result: qrCodeView()
       }
     }
+    .disableAXResizing()
   }
 
-  @ViewBuilder
   private func errorView() -> some View {
     VStack(spacing: .x6) {
       VStack {
@@ -80,7 +98,6 @@ extension WalletPairingOfferView {
     .frame(maxWidth: qrCodeSize)
   }
 
-  @ViewBuilder
   private func loadingView() -> some View {
     ProgressView()
       .controlSize(.large)
@@ -96,32 +113,17 @@ extension WalletPairingOfferView {
     }
   }
 
-  @ViewBuilder
-  private func viewFooter() -> some View {
-    ButtonSheet {
-      VStack {
-        if viewModel.walletPairingPollingManager.isPolling {
-          HStack {
-            ProgressView()
+  private func pollingStatusView() -> some View {
+    HStack {
+      ProgressView()
 
-            Text(L10n.tkWalletPairingDevicePairingQRCodeFetchDeviceBody)
-              .font(.custom.body)
-              .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-              .multilineTextAlignment(.leading)
-          }
-          .frame(maxWidth: .infinity)
-          .accessibilityElement(children: .combine)
-        }
-
-        Button(action: viewModel.close) {
-          Text(L10n.tkGlobalClose)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.secondary)
-        .controlSize(.large)
-      }
+      Text(L10n.tkWalletPairingDevicePairingQRCodeFetchDeviceBody)
+        .font(.custom.body)
+        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        .multilineTextAlignment(.leading)
     }
+    .frame(maxWidth: .infinity)
+    .accessibilityElement(children: .combine)
   }
 }
 

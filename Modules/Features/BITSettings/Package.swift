@@ -15,6 +15,7 @@ let package = Package(
       targets: ["BITSettings"]),
   ],
   dependencies: [
+    .package(path: "../BITActivity"),
     .package(path: "../BITAppAuth"),
     .package(path: "../BITAppInfo"),
     .package(path: "../../Platforms/BITL10n"),
@@ -23,6 +24,7 @@ let package = Package(
     .package(path: "../../Platforms/BITAnalytics"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
+    .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
     .target(
@@ -30,6 +32,7 @@ let package = Package(
       dependencies: [
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "BITAppInfo", package: "BITAppInfo"),
@@ -42,6 +45,13 @@ let package = Package(
       name: "BITSettingsTests",
       dependencies: [
         "BITSettings",
+        .product(name: "BITActivity", package: "BITActivity"),
+        .product(name: "BITAnalytics", package: "BITAnalytics"),
+        .product(name: "BITAppAuth", package: "BITAppAuth"),
+        .product(name: "BITAppInfo", package: "BITAppInfo"),
+        .product(name: "BITTheming", package: "BITTheming"),
+        .product(name: "Factory", package: "Factory"),
+        .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

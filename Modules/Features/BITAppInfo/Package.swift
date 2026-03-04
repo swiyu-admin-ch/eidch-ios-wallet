@@ -46,6 +46,8 @@ let package = Package(
       name: "BITAppInfoTests",
       dependencies: [
         "BITAppInfo",
+        .product(name: "Factory", package: "Factory"),
+        .product(name: "Spyable", package: "swift-spyable"),
       ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),

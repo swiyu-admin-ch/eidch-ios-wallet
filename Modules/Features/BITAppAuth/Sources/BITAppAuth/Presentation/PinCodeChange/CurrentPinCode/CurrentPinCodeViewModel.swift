@@ -62,7 +62,9 @@ public class CurrentPinCodeViewModel: ObservableObject, Vibrating {
   @Injected(\.attemptsLimit) private var attemptsLimit: Int
   @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
 
-  private var attemptLeft: Int { attemptsLimit - attempts }
+  private var attemptLeft: Int {
+    attemptsLimit - attempts
+  }
 
   private func reset() {
     try? resetLoginAttemptCounterUseCase.execute()

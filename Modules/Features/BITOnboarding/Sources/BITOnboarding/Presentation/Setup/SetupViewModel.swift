@@ -31,6 +31,7 @@ class SetupViewModel: ObservableObject {
       guard let pincode = router.context.pincode else { throw SetupError.missingPinCode }
       try registerPinCodeUseCase.execute(pinCode: pincode)
       await updateAnalyticsStatusUseCase.execute(isAllowed: router.context.analyticsOptIn)
+      try setActivityHistoryEnabledUseCase(true)
       isOnboardingEnabled = false
       try await Task.sleep(nanoseconds: 2_000_000_000)
       router.completed()
@@ -47,8 +48,9 @@ class SetupViewModel: ObservableObject {
   }
 
   private let router: OnboardingInternalRoutes
-  @Injected(\.registerPinCodeUseCase) private var registerPinCodeUseCase: RegisterPinCodeUseCaseProtocol
-  @Injected(\.updateAnalyticsStatusUseCase) private var updateAnalyticsStatusUseCase: UpdateAnalyticStatusUseCaseProtocol
+  @Injected(\.registerPinCodeUseCase) private var registerPinCodeUseCase
+  @Injected(\.updateAnalyticsStatusUseCase) private var updateAnalyticsStatusUseCase
+  @Injected(\.setActivityHistoryEnabledUseCase) private var setActivityHistoryEnabledUseCase
 
 }
 

@@ -8,12 +8,19 @@ public struct InformationView2: View {
   // MARK: Lifecycle
 
   public init(
+    contents: [ContentType] = [],
+    actions: [ActionType] = [])
+  {
+    self.contents = contents
+    self.actions = actions
+  }
+
+  public init(
     image: Image,
     contents: [ContentType] = [],
     actions: [ActionType] = [])
   {
-    self.image = image
-    self.contents = contents
+    self.contents = [.hero(image: image)] + contents
     self.actions = actions
   }
 
@@ -36,21 +43,33 @@ public struct InformationView2: View {
 
   private var contents: [ContentType]
   private var actions: [ActionType]
-  private var image: Image
 
-  @ViewBuilder
-  private func leftContent() -> some View {
-    Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor), image: image)
-      .foregroundStyle(ThemingAssets.Grays.white.swiftUIColor)
-      .accessibilityHidden(true)
-      .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
+  private var heroContent: ContentType? {
+    for content in contents {
+      if case .hero = content {
+        return content
+      }
+    }
+    return nil
   }
 
-  @ViewBuilder
+  private var bodyContents: [ContentType] {
+    contents.filter { content in
+      if case .hero = content {
+        return false
+      }
+      return true
+    }
+  }
+
+  private func leftContent() -> some View {
+    heroContent?.body
+  }
+
   private func rightContent() -> some View {
-    VStack(alignment: .leading, spacing: .x6) {
-      ForEach(contents.indices, id: \.self) { index in
-        contents[index].body
+    VStack(alignment: .leading, spacing: .x3) {
+      ForEach(bodyContents.indices, id: \.self) { index in
+        bodyContents[index].body
       }
     }
     .padding(.horizontal, .x6)
@@ -61,27 +80,73 @@ public struct InformationView2: View {
 
   @ViewBuilder
   private func footerContent() -> some View {
-    ButtonSheet {
-      VStack(spacing: .x4) {
-        ForEach(actions.indices, id: \.self) { index in
-          actions[index].body
+    if actions.isEmpty {
+      EmptyView()
+    } else {
+      ButtonSheet {
+        VStack(spacing: .x2) {
+          ForEach(actions.indices, id: \.self) { index in
+            actions[index].body
+          }
         }
       }
     }
   }
+
 }
 
 extension InformationView2 {
+  public enum Hero {
+    case image(Image)
+    case view(AnyView)
+    case card(AnyView)
+
+    @ViewBuilder
+    var body: some View {
+      switch self {
+      case .image(let image):
+        image
+          .resizable()
+          .scaledToFit()
+      case .view(let view):
+        view
+      case .card(let view):
+        view
+      }
+    }
+  }
+
   public enum ContentType {
     case title(_ label: String, alt: String? = nil, identifier: String? = nil)
     case body(_ label: String, alt: String? = nil, identifier: String? = nil)
+    case bodyBold(_ label: String, alt: String? = nil, identifier: String? = nil)
+    case spacer(_ size: CGFloat = .x4)
     case caption(_ label: String, alt: String? = nil, identifier: String? = nil)
+    case captionErrorDescription(_ error: Error, alt: String? = nil, identifier: String? = nil)
     case captionButton(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
+    case hero(Hero)
+    case anyView(AnyView)
 
     // MARK: Public
 
     @MainActor public var body: some View {
       ContentTypeView(self)
+    }
+
+    public static func hero(image: Image) -> ContentType {
+      .hero(.image(image))
+    }
+
+    public static func hero(@ViewBuilder _ content: () -> some View) -> ContentType {
+      .hero(.view(AnyView(content())))
+    }
+
+    public static func heroCard(@ViewBuilder _ content: () -> some View) -> ContentType {
+      .hero(.card(AnyView(content())))
+    }
+
+    public static func anyView(@ViewBuilder _ content: () -> some View) -> ContentType {
+      .anyView(AnyView(content()))
     }
   }
 
@@ -90,11 +155,18 @@ extension InformationView2 {
   public enum ActionType {
     case primary(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
     case secondary(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
+    case primaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), (Navigator) async -> Void)
+    case secondaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), (Navigator) async -> Void)
+    case anyView(AnyView)
 
     // MARK: Public
 
     @MainActor public var body: some View {
       ActionTypeView(self)
+    }
+
+    public static func anyView(@ViewBuilder _ content: () -> some View) -> ActionType {
+      .anyView(AnyView(content()))
     }
 
   }
@@ -123,9 +195,11 @@ struct ContentTypeView: View {
         .multilineTextAlignment(.leading)
         .minimumScaleFactor(0.5)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityPriorityFocus()
         .accessibilityLabel(alt ?? label)
         .accessibilityAddTraits(.isHeader)
         .accessibility(identifier: identifier ?? alt ?? label)
+        .accessibilityPriorityFocus()
     case .body(let label, let alt, let identifier):
       Text(label)
         .font(.custom.body)
@@ -134,7 +208,27 @@ struct ContentTypeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityLabel(alt ?? label)
         .accessibility(identifier: identifier ?? alt ?? label)
+    case .bodyBold(let label, let alt, let identifier):
+      Text(label)
+        .font(.custom.bodyBold)
+        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityLabel(alt ?? label)
+        .accessibility(identifier: identifier ?? alt ?? label)
+    case .spacer(let size):
+      Spacer()
+        .frame(height: size)
     case .caption(let label, let alt, let identifier):
+      Text(label)
+        .font(.custom.footnote)
+        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityLabel(alt ?? label)
+        .accessibility(identifier: identifier ?? alt ?? label)
+    case .captionErrorDescription(let error, let alt, let identifier):
+      let label = "\(String(describing: error))\n\(error.localizedDescription)"
       Text(label)
         .font(.custom.footnote)
         .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
@@ -148,6 +242,22 @@ struct ContentTypeView: View {
         .foregroundColor(ThemingAssets.Component.Link.label.swiftUIColor)
         .accessibilityLabel(alt ?? label)
         .accessibility(identifier: identifier ?? alt ?? label)
+    case .anyView(let view):
+      view
+    case .hero(let hero):
+      switch hero {
+      case .image(let image):
+        Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor), image: image)
+          .accessibilityHidden(true)
+          .accessibilityIdentifier(InformationView2.AccessibilityIdentifier.image.rawValue)
+      case .view(let view):
+        view
+          .accessibilityIdentifier(InformationView2.AccessibilityIdentifier.image.rawValue)
+      case .card(let view):
+        Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) { view }
+          .accessibilityHidden(true)
+          .accessibilityIdentifier(InformationView2.AccessibilityIdentifier.image.rawValue)
+      }
     }
   }
 
@@ -177,6 +287,12 @@ struct ActionTypeView: View {
       button(label: label, alt: alt, identifier: identifier, action)
     case .secondary(let label, let alt, let identifier, let action):
       button(label: label, alt: alt, identifier: identifier, style: .secondary, action)
+    case .primaryAsync(let label, let alt, let identifier, let actionOptions, let action):
+      asyncButton(label: label, alt: alt, identifier: identifier, actionOptions: actionOptions, action)
+    case .secondaryAsync(let label, let alt, let identifier, let actionOptions, let action):
+      asyncButton(label: label, alt: alt, identifier: identifier, actionOptions: actionOptions, style: .secondary, action)
+    case .anyView(let view):
+      view
     }
   }
 
@@ -184,7 +300,11 @@ struct ActionTypeView: View {
 
   private let actionType: InformationView2.ActionType
 
-  private func button(label: String, alt: String? = nil, identifier: String? = nil, style: CustomButtonStyle = .primary, _ action: @escaping ((Navigator) -> Void)) -> some View {
+  private func button(
+    label: String, alt: String? = nil, identifier: String? = nil,
+    style: CustomButtonStyle = .primary, _ action: @escaping ((Navigator) -> Void))
+    -> some View
+  {
     Button(action: { action(navigator) }) {
       Text(label)
         .multilineTextAlignment(.leading)
@@ -195,4 +315,65 @@ struct ActionTypeView: View {
     .accessibilityLabel(alt ?? label)
     .accessibility(identifier: identifier ?? alt ?? label)
   }
+
+  private func asyncButton(label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), style: CustomButtonStyle = .primary, _ action: @escaping ((Navigator) async -> Void)) -> some View {
+    AsyncButton(action: { await action(navigator) }, actionOptions: actionOptions) {
+      AnyView(
+        Text(label)
+          .multilineTextAlignment(.leading)
+          .frame(maxWidth: .infinity))
+    }
+    .buttonStyle(style)
+    .controlSize(.large)
+    .accessibilityLabel(alt ?? label)
+    .accessibility(identifier: identifier ?? alt ?? label)
+  }
 }
+
+#if DEBUG
+#Preview {
+  NavigationView {
+    InformationView2(
+      image: ThemingAssets.camera.swiftUIImage,
+      contents: [
+        InformationView2.previewContentTitle,
+        InformationView2.previewContentBody,
+        .spacer(),
+        .bodyBold("At vero eos et accusam et justo duo dolores et ea rebum."),
+      ],
+      actions: InformationView2.previewActions)
+  }
+}
+
+#Preview("Error") {
+  NavigationView {
+    InformationView2(
+      image: ThemingAssets.closeCircle.swiftUIImage,
+      contents: [
+        InformationView2.previewContentTitle,
+        InformationView2.previewContentBody,
+        .spacer(),
+        .captionErrorDescription(CredentialErrorMock.expiredInvitation),
+      ],
+      actions: InformationView2.previewActions)
+  }
+}
+
+extension InformationView2 {
+  fileprivate static let previewActions = [
+    ActionType.primary("Primary", { _ in }),
+    ActionType.secondary("Secondary", { _ in }),
+  ]
+  fileprivate static let previewContentTitle = ContentType.title("Lorem ipsum")
+  fileprivate static let previewContentBody = ContentType.body("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.")
+}
+
+// MARK: - CredentialErrorMock
+
+private enum CredentialErrorMock: LocalizedError {
+  case expiredInvitation
+  var errorDescription: String? {
+    "access token is expired"
+  }
+}
+#endif

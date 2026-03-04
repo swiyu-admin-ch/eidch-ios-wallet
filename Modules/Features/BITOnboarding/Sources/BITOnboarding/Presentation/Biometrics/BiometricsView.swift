@@ -74,7 +74,6 @@ struct BiometricsView: View {
 
 extension BiometricsView {
 
-  @ViewBuilder
   private func main() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
       Text(viewModel.primaryText)
@@ -104,7 +103,6 @@ extension BiometricsView {
     .padding(.bottom)
   }
 
-  @ViewBuilder
   private func footer() -> some View {
     DefaultInformationFooterView(
       primaryButtonLabel: viewModel.hasBiometricAuth ? L10n.tkOnboardingBiometricsPermissionButtonPrimary : L10n.tkOnboardingBiometricsPermissionDisabledButtonPrimary,

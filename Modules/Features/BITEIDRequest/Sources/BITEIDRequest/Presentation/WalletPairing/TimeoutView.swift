@@ -1,8 +1,5 @@
 import BITL10n
 import BITTheming
-import Factory
-import Foundation
-import NavigatorUI
 import SwiftUI
 
 struct TimeoutView: View {
@@ -10,25 +7,22 @@ struct TimeoutView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.timer.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor)
-    {
-      DefaultInformationContentView(
-        primary: L10n.tkEidRequestTimeoutPrimary,
-        secondary: L10n.tkEidRequestTimeoutSecondary)
-    } footer: {
-      DefaultInformationFooterView(
-        primaryButtonLabel: L10n.tkEidRequestTimeoutButtonRestart,
-        primaryButtonAction: close)
-    }
-    .defaultEidRequestToolbar(onClose: close)
-    .navigationBarBackButtonHidden(true)
+      contents: [
+        .title(L10n.tkEidRequestTimeoutPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestTimeoutSecondary, identifier: "secondaryText"),
+      ],
+      actions: [
+        .primary(L10n.tkEidRequestTimeoutButtonRestart, identifier: "primaryButton", { _ in
+          close()
+        }),
+      ])
+      .defaultEidRequestToolbar(onClose: close)
+      .navigationBarBackButtonHidden()
   }
 
   // MARK: Private
-
-  @Environment(\.navigator) private var navigator
 
   private func close() {}
 

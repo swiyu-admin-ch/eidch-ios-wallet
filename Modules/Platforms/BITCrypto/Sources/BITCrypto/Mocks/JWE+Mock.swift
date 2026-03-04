@@ -1,0 +1,19 @@
+// swiftlint:disable force_try
+#if DEBUG
+import Foundation
+import JOSESwift
+@testable import BITTestingCore
+
+extension JWE: @retroactive Mockable {
+  public struct Mock {
+    // {"key": "value"} encrypted with SecKeyTestsHelper.privateKey
+    public static let validSample = try! JWE(compactSerialization: "eyJhbGciOiJFQ0RILUVTIiwiZW5jIjoiQTEyOEdDTSIsImVwayI6eyJjcnYiOiJQLTI1NiIsImtpZCI6IjNFNEE1RkQ3LTNENTktNEU0Ri04OTg2LUEyNThERDlEQjVERiIsImt0eSI6IkVDIiwieCI6ImRtcENjVHdkWVdIVlU3M0twUWNLcWVmZUFjaU8zV3YtcTY3bENDd0VpY0EiLCJ5IjoiUkgyRnhFMFVVVmtHSW1rLWRnRzFTdUZXRWI5VTFRR0ZYTm96QWduSk1HOCJ9LCJ6aXAiOiJERUYifQ..Z1Qk2Xs_Dmf_EI9-.u-nv5xGs8NZF3LpSHtVeJGg.eq8OtqCA5gF1O52I4Ody-w")
+    // {"credential_configuration_id": "elfa-sdjwt"} encrypted with JWK.Mock.validSample
+    public static let sampleCredentialRequest = try! JWE(compactSerialization: "eyJhbGciOiJFQ0RILUVTIiwiZW5jIjoiQTEyOEdDTSIsImVwayI6eyJjcnYiOiJQLTUyMSIsImtpZCI6IkJFNkRFREM2LUVBMUQtNDBDRC04NjNDLTNFQTVBRDg1NjE3MiIsImt0eSI6IkVDIiwieCI6IkFTdjdjSGRSQWhEMHdoTWhFdWphTnpfMU1vQzFNVEJMcUt1SmdjU1FVTHlSR2F3ZWY0UldUaHdrTDR3VURZa25iN29pVURGMjMwMlV0dDN3MnQ1RUY4QTkiLCJ5IjoiQWZLM1ZkTTQ5aVFlS2NyQkxDdlYteXo2MFdVbzJIbUp6Mk5qaDVHWTg2TXo1SUNMQ1NXYzNBZDl2WEpQb0xHVFUxZ1JibWxqMm03VzN2a005UVZ4a2tPVyJ9LCJ6aXAiOiJERUYifQ.._J6qu4UGWzxG6HuW.YswUYH-61Qd1BzWbEeSYQNQKk-GIwHhyAAPb3s95zXH9CfzcY4AnFML7YCRMZQ.l-OANEQbAUBDg35j5XjsSA")
+    // {"transaction_id": "transactionId"} encrypted with JWK.Mock.validSample
+    public static let sampleCredentialRequestDeferred = try! JWE(compactSerialization: "eyJhbGciOiJFQ0RILUVTIiwiZW5jIjoiQTEyOEdDTSIsImVwayI6eyJjcnYiOiJQLTUyMSIsImtpZCI6Ijk5RTFBMTQwLTY3QzctNDhGNi04QjZELUE3QTM3OEY3RjA1RiIsImt0eSI6IkVDIiwieCI6IkFJcE55d1NjQW9IZ0MzSXhhOGxxd1pZSE56bVB6S3ZwLW1jUi1pNWRBWnZfZGdob20tTFFXNlBaeEFuME1hRVNfcDlEX05FNTdUZnVyOF9WdndXQkU4cEwiLCJ5IjoiQUU2ZTJkY3pqdTE4LTMxNEp5aE1ULXRLTF9wYWUwcEluT2kteGNYYU9DOE9IVlh3T3FlT2QwS0NsTmJibFJvd0U3QzNSeWgxQUdWOEtodjdFM1FDQTg5byJ9LCJ6aXAiOiJERUYifQ.._Qw3062FUFoiU_fB.e0_l7XdwozDqBllcyL8zG2hp_1JRgnasL-g.4DwzZCFFYu396swK6rKAcQ")
+
+    public static let validSampleData = Data(validSample.compactSerializedString.utf8)
+  }
+}
+#endif

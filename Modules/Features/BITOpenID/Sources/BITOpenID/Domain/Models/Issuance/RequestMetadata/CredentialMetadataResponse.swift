@@ -7,6 +7,6 @@ public struct CredentialMetadataResponse {
     self.raw = raw
   }
 
-  let metadata: CredentialMetadata
-  let raw: Data
+  public let metadata: CredentialMetadata
+  public let raw: Data
 }

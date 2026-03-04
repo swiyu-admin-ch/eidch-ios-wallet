@@ -57,6 +57,22 @@ extension Container {
     self { [] }
   }
 
+  public var encryptionSupportedCurves: Factory<[String]> {
+    self { ["P-256"] }
+  }
+
+  public var isPayloadEncryptionEnabled: Factory<Bool> {
+    self { false }
+  }
+
+  public var deferredCredentialRequestBodyGenerator: Factory<DeferredCredentialRequestBodyGeneratorProtocol> {
+    self { DeferredCredentialRequestBodyGenerator() }
+  }
+
+  public var credentialEncryptionContextGenerator: Factory<CredentialEncryptionContextGeneratorProtocol> {
+    self { CredentialEncryptionContextGenerator() }
+  }
+
   // MARK: Internal
 
   var typeMetadataService: Factory<TypeMetadataServiceProtocol> {
@@ -75,6 +91,10 @@ extension Container {
     self { RequestObjectValidator() }
   }
 
+  var requestObjectEncryptionValidator: Factory<RequestObjectEncryptionValidatorProtocol> {
+    self { RequestObjectEncryptionValidator() }
+  }
+
   var jsonSchemaValidator: Factory<JsonSchemaValidatorProtocol> {
     self { JsonSchemaValidator() }
   }
@@ -82,6 +102,19 @@ extension Container {
   var vcSdJwtSchemaValidator: Factory<VcSdJwtSchemaValidatorProtocol> {
     self { VcSdJwtSchemaValidator() }
   }
+
+  var credentialResponseEncryptionKeyRepository: Factory<CredentialResponseEncryptionKeyRepositoryProtocol> {
+    self { CredentialResponseEncryptionKeyRepository() }
+  }
+
+  var credentialEncryptionValidator: Factory<CredentialEncryptionValidatorProtocol> {
+    self { CredentialEncryptionValidator() }
+  }
+
+  var credentialRequestBodyGenerator: Factory<CredentialRequestBodyGeneratorProtocol> {
+    self { CredentialRequestBodyGenerator() }
+  }
+
 }
 
 // MARK: - AnyFetcher
@@ -173,7 +206,9 @@ extension Container {
     self { TokenStatusListByteDecoder() }
   }
 
-  var tokenStatusListValidator: Factory<AnyStatusCheckValidatorProtocol> { self { TokenStatusListValidator() } }
+  var tokenStatusListValidator: Factory<AnyStatusCheckValidatorProtocol> {
+    self { TokenStatusListValidator() }
+  }
 
 }
 

@@ -1,34 +1,27 @@
 import BITL10n
 import BITTheming
-import Factory
-import NavigatorUI
 import SwiftUI
 
 struct AVIntroSelfieVideoView: View {
 
-  // MARK: Internal
-
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.selfie.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkEidRequestAutoVerificationIntroSelfieVideoPrimary,
-          secondary: L10n.tkEidRequestAutoVerificationIntroSelfieVideoSecondary)
-      },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkGlobalContinue,
-          primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.recordSelfie) })
-      })
-      .navigationBarBackButtonHidden(true)
+      contents: [
+        .title(L10n.tkEidRequestAutoVerificationIntroSelfieVideoPrimary),
+        .body(L10n.tkEidRequestAutoVerificationIntroSelfieVideoSecondary),
+      ],
+      actions: [
+        .primary(L10n.tkGlobalContinue, { navigator in
+          navigator.navigate(to: EIDRequestDestinations.recordSelfie)
+        }),
+      ])
+      .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
+      .navigationCheckpoint(EIDRequestCheckpoints.recordSelfieInformation)
   }
 
   // MARK: Private
-
-  @Environment(\.navigator) private var navigator
 
 }
 

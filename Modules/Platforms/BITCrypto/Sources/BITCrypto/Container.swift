@@ -16,6 +16,14 @@ extension Container {
     self { SRIValidator() }
   }
 
+  public var jweEncrypter: Factory<JWEEncrypterProtocol> {
+    self { JWEEncrypter() }
+  }
+
+  public var jweDecrypter: Factory<JWEDecrypterProtocol> {
+    self { JWEDecrypter() }
+  }
+
   public var sha256Hasher: Factory<Hashable> {
     self { SHA256Hasher() }
   }

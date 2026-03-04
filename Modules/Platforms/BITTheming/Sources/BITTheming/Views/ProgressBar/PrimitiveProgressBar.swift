@@ -4,13 +4,6 @@ import SwiftUI
 
 struct PrimitiveProgressBar: View {
 
-  // MARK: Lifecycle
-
-  init(image: Image, position: CGFloat) {
-    self.image = image
-    self.position = position
-  }
-
   // MARK: Internal
 
   var image: Image
@@ -22,8 +15,7 @@ struct PrimitiveProgressBar: View {
         image
           .resizable()
           .frame(width: 1000, height: 1000)
-          .offset(x: position)
-      )
+          .offset(x: position))
       .clipped()
       .clipShape(.capsule)
   }

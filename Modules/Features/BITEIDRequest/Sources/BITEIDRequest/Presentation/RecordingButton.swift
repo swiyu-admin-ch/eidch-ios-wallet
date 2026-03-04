@@ -1,4 +1,5 @@
 import BITTheming
+import Factory
 import SwiftUI
 
 // MARK: - RecordingButton
@@ -7,9 +8,12 @@ struct RecordingButton: View {
 
   // MARK: Lifecycle
 
-  init(state: Binding<Self.State>, action: @escaping () -> Void) {
+  init(state: Binding<Self.State>, onTapInitial: (() -> Void)? = nil, onTapRecord: (() -> Void)? = nil, onTapLoading: (() -> Void)? = nil, onTapSuccess: (() -> Void)? = nil) {
     _state = state
-    self.action = action
+    self.onTapInitial = onTapInitial
+    self.onTapRecord = onTapRecord
+    self.onTapLoading = onTapLoading
+    self.onTapSuccess = onTapSuccess
   }
 
   // MARK: Internal
@@ -23,7 +27,14 @@ struct RecordingButton: View {
 
   var body: some View {
     VStack {
-      Button(action: action) {
+      Button {
+        switch state {
+        case .initial: onTapInitial?()
+        case .record: onTapRecord?()
+        case .loading: onTapLoading?()
+        case .success: onTapSuccess?()
+        }
+      } label: {
         Color.white
           .clipShape(Circle())
           .overlay {
@@ -45,7 +56,10 @@ struct RecordingButton: View {
 
   @Binding private var state: State
 
-  private let action: () -> Void
+  private let onTapInitial: (() -> Void)?
+  private let onTapRecord: (() -> Void)?
+  private let onTapLoading: (() -> Void)?
+  private let onTapSuccess: (() -> Void)?
   private let buttonSize = 72.0
 
   private var backgroundShape: some View {

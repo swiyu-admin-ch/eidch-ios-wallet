@@ -8,12 +8,12 @@ extension Container {
 
   // MARK: - Credential offer
 
-  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes), CredentialOfferViewModel> {
-    self { CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2, router: $3) }
+  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes, delegate: InvitationDelegate?), CredentialOfferViewModel> {
+    self { CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2, router: $3, delegate: $4) }
   }
 
-  var credentialOfferModule: ParameterFactory<(VerifiableCredential, TrustInformation?), CredentialOfferModule> {
-    self { CredentialOfferModule(credential: $0, trustInformation: $1) }
+  var credentialOfferModule: ParameterFactory<(VerifiableCredential, TrustInformation?, InvitationDelegate?), CredentialOfferModule> {
+    self { CredentialOfferModule(credential: $0, trustInformation: $1, delegate: $2) }
   }
 
   // MARK: - Camera
@@ -44,6 +44,10 @@ extension Container {
 
   public var fetchPresentationRequestUseCase: Factory<FetchPresentationRequestUseCaseProtocol> {
     self { FetchPresentationRequestUseCase() }
+  }
+
+  public var invitationErrorMapper: Factory<InvitationErrorMapping> {
+    self { InvitationErrorMapper() }
   }
 
   public var invitationRouter: Factory<InvitationRouter> {

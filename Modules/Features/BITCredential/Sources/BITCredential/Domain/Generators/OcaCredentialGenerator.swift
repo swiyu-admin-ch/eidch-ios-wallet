@@ -11,7 +11,7 @@ import Spyable
 @Spyable
 protocol OcaCredentialGeneratorProtocol {
   func generate(for anyCredential: AnyCredential, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential
-  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential
+  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential
 }
 
 // MARK: - OcaCredentialGenerator
@@ -36,6 +36,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
       status: .unknown,
       clusters: clusters,
       format: anyCredential.format,
+      issuerUrl: context.issuerUrl,
       issuer: anyCredential.issuer,
       keyBinding: context.keyBinding,
       rawCredentialData: context.rawCredentialData,
@@ -45,16 +46,17 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
       validUntil: anyCredential.validUntil)
   }
 
-  func generateDeferred(_ deferredCredentialRequest: DeferredCredentialRequest, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential {
+  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential {
     let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
     let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
 
     return DeferredCredential(
-      transactionId: deferredCredentialRequest.transactionId,
-      accessToken: deferredCredentialRequest.accessToken,
-      endpoint: deferredCredentialRequest.endpoint,
-      format: deferredCredentialRequest.format,
+      transactionId: deferredCredentialContext.transactionId,
+      accessToken: deferredCredentialContext.accessToken,
+      endpoint: deferredCredentialContext.endpoint,
+      format: deferredCredentialContext.format,
+      issuerUrl: context.issuerUrl,
       issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
       keyBinding: context.keyBinding,

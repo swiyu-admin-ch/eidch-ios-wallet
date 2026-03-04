@@ -63,7 +63,6 @@ struct DeclinePresentationView: View {
 
   private let router: PresentationInternalRoutes
 
-  @ViewBuilder
   private var content: some View {
     VStack {
       Spacer()
@@ -76,11 +75,11 @@ struct DeclinePresentationView: View {
       }
 
       VStack(spacing: .x1) {
-        Text(L10n.tkErrorEmptywalletTitle)
+        Text(L10n.tkPresentCredentialNotFoundTitle)
           .multilineTextAlignment(.center)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        Text(L10n.tkErrorEmptywalletBody)
+        Text(L10n.tkPresentCredentialNotFoundBody)
           .multilineTextAlignment(.center)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor.opacity(0.7))

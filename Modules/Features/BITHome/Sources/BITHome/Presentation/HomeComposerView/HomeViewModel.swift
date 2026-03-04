@@ -34,7 +34,8 @@ class HomeViewModel: ObservableObject {
   @Published var state = State.results
   @Published var requestCases = [RequestCaseViewState]()
   @Published var credentials = [any CredentialViewModelProtocol]()
-  @Published var isCredentialSavedPopupPresented = false
+  @Published var isToastPresented = false
+  @Published private(set) var toastMessage: String?
 
   @Injected(\.isEIDRequestFeatureEnabled) var isEIDRequestFeatureEnabled: Bool
 
@@ -88,6 +89,8 @@ class HomeViewModel: ObservableObject {
 
 extension HomeViewModel {
 
+  // MARK: Internal
+
   func openScanner() {
     router.invitation(delegate: self)
   }
@@ -102,15 +105,12 @@ extension HomeViewModel {
   }
 
   func openCredential(_ credentialViewModel: any CredentialViewModelProtocol) {
-    guard let verifiableCredential = credentialViewModel.credential as? VerifiableCredential else {
-      return
-    }
-
-    switch verifiableCredential.progressionState {
-    case .accepted:
-      router.credentialDetail(verifiableCredential)
-    case .unaccepted:
-      router.credentialOffer(credential: verifiableCredential)
+    switch credentialViewModel.credential {
+    case let verifiableCredential as VerifiableCredential:
+      openVerifiableCredential(verifiableCredential)
+    case let deferredCredential as DeferredCredential:
+      openDeferredCredential(deferredCredential)
+    default: return
     }
   }
 
@@ -121,6 +121,22 @@ extension HomeViewModel {
   func openEIDRequest() {
     router.eIDRequest()
   }
+
+  // MARK: Private
+
+  private func openVerifiableCredential(_ verifiableCredential: VerifiableCredential) {
+    switch verifiableCredential.progressionState {
+    case .accepted:
+      router.credentialDetail(verifiableCredential, delegate: self)
+    case .unaccepted:
+      router.credentialOffer(credential: verifiableCredential, delegate: self)
+    }
+  }
+
+  private func openDeferredCredential(_ deferredCredential: DeferredCredential) {
+    router.credentialDetail(deferredCredential, delegate: self)
+  }
+
 }
 
 // MARK: - Credentials
@@ -257,7 +273,29 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 
 extension HomeViewModel: @preconcurrency InvitationDelegate {
 
-  func didSaveDeferredCredential() {
-    isCredentialSavedPopupPresented = true
+  func didSaveCredential() {
+    toastMessage = L10n.tkHomeNotificationCredentialAccepted
+    isToastPresented = true
+  }
+
+  func didDeclineCredential() {
+    toastMessage = L10n.tkHomeNotificationCredentialDeclined
+    isToastPresented = true
+  }
+}
+
+extension HomeViewModel {
+  func clearToast() {
+    isToastPresented = false
+    toastMessage = nil
+  }
+}
+
+// MARK: @MainActor CredentialDetailDelegate
+
+extension HomeViewModel: @MainActor CredentialDetailDelegate {
+  func onCredentialDeleted() {
+    toastMessage = L10n.tkHomeNotificationCredentialDeleted
+    isToastPresented = true
   }
 }

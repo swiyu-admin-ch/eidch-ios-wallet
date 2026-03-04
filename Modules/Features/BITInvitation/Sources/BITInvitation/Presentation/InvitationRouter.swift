@@ -17,5 +17,6 @@ final public class InvitationRouter: Router<UIViewController>, InvitationRouterR
 
 @Spyable
 public protocol InvitationDelegate: AnyObject {
-  func didSaveDeferredCredential()
+  func didSaveCredential()
+  func didDeclineCredential()
 }

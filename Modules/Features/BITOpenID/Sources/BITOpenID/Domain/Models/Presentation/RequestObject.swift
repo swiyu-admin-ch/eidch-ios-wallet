@@ -1,4 +1,5 @@
 import BITCore
+import BITCrypto
 import BITJWT
 import BITSdJWT
 import Foundation
@@ -8,18 +9,29 @@ import Foundation
 public enum RequestObjectError: Error {
   case invalidPayload
   case invalidInputDescriptorFormat
+  case invalidDcqlQuery
+  case missingQueryType
 }
 
 // MARK: - RequestObject
 
-/// A srtructure representing OpenID Authorization Request
+/// A structure representing OpenID Authorization Request
 /// https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
 public class RequestObject: Codable {
 
   // MARK: Lifecycle
 
-  init(presentationDefinition: PresentationDefinition, nonce: String?, responseUri: URL, clientMetadata: ClientMetadata?, responseType: String, clientId: String, clientIdScheme: String?, responseMode: String) {
-    self.presentationDefinition = presentationDefinition
+  init(
+    queryType: PresentationRequestQueryType,
+    nonce: String?,
+    responseUri: URL,
+    clientMetadata: ClientMetadata?,
+    responseType: String,
+    clientId: String,
+    clientIdScheme: String?,
+    responseMode: ResponseMode)
+  {
+    self.queryType = queryType
     self.nonce = nonce
     self.responseUri = responseUri
     self.clientMetadata = clientMetadata
@@ -29,20 +41,62 @@ public class RequestObject: Codable {
     self.responseMode = responseMode
   }
 
+  public required init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+    nonce = try container.decodeIfPresent(String.self, forKey: .nonce)
+    responseUri = try container.decode(URL.self, forKey: .responseUri)
+    clientMetadata = try container.decodeIfPresent(ClientMetadata.self, forKey: .clientMetadata)
+    responseType = try container.decode(String.self, forKey: .responseType)
+    clientId = try container.decode(String.self, forKey: .clientId)
+    clientIdScheme = try container.decodeIfPresent(String.self, forKey: .clientIdScheme)
+    responseMode = try container.decode(ResponseMode.self, forKey: .responseMode)
+
+    queryType = try PresentationRequestQueryType(from: decoder)
+  }
+
   // MARK: Public
 
-  public let presentationDefinition: PresentationDefinition
+  public let queryType: PresentationRequestQueryType
   public let nonce: String?
   public let responseUri: URL
   public let clientMetadata: ClientMetadata?
   public let responseType: String
   public let clientId: String
   public let clientIdScheme: String?
-  public let responseMode: String
+  public let responseMode: ResponseMode
   public var raw: Data?
 
+  public var presentationDefinition: PresentationDefinition? {
+    if case .presentationDefinition(let definition) = queryType {
+      return definition
+    }
+    return nil
+  }
+
+  public var rawDcqlQuery: Data? {
+    if case .dcqlRaw(let data) = queryType {
+      return data
+    }
+    return nil
+  }
+
   public var firstInputDescriptor: InputDescriptor? {
-    presentationDefinition.inputDescriptors.first
+    presentationDefinition?.inputDescriptors.first
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encodeIfPresent(nonce, forKey: .nonce)
+    try container.encodeIfPresent(responseUri, forKey: .responseUri)
+    try container.encodeIfPresent(clientMetadata, forKey: .clientMetadata)
+    try container.encodeIfPresent(responseType, forKey: .responseType)
+    try container.encodeIfPresent(clientId, forKey: .clientId)
+    try container.encodeIfPresent(clientIdScheme, forKey: .clientIdScheme)
+    try container.encodeIfPresent(responseMode, forKey: .responseMode)
+
+    try queryType.encode(to: encoder)
   }
 
   public func isEqual(to other: RequestObject) -> Bool {
@@ -54,13 +108,12 @@ public class RequestObject: Codable {
       responseUri == other.responseUri &&
       nonce == other.nonce &&
       clientMetadata == other.clientMetadata &&
-      presentationDefinition == other.presentationDefinition
+      queryType == other.queryType
   }
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case presentationDefinition = "presentation_definition"
     case nonce
     case responseUri = "response_uri"
     case clientMetadata = "client_metadata"
@@ -70,6 +123,15 @@ public class RequestObject: Codable {
     case responseMode = "response_mode"
   }
 
+}
+
+// MARK: RequestObject.ResponseMode
+
+extension RequestObject {
+  public enum ResponseMode: String, Codable {
+    case directPost = "direct_post"
+    case directPostJWT = "direct_post.jwt"
+  }
 }
 
 // MARK: Equatable
@@ -84,25 +146,60 @@ public typealias Verifier = ClientMetadata
 
 // MARK: - ClientMetadata
 
+/// Implementation of Human-Readable Client Metadata as of
+/// https://datatracker.ietf.org/doc/html/rfc7591#section-2.2
 public struct ClientMetadata: Codable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(clientName: LocalizedDisplay<String>?, logoUri: LocalizedDisplay<URL>?) throws {
+  public init(
+    clientName: LocalizedDisplay<String>?,
+    logoUri: LocalizedDisplay<URL>?,
+    jwks: JWKs? = nil,
+    encryptedResponseEncValuesSupported: [String]? = nil) throws
+  {
     self.clientName = clientName
     self.logoUri = logoUri
+    self.jwks = jwks
+    self.encryptedResponseEncValuesSupported = encryptedResponseEncValuesSupported
   }
 
   public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: DynamicCodingKey.self)
-    clientName = try LocalizedDisplay<String>(from: container, withBaseKey: "client_name")
-    logoUri = try LocalizedDisplay<URL>(from: container, withBaseKey: "logo_uri")
+    let dynamicContainer = try decoder.container(keyedBy: DynamicCodingKey.self)
+    clientName = try LocalizedDisplay<String>(from: dynamicContainer, withBaseKey: "client_name")
+    logoUri = try LocalizedDisplay<URL>(from: dynamicContainer, withBaseKey: "logo_uri")
+
+    let staticContainer = try decoder.container(keyedBy: CodingKeys.self)
+    jwks = try staticContainer.decodeIfPresent(JWKs.self, forKey: .jwks)
+    encryptedResponseEncValuesSupported = try staticContainer.decodeIfPresent([String].self, forKey: .encryptedResponseEncValuesSupported)
   }
 
   // MARK: Public
 
   public let clientName: LocalizedDisplay<String>?
   public let logoUri: LocalizedDisplay<URL>?
+  public let jwks: JWKs?
+  public let encryptedResponseEncValuesSupported: [String]?
+
+  // MARK: Private
+
+  private enum CodingKeys: String, CodingKey {
+    case jwks
+    case encryptedResponseEncValuesSupported = "encrypted_response_enc_values_supported"
+  }
+
+}
+
+// MARK: ClientMetadata.JWKs
+
+extension ClientMetadata {
+  public struct JWKs: Codable, Equatable {
+    public let keys: [JWK]
+
+    public init(keys: [JWK]) {
+      self.keys = keys
+    }
+  }
 }
 
 // MARK: ClientMetadata.LocalizedDisplay
@@ -164,7 +261,7 @@ extension ClientMetadata {
 
 // MARK: - PresentationDefinition
 
-/// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
+// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
 
 public struct PresentationDefinition: Codable, Equatable {
   public let id: String
@@ -172,7 +269,7 @@ public struct PresentationDefinition: Codable, Equatable {
   public let purpose: String?
   public let inputDescriptors: [InputDescriptor]
 
-  /// This format property seems to be the same as in the InputDescriptor
+  // This format property seems to be the same as in the InputDescriptor
 
   enum CodingKeys: String, CodingKey {
     case id

@@ -15,7 +15,7 @@ final class ActivityPresentationTests: XCTestCase {
   func testInit_plainRequestObject_mapsDataCorrectly() throws {
     contextMock.requestObject.raw = Self.rawRequestObjectMock
 
-    let activity = Activity(context: contextMock, credential: contextMock.selectedCredential!, type: .presentationAccepted)
+    let activity = try Activity(context: contextMock, credential: XCTUnwrap(contextMock.selectedCredential), type: .presentationAccepted)
 
     assertActivity(
       activity,
@@ -24,13 +24,13 @@ final class ActivityPresentationTests: XCTestCase {
       verifierDisplays: contextMock.verifierDisplays)
   }
 
-  func testInit_jwtPresentationRequest_nonComplianceDataIsRawJWS() {
-    let activity = Activity(context: jwtContextMock, credential: jwtContextMock.selectedCredential!, type: .presentationDeclined)
+  func testInit_jwtPresentationRequest_nonComplianceDataIsRawJWS() throws {
+    let activity = try Activity(context: jwtContextMock, credential: XCTUnwrap(jwtContextMock.selectedCredential), type: .presentationDeclined)
 
-    assertActivity(
+    try assertActivity(
       activity,
       type: .presentationDeclined,
-      nonComplianceData: "rawJWS".data(using: .utf8)!,
+      nonComplianceData: XCTUnwrap("rawJWS".data(using: .utf8)),
       verifierDisplays: jwtContextMock.verifierDisplays)
   }
 

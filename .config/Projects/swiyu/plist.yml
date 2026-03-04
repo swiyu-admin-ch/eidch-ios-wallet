@@ -1,0 +1,81 @@
+targetTemplates:
+  swiyu-info:
+    info:
+      path: ../../../swiyu/Info.plist
+      properties:
+        UIDesignRequiresCompatibility: true
+        LSHasLocalizedDisplayName: true
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
+        CFBundleDisplayName: $(APP_NAME)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: '6.0'
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIApplicationSupportsIndirectInputEvents: true
+        UILaunchScreen:
+          UIColorName: Launchscreen-background
+          UIImageName: Launchscreen-logo
+          UIImageRespectsSafeAreaInsets: false
+        UIRequiredDeviceCapabilities:
+          - armv7
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: credential-offer
+            CFBundleURLSchemes:
+              - openid-credential-offer
+              - swiyu
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: presentation
+            CFBundleURLSchemes:
+              - openid4vp
+              - swiyu-verify
+        UILaunchStoryboardName:
+          LaunchScreen.storyboard
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default Configuration
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        NSCameraUsageDescription: 'swiyu app would like to use your camera to scan QRCodes.'
+        NSFaceIDUsageDescription: 'swiyu app would like to use your biometric references to access secured resources.'
+        NFCReaderUsageDescription: 'swiyu app would like to use NFC to scan passports'
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+        # DTX general
+        DTXApplicationID: $(DYNATRACE_APP_ID)
+        DTXBeaconURL: $(DYNATRACE_BEACON_URL)
+        DTXLogLevel: $(DYNATRACE_DEBUG_LEVEL)
+        DTXAutoStart: true
+        DTXStartupLoadBalancing: true
+        # DTX User actions
+        DTXInstrumentAutoUserAction: false
+        DTXUIActionNamePrivacy: true
+        # Web Requests
+        DTXInstrumentWebRequestTiming: false
+        DTXInstrumentWebViewTiming: false
+        # DTX: Privacy & Security
+        DTXUserOptIn: $(DYNATRACE_USER_OPT_IN)
+        DTXCrashReportingEnabled: true
+        DTXInstrumentGPSLocation: false
+        DTXAllowAnyCert: false
+        # DTX SwiftUI
+        DTXSwiftUIEnableSessionReplayInstrumentation: false
+        DTXCleanSwiftUILogsByAgeDays: 1
+        DTXCleanSwiftUILogsByCount: 100
+        DTXSwiftUIInstrumentSimulatorBuilds: true
+        # DTX Lifecycle
+        DTXInstrumentLifecycleMonitoring: false
+        DTXInstrumentFrameworks: false
+        # PXL SDK
+        AVBeamAppID: $(PXL_APP_ID)
+        com.apple.developer.nfc.readersession.iso7816.select-identifiers:
+          - A0000002471001

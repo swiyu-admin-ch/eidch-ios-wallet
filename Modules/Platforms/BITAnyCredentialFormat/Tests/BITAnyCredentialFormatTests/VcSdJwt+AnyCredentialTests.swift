@@ -7,7 +7,7 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
 
   // MARK: Internal
 
-  func testGetClaimsDictionary_all_returnsAll() throws {
+  func testGetClaimsDictionary_all_returnsAll() {
     let jws = VcSdJWS.Mock.reservedClaimsWithOneClaim
 
     let claims = jws.getClaimsDictionary(.all)
@@ -17,7 +17,7 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
     XCTAssertTrue(SdJWSDecoder.reservedClaimNames.allSatisfy { claims.keys.contains($0) })
   }
 
-  func testGetClaimsDictionary_nonTechnical_returnsClaimsWithoutReservedNames() throws {
+  func testGetClaimsDictionary_nonTechnical_returnsClaimsWithoutReservedNames() {
     let jws = VcSdJWS.Mock.reservedClaimsWithOneClaim
 
     let claims = jws.getClaimsDictionary(.nonTechnical)

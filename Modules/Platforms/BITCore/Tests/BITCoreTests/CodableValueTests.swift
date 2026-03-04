@@ -181,7 +181,7 @@ final class CodableValueTests: XCTestCase {
 
   // MARK: Private
 
-  // Helper struct for testing unsupported type
+  /// Helper struct for testing unsupported type
   private struct CustomStruct {
     let value: String
   }

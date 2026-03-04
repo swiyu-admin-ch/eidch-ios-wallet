@@ -1,11 +1,12 @@
 import BITCredentialShared
+import BITL10n
 import BITOpenID
 import BITTheming
 import Factory
 import Foundation
 import SwiftUI
 
-public class DeferredCredentialViewModel: CredentialCellViewModelProtocol, CredentialViewModelProtocol {
+public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, CredentialViewModelProtocol {
 
   // MARK: Lifecycle
 
@@ -24,14 +25,10 @@ public class DeferredCredentialViewModel: CredentialCellViewModelProtocol, Crede
   public var credentialDisplay: CredentialDisplay?
   public var environment: TrustEnvironment?
 
-  #warning("Update all those computed properties in a follow-up story")
-
   public var statusText: String {
     switch credential.progressionState {
-    case .inProgress:
-      "In progress"
-    case .invalid:
-      "Invalid"
+    case .inProgress: L10n.tkDeferredCredentialStatusInProgress
+    case .invalid: L10n.tkDeferredCredentialStatusInvalid
     }
   }
 
@@ -40,33 +37,31 @@ public class DeferredCredentialViewModel: CredentialCellViewModelProtocol, Crede
     case .inProgress:
       Image(systemName: "clock")
     case .invalid:
-      Assets.statusInvalid.swiftUIImage
+      Image(systemName: "xmark")
     }
   }
 
   public var statusTextAlt: String {
     switch credential.progressionState {
-    case .inProgress:
-      "In progress"
-    case .invalid:
-      "Invalid"
+    case .inProgress: L10n.tkDeferredCredentialStatusInProgress
+    case .invalid: L10n.tkDeferredCredentialStatusInvalid
     }
+  }
+
+  public var cardStatusBadgeStyle: any BadgeStyle {
+    credential.progressionState == .inProgress ? .info : .error
   }
 
   public var statusBadgeStyle: any BadgeStyle {
-    switch credential.progressionState {
-    case .inProgress:
-      .outline
-    case .invalid:
-      .error
-    }
+    .info
   }
 
   public var statusColor: Color {
-    switch credential.progressionState {
-    case .inProgress: ThemingAssets.Label.secondary.swiftUIColor
-    case .invalid: ThemingAssets.Brand.Core.swissRed.swiftUIColor
-    }
+    ThemingAssets.Label.secondary.swiftUIColor
+  }
+
+  public var cardStyle: CredentialCardStyle {
+    .deferred
   }
 
   public func view() -> some View {

@@ -12,7 +12,7 @@ import UIKit
 import SwiftUI
 #endif
 
-// Deprecated typealiases
+/// Deprecated typealiases
 @available(*, deprecated, renamed: "ImageAsset.Image", message: "This typealias will be removed in SwiftGen 7.0")
 typealias AssetImageTypeAlias = ImageAsset.Image
 
@@ -24,6 +24,7 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 enum Assets {
   static let impresum = ImageAsset(name: "Impresum")
   static let lizenzen = ImageAsset(name: "Lizenzen")
+  static let activityHistory = ImageAsset(name: "activityHistory")
   static let backup = ImageAsset(name: "backup")
   static let checkmark = ImageAsset(name: "checkmark")
   static let demo = ImageAsset(name: "demo")
@@ -36,8 +37,10 @@ enum Assets {
   static let licenses = ImageAsset(name: "licenses")
   static let lock = ImageAsset(name: "lock")
   static let privacy = ImageAsset(name: "privacy")
+  static let saveActivities = ImageAsset(name: "saveActivities")
   static let swissLogo = ImageAsset(name: "swissLogo")
   static let terms = ImageAsset(name: "terms")
+  static let trash = ImageAsset(name: "trash")
   static let verification = ImageAsset(name: "verification")
   static let verificationQrCode = ImageAsset(name: "verificationQrCode")
 }

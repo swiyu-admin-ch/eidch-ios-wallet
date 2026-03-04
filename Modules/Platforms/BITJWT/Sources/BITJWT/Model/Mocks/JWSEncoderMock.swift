@@ -32,7 +32,7 @@ class JWSEncoderMock<U: JWT>: JWSEncoderProtocol {
     return data
   }
 
-  func encode<T>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> where T: JWT, T: Decodable, T: Encodable, T: Equatable {
+  func encode<T: JWT & Decodable & Encodable & Equatable>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> {
     if let encodeUsingThrowableError {
       throw encodeUsingThrowableError
     }

@@ -7,7 +7,7 @@ typealias Reducer<State, Event> = (inout State, Event) -> AnyPublisher<Event, Ne
 // MARK: - StateMachine
 
 @MainActor
-open class StateMachine<State, Event>: NSObject, ObservableObject where State: Equatable {
+open class StateMachine<State: Equatable, Event>: NSObject, ObservableObject {
 
   // MARK: Lifecycle
 

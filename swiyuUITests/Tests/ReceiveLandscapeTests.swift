@@ -30,7 +30,7 @@ final class ReceiveLandscapeTests: UITestCase {
       .assertHomeScreen()
   }
 
-  func testAcceptOfferLandscape() throws {
+  func testAcceptOfferLandscape() {
     let homeScreen = HomeScreen.navigateToAfterLaunchingApp(app)
     let credentialsCount = homeScreen.getCredentialsCount()
     homeScreen
@@ -41,7 +41,7 @@ final class ReceiveLandscapeTests: UITestCase {
       .assertCredentialsCountEquals(credentialsCount + 1)
   }
 
-  func testDeclineOfferLandscape() throws {
+  func testDeclineOfferLandscape() {
     let homeScreen = HomeScreen.navigateToAfterLaunchingApp(app)
     let credentialsCount = homeScreen.getCredentialsCount()
     homeScreen

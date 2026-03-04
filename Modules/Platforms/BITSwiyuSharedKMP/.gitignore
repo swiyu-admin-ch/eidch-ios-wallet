@@ -1,0 +1,2 @@
+# Ignore built XCFramework - rebuild with Scripts/build_framework.sh
+Frameworks/SwiyuShared.xcframework

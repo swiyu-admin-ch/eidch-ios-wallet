@@ -17,23 +17,21 @@ struct LegalRepresentantConsentView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.check.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkEidRequestGuardianSelectionPrimary,
-          secondary: L10n.tkEidRequestGuardianSelectionSecondary)
-      },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkEidRequestGuardianSelectionButtonObtainConsent,
-          primaryButtonStyle: .secondary,
-          primaryButtonAction: viewModel.obtainConsent,
-          secondaryButtonLabel: L10n.tkEidRequestGuardianSelectionButtonContinueAsGuardian,
-          secondaryButtonAction: viewModel.continueAsParent)
-      })
-      .navigationBarBackButtonHidden(true)
+      contents: [
+        .title(L10n.tkEidRequestGuardianSelectionPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestGuardianSelectionSecondary, identifier: "secondaryText"),
+      ],
+      actions: [
+        .secondary(L10n.tkEidRequestGuardianSelectionButtonObtainConsent, identifier: "primaryButton", { _ in
+          viewModel.obtainConsent()
+        }),
+        .secondary(L10n.tkEidRequestGuardianSelectionButtonContinueAsGuardian, identifier: "secondaryButton", { _ in
+          viewModel.continueAsParent()
+        }),
+      ])
+      .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)
   }

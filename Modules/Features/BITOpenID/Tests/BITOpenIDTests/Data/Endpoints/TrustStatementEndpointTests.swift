@@ -9,7 +9,7 @@ final class TrustStatementEndpointTests: XCTestCase {
   func testIdentityTrustStatements() throws {
     let baseUrl = "https://example.com"
     let did = "did:example:1234"
-    let url = URL(string: baseUrl)!
+    let url = try XCTUnwrap(URL(string: baseUrl))
 
     let endpoint = URL(target: TrustStatementEndpoint.identity(url: url, subjectDid: did))
 
@@ -20,7 +20,7 @@ final class TrustStatementEndpointTests: XCTestCase {
     for type in VcSchemaTrustStatementType.allCases {
       let baseUrl = "https://example.com"
       let vcSchemaId = "vcSchemaId"
-      let url = URL(string: baseUrl)!
+      let url = try XCTUnwrap(URL(string: baseUrl))
 
       let endpoint = URL(target: TrustStatementEndpoint.vcSchema(url: url, type: type, vcSchemaId: vcSchemaId))
 

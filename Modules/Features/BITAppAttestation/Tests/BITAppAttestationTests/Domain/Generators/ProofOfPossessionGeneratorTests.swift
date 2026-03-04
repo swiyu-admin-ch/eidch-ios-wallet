@@ -31,7 +31,7 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
     XCTAssertEqual(urlSession.dataFromReceivedUrl, mockChallengeEndpoint)
     XCTAssertTrue(clientAttestationRepository.getCalled)
     XCTAssertEqual(appAttestationKeyRepository.getForReceivedType, .client)
-    XCTAssertEqual(jsonCanonicalizer.canonicalizeDataReceivedData, try! JSONEncoder().encode(mockBody))
+    XCTAssertEqual(jsonCanonicalizer.canonicalizeDataReceivedData, try JSONEncoder().encode(mockBody))
   }
 
   func testGenerate_assertCount_success() async throws {

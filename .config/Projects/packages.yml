@@ -1,0 +1,91 @@
+packages:
+  Factory:
+    url: https://github.com/hmlongco/Factory
+    from: "2.2.0"
+
+  RealmSwift:
+    url: https://github.com/realm/realm-swift
+    from: "10.54.3"
+
+  realm-swift:
+    url: https://github.com/realm/realm-swift
+    from: "10.54.3"
+
+  swift-spyable:
+    url: https://github.com/Matejkob/swift-spyable
+    exactVersion: "0.8.0"
+
+  jsonschema-swift:
+    url: https://github.com/swiyu-admin-ch/jsonschema-swift.git
+    exactVersion: "0.37.1"
+
+  BITCore:
+    path: ../../Modules/Platforms/BITCore
+  BITJsonCanonicalizer:
+    path: ../../Modules/Platforms/BITJsonCanonicalizer
+  BITL10n:
+    path: ../../Modules/Platforms/BITL10n
+  BITNavigation:
+    path: ../../Modules/Platforms/BITNavigation
+  BITCrypto:
+    path: ../../Modules/Platforms/BITCrypto
+  BITQRCode:
+    path: ../../Modules/Platforms/BITQRCode
+  BITNetworking:
+    path: ../../Modules/Platforms/BITNetworking
+  BITTheming:
+    path: ../../Modules/Platforms/BITTheming
+  BITVault:
+    path: ../../Modules/Platforms/BITVault
+  BITDataStore:
+    path: ../../Modules/Platforms/BITDataStore
+  BITDeeplink:
+    path: ../../Modules/Platforms/BITDeeplink
+  BITJWT:
+    path: ../../Modules/Platforms/BITJWT
+  BITSdJWT:
+    path: ../../Modules/Platforms/BITSdJWT
+  BITLocalAuthentication:
+    path: ../../Modules/Platforms/BITLocalAuthentication
+  BITAnalytics:
+    path: ../../Modules/Platforms/BITAnalytics
+  BITAnyCredentialFormat:
+    path: ../../Modules/Platforms/BITAnyCredentialFormat
+  BITSwiyuSharedKMP:
+    path: ../../Modules/Platforms/BITSwiyuSharedKMP
+  BITAppAuth:
+    path: ../../Modules/Features/BITAppAuth
+  BITSettings:
+    path: ../../Modules/Features/BITSettings
+  BITAppInfo:
+    path: ../../Modules/Features/BITAppInfo
+  BITOnboarding:
+    path: ../../Modules/Features/BITOnboarding
+  BITInvitation:
+    path: ../../Modules/Features/BITInvitation
+  BITCredential:
+    path: ../../Modules/Features/BITCredential
+  BITPresentation:
+    path: ../../Modules/Features/BITPresentation
+  BITHome:
+    path: ../../Modules/Features/BITHome
+  BITCredentialShared:
+    path: ../../Modules/Features/BITCredentialShared
+  BITEntities:
+    path: ../../Modules/Features/BITEntities
+  BITOpenID:
+    path: ../../Modules/Features/BITOpenID
+  BITEIDRequest:
+    path: ../../Modules/Features/BITEIDRequest
+  BITOca:
+    path: ../../Modules/Features/BITOca
+  BITAppAttestation:
+    path: ../../Modules/Features/BITAppAttestation
+  BITEIDRequestShared:
+    path: ../../Modules/Features/BITEIDRequestShared
+  BITActivity:
+    path: ../../Modules/Features/BITActivity
+  BITActivityDetail:
+    path: ../../Modules/Features/BITActivityDetail
+  BITNonCompliance:
+    path: ../../Modules/Features/BITNonCompliance

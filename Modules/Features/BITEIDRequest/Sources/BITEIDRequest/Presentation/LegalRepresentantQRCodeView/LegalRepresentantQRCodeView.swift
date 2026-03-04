@@ -1,7 +1,6 @@
 import BITL10n
 import BITTheming
 import Factory
-import NavigatorUI
 import SwiftUI
 
 // MARK: - LegalRepresentantQRCodeView
@@ -17,33 +16,39 @@ struct LegalRepresentantQRCodeView: View {
   // MARK: Internal
 
   var body: some View {
-    AdaptiveColumnsView(primaryContent: card) {
-      DefaultInformationContentView(
-        primary: L10n.tkEidRequestGuardianConsentPrimary,
-        secondary: L10n.tkEidRequestGuardianConsentSecondary)
-        .padding(.horizontal, .x6)
-    } footer: {
-      viewFooter()
-    }
-    .toolbar(.visible)
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
-    .navigate(to: $viewModel.destination)
-    .task {
-      await viewModel.getVerificationQRCode()
-    }
+    InformationView2(
+      contents: [
+        .heroCard { card() },
+        .title(L10n.tkEidRequestGuardianConsentPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestGuardianConsentSecondary, identifier: "secondaryText"),
+      ],
+      actions: actions)
+      .toolbar(.visible)
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+      .navigate(to: $viewModel.destination)
+      .task {
+        await viewModel.getVerificationQRCode()
+      }
   }
 
   // MARK: Private
 
   @StateObject private var viewModel: LegalRepresentantQRCodeViewModel
-  @Environment(\.navigator) private var navigator
 
   private let qrCodeSize = 200.0
 }
 
 extension LegalRepresentantQRCodeView {
 
-  @ViewBuilder
+  private var actions: [InformationView2.ActionType] {
+    [
+      .anyView { shareActionView() },
+      .primaryAsync(L10n.tkEidRequestGuardianConsentButtonFinish, actionOptions: [.showProgressView], { _ in
+        await viewModel.finish()
+      }),
+    ]
+  }
+
   private func card() -> some View {
     Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) {
       switch viewModel.state {
@@ -54,7 +59,6 @@ extension LegalRepresentantQRCodeView {
     }
   }
 
-  @ViewBuilder
   private func errorView() -> some View {
     VStack(spacing: .x6) {
       VStack {
@@ -76,7 +80,6 @@ extension LegalRepresentantQRCodeView {
     .frame(maxWidth: qrCodeSize)
   }
 
-  @ViewBuilder
   private func loadingView() -> some View {
     ProgressView()
       .controlSize(.large)
@@ -92,42 +95,28 @@ extension LegalRepresentantQRCodeView {
   }
 
   @ViewBuilder
-  private func viewFooter() -> some View {
-    ButtonSheet {
-      VStack(spacing: .x4) {
-        if case .result(_, let qrCodeURL) = viewModel.state {
-          ShareLink(item: qrCodeURL) {
-            Button(action: { }) {
-              Text(L10n.tkEidRequestGuardianConsentButtonShare)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.secondary)
-            .controlSize(.large)
-            .allowsHitTesting(false) // Disable the button without changing its background color
-          }
-          .disabled(viewModel.isShareQRCodeDisabled)
-        } else {
-          Button(action: { }) {
-            Text(L10n.tkEidRequestGuardianConsentButtonShare)
-              .multilineTextAlignment(.leading)
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.secondary)
-          .controlSize(.large)
-          .disabled(true)
+  private func shareActionView() -> some View {
+    if case .result(_, let qrCodeURL) = viewModel.state {
+      ShareLink(item: qrCodeURL) {
+        Button(action: { }) {
+          Text(L10n.tkEidRequestGuardianConsentButtonShare)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity)
         }
-
-        AsyncButton(
-          action: { await viewModel.finish() },
-          actionOptions: [.showProgressView],
-          label: {
-            Text(L10n.tkEidRequestGuardianConsentButtonFinish)
-              .multilineTextAlignment(.leading)
-          })
-          .buttonStyle(.primary)
-          .controlSize(.large)
+        .buttonStyle(.secondary)
+        .controlSize(.large)
+        .allowsHitTesting(false) // Disable the button without changing its background color
       }
+      .disabled(viewModel.isShareQRCodeDisabled)
+    } else {
+      Button(action: { }) {
+        Text(L10n.tkEidRequestGuardianConsentButtonShare)
+          .multilineTextAlignment(.leading)
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.secondary)
+      .controlSize(.large)
+      .disabled(true)
     }
   }
 }

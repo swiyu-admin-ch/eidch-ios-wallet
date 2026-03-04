@@ -59,7 +59,7 @@ public struct ErrorDataset {
         guard let url = URL(string: L10n.tkErrorGenericHelpLinkValue) else { return }
         UIApplication.shared.open(url)
       }),
-      .caption("\(String(describing: error))\n\(error.localizedDescription)"),
+      .captionErrorDescription(error),
     ], actions: actions)
   }
 
@@ -72,7 +72,7 @@ public struct ErrorDataset {
         guard let url = URL(string: L10n.tkErrorGenericHelpLinkValue) else { return }
         UIApplication.shared.open(url)
       }),
-      .caption("\(String(describing: error))\n\(error.localizedDescription)"),
+      .captionErrorDescription(error),
     ], actions: [
       .primary(L10n.tkErrorGenericButtonPrimary) { $0.pop() },
     ])
@@ -111,11 +111,21 @@ extension ErrorDataset: Hashable {
   private var contentLabels: [String] {
     contents.compactMap { content in
       switch content {
-      case .body(let label, _, _),
-           .caption(let label, _, _),
-           .captionButton(let label, _, _, _),
-           .title(let label, _, _):
+      case .body(let label, _, _):
         label
+      case .bodyBold(let label, _, _):
+        label
+      case .caption(let label, _, _):
+        label
+      case .captionButton(let label, _, _, _):
+        label
+      case .title(let label, _, _):
+        label
+      case .captionErrorDescription(let error, _, _):
+        "\(String(describing: error))\n\(error.localizedDescription)"
+      case .anyView,
+           .hero,
+           .spacer: nil
       }
     }
   }
@@ -124,8 +134,12 @@ extension ErrorDataset: Hashable {
     actions.compactMap { action in
       switch action {
       case .primary(let label, _, _, _),
-           .secondary(let label, _, _, _):
+           .primaryAsync(let label, _, _, _, _),
+           .secondary(let label, _, _, _),
+           .secondaryAsync(let label, _, _, _, _):
         label
+      case .anyView:
+        nil
       }
     }
   }

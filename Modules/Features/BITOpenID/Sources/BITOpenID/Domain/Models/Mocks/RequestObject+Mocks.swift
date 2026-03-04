@@ -13,6 +13,7 @@ extension RequestObject {
       public static let sample: RequestObject = Mocker.decode(fromFile: "request-object-multipass", bundle: Bundle.module)
       public static let sampleData: Data = Mocker.getData(fromFile: "request-object-multipass", bundle: Bundle.module) ?? Data()
       public static let sampleIT: RequestObject = Mocker.decode(fromFile: "request-object-multipass-it", bundle: Bundle.module)
+      public static let sampleWithDcqlQuery: RequestObject = Mocker.decode(fromFile: "request-object-multipass-with-dcql", bundle: Bundle.module)
       public static let sampleWithoutInputDescriptors: RequestObject = Mocker.decode(fromFile: "request-object-without-input-descriptors", bundle: Bundle.module)
       public static let sampleMultipassExtraField: RequestObject = Mocker.decode(fromFile: "request-object-multipass-plus-extra-field", bundle: Bundle.module)
       public static let unsupportedResponseTypeSample: RequestObject = Mocker.decode(fromFile: "request-object-unsupported-response-type", bundle: Bundle.module)
@@ -27,6 +28,11 @@ extension RequestObject {
       public static let sampleWithoutClientMetadataData: Data = Mocker.getData(fromFile: "request-object-multipass-no-metadata", bundle: Bundle.module) ?? Data()
       public static let sampleWithMissingConstraintsFieldsData: Data = Mocker.getData(fromFile: "request-object-missing-constraints-fields", bundle: Bundle.module) ?? Data()
       public static let sampleWithUnsupportedClientMetadata: Data = Mocker.getData(fromFile: "request-object-multipass-unsupported-metadata", bundle: Bundle.module) ?? Data()
+    }
+
+    public enum Dcql {
+      public static let sample: RequestObject = Mocker.decode(fromFile: "request-object-dcql", bundle: Bundle.module)
+      public static let sampleData: Data = Mocker.getData(fromFile: "request-object-dcql", bundle: Bundle.module) ?? Data()
     }
 
     // MARK: Internal

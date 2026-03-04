@@ -26,7 +26,7 @@ final class ReceiveTests: UITestCase {
       .assertHomeScreen()
   }
 
-  func testAcceptOffer() throws {
+  func testAcceptOffer() {
     let homeScreen = HomeScreen.navigateToAfterLaunchingApp(app)
     let credentialsCount = homeScreen.getCredentialsCount()
     homeScreen
@@ -37,7 +37,7 @@ final class ReceiveTests: UITestCase {
       .assertCredentialsCountEquals(credentialsCount + 1)
   }
 
-  func testDeclineOffer() throws {
+  func testDeclineOffer() {
     let homeScreen = HomeScreen.navigateToAfterLaunchingApp(app)
     let credentialsCount = homeScreen.getCredentialsCount()
     homeScreen

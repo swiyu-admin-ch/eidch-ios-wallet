@@ -16,15 +16,31 @@ final class ActivityServiceTests: XCTestCase {
     setupSuccessState()
   }
 
-  func testCreate_argumentsPassed() throws {
+  func testCreate_historyEnabled_argumentsPassed() throws {
     try service.create(activityMock, credentialId: credentialIdMock)
 
     XCTAssertEqual(repositorySpy.createCredentialIdReceivedArguments?.activity, activityMock)
     XCTAssertEqual(repositorySpy.createCredentialIdReceivedArguments?.credentialId, credentialIdMock)
   }
 
-  func testCreate_repositoryThrowsError_throwsError() throws {
+  func testCreate_historyDisabled_doesNothing() throws {
+    repositorySpy.isActivityHistoryEnabledReturnValue = false
+
+    try service.create(activityMock, credentialId: credentialIdMock)
+
+    XCTAssertFalse(repositorySpy.createCredentialIdCalled)
+  }
+
+  func testCreate_createCredentialThrowsError_throwsError() throws {
     repositorySpy.createCredentialIdThrowableError = TestingError.error
+
+    XCTAssertThrowsError(try service.create(activityMock, credentialId: credentialIdMock)) { error in
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testCreate_activityHistoryEnabledThrowsError_throwsError() throws {
+    repositorySpy.isActivityHistoryEnabledThrowableError = TestingError.error
 
     XCTAssertThrowsError(try service.create(activityMock, credentialId: credentialIdMock)) { error in
       XCTAssertEqual(error as? TestingError, .error)
@@ -47,6 +63,7 @@ final class ActivityServiceTests: XCTestCase {
   }
 
   private func setupSuccessState() {
+    repositorySpy.isActivityHistoryEnabledReturnValue = true
     repositorySpy.createCredentialIdReturnValue = activityMock
   }
 }

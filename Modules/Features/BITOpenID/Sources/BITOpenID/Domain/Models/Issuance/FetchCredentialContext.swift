@@ -13,6 +13,7 @@ public class FetchCredentialContext {
     accessToken: AccessToken,
     nonce: Nonce? = nil,
     credentialEndpoint: URL,
+    credentialEncryptionContext: CredentialEncryptionContext? = nil,
     createdAt: Date = .now,
     deferredCredentialEndpoint: URL? = nil)
   {
@@ -24,6 +25,7 @@ public class FetchCredentialContext {
     self.accessToken = accessToken
     self.nonce = nonce
     self.credentialEndpoint = credentialEndpoint
+    self.credentialEncryptionContext = credentialEncryptionContext
     self.createdAt = createdAt
     self.deferredCredentialEndpoint = deferredCredentialEndpoint
   }
@@ -35,6 +37,7 @@ public class FetchCredentialContext {
   let selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported
   let credentialIssuer: String
   let holderBindingContext: HolderBindingContext?
+  let credentialEncryptionContext: CredentialEncryptionContext?
   let createdAt: Date
   let accessToken: AccessToken
   let nonce: Nonce?

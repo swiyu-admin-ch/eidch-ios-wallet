@@ -53,18 +53,18 @@ final class CESRHashValidatorTests: XCTestCase {
     XCTAssertFalse(validator.validate(jsonString: OCACaptureBaseMocks.validInput01))
   }
 
-  func testValidator_missingDigest_returnsFalse() {
-    let data = OCACaptureBaseMocks.noDigest.data(using: .utf8)!
+  func testValidator_missingDigest_returnsFalse() throws {
+    let data = try XCTUnwrap(OCACaptureBaseMocks.noDigest.data(using: .utf8))
     XCTAssertFalse(validator.validate(data: data))
   }
 
-  func testValidator_emptyDigest_returnsFalse() {
-    let data = OCACaptureBaseMocks.emptyDigest.data(using: .utf8)!
+  func testValidator_emptyDigest_returnsFalse() throws {
+    let data = try XCTUnwrap(OCACaptureBaseMocks.emptyDigest.data(using: .utf8))
     XCTAssertFalse(validator.validate(data: data))
   }
 
-  func testValidator_wrongJson_returnsFalse() {
-    let data = OCACaptureBaseMocks.wrongJson.data(using: .utf8)!
+  func testValidator_wrongJson_returnsFalse() throws {
+    let data = try XCTUnwrap(OCACaptureBaseMocks.wrongJson.data(using: .utf8))
     XCTAssertFalse(validator.validate(data: data))
   }
 

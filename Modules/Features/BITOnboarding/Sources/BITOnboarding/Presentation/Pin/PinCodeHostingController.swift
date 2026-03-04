@@ -9,7 +9,7 @@ class PinCodeInformationController: UIHostingController<PinCodeInformationView> 
 
 // MARK: - PinCodeHostingController
 
-class PinCodeHostingController<Content>: UIHostingController<Content> where Content: View {
+class PinCodeHostingController<Content: View>: UIHostingController<Content> {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)

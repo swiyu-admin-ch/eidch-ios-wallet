@@ -35,14 +35,14 @@ final class ActivityRepositoryTests: XCTestCase {
     XCTAssertEqual(credential?.activities[0].id, created.id)
   }
 
-  func testGet_success() async throws {
+  func testGet_success() throws {
     let created = try repository.create(.Mock.issueTrusted, credentialId: credentialIdMock)
     let fetched = try repository.get(created.id)
 
     XCTAssertEqual(created, fetched)
   }
 
-  func testGet_noActivity_notFound() async throws {
+  func testGet_noActivity_notFound() throws {
     XCTAssertThrowsError(try repository.get(UUID())) { error in
       XCTAssertEqual(error as? ActivityRepositoryError, .notFound)
     }
@@ -133,7 +133,7 @@ final class ActivityRepositoryTests: XCTestCase {
     XCTAssertNotNil(realm.object(ofType: ImageEntity.self, forPrimaryKey: hash))
   }
 
-  func testDelete_notFound() async throws {
+  func testDelete_notFound() throws {
     XCTAssertThrowsError(try repository.delete(UUID())) { error in
       XCTAssertEqual(error as? ActivityRepositoryError, .notFound)
     }
@@ -143,7 +143,11 @@ final class ActivityRepositoryTests: XCTestCase {
     _ = try repository.create(.Mock.issueTrusted, credentialId: credentialIdMock)
     _ = try repository.create(.Mock.presentationAcceptedTrusted, credentialId: credentialIdMock)
 
-    try repository.deleteAll(for: credentialIdMock)
+    let otherCredentialId = UUID()
+    try createCredential(credentialId: otherCredentialId)
+    _ = try repository.create(.Mock.issueTrusted, credentialId: otherCredentialId)
+
+    try repository.deleteAll()
 
     let realm = try Realm(configuration: Container.shared.realmDataStoreConfiguration())
     let credential = realm.object(ofType: CredentialEntity.self, forPrimaryKey: credentialIdMock)
@@ -159,7 +163,7 @@ final class ActivityRepositoryTests: XCTestCase {
     _ = try repository.create(activity1, credentialId: credentialIdMock)
     _ = try repository.create(activity2, credentialId: credentialIdMock)
 
-    try repository.deleteAll(for: credentialIdMock)
+    try repository.deleteAll()
 
     let hash = ImageHasher.hash(imageData)
     let realm = try Realm(configuration: Container.shared.realmDataStoreConfiguration())
@@ -167,13 +171,34 @@ final class ActivityRepositoryTests: XCTestCase {
     XCTAssertNil(realm.object(ofType: ImageEntity.self, forPrimaryKey: hash))
   }
 
-  func testDeleteAll_notFound() throws {
-    XCTAssertThrowsError(try repository.deleteAll(for: UUID())) { error in
-      XCTAssertEqual(error as? ActivityRepositoryError, .notFound)
-    }
+  func testIsActivityHistoryEnabled_enabled_returnsEnabled() throws {
+    UserDefaults.standard.set(true, forKey: Self.activityHistoryEnabledKey)
+
+    let result = try repository.isActivityHistoryEnabled()
+
+    XCTAssertTrue(result)
+  }
+
+  func testIsActivityHistoryEnabled_disabled_returnsDisabled() throws {
+    UserDefaults.standard.set(false, forKey: Self.activityHistoryEnabledKey)
+
+    let result = try repository.isActivityHistoryEnabled()
+
+    XCTAssertFalse(result)
+  }
+
+  func testSetActivityHistoryEnabled_disabled_passesArguments() throws {
+    UserDefaults.standard.set(false, forKey: Self.activityHistoryEnabledKey)
+
+    try repository.setActivityHistoryEnabled(true)
+
+    let result = UserDefaults.standard.bool(forKey: Self.activityHistoryEnabledKey)
+    XCTAssertTrue(result)
   }
 
   // MARK: Private
+
+  private static let activityHistoryEnabledKey = "isActivityHistoryEnabled"
 
   private var repository: ActivityRepositoryProtocol!
   private let credentialIdMock = UUID(uuidString: "9d0e30cd-e8ff-43b4-ba46-efe9047770a1")!

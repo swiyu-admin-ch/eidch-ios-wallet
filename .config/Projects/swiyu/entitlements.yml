@@ -1,0 +1,6 @@
+targetTemplates:
+  swiyu-entitlements:
+    entitlements:
+      path: ../../../swiyu/swiyu.entitlements
+      properties:
+        com.apple.developer.nfc.readersession.formats: ["TAG"]

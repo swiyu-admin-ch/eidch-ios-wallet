@@ -3,7 +3,7 @@ import UIKit
 
 // MARK: - CustomAsyncPublisher
 
-struct CustomAsyncPublisher<P>: AsyncSequence where P: Publisher, P.Failure == Never {
+struct CustomAsyncPublisher<P: Publisher>: AsyncSequence where P.Failure == Never {
 
   // MARK: Lifecycle
 

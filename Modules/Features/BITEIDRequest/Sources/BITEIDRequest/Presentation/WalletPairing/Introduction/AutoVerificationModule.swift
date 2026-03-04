@@ -12,11 +12,12 @@ class AutoVerificationModule: EIDRequestModule {
   init(caseId: String, router: EIDRequestRouter = Container.shared.eIDRequestRouter(), navigatorRoot: Navigator = Container.shared.navigatorRoot()) {
     self.router = router
 
-    let viewController = UIHostingController(rootView: ManagedNavigationStack {
-      AVWelcomeView()
-    }
-    .navigationDestination(EIDRequestDestinations.self)
-    .navigationRoot(navigatorRoot))
+    let viewController = UIHostingController(
+      rootView: ManagedNavigationStack {
+        AVWelcomeView()
+      }
+      .navigationDestination(EIDRequestDestinations.self)
+      .navigationRoot(navigatorRoot))
     router.viewController = viewController
     self.viewController = viewController
 

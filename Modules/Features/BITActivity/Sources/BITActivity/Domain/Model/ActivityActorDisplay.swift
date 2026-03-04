@@ -36,10 +36,4 @@ public struct ActivityActorDisplay: Codable, DisplayLocalizable {
 
 extension ActivityActorDisplay: Equatable {
 
-  public static func == (lhs: ActivityActorDisplay, rhs: ActivityActorDisplay) -> Bool {
-    lhs.name == rhs.name &&
-      lhs.locale == rhs.locale &&
-      lhs.image == rhs.image
-  }
-
 }

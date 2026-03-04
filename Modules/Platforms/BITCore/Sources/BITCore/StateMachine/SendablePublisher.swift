@@ -53,7 +53,7 @@ public struct SendablePublisher<Output, Failure: Error>: Publisher {
 
   // MARK: Public
 
-  public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+  public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
     upstream.subscribe(subscriber)
   }
 

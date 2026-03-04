@@ -8,13 +8,32 @@ final class Tests: XCTestCase {
   enum FakeAPI: TargetType {
     case someEndpoint
 
+    // MARK: Internal
+
     // swiftlint:disable force_unwrapping
-    var baseURL: URL { URL(string: "http://localhost")! }
-    var path: String { "/" }
-    var method: Moya.Method { .get }
-    var task: Moya.Task { .requestPlain }
-    var headers: [String: String]? { nil }
-    var sampleData: Data { "{\"name\": \"John\"}".data(using: .utf8)! }
+    var baseURL: URL {
+      URL(string: "http://localhost")!
+    }
+
+    var path: String {
+      "/"
+    }
+
+    var method: Moya.Method {
+      .get
+    }
+
+    var task: Moya.Task {
+      .requestPlain
+    }
+
+    var headers: [String: String]? {
+      nil
+    }
+
+    var sampleData: Data {
+      "{\"name\": \"John\"}".data(using: .utf8)!
+    }
     // swiftlint:enable force_unwrapping
 
   }

@@ -36,7 +36,6 @@ struct CredentialSummaryWidget: View {
   private let claimBadges: [ClaimBadgeViewModel]
   private let badgeAction: (BadgeType) -> Void
 
-  @ViewBuilder
   private var badges: some View {
     FlowLayout(verticalSpacing: .x3, horizontalSpacing: .x2) {
       ForEach(claimBadges) { badge in

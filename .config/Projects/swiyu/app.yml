@@ -1,0 +1,19 @@
+targets:
+  swiyu:
+    templates:
+      - ios-app-base
+      - swiyu-feature-deps
+      - swiyu-info
+      - swiyu-settings-base
+      - swiyu-settings-configs
+      - swiyu-entitlements
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: ../../../swiyu
+        excludes:
+          - "**/*.sh"
+    scheme:
+      testTargets:
+        - swiyuTests

@@ -22,6 +22,6 @@ struct CompletionView: View {
             router.context.onboardingDelegate?.didCompleteOnboarding()
           })
       })
-      .navigationBarBackButtonHidden(true)
+      .navigationBarBackButtonHidden()
   }
 }

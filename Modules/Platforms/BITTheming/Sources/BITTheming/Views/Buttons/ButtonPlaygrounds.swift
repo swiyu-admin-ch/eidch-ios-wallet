@@ -41,7 +41,6 @@ struct ButtonPlaygrounds: View {
     }
   }
 
-  @ViewBuilder
   func section(style: CustomButtonStyle, text: String = "Button", imageName: String = "arrow.right") -> some View {
     Group {
       ScrollView(.horizontal, showsIndicators: false) {
@@ -70,7 +69,6 @@ struct ButtonPlaygrounds: View {
     }
   }
 
-  @ViewBuilder
   func buttonSet(label: () -> some View, style: CustomButtonStyle, isDisabled: Bool = false) -> some View {
     HStack {
       button(label: label, style: style, isDisabled: isDisabled)
@@ -90,7 +88,6 @@ struct ButtonPlaygrounds: View {
     }
   }
 
-  @ViewBuilder
   func circleButtonSet(label: () -> some View, style: CustomButtonStyle, isDisabled: Bool = false) -> some View {
     HStack {
       button(label: label, style: style, isDisabled: isDisabled)
@@ -115,7 +112,6 @@ struct ButtonPlaygrounds: View {
     }
   }
 
-  @ViewBuilder
   func button(label: () -> some View, style: CustomButtonStyle, isDisabled: Bool = false) -> some View {
     Button(action: {}, label: label)
       .buttonStyle(style)

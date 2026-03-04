@@ -58,7 +58,7 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
   private func createVerifier(for jwk: BITCrypto.JWK, algorithm: JWTAlgorithm) throws -> Verifier? {
     guard let secKey = try ECPublicKey.getSecKey(curve: jwk.crv, x: jwk.x, y: jwk.y) else { return nil }
     let signatureAlgorithm = try SignatureAlgorithm(from: algorithm)
-    return Verifier(verifyingAlgorithm: signatureAlgorithm, key: secKey)
+    return Verifier(signatureAlgorithm: signatureAlgorithm, key: secKey)
   }
 }
 

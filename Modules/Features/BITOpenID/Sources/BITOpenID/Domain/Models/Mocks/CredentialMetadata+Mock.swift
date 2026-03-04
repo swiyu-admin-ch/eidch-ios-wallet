@@ -20,6 +20,7 @@ extension CredentialMetadata: Mockable {
     static let vctUrl: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-vct-url", bundle: Bundle.module)
     static let vctMetadataUri: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-vct-metadata-uri", bundle: Bundle.module)
     static let chasseralIssuer01: CredentialMetadata = Mocker.decode(fromFile: "chsseral-issuer-01-metadata", bundle: Bundle.module)
+    static let displayLocaleVariants: CredentialMetadata = Mocker.decode(fromFile: "credential-metadata-display-locale-variants", bundle: Bundle.module)
 
     static let sampleUnsupportedProofTypeAlgorithmData: Data = Mocker.getData(fromFile: "credential-metadata-unsupported-proof-type-algorithm", bundle: Bundle.module) ?? Data()
     static let sampleUnsupportedCryptographicBindingMethodData: Data = Mocker.getData(fromFile: "credential-metadata-unsupported-cryptographic-binding-method", bundle: Bundle.module) ?? Data()
@@ -38,6 +39,7 @@ extension CredentialMetadata: Mockable {
     static let sampleWithUnknownFormatData: Data = Mocker.getData(fromFile: "credential-metadata-with-unknown-format", bundle: Bundle.module) ?? Data()
 
     static let chasseralIssuer01Data: Data = Mocker.getData(fromFile: "chsseral-issuer-01-metadata", bundle: Bundle.module) ?? Data()
+    static let displayLocaleVariantsData: Data = Mocker.getData(fromFile: "credential-metadata-display-locale-variants", bundle: Bundle.module) ?? Data()
     static let chasseralIssuerUnsupportedNonceData: Data = Mocker.getData(fromFile: "chsseral-issuer-unsupported-nonce", bundle: Bundle.module) ?? Data()
 
   }

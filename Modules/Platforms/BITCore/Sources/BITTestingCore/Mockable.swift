@@ -40,8 +40,7 @@ extension Mockable {
 
   public static func decode<T: Decodable>(fromData data: Data, dateFormatter: JSONDecoder.DateDecodingStrategy = .iso8601) -> T {
     do {
-      let object: T = try JSONDecoder.decode(data, dateFormat: dateFormatter)
-      return object
+      return try JSONDecoder.decode(data, dateFormat: dateFormatter)
     } catch {
       fatalError("Can't decode object: \(error)")
     }

@@ -8,15 +8,13 @@ enum OpenIDEndpoint {
   case vcSchema(url: URL)
   case typeMetadata(url: URL)
   case metadata(fromIssuerUrl: URL)
-  #warning("TODO: Delete this case after contract updated on OMNI side")
-  case fallbackOpenIdConfiguration(issuerUrl: URL)
-  case credential(url: URL, body: CredentialRequest, accessToken: AccessToken)
+  case credential(url: URL, body: CredentialRequestBody, accessToken: AccessToken)
   case accessToken(fromTokenUrl: URL, preAuthorizedCode: String)
   case nonce(url: URL)
   case openIdConfiguration(issuerURL: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
-  case deferredCredential(url: URL, transactionId: String, accessToken: String)
+  case deferredCredential(url: URL, body: DeferredCredentialRequestBody, accessToken: String)
 }
 
 // MARK: TargetType
@@ -30,7 +28,6 @@ extension OpenIDEndpoint: TargetType {
     case .accessToken(let baseUrl, _),
          .credential(let baseUrl, _, _),
          .deferredCredential(let baseUrl, _, _),
-         .fallbackOpenIdConfiguration(let baseUrl),
          .metadata(let baseUrl),
          .nonce(let baseUrl),
          .openIdConfiguration(let baseUrl),
@@ -44,8 +41,6 @@ extension OpenIDEndpoint: TargetType {
 
   var path: String {
     switch self {
-    case .fallbackOpenIdConfiguration:
-      ".well-known/openid-configuration"
     case .metadata:
       ".well-known/openid-credential-issuer"
     case .openIdConfiguration:
@@ -64,8 +59,7 @@ extension OpenIDEndpoint: TargetType {
 
   var method: Moya.Method {
     switch self {
-    case .fallbackOpenIdConfiguration,
-         .metadata,
+    case .metadata,
          .openIdConfiguration,
          .publicKeyInfo,
          .status,
@@ -82,8 +76,7 @@ extension OpenIDEndpoint: TargetType {
 
   var task: Task {
     switch self {
-    case .fallbackOpenIdConfiguration,
-         .metadata,
+    case .metadata,
          .nonce,
          .openIdConfiguration,
          .publicKeyInfo,
@@ -92,10 +85,15 @@ extension OpenIDEndpoint: TargetType {
          .vcSchema:
       .requestPlain
 
-    case .deferredCredential(_, let transactionId, _):
-      .requestParameters(
-        parameters: ["transaction_id": transactionId],
-        encoding: JSONEncoding.default)
+    case .deferredCredential(_, let body, _):
+      switch body {
+      case .json(let request):
+        .requestParameters(
+          parameters: request.asDictionary(),
+          encoding: JSONEncoding.default)
+      case .jwe(let token):
+        .requestData(Data(token.utf8))
+      }
 
     case .accessToken(_, let preAuthorizedCode):
       .requestParameters(parameters: [
@@ -104,9 +102,14 @@ extension OpenIDEndpoint: TargetType {
       ], encoding: URLEncoding.queryString)
 
     case .credential(_, let credentialBody, _):
-      .requestParameters(
-        parameters: credentialBody.asDictionary(),
-        encoding: JSONEncoding.default)
+      switch credentialBody {
+      case .json(let request):
+        .requestParameters(
+          parameters: request.asDictionary(),
+          encoding: JSONEncoding.default)
+      case .jwe(let token):
+        .requestData(Data(token.utf8))
+      }
     }
   }
 
@@ -116,30 +119,29 @@ extension OpenIDEndpoint: TargetType {
          .publicKeyInfo,
          .typeMetadata:
       NetworkHeader.standard.raw
-    case .fallbackOpenIdConfiguration,
-         .metadata,
+    case .metadata,
          .openIdConfiguration: [
-        Self.keyAccept: [
-          Self.valueApplicationJWT,
-          Self.valueApplicationJson,
-        ].joined(separator: ", "),
-      ]
-    case .credential(_, _, let accessToken):
+        NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
+      ].raw
+    case .credential(_, let body, let accessToken):
       [
         NetworkHeader.authorization(value: "\(accessToken.tokenType.rawValue) \(accessToken.accessToken)"),
         NetworkHeader.swiyuAPIVersion("2"),
+        NetworkHeader.contentType(body.contentType.rawValue),
+        NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
       ].raw
     case .accessToken:
       [
         NetworkHeader.standard,
         NetworkHeader.swiyuAPIVersion("2"),
       ].raw
-    case .deferredCredential(_, _, let accessToken):
+    case .deferredCredential(_, let body, let accessToken):
       // OAuth 2.0 access token to be implemented with batch issuance feature
       [
-        NetworkHeader.standard,
         NetworkHeader.authorization(value: "Bearer \(accessToken)"),
         NetworkHeader.swiyuAPIVersion("2"),
+        NetworkHeader.contentType(body.contentType.rawValue),
+        NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
       ].raw
     case .status: [ Self.keyAccept: Self.valueApplicationStatusList ]
     case .vcSchema: [
@@ -155,8 +157,7 @@ extension OpenIDEndpoint: TargetType {
   #if DEBUG
   var sampleData: Data {
     switch self {
-    case .fallbackOpenIdConfiguration,
-         .metadata:
+    case .metadata:
       CredentialMetadata.Mock.sampleData
     case .openIdConfiguration:
       OpenIdConfiguration.Mock.sampleData

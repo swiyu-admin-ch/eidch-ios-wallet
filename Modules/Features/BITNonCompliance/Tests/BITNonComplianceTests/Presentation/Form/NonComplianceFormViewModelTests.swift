@@ -18,7 +18,7 @@ final class NonComplianceFormViewModelTests: XCTestCase {
     await createSuccessState()
   }
 
-  func testInit_stateIsLoadingAndFieldsEmpty() async {
+  func testInit_stateIsLoadingAndFieldsEmpty() {
     viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
 
     if case .loading = viewModel.state {

@@ -6,7 +6,7 @@ final class BetaIdViewModelTests: XCTestCase {
   // MARK: Internal
 
   @MainActor
-  func testOpenSettings() async {
+  func testOpenSettings() {
     let viewModel = BetaIdViewModel(router: mockRouter)
 
     viewModel.openBetaIdLink()

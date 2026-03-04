@@ -69,9 +69,9 @@ extension TestSdJWT: Mockable {
     static let digest2 = "QhuvIMQd5LyX8gOR3weVzSY0yGZGGHdVXY0E-NhhUfw"
     static let digest3 = "ql6yBMb-5Ql1gG833J1o3poFIDLVt9Ck79astQeVYb0"
     static let digests = [digest1, digest2, digest3]
-    // ["test_salt_1", "test_key_1", "test_value_1"]
+    /// ["test_salt_1", "test_key_1", "test_value_1"]
     static let disclosure1 = "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIiwgInRlc3RfdmFsdWVfMSJd"
-    // ["test_salt_2", "test_key_2", "test_value_2"]
+    /// ["test_salt_2", "test_key_2", "test_value_2"]
     static let disclosure2 = "WyJ0ZXN0X3NhbHRfMiIsICJ0ZXN0X2tleV8yIiwgInRlc3RfdmFsdWVfMiJd"
     // ["test_salt_3", "test_key_3", "test_value_3"]
     static let disclosure3 = "WyJ0ZXN0X3NhbHRfMyIsICJ0ZXN0X2tleV8zIiwgInRlc3RfdmFsdWVfMyJd"

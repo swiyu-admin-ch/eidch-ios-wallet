@@ -1,7 +1,6 @@
 import BITL10n
 import BITTheming
 import Foundation
-import NavigatorUI
 import SwiftUI
 
 struct WalletPairingOfferRejected: View {
@@ -12,28 +11,25 @@ struct WalletPairingOfferRejected: View {
 
   var body: some View
   {
-    InformationView(
+    InformationView2(
       image: Assets.walletPairing.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor)
-    {
-      DefaultInformationContentView(
-        primary: L10n.tkEidRequestWalletPairingOfferRejectedPrimary,
-        secondary: L10n.tkEidRequestWalletPairingOfferRejectedSecondary,
-        tertiary: L10n.tkEidRequestWalletPairingOfferRejectedTertiary,
-        tertiaryAction: { openLink(L10n.tkEidRequestWalletPairingOfferRejectedTertiaryLink) })
-    } footer: {
-      DefaultInformationFooterView(
-        primaryButtonLabel: L10n.tkEidRequestWalletPairingOfferRejectedButtonPrimary,
-        primaryButtonAction: {
+      contents: [
+        .title(L10n.tkEidRequestWalletPairingOfferRejectedPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestWalletPairingOfferRejectedSecondary, identifier: "secondaryText"),
+        .captionButton(L10n.tkEidRequestWalletPairingOfferRejectedTertiary, { _ in
+          openLink(L10n.tkEidRequestWalletPairingOfferRejectedTertiaryLink)
+        }),
+      ],
+      actions: [
+        .primary(L10n.tkEidRequestWalletPairingOfferRejectedButtonPrimary, identifier: "primaryButton", { navigator in
           onRetry(Void())
           navigator.returnToCheckpoint(EIDRequestCheckpoints.walletPairingOffer)
-        })
-    }
+        }),
+      ])
   }
 
   // MARK: Private
 
-  @Environment(\.navigator) private var navigator
   @Environment(\.openURL) private var openURL
 
   private func openLink(_ urlString: String) {

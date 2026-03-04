@@ -43,7 +43,6 @@ public struct ActivityListView: View {
 
   private let credentialId: UUID
 
-  @ViewBuilder
   private var content: some View {
     ZStack {
       ThemingAssets.Background.secondary.swiftUIColor
@@ -67,7 +66,6 @@ public struct ActivityListView: View {
     }
   }
 
-  @ViewBuilder
   private func list(_ viewModels: [ActivityCellViewModel]) -> some View {
     List(viewModels) { viewModel in
       ActivityCell(viewModel) {

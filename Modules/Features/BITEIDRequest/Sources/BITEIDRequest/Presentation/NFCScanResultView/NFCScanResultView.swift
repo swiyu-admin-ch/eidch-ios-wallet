@@ -39,14 +39,13 @@ struct NFCScanResultView: View {
     .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
     .toolbarBackground(ThemingAssets.Background.secondary.swiftUIColor)
-    .navigationBarBackButtonHidden(true)
+    .navigationBarBackButtonHidden()
   }
 
   // MARK: Private
 
   @StateObject private var viewModel: NFCScanResultViewModel
 
-  @ViewBuilder
   private func content(_ entries: [NFCScanResultViewModel.NFCScanResultEntryType]) -> some View {
     ZStack {
       ThemingAssets.Background.secondary.swiftUIColor
@@ -70,7 +69,6 @@ struct NFCScanResultView: View {
     }
   }
 
-  @ViewBuilder
   private func footer() -> some View {
     Button(action: viewModel.primaryAction, label: {
       Text(L10n.tkGlobalContinue)

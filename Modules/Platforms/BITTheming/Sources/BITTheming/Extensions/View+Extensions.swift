@@ -8,9 +8,8 @@ extension View {
       GeometryReader { geometryProxy in
         Color.clear
           .preference(key: SizePreferenceKey.self, value: geometryProxy.size)
-      }
-    )
-    .onPreferenceChange(SizePreferenceKey.self, perform: onChange)
+      })
+      .onPreferenceChange(SizePreferenceKey.self, perform: onChange)
   }
 
   public func readSafeAreaInsets(onChange: @escaping (EdgeInsets) -> Void) -> some View {
@@ -18,9 +17,8 @@ extension View {
       GeometryReader { geometryProxy in
         Color.clear
           .preference(key: SafeAreaInsetsPreferenceKey.self, value: geometryProxy.safeAreaInsets)
-      }
-    )
-    .onPreferenceChange(SafeAreaInsetsPreferenceKey.self, perform: onChange)
+      })
+      .onPreferenceChange(SafeAreaInsetsPreferenceKey.self, perform: onChange)
   }
 
   @ViewBuilder

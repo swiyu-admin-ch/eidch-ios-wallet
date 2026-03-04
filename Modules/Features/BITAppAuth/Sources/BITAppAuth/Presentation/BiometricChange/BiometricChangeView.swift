@@ -35,7 +35,6 @@ struct BiometricChangeView: View {
     }
   }
 
-  @ViewBuilder
   private func passwordView() -> some View {
     PinCodeFormView(
       pinCode: $viewModel.pinCode,
@@ -51,7 +50,6 @@ struct BiometricChangeView: View {
       })
   }
 
-  @ViewBuilder
   private func disabledBiometricsView() -> some View {
     InformationView(
       image: viewModel.biometricType.image,

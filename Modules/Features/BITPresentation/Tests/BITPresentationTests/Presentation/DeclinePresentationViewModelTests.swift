@@ -19,13 +19,13 @@ final class DeclinePresentationViewModelTests: XCTestCase {
     viewModel = DeclinePresentationViewModel(context: context, router: router)
   }
 
-  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() {
+  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
     Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
     viewModel = DeclinePresentationViewModel(context: context, router: router)
 
     XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
-    XCTAssertEqual(String(data: viewModel.verifierDisplay.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(viewModel.verifierDisplay.trustInformation, context.trustInformation)
   }
 

@@ -130,7 +130,7 @@ extension BrandingOverlay1x1 {
     "}}"
   }
 
-  // Resolve name to JSONPath "Fullname: {{firstname}} {{lastname}}" -> "Fullname: {{$.firstname}} {{$.lastname}}"
+  /// Resolve name to JSONPath "Fullname: {{firstname}} {{lastname}}" -> "Fullname: {{$.firstname}} {{$.lastname}}"
   private func resolveAttributeFieldTemplate(_ field: String?, using attributeTransform: (String) -> String?) -> String? {
     field.map {
       $0.replacing(Self.regex) { match in

@@ -17,8 +17,18 @@ struct RequestObjectValidator: RequestObjectValidatorProtocol {
   // MARK: Internal
 
   func validate(_ requestObject: RequestObject) -> Bool {
-    requestObject.isValid
+    guard requestObject.isValid else { return false }
+    do {
+      try requestObjectEncryptionValidator.validate(requestObject)
+      return true
+    } catch {
+      return false
+    }
   }
+
+  // MARK: Private
+
+  @Injected(\.requestObjectEncryptionValidator) private var requestObjectEncryptionValidator
 }
 
 extension RequestObject {
@@ -37,13 +47,11 @@ extension RequestObject {
 
   private static let didKey = "did"
   private static let vpTokenKey = "vp_token"
-  private static let directPostKey = "direct_post"
   private static let regex = "^did:[a-z0-9]+:[a-zA-Z0-9.\\-_:]+$"
   private static let constraintPathRegex = #".*\[\s*\?.*"#
 
   private func isResponseValid() -> Bool {
-    responseType == Self.vpTokenKey &&
-      responseMode == Self.directPostKey
+    responseType == Self.vpTokenKey
   }
 
   private func isClientInformationValid() -> Bool {
@@ -56,7 +64,7 @@ extension RequestObject {
   }
 
   private func areInputDescriptorsValid() -> Bool {
-    let descriptors = presentationDefinition.inputDescriptors
+    guard let descriptors = presentationDefinition?.inputDescriptors else { return true }
     return descriptors.allSatisfy { descriptor in
       !descriptor.constraints.fields.isEmpty
     }
@@ -66,6 +74,8 @@ extension RequestObject {
     guard let regex = try? Regex(Self.constraintPathRegex) else {
       return false
     }
+
+    guard let presentationDefinition else { return true }
 
     return presentationDefinition.inputDescriptors.allSatisfy { descriptor in
       descriptor.constraints.fields.allSatisfy { field in

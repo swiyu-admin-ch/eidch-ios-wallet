@@ -47,14 +47,10 @@ struct HomeView: View {
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModels(with: scheme.rawValue)
       }
-      .popup(isPresented: $viewModel.isCredentialSavedPopupPresented) {
-        savedCredentialPopup()
-      } customize: {
-        $0.type(.floater(verticalPadding: orientation.isPortrait ? 130 : 0))
-          .closeOnTap(true)
-          .autohideIn(5)
-          .appearFrom(.bottomSlide)
-      }
+      .toastMessage(
+        isPresented: $viewModel.isToastPresented,
+        message: viewModel.toastMessage,
+        clearAction: viewModel.clearToast)
       .accessibilityElement(children: .contain)
       .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
@@ -90,7 +86,6 @@ struct HomeView: View {
 
 extension HomeView {
 
-  @ViewBuilder
   private func mainContent() -> some View {
     List {
       RequestCasesListView(viewModel.requestCases)
@@ -120,7 +115,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func emptyView() -> some View {
     ViewThatFits(in: .vertical) {
       VStack {
@@ -139,7 +133,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func errorView(_ error: Error) -> some View {
     ViewThatFits(in: .vertical) {
       VStack {
@@ -151,7 +144,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func menuButton() -> some View {
     Menu {
       Section {
@@ -216,7 +208,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func credentialsList() -> some View {
     ForEach(viewModel.credentials, id: \.id) { credential in
       Button(action: { viewModel.openCredential(credential) }, label: {
@@ -226,7 +217,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func credentialEmptyStateView() -> some View {
     VStack(alignment: .center, spacing: .x1) {
       if !sizeCategory.isAccessibilityCategory {
@@ -272,27 +262,19 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func emptyStateView(_ error: Error) -> some View {
     EmptyStateView(.error(error: error)) { Text(L10n.tkHomeHomescreenEmptyStateButton) } action: { await viewModel.refresh() }
       .padding(.horizontal, .x6)
-  }
-
-  @ViewBuilder
-  private func savedCredentialPopup() -> some View {
-    LabelBadge(text: L10n.tkHomeSaveDeferredCredentialPopup, backgroundColor: ThemingAssets.Brand.Bright.firGreen.swiftUIColor, image: "checkmark.circle")
   }
 }
 
 // MARK: - Portrait
 
 extension HomeView {
-  @ViewBuilder
   private func portraitLayout() -> some View {
     mainContent()
   }
 
-  @ViewBuilder
   private func portraitFooter() -> some View {
     VStack {
       HStack {
@@ -312,7 +294,6 @@ extension HomeView {
 // MARK: - Landscape
 
 extension HomeView {
-  @ViewBuilder
   private func landscapeLayout() -> some View {
     ViewThatFits(in: .vertical) {
       landscapeContentLayout()
@@ -320,7 +301,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func landscapeContentLayout() -> some View {
     HStack {
       landscapeFooter()
@@ -329,7 +309,6 @@ extension HomeView {
     }
   }
 
-  @ViewBuilder
   private func landscapeScrollableContentLayout() -> some View {
     HStack {
       landscapeFooter()
@@ -340,7 +319,6 @@ extension HomeView {
     .padding(.vertical, .x4)
   }
 
-  @ViewBuilder
   private func landscapeFooter() -> some View {
     VStack {
       Spacer()

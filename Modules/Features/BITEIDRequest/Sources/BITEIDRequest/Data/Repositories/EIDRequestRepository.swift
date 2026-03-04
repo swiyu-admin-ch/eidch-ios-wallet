@@ -45,8 +45,7 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
       return try await networkService.request(
         EIDRequestEndpoint.legalRepresentantVerification(caseId: requestCaseId),
         plugins: [ClientAttestationPlugin(
-          clientAttestation: clientAttestation.rawJWS
-        )])
+          clientAttestation: clientAttestation.rawJWS)])
     } catch let error as NetworkError where error.status == .badRequest {
       throw try parseError(error)
     } catch {

@@ -20,25 +20,25 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() {
+  func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
     Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
     viewModel = PresentationRequestResultStateViewModel(state: .error, context: context, router: router)
 
     XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
-    XCTAssertEqual(String(data: viewModel.verifierDisplay.logo!, encoding: .utf8)!, "EN_logoUri")
+    XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(viewModel.verifierDisplay.trustInformation, context.trustInformation)
   }
 
   @MainActor
-  func testFinish_delegateFinishCalled() async throws {
+  func testFinish_delegateFinishCalled() async {
     await viewModel.finish()
 
     XCTAssertEqual(presentationFinishDelegateMock.finishCalled, true)
   }
 
   @MainActor
-  func testRetry_delegateRetryCalled() async throws {
+  func testRetry_delegateRetryCalled() {
     viewModel.retry()
 
     XCTAssertEqual(presentationFinishDelegateMock.retryCalled, true)

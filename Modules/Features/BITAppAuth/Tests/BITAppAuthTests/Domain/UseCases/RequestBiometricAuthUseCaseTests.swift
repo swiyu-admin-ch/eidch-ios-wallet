@@ -59,7 +59,7 @@ final class RequestBiometricAuthUseCaseTests: XCTestCase {
     }
   }
 
-  func testEvents() async throws {
+  func testEvents() async {
     spyContext.evaluatePolicyLocalizedReasonClosure = { _, _ in true }
     spyContext.canEvaluatePolicyErrorClosure = { _, _ in false }
 

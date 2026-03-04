@@ -52,7 +52,7 @@ final class JsonCanonicalizerTests: XCTestCase {
     let input = try sample.input()
     let expectedOutput = try String(data: sample.outputHex(), encoding: .utf8)
 
-    let output = try JsonCanonicalizer().canonicalize(input)
+    let output = try JsonCanonicalizer().canonicalize(jsonString: input)
 
     XCTAssertEqual(expectedOutput, dataToHexString(output))
   }

@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - RawCredentialData
 
-public struct RawCredentialData: Identifiable, Codable {
+public struct RawCredentialData: Identifiable, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -43,16 +43,5 @@ public struct RawCredentialData: Identifiable, Codable {
     case id
     case rawOIDMetadata
     case rawOcaBundle
-  }
-}
-
-// MARK: Equatable
-
-extension RawCredentialData: Equatable {
-
-  public static func == (lhs: RawCredentialData, rhs: RawCredentialData) -> Bool {
-    lhs.id == rhs.id &&
-      lhs.rawOIDMetadata == rhs.rawOIDMetadata &&
-      lhs.rawOcaBundle == rhs.rawOcaBundle
   }
 }

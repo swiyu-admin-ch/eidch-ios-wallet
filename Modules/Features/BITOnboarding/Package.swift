@@ -21,6 +21,7 @@ let package = Package(
     .package(path: "../../Platforms/BITAnalytics"),
     .package(path: "../../Platforms/BITSettings"),
     .package(path: "../BITAppAuth"),
+    .package(path: "../BITActivity"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
   ],
@@ -33,6 +34,7 @@ let package = Package(
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "BITAppAuth", package: "BITAppAuth"),
+        .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITSettings", package: "BITSettings"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "PopupView", package: "PopupView"),

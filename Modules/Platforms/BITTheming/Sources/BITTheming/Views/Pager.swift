@@ -39,8 +39,7 @@ public struct Pager<Content: View>: View {
           }
 
           updateAccessibilityFocus()
-        }
-      )
+        })
       .onAppear {
         updateAccessibilityFocus()
       }

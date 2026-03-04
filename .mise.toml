@@ -3,8 +3,8 @@ _.file = '.env'
 
 [tools]
 xcodegen = '2.44.1'
-swiftlint = '0.62.1'
-swiftformat = '0.58.5'
+swiftlint = '0.63.2'
+swiftformat = '0.59.1'
 swiftgen = '6.6.3'
 danger-swift = '3.22.0'
 ruby = '3.4.7'
@@ -151,7 +151,7 @@ run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:prod']
 [tasks.tag]
 description = 'Run tag a version for a type defined as an env variable'
 depends = ['xcode-configuration-ci']
-run = ['bundle install', 'bundle exec fastlane ios tag_version version_bump_type:$APP_VERSION_BUMP_TYPE']
+run = ['bundle install', 'bundle exec fastlane run tag_version version_bump_type:$APP_VERSION_BUMP_TYPE']
 
 [tasks.ci-build-ref-sim]
 description = 'Run simulator build (ref)'
@@ -191,4 +191,4 @@ depends = ['swiftformat', 'swiftlint', 'sort-text-keys']
 
 [tasks.sort-text-keys]
 description = 'Sorts text keys and fails on duplicates'
-run = ['Scripts/sort_text_keys.rb']
+run = ['.resources/scripts/sort_text_keys.rb']

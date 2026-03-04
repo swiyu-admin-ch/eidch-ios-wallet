@@ -8,7 +8,7 @@ import Spyable
 
 @Spyable
 public protocol DeleteCredentialUseCaseProtocol {
-  func execute(_ credential: VerifiableCredential) async throws
+  func execute(_ credential: CredentialProtocol) async throws
 }
 
 // MARK: - DeleteCredentialError
@@ -21,7 +21,7 @@ enum DeleteCredentialError: Error {
 
 struct DeleteCredentialUseCase: DeleteCredentialUseCaseProtocol {
 
-  func execute(_ credential: VerifiableCredential) async throws {
+  func execute(_ credential: CredentialProtocol) async throws {
     if let keyAlgorithm = credential.keyBinding?.algorithm, let keyId = credential.keyBinding?.id, let algorithm = VaultAlgorithm(rawValue: keyAlgorithm) {
       try? keyManager.deleteKeyPair(withIdentifier: keyId.uuidString, algorithm: algorithm)
     }

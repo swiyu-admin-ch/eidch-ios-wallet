@@ -70,7 +70,11 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
   }
 
   private func getPresentationRequestFields(from requestObject: RequestObject) -> [NonComplianceExcessiveDataReportBody.Field] {
-    requestObject.presentationDefinition.inputDescriptors
+    guard let presentationDefinition = requestObject.presentationDefinition else {
+      return []
+    }
+
+    return presentationDefinition.inputDescriptors
       .flatMap(\.constraints.fields)
       .flatMap { field in
         field.path.map { path in

@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - LoginHostingController
 
-public class LoginHostingController<Content>: UIHostingController<Content> where Content: View {
+public class LoginHostingController<Content: View>: UIHostingController<Content> {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)

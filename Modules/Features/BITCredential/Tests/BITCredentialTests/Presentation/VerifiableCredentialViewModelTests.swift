@@ -116,7 +116,7 @@ final class VerifiableCredentialViewModelTests: XCTestCase {
     getCredentialDisplayUseCase.executeForColorSchemeReturnValue = CredentialDisplay(locale: "en", summary: "Name: {{$.firstName}}")
     let claim = CredentialClaim(key: "firstName", value: nil)
     let cluster = CredentialClaimCluster(claims: [claim])
-    let credential = VerifiableCredential(progressionState: .unaccepted, payload: Data(), clusters: [cluster], format: "format", issuer: "issuer")
+    let credential = VerifiableCredential(progressionState: .unaccepted, payload: Data(), clusters: [cluster], format: "format", issuerUrl: "https://issuer", issuer: "issuer")
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 

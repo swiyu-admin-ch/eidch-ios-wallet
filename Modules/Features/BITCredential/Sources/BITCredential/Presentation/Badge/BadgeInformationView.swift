@@ -50,8 +50,7 @@ public struct BadgeInformationView: View {
               .padding(.x3)
               .background(
                 RoundedRectangle(cornerRadius: 10)
-                  .foregroundStyle(ThemingAssets.Background.groupedRow.swiftUIColor)
-              )
+                  .foregroundStyle(ThemingAssets.Background.groupedRow.swiftUIColor))
           }
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           .padding(.horizontal, .x2)

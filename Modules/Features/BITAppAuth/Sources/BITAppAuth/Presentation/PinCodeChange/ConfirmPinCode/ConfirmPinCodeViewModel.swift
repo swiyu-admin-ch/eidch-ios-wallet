@@ -64,7 +64,9 @@ public class ConfirmPinCodeViewModel: ObservableObject, Vibrating {
   @Injected(\.updatePinCodeUseCase) private var updatePinCode: UpdatePinCodeUseCaseProtocol
   @Injected(\.validatePinCodeRuleUseCase) private var validatePinCode: ValidatePinCodeRuleUseCaseProtocol
 
-  private var attemptLeft: Int { attemptsLimit - attempts }
+  private var attemptLeft: Int {
+    attemptsLimit - attempts
+  }
 
   private func validatePinCodeRuleCompliance() throws {
     try validatePinCode.execute(pinCode)

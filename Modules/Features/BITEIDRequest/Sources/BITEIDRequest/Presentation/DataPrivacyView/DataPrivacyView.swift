@@ -1,7 +1,5 @@
 import BITL10n
 import BITTheming
-import Factory
-import NavigatorUI
 import SwiftUI
 
 struct DataPrivacyView: View {
@@ -9,27 +7,25 @@ struct DataPrivacyView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.shield.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkEidRequestDataPrivacyTitle,
-          secondary: L10n.tkEidRequestDataPrivacyBody,
-          tertiary: L10n.tkEidRequestDataPrivacyLinkText,
-          tertiaryAction: { openLink(L10n.tkEidRequestDataPrivacyLinkValue) })
-      },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkEidRequestDataPrivacyPrimaryButton,
-          primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.attestation) })
-      })
+      contents: [
+        .title(L10n.tkEidRequestDataPrivacyTitle, identifier: "primaryText"),
+        .body(L10n.tkEidRequestDataPrivacyBody, identifier: "secondaryText"),
+        .captionButton(L10n.tkEidRequestDataPrivacyLinkText, { _ in
+          openLink(L10n.tkEidRequestDataPrivacyLinkValue)
+        }),
+      ],
+      actions: [
+        .primary(L10n.tkEidRequestDataPrivacyPrimaryButton, identifier: "primaryButton", { navigator in
+          navigator.navigate(to: EIDRequestDestinations.setupSDK)
+        }),
+      ])
       .defaultEidRequestToolbar()
   }
 
   // MARK: Private
 
-  @Environment(\.navigator) private var navigator
   @Environment(\.openURL) private var openURL
 
   private func openLink(_ link: String) {

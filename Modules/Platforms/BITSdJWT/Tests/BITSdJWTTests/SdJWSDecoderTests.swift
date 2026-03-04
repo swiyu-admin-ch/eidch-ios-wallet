@@ -235,7 +235,7 @@ final class SdJWSDecoderTests: XCTestCase {
   func testDecode_onePartDisclosure_throwsError() throws {
     // ["test_salt_1"]
     let sdJwt = createInvalidDisclosureSdJwt(disclosure: "WyJ0ZXN0X3NhbHRfMSJd")
-    let data = sdJwt.data(using: .utf8)!
+    let data = try XCTUnwrap(sdJwt.data(using: .utf8))
 
     XCTAssertThrowsError(try decoder.decode(TestSdJWT.self, from: data)) { error in
       XCTAssertEqual(error as? SdJWSDecoderError, .invalidDisclosure)
@@ -245,7 +245,7 @@ final class SdJWSDecoderTests: XCTestCase {
   func testDecode_twoPartDisclosure_throwsError() throws {
     // ["test_salt_1", "test_key_1"]
     let sdJwt = createInvalidDisclosureSdJwt(disclosure: "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIl0")
-    let data = sdJwt.data(using: .utf8)!
+    let data = try XCTUnwrap(sdJwt.data(using: .utf8))
 
     XCTAssertThrowsError(try decoder.decode(TestSdJWT.self, from: data)) { error in
       XCTAssertEqual(error as? SdJWSDecoderError, .invalidDisclosure)
@@ -255,7 +255,7 @@ final class SdJWSDecoderTests: XCTestCase {
   func testDecode_tooManyPartsDisclosure_throwsError() throws {
     // ["test_salt_1", "test_key_1", "test_value_1", "test"]
     let sdJwt = createInvalidDisclosureSdJwt(disclosure: "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIiwgInRlc3RfdmFsdWVfMSIsICJ0ZXN0Il0")
-    let data = sdJwt.data(using: .utf8)!
+    let data = try XCTUnwrap(sdJwt.data(using: .utf8))
 
     XCTAssertThrowsError(try decoder.decode(TestSdJWT.self, from: data)) { error in
       XCTAssertEqual(error as? SdJWSDecoderError, .invalidDisclosure)
@@ -369,17 +369,29 @@ private struct TestDatePayload: JWT {
 
   let type: String? = "test"
 
-  var issuer: String? { nil }
+  var issuer: String? {
+    nil
+  }
 
-  var audience: String? { nil }
+  var audience: String? {
+    nil
+  }
 
-  var subject: String? { nil }
+  var subject: String? {
+    nil
+  }
 
-  var issuedAt: Date? { nil }
+  var issuedAt: Date? {
+    nil
+  }
 
-  var expiredAt: Date? { nil }
+  var expiredAt: Date? {
+    nil
+  }
 
-  var activatedAt: Date? { nil }
+  var activatedAt: Date? {
+    nil
+  }
 
   // MARK: Private
 

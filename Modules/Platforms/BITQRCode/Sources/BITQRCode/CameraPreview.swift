@@ -168,13 +168,11 @@ public class CameraPreviewView: UIView {
       x: (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4,
       y: (corners[0].y + corners[1].y + corners[2].y + corners[3].y) / 4)
 
-    let sortedCorners = corners.sorted { corner1, corner2 in
+    return corners.sorted { corner1, corner2 in
       let angle1 = atan2(corner1.y - center.y, corner1.x - center.x)
       let angle2 = atan2(corner2.y - center.y, corner2.x - center.x)
       return angle1 < angle2
     }
-
-    return sortedCorners
   }
 
   private func boundsHaveChanged() -> Bool {

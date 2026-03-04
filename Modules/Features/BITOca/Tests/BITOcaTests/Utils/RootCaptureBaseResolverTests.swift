@@ -15,7 +15,7 @@ final class RootCaptureBaseResolverTests: XCTestCase {
   }
 
   func testResolve_noCaptureBases_throwsError() throws {
-    XCTAssertThrowsError(try try resolver.resolve([])) { error in
+    XCTAssertThrowsError(try resolver.resolve([])) { error in
       XCTAssertEqual(error as? OcaError, .invalidRootCaptureBase)
     }
   }

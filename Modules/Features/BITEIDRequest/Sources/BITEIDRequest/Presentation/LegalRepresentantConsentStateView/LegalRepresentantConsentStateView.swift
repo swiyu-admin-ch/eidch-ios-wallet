@@ -18,13 +18,14 @@ struct LegalRepresentantConsentStateView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: viewModel.image,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: content,
-      footer: {
-        DefaultInformationFooterView(primaryButtonLabel: viewModel.primaryButtonText, primaryButtonAction: viewModel.primaryAction)
-      })
+      contents: contents,
+      actions: [
+        .primary(viewModel.primaryButtonText, identifier: "primaryButton", { _ in
+          viewModel.primaryAction()
+        }),
+      ])
       .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .navigate(to: $viewModel.destination)
       .toolbar(.visible)
@@ -43,18 +44,23 @@ struct LegalRepresentantConsentStateView: View {
 }
 
 extension LegalRepresentantConsentStateView {
-  @ViewBuilder
-  private func content() -> some View {
+  private var contents: [InformationView2.ContentType] {
     if case .inQueue(let inQueueStateViewModel) = viewModel.state, inQueueStateViewModel.isLegalRepresentantConsentVerified {
-      queueInformationViewContent(inQueueStateViewModel)
+      [
+        .anyView { queueInformationViewContent(inQueueStateViewModel) },
+      ]
     } else if case .readyForOnlineSession(let readyForOnlineSessionViewModel) = viewModel.state {
-      readyForOnlineSessionContent(readyForOnlineSessionViewModel)
+      [
+        .anyView { readyForOnlineSessionContent(readyForOnlineSessionViewModel) },
+      ]
     } else {
-      DefaultInformationContentView(primary: viewModel.primaryText, secondary: viewModel.secondaryText)
+      [
+        .title(viewModel.primaryText, identifier: AccessibilityIdentifier.primaryText.rawValue),
+        .body(viewModel.secondaryText, identifier: AccessibilityIdentifier.secondaryText.rawValue),
+      ]
     }
   }
 
-  @ViewBuilder
   private func queueInformationViewContent(_ inQueueStateViewModel: InQueueStateViewModel) -> some View {
     VStack(alignment: .leading, spacing: .x6) {
       Text(viewModel.primaryText)
@@ -92,7 +98,6 @@ extension LegalRepresentantConsentStateView {
     .frame(maxWidth: .infinity)
   }
 
-  @ViewBuilder
   private func readyForOnlineSessionContent(_ readyForOnlineSessionViewModel: ReadyForOnlineSessionStateViewModel) -> some View {
     VStack(alignment: .leading, spacing: .x6) {
       Text(viewModel.primaryText)

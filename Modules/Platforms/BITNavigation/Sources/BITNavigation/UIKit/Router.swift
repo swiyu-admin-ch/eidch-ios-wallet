@@ -4,7 +4,7 @@ import UIKit
 
 // MARK: - Router
 
-open class Router<VC>: RouterProtocol where VC: UIViewController {
+open class Router<VC: UIViewController>: RouterProtocol {
 
   // MARK: Lifecycle
 

@@ -162,6 +162,8 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
   private static let issuer = "issuer"
   private static let buffer = 5.0
 
+  private let issuerUrlMock = "https://issuer"
+
   private var mockCredential: VerifiableCredential!
   private var anyCredentialSpy: AnyCredentialSpy!
 
@@ -174,7 +176,7 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
   // swiftlint:enable all
 
   private func success(status: CredentialStatus = .valid, validatorStatus: VcStatus = .valid) {
-    mockCredential = VerifiableCredential(progressionState: .accepted, payload: CredentialPayload.Mock.default, format: "vc+sd-jwt", issuer: Self.issuer)
+    mockCredential = VerifiableCredential(progressionState: .accepted, payload: CredentialPayload.Mock.default, format: "vc+sd-jwt", issuerUrl: issuerUrlMock, issuer: Self.issuer)
     let anyStatusSpy = AnyStatusSpy()
     anyStatusSpy.type = .tokenStatusList
     anyCredentialSpy.status = anyStatusSpy

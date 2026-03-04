@@ -14,7 +14,7 @@ private enum PresentationEndpointError: Error {
 
 enum PresentationEndpoint {
   case requestObject(url: URL)
-  case submission(url: URL, presentationBody: PresentationRequestBody)
+  case submission(url: URL, authorizationResponse: AuthorizationResponseBody)
   case errorSubmission(url: URL, presentationErrorBody: PresentationErrorRequestBody)
 }
 
@@ -52,8 +52,8 @@ extension PresentationEndpoint: TargetType {
     switch self {
     case .requestObject:
       .requestPlain
-    case .submission(_, presentationBody: let presentationBody):
-      .requestParameters(parameters: presentationBody.asDictionary(), encoding: URLEncoding.httpBody)
+    case .submission(_, authorizationResponse: let authorizationResponse):
+      .requestParameters(parameters: authorizationResponse.asDictionary(), encoding: URLEncoding.httpBody)
     case .errorSubmission(_, presentationErrorBody: let presentationErrorBody):
       .requestParameters(parameters: presentationErrorBody.asDictionary(), encoding: URLEncoding.httpBody)
     }
@@ -63,9 +63,15 @@ extension PresentationEndpoint: TargetType {
     switch self {
     case .requestObject:
       NetworkHeader.standard.raw
-    case .errorSubmission,
-         .submission:
-      NetworkHeader.form.raw
+    case .errorSubmission:
+      [
+        NetworkHeader.form,
+      ].raw
+    case .submission(_, let authorizationResponse):
+      [
+        NetworkHeader.form,
+        NetworkHeader.swiyuAPIVersion(authorizationResponse.type == .dcql ? "2" : "1"),
+      ].raw
     }
   }
 }

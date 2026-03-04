@@ -12,10 +12,6 @@ public struct VcSdJwtOcaRendering: Decodable, Equatable {
     case uriIntegrity = "uri#integrity"
   }
 
-  public static func == (lhs: VcSdJwtOcaRendering, rhs: VcSdJwtOcaRendering) -> Bool {
-    lhs.uri == rhs.uri
-      && lhs.uriIntegrity == rhs.uriIntegrity
-  }
 }
 
 #if DEBUG

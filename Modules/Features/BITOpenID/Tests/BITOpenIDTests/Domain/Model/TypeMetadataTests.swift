@@ -6,7 +6,7 @@ final class TypeMetadataTests: XCTestCase {
 
   // MARK: - Valid JSON Decoding
 
-  func testValidTypeMetadataDecoding() {
+  func testValidTypeMetadataDecoding() throws {
     let metadata = TypeMetadata.Mock.sampleUrlOca
 
     XCTAssertEqual(metadata.vct, "https://example.com/education_credential")
@@ -18,7 +18,7 @@ final class TypeMetadataTests: XCTestCase {
 
     // Display Checks
     XCTAssertEqual(metadata.displays?.count, 1)
-    let display = metadata.displays!.first!
+    let display = try XCTUnwrap(metadata.displays?.first)
     XCTAssertEqual(display.lang, "en")
     XCTAssertEqual(display.name, "Education Credential")
     XCTAssertEqual(display.description, "Academic credential for students")
@@ -28,7 +28,7 @@ final class TypeMetadataTests: XCTestCase {
     XCTAssertEqual(display.rendering?.oca?.uriIntegrity, "sha256-9cLlJNXN-TsMk-PmKjZ5t0WRL5ca_xGgX3c1VLmXfh-WRL5")
 
     // Rendering Checks
-    let rendering = display.rendering!
+    let rendering = try XCTUnwrap(display.rendering)
     XCTAssertNotNil(rendering.simple)
     XCTAssertEqual(rendering.simple?.backgroundColor, "#FFFFFF")
     XCTAssertEqual(rendering.simple?.textColor, "#000000")
@@ -40,7 +40,7 @@ final class TypeMetadataTests: XCTestCase {
 
     // SVG Templates
     XCTAssertEqual(rendering.svgTemplates?.count, 1)
-    let svgTemplate = rendering.svgTemplates!.first!
+    let svgTemplate = try XCTUnwrap(rendering.svgTemplates?.first)
     XCTAssertEqual(svgTemplate.uri, "https://example.com/template.svg")
     XCTAssertEqual(svgTemplate.uriIntegrity, "sha256-validBase64==")
     XCTAssertEqual(svgTemplate.properties?.orientation, "landscape")
@@ -50,16 +50,16 @@ final class TypeMetadataTests: XCTestCase {
     // Claims
     XCTAssertEqual(metadata.claims?.count, 2)
 
-    let claim1 = metadata.claims![0]
+    let claim1 = try XCTUnwrap(metadata.claims?[0])
     XCTAssertEqual(claim1.path.count, 1)
     XCTAssertEqual(claim1.display?.count, 1)
-    XCTAssertEqual(claim1.display!.first!.lang, "en")
-    XCTAssertEqual(claim1.display!.first!.label, "Full Name")
-    XCTAssertEqual(claim1.display!.first!.description, "The student's full name.")
+    XCTAssertEqual(claim1.display?.first?.lang, "en")
+    XCTAssertEqual(claim1.display?.first?.label, "Full Name")
+    XCTAssertEqual(claim1.display?.first?.description, "The student's full name.")
     XCTAssertEqual(claim1.sd, .allowed)
     XCTAssertEqual(claim1.svgId, "full_name")
 
-    let claim2 = metadata.claims![1]
+    let claim2 = try XCTUnwrap(metadata.claims?[1])
     XCTAssertEqual(claim2.path.count, 3)
     XCTAssertEqual(claim2.sd, .never)
     XCTAssertNil(claim2.display)
@@ -67,7 +67,7 @@ final class TypeMetadataTests: XCTestCase {
 
   // MARK: - Invalid JSON Handling
 
-  func testInvalidTypeMetadataDecoding() {
+  func testInvalidTypeMetadataDecoding() throws {
     let json = """
     {
         "vct": "https://example.com/education_credential",
@@ -77,7 +77,7 @@ final class TypeMetadataTests: XCTestCase {
         ]
     }
     """
-    let jsonData = json.data(using: .utf8)!
+    let jsonData = try XCTUnwrap(json.data(using: .utf8))
 
     XCTAssertThrowsError(try JSONDecoder().decode(TypeMetadata.self, from: jsonData)) { error in
       XCTAssertTrue(error is DecodingError, "Expected DecodingError but got \(error)")
@@ -86,9 +86,9 @@ final class TypeMetadataTests: XCTestCase {
 
   // MARK: - Edge Cases
 
-  func testEmptyTypeMetadataDecoding() {
+  func testEmptyTypeMetadataDecoding() throws {
     let json = "{}"
-    let jsonData = json.data(using: .utf8)!
+    let jsonData = try XCTUnwrap(json.data(using: .utf8))
 
     do {
       let metadata = try JSONDecoder().decode(TypeMetadata.self, from: jsonData)
@@ -105,7 +105,7 @@ final class TypeMetadataTests: XCTestCase {
     }
   }
 
-  func testPartialTypeMetadataDecoding() {
+  func testPartialTypeMetadataDecoding() throws {
     let json = """
     {
         "vct": "https://example.com/education_credential",
@@ -118,7 +118,7 @@ final class TypeMetadataTests: XCTestCase {
         ]
     }
     """
-    let jsonData = json.data(using: .utf8)!
+    let jsonData = try XCTUnwrap(json.data(using: .utf8))
 
     do {
       let metadata = try JSONDecoder().decode(TypeMetadata.self, from: jsonData)
@@ -126,7 +126,7 @@ final class TypeMetadataTests: XCTestCase {
       XCTAssertEqual(metadata.name, "Education Credential")
       XCTAssertEqual(metadata.displays?.count, 1)
 
-      let display = metadata.displays!.first!
+      let display = try XCTUnwrap(metadata.displays?.first)
       XCTAssertEqual(display.lang, "en")
       XCTAssertEqual(display.name, "Partial Display")
       XCTAssertNil(display.description)

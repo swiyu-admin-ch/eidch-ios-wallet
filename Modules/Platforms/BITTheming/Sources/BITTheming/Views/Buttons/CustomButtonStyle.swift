@@ -1,18 +1,38 @@
 import SwiftUI
 
 extension ButtonStyle where Self == CustomButtonStyle {
-  public static var bezeled: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .bezeled) }
-  public static var secondary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .secondary) }
-  public static var destructive: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .destructive) }
-  public static var primary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .primary) }
-  public static var tertiary: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .tertiary) }
-  public static var firGreen: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .firGreen) }
-  public static var navyBlue: CustomButtonStyle { CustomButtonStyle(buttonConfiguration: .navyBlue) }
+  public static var bezeled: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .bezeled)
+  }
+
+  public static var secondary: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .secondary)
+  }
+
+  public static var destructive: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .destructive)
+  }
+
+  public static var primary: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .primary)
+  }
+
+  public static var tertiary: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .tertiary)
+  }
+
+  public static var firGreen: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .firGreen)
+  }
+
+  public static var navyBlue: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .navyBlue)
+  }
 }
 
 // MARK: - CircleButton
 
-public struct CircleButton<Label>: View where Label: View {
+public struct CircleButton<Label: View>: View {
 
   // MARK: Lifecycle
 

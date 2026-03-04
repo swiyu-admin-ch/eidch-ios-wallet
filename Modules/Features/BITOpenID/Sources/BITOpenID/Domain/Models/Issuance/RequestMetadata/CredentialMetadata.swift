@@ -1,4 +1,5 @@
 import BITCore
+import BITCrypto
 import BITJWT
 import BITVault
 import Foundation
@@ -15,6 +16,8 @@ public struct CredentialMetadata: Decodable {
     credentialEndpoint: String,
     credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported],
     display: [CredentialMetadataDisplay]?,
+    credentialRequestEncryption: CredentialRequestEncryption? = nil,
+    credentialResponseEncryption: CredentialResponseEncryption? = nil,
     nonceEndpoint: URL? = nil,
     deferredCredentialEndpoint: URL? = nil)
   {
@@ -23,6 +26,8 @@ public struct CredentialMetadata: Decodable {
     self.credentialConfigurationsSupported = credentialConfigurationsSupported
     self.display = display
     preferredDisplay = display?.findDisplayWithFallback()
+    self.credentialRequestEncryption = credentialRequestEncryption
+    self.credentialResponseEncryption = credentialResponseEncryption
     self.nonceEndpoint = nonceEndpoint
     self.deferredCredentialEndpoint = deferredCredentialEndpoint
   }
@@ -40,6 +45,8 @@ public struct CredentialMetadata: Decodable {
       nonceEndpoint = endpoint
     }
     let deferredCredentialEndpoint = try container.decodeIfPresent(URL.self, forKey: .deferredCredentialEndpoint)
+    let credentialRequestEncryption = try container.decodeIfPresent(CredentialRequestEncryption.self, forKey: .credentialRequestEncryption)
+    let credentialResponseEncryption = try container.decodeIfPresent(CredentialResponseEncryption.self, forKey: .credentialResponseEncryption)
 
     let decodedAnyCredentialConfigurationsSupported = try container.decode([String: CredentialConfigurationSupportedWrapper].self, forKey: .credentialConfigurationsSupported)
     let anyCredentialConfigurationsSupported = decodedAnyCredentialConfigurationsSupported.compactMapValues { $0.anyCredentialConfigurationSupported }
@@ -49,6 +56,8 @@ public struct CredentialMetadata: Decodable {
       credentialEndpoint: credentialEndpoint,
       credentialConfigurationsSupported: anyCredentialConfigurationsSupported,
       display: display,
+      credentialRequestEncryption: credentialRequestEncryption,
+      credentialResponseEncryption: credentialResponseEncryption,
       nonceEndpoint: nonceEndpoint,
       deferredCredentialEndpoint: deferredCredentialEndpoint)
   }
@@ -58,6 +67,7 @@ public struct CredentialMetadata: Decodable {
   public let credentialEndpoint: String
   public let credentialIssuer: String
   public let display: [CredentialMetadataDisplay]?
+  public let deferredCredentialEndpoint: URL?
 
   // MARK: Internal
 
@@ -65,6 +75,8 @@ public struct CredentialMetadata: Decodable {
     case credentialIssuer = "credential_issuer"
     case credentialEndpoint = "credential_endpoint"
     case credentialConfigurationsSupported = "credential_configurations_supported"
+    case credentialRequestEncryption = "credential_request_encryption"
+    case credentialResponseEncryption = "credential_response_encryption"
     case display
     case preferredDisplay
     case nonceEndpoint = "nonce_endpoint"
@@ -73,9 +85,49 @@ public struct CredentialMetadata: Decodable {
 
   let credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported]
   let preferredDisplay: CredentialMetadataDisplay?
+  let credentialRequestEncryption: CredentialRequestEncryption?
+  let credentialResponseEncryption: CredentialResponseEncryption?
   let nonceEndpoint: URL?
-  let deferredCredentialEndpoint: URL?
 
+}
+
+extension CredentialMetadata {
+
+  // MARK: CredentialRequestEncryption
+
+  public struct CredentialRequestEncryption: Decodable, Equatable {
+    public let jwks: JWKs
+    public let supportedEncryptionAlgorithms: [EncryptionAlgorithm]
+    public let supportedZipValues: [CompressionAlgorithm]?
+    public let encryptionRequired: Bool
+
+    enum CodingKeys: String, CodingKey {
+      case jwks
+      case supportedEncryptionAlgorithms = "enc_values_supported"
+      case supportedZipValues = "zip_values_supported"
+      case encryptionRequired = "encryption_required"
+    }
+
+    public struct JWKs: Decodable, Equatable {
+      let keys: [JWK]
+    }
+  }
+
+  // MARK: CredentialRequestEncryption
+
+  public struct CredentialResponseEncryption: Decodable, Equatable {
+    public let supportedAlgorithmValues: [KeyManagementAlgorithm]
+    public let supportedEncryptionAlgorithms: [EncryptionAlgorithm]
+    public let supportedZipValues: [CompressionAlgorithm]?
+    public let encryptionRequired: Bool
+
+    enum CodingKeys: String, CodingKey {
+      case encryptionRequired = "encryption_required"
+      case supportedAlgorithmValues = "alg_values_supported"
+      case supportedEncryptionAlgorithms = "enc_values_supported"
+      case supportedZipValues = "zip_values_supported"
+    }
+  }
 }
 
 extension CredentialMetadata {

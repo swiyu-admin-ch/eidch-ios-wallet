@@ -27,6 +27,6 @@ struct CompletionErrorView: View {
             router.pop()
           })
       })
-      .navigationBarBackButtonHidden(true)
+      .navigationBarBackButtonHidden()
   }
 }

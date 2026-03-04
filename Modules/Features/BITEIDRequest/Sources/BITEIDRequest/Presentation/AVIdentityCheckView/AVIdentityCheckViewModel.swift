@@ -1,3 +1,4 @@
+import BITAVWrapper
 import BITNavigation
 import Factory
 import SwiftUI
@@ -15,6 +16,14 @@ class AVIdentityCheckViewModel: ObservableObject {
         throw EIDRequestError.missingCaseId
       }
 
+      Task.detached { [weak self] in
+        guard let self else {
+          return
+        }
+
+        try? avBeam.initialize(using: AVBeamInitConfig(appId: avBeamAppID))
+      }
+
       let response = try await startAutoVerificationUseCase.execute(for: caseId)
       context.autoVerificationResponse = response
       context.identityType = response.isNFCRequired ? .passport : .identityCard
@@ -27,6 +36,8 @@ class AVIdentityCheckViewModel: ObservableObject {
 
   // MARK: Private
 
+  @Injected(\.avBeamAppID) private var avBeamAppID
+  @Injected(\.avBeam) private var avBeam: AVBeamProtocol
   @Injected(\.eidRequestContext) private var context
   @Injected(\.startAutoVerificationUseCase) private var startAutoVerificationUseCase
 
@@ -35,7 +46,7 @@ class AVIdentityCheckViewModel: ObservableObject {
       return .nfcScan
     }
     if response.isScanDocumentRequired {
-      return .scanDocumentInformation
+      return .scanDocumentInformation(isBackEnabled: false)
     }
     if response.isDocumentVideoRecordingRequired {
       return .recordDocumentInformation

@@ -1,11 +1,7 @@
+import BITAnalytics
 import BITAVWrapper
 import BITL10n
-import BITNavigation
-import BITNetworking
-import BITTheming
 import Factory
-import Foundation
-import NavigatorUI
 import SwiftUI
 
 // MARK: - RecordDocumentViewModel
@@ -56,20 +52,16 @@ class RecordDocumentViewModel: ObservableObject {
   }
 
   @Published var state = StateView.loading
-  @Published var introductionPopupState: ScanningState? = .recto
   @Published var isNotificationPresented = false
   @Published var notification: AVBeamNotification? = nil
   @Published var timer: Timer?
+  @Published var buttonState = RecordingButton.State.initial
 
   @Published var destination: EIDRequestDestinations?
 
   @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
-  @Published var scanningState = ScanningState.recto {
-    didSet {
-      introductionPopupState = scanningState
-    }
-  }
+  @Published var scanningState = ScanningState.recto
 
   var overlayImage: (front: Image, back: Image) {
     let image: (ImageAsset, ImageAsset) = switch context.identityType {
@@ -83,19 +75,6 @@ class RecordDocumentViewModel: ObservableObject {
 
   var title: String {
     scanningState.title
-  }
-
-  func setup() async {
-    do {
-      guard let caseId = context.caseId else { return }
-
-      let requestCase = try await fetchEIDRequestCaseUseCase.execute(caseId: caseId)
-      context.identityType = .identityCard
-
-      initializeSDK()
-    } catch {
-      handleError(error)
-    }
   }
 
   func initializeSDK() {
@@ -117,6 +96,11 @@ class RecordDocumentViewModel: ObservableObject {
     try? avBeam.stopCamera()
   }
 
+  func cancelInitialization() {
+    avBeam.shutdown()
+    navigatorRoot.returnToCheckpoint(EIDRequestCheckpoints.recordDocumentInformation)
+  }
+
   func startCamera() {
     let avBeam = avBeam
     Task.detached { [weak self] in
@@ -136,6 +120,9 @@ class RecordDocumentViewModel: ObservableObject {
   func startRecordDocument() {
     let config = AVBeamRecordDocumentConfig(timeout: recordDocumentTimeout)
     let avBeam = avBeam
+
+    buttonState = .record
+
     Task.detached { [weak self] in
       do {
         try avBeam.startRecordDocument(config: config)
@@ -150,19 +137,24 @@ class RecordDocumentViewModel: ObservableObject {
     }
   }
 
-  func closeIntroductionPopup() {
-    introductionPopupState = nil
+  func stopRecordDocument() {
+    buttonState = .initial
+    reset()
+    avBeam.stopRecordDocument()
   }
 
   // MARK: Private
 
+  @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @Injected(\.scanDelay) private var scanDelay
   @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
   @Injected(\.recordDocumentTimeout) private var recordDocumentTimeout
-  @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
   @Injected(\.avBeamAppID) private var avBeamAppID
   @Injected(\.eidRequestContext) private var context
+  @Injected(\.navigatorRoot) private var navigatorRoot
 
   private func handleError(_ error: Error) {
+    analytics.log(error)
     stop()
     destination = .error(.retry(error, { [weak self] navigator in
       self?.reset()
@@ -175,6 +167,7 @@ class RecordDocumentViewModel: ObservableObject {
     scanningState = .recto
     isNotificationPresented = false
     notification = nil
+    buttonState = .initial
   }
 }
 
@@ -182,7 +175,11 @@ class RecordDocumentViewModel: ObservableObject {
 
 extension RecordDocumentViewModel: AVBeamMessageDelegate {
 
-  nonisolated func didReceiveError(error: AVBeamError) {}
+  nonisolated func didReceiveError(error: AVBeamError) {
+    Task { @MainActor in
+      analytics.log(error)
+    }
+  }
 
   nonisolated func didReceiveNotification(notification: AVBeamNotification) {
     Task { @MainActor in
@@ -191,7 +188,7 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
         self.startCamera()
 
       case .streamingStarted:
-        self.startRecordDocument()
+        buttonState = .initial
 
       case .docRecordingStarted:
         self.timer = .scheduledTimer(withTimeInterval: self.recordDocumentTimeout / 2, repeats: false, block: { @MainActor _ in
@@ -216,10 +213,17 @@ extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
           return self.handleError(packageResult.data.errorCode)
         }
 
+        self.buttonState = .loading
+
         try? avBeam.stopCamera()
         guard let caseId = self.context.caseId else { throw EIDRequestError.missingCaseId }
         let output = RecordDocumentOutput(packageResult)
         try await self.saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
+
+        try? await Task.sleep(nanoseconds: scanDelay)
+        self.buttonState = .success
+        try? await Task.sleep(nanoseconds: scanDelay)
+
         self.destination = .avIntroSelfieVideo
       } catch {
         self.handleError(error)

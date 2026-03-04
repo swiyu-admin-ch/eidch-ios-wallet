@@ -15,12 +15,12 @@ public class RealmDataStore: RealmDataStoreProtocol {
 
   // MARK: Public
 
-  public func get<T>(_ type: T.Type, configuration: Realm.Configuration) throws -> Results<T> where T: RealmFetchable {
+  public func get<T: RealmFetchable>(_ type: T.Type, configuration: Realm.Configuration) throws -> Results<T> {
     let realm = try Realm(configuration: configuration)
     return realm.objects(type)
   }
 
-  public func get<T>(_ type: T.Type, forPrimaryKey key: some Any, configuration: Realm.Configuration) throws -> T? where T: RealmSwiftObject {
+  public func get<T: RealmSwiftObject>(_ type: T.Type, forPrimaryKey key: some Any, configuration: Realm.Configuration) throws -> T? {
     let realm = try Realm(configuration: configuration)
     return realm.object(ofType: type.self, forPrimaryKey: key)
   }

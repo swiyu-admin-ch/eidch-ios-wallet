@@ -4,14 +4,14 @@ import NavigatorUI
 import SwiftUI
 
 @MainActor
-class CredentialDetailModule {
+final class CredentialDetailModule {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, router: CredentialDetailRouter = Container.shared.credentialDetailRouter()) {
+  init(credential: CredentialProtocol, delegate: CredentialDetailDelegate?, router: CredentialDetailRouter = Container.shared.credentialDetailRouter()) {
     self.router = router
     let viewController = UIHostingController(rootView: ManagedNavigationStack {
-      CredentialDetailView(credential: credential)
+      CredentialDetailView(credential: credential, delegate: delegate)
         .navigationDestination(CredentialDetailDestinations.self)
     })
 

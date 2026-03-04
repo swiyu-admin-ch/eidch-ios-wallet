@@ -7,7 +7,7 @@ import JOSESwift
 
 public protocol JWSEncoderProtocol {
   func encode(_ value: some JWT, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data
-  func encode<T>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> where T: JWT
+  func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T>
 }
 
 extension JWSEncoderProtocol {
@@ -50,14 +50,14 @@ public struct JWSEncoder: JWSEncoderProtocol {
     let algorithm = try parseAlgorithm(keyPair.algorithm.rawValue)
     let header = try header(using: keyPair, algorithm: algorithm, type: jwt.type, additionalParameters: additionalHeaderParameters)
     let payload = try createPayload(jwt)
-    guard let signer = Signer(signingAlgorithm: algorithm, key: keyPair.privateKey) else {
+    guard let signer = Signer(signatureAlgorithm: algorithm, key: keyPair.privateKey) else {
       throw JWSEncoderError.wrongKeyType
     }
     let jws = try JOSESwift.JWS(header: header, payload: payload, signer: signer)
     return jws.compactSerializedData
   }
 
-  public func encode<T>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> where T: JWT {
+  public func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> {
     let data = try encode(value, using: keyPair)
 
     guard

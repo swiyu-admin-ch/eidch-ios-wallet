@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - InvitationError
 
-enum InvitationError: Error {
+public enum InvitationError: Error {
   // Network related errors
   case noConnection
   case invalidQRCode
@@ -16,29 +16,49 @@ enum InvitationError: Error {
   case unknownIssuer
   case validationFailed
 
-  // Presentation related errors
+  /// Presentation related errors
   case invalidPresentationRequest
 }
 
-extension InvitationError {
-  static func from(_ error: Error) -> InvitationError {
+// MARK: - InvitationErrorMapping
+
+public protocol InvitationErrorMapping {
+  func callAsFunction(_ error: Error) -> Error
+}
+
+// MARK: - InvitationErrorMapper
+
+public struct InvitationErrorMapper: InvitationErrorMapping {
+
+  // MARK: Lifecycle
+
+  public init() {}
+
+  // MARK: Public
+
+  public func callAsFunction(_ error: Error) -> Error {
+    if let invitationError = error as? InvitationError {
+      return invitationError
+    }
+
     if let networkError = error as? NetworkError {
       switch networkError.status {
-      case .noConnection:
-        return .noConnection
+      case .noConnection,
+           .timeout:
+        return InvitationError.noConnection
       default:
-        return .invalidQRCode
+        return InvitationError.invalidQRCode
       }
     }
 
     if let fetchError = error as? FetchAnyVerifiableCredentialError {
       switch fetchError {
       case .expiredInvitation:
-        return .expiredInvitation
+        return InvitationError.expiredInvitation
       case .unknownIssuer:
-        return .unknownIssuer
+        return InvitationError.unknownIssuer
       case .validationFailed:
-        return .validationFailed
+        return InvitationError.validationFailed
       case .credentialEndpointCreationError,
            .invalidVcSchema,
            .missingTypeMetadata,
@@ -48,21 +68,21 @@ extension InvitationError {
            .unsupportedAlgorithm,
            .unsupportedKeyStorage,
            .vctMismatch:
-        return .invalidQRCode
+        return InvitationError.invalidQRCode
       }
     }
 
     if let fetchError = error as? FetchPresentationRequestUseCaseError {
       switch fetchError {
       case .expiredRequest:
-        return .expiredInvitation
+        return InvitationError.expiredInvitation
       case .invalidRequest:
-        return .invalidPresentationRequest
+        return InvitationError.invalidPresentationRequest
       case .invalidUrl:
-        return .invalidQRCode
+        return InvitationError.invalidQRCode
       }
     }
 
-    return .invalidQRCode
+    return InvitationError.invalidQRCode
   }
 }

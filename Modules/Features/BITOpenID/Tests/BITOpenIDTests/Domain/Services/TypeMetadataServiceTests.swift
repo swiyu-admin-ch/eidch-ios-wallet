@@ -1,4 +1,5 @@
 import Factory
+import Moya
 import XCTest
 @testable import BITCrypto
 @testable import BITNetworking
@@ -97,7 +98,6 @@ final class TypeMetadataServiceTests: XCTestCase {
 
   private var service: TypeMetadataService!
 
-  private let mockResponse = NetworkResponse(object: mockTypeMetadata, data: mockTypeMetadataData)
   private let typeMetadataUriMock = TypeMetadataUri(url: vctUrlMock, integrity: vctIntegrityMock)
 
   private var sriValidator: SRIValidatorProtocolSpy!
@@ -113,7 +113,6 @@ final class TypeMetadataServiceTests: XCTestCase {
 
   private func createSuccessState() {
     sriValidator.validateWithReturnValue = true
-    repository.fetchTypeMetadataFromReturnValue = mockResponse
+    repository.fetchTypeMetadataFromReturnValue = (object: Self.mockTypeMetadata, response: Moya.Response(statusCode: 200, data: Self.mockTypeMetadataData))
   }
-
 }

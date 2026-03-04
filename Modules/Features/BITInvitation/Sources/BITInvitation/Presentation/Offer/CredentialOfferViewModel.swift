@@ -8,11 +8,12 @@ final class CredentialOfferViewModel: ObservableObject {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation? = nil, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation? = nil, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes, delegate: InvitationDelegate?) {
     self.credential = credential
     self.trustInformation = trustInformation
     self.state = state
     self.router = router
+    self.delegate = delegate
   }
 
   // MARK: Internal
@@ -26,7 +27,6 @@ final class CredentialOfferViewModel: ObservableObject {
 
   let credential: VerifiableCredential
   var trustInformation: TrustInformation?
-
   @Published var state: State
   @Published var credentialViewModel: VerifiableCredentialViewModel?
   @Published var isUnknownIssuerAlertShown = false
@@ -53,6 +53,7 @@ final class CredentialOfferViewModel: ObservableObject {
 
       try await acceptCredentialUseCase(credential)
       try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
+      delegate?.didSaveCredential()
       close()
     } catch {
       state = .error
@@ -62,6 +63,7 @@ final class CredentialOfferViewModel: ObservableObject {
   func confirmDecline() async {
     do {
       try await deleteCredentialUseCase.execute(credential)
+      delegate?.didDeclineCredential()
       close()
     } catch {
       state = .error
@@ -90,6 +92,7 @@ final class CredentialOfferViewModel: ObservableObject {
 
   // MARK: Private
 
+  private weak var delegate: InvitationDelegate?
   private let router: CredentialOfferInternalRoutes
 
   @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64

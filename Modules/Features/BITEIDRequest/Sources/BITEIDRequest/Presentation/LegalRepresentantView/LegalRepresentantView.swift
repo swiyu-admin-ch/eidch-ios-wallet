@@ -4,29 +4,25 @@ import Factory
 import NavigatorUI
 import SwiftUI
 
-// MARK: - LegalRepresentantView
-
 struct LegalRepresentantView: View {
 
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.person.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkEidRequestGuardianshipPrimary,
-          secondary: L10n.tkEidRequestGuardianshipSecondary)
-      },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkEidRequestGuardianshipButtonYes,
-          primaryButtonStyle: .secondary,
-          primaryButtonAction: { viewModel.action(true) },
-          secondaryButtonLabel: L10n.tkEidRequestGuardianshipButtonNo,
-          secondaryButtonAction: { viewModel.action(false) })
-      })
+      contents: [
+        .title(L10n.tkEidRequestGuardianshipPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestGuardianshipSecondary, identifier: "secondaryText"),
+      ],
+      actions: [
+        .primary(L10n.tkEidRequestGuardianshipButtonNo, identifier: "primaryButton", { _ in
+          viewModel.action(false)
+        }),
+        .secondary(L10n.tkEidRequestGuardianshipButtonYes, identifier: "secondaryButton", { _ in
+          viewModel.action(true)
+        }),
+      ])
       .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
       .navigate(to: $viewModel.destination)

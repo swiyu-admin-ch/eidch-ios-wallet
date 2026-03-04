@@ -10,7 +10,8 @@ class WalletPairingListModule: EIDRequestModule {
 
   init(router: EIDRequestRouter = Container.shared.eIDRequestRouter(), caseId: String) {
     self.router = router
-    let viewController = UIHostingController(rootView:
+    let viewController = UIHostingController(
+      rootView:
       ManagedNavigationStack {
         EIDRequestDestinations.walletPairingList
           .navigationDestination(EIDRequestDestinations.self)

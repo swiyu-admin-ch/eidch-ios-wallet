@@ -24,7 +24,6 @@ struct DiagnosticDataSettingsView: View {
     }
   }
 
-  @ViewBuilder
   func bulletPoint(_ title: String) -> some View {
     HStack(spacing: .x1) {
       Assets.checkmark.swiftUIImage

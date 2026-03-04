@@ -27,8 +27,7 @@ struct VersionEnforcementView: View {
             .resizable()
             .scaledToFill()
             .clipped()
-            .overlay(.black.opacity(Defaults.overlayDimming))
-        )
+            .overlay(.black.opacity(Defaults.overlayDimming)))
         .clipped()
         .ignoresSafeArea()
         .accessibilityHidden(true)
@@ -47,7 +46,6 @@ struct VersionEnforcementView: View {
 
   @StateObject private var viewModel: VersionEnforcementViewModel
 
-  @ViewBuilder
   private func content() -> some View {
     ViewThatFits(in: .vertical) {
       contentLayout()
@@ -59,7 +57,6 @@ struct VersionEnforcementView: View {
 // MARK: - Components
 
 extension VersionEnforcementView {
-  @ViewBuilder
   private func mainContent() -> some View {
     VStack(spacing: .x2) {
       Text(viewModel.title)
@@ -77,7 +74,6 @@ extension VersionEnforcementView {
     .padding(.horizontal, .x6)
   }
 
-  @ViewBuilder
   private func footer() -> some View {
     Button(action: viewModel.openAppStore) {
       Text(L10n.versionEnforcementButton)
@@ -88,7 +84,6 @@ extension VersionEnforcementView {
     .accessibilityLabel(L10n.versionEnforcementButton)
   }
 
-  @ViewBuilder
   private func contentLayout() -> some View {
     VStack(spacing: 0) {
       Spacer()
@@ -99,7 +94,6 @@ extension VersionEnforcementView {
     .frame(maxWidth: Defaults.contentMaxWidth)
   }
 
-  @ViewBuilder
   private func scrollableContentLayout() -> some View {
     ZStack(alignment: .bottom) {
       VStack {

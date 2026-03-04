@@ -53,7 +53,6 @@ struct NonComplianceDescriptionView: View {
   @FocusState private var focusField: Bool
   @ObservedObject private var viewModel: NonComplianceDescriptionViewModel
 
-  @ViewBuilder
   private var inputField: some View {
     Form {
       Section {

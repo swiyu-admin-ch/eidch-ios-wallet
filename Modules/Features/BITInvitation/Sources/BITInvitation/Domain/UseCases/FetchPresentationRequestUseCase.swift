@@ -74,7 +74,8 @@ extension RequestObjectJWT {
   // MARK: Fileprivate
 
   fileprivate var requestedVcSchemaId: String? {
-    presentationDefinition.inputDescriptors.compactMap { descriptor in
+    guard let inputDescriptors = presentationDefinition?.inputDescriptors else { return nil }
+    return inputDescriptors.compactMap { descriptor in
       let vcSchemaIdField = descriptor.constraints.fields.first { field in
         field.path.contains { vcSchemaIdPaths.contains($0) }
       }

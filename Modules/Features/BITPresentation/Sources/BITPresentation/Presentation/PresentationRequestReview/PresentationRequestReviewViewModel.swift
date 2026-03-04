@@ -89,7 +89,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
       startDelayedLoadingMessageTask()
       do {
         try await submitPresentationUseCase.execute(context: context)
-        router.presentationResultState(with: .success(claims: credential.requestedClusteredClaims.flatMap(\.claims)), context: context)
+        router.presentationResultState(with: .success(claims: credential.requestedClaimClusters.flatMap(\.claims)), context: context)
       } catch {
         handleSubmitError(error, processing: viewState)
       }
@@ -115,7 +115,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
     if error as? UserSessionError == .notLoggedIn {
       isSessionTimeoutPresented = true
     } else {
-      let resultState = PresentationRequestResultState(error: error, claims: credential.requestedClusteredClaims.flatMap(\.claims))
+      let resultState = PresentationRequestResultState(error: error, claims: credential.requestedClaimClusters.flatMap(\.claims))
       router.presentationResultState(with: resultState, context: context)
     }
     let viewModel = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: processing.credential.colorScheme)

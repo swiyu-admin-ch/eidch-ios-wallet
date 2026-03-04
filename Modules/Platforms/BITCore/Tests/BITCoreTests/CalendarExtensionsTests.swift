@@ -16,7 +16,7 @@ final class CalendarExtensionsTests: XCTestCase {
     CFTimeZoneResetSystem()
   }
 
-  func testNumberOfDaysBetween_sameDay_Returns0() throws {
+  func testNumberOfDaysBetween_sameDay_Returns0() {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: 1)
 
@@ -25,7 +25,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 0)
   }
 
-  func testNumberOfDaysBetween_fromMidnightToSameDayBeforeMidnight_Returns0() throws {
+  func testNumberOfDaysBetween_fromMidnightToSameDayBeforeMidnight_Returns0() {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay - 1)
 
@@ -34,7 +34,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 0)
   }
 
-  func testNumberOfDaysBetween_from11PMToSameDayBeforeMidnight_Returns0() throws {
+  func testNumberOfDaysBetween_from11PMToSameDayBeforeMidnight_Returns0() {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerHour - 1)
 
@@ -43,7 +43,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 0)
   }
 
-  func testNumberOfDaysBetween_fromMidnightToNextDayAfterMidnight_Returns1() throws {
+  func testNumberOfDaysBetween_fromMidnightToNextDayAfterMidnight_Returns1() {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay + 1)
 
@@ -52,7 +52,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 1)
   }
 
-  func testNumberOfDaysBetween_from11PMToNextDayAfterMidnight_Returns1() throws {
+  func testNumberOfDaysBetween_from11PMToNextDayAfterMidnight_Returns1() {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerHour + 1)
 
@@ -61,7 +61,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 1)
   }
 
-  func testNumberOfDaysBetween_fromMidnightToNextDayBeforeMidnight_Returns1() throws {
+  func testNumberOfDaysBetween_fromMidnightToNextDayBeforeMidnight_Returns1() {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay * 2 - 1)
 
@@ -70,7 +70,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 1)
   }
 
-  func testNumberOfDaysBetween_from11PMToNextDayBeforeMidnight_Returns1() throws {
+  func testNumberOfDaysBetween_from11PMToNextDayBeforeMidnight_Returns1() {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay + Self.secondsPerHour - 1)
 
@@ -79,7 +79,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 1)
   }
 
-  func testNumberOfDaysBetween_fromMidnightToInAWeek_Returns7() throws {
+  func testNumberOfDaysBetween_fromMidnightToInAWeek_Returns7() {
     let fromDate = midnightDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay * 7 + 1)
 
@@ -88,7 +88,7 @@ final class CalendarExtensionsTests: XCTestCase {
     XCTAssertEqual(days, 7)
   }
 
-  func testNumberOfDaysBetween_from11PMToInAWeek_Returns7() throws {
+  func testNumberOfDaysBetween_from11PMToInAWeek_Returns7() {
     let fromDate = elevenPMDate
     let toDate = fromDate.advanced(by: Self.secondsPerDay * 6 + Self.secondsPerHour + 1)
 

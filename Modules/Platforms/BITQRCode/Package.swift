@@ -25,7 +25,4 @@ let package = Package(
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
       ]),
-    .testTarget(
-      name: "BITQRCodeTests",
-      dependencies: ["BITQRCode"]),
   ])

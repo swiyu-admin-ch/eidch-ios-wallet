@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - CredentialDisplay
 
-public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable {
+public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equatable {
 
   // MARK: Lifecycle
 
@@ -79,22 +79,4 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable {
   public var logoBase64: Data?
   public var summary: String?
   public var credentialId: UUID?
-}
-
-// MARK: Equatable
-
-extension CredentialDisplay: Equatable {
-
-  public static func == (lhs: CredentialDisplay, rhs: CredentialDisplay) -> Bool {
-    lhs.id == rhs.id &&
-      lhs.name == rhs.name &&
-      lhs.backgroundColor == rhs.backgroundColor &&
-      lhs.theme == rhs.theme &&
-      lhs.locale == rhs.locale &&
-      lhs.logoAltText == rhs.logoAltText &&
-      lhs.logoBase64 == rhs.logoBase64 &&
-      lhs.summary == rhs.summary &&
-      lhs.credentialId == rhs.credentialId
-  }
-
 }

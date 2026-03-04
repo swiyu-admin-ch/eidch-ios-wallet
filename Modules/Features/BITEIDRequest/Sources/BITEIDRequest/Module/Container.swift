@@ -71,18 +71,18 @@ extension Container {
     self { DocumentSelectionViewModel() }
   }
 
-  var validateAttestationsViewModel: Factory<ValidateAttestationsViewModel> {
+  var setupViewModel: Factory<SetupViewModel> {
     self {
       #if targetEnvironment(simulator)
-      MockValidateAttestationsViewModel()
+      MockSetupViewModel()
       #else
-      ValidateAttestationsViewModel()
+      SetupViewModel()
       #endif
     }
   }
 
-  var validateAttestationsErrorViewModel: ParameterFactory<(ErrorWrapper, (Void) -> Void), ValidateAttestationsErrorViewModel> {
-    self { ValidateAttestationsErrorViewModel(error: $0, callback: $1) }
+  var setupSDKErrorViewModel: ParameterFactory<(ErrorWrapper, (Void) -> Void), SetupSDKErrorViewModel> {
+    self { SetupSDKErrorViewModel(error: $0, callback: $1) }
   }
 
   var nfcScanViewModel: Factory<NFCScanViewModel> {
@@ -178,6 +178,10 @@ extension Container {
 
   // MARK: Internal
 
+  var maxFailedNFCScanAttempts: Factory<Int> {
+    self { 3 }
+  }
+
   var applyEIDRequestUseCase: Factory<ApplyEIDRequestUseCaseProtocol> {
     #if targetEnvironment (simulator)
     self { MockApplyEIDRequestUseCase() }
@@ -218,7 +222,7 @@ extension Container {
     }
   }
 
-  var captureFaceDelay: Factory<UInt64> {
+  var scanDelay: Factory<UInt64> {
     self { 1_500_000_000 }
       .context(.test) { 10 }
   }

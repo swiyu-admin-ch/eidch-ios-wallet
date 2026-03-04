@@ -6,7 +6,7 @@ public typealias VcSdJWS = SdJWS<VcSdJwt>
 
 // MARK: - VcSdJwt
 
-/// https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html
+// https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html
 
 public struct VcSdJwt: JWT, Codable, Equatable {
 
@@ -38,9 +38,11 @@ public struct VcSdJwt: JWT, Codable, Equatable {
 
   public var vctMetadataUriIntegrity: String?
 
-  /// registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
+  // registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
 
-  public var issuer: String? { requiredIssuer }
+  public var issuer: String? {
+    requiredIssuer
+  }
 
   // MARK: Internal
 

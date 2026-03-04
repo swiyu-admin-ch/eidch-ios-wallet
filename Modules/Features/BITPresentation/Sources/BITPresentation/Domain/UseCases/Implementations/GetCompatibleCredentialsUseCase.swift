@@ -14,16 +14,37 @@ public protocol GetCompatibleCredentialsUseCaseProtocol {
 
 // MARK: - GetCompatibleCredentialsUseCase
 
-/// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
+// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
 
 struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol {
 
   // MARK: Internal
 
   func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential] {
-    guard let inputDescriptor = requestObject.firstInputDescriptor else { return [] }
     let credentials = try await credentialRepository.getAllAcceptedVerifiableCredentials()
-    return filter(credentials: credentials, withInputDescriptor: inputDescriptor)
+    guard !credentials.isEmpty else {
+      return []
+    }
+
+    let compatibleCredentials: [CompatibleCredential]
+
+    let dcqlQuery = try requestObject.dcqlQuery
+
+    if let dcqlQuery {
+      // DCQL matching
+      compatibleCredentials = try await dcqlCredentialMatcher.match(credentials: credentials, with: dcqlQuery)
+    } else if let inputDescriptor = requestObject.firstInputDescriptor {
+      // PresentationDefinition
+      compatibleCredentials = filter(credentials: credentials, withInputDescriptor: inputDescriptor)
+    } else {
+      return []
+    }
+
+    guard !compatibleCredentials.isEmpty else {
+      return []
+    }
+
+    return compatibleCredentials
   }
 
   // MARK: Private
@@ -31,6 +52,7 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
   @Injected(\.credentialRepository) private var credentialRepository
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase
   @Injected(\.presentationFieldsValidator) private var presentationFieldsValidator
+  @Injected(\.dcqlCredentialMatcher) private var dcqlCredentialMatcher
 
   private func filter(credentials: [VerifiableCredential], withInputDescriptor inputDescriptor: InputDescriptor) -> [CompatibleCredential] {
     credentials.compactMap { credential in

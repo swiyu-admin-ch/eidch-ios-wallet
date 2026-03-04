@@ -47,7 +47,10 @@ extension NetworkContainer {
   }
 
   public var plugins: Factory<[PluginType]> {
-    self { [] }
+    self { [
+      MaxContentLengthPlugin(),
+      AnalyticsPlugin(),
+    ] }
   }
 
   public var stubClosure: Factory<StubHandler> {

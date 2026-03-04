@@ -16,6 +16,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     accessToken: String,
     endpoint: String,
     format: String,
+    issuerUrl: String,
     selectedConfigurationId: String? = nil,
     issuerDisplays: [CredentialIssuerDisplay] = [],
     displays: [CredentialDisplay] = [],
@@ -33,6 +34,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     self.pollingInterval = pollingInterval
     self.polledAt = polledAt
     self.format = format
+    self.issuerUrl = issuerUrl
     self.issuerDisplays = issuerDisplays
     self.displays = displays
     self.rawCredentialData = rawCredentialData
@@ -41,7 +43,10 @@ public struct DeferredCredential: Codable, CredentialProtocol {
   }
 
   public init(_ entity: CredentialEntity) throws {
-    guard let deferredCredential = entity.deferredCredential else {
+    guard
+      let deferredCredential = entity.deferredCredential,
+      let progressState = DeferredCredential.ProgressionState(rawValue: deferredCredential.progressState)
+    else {
       throw CredentialError.invalidEntity
     }
 
@@ -52,10 +57,11 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       id: entity.id,
       transactionId: deferredCredential.id,
       createdAt: entity.createdAt,
-      progressionState: DeferredCredential.ProgressionState(deferredCredential.progressState),
+      progressionState: progressState,
       accessToken: deferredCredential.accessToken,
       endpoint: deferredCredential.endpoint,
       format: entity.format,
+      issuerUrl: entity.issuerUrl,
       selectedConfigurationId: entity.selectedConfigurationId,
       issuerDisplays: issuerDisplays,
       displays: displays,
@@ -65,19 +71,17 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       polledAt: entity.deferredCredential?.polledAt)
   }
 
-  public init(_ deferredCredentialRequest: DeferredCredentialRequest) {
-    self.init(
-      transactionId: deferredCredentialRequest.transactionId,
-      accessToken: deferredCredentialRequest.accessToken,
-      endpoint: deferredCredentialRequest.endpoint,
-      format: deferredCredentialRequest.format)
-  }
-
   // MARK: Public
+
+  public enum ProgressionState: String, Codable {
+    case inProgress
+    case invalid
+  }
 
   public static let defaultPollingInterval = 5
 
   public let format: String
+  public let issuerUrl: String
   public let selectedConfigurationId: String?
   public let createdAt: Date
   public let issuerDisplays: [CredentialIssuerDisplay]
@@ -93,7 +97,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
   public var keyBinding: CredentialKeyBinding?
   public var rawCredentialData: RawCredentialData?
 
-  public let progressionState: ProgressionState
+  public var progressionState: ProgressionState
 
   public var id: UUID
 
@@ -105,6 +109,7 @@ extension DeferredCredential: Equatable {
 
   public static func == (lhs: DeferredCredential, rhs: DeferredCredential) -> Bool {
     lhs.format == rhs.format &&
+      lhs.issuerUrl == rhs.issuerUrl &&
       lhs.createdAt == rhs.createdAt &&
       lhs.issuerDisplays.allSatisfy(rhs.issuerDisplays.contains) && rhs.issuerDisplays.allSatisfy(lhs.issuerDisplays.contains) &&
       lhs.displays.allSatisfy(rhs.displays.contains) && rhs.displays.allSatisfy(lhs.displays.contains) &&
@@ -118,23 +123,20 @@ extension DeferredCredential: Equatable {
   }
 }
 
-// MARK: DeferredCredential.ProgressionState
+// MARK: Hashable
 
-extension DeferredCredential {
+extension DeferredCredential: Hashable {
 
-  public enum ProgressionState: String, Codable {
-    case inProgress
-    case invalid
-
-    // MARK: Lifecycle
-
-    init(_ state: DeferredCredentialEntity.ProgressionState) {
-      switch state {
-      case .inProgress:
-        self = .inProgress
-      case .invalid:
-        self = .invalid
-      }
-    }
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+    hasher.combine(format)
+    hasher.combine(createdAt)
+    hasher.combine(progressionState)
+    hasher.combine(pollingInterval)
+    hasher.combine(polledAt)
+    hasher.combine(accessToken)
+    hasher.combine(transactionId)
+    hasher.combine(selectedConfigurationId)
+    hasher.combine(endpoint)
   }
 }

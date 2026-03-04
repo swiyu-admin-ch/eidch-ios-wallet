@@ -40,17 +40,25 @@ struct ActivityRepository: ActivityRepositoryProtocol {
     try database.removeUnreferencedImages(images)
   }
 
-  func deleteAll(for credentialId: UUID) throws {
-    let credential = try getCredential(for: credentialId)
-    let activities = Array(credential.activities)
+  func deleteAll() throws {
+    let activities = try database.get(CredentialActivityEntity.self)
     let images = activities.actorImages()
     try database.delete(activities)
     try database.removeUnreferencedImages(images)
   }
 
+  func isActivityHistoryEnabled() throws -> Bool {
+    UserDefaults.standard.bool(forKey: activityHistoryEnabledKey)
+  }
+
+  func setActivityHistoryEnabled(_ isEnabled: Bool) throws {
+    UserDefaults.standard.set(isEnabled, forKey: activityHistoryEnabledKey)
+  }
+
   // MARK: Private
 
   @Injected(\.dataStore) private var database
+  private let activityHistoryEnabledKey = "isActivityHistoryEnabled"
 
   private func getCredential(for credentialId: UUID) throws -> CredentialEntity {
     guard let credential = try database.get(CredentialEntity.self, forPrimaryKey: credentialId) else {

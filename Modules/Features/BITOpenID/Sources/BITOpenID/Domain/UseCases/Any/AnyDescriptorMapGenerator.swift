@@ -13,7 +13,7 @@ struct AnyDescriptorMapGenerator: AnyDescriptorMapGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(using inputDescriptor: InputDescriptor, vcFormat: String) throws -> [PresentationRequestBody.DescriptorMap] {
+  func generate(using inputDescriptor: InputDescriptor, vcFormat: String) throws -> [AuthorizationResponse.DescriptorMap] {
     inputDescriptor.formats
       .compactMap { CredentialFormat(rawValue: $0.label) }
       .compactMap { dispatcher[$0] }

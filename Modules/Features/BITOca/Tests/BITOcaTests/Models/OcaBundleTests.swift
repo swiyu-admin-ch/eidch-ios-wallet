@@ -18,7 +18,7 @@ final class OcaBundleTests: XCTestCase {
     setupSuccessState()
   }
 
-  func testDecode_elfa() throws {
+  func testDecode_elfa() {
     let ocaBundle = OcaBundle.Mock.elfa
 
     XCTAssertEqual(ocaBundle.captureBases.count, 2)
@@ -63,15 +63,15 @@ final class OcaBundleTests: XCTestCase {
     let standardOverlays = ocaBundle.overlays.compactMap { $0 as? StandardOverlay1x0 }
     XCTAssertEqual(standardOverlays.count, 1)
 
-    let attributeStandards = standardOverlays.first!.attributeStandards
+    let attributeStandards = try XCTUnwrap(standardOverlays.first?.attributeStandards)
     XCTAssertEqual(attributeStandards.count, 2)
-    let dataURLAttribute = attributeStandards.first { $0.key == "dataUrl" }!
-    let unknownAttribute = attributeStandards.first { $0.key == "unknown" }!
+    let dataURLAttribute = try XCTUnwrap(attributeStandards.first { $0.key == "dataUrl" })
+    let unknownAttribute = try XCTUnwrap(attributeStandards.first { $0.key == "unknown" })
     XCTAssertEqual(dataURLAttribute.value, .dataURLScheme)
     XCTAssertEqual(unknownAttribute.value, .unknown(rawString: "unknown"))
   }
 
-  func testDecode_simpleSample() throws {
+  func testDecode_simpleSample() {
     let ocaBundle = OcaBundle.Mock.simpleSample
 
     XCTAssertEqual(ocaBundle.captureBases.count, 1)
@@ -80,7 +80,7 @@ final class OcaBundleTests: XCTestCase {
     XCTAssertEqual(ocaBundle.overlays.count, 13)
   }
 
-  func testDecode_nested() throws {
+  func testDecode_nested() {
     let ocaBundle = OcaBundle.Mock.nested
 
     XCTAssertEqual(ocaBundle.captureBases.count, 4)
@@ -154,7 +154,7 @@ final class OcaBundleTests: XCTestCase {
     XCTAssertNil(attribute)
   }
 
-  func testGetLatestOverlaysOfType_oneOverlayType_returnsOverlay() throws {
+  func testGetLatestOverlaysOfType_oneOverlayType_returnsOverlay() {
     let ocaBundle = OcaBundle.Mock.simpleSample
 
     let labelOverlays = ocaBundle.getLatestOverlaysOfType(overlayType: .label)
@@ -167,7 +167,7 @@ final class OcaBundleTests: XCTestCase {
     XCTAssertEqual(brandingOverlays.count, 2)
   }
 
-  func testGetLatestOverlaysOfType_oneOverlayTypeWithDigest_returnsOverlayForDigest() throws {
+  func testGetLatestOverlaysOfType_oneOverlayTypeWithDigest_returnsOverlayForDigest() {
     let ocaBundle = OcaBundle.Mock.nested
 
     let rootLabelOverlays = ocaBundle.getLatestOverlaysOfType(overlayType: .label, digest: Self.nestedRootCaptureBaseDigest)
@@ -187,7 +187,7 @@ final class OcaBundleTests: XCTestCase {
     XCTAssertEqual(orderOverlays.count, 1)
   }
 
-  func testRootCaptureBase_resolvesRoot() throws {
+  func testRootCaptureBase_resolvesRoot() {
     rootCaptureBaseResolverSpy.resolveReturnValue = rootCaptureBaseMock
 
     let ocaBundle = OcaBundle.Mock.elfa

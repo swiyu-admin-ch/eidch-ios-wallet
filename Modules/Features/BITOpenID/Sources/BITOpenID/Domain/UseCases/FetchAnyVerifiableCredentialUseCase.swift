@@ -42,6 +42,11 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
     let accessToken = try await fetchAccessToken(tokenEndpoint: configuration.tokenEndpoint, credentialOffer: offer)
     let nonce = try await fetchNonceIfNeeded(from: metadataWrapper, holderBindingContext: holderBindingContext)
+    var credentialEncryptionContext: CredentialEncryptionContext?
+    #warning("remove feature flag, once OMNI is feature ready. Per default only enabled on DEV")
+    if isPayloadEncryptionEnabled {
+      credentialEncryptionContext = try credentialEncryptionContextGenerator(for: metadataWrapper.credentialMetadata)
+    }
 
     let context = FetchCredentialContext(
       credentialConfigurationId: metadataWrapper.credentialConfigurationId,
@@ -52,6 +57,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       accessToken: accessToken,
       nonce: nonce,
       credentialEndpoint: credentialEndpoint,
+      credentialEncryptionContext: credentialEncryptionContext,
       deferredCredentialEndpoint: metadataWrapper.credentialMetadata.deferredCredentialEndpoint)
 
     guard let credentialFormat = CredentialFormat(rawValue: context.format), let dispatcherFormat = dispatcher[credentialFormat] else {
@@ -65,6 +71,8 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
 
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.anyFetchCredentialDispatcher) private var dispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]
+  @Injected(\.credentialEncryptionContextGenerator) private var credentialEncryptionContextGenerator: CredentialEncryptionContextGeneratorProtocol
+  @Injected(\.isPayloadEncryptionEnabled) private var isPayloadEncryptionEnabled
 
   private func getCredentialEndpoint(from metadata: CredentialMetadataWrapper) throws -> URL {
     guard

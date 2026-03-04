@@ -4,10 +4,8 @@ import SwiftUI
 // MARK: - AnimationStep
 
 public struct AnimationStep {
-  let size: CGSize
-  let offsetX: CGFloat
-  let duration: Double
-  let animation: Animation
+
+  // MARK: Lifecycle
 
   public init(size: CGSize, offsetX: CGFloat, duration: Double = 0.5, animation: Animation = .easeInOut) {
     self.size = size
@@ -15,6 +13,14 @@ public struct AnimationStep {
     self.duration = duration
     self.animation = animation
   }
+
+  // MARK: Internal
+
+  let size: CGSize
+  let offsetX: CGFloat
+  let duration: Double
+  let animation: Animation
+
 }
 
 // MARK: - AnimationConfiguration
@@ -71,7 +77,7 @@ public struct AnimationSequence {
   let steps: [AnimationStep]
   let shouldLoop: Bool
 
-  // Regenerate steps with new random values
+  /// Regenerate steps with new random values
   mutating func regenerate(with configuration: AnimationConfiguration) {
     self = AnimationSequence(configuration: configuration)
   }
@@ -109,8 +115,14 @@ extension AnimationSequence {
       offsetRange: -120...120,
       baseDuration: 0.5,
       baseAnimation: .interpolatingSpring,
-      shouldLoop: true)
-  )
+      shouldLoop: true))
+
+  public static let setupSequence = AnimationSequence(steps: [
+    AnimationStep(size: CGSize(width: 250, height: 4), offsetX: -20, duration: 1),
+    AnimationStep(size: CGSize(width: 235, height: 28), offsetX: 75, duration: 1),
+    AnimationStep(size: CGSize(width: 235, height: 28), offsetX: -50, duration: 1),
+    AnimationStep(size: CGSize(width: 235, height: 28), offsetX: 120, duration: 1),
+  ])
 }
 
 // MARK: - AnimationStateManager

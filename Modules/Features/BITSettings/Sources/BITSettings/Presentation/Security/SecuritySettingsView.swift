@@ -40,6 +40,10 @@ struct SecuritySettingsView: View {
           })
         SettingsItem(icon: .empty, title: L10n.tkSettingsSecurityPrivacyDataProtectionDiagnosticData, type: .navigation { path.append(SecuritySettings.diagnosticData) })
         SettingsItem(
+          image: Assets.activityHistory.swiftUIImage,
+          title: L10n.tkSettingsSecurityPrivacyDataProtectionActivityHistory,
+          type: .navigation { path.append(SecuritySettings.activityHistory) })
+        SettingsItem(
           image: Assets.privacy.swiftUIImage,
           title: L10n.tkSettingsSecurityPrivacyDataProtectionPrivacyPolicyLinkText,
           type: .link(L10n.tkSettingsSecurityPrivacyDataProtectionPrivacyPolicyLinkValue),
@@ -55,6 +59,7 @@ struct SecuritySettingsView: View {
       case .biometrics:
         BiometricChangeModuleWrapper(delegate: viewModel)
           .edgesIgnoringSafeArea(.all)
+      case .activityHistory: ActivityHistorySettingsView()
       case .diagnosticData: DiagnosticDataSettingsView()
       }
     }
@@ -76,6 +81,7 @@ enum SecuritySettings: Hashable {
   case password
   case biometrics
   case diagnosticData
+  case activityHistory
 }
 
 #Preview {

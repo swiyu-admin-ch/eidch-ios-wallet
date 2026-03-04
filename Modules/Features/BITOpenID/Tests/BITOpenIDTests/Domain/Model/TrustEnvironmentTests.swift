@@ -12,7 +12,7 @@ final class TrustEnvironmentTests: XCTestCase {
     Container.shared.reset()
   }
 
-  func testInit_swiyuDid_returnsSwiyu() throws {
+  func testInit_swiyuDid_returnsSwiyu() {
     for did in swiyuDids {
       let environment = TrustEnvironment(did: did)
 
@@ -20,7 +20,7 @@ final class TrustEnvironmentTests: XCTestCase {
     }
   }
 
-  func testInit_swiyuIntDid_returnsSwiyuInt() throws {
+  func testInit_swiyuIntDid_returnsSwiyuInt() {
     for did in swiyuIntDids {
       let environment = TrustEnvironment(did: did)
 
@@ -28,7 +28,7 @@ final class TrustEnvironmentTests: XCTestCase {
     }
   }
 
-  func testInit_unknownDid_returnsExternal() throws {
+  func testInit_unknownDid_returnsExternal() {
     for did in unknownDids {
       let environment = TrustEnvironment(did: did)
 

@@ -26,11 +26,23 @@ extension Container {
     self { nil }
   }
 
-  // MARK: Internal
+  public var isActivityHistoryEnabledUseCase: Factory<IsActivityHistoryEnabledUseCaseProtocol> {
+    self { IsActivityHistoryEnabledUseCase() }
+  }
 
-  var activityRepository: Factory<ActivityRepositoryProtocol> {
+  public var setActivityHistoryEnabledUseCase: Factory<SetActivityHistoryEnabledUseCaseProtocol> {
+    self { SetActivityHistoryEnabledUseCase() }
+  }
+
+  public var deleteAllActivitiesUseCase: Factory<DeleteAllActivitiesUseCaseProtocol> {
+    self { DeleteAllActivitiesUseCase() }
+  }
+
+  public var activityRepository: Factory<ActivityRepositoryProtocol> {
     self { ActivityRepository() }
   }
+
+  // MARK: Internal
 
   @MainActor
   var activityListViewModel: ParameterFactory<UUID, ActivityListViewModel> {

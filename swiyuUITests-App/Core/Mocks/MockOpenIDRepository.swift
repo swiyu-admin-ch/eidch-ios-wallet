@@ -39,11 +39,11 @@ struct MockOpenIDRepository: OpenIDRepositoryProtocol {
     Nonce.Mock.sample
   }
 
-  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequest) async throws -> FetchAnyCredentialResult {
+  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequestBody) async throws -> FetchAnyCredentialResult {
     try .credential(VcSdJWS.Mock.validSample())
   }
 
-  func fetchCredential(from url: URL, transactionId: String, accessToken: String, format: String) async throws -> FetchAnyCredentialResult {
+  func fetchCredential(from url: URL, requestBody: DeferredCredentialRequestBody, accessToken: String, format: String, privateKey: SecKey?) async throws -> FetchAnyCredentialResult {
     try .credential(VcSdJWS.Mock.validSample())
   }
 

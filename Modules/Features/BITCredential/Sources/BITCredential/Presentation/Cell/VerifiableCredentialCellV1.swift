@@ -97,7 +97,6 @@ public struct VerifiableCredentialCellV1: View {
 
 extension VerifiableCredentialCellV1 {
 
-  @ViewBuilder
   private var badges: some View {
     HStack(spacing: .x3) {
       if viewModel.environment == .swiyuInt {

@@ -5,6 +5,7 @@ import Foundation
 public enum VaultAlgorithm: String, CaseIterable {
   case eciesEncryptionStandardVariableIVX963SHA256AESGCM = "ES256"
   case eciesEncryptionStandardVariableIVX963SHA512AESGCM = "ES512"
+  case ecdhP256 = "ECDH-ES"
 
   // MARK: Lifecycle
 
@@ -24,6 +25,8 @@ public enum VaultAlgorithm: String, CaseIterable {
       kSecAttrKeyTypeECSECPrimeRandom
     case .eciesEncryptionStandardVariableIVX963SHA512AESGCM:
       kSecAttrKeyTypeECSECPrimeRandom
+    case .ecdhP256:
+      kSecAttrKeyTypeECSECPrimeRandom
     }
   }
 
@@ -37,6 +40,8 @@ public enum VaultAlgorithm: String, CaseIterable {
       .eciesEncryptionStandardVariableIVX963SHA256AESGCM
     case .eciesEncryptionStandardVariableIVX963SHA512AESGCM:
       .eciesEncryptionStandardVariableIVX963SHA512AESGCM
+    case .ecdhP256:
+      .ecdhKeyExchangeStandard
     }
   }
 
@@ -46,6 +51,8 @@ public enum VaultAlgorithm: String, CaseIterable {
       .ecdsaSignatureMessageX962SHA256
     case .eciesEncryptionStandardVariableIVX963SHA512AESGCM:
       .eciesEncryptionStandardVariableIVX963SHA512AESGCM
+    case .ecdhP256:
+      .ecdhKeyExchangeStandard
     }
   }
 
@@ -53,6 +60,7 @@ public enum VaultAlgorithm: String, CaseIterable {
     switch self {
     case .eciesEncryptionStandardVariableIVX963SHA256AESGCM: 256
     case .eciesEncryptionStandardVariableIVX963SHA512AESGCM: 521
+    case .ecdhP256: 256
     }
   }
 

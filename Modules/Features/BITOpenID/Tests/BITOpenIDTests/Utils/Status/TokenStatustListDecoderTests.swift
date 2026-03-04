@@ -19,7 +19,7 @@ final class TokenStatusListDecoderTests: XCTestCase {
     decoder = TokenStatusListDecoder()
   }
 
-  func testDecode_ValidJWT_ShouldReturnStatusCode() async throws {
+  func testDecode_ValidJWT_ShouldReturnStatusCode() throws {
     let index = 1
     let statusCode = StatusCode(0)
     spyTokenStatusListByteDecoder.decodeBitsIndexReturnValue = statusCode
@@ -32,7 +32,7 @@ final class TokenStatusListDecoderTests: XCTestCase {
     XCTAssertEqual(Data(fromArray: BYTES), spyTokenStatusListByteDecoder.decodeBitsIndexReceivedArguments?.statusList)
   }
 
-  func testDecode_decoderThrows_throwsError() async throws {
+  func testDecode_decoderThrows_throwsError() throws {
     spyTokenStatusListByteDecoder.decodeBitsIndexThrowableError = TestingError.error
 
     XCTAssertThrowsError(try decoder.decode(jwsMock, index: 0)) { error in
@@ -40,7 +40,7 @@ final class TokenStatusListDecoderTests: XCTestCase {
     }
   }
 
-  func testDecode_notBase64EncodedList_throwsError() async throws {
+  func testDecode_notBase64EncodedList_throwsError() throws {
     let header = JWSHeader(algorithm: JWTAlgorithm.ES256)
     let payload = TokenStatusList(issuer: "issuer", subject: "subject", issuedAt: Date(), statusList: TokenStatusList.StatusList(bits: 0, list: "%"))
     let jws: JWS<TokenStatusList> = JWS(payload: payload, rawPayload: "rawPayload", rawJWS: "rawJWS", header: header)

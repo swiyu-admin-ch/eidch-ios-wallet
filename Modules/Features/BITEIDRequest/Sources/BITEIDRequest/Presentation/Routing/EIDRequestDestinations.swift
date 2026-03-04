@@ -11,7 +11,7 @@ enum EIDRequestDestinations: NavigationDestination {
   case introduction
   case dataPrivacyView
 
-  case attestation
+  case setupSDK
 
   case legalRepresentant
   case legalRepresentantConsent(caseId: String)
@@ -20,7 +20,7 @@ enum EIDRequestDestinations: NavigationDestination {
   case legalRepresentantConsentState(state: RequestCaseViewState)
   case queueInformation(_ onlineSessionStateDate: Date)
 
-  case validateAttestationError(error: ErrorWrapper, Callback<Void>)
+  case setupSDKError(error: ErrorWrapper, Callback<Void>)
 
   case error(ErrorDataset)
 
@@ -28,7 +28,7 @@ enum EIDRequestDestinations: NavigationDestination {
   case mrzMockData
 
   // Document scan
-  case scanDocumentInformation
+  case scanDocumentInformation(isBackEnabled: Bool)
   case scanDocument
   case scanDocumentSubmit(_ output: ScanDocumentOutput)
 
@@ -43,8 +43,6 @@ enum EIDRequestDestinations: NavigationDestination {
   // NFC
   case nfcScan
   case nfcScanResult(_ packageResult: AVBeamPackageResult)
-  case nfcHelp
-  case nfcHelpFailure
 
   case recordDocumentInformation
   case recordDocument
@@ -62,8 +60,7 @@ enum EIDRequestDestinations: NavigationDestination {
 
   var method: NavigationMethod {
     switch self {
-    case .nfcHelp,
-         .walletPairingOffer:
+    case .walletPairingOffer:
       .managedSheet
     default:
       .push
@@ -76,8 +73,8 @@ enum EIDRequestDestinations: NavigationDestination {
       IntroductionView()
     case .dataPrivacyView:
       DataPrivacyView()
-    case .attestation:
-      ValidateAttestationsView()
+    case .setupSDK:
+      SetupView()
     case .legalRepresentant:
       LegalRepresentantView()
     case .legalRepresentantConsent(let caseId):
@@ -90,14 +87,14 @@ enum EIDRequestDestinations: NavigationDestination {
       LegalRepresentantConsentStateView(state: state)
     case .queueInformation(let date):
       QueueInformationView(onlineSessionStartDate: date)
-    case .validateAttestationError(let error, let callback):
-      ValidateAttestationsErrorView(error: error, callback: callback.handler)
+    case .setupSDKError(let error, let callback):
+      SetupSDKErrorView(error: error, callback: callback.handler)
     case .documentSelection:
       DocumentSelectionView()
     case .mrzMockData:
       MRZMockDataView()
-    case .scanDocumentInformation:
-      ScanDocumentInformationView()
+    case .scanDocumentInformation(let isBackEnabled):
+      ScanDocumentInformationView(isBackEnabled: isBackEnabled)
     case .scanDocument:
       ScanDocumentView()
     case .scanDocumentSubmit(let output):
@@ -119,17 +116,12 @@ enum EIDRequestDestinations: NavigationDestination {
       RecordDocumentInformationView()
     case .recordDocument:
       RecordDocumentView()
-    case .nfcHelp:
-      NFCHelpView()
-    case .nfcHelpFailure:
-      NFCHelpFailureView()
     case .avIntroSelfieVideo:
       AVIntroSelfieVideoView()
     case .recordSelfie:
       RecordSelfieView()
     case .submitEidRequest:
-
-      DebugSubmitEIDRequestView()
+      SubmitEIDRequestView()
     case .nfcScanResult(let packageResult):
       NFCScanResultView(packageResult: packageResult)
     case .timeout:
@@ -158,8 +150,8 @@ struct ErrorWrapper: Hashable {
   let error: Error
 
   static func == (lhs: ErrorWrapper, rhs: ErrorWrapper) -> Bool {
-    type(of: lhs.error) == type(of: rhs.error) &&
-      lhs.error.localizedDescription == rhs.error.localizedDescription
+    type(of: lhs.error) == type(of: rhs.error)
+      && lhs.error.localizedDescription == rhs.error.localizedDescription
   }
 
   func hash(into hasher: inout Hasher) {

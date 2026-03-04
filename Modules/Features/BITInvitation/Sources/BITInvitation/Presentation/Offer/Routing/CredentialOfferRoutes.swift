@@ -5,12 +5,12 @@ import BITNavigation
 // MARK: - CredentialOfferRoutes
 
 public protocol CredentialOfferRoutes {
-  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?)
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?, delegate: InvitationDelegate?)
 }
 
 extension CredentialOfferRoutes {
-  public func credentialOffer(credential: VerifiableCredential) {
-    credentialOffer(credential: credential, trustInformation: nil)
+  public func credentialOffer(credential: VerifiableCredential, delegate: InvitationDelegate?) {
+    credentialOffer(credential: credential, trustInformation: nil, delegate: delegate)
   }
 }
 

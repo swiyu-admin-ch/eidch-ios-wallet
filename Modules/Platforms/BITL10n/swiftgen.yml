@@ -1,7 +1,7 @@
 strings:
   inputs: Sources/BITL10n/Resources/en.lproj
   outputs:
-    - templateName: structured-swift5
+    - templatePath: custom-strings.stencil
       output: Sources/BITL10n/Strings.swift
       params:
         publicAccess: true

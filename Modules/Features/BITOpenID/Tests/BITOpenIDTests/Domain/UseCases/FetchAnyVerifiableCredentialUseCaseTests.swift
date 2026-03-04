@@ -42,6 +42,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
       return
     }
 
+    XCTAssertTrue(credentialEncryptionContextGeneratorSpy.callAsFunctionForCalled)
     XCTAssertEqual(receivedContext.format, mockMetadataWrapper.selectedCredential.format)
     XCTAssertEqual(
       receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported,
@@ -51,6 +52,8 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(receivedContext.accessToken, mockAccessToken)
     XCTAssertEqual(receivedContext.nonce, mockNonce)
     XCTAssertEqual(receivedContext.credentialEndpoint.absoluteString, mockMetadataWrapper.credentialMetadata.credentialEndpoint)
+    XCTAssertEqual(receivedContext.credentialEncryptionContext, mockCredentialEncryptionContext)
+    XCTAssertEqual(receivedContext.deferredCredentialEndpoint, mockMetadataWrapper.credentialMetadata.deferredCredentialEndpoint)
 
     XCTAssertTrue(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
   }
@@ -125,6 +128,16 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertNil(spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext?.nonce)
   }
 
+  func testExecute_payloadEncryptionDisabled_doesNotGenerateContext() async throws {
+    Container.shared.isPayloadEncryptionEnabled.register { false }
+    useCase = FetchAnyVerifiableCredentialUseCase()
+
+    _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
+
+    XCTAssertFalse(credentialEncryptionContextGeneratorSpy.callAsFunctionForCalled)
+    XCTAssertNil(spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext?.credentialEncryptionContext)
+  }
+
   // MARK: Private
 
   private let mockHolderBindingContext = HolderBindingContext.Mock.attestedHardwareKey
@@ -135,26 +148,38 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private let mockCredentialOffer = CredentialOffer.Mock.sample
   private let mockAccessToken = AccessToken.Mock.sample
   private let mockNonce = Nonce.Mock.default
+  private let mockCredentialEncryptionContext = CredentialEncryptionContext(
+    issuerPublicKey: JWK.Mock.build(alg: KeyManagementAlgorithm.ECDH_ES.rawValue),
+    credentialRequestEncryptionAlgorithm: .A128GCM,
+    credentialRequestEncryptionZipValue: .deflate,
+    responseKeyPair: VaultKeyPair.Mock.ES256,
+    credentialResponseEncryptionAlgorithm: .A128GCM,
+    credentialResponseEncryptionZipValue: .deflate)
 
   private var repository = OpenIDRepositoryProtocolSpy()
 
   private let mockVcSdJwtCredential = AnyCredentialSpy()
   private var mockDispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]!
   private var spyFetchCredentialVcSdJwtUseCase: FetchAnyCredentialUseCaseProtocolSpy!
+  private var credentialEncryptionContextGeneratorSpy: CredentialEncryptionContextGeneratorProtocolSpy!
 
   private var useCase = FetchAnyVerifiableCredentialUseCase()
 
   private func registerMocks() {
     repository = OpenIDRepositoryProtocolSpy()
     spyFetchCredentialVcSdJwtUseCase = FetchAnyCredentialUseCaseProtocolSpy()
+    credentialEncryptionContextGeneratorSpy = CredentialEncryptionContextGeneratorProtocolSpy()
     mockDispatcher = [.vcSdJwt: spyFetchCredentialVcSdJwtUseCase]
 
     Container.shared.anyFetchCredentialDispatcher.register { self.mockDispatcher }
     Container.shared.openIDRepository.register { self.repository }
+    Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGeneratorSpy }
+    Container.shared.isPayloadEncryptionEnabled.register { true }
   }
 
   private func success() {
     spyFetchCredentialVcSdJwtUseCase.executeForReturnValue = .credential(mockAnyCredential)
+    credentialEncryptionContextGeneratorSpy.callAsFunctionForReturnValue = mockCredentialEncryptionContext
     repository.fetchOpenIdConfigurationFromReturnValue = mockOpenIdConfiguration
     repository.fetchAccessTokenFromPreAuthorizedCodeReturnValue = mockAccessToken
     repository.fetchNonceFromReturnValue = mockNonce

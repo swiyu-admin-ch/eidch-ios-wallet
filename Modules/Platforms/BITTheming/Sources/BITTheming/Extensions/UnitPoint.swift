@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// https://www.david-smith.org/blog/2023/02/22/design-notes-24/
+// https://www.david-smith.org/blog/2023/02/22/design-notes-24/
 
 extension UnitPoint {
 

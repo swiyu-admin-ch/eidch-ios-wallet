@@ -40,7 +40,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     let requestObject = Self.requestObjectMock
     XCTAssertEqual(context.requestObject, requestObject)
     XCTAssertEqual(context.compatibleCredentials, compatibleCredentialsMock)
-    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first!)
+    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first)
     XCTAssertEqual(context.trustInformation.identity, .untrusted)
     XCTAssertEqual(context.trustInformation.vcSchema, .notProtected)
   }
@@ -99,7 +99,7 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     let requestObject = requestObjectJWSMock.payload
     XCTAssertEqual(context.requestObject, requestObject)
     XCTAssertEqual(context.compatibleCredentials, compatibleCredentialsMock)
-    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first!)
+    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first)
     XCTAssertEqual(context.trustInformation, trustInformationMock)
   }
 

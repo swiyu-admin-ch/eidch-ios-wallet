@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - CredentialMetadataJWT
 
-struct CredentialMetadataJWT: JWT, Codable {
+struct CredentialMetadataJWT: JWT, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -47,20 +47,10 @@ struct CredentialMetadataJWT: JWT, Codable {
   let expiredAt: Date?
   let credentialMetadata: CredentialMetadata
 
-  var type: String? { Self.typeIdentifier }
-
-}
-
-// MARK: Equatable
-
-extension CredentialMetadataJWT: Equatable {
-  static func == (lhs: CredentialMetadataJWT, rhs: CredentialMetadataJWT) -> Bool {
-    lhs.issuer == rhs.issuer
-      && lhs.subject == rhs.subject
-      && lhs.issuedAt == rhs.issuedAt
-      && lhs.expiredAt == rhs.expiredAt
-      && lhs.credentialMetadata == rhs.credentialMetadata
+  var type: String? {
+    Self.typeIdentifier
   }
+
 }
 
 extension CredentialMetadataJWT {

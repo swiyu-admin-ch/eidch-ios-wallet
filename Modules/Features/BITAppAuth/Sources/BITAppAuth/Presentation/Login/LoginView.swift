@@ -55,7 +55,6 @@ public struct LoginView: View {
 
   @Orientation private var orientation
 
-  @ViewBuilder
   private func content() -> some View {
     VStack {
       switch viewModel.state {
@@ -79,7 +78,6 @@ public struct LoginView: View {
 
 extension LoginView {
 
-  @ViewBuilder
   private func loadingView() -> some View {
     VStack {
       Spacer()
@@ -97,7 +95,6 @@ extension LoginView {
 
 extension LoginView {
 
-  @ViewBuilder
   private func lockedView() -> some View {
     VStack {
       Spacer()
@@ -169,7 +166,6 @@ extension LoginView {
 
 extension LoginView {
 
-  @ViewBuilder
   private func loginBiometricsView() -> some View {
     VStack {
       Spacer()
@@ -196,7 +192,6 @@ extension LoginView {
 
 extension LoginView {
 
-  @ViewBuilder
   private func loginPasswordView() -> some View {
     ScrollView {
       VStack {
@@ -218,7 +213,6 @@ extension LoginView {
     }
   }
 
-  @ViewBuilder
   private func loginLandscapeLayout() -> some View {
     VStack(alignment: .leading) {
       HStack {
@@ -262,7 +256,6 @@ extension LoginView {
     Spacer()
   }
 
-  @ViewBuilder
   private func loginFooterView() -> some View {
     HStack {
       if viewModel.isBiometricAuthenticationAvailable {
@@ -280,7 +273,6 @@ extension LoginView {
     .padding(.vertical, .x2)
   }
 
-  @ViewBuilder
   private func secureField() -> some View {
     SecureTextField(
       text: $viewModel.pinCode,
@@ -328,7 +320,6 @@ extension LoginView {
 
 extension LoginView {
 
-  @ViewBuilder
   private func biometricButton() -> some View {
     Button {
       Task {
@@ -347,7 +338,6 @@ extension LoginView {
     .environment(\.colorScheme, .light)
   }
 
-  @ViewBuilder
   private func loginButton() -> some View {
     Button {
       viewModel.pinCodeAuthentication()

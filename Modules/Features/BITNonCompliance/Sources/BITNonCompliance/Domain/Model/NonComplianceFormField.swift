@@ -8,5 +8,7 @@ enum NonComplianceFormField: CaseIterable, Hashable {
 }
 
 extension NonComplianceFormField {
-  static var mandatoryFields: [NonComplianceFormField] { [.description] }
+  static var mandatoryFields: [NonComplianceFormField] {
+    [.description]
+  }
 }

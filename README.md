@@ -1,4 +1,4 @@
-![swiyu GitHub banner](./Resources/swiyuBanner.jpg)
+![swiyu GitHub banner](./.resources/swiyuBanner.jpg)
 
 # swiyu - iOS wallet
 

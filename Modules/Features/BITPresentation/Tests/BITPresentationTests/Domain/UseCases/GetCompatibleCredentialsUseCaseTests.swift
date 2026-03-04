@@ -10,6 +10,8 @@ import XCTest
 @testable import BITPresentation
 @testable import BITTestingCore
 
+// MARK: - GetCompatibleCredentialsUseCaseTests
+
 final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
 
   // MARK: Internal
@@ -40,8 +42,22 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[1].format, mockCredentials[2].format)
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[1].payload, mockCredentials[2].payload)
     XCTAssertEqual(fieldValidatorSpy.validateWithReceivedArguments?.anyCredential.raw, mockAnyCredential.raw)
-    let inputDescriptor = requestObject.presentationDefinition.inputDescriptors.first
-    XCTAssertEqual(fieldValidatorSpy.validateWithReceivedArguments?.requestedFields, inputDescriptor?.constraints.fields)
+    guard let inputDescriptor = requestObject.presentationDefinition?.inputDescriptors.first else {
+      XCTFail("Missing input descriptor fixture")
+      return
+    }
+    XCTAssertEqual(fieldValidatorSpy.validateWithReceivedArguments?.requestedFields, inputDescriptor.constraints.fields)
+  }
+
+  func testExecute_DcqlPreferredOverDif_UsesDcqlMatcher() async throws {
+    let requestObject = RequestObject.Mock.VcSdJwt.sampleWithDcqlQuery
+    dcqlCredentialMatcherSpy.matchCredentialsWithReturnValue = [CompatibleCredential(credential: mockCredentials[0], requestedFields: mockMatchingFields)]
+
+    let credentials = try await useCase.execute(using: requestObject)
+
+    XCTAssertFalse(credentials.isEmpty)
+    XCTAssertFalse(fieldValidatorSpy.validateWithCalled)
+    XCTAssertTrue(dcqlCredentialMatcherSpy.matchCredentialsWithCalled)
   }
 
   func testExecute_NoMatchingFormat_returnsEmptyCredentialsList() async throws {
@@ -106,6 +122,7 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
   private var credentialRepository = CredentialRepositoryProcotolSpy()
   private var createAnyCredentialUseCaseSpy = CreateAnyCredentialUseCaseProtocolSpy()
   private var fieldValidatorSpy = PresentationFieldsValidatorProtocolSpy()
+  private var dcqlCredentialMatcherSpy = DcqlCredentialMatcherProtocolSpy()
 
   private var useCase = GetCompatibleCredentialsUseCase()
 
@@ -115,10 +132,12 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
     credentialRepository = CredentialRepositoryProcotolSpy()
     createAnyCredentialUseCaseSpy = CreateAnyCredentialUseCaseProtocolSpy()
     fieldValidatorSpy = PresentationFieldsValidatorProtocolSpy()
+    dcqlCredentialMatcherSpy = DcqlCredentialMatcherProtocolSpy()
 
     Container.shared.credentialRepository.register { self.credentialRepository }
     Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCaseSpy }
     Container.shared.presentationFieldsValidator.register { self.fieldValidatorSpy }
+    Container.shared.dcqlCredentialMatcher.register { self.dcqlCredentialMatcherSpy }
   }
 
   private func success() {

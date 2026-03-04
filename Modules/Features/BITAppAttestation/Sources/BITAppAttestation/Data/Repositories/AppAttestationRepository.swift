@@ -38,7 +38,7 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
       audience: clientAttestation.payload.issuer,
       challengeEndpoint: URL(target: AttestationServiceEndpoint.challenge))
 
-    let result: (keyAttestationResponse: KeyAttestationResponse, _) = try await networkService.request(
+    let keyAttestationResponse: KeyAttestationResponse = try await networkService.request(
       AttestationServiceEndpoint.keyAttestation(body),
       plugins: [
         ClientAttestationPlugin(
@@ -46,7 +46,7 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
           proofOfPossession: proofOfPossession.rawJWS),
       ])
 
-    return try jwsDecoder.decode(KeyAttestationJWT.self, from: result.keyAttestationResponse.keyAttestation.data(using: .utf8) ?? Data())
+    return try jwsDecoder.decode(KeyAttestationJWT.self, from: keyAttestationResponse.keyAttestation.data(using: .utf8) ?? Data())
   }
 
   // MARK: Private

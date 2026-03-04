@@ -20,7 +20,7 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     successState()
   }
 
-  func testValidate_valid_returnsTrue() throws {
+  func testValidate_valid_returnsTrue() {
     let data = OcaBundle.Mock.elfaData
 
     let result = validator.validate(data)
@@ -28,7 +28,7 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testValidate_valid_argumentsPassed() throws {
+  func testValidate_valid_argumentsPassed() {
     let captureBase1 = "{\"digest\":\"digest1\"}"
     let captureBase2 = "{\"digest\":\"digest2\"}"
     let data = "{\"capture_bases\":[\(captureBase1), \(captureBase2)]}".data(using: .utf8)!
@@ -36,11 +36,11 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     _ = validator.validate(data)
 
     XCTAssertEqual(cesrHashValidatorMock.validateDataCallsCount, 2)
-    XCTAssertEqual(cesrHashValidatorMock.validateDataReceivedInvocations[0], captureBase1.data(using: .utf8)!)
-    XCTAssertEqual(cesrHashValidatorMock.validateDataReceivedInvocations[1], captureBase2.data(using: .utf8)!)
+    XCTAssertEqual(cesrHashValidatorMock.validateDataReceivedInvocations[0], captureBase1.data(using: .utf8))
+    XCTAssertEqual(cesrHashValidatorMock.validateDataReceivedInvocations[1], captureBase2.data(using: .utf8))
   }
 
-  func testValidate_emptyCaptureBases_returnsTrue() throws {
+  func testValidate_emptyCaptureBases_returnsTrue() {
     let data = "{\"capture_bases\":[]}".data(using: .utf8)!
 
     let result = validator.validate(data)
@@ -48,7 +48,7 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     XCTAssertTrue(result)
   }
 
-  func testValidate_noJson_returnsFalse() throws {
+  func testValidate_noJson_returnsFalse() {
     let data = "not json".data(using: .utf8)!
 
     let result = validator.validate(data)
@@ -56,7 +56,7 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_noCaptureBases_returnsFalse() throws {
+  func testValidate_noCaptureBases_returnsFalse() {
     let data = "{\"overlays\":[]}".data(using: .utf8)!
 
     let result = validator.validate(data)
@@ -64,7 +64,7 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_CESRReturnsFalseOne_returnsFalse() throws {
+  func testValidate_CESRReturnsFalseOne_returnsFalse() {
     let data = OcaBundle.Mock.elfaData
     cesrHashValidatorMock.validateDataReturnValue = false
 
@@ -73,7 +73,7 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_CESRReturnsFalseMulti_returnsFalse() throws {
+  func testValidate_CESRReturnsFalseMulti_returnsFalse() {
     let data = "{\"capture_bases\":[{\"digest\":\"valid\"}, {\"digest\":\"invalid\"}]}".data(using: .utf8)!
     var count = 0
     cesrHashValidatorMock.validateDataClosure = { _ in

@@ -7,7 +7,7 @@ final class VcSdJwtTypeMetadataUriTests: XCTestCase {
 
   // MARK: Internal
 
-  func testTypeMetadataUri_vctMetadataUri_returnsVctMetadataUriAndIntegrity() throws {
+  func testTypeMetadataUri_vctMetadataUri_returnsVctMetadataUriAndIntegrity() {
     let vcSdJwtMock = createVcSdJwt(
       vct: vctMock,
       vctMetadataUri: vctMetadataUriMock,
@@ -19,7 +19,7 @@ final class VcSdJwtTypeMetadataUriTests: XCTestCase {
     XCTAssertEqual(uri?.integrity, vctMetadataUriIntegrityMock)
   }
 
-  func testTypeMetadataUri_vctUrl_returnsVctUrlAndIntegrity() throws {
+  func testTypeMetadataUri_vctUrl_returnsVctUrlAndIntegrity() {
     let vcSdJwtMock = createVcSdJwt(vct: vctUrlMock, vctIntegrity: vctIntegrityMock)
 
     let uri = vcSdJwtMock.typeMetadataUri
@@ -28,7 +28,7 @@ final class VcSdJwtTypeMetadataUriTests: XCTestCase {
     XCTAssertEqual(uri?.integrity, vctIntegrityMock)
   }
 
-  func testTypeMetadataUri_vctMetadataUriNotUrl_returnsNil() throws {
+  func testTypeMetadataUri_vctMetadataUriNotUrl_returnsNil() {
     let vcSdJwtMock = createVcSdJwt(vct: vctUrlMock, vctMetadataUri: "invalid", vctMetadataUriIntegrity: "vctMetadataUriIntegrity")
 
     let uri = vcSdJwtMock.typeMetadataUri
@@ -36,7 +36,7 @@ final class VcSdJwtTypeMetadataUriTests: XCTestCase {
     XCTAssertNil(uri)
   }
 
-  func testTypeMetadataUri_vctUrlNotUrl_returnsNil() throws {
+  func testTypeMetadataUri_vctUrlNotUrl_returnsNil() {
     let vcSdJwtMock = createVcSdJwt(vct: "invalid", vctIntegrity: vctIntegrityMock)
 
     let uri = vcSdJwtMock.typeMetadataUri

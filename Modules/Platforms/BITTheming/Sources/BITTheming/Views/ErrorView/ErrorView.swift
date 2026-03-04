@@ -18,7 +18,7 @@ public struct ErrorView: View {
       image: ThemingAssets.closeCircle.swiftUIImage,
       contents: dataset.contents,
       actions: dataset.actions)
-      .navigationBarBackButtonHidden(true)
+      .navigationBarBackButtonHidden()
       .toolbar {
         CloseButtonToolbar {
           navigator.dismiss()

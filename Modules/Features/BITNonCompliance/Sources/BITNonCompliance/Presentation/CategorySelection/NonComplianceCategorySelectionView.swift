@@ -8,6 +8,8 @@ struct NonComplianceCategorySelectionView: View {
 
   // MARK: Internal
 
+  let activity: Activity
+
   var body: some View {
     ZStack(alignment: .top) {
       ThemingAssets.Background.secondary.swiftUIColor
@@ -28,8 +30,6 @@ struct NonComplianceCategorySelectionView: View {
   // MARK: Private
 
   @Environment(\.navigator) private var navigator
-
-  let activity: Activity
 
   private var categories: [NonComplianceCategory] {
     activity.type.nonComplianceCategories

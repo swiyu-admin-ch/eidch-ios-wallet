@@ -24,8 +24,4 @@ public struct ActivityClaim: Codable {
 
 extension ActivityClaim: Equatable {
 
-  public static func == (lhs: ActivityClaim, rhs: ActivityClaim) -> Bool {
-    lhs.credentialClaimId == rhs.credentialClaimId
-  }
-
 }

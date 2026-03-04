@@ -124,17 +124,29 @@ private struct TestDatePayload: JWT {
 
   let type: String? = "test"
 
-  var issuer: String? { nil }
+  var issuer: String? {
+    nil
+  }
 
-  var audience: String? { nil }
+  var audience: String? {
+    nil
+  }
 
-  var subject: String? { nil }
+  var subject: String? {
+    nil
+  }
 
-  var issuedAt: Date? { nil }
+  var issuedAt: Date? {
+    nil
+  }
 
-  var expiredAt: Date? { nil }
+  var expiredAt: Date? {
+    nil
+  }
 
-  var activatedAt: Date? { nil }
+  var activatedAt: Date? {
+    nil
+  }
 
   // MARK: Private
 
@@ -146,21 +158,33 @@ private struct TestDatePayload: JWT {
 
 private struct TestEmptyPayload: JWT {
 
-  let type: String? = nil
-
   enum CodingKeys: CodingKey {}
 
-  var issuer: String? { nil }
+  let type: String? = nil
 
-  var audience: String? { nil }
+  var issuer: String? {
+    nil
+  }
 
-  var subject: String? { nil }
+  var audience: String? {
+    nil
+  }
 
-  var issuedAt: Date? { nil }
+  var subject: String? {
+    nil
+  }
 
-  var expiredAt: Date? { nil }
+  var issuedAt: Date? {
+    nil
+  }
 
-  var activatedAt: Date? { nil }
+  var expiredAt: Date? {
+    nil
+  }
+
+  var activatedAt: Date? {
+    nil
+  }
 
 }
 

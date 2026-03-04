@@ -37,7 +37,8 @@ struct SettingsItem: View {
           content
         })
       }
-    case .navigation(let action),
+    case .button(_, let action),
+         .navigation(let action),
          .toggle(_, _, let action):
       Button(action: action) {
         content
@@ -52,6 +53,14 @@ struct SettingsItem: View {
   @ScaledMetric(relativeTo: .body) private var leadingIconSize: CGFloat = 18
 
   private let itemMinHeight: CGFloat = 44
+
+  private var foregroundColor: Color {
+    if case .button(let isDestructive, _) = type, isDestructive {
+      ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor
+    } else {
+      ThemingAssets.Label.primary.swiftUIColor
+    }
+  }
 
   private var content: some View {
     VStack(spacing: 0) {
@@ -85,7 +94,7 @@ struct SettingsItem: View {
       image
         .resizable()
         .scaledToFit()
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .foregroundStyle(foregroundColor)
         .frame(width: leadingIconSize, height: leadingIconSize)
         .padding(.trailing, .x6)
     case .empty:
@@ -97,13 +106,12 @@ struct SettingsItem: View {
     }
   }
 
-  @ViewBuilder
   private func horizontalTexts() -> some View {
     HStack(spacing: 0) {
       Text(title)
         .multilineTextAlignment(.leading)
         .font(.custom.body)
-        .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
+        .foregroundColor(foregroundColor)
       Spacer(minLength: .x2)
       if let detail {
         let trailingPadding: CGFloat = if case .info = type { 0 } else { .x4 }
@@ -122,7 +130,7 @@ struct SettingsItem: View {
       Text(title)
         .multilineTextAlignment(.leading)
         .font(.custom.body)
-        .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
+        .foregroundColor(foregroundColor)
       if let detail {
         Text(detail)
           .multilineTextAlignment(.leading)
@@ -137,7 +145,8 @@ struct SettingsItem: View {
   @ViewBuilder
   private func trailingView() -> some View {
     switch type {
-    case .info:
+    case .button,
+         .info:
       EmptyView()
     case .link:
       Assets.external.swiftUIImage
@@ -176,6 +185,7 @@ enum SettingsIcon {
 
 enum SettingsItemType {
   case info
+  case button(isDestructive: Bool = false, action: () -> Void)
   case navigation(action: () -> Void)
   case link(_ urlString: String)
   case toggle(isOn: Binding<Bool>, isLoading: Binding<Bool> = .constant(false), action: () -> Void)
@@ -186,6 +196,8 @@ enum SettingsItemType {
     VStack(spacing: 0) {
       SettingsItem(title: "Title", detail: "Detail")
       SettingsItem(title: "Title", detail: "Detail", type: .navigation {})
+      SettingsItem(icon: .image(Assets.lock.swiftUIImage), title: "Title", type: .button {})
+      SettingsItem(icon: .image(Assets.lock.swiftUIImage), title: "Title", type: .button(isDestructive: true) {})
       SettingsItem(icon: .image(Assets.lock.swiftUIImage), title: "Title", type: .navigation {})
       SettingsItem(icon: .image(Assets.lock.swiftUIImage), title: "Title", detail: "Detail", type: .navigation {})
       SettingsItem(icon: .empty, title: "Title", type: .navigation {})

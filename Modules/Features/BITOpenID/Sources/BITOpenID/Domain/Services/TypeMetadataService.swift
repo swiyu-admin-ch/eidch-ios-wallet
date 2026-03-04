@@ -49,7 +49,7 @@ struct TypeMetadataService: TypeMetadataServiceProtocol {
     }
 
     do {
-      guard try sriValidator.validate(response.data, with: integrity) else {
+      guard try sriValidator.validate(response.response.data, with: integrity) else {
         throw TypeMetadataServiceError.typeMetadataInvalidIntegrity
       }
       return typeMetadata

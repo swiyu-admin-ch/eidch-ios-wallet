@@ -6,7 +6,7 @@ final class StandardOverlayTests: XCTestCase {
 
   // MARK: Internal
 
-  func testDecode_dataURLStart_returnsOverlayWithDataURL() throws {
+  func testDecode_dataURLStart_returnsOverlayWithDataURL() {
     for urn in Self.validDataURLURNs {
       let overlay = createOverlay(for: [Self.attributeMock: urn])
 
@@ -15,7 +15,7 @@ final class StandardOverlayTests: XCTestCase {
     }
   }
 
-  func testDecode_Iso8601Start_returnsOverlayWithdateTimeIso8601() throws {
+  func testDecode_Iso8601Start_returnsOverlayWithdateTimeIso8601() {
     for urn in Self.validDateTimeIso8601URNs {
       let overlay = createOverlay(for: [Self.attributeMock: urn])
 
@@ -24,7 +24,7 @@ final class StandardOverlayTests: XCTestCase {
     }
   }
 
-  func testDecode_unixEpochStart_returnsOverlayWithdateTimeUnixEpoch() throws {
+  func testDecode_unixEpochStart_returnsOverlayWithdateTimeUnixEpoch() {
     for urn in Self.validDateTimeUnixEpochURNs {
       let overlay = createOverlay(for: [Self.attributeMock: urn])
 

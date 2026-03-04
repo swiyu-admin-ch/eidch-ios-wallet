@@ -12,22 +12,22 @@ final class LocaleValidatorTests: XCTestCase {
     validator = LocaleValidator()
   }
 
-  func testValidate_languageOnly_returnsTrue() throws {
+  func testValidate_languageOnly_returnsTrue() {
     XCTAssertTrue(validator.validate("en"))
     XCTAssertTrue(validator.validate("xy"))
   }
 
-  func testValidate_languageAndRegion_returnsTrue() throws {
+  func testValidate_languageAndRegion_returnsTrue() {
     XCTAssertTrue(validator.validate("en-US"))
     XCTAssertTrue(validator.validate("en-XY"))
     XCTAssertTrue(validator.validate("xy-XY"))
   }
 
-  func testValidate_emptyString_returnsFalse() throws {
+  func testValidate_emptyString_returnsFalse() {
     XCTAssertFalse(validator.validate(""))
   }
 
-  func testValidate_invalidFormat_returnsFalse() throws {
+  func testValidate_invalidFormat_returnsFalse() {
     XCTAssertFalse(validator.validate("x"))
     XCTAssertFalse(validator.validate("è"))
     XCTAssertFalse(validator.validate("en-"))

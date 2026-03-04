@@ -20,6 +20,11 @@ extension Container {
   }
 
   @MainActor
+  var activityHistorySettingsViewModel: Factory<ActivityHistorySettingsViewModel> {
+    self { ActivityHistorySettingsViewModel() }
+  }
+
+  @MainActor
   var licencesViewModel: Factory<LicencesListViewModel> {
     self { LicencesListViewModel() }
   }

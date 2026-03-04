@@ -10,9 +10,10 @@ final class VcSdJwtDescriptorMapGeneratorTests: XCTestCase {
   }
 
   func testExecute_happyPath() throws {
-    // swiftlint: disable all
-    let inputDescriptor: InputDescriptor = RequestObject.Mock.VcSdJwt.sample.presentationDefinition.inputDescriptors.first!
-    // swiftlint: enable all
+    guard let inputDescriptor = RequestObject.Mock.VcSdJwt.sample.presentationDefinition?.inputDescriptors.first else {
+      XCTFail("Missing input descriptor fixture")
+      return
+    }
     let mockFormat = "mock-format"
 
     let descriptorMap = try generator.generate(using: inputDescriptor, vcFormat: mockFormat)

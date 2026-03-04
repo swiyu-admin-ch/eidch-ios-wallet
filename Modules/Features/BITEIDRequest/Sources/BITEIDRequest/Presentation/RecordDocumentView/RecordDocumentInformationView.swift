@@ -1,30 +1,30 @@
 import BITL10n
 import BITTheming
-import NavigatorUI
 import SwiftUI
-
-// MARK: - NFCHelpView
 
 struct RecordDocumentInformationView: View {
 
-  // MARK: Internal
-
   var body: some View {
-    InformationView(image: Assets.scanDocument.swiftUIImage, backgroundColor: ThemingAssets.Background.secondary.swiftUIColor, content: {
-      DefaultInformationContentView(primary: L10n.tkEidRequestRecordDocumentInformationPrimary, secondary: L10n.tkEidRequestRecordDocumentInformationSecondary)
-    }, footer: {
-      DefaultInformationFooterView(primaryButtonLabel: L10n.tkEidRequestRecordDocumentInformationButtonPrimary) {
-        navigator.navigate(to: EIDRequestDestinations.recordDocument)
-      }
-    })
-    .navigationDestination(EIDRequestDestinations.self)
-    .navigationBarTitleDisplayMode(.inline)
-    .defaultEidRequestToolbar()
+    InformationView2(
+      image: Assets.scanDocument.swiftUIImage,
+      contents: [
+        .title(L10n.tkEidRequestRecordDocumentInformationPrimary, identifier: "primaryText"),
+        .body(L10n.tkEidRequestRecordDocumentInformationSecondary, identifier: "secondaryText"),
+      ],
+      actions: [
+        .primary(L10n.tkEidRequestRecordDocumentInformationButtonPrimary, identifier: "primaryButton", { navigator in
+          navigator.navigate(to: EIDRequestDestinations.recordDocument)
+        }),
+      ])
+      .navigationDestination(EIDRequestDestinations.self)
+      .navigationBarTitleDisplayMode(.inline)
+      .defaultEidRequestToolbar()
+      .navigationCheckpoint(EIDRequestCheckpoints.recordDocumentInformation)
+      .navigationBarBackButtonHidden()
   }
 
   // MARK: Private
 
-  @Environment(\.navigator) private var navigator
 }
 
 #Preview {

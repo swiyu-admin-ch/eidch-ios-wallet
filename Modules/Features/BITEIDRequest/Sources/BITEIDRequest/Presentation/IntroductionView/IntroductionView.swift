@@ -9,22 +9,21 @@ struct IntroductionView: View {
   // MARK: Internal
 
   var body: some View {
-    InformationView(
+    InformationView2(
       image: Assets.card.swiftUIImage,
-      backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
-      content: {
-        DefaultInformationContentView(
-          primary: L10n.tkEidRequestIntroTitle,
-          secondary: L10n.tkEidRequestIntroBody,
-          tertiary: L10n.tkEidRequestIntroSmallBody)
-      },
-      footer: {
-        DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkEidRequestIntroPrimaryButton,
-          primaryButtonAction: { navigator.navigate(to: EIDRequestDestinations.dataPrivacyView) },
-          secondaryButtonLabel: L10n.tkEidRequestIntroSecondaryButton,
-          secondaryButtonAction: { navigator.dismiss() })
-      })
+      contents: [
+        .title(L10n.tkEidRequestIntroTitle),
+        .body(L10n.tkEidRequestIntroBody),
+        .caption(L10n.tkEidRequestIntroSmallBody),
+      ],
+      actions: [
+        .primary(L10n.tkEidRequestIntroPrimaryButton, { navigator in
+          navigator.navigate(to: EIDRequestDestinations.dataPrivacyView)
+        }),
+        .secondary(L10n.tkEidRequestIntroSecondaryButton, { navigator in
+          navigator.dismiss()
+        }),
+      ])
       .defaultEidRequestToolbar()
   }
 

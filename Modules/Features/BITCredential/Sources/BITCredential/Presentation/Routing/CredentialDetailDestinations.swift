@@ -1,3 +1,4 @@
+import BITCredentialShared
 import NavigatorUI
 import SwiftUI
 

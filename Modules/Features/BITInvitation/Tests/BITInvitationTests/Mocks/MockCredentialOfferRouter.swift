@@ -14,7 +14,7 @@ final class MockCredentialOfferRouter: ClosableRoutesMock, CredentialOfferRoutes
   private(set) var externalLinkCalled = false
   private(set) var didCallBadgeInformation = false
 
-  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?) {
+  func credentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation?, delegate: InvitationDelegate?) {
     credentialOfferCalled = true
     credentialOfferCredential = credential
     self.trustInformation = trustInformation

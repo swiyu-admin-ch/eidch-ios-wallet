@@ -21,7 +21,7 @@ final class TrustInformationServiceTests: XCTestCase {
 
   // MARK: - testFetch identity
 
-  func testFetch_validIdentityAndIssuanceStatement_returnsTrusted() async throws {
+  func testFetch_validIdentityAndIssuanceStatement_returnsTrusted() async {
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
     XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
@@ -29,7 +29,7 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
-  func testFetch_validIdentityAndIssuanceStatement_argumentsPassed() async throws {
+  func testFetch_validIdentityAndIssuanceStatement_argumentsPassed() async {
     _ = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
     XCTAssertEqual(statementServiceSpy.fetchIdentityForCallsCount, 1)
@@ -41,14 +41,14 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReceivedArguments?.vcSchemaId, vcSchemaIdMock)
   }
 
-  func testFetch_validIdentityAndNoVcSchemaId_returnsIdentityTrusted() async throws {
+  func testFetch_validIdentityAndNoVcSchemaId_returnsIdentityTrusted() async {
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: nil)
 
     XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
     XCTAssertEqual(result.vcSchema, .notProtected)
   }
 
-  func testFetch_validIdentityAndNoVcSchemaId_argumentsPassed() async throws {
+  func testFetch_validIdentityAndNoVcSchemaId_argumentsPassed() async {
     _ = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: nil)
 
     XCTAssertEqual(statementServiceSpy.fetchIdentityForCallsCount, 1)
@@ -57,21 +57,21 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdCallsCount, 0)
   }
 
-  func testFetch_unknownSubjectDid_returnsUnknown() async throws {
+  func testFetch_unknownSubjectDid_returnsUnknown() async {
     let result = await service.fetch(for: "unknown", type: vcSchemaTypeMock, vcSchemaId: nil)
 
     XCTAssertEqual(result.identity, .unknown)
     XCTAssertEqual(result.vcSchema, .notProtected)
   }
 
-  func testFetch_unknownSubjectDid_argumentsPassed() async throws {
+  func testFetch_unknownSubjectDid_argumentsPassed() async {
     _ = await service.fetch(for: "unknown", type: vcSchemaTypeMock, vcSchemaId: nil)
 
     XCTAssertEqual(statementServiceSpy.fetchIdentityForCallsCount, 0)
     XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdCallsCount, 0)
   }
 
-  func testFetch_fetchVcSchemaReturnsNil_returnsNotProtectedVcSchema() async throws {
+  func testFetch_fetchVcSchemaReturnsNil_returnsNotProtectedVcSchema() async {
     statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReturnValue = nil
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
@@ -81,7 +81,7 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
-  func testFetch_fetchIdentityThrowsError_returnsUntrustedIdentity() async throws {
+  func testFetch_fetchIdentityThrowsError_returnsUntrustedIdentity() async {
     statementServiceSpy.fetchIdentityForThrowableError = TestingError.error
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
@@ -91,7 +91,7 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
-  func testFetch_fetchVcSchemaThrowsValidationError_returnsUntrustedVcSchema() async throws {
+  func testFetch_fetchVcSchemaThrowsValidationError_returnsUntrustedVcSchema() async {
     statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdThrowableError = TrustStatementServiceError.validationFailed
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
@@ -101,7 +101,7 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
-  func testFetch_fetchVcSchemaThrowsError_returnsNotProtectedVcSchema() async throws {
+  func testFetch_fetchVcSchemaThrowsError_returnsNotProtectedVcSchema() async {
     statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdThrowableError = TestingError.error
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
@@ -110,7 +110,7 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(result.vcSchema, .notProtected)
   }
 
-  func testFetch_notCompliantActor_returnsNotCompliantActor() async throws {
+  func testFetch_notCompliantActor_returnsNotCompliantActor() async {
     let reasonMock = ["en": "reason EN"]
     nonComplianceRepositorySpy.fetchNonCompliantActorForReturnValue = NonCompliantActor(reason: reasonMock, did: subjectDidMock)
 
@@ -119,7 +119,7 @@ final class TrustInformationServiceTests: XCTestCase {
     XCTAssertEqual(result.actorCompliance, .notCompliant(LocalizedNonComplianceReason(values: reasonMock)))
   }
 
-  func testFetch_fetchNonCompliantActorThrowsError_returnsCompliantActorCompliance() async throws {
+  func testFetch_fetchNonCompliantActorThrowsError_returnsCompliantActorCompliance() async {
     nonComplianceRepositorySpy.fetchNonCompliantActorForThrowableError = TestingError.error
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)

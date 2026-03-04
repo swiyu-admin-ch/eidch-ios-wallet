@@ -4,12 +4,15 @@ import Spyable
 // MARK: - ActivityRepositoryProtocol
 
 @Spyable
-protocol ActivityRepositoryProtocol {
+public protocol ActivityRepositoryProtocol {
   func create(_ activity: Activity, credentialId: UUID) throws -> Activity
   func get(_ id: UUID) throws -> Activity
   func getAll(for credentialId: UUID, limit: Int) throws -> [Activity]
   func delete(_ id: UUID) throws
-  func deleteAll(for credentialId: UUID) throws
+  func deleteAll() throws
+
+  func isActivityHistoryEnabled() throws -> Bool
+  func setActivityHistoryEnabled(_ isEnabled: Bool) throws
 }
 
 extension ActivityRepositoryProtocol {

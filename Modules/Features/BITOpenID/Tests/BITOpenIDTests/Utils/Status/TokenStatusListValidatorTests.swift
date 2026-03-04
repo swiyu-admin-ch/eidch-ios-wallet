@@ -30,13 +30,13 @@ final class TokenStatusListValidatorTests: XCTestCase {
     success()
   }
 
-  func testValidate_ValidCredential_ShouldReturnValid() async throws {
+  func testValidate_ValidCredential_ShouldReturnValid() async {
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(result, .valid)
   }
 
-  func testValidate_ValidCredential_ArgumentsPassed() async throws {
+  func testValidate_ValidCredential_ArgumentsPassed() async {
     _ = await validator.validate(mockStatus, issuer: Self.issuerMock)
 
     XCTAssertEqual(jwsMock, tokenStatusListDecoderSpy.decodeIndexReceivedArguments?.jws)
@@ -44,7 +44,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedJws as? JWS, jwsMock)
   }
 
-  func testValidate_RevokedCredential_ShouldReturnRevoked() async throws {
+  func testValidate_RevokedCredential_ShouldReturnRevoked() async {
     tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(1)
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
@@ -52,7 +52,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .revoked)
   }
 
-  func testValidate_SuspendedCredential_ShouldReturnSuspended() async throws {
+  func testValidate_SuspendedCredential_ShouldReturnSuspended() async {
     tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(2)
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
@@ -60,7 +60,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .suspended)
   }
 
-  func testValidate_UnsupportedCredentialStatus_ShouldReturnUnsupported() async throws {
+  func testValidate_UnsupportedCredentialStatus_ShouldReturnUnsupported() async {
     tokenStatusListDecoderSpy.decodeIndexReturnValue = StatusCode(3)
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
@@ -68,7 +68,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .unsupported)
   }
 
-  func testValidate_FetchThrowsError_ShouldReturnUnknown() async throws {
+  func testValidate_FetchThrowsError_ShouldReturnUnknown() async {
     openIdRepositorySpy.fetchCredentialStatusFromThrowableError = TestingError.error
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
@@ -76,7 +76,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .unknown)
   }
 
-  func testValidate_StatusListWithInvalidSubject_ShouldReturnUnknown() async throws {
+  func testValidate_StatusListWithInvalidSubject_ShouldReturnUnknown() async {
     let payload = TokenStatusList(issuer: jwsMock.payload.issuer, subject: "invalid", issuedAt: jwsMock.payload.issuedAt, statusList: jwsMock.payload.statusList)
     let jws = JWS(payload: payload, rawPayload: jwsMock.rawPayload, rawJWS: jwsMock.rawJWS, header: jwsMock.header)
     openIdRepositorySpy.fetchCredentialStatusFromReturnValue = jws
@@ -86,7 +86,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .unknown)
   }
 
-  func testValidate_StatusListWithInvalidIssuer_ShouldReturnUnknown() async throws {
+  func testValidate_StatusListWithInvalidIssuer_ShouldReturnUnknown() async {
     let payload = TokenStatusList(issuer: "invalid", subject: jwsMock.payload.subject, issuedAt: jwsMock.payload.issuedAt, statusList: jwsMock.payload.statusList)
     let jws = JWS(payload: payload, rawPayload: jwsMock.rawPayload, rawJWS: jwsMock.rawJWS, header: jwsMock.header)
     openIdRepositorySpy.fetchCredentialStatusFromReturnValue = jws
@@ -96,7 +96,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .unknown)
   }
 
-  func testValidate_StatusListInvalidSignature_ShouldReturnUnknown() async throws {
+  func testValidate_StatusListInvalidSignature_ShouldReturnUnknown() async {
     jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)
@@ -104,7 +104,7 @@ final class TokenStatusListValidatorTests: XCTestCase {
     XCTAssertEqual(result, .unknown)
   }
 
-  func testValidate_ValidatorThrowsError_ShouldReturnUnknown() async throws {
+  func testValidate_ValidatorThrowsError_ShouldReturnUnknown() async {
     jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
     let result = await validator.validate(mockStatus, issuer: Self.issuerMock)

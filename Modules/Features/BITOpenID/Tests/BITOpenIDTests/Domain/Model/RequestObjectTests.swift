@@ -9,7 +9,8 @@ final class RequestObjectTests: XCTestCase {
 
   func testDecodingVcSdJwtRequestObject() throws {
     let mockRequestObjectData = RequestObject.Mock.VcSdJwt.jsonSampleData
-    let mockRequestObject = try JSONDecoder().decode(RequestObject.self, from: mockRequestObjectData)
+    let decoder = JSONDecoder()
+    let mockRequestObject = try decoder.decode(RequestObject.self, from: mockRequestObjectData)
 
     XCTAssertNotNil(mockRequestObject.presentationDefinition)
     XCTAssertNotNil(mockRequestObject.responseUri)
@@ -18,12 +19,13 @@ final class RequestObjectTests: XCTestCase {
     XCTAssertNotNil(mockRequestObject.clientMetadata?.logoUri)
 
     guard
-      let firstInputDescriptor = mockRequestObject.presentationDefinition.inputDescriptors.first
+      let presentationDefinition = mockRequestObject.presentationDefinition,
+      let firstInputDescriptor = presentationDefinition.inputDescriptors.first
     else {
       XCTFail("No input descriptor")
       return
     }
-    XCTAssertEqual(mockRequestObject.firstInputDescriptor, mockRequestObject.presentationDefinition.inputDescriptors.first)
+    XCTAssertEqual(mockRequestObject.firstInputDescriptor, presentationDefinition.inputDescriptors.first)
     XCTAssertFalse(firstInputDescriptor.formats.isEmpty)
 
     XCTAssertEqual(mockRequestObject.firstInputDescriptor?.formats.first?.vcAlgorithm?.first, "ES256")
@@ -32,7 +34,8 @@ final class RequestObjectTests: XCTestCase {
 
   func testDecodingVcSdJwtRequestObjectWithUnsupportedClientMetadata() throws {
     let mockRequestObjectData = RequestObject.Mock.VcSdJwt.sampleWithUnsupportedClientMetadata
-    let mockRequestObject = try JSONDecoder().decode(RequestObject.self, from: mockRequestObjectData)
+    let decoder = JSONDecoder()
+    let mockRequestObject = try decoder.decode(RequestObject.self, from: mockRequestObjectData)
 
     XCTAssertNotNil(mockRequestObject.presentationDefinition)
     XCTAssertNotNil(mockRequestObject.responseUri)
@@ -41,7 +44,8 @@ final class RequestObjectTests: XCTestCase {
     XCTAssertNil(mockRequestObject.clientMetadata?.logoUri)
 
     guard
-      let firstInputDescriptor = mockRequestObject.presentationDefinition.inputDescriptors.first
+      let presentationDefinition = mockRequestObject.presentationDefinition,
+      let firstInputDescriptor = presentationDefinition.inputDescriptors.first
     else {
       XCTFail("No input descriptor")
       return
@@ -51,7 +55,8 @@ final class RequestObjectTests: XCTestCase {
 
   func testDecodingRequestObjectWithoutClientMetadata() throws {
     let mockRequestObjectData = RequestObject.Mock.VcSdJwt.sampleWithoutClientMetadataData
-    let mockRequestObject = try JSONDecoder().decode(RequestObject.self, from: mockRequestObjectData)
+    let decoder = JSONDecoder()
+    let mockRequestObject = try decoder.decode(RequestObject.self, from: mockRequestObjectData)
 
     XCTAssertNotNil(mockRequestObject.presentationDefinition)
     XCTAssertNotNil(mockRequestObject.responseUri)
@@ -61,7 +66,8 @@ final class RequestObjectTests: XCTestCase {
   func testDecoding_UnknownInputDescriptorFormat_ThrowsInvalidPayload() throws {
     let data = RequestObject.Mock.UnknownFormat.sampleData
 
-    XCTAssertThrowsError(try JSONDecoder().decode(RequestObject.self, from: data)) { error in
+    let decoder = JSONDecoder()
+    XCTAssertThrowsError(try decoder.decode(RequestObject.self, from: data)) { error in
       XCTAssertEqual(error as? RequestObjectError, .invalidPayload)
     }
   }
@@ -69,12 +75,13 @@ final class RequestObjectTests: XCTestCase {
   func testDecoding_NoInputDescriptorFormat_ThrowsInvalidPayload() throws {
     let data = RequestObject.Mock.UnknownFormat.sampleWithoutFormatData
 
-    XCTAssertThrowsError(try JSONDecoder().decode(RequestObject.self, from: data)) { error in
+    let decoder = JSONDecoder()
+    XCTAssertThrowsError(try decoder.decode(RequestObject.self, from: data)) { error in
       XCTAssertEqual(error as? RequestObjectError, .invalidPayload)
     }
   }
 
-  func testGetPreferredDisplay_multipleLanguages_returnsFirstValidLanguage() throws {
+  func testGetPreferredDisplay_multipleLanguages_returnsFirstValidLanguage() {
     let requestObject = RequestObject.Mock.VcSdJwt.sample
     let languages: [UserLanguageCode] = ["cz", "de", "en"]
 
@@ -83,12 +90,20 @@ final class RequestObjectTests: XCTestCase {
     XCTAssertEqual(clientName, "DE Verifier")
   }
 
-  func testGetPreferredDisplay_noLanguages_returnsFallback() throws {
+  func testGetPreferredDisplay_noLanguages_returnsFallback() {
     let requestObject = RequestObject.Mock.VcSdJwt.sample
 
     let clientName = requestObject.clientMetadata?.clientName?.getPreferredDisplay(considering: [])
 
     XCTAssertEqual(clientName, "Verifier")
+  }
+
+  func testDecodingDcqlRequestObjectCapturesRawQuery() throws {
+    let decoder = JSONDecoder()
+    let requestObject = try decoder.decode(RequestObject.self, from: RequestObject.Mock.Dcql.sampleData)
+
+    XCTAssertNil(requestObject.presentationDefinition)
+    XCTAssertNotNil(requestObject.rawDcqlQuery)
   }
 
 }

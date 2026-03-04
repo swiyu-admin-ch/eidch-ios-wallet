@@ -16,6 +16,7 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
+    .package(path: "../../Platforms/BITCrypto"),
     .package(path: "../../Platforms/BITVault"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITTheming"),
@@ -46,7 +47,11 @@ let package = Package(
       name: "BITCredentialSharedTests",
       dependencies: [
         "BITCredentialShared",
+        .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITCrypto", package: "BITCrypto"),
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
+        .product(name: "BITTestingCore", package: "BITCore"),
+        .product(name: "Factory", package: "Factory"),
       ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),

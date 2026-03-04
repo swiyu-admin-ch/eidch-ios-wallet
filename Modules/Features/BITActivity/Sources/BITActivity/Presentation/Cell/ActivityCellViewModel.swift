@@ -13,7 +13,9 @@ public struct ActivityCellViewModel: Identifiable {
 
   // MARK: Public
 
-  public var id: UUID { activity.id }
+  public var id: UUID {
+    activity.id
+  }
 
   // MARK: Internal
 
@@ -45,14 +47,12 @@ public struct ActivityCellViewModel: Identifiable {
         .locale(currentLocale)
         .year(.defaultDigits)
         .month(.twoDigits)
-        .day(.twoDigits)
-    )
+        .day(.twoDigits))
     let time = activity.createdAt.formatted(
       .dateTime
         .locale(currentLocale)
         .hour(.twoDigits(amPM: .abbreviated))
-        .minute(.twoDigits)
-    )
+        .minute(.twoDigits))
     return "\(date) | \(time)"
   }
 

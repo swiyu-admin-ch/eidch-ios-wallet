@@ -95,7 +95,9 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
   @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
   @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
 
-  private var attemptLeft: Int { attemptsLimit - attempts }
+  private var attemptLeft: Int {
+    attemptsLimit - attempts
+  }
 
   private func reset() {
     try? resetLoginAttemptCounterUseCase.execute()

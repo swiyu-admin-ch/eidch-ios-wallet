@@ -36,7 +36,9 @@ public class PresentationRequestContext {
 
   var selectedCredential: CompatibleCredential?
 
-  var requestObject: RequestObject { presentationRequest.requestObject }
+  var requestObject: RequestObject {
+    presentationRequest.requestObject
+  }
 
   var verifierDisplays: [VerifierDisplay] {
     if case .trusted(let trustStatement) = trustInformation.identity {

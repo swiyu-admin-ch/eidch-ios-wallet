@@ -1,7 +1,9 @@
 import SwiftUI
 
 extension LabelStyle where Self == TitleAndIconReversedLabelStyle {
-  public static var titleAndIconReversed: TitleAndIconReversedLabelStyle { TitleAndIconReversedLabelStyle() }
+  public static var titleAndIconReversed: TitleAndIconReversedLabelStyle {
+    TitleAndIconReversedLabelStyle()
+  }
 }
 
 // MARK: - TitleAndIconReversedLabelStyle

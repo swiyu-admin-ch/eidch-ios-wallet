@@ -52,12 +52,21 @@ extension Container {
     self { GetCompatibleCredentialsUseCase() }
   }
 
-  public var presentationRequestBodyGenerator: Factory<PresentationRequestBodyGeneratorProtocol> {
-    self { PresentationRequestBodyGenerator() }
+  public var dcqlCredentialMatcher: Factory<DcqlCredentialMatcherProtocol> {
+    self { DcqlCredentialMatcher() }
+  }
+
+  public var authorizationResponseBodyGenerator: Factory<AuthorizationResponseBodyGeneratorProtocol> {
+    self { AuthorizationResponseBodyGenerator() }
   }
 
   // MARK: Internal
 
-  var loadingMessageDelay: Factory<Double> { self { 5 } }
-  var declinePresentationRequestDelay: Factory<UInt64> { self { 1_000_000_000 } }
+  var loadingMessageDelay: Factory<Double> {
+    self { 5 }
+  }
+
+  var declinePresentationRequestDelay: Factory<UInt64> {
+    self { 1_000_000_000 }
+  }
 }

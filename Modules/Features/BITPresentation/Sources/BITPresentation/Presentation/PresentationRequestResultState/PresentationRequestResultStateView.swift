@@ -63,7 +63,6 @@ struct PresentationRequestResultStateView: View {
 
   private let router: PresentationInternalRoutes
 
-  @ViewBuilder
   private func stateView() -> some View {
     VStack {
       Spacer()
@@ -143,7 +142,6 @@ struct PresentationRequestResultStateView: View {
     .clipShape(.rect(cornerRadius: .x2))
   }
 
-  @ViewBuilder
   private func claimsList(_ claims: [CredentialClaim], @ViewBuilder cell: @escaping (CredentialClaim) -> some View) -> some View {
     LazyVStack(alignment: .leading, spacing: .x1) {
       ForEach(claims, id: \.id) { claim in
@@ -154,7 +152,6 @@ struct PresentationRequestResultStateView: View {
     .frame(maxWidth: 400)
   }
 
-  @ViewBuilder
   private func claimCell(_ claim: CredentialClaim, image: Image = Assets.checkmark.swiftUIImage, imageColor: Color? = nil) -> some View {
     HStack(alignment: .top, spacing: .x1) {
       if sizeCategory < .accessibilityExtraLarge {
@@ -170,7 +167,6 @@ struct PresentationRequestResultStateView: View {
     }
   }
 
-  @ViewBuilder
   private func denyView() -> some View {
     Text(L10n.tkPresentResultDeclinedPrimary)
       .multilineTextAlignment(.center)
@@ -179,7 +175,6 @@ struct PresentationRequestResultStateView: View {
       .padding(.bottom, compression.isCompressed ? .x2 : .x4)
   }
 
-  @ViewBuilder
   private func errorMessages(title: String, subtitle: String) -> some View {
     VStack(spacing: .x1) {
       Text(title)
@@ -212,7 +207,6 @@ struct PresentationRequestResultStateView: View {
     }
   }
 
-  @ViewBuilder
   private func finishButton() -> some View {
     AsyncButton(action: viewModel.finish) {
       Text(L10n.tkGlobalFinish)
@@ -221,7 +215,6 @@ struct PresentationRequestResultStateView: View {
     .accessibilityIdentifier(AccessibilityIdentifier.finishButton.rawValue)
   }
 
-  @ViewBuilder
   private func errorButtons() -> some View {
     AdaptiveButtonStack {
       Button { viewModel.retry() } label: {

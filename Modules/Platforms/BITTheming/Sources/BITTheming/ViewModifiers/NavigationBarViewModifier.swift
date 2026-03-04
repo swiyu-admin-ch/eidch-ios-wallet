@@ -16,8 +16,7 @@ public struct NavigationBarAppearanceViewModifier: ViewModifier {
       .background(
         NavigationView { viewController in
           viewController.applyNavigationAppearance(appearance, scrollEdgeAppearance: scrollEdgeAppearance)
-        }
-      )
+        })
   }
 }
 

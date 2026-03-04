@@ -58,7 +58,7 @@ extension ActorInformationBadgeType {
     }
   }
 
-  // var like for the others does not work because of the any (seems like a problem of swift...)
+  /// var like for the others does not work because of the any (seems like a problem of swift...)
   static func badgeStyle(type: ActorInformationBadgeType) -> any BadgeStyle {
     switch type {
     case .legitimateIssuer,

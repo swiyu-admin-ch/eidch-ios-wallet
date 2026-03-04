@@ -25,6 +25,7 @@ struct CameraView: View {
           focus = .camera
         }
       }
+      .disablePhoneLock()
       .popup(isPresented: $viewModel.isTorchEnabled) {
         torchTipView()
       } customize: {
@@ -120,7 +121,6 @@ struct CameraView: View {
 
   @Orientation private var orientation
 
-  @ViewBuilder
   private func content() -> some View {
     scannerView()
       .ignoresSafeArea(edges: orientation.isLandscape ? [.horizontal] : [])
@@ -131,7 +131,6 @@ struct CameraView: View {
 // MARK: - Components
 
 extension CameraView {
-  @ViewBuilder
   private func scannerView() -> some View {
     CameraPreview(session: viewModel.session, object: viewModel.cameraManager.capturedObject, viewModel.didMoveFocusArea(to:))
       .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
@@ -143,7 +142,6 @@ extension CameraView {
       .accessibilityFocused($focus, equals: .camera)
   }
 
-  @ViewBuilder
   private func progressView() -> some View {
     ProgressViewLabelBadge(
       text: L10n.tkGlobalPleasewait,
@@ -153,12 +151,10 @@ extension CameraView {
       .accessibilityFocused($focus, equals: .loadingTip)
   }
 
-  @ViewBuilder
   private func torchTipView() -> some View {
     LabelBadge(text: L10n.tkQrscannerLightonTitle, backgroundColor: ThemingAssets.Brand.Bright.navyBlue.swiftUIColor, image: "sun.min")
   }
 
-  @ViewBuilder
   private func helpTipView() -> some View {
     tipView(primary: L10n.tkQrscannerScanningTitle, secondary: L10n.tkQrscannerScanningBody, icon: Assets.qrcode.swiftUIImage, close: viewModel.closeTipView)
       .frame(maxWidth: orientation.isPortrait ? .infinity : Constants.tipViewMaxWidth)
@@ -166,13 +162,13 @@ extension CameraView {
   }
 
   @ViewBuilder
-  private func errorView(_ error: InvitationError) -> some View {
-    tipView(primary: error.primaryText, secondary: error.secondaryText, icon: error.icon, close: viewModel.closeErrorView)
+  private func errorView(_ error: Error) -> some View {
+    let invitationError = error as? InvitationError ?? .invalidQRCode
+    tipView(primary: invitationError.primaryText, secondary: invitationError.secondaryText, icon: invitationError.icon, close: viewModel.closeErrorView)
       .frame(maxWidth: orientation.isPortrait ? .infinity : Constants.tipViewMaxWidth)
       .padding(.horizontal, orientation.isPortrait ? .x3 : .x1)
   }
 
-  @ViewBuilder
   private func tipView(primary: String, secondary: String, tertiary: String? = nil, icon: Image, close: @escaping() -> Void) -> some View {
     Notification(
       image: icon,

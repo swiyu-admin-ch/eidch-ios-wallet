@@ -65,7 +65,6 @@ struct PinCodeFormView: View {
 
   @Orientation private var orientation
 
-  @ViewBuilder
   private func content() -> some View {
     ScrollView {
       VStack {
@@ -88,7 +87,6 @@ struct PinCodeFormView: View {
     .background(ThemingAssets.Background.secondary.swiftUIColor)
   }
 
-  @ViewBuilder
   private func landscapeLayout() -> some View {
     VStack(alignment: .leading) {
       HStack {
@@ -120,7 +118,6 @@ struct PinCodeFormView: View {
     Spacer()
   }
 
-  @ViewBuilder
   private func footerView() -> some View {
     HStack {
       Spacer()
@@ -133,7 +130,6 @@ struct PinCodeFormView: View {
     .padding(.bottom, .x4)
   }
 
-  @ViewBuilder
   private func secureField() -> some View {
     VStack(alignment: .leading) {
       Text(fieldTitle)
@@ -143,8 +139,7 @@ struct PinCodeFormView: View {
         .overlay(
           RoundedRectangle(cornerRadius: .x2)
             .inset(by: 1)
-            .stroke(inputFieldState == .error ? ThemingAssets.Brand.Core.swissRed.swiftUIColor : ThemingAssets.Label.secondary.swiftUIColor, lineWidth: 1)
-        )
+            .stroke(inputFieldState == .error ? ThemingAssets.Brand.Core.swissRed.swiftUIColor : ThemingAssets.Label.secondary.swiftUIColor, lineWidth: 1))
         .focused($inputFocused)
         .modifier(ShakeEffect(animatableData: CGFloat(attempts)))
         .onAppear {
@@ -158,7 +153,6 @@ struct PinCodeFormView: View {
     }
   }
 
-  @ViewBuilder
   private func nextButton() -> some View {
     Button {
       onPressNext()
@@ -171,7 +165,6 @@ struct PinCodeFormView: View {
     .disabled(!isSubmitEnabled)
   }
 
-  @ViewBuilder
   private func inputFieldMessage(_ message: String) -> some View {
     Text(message)
       .font(.custom.footnote)

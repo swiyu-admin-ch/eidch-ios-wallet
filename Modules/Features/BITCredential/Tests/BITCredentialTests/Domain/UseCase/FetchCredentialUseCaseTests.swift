@@ -63,7 +63,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReceivedArguments?.metadataWrapper.rawData, metadataWrapper.rawData)
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReceivedArguments?.holderBindingContext, mockHolderBindingContext)
 
-    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.deferredCredentialRequest, mockDeferredCrendentialRequest)
+    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.deferredCredentialContext, mockDeferredCrendentialRequest)
     XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.keyBinding, mockCredentialKeyBinding)
     XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.metadataWrapper.selectedCredential.claims, metadataWrapper.selectedCredential.claims)
     XCTAssertNotNil(credentialGenerator.generateDeferredKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
@@ -76,7 +76,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(holderBindingContextGenerator.generateFromCallsCount, 1)
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextCallsCount, 1)
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 1)
-    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperCallsCount, 1)
+    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementCallsCount, 1)
     XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 1)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdCallsCount, 1)
@@ -93,14 +93,16 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReceivedArguments?.holderBindingContext, mockHolderBindingContext)
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialReceivedAnyCredential?.raw, anyCredential.raw)
 
-    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.anyCredential.raw, anyCredential.raw)
-    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.keyBinding, mockCredentialKeyBinding)
-    XCTAssertNotNil(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
-    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.metadataWrapper.selectedCredential.claims, metadataWrapper.selectedCredential.claims)
-
-    for issuerDisplay in credentialRepository.createVerifiableCredentialReceivedVerifiableCredential!.issuerDisplays {
-      XCTAssertEqual(issuerDisplay.name, "\(issuerDisplay.locale!) entityName")
+    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReceivedArguments?.anyCredential.raw, anyCredential.raw)
+    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReceivedArguments?.keyBinding, mockCredentialKeyBinding)
+    XCTAssertNotNil(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReceivedArguments?.rawOcaBundle)
+    XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReceivedArguments?.metadataWrapper.selectedCredential.claims, metadataWrapper.selectedCredential.claims)
+    if case .trusted(let statement) = mockTrustInformation.identity {
+      XCTAssertEqual(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReceivedArguments?.trustStatement, statement)
+    } else {
+      XCTFail("Expected a trusted identity")
     }
+
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, anyCredential.issuer)
     XCTAssertEqual(trustInformationServiceSpy.fetchForTypeVcSchemaIdReceivedArguments?.type, .issuance)
@@ -118,10 +120,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(credential as? VerifiableCredential, updatedCredential)
     XCTAssertEqual(trustInformation, mockTrustInformation)
 
-    for issuerDisplay in credentialRepository.createVerifiableCredentialReceivedVerifiableCredential!.issuerDisplays {
-      XCTAssertEqual(issuerDisplay.name, "\(issuerDisplay.locale!) entityName")
-    }
-    XCTAssertNil(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReceivedArguments?.rawOcaBundle)
+    XCTAssertNil(credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReceivedArguments?.rawOcaBundle)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
   }
 
@@ -172,7 +171,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_credentialGeneratorFailure_throwsError() async throws {
-    credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperThrowableError = TestingError.error
+    credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(from: offer)
@@ -234,7 +233,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   private let rawOcaBundleMock = "rawOcaBundle".data(using: .utf8)!
   private let mockTrustInformation = TrustInformation.Mock.trustedIdentity
   private let mockHolderBindingContext = HolderBindingContext.Mock.softwareKey
-  private let mockDeferredCrendentialRequest = DeferredCredentialRequest.Mock.sample
+  private let mockDeferredCrendentialRequest = DeferredCredentialContext.Mock.sample
   private let mockDeferredCrendential = DeferredCredential.Mock.sample
   private var mockCredentialKeyBinding: CredentialKeyBinding!
 
@@ -275,7 +274,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     fetchAnyVerifiableCredentialUseCase.executeFromMetadataWrapperHolderBindingContextReturnValue = FetchAnyCredentialResult.credential(anyCredential)
     fetchVcMetadataUseCase.executeMetadataReturnValue = rawOcaBundleMock
     fetchVcMetadataUseCase.executeAnyCredentialReturnValue = rawOcaBundleMock
-    credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperReturnValue = generatedCredential
+    credentialGenerator.generateForKeyBindingRawOcaBundleMetadataWrapperTrustStatementReturnValue = generatedCredential
     credentialRepository.createVerifiableCredentialReturnValue = repositoryCredential
     checkAndUpdateCredentialStatusUseCase.executeForReturnValue = updatedCredential
     trustInformationServiceSpy.fetchForTypeVcSchemaIdReturnValue = mockTrustInformation

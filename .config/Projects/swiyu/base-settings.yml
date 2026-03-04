@@ -1,0 +1,26 @@
+targetTemplates:
+  swiyu-settings-base:
+    postBuildScripts:
+      - path: ../../../.resources/scripts/format_generated_files.sh
+        name: Format generated files
+        inputFiles:
+          - $(SRCROOT)/swiyu/Resources/Assets.swift
+        outputFiles:
+          - "/tmp/$(TARGET_NAME)DummyOutputFileFormatGeneratedFiles.txt"
+      - path: ../../../.resources/scripts/swift_package_list.sh
+        name: Swift packages list
+        outputFiles:
+          - "/tmp/$(TARGET_NAME)DummyOutputFileSwiftPackagesList.txt"
+      - path: ../../../.resources/scripts/settings_bundle.sh
+        name: Settings bundle
+        outputFiles:
+          - "/tmp/$(TARGET_NAME)DummyOutputFileSettingsBundle.txt"
+    settings:
+      base:
+        IPHONEOS_DEPLOYMENT_TARGET: 16.0
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 100.0 # avoids version enforcement for local builds
+        PRODUCT_NAME: swiyu
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        DEBUG_INFORMATION_FORMAT: dwarf-with-dsym

@@ -18,6 +18,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     status: CredentialStatus = .unknown,
     clusters: [CredentialClaimCluster] = [],
     format: String,
+    issuerUrl: String,
     selectedConfigurationId: String? = nil,
     issuer: String,
     keyBinding: CredentialKeyBinding? = nil,
@@ -37,6 +38,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     self.validFrom = validFrom
     self.validUntil = validUntil
     self.format = format
+    self.issuerUrl = issuerUrl
     self.selectedConfigurationId = selectedConfigurationId
     self.keyBinding = keyBinding
     self.rawCredentialData = rawCredentialData
@@ -59,6 +61,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
       status: CredentialStatus(verifiableCredential.status),
       clusters: Array(verifiableCredential.clusters.map(CredentialClaimCluster.init)),
       format: entity.format,
+      issuerUrl: entity.issuerUrl,
       selectedConfigurationId: entity.selectedConfigurationId,
       issuer: verifiableCredential.issuer,
       keyBinding: entity.keyBinding.flatMap(CredentialKeyBinding.init),
@@ -79,6 +82,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public let validUntil: Date?
 
   public var format: String
+  public var issuerUrl: String
   public var selectedConfigurationId: String?
 
   public var keyBinding: CredentialKeyBinding? = nil
@@ -107,6 +111,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     case validFrom
     case validUntil
     case format
+    case issuerUrl
     case selectedConfigurationId
     case keyBinding
     case rawCredentialData
@@ -132,6 +137,7 @@ extension VerifiableCredential: Equatable {
       lhs.keyBinding == rhs.keyBinding &&
       lhs.rawCredentialData == rhs.rawCredentialData &&
       lhs.format == rhs.format &&
+      lhs.issuerUrl == rhs.issuerUrl &&
       lhs.selectedConfigurationId == rhs.selectedConfigurationId &&
       lhs.clusters.allSatisfy(rhs.clusters.contains) && rhs.clusters.allSatisfy(lhs.clusters.contains) &&
       lhs.issuerDisplays.allSatisfy(rhs.issuerDisplays.contains) && rhs.issuerDisplays.allSatisfy(lhs.issuerDisplays.contains) &&
@@ -157,5 +163,20 @@ extension VerifiableCredential {
         self = .unaccepted
       }
     }
+  }
+}
+
+// MARK: Hashable
+
+extension VerifiableCredential: Hashable {
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+    hasher.combine(createdAt)
+    hasher.combine(payload)
+    hasher.combine(issuer)
+    hasher.combine(status)
+    hasher.combine(validFrom)
+    hasher.combine(validUntil)
   }
 }

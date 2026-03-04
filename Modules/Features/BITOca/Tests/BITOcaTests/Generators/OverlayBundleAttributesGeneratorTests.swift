@@ -20,7 +20,7 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     let attributes = generator.generate(from: ocaBundle)
 
     XCTAssertEqual(attributes.count, 2)
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
     XCTAssertEqual(attribute.captureBaseDigest, Self.rootCaptureBaseDigest)
     XCTAssertEqual(attribute.name, Self.attributeMock)
     XCTAssertEqual(attribute.attributeType, Self.attributeTypeMock)
@@ -40,8 +40,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     let attributes = generator.generate(from: ocaBundle)
 
     XCTAssertEqual(attributes.count, 2)
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.characterEncoding, .base64)
     XCTAssertNil(otherAttribute.characterEncoding)
   }
@@ -53,8 +53,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
     let attributes = generator.generate(from: ocaBundle)
 
     XCTAssertEqual(attributes.count, 2)
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.characterEncoding, .unknown(rawString: "encoding"))
     XCTAssertEqual(otherAttribute.characterEncoding, .base64)
   }
@@ -66,8 +66,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.dataSources, dataSources)
     XCTAssertTrue(otherAttribute.dataSources.isEmpty)
   }
@@ -80,8 +80,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.entryMapping, entries)
     XCTAssertTrue(otherAttribute.entryMapping.isEmpty)
   }
@@ -92,8 +92,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.format, "format")
     XCTAssertNil(otherAttribute.format)
   }
@@ -105,8 +105,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.labels, labels)
     XCTAssertTrue(otherAttribute.labels.isEmpty)
   }
@@ -117,8 +117,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.order, 1)
     XCTAssertNil(otherAttribute.order)
   }
@@ -129,8 +129,8 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertTrue(attribute.isSensitive)
     XCTAssertFalse(otherAttribute.isSensitive)
   }
@@ -141,13 +141,13 @@ final class OverlayBundleAttributesGeneratorTests: XCTestCase {
 
     let attributes = generator.generate(from: ocaBundle)
 
-    let attribute = attributes.first { $0.name == Self.attributeMock }!
-    let otherAttribute = attributes.first { $0.name == Self.otherAttributeMock }!
+    let attribute = try XCTUnwrap(attributes.first { $0.name == Self.attributeMock })
+    let otherAttribute = try XCTUnwrap(attributes.first { $0.name == Self.otherAttributeMock })
     XCTAssertEqual(attribute.standard, .dataURLScheme)
     XCTAssertNil(otherAttribute.standard)
   }
 
-  func testGenerate_nested_returnsAttributes() throws {
+  func testGenerate_nested_returnsAttributes() {
     let ocaBundle = OcaBundle.Mock.nested
 
     let attributes = generator.generate(from: ocaBundle)

@@ -1,0 +1,44 @@
+targets:
+  swiyuTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources: ../../../swiyuTests
+    dependencies:
+      - target: swiyu
+    settings:
+      base:
+        DEVELOPMENT_TEAM: 2NG6YF3PM2
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/swiyu.app/swiyu
+    info:
+      path: ../../../swiyuTests/Info.plist
+      properties:
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+
+  swiyuUITests:
+    templates:
+      - swiyu-uitest-deps
+    type: bundle.ui-testing
+    platform: iOS
+    sources: ../../../swiyuUITests
+    dependencies:
+      - target: swiyuUITests-App
+    deploymentTarget: "16.0"
+    settings:
+      base:
+        DEVELOPMENT_TEAM: 2NG6YF3PM2
+      configs:
+        Test (debug):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.uitest
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.uitest.xctrunner
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS:
+            - "DEBUG"
+    info:
+      path: ../../../swiyuUITests/Info.plist
+      properties:
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleName: $(PRODUCT_NAME)

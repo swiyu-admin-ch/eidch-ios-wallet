@@ -71,19 +71,16 @@ public struct InformationView<Content: View, Footer: View>: View {
 
 extension InformationView {
 
-  @ViewBuilder
   private func leftContent() -> some View {
     card()
   }
 
-  @ViewBuilder
   private func rightContent() -> some View {
     content
       .padding(.horizontal, .x6)
       .accessibilityPriorityFocus()
   }
 
-  @ViewBuilder
   private func footerContent() -> some View {
     footer
   }

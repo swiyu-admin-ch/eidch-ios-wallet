@@ -10,20 +10,8 @@ extension DeferredCredentialEntity {
     accessToken = credential.accessToken
     endpoint = credential.endpoint
     createdAt = credential.createdAt
-    progressState = ProgressionState(credential.progressionState)
+    progressState = credential.progressionState.rawValue
     pollingInterval = credential.pollingInterval
     polledAt = credential.polledAt
-  }
-}
-
-extension DeferredCredentialEntity.ProgressionState {
-
-  init(_ state: DeferredCredential.ProgressionState) {
-    switch state {
-    case .inProgress:
-      self = .inProgress
-    case .invalid:
-      self = .invalid
-    }
   }
 }

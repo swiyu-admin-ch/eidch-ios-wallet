@@ -27,7 +27,9 @@ final class NoDevicePinCodeScene: SceneManagerProtocol {
 
   var module: NoDevicePinCodeModule = Container.shared.noDevicePinCodeModule()
 
-  func viewController() -> UIViewController { module.viewController }
+  func viewController() -> UIViewController {
+    module.viewController
+  }
 
   // MARK: Private
 

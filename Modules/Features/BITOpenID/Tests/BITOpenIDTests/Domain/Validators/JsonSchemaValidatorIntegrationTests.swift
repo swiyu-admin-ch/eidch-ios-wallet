@@ -15,12 +15,12 @@ final class JsonSchemaValidatorIntegrationTests: XCTestCase {
 
   func testValidateDictionary_validArguments_success() throws {
     let jsonDict = try? JSONSerialization.jsonObject(with: credential) as? [String: Any]
-    XCTAssertTrue(try JsonSchemaValidator().validate(dictionary: jsonDict!, with: schemaCredential))
+    XCTAssertTrue(try JsonSchemaValidator().validate(dictionary: XCTUnwrap(jsonDict), with: schemaCredential))
   }
 
   func testValidateDictionary_requiredArgumentsOnlySet_success() throws {
     let jsonDict = try? JSONSerialization.jsonObject(with: credentialRequiredSetOnly) as? [String: Any]
-    XCTAssertTrue(try JsonSchemaValidator().validate(dictionary: jsonDict!, with: schemaCredential))
+    XCTAssertTrue(try JsonSchemaValidator().validate(dictionary: XCTUnwrap(jsonDict), with: schemaCredential))
   }
 
   func testValidate_schemaMalformed_throwsError() throws {
@@ -37,7 +37,7 @@ final class JsonSchemaValidatorIntegrationTests: XCTestCase {
 
   func testValidateDictionary_credentialMissingClaim_failure() throws {
     let jsonDict = try? JSONSerialization.jsonObject(with: credentialMissingClaim) as? [String: Any]
-    XCTAssertFalse(try JsonSchemaValidator().validate(dictionary: jsonDict!, with: schemaCredential))
+    XCTAssertFalse(try JsonSchemaValidator().validate(dictionary: XCTUnwrap(jsonDict), with: schemaCredential))
   }
 
   // MARK: Private

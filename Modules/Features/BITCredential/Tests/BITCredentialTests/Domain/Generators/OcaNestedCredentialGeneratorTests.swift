@@ -29,7 +29,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 1)
-    let cluster = credential.clusters.first!
+    let cluster = try XCTUnwrap(credential.clusters.first)
     assertNestedCluster(cluster)
   }
 
@@ -41,10 +41,10 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 2)
-    let cluster = credential.clusters.first { !$0.childClusters.isEmpty }!
+    let cluster = try XCTUnwrap(credential.clusters.first { !$0.childClusters.isEmpty })
     assertNestedCluster(cluster)
 
-    let additionalCluster = credential.clusters.first(where: \.childClusters.isEmpty)!
+    let additionalCluster = try XCTUnwrap(credential.clusters.first(where: \.childClusters.isEmpty))
     XCTAssertEqual(additionalCluster.claims.count, 1)
     XCTAssertTrue(additionalCluster.claims[0].displays.isEmpty)
     XCTAssertEqual(additionalCluster.childClusters.count, 0)
@@ -71,7 +71,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.clusters.count, 4)
     assertSimpleNestedClusters(credential.clusters)
 
-    let additionalCluster = credential.clusters.first(where: \.displays.isEmpty)!
+    let additionalCluster = try XCTUnwrap(credential.clusters.first(where: \.displays.isEmpty))
     XCTAssertEqual(additionalCluster.claims.count, 1)
     XCTAssertTrue(additionalCluster.claims[0].displays.isEmpty)
     XCTAssertEqual(additionalCluster.childClusters.count, 0)

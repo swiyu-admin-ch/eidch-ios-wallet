@@ -15,6 +15,10 @@ extension Container {
 
   // MARK: Internal
 
+  var fetchDeferredCredentialService: Factory<FetchDeferredCredentialServiceProtocol> {
+    self { FetchDeferredCredentialService() }
+  }
+
   var holderBindingContextGenerator: Factory<HolderBindingContextGeneratorProtocol> {
     self { HolderBindingContextGenerator() }
   }
@@ -53,13 +57,13 @@ extension Container {
   }
 
   @MainActor
-  var credentialDetailViewModel: ParameterFactory<VerifiableCredential, CredentialDetailViewModel> {
-    self { CredentialDetailViewModel($0) }
+  var credentialDetailViewModel: ParameterFactory<(CredentialProtocol, CredentialDetailDelegate?), CredentialDetailViewModel> {
+    self { CredentialDetailViewModel($0, delegate: $1) }
   }
 
   @MainActor
-  var credentialDetailModule: ParameterFactory<VerifiableCredential, CredentialDetailModule> {
-    self { CredentialDetailModule(credential: $0) }
+  var credentialDetailModule: ParameterFactory<(CredentialProtocol, CredentialDetailDelegate?), CredentialDetailModule> {
+    self { CredentialDetailModule(credential: $0, delegate: $1) }
   }
 }
 

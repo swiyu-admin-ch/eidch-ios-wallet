@@ -28,7 +28,7 @@ final class NoDevicePinCodeSceneTests: XCTestCase {
   }
 
   @MainActor
-  func testAppSceneResult() async {
+  func testAppSceneResult() {
     UserDefaults.standard.setValue(false, forKey: "rootOnboardingIsEnabled")
 
     (scene.module.viewModel as? MockNoDevicePinCodeViewModel)?.done()
@@ -40,7 +40,7 @@ final class NoDevicePinCodeSceneTests: XCTestCase {
   }
 
   @MainActor
-  func testOnBoardingResult() async {
+  func testOnBoardingResult() {
     UserDefaults.standard.setValue(true, forKey: "rootOnboardingIsEnabled")
 
     (scene.module.viewModel as? MockNoDevicePinCodeViewModel)?.done()

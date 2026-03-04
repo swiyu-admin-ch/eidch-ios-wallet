@@ -24,14 +24,15 @@ public struct AdaptiveColumnsView<PrimaryContent: View, SecondaryContent: View, 
 
   // MARK: Private
 
-  @Environment(\.sizeCategory) var sizeCategory
+  @Environment(\.sizeCategory) private var sizeCategory
+
   @Orientation private var orientation
 
-  @ViewBuilder
   private func portrait() -> some View {
     VStack(spacing: spacing.portrait) {
       primaryContent()
       secondaryContent()
+        .padding(.top, .x4)
       Spacer()
     }
     .applyScrollViewIfNeeded()
@@ -40,7 +41,6 @@ public struct AdaptiveColumnsView<PrimaryContent: View, SecondaryContent: View, 
     }
   }
 
-  @ViewBuilder
   private func landscape() -> some View {
     GeometryReader { geometry in
       HStack(alignment: .top, spacing: spacing.landscape) {
@@ -55,7 +55,6 @@ public struct AdaptiveColumnsView<PrimaryContent: View, SecondaryContent: View, 
     }
   }
 
-  @ViewBuilder
   private func primaryContent() -> some View {
     primary
       .frame(maxWidth: .infinity)

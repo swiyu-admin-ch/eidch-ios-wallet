@@ -64,12 +64,6 @@ extension TypeMetadata {
 
     let description: String?
 
-    public static func == (lhs: TypeMetadata.Display, rhs: TypeMetadata.Display) -> Bool {
-      lhs.lang == rhs.lang
-        && lhs.name == rhs.name
-        && lhs.description == rhs.description
-        && lhs.rendering == rhs.rendering
-    }
   }
 
 }
@@ -83,12 +77,6 @@ extension TypeMetadata.Display {
     // MARK: Public
 
     public let oca: VcSdJwtOcaRendering?
-
-    public static func == (lhs: TypeMetadata.Display.Rendering, rhs: TypeMetadata.Display.Rendering) -> Bool {
-      lhs.simple == rhs.simple
-        && lhs.svgTemplates == rhs.svgTemplates
-        && lhs.oca == rhs.oca
-    }
 
     // MARK: Internal
 
@@ -117,11 +105,6 @@ extension TypeMetadata.Display.Rendering {
       case textColor = "text_color"
     }
 
-    static func == (lhs: TypeMetadata.Display.Rendering.SimpleRendering, rhs: TypeMetadata.Display.Rendering.SimpleRendering) -> Bool {
-      lhs.logo == rhs.logo
-        && lhs.backgroundColor == rhs.backgroundColor
-        && lhs.textColor == rhs.textColor
-    }
   }
 
   struct Logo: Decodable, Equatable {
@@ -135,11 +118,6 @@ extension TypeMetadata.Display.Rendering {
       case altText = "alt_text"
     }
 
-    static func == (lhs: TypeMetadata.Display.Rendering.Logo, rhs: TypeMetadata.Display.Rendering.Logo) -> Bool {
-      lhs.uri == rhs.uri
-        && lhs.uriIntegrity == rhs.uriIntegrity
-        && lhs.altText == rhs.altText
-    }
   }
 
 }
@@ -157,11 +135,6 @@ extension TypeMetadata.Display.Rendering {
       case properties
     }
 
-    static func == (lhs: TypeMetadata.Display.Rendering.SVGTemplate, rhs: TypeMetadata.Display.Rendering.SVGTemplate) -> Bool {
-      lhs.uri == rhs.uri
-        && lhs.uriIntegrity == rhs.uriIntegrity
-        && lhs.properties == rhs.properties
-    }
   }
 
   struct SVGProperties: Decodable, Equatable {
@@ -175,11 +148,6 @@ extension TypeMetadata.Display.Rendering {
       case contrast
     }
 
-    static func == (lhs: TypeMetadata.Display.Rendering.SVGProperties, rhs: TypeMetadata.Display.Rendering.SVGProperties) -> Bool {
-      lhs.orientation == rhs.orientation
-        && lhs.colorScheme == rhs.colorScheme
-        && lhs.contrast == rhs.contrast
-    }
   }
 
 }

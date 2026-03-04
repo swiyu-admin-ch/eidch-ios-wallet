@@ -25,11 +25,11 @@ final class SdJWSTests: XCTestCase {
 
     let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
 
-    let expected = String(data: TestSdJWT.Mock.flatJwtData, encoding: .utf8)!
+    let expected = try XCTUnwrap(String(data: TestSdJWT.Mock.flatJwtData, encoding: .utf8))
     XCTAssertEqual(expected, newSdJwt)
   }
 
-  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringSomeKeys_ReturnsJwtWithRequiredDisclosures() throws {
+  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringSomeKeys_ReturnsJwtWithRequiredDisclosures() {
     let sdJwt = TestSdJWT.Mock.flat
     let keys = [Self.key2]
 
@@ -39,7 +39,7 @@ final class SdJWSTests: XCTestCase {
     XCTAssertEqual(expected, newSdJwt)
   }
 
-  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringNoKeys_ReturnsJwt() throws {
+  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringNoKeys_ReturnsJwt() {
     let sdJwt = TestSdJWT.Mock.flat
     let keys = [String]()
 
@@ -48,7 +48,7 @@ final class SdJWSTests: XCTestCase {
     XCTAssertEqual(sdJwt.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
   }
 
-  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringOtherKeys_ReturnsJwt() throws {
+  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringOtherKeys_ReturnsJwt() {
     let sdJwt = TestSdJWT.Mock.flat
     let keys: [String] = ["otherKey", "otherKey2"]
 

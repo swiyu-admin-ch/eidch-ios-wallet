@@ -84,20 +84,54 @@ extension Container {
 
   // MARK: Public
 
-  public var pinCodeErrorAnimationDuration: Factory<CGFloat> { self { 0.5 } }
-  public var awaitTimeBeforeBiometrics: Factory<UInt64> { self { 325_000_000 } }
-  public var pinCodeObserverDelay: Factory<CGFloat> { self { 0.1 } }
-  public var loadingDelay: Factory<UInt64> { self { 1_000_000_000 } }
-  public var loginRequiredIntervalThreshold: Factory<TimeInterval> { self { 5 } }
-  public var pinCodeSize: Factory<Int> { self { 6 } }
-  public var pinCodeMinimumSize: Factory<Int> { self { 6 } }
-  public var pinCodeErrorAuthHideDelay: Factory<Double> { self { 5 } }
-  public var attemptsLimit: Factory<Int> { self { 5 } }
-  public var attemptsLimitChangePinCode: Factory<Int> { self { 3 } }
-  public var lockDelay: Factory<TimeInterval> { self { 60 * 5 } }
+  public var pinCodeErrorAnimationDuration: Factory<CGFloat> {
+    self { 0.5 }
+  }
+
+  public var awaitTimeBeforeBiometrics: Factory<UInt64> {
+    self { 325_000_000 }
+  }
+
+  public var pinCodeObserverDelay: Factory<CGFloat> {
+    self { 0.1 }
+  }
+
+  public var loadingDelay: Factory<UInt64> {
+    self { 1_000_000_000 }
+  }
+
+  public var loginRequiredIntervalThreshold: Factory<TimeInterval> {
+    self { 5 }
+  }
+
+  public var pinCodeSize: Factory<Int> {
+    self { 6 }
+  }
+
+  public var pinCodeMinimumSize: Factory<Int> {
+    self { 6 }
+  }
+
+  public var pinCodeErrorAuthHideDelay: Factory<Double> {
+    self { 5 }
+  }
+
+  public var attemptsLimit: Factory<Int> {
+    self { 5 }
+  }
+
+  public var attemptsLimitChangePinCode: Factory<Int> {
+    self { 3 }
+  }
+
+  public var lockDelay: Factory<TimeInterval> {
+    self { 60 * 5 }
+  }
 
   /// Length In byte
-  public var passphraseLength: Factory<Int> { self { 64 } }
+  public var passphraseLength: Factory<Int> {
+    self { 64 }
+  }
 
   public var pinCodeManager: Factory<PinCodeManagerProtocol> {
     self { PinCodeManager() }
