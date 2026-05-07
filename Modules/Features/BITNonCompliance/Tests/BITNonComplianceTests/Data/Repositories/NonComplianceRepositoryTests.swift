@@ -1,8 +1,14 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
+// swiftlint: disable implicitly_unwrapped_optional force_unwrapping force_try
 import BITNetworking
 import Factory
+import RealmSwift
 import XCTest
+@testable import BITActivity
 @testable import BITAppAttestation
+@testable import BITAppAuth
+@testable import BITDataStore
+@testable import BITEntities
+@testable import BITLocalAuthentication
 @testable import BITNonCompliance
 @testable import BITOpenID
 @testable import BITTestingCore
@@ -33,8 +39,9 @@ final class NonComplianceRepositoryTests: XCTestCase {
 
     XCTAssertEqual(reportBodyGeneratorSpy.generateFromCallsCount, 1)
     XCTAssertEqual(reportBodyGeneratorSpy.generateFromReceivedReport as? NonComplianceExcessiveDataReport, reportMock)
-    XCTAssertEqual(proofOfPossessionGeneratorSpy.generateForAudienceChallengeEndpointReceivedArguments?.audience, baseURLMock.absoluteString)
-    XCTAssertEqual(proofOfPossessionGeneratorSpy.generateForAudienceChallengeEndpointReceivedArguments?.challengeEndpoint, URL(target: NonComplianceEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, baseURLMock.absoluteString)
+    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, URL(target: NonComplianceEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.clientAttestation, clientAttestationMock)
   }
 
   func testCreate_bodyGeneratorError_throws() async throws {
@@ -45,12 +52,12 @@ final class NonComplianceRepositoryTests: XCTestCase {
       XCTFail("Expected error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertEqual(proofOfPossessionGeneratorSpy.generateForAudienceChallengeEndpointCallsCount, 0)
+      XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 0)
     }
   }
 
   func testCreate_generateProofOfPossessionsFails_throws() async throws {
-    proofOfPossessionGeneratorSpy.generateForAudienceChallengeEndpointThrowableError = TestingError.error
+    proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
 
     do {
       try await repository.create(reportMock)
@@ -114,6 +121,46 @@ final class NonComplianceRepositoryTests: XCTestCase {
     }
   }
 
+  func testGetActivity_success() throws {
+    let activity = try CredentialActivityEntity.Mock.create()
+
+    let fetched = try repository.getActivity(activity.id)
+
+    XCTAssertEqual(activityFactorySpy.callAsFunctionReceivedEntity, activity)
+    XCTAssertEqual(fetched, nonComplianceActivityMock)
+  }
+
+  func testGetActivity_noActivity_notFound() throws {
+    XCTAssertThrowsError(try repository.getActivity(UUID())) { error in
+      XCTAssertEqual(error as? NonComplianceRepositoryError, .activityNotFound)
+    }
+  }
+
+  func testGetActivityActorDisplay_success() throws {
+    let locale = "locale"
+    let actorDisplay = try ActivityActorDisplayEntity.Mock.create(locale: locale, createParent: false)
+    let activity = try CredentialActivityEntity.Mock.create(actorDisplays: [actorDisplay])
+
+    let fetched = try repository.getActivityActorDisplay(activity.id)
+
+    XCTAssertEqual(actorDisplayFactorySpy.callAsFunctionReceivedEntity?.locale, locale)
+    XCTAssertEqual(fetched, actorDisplayMock)
+  }
+
+  func testGetActivityActorDisplay_noActivity_throwsErrors() throws {
+    XCTAssertThrowsError(try repository.getActivityActorDisplay(UUID())) { error in
+      XCTAssertEqual(error as? NonComplianceRepositoryError, .activityNotFound)
+    }
+  }
+
+  func testGetActivityActorDisplay_noActorDisplay_returnsNil() throws {
+    let activity = try CredentialActivityEntity.Mock.create()
+
+    let fetched = try repository.getActivityActorDisplay(activity.id)
+
+    XCTAssertNil(fetched)
+  }
+
   // MARK: Private
 
   private var repository: NonComplianceRepository!
@@ -127,26 +174,49 @@ final class NonComplianceRepositoryTests: XCTestCase {
   private let trustRegistryURLMock = URL(string: "https://example.com")
   private let nonCompliantActorsResponseMock = NonCompliantActorsResponse.Mock.default
   private let nonCompliantActorsResponseDataMock = NonCompliantActorsResponse.Mock.defaultData
+  private let actorDisplayMock = ActivityActorDisplay.Mock.default
+  private let nonComplianceActivityMock = NonComplianceActivity.Mock.default
 
   private var reportBodyGeneratorSpy: NonComplianceReportRequestBodyGeneratorProtocolSpy!
   private var proofOfPossessionGeneratorSpy: ProofOfPossessionGeneratorProtocolSpy!
+  private var clientAttestationRepositorySpy: ClientAttestationRepositoryProtocolSpy!
   private var mapperSpy: TrustRegistryUrlMapperProtocolSpy!
+  private var userSession: SessionSpy!
+  private var userContext: LAContextProtocolSpy!
+  private var actorDisplayFactorySpy: ActivityActorDisplayFactoryProtocolSpy!
+  private var activityFactorySpy: NonComplianceActivityFactoryProtocolSpy!
 
   private func registerMocks() {
     reportBodyGeneratorSpy = NonComplianceReportRequestBodyGeneratorProtocolSpy()
     proofOfPossessionGeneratorSpy = ProofOfPossessionGeneratorProtocolSpy()
+    clientAttestationRepositorySpy = ClientAttestationRepositoryProtocolSpy()
     mapperSpy = TrustRegistryUrlMapperProtocolSpy()
+    actorDisplayFactorySpy = ActivityActorDisplayFactoryProtocolSpy()
+    activityFactorySpy = NonComplianceActivityFactoryProtocolSpy()
 
+    userSession = SessionSpy()
+    userContext = LAContextProtocolSpy()
+    userSession.isLoggedIn = true
+    userSession.context = userContext
+
+    Container.shared.configureInMemoryDataStore()
     Container.shared.nonComplianceReportRequestBodyGenerator.register { self.reportBodyGeneratorSpy }
     Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGeneratorSpy }
+    Container.shared.clientAttestationRepository.register { self.clientAttestationRepositorySpy }
     Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
+    Container.shared.activityActorDisplayFactory.register { self.actorDisplayFactorySpy }
+    Container.shared.nonComplianceActivityFactory.register { self.activityFactorySpy }
     Container.shared.nonComplianceBaseURL.register { self.baseURLMock }
+    Container.shared.userSession.register { self.userSession }
   }
 
   private func success() {
     reportBodyGeneratorSpy.generateFromReturnValue = reportBodyMock
-    proofOfPossessionGeneratorSpy.generateForAudienceChallengeEndpointReturnValue = (clientAttestationMock, clientAttestationProofOfPossessionMock)
+    proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReturnValue = clientAttestationProofOfPossessionMock
+    clientAttestationRepositorySpy.getUsingReturnValue = clientAttestationMock
     mapperSpy.mapDidReturnValue = trustRegistryURLMock
+    actorDisplayFactorySpy.callAsFunctionReturnValue = actorDisplayMock
+    activityFactorySpy.callAsFunctionReturnValue = nonComplianceActivityMock
   }
 
   private func mockResponse(code: Int, data: Data = Data()) {

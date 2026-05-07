@@ -23,34 +23,23 @@ final class SubmitNonComplianceReportUseCaseTests: XCTestCase {
   }
 
   func testExecute_success() async throws {
-    try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activity: activityMock)
+    try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activityId: activityIdMock)
 
     XCTAssertEqual(nonComplianceRepositorySpy.createCallsCount, 1)
-    XCTAssertEqual(fetchClientAttestationUseCaseSpy.executeCallsCount, 1)
+    XCTAssertEqual(nonComplianceRepositorySpy.getActivityReceivedId, activityIdMock)
+    XCTAssertEqual(clientAttestationRepository.getUsingCallsCount, 1)
 
     let report = nonComplianceRepositorySpy.createReceivedReport as? NonComplianceExcessiveDataReport
     XCTAssertEqual(report?.description, descriptionMock)
     XCTAssertEqual(report?.email, emailMock)
     XCTAssertEqual(report?.activity, activityMock)
-    XCTAssertEqual(report?.credential, credentialMock)
-  }
-
-  func testExecute_withoutCredential_throws() async throws {
-    activityMock.credential = nil
-
-    do {
-      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activity: activityMock)
-      XCTFail("Expected Error")
-    } catch {
-      XCTAssertEqual(error as? SubmitNonComplianceReportUseCaseError, .linkedCredentialError)
-    }
   }
 
   func testExecute_userSessionNotLoggedIn_throwsError() async throws {
     userSessionSpy.isLoggedIn = false
 
     do {
-      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activity: activityMock)
+      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activityId: activityIdMock)
       XCTFail("Expected Error")
     } catch {
       XCTAssertEqual(error as? UserSessionError, .notLoggedIn)
@@ -61,7 +50,7 @@ final class SubmitNonComplianceReportUseCaseTests: XCTestCase {
     userSessionSpy.context = nil
 
     do {
-      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activity: activityMock)
+      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activityId: activityIdMock)
       XCTFail("Expected Error")
     } catch {
       XCTAssertEqual(error as? UserSessionError, .notLoggedIn)
@@ -69,10 +58,10 @@ final class SubmitNonComplianceReportUseCaseTests: XCTestCase {
   }
 
   func testExecute_clientAttestationThrows_throwsError() async throws {
-    fetchClientAttestationUseCaseSpy.executeThrowableError = TestingError.error
+    clientAttestationRepository.getUsingThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activity: activityMock)
+      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activityId: activityIdMock)
       XCTFail("Expected Error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -83,7 +72,7 @@ final class SubmitNonComplianceReportUseCaseTests: XCTestCase {
     nonComplianceRepositorySpy.createThrowableError = TestingError.error
 
     do {
-      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activity: activityMock)
+      try await useCase.execute(category: .excessiveDataRequest, description: descriptionMock, email: emailMock, activityId: activityIdMock)
       XCTFail("Expected Error")
     } catch TestingError.error {
       XCTAssertEqual(nonComplianceRepositorySpy.createCallsCount, 1)
@@ -97,10 +86,10 @@ final class SubmitNonComplianceReportUseCaseTests: XCTestCase {
   private var useCase: SubmitNonComplianceReportUseCase!
 
   private var nonComplianceRepositorySpy: NonComplianceRepositoryProtocolSpy!
-  private var fetchClientAttestationUseCaseSpy: FetchClientAttestationUseCaseProtocolSpy!
+  private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!
 
-  private let credentialMock = VerifiableCredential.Mock.sample
-  private var activityMock = Activity.Mock.presentationAcceptedTrusted
+  private var activityIdMock = UUID()
+  private var activityMock = NonComplianceActivity.Mock.default
   private let clientAttestationMock = ClientAttestationJWT.Mock.sample
   private let descriptionMock = String(repeating: "x", count: 20)
   private let emailMock = "admin@example.com"
@@ -108,17 +97,17 @@ final class SubmitNonComplianceReportUseCaseTests: XCTestCase {
 
   private func registerMocks() {
     nonComplianceRepositorySpy = NonComplianceRepositoryProtocolSpy()
-    fetchClientAttestationUseCaseSpy = FetchClientAttestationUseCaseProtocolSpy()
+    clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
     userSessionSpy = SessionSpy()
 
-    Container.shared.nonComplianceRepository.register { self.nonComplianceRepositorySpy }
-    Container.shared.fetchClientAttestationUseCase.register { self.fetchClientAttestationUseCaseSpy }
-    Container.shared.userSession.register { self.userSessionSpy }
+    Container.shared.nonComplianceRepository.register { @MainActor in self.nonComplianceRepositorySpy }
+    Container.shared.clientAttestationRepository.register { @MainActor in self.clientAttestationRepository }
+    Container.shared.userSession.register { @MainActor in self.userSessionSpy }
   }
 
   private func createSuccessState() {
-    activityMock.credential = credentialMock
-    fetchClientAttestationUseCaseSpy.executeReturnValue = clientAttestationMock
+    nonComplianceRepositorySpy.getActivityReturnValue = activityMock
+    clientAttestationRepository.getUsingReturnValue = clientAttestationMock
     userSessionSpy.isLoggedIn = true
     userSessionSpy.context = LAContextProtocolSpy()
   }

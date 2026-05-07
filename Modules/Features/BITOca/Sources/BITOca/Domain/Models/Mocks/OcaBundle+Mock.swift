@@ -1,10 +1,11 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension OcaBundle: Mockable {
   enum Mock {
     static let elfa = create(from: "oca-bundle-elfa")
+    static let dataSource1x0SimpleSample = create(from: "oca-bundle-one-attribute-data-source-1x0")
     static let simpleSample = create(from: "oca-bundle-simple-sample")
     static let specialDataTypes = create(from: "oca-bundle-special-data-types")
     static let nested = create(from: "oca-bundle-nested")

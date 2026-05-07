@@ -10,11 +10,11 @@
   ],
   "overlays": [
     {
-      "type": "extend/overlays/data_source/1.0",
+      "type": "extend/overlays/data_source/2.0",
       "capture_base": "IL00eAbH9tHLBN0s6qIZyVVmm6vYA3wsakyqnFMU1nL4",
       "format": "vc+sd-jwt",
       "attribute_sources": {
-        "key": "$.key"
+        "key": ["key"]
       }
     }
   ]

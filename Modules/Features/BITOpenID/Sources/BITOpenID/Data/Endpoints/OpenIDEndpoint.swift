@@ -1,3 +1,4 @@
+import BITCore
 import BITNetworking
 import Foundation
 import Moya
@@ -8,10 +9,13 @@ enum OpenIDEndpoint {
   case vcSchema(url: URL)
   case typeMetadata(url: URL)
   case metadata(fromIssuerUrl: URL)
+  case oidConnectMetadata(fromIssuerUrl: URL)
   case credential(url: URL, body: CredentialRequestBody, accessToken: AccessToken)
   case accessToken(fromTokenUrl: URL, preAuthorizedCode: String)
+  case refreshAccessToken(fromTokenUrl: URL, refreshToken: String)
   case nonce(url: URL)
-  case openIdConfiguration(issuerURL: URL)
+  case openIdConfiguration(fromIssuerUrl: URL)
+  case oidConnectOpenIdConfiguration(fromIssuerUrl: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
   case deferredCredential(url: URL, body: DeferredCredentialRequestBody, accessToken: String)
@@ -28,28 +32,37 @@ extension OpenIDEndpoint: TargetType {
     case .accessToken(let baseUrl, _),
          .credential(let baseUrl, _, _),
          .deferredCredential(let baseUrl, _, _),
-         .metadata(let baseUrl),
          .nonce(let baseUrl),
-         .openIdConfiguration(let baseUrl),
+         .oidConnectMetadata(let baseUrl),
+         .oidConnectOpenIdConfiguration(let baseUrl),
          .publicKeyInfo(let baseUrl),
+         .refreshAccessToken(let baseUrl, _),
          .status(let baseUrl),
          .typeMetadata(let baseUrl),
          .vcSchema(let baseUrl):
       baseUrl
+    case .metadata(let baseUrl),
+         .openIdConfiguration(let baseUrl):
+      baseUrl.deletingPathAndQuery ?? baseUrl
     }
   }
 
   var path: String {
     switch self {
-    case .metadata:
+    case .metadata(let baseUrl):
+      ".well-known/openid-credential-issuer" + baseUrl.path()
+    case .oidConnectMetadata:
       ".well-known/openid-credential-issuer"
-    case .openIdConfiguration:
+    case .openIdConfiguration(let baseUrl):
+      ".well-known/oauth-authorization-server" + baseUrl.path()
+    case .oidConnectOpenIdConfiguration:
       ".well-known/oauth-authorization-server"
     case .accessToken,
          .credential,
          .deferredCredential,
          .nonce,
          .publicKeyInfo,
+         .refreshAccessToken,
          .status,
          .typeMetadata,
          .vcSchema:
@@ -60,6 +73,8 @@ extension OpenIDEndpoint: TargetType {
   var method: Moya.Method {
     switch self {
     case .metadata,
+         .oidConnectMetadata,
+         .oidConnectOpenIdConfiguration,
          .openIdConfiguration,
          .publicKeyInfo,
          .status,
@@ -69,7 +84,8 @@ extension OpenIDEndpoint: TargetType {
     case .accessToken,
          .credential,
          .deferredCredential,
-         .nonce:
+         .nonce,
+         .refreshAccessToken:
       .post
     }
   }
@@ -78,6 +94,8 @@ extension OpenIDEndpoint: TargetType {
     switch self {
     case .metadata,
          .nonce,
+         .oidConnectMetadata,
+         .oidConnectOpenIdConfiguration,
          .openIdConfiguration,
          .publicKeyInfo,
          .status,
@@ -99,7 +117,13 @@ extension OpenIDEndpoint: TargetType {
       .requestParameters(parameters: [
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": preAuthorizedCode,
-      ], encoding: URLEncoding.queryString)
+      ], encoding: URLEncoding.httpBody)
+
+    case .refreshAccessToken(_, let refreshToken):
+      .requestParameters(parameters: [
+        "grant_type": "refresh_token",
+        "refresh_token": refreshToken,
+      ], encoding: URLEncoding.httpBody)
 
     case .credential(_, let credentialBody, _):
       switch credentialBody {
@@ -120,6 +144,11 @@ extension OpenIDEndpoint: TargetType {
          .typeMetadata:
       NetworkHeader.standard.raw
     case .metadata,
+         .oidConnectMetadata: [
+        NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
+        NetworkHeader.acceptLanguage(UserLocale.LocaleIdentifier.allCases.map(\.rawValue)),
+      ].raw
+    case .oidConnectOpenIdConfiguration,
          .openIdConfiguration: [
         NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
       ].raw
@@ -130,9 +159,10 @@ extension OpenIDEndpoint: TargetType {
         NetworkHeader.contentType(body.contentType.rawValue),
         NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
       ].raw
-    case .accessToken:
+    case .accessToken,
+         .refreshAccessToken:
       [
-        NetworkHeader.standard,
+        NetworkHeader.formUrlEncoded,
         NetworkHeader.swiyuAPIVersion("2"),
       ].raw
     case .deferredCredential(_, let body, let accessToken):
@@ -157,9 +187,13 @@ extension OpenIDEndpoint: TargetType {
   #if DEBUG
   var sampleData: Data {
     switch self {
+    case .oidConnectMetadata:
+      CredentialIssuerMetadata.Mock.sampleData
     case .metadata:
-      CredentialMetadata.Mock.sampleData
+      CredentialIssuerMetadata.Mock.sampleData
     case .openIdConfiguration:
+      OpenIdConfiguration.Mock.sampleData
+    case .oidConnectOpenIdConfiguration:
       OpenIdConfiguration.Mock.sampleData
     case .accessToken:
       AccessToken.Mock.sampleData

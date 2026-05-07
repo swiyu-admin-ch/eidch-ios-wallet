@@ -100,10 +100,13 @@ struct ResultLogBuilder {
     lines.append(contentsOf: trustInformationLogLines(trustInformation))
     if let verifiableCredential = credential as? VerifiableCredential {
       lines.append("")
-      lines.append("Raw credential:")
-      if let rawCredential = String(data: verifiableCredential.payload, encoding: .utf8) {
-        lines.append(rawCredential)
-      } else {
+      lines.append("Raw credentials:")
+      for bundleItem in verifiableCredential.bundleItems {
+        if let rawCredential = String(data: bundleItem.payload, encoding: .utf8) {
+          lines.append(rawCredential)
+        }
+      }
+      if verifiableCredential.bundleItems.isEmpty {
         lines.append("Unavailable")
       }
       lines.append("")
@@ -184,7 +187,7 @@ struct ResultLogBuilder {
       lines.append("\(indent)[Cluster] \(title)")
       for claim in cluster.claims {
         let value = claim.isSensitive ? "<redacted>" : (claim.value ?? "")
-        lines.append("\(indent)- \(claim.key): \(value)")
+        lines.append("\(indent)- \(claim.path): \(value)")
       }
       if !cluster.childClusters.isEmpty {
         lines.append(contentsOf: claimClusterLogLines(cluster.childClusters, indent: indent + "  "))

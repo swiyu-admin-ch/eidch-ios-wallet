@@ -8,7 +8,7 @@ import Spyable
 // MARK: - AppAttestationRepositoryProtocol
 
 @Spyable
-protocol AppAttestationRepositoryProtocol {
+public protocol AppAttestationRepositoryProtocol {
   func fetchChallenge() async throws -> AttestationChallenge
   func fetchClientAttestation(_ requestBody: ClientAttestationRequestBody) async throws -> ClientAttestation
   func fetchKeyAttestation(body: KeyAttestationRequestBody, clientAttestation: ClientAttestation) async throws -> KeyAttestation
@@ -26,17 +26,22 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
   }
 
   func fetchClientAttestation(_ requestBody: ClientAttestationRequestBody) async throws -> ClientAttestation {
-    let response = try await networkService.request(AttestationServiceEndpoint.clientAttestation(requestBody))
-    let clientAttestationResponse = try JSONDecoder().decode(ClientAttestationResponse.self, from: response.data)
+    do {
+      let response = try await networkService.request(AttestationServiceEndpoint.clientAttestation(requestBody))
+      let clientAttestationResponse = try JSONDecoder().decode(ClientAttestationResponse.self, from: response.data)
 
-    return try jwsDecoder.decode(ClientAttestationJWT.self, from: clientAttestationResponse.clientAttestation.data(using: .utf8) ?? Data())
+      return try jwsDecoder.decode(ClientAttestationJWT.self, from: clientAttestationResponse.clientAttestation.data(using: .utf8) ?? Data())
+    } catch let error as NetworkError where error.status == .badRequest {
+      throw AppAttestationRepositoryError.invalidClientAttestation
+    }
   }
 
   func fetchKeyAttestation(body: KeyAttestationRequestBody, clientAttestation: ClientAttestation) async throws -> KeyAttestation {
-    let (_, proofOfPossession) = try await proofOfPossessionGenerator.generate(
+    let proofOfPossession = try await proofOfPossessionGenerator(
       for: body,
       audience: clientAttestation.payload.issuer,
-      challengeEndpoint: URL(target: AttestationServiceEndpoint.challenge))
+      challengeEndpoint: URL(target: AttestationServiceEndpoint.challenge),
+      clientAttestation: clientAttestation)
 
     let keyAttestationResponse: KeyAttestationResponse = try await networkService.request(
       AttestationServiceEndpoint.keyAttestation(body),
@@ -54,4 +59,12 @@ struct AppAttestationRepository: AppAttestationRepositoryProtocol {
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
+}
+
+// MARK: - AppAttestationRepositoryError
+
+public enum AppAttestationRepositoryError: Error {
+  case invalidBindingKey
+  case invalidKeyAttestation
+  case invalidClientAttestation
 }

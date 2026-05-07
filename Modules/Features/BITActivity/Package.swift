@@ -7,7 +7,7 @@ let package = Package(
   name: "BITActivity",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -21,8 +21,8 @@ let package = Package(
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITTheming"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
-    .package(url: "https://github.com/hmlongco/Navigator", exact: "1.3.1"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
+    .package(url: "https://github.com/hmlongco/Navigator", exact: "2.0.2"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [

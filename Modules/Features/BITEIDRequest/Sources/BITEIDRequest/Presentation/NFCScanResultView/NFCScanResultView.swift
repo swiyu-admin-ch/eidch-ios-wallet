@@ -11,7 +11,7 @@ struct NFCScanResultView: View {
   // MARK: Lifecycle
 
   init(packageResult: AVBeamPackageResult) {
-    _viewModel = StateObject(wrappedValue: Container.shared.nfcScanResultViewModel(packageResult))
+    _viewModel = State(initialValue: Container.shared.nfcScanResultViewModel(packageResult))
   }
 
   // MARK: Internal
@@ -40,31 +40,27 @@ struct NFCScanResultView: View {
     .navigate(to: $viewModel.destination)
     .toolbarBackground(ThemingAssets.Background.secondary.swiftUIColor)
     .navigationBarBackButtonHidden()
+    .navigationTitle(L10n.tkEidRequestNfcScanResultTitle)
+    .navigationBarTitleDisplayMode(.inline)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: NFCScanResultViewModel
+  @State private var viewModel: NFCScanResultViewModel
 
-  private func content(_ entries: [NFCScanResultViewModel.NFCScanResultEntryType]) -> some View {
+  private func content(_ entries: [ScanResultEntryType]) -> some View {
     ZStack {
       ThemingAssets.Background.secondary.swiftUIColor
         .frame(maxWidth: .infinity)
         .ignoresSafeArea()
       List {
         Section {
-          NFCScanResultListView(entries: entries)
-        } header: {
-          Text(L10n.tkEidRequestNfcScanResultTitle)
-            .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-            .font(.custom.title2Emphasized)
-            .padding(.top, .x10)
-            .padding(.bottom, .x6)
-            .accessibilityAddTraits(.isHeader)
+          ScanResultListView(entries: entries, resizeImages: true)
         }
         .listRowInsets(EdgeInsets())
         .textCase(nil)
       }
+      .frame(maxWidth: 635)
       .scrollContentBackground(.hidden)
     }
   }
@@ -77,5 +73,6 @@ struct NFCScanResultView: View {
     .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
     .buttonStyle(.primary)
     .controlSize(.large)
+    .frame(maxWidth: 635)
   }
 }

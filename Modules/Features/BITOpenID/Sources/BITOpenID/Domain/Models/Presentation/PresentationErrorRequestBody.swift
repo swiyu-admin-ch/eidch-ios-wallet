@@ -6,34 +6,26 @@ public struct PresentationErrorRequestBody: Codable {
 
   // MARK: Lifecycle
 
-  public init(error: ErrorType, errorDescription: String? = nil) {
+  public init(error: Code, errorDescription: String? = nil) {
     self.error = error
     self.errorDescription = errorDescription
   }
 
   // MARK: Public
 
-  public let error: ErrorType
+  public enum Code: String, Codable, Equatable {
+    case invalidRequest = "invalid_request"
+    case invalidClient = "invalid_client"
+    case accessDenied = "access_denied"
+  }
+
+  public let error: Code
+  public let errorDescription: String?
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
     case error
     case errorDescription = "error_description"
-  }
-
-  let errorDescription: String?
-
-}
-
-// MARK: PresentationErrorRequestBody.ErrorType
-
-extension PresentationErrorRequestBody {
-
-  public enum ErrorType: String, Codable {
-    case clientRejected = "client_rejected"
-    case invalidRequest = "invalid_request"
-    case presentationProcessClosed = "verification_process_closed"
-    case invalidCredential = "invalid_credential"
   }
 }

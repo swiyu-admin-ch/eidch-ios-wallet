@@ -1,5 +1,6 @@
 import BITDataStore
 import BITEntities
+import Combine
 import Factory
 import Foundation
 
@@ -9,7 +10,9 @@ struct ActivityRepository: ActivityRepositoryProtocol {
 
   // MARK: Internal
 
-  func create(_ activity: Activity, credentialId: UUID) throws -> Activity {
+  let activityHistoryEnabledSubject = CurrentValueSubject<Bool, Never>(UserDefaults.standard.bool(forKey: activityHistoryEnabledKey))
+
+  func create(_ activity: Activity, credentialId: UUID) throws -> UUID {
     try createImages(from: activity.actorDisplays)
     let entity = CredentialActivityEntity(activity)
     try database.save(entity)
@@ -17,20 +20,20 @@ struct ActivityRepository: ActivityRepositoryProtocol {
     try database.write {
       credential.activities.append(entity)
     }
-    return Activity(entity)
+    return entity.id
   }
 
-  func get(_ id: UUID) throws -> Activity {
+  func getDetail(_ id: UUID) throws -> ActivityDetail {
     let entity = try getEntity(id)
-    return Activity(entity)
+    return try activityDetailFactory(entity)
   }
 
-  func getAll(for credentialId: UUID, limit: Int = Int.max) throws -> [Activity] {
+  func getAll(for credentialId: UUID, limit: Int = Int.max) throws -> [ActivityListItem] {
     let credential = try getCredential(for: credentialId)
     return credential.activities
-      .sorted(byKeyPath: "createdAt", ascending: false)
+      .sorted(by: \.createdAt, ascending: false)
       .prefix(limit)
-      .map(Activity.init)
+      .map(activityListItemFactory.callAsFunction)
   }
 
   func delete(_ id: UUID) throws {
@@ -48,17 +51,21 @@ struct ActivityRepository: ActivityRepositoryProtocol {
   }
 
   func isActivityHistoryEnabled() throws -> Bool {
-    UserDefaults.standard.bool(forKey: activityHistoryEnabledKey)
+    UserDefaults.standard.bool(forKey: Self.activityHistoryEnabledKey)
   }
 
   func setActivityHistoryEnabled(_ isEnabled: Bool) throws {
-    UserDefaults.standard.set(isEnabled, forKey: activityHistoryEnabledKey)
+    UserDefaults.standard.set(isEnabled, forKey: Self.activityHistoryEnabledKey)
+    activityHistoryEnabledSubject.send(isEnabled)
   }
 
   // MARK: Private
 
+  private static let activityHistoryEnabledKey = "isActivityHistoryEnabled"
+
   @Injected(\.dataStore) private var database
-  private let activityHistoryEnabledKey = "isActivityHistoryEnabled"
+  @Injected(\.activityListItemFactory) private var activityListItemFactory
+  @Injected(\.activityDetailFactory) private var activityDetailFactory
 
   private func getCredential(for credentialId: UUID) throws -> CredentialEntity {
     guard let credential = try database.get(CredentialEntity.self, forPrimaryKey: credentialId) else {

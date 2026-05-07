@@ -1,6 +1,7 @@
 import Factory
 import XCTest
 @testable import BITAnyCredentialFormat
+@testable import BITClaimsPathPointer
 @testable import BITCore
 @testable import BITCredential
 @testable import BITCredentialShared
@@ -25,7 +26,10 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   func testGenerate_nestedWithClaimsOnRoot_returnsCredentialWithOneCluster() throws {
     let anyCredential = createNestedAnyCredential()
-    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.nested, context: mockCredentialGeneratorContext)
+    let credential = try generator.generate(
+      for: [CredentialWithKeyBinding(credential: anyCredential, keyBinding: mockCredentialKeyBinding)],
+      ocaBundle: OcaBundle.Mock.nested,
+      context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 1)
@@ -35,9 +39,12 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   func testGenerate_nestedWithClaimsOnRootAndMissingOcaAttributes_returnsCredentialWithTwoClusters() throws {
     let anyCredential = createNestedAnyCredential()
-    let additionalClaim = createTextClaim(jsonPath: "$.other_path", value: "other_value")
+    let additionalClaim = createTextClaim(key: "other_path", value: "other_value", path: [.string("other_path")])
     anyCredential.claims.insert(additionalClaim, at: 1)
-    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.nested, context: mockCredentialGeneratorContext)
+    let credential = try generator.generate(
+      for: [CredentialWithKeyBinding(credential: anyCredential, keyBinding: mockCredentialKeyBinding)],
+      ocaBundle: OcaBundle.Mock.nested,
+      context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 2)
@@ -46,6 +53,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
     let additionalCluster = try XCTUnwrap(credential.clusters.first(where: \.childClusters.isEmpty))
     XCTAssertEqual(additionalCluster.claims.count, 1)
+    XCTAssertEqual(additionalCluster.claims[0].path, Self.otherPathMock)
     XCTAssertTrue(additionalCluster.claims[0].displays.isEmpty)
     XCTAssertEqual(additionalCluster.childClusters.count, 0)
   }
@@ -53,7 +61,10 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   func testGenerate_nestedWithoutClaimsOnRoot_returnsCredentialWithClusters() throws {
     let anyCredential = createSimpleNestedCredential()
 
-    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.simpleNested, context: mockCredentialGeneratorContext)
+    let credential = try generator.generate(
+      for: [CredentialWithKeyBinding(credential: anyCredential, keyBinding: mockCredentialKeyBinding)],
+      ocaBundle: OcaBundle.Mock.simpleNested,
+      context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 3)
@@ -62,10 +73,13 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   func testGenerate_nestedWithoutClaimsOnRootAndMissingOcaAttributes_returnsCredentialWithClusters() throws {
     let anyCredential = createSimpleNestedCredential()
-    let additionalClaim = createTextClaim(jsonPath: "$.other_path", value: "other_value")
+    let additionalClaim = createTextClaim(key: "other_path", value: "other_value", path: [.string("other_path")])
     anyCredential.claims.insert(additionalClaim, at: 1)
 
-    let credential = try generator.generate(for: anyCredential, ocaBundle: OcaBundle.Mock.simpleNested, context: mockCredentialGeneratorContext)
+    let credential = try generator.generate(
+      for: [CredentialWithKeyBinding(credential: anyCredential, keyBinding: mockCredentialKeyBinding)],
+      ocaBundle: OcaBundle.Mock.simpleNested,
+      context: mockCredentialGeneratorContext)
 
     assertBasicCredential(credential)
     XCTAssertEqual(credential.clusters.count, 4)
@@ -73,6 +87,7 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
     let additionalCluster = try XCTUnwrap(credential.clusters.first(where: \.displays.isEmpty))
     XCTAssertEqual(additionalCluster.claims.count, 1)
+    XCTAssertEqual(additionalCluster.claims[0].path, Self.otherPathMock)
     XCTAssertTrue(additionalCluster.claims[0].displays.isEmpty)
     XCTAssertEqual(additionalCluster.childClusters.count, 0)
   }
@@ -84,6 +99,14 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   private static let captureBase3Claim1KeyMock = "capture_base_3.claim_1"
   private static let arrayCaptureBaseClaimKeyMock = "array_capture_base"
   private static let textArrayClaimKeyMock = "text_array_claim"
+  private static let captureBase1Claim1PathMock: ClaimsPathPointer = [.string("capture_base_1_claim_1")]
+  private static let captureBase2Claim1PathMock: ClaimsPathPointer = [.string("capture_base_2"), .string("claim_1")]
+  private static let captureBase2Claim2PathMock: ClaimsPathPointer = [.string("capture_base_2"), .string("claim_2")]
+  private static let captureBase2Claim3PathMock: ClaimsPathPointer = [.string("capture_base_2"), .string("claim_3")]
+  private static let captureBase3Claim1PathMock: ClaimsPathPointer = [.string("capture_base_3"), .string("claim_1")]
+  private static let arrayCaptureBaseClaimPathMock: ClaimsPathPointer = [.string("array_capture_base"), .null]
+  private static let textArrayClaimPathMock: ClaimsPathPointer = [.string("text_array_claim"), .null]
+  private static let otherPathMock: ClaimsPathPointer = [.string("other_path")]
 
   private let formatMock = "vc+sd-jwt"
   private let issuerMock = "issuer"
@@ -93,14 +116,21 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   private let ocaBundleMock = OcaBundle.Mock.simpleSample
 
   private let mockCredentialGeneratorContext = CredentialGeneratorContext.Mock.sample
+  private let mockCredentialKeyBinding = KeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
 
   private var captureBaseDisplayGeneratorSpy = CaptureBaseDisplayGeneratorProtocolSpy()
+
+  private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private var generator = OcaCredentialGenerator()
 
   private func registerMocks() {
     captureBaseDisplayGeneratorSpy = CaptureBaseDisplayGeneratorProtocolSpy()
     Container.shared.captureBaseDisplayGenerator.register { self.captureBaseDisplayGeneratorSpy }
+
+    selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
+      $0.bundleItems.first!
+    }
   }
 
   private func success() {
@@ -111,29 +141,32 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   }
 
   private func createNestedAnyCredential() -> AnyCredentialSpy {
-    let captureBase1Claim1 = createTextClaim(jsonPath: "$.\(Self.captureBase1Claim1KeyMock)", value: "captureBase1Claim1")
-    let captureBase1Claim2 = createTextClaim(jsonPath: "$.capture_base_1_claim_2", value: "captureBase1Claim2")
+    let captureBase1Claim1 = createTextClaim(key: Self.captureBase1Claim1KeyMock, value: "captureBase1Claim1", path: Self.captureBase1Claim1PathMock)
+    let captureBase1Claim2 = createTextClaim(key: "capture_base_1_claim_2", value: "captureBase1Claim2", path: [.string("capture_base_1_claim_2")])
 
-    let captureBase2Claim1 = createTextClaim(jsonPath: "$.\(Self.captureBase2Claim1KeyMock)", value: "captureBase2Claim1")
-    let captureBase2Claim2 = createTextClaim(jsonPath: "$.capture_base_2.claim_2", value: "captureBase2Claim2")
-    let captureBase2Claim3 = createTextClaim(jsonPath: "$.capture_base_2.claim_3", value: "captureBase2Claim3")
+    let captureBase2Claim1 = createTextClaim(key: Self.captureBase2Claim1KeyMock, value: "captureBase2Claim1", path: Self.captureBase2Claim1PathMock)
+    let captureBase2Claim2 = createTextClaim(key: "capture_base_2_claim_2", value: "captureBase2Claim2", path: Self.captureBase2Claim2PathMock)
+    let captureBase2Claim3 = createTextClaim(key: "capture_base_2_claim_3", value: "captureBase2Claim3", path: Self.captureBase2Claim3PathMock)
 
     let arrayCaptureBase = AnyClaimSpy()
-    arrayCaptureBase.key = "$.\(Self.arrayCaptureBaseClaimKeyMock)"
+    arrayCaptureBase.key = Self.arrayCaptureBaseClaimKeyMock
     let arrayCaptureBase0 = CodableValue.dictionary(["claim_1": .string("arrayCaptureBase0Claim1"), "claim_2": .string("arrayCaptureBase0Claim2")])
     let arrayCaptureBase1 = CodableValue.dictionary(["claim_1": .string("arrayCaptureBase1Claim1"), "claim_2": .string("arrayCaptureBase1Claim2")])
+    arrayCaptureBase.path = [.string(Self.arrayCaptureBaseClaimKeyMock), .null]
     arrayCaptureBase.value = .array([arrayCaptureBase0, arrayCaptureBase1])
 
     let textArrayClaim = AnyClaimSpy()
-    textArrayClaim.key = "$.\(Self.textArrayClaimKeyMock)"
+    textArrayClaim.key = Self.textArrayClaimKeyMock
+    textArrayClaim.path = [.string(Self.textArrayClaimKeyMock), .null]
     textArrayClaim.value = .array([.string("textArrayClaim0"), .string("textArrayClaim1")])
 
     return createAnyCredential(claims: [captureBase1Claim1, captureBase1Claim2, captureBase2Claim1, captureBase2Claim2, captureBase2Claim3, arrayCaptureBase, textArrayClaim])
   }
 
-  private func createTextClaim(jsonPath: String, value: String) -> AnyClaimSpy {
+  private func createTextClaim(key: String, value: String, path: ClaimsPathPointer) -> AnyClaimSpy {
     let claim = AnyClaimSpy()
-    claim.key = jsonPath
+    claim.key = key
+    claim.path = path
     claim.value = .string(value)
     return claim
   }
@@ -150,17 +183,18 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
   }
 
   private func createSimpleNestedCredential() -> AnyCredentialSpy {
-    let captureBase1Claim1 = createTextClaim(jsonPath: "$.\(Self.captureBase1Claim1KeyMock)", value: "captureBase1Claim1")
-    let captureBase2Claim1 = createTextClaim(jsonPath: "$.\(Self.captureBase2Claim1KeyMock)", value: "captureBase2Claim1")
-    let captureBase3Claim1 = createTextClaim(jsonPath: "$.\(Self.captureBase3Claim1KeyMock)", value: "captureBase3Claim1")
+    let captureBase1Claim1 = createTextClaim(key: Self.captureBase1Claim1KeyMock, value: "captureBase1Claim1", path: Self.captureBase1Claim1PathMock)
+    let captureBase2Claim1 = createTextClaim(key: Self.captureBase2Claim1KeyMock, value: "captureBase2Claim1", path: Self.captureBase2Claim1PathMock)
+    let captureBase3Claim1 = createTextClaim(key: Self.captureBase3Claim1KeyMock, value: "captureBase3Claim1", path: Self.captureBase3Claim1PathMock)
     return createAnyCredential(claims: [captureBase1Claim1, captureBase2Claim1, captureBase3Claim1])
   }
 
   private func assertBasicCredential(_ credential: VerifiableCredential) {
+    let selectedBundleItem = try? selectCredentialBundleItemUseCaseSpy(credential)
     XCTAssertEqual(credential.id, mockCredentialGeneratorContext.credentialId)
-    XCTAssertEqual(credential.status, .unknown)
-    XCTAssertEqual(credential.keyBinding, mockCredentialGeneratorContext.keyBinding)
-    XCTAssertEqual(String(data: credential.payload, encoding: .utf8)!, rawPayloadMock)
+    XCTAssertEqual(selectedBundleItem?.status, .unknown)
+    XCTAssertEqual(selectedBundleItem?.keyBinding, mockCredentialKeyBinding)
+    XCTAssertEqual(String(data: selectedBundleItem?.payload ?? Data(), encoding: .utf8)!, rawPayloadMock)
     XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContext.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
     XCTAssertEqual(credential.issuer, issuerMock)
@@ -179,10 +213,10 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
 
   private func assertRootCluster(_ cluster: CredentialClaimCluster) {
     XCTAssertEqual(cluster.claims.count, 2)
-    let arrayCaptureBaseClaim = cluster.claims.first { $0.key == Self.arrayCaptureBaseClaimKeyMock }!
+    let arrayCaptureBaseClaim = cluster.claims.first { $0.path == Self.arrayCaptureBaseClaimPathMock }!
     XCTAssertEqual(arrayCaptureBaseClaim.displays.count, 1)
     XCTAssertEqual(arrayCaptureBaseClaim.order, 2)
-    let textArrayClaim = cluster.claims.first { $0.key == Self.textArrayClaimKeyMock }!
+    let textArrayClaim = cluster.claims.first { $0.path == Self.textArrayClaimPathMock }!
     XCTAssertEqual(textArrayClaim.displays.count, 1)
     XCTAssertEqual(textArrayClaim.order, 3)
   }
@@ -203,24 +237,25 @@ final class OcaNestedCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(captureBase2Cluster.displays.count, 1)
     XCTAssertTrue(captureBase2Cluster.childClusters.isEmpty)
     XCTAssertEqual(captureBase2Cluster.claims.count, 3)
+    XCTAssertNotNil(captureBase2Cluster.claims.map(\.path).contains(Self.captureBase2Claim1PathMock))
+    XCTAssertNotNil(captureBase2Cluster.claims.map(\.path).contains(Self.captureBase2Claim2PathMock))
+    XCTAssertNotNil(captureBase2Cluster.claims.map(\.path).contains(Self.captureBase2Claim3PathMock))
     XCTAssertEqual(captureBase2Cluster.claims[0].displays.count, 2)
     XCTAssertEqual(captureBase2Cluster.claims[1].displays.count, 2)
     XCTAssertEqual(captureBase2Cluster.claims[2].displays.count, 2)
   }
 
   private func assertSimpleNestedClusters(_ clusters: [CredentialClaimCluster]) {
-    let captureBase1Cluster = clusters.first { $0.claims.first?.key == Self.captureBase1Claim1KeyMock }!
+    let captureBase1Cluster = clusters.first { $0.claims.first?.path == Self.captureBase1Claim1PathMock }!
     XCTAssertEqual(captureBase1Cluster.order, 1)
     XCTAssertEqual(captureBase1Cluster.displays.count, 1)
 
-    let captureBase2Cluster = clusters.first { $0.claims.first?.key == Self.captureBase2Claim1KeyMock }!
+    let captureBase2Cluster = clusters.first { $0.claims.first?.path == Self.captureBase2Claim1PathMock }!
     XCTAssertEqual(captureBase2Cluster.order, 2)
     XCTAssertEqual(captureBase2Cluster.displays.count, 1)
 
-    let captureBase3Cluster = clusters.first { $0.claims.first?.key == Self.captureBase3Claim1KeyMock }!
+    let captureBase3Cluster = clusters.first { $0.claims.first?.path == Self.captureBase3Claim1PathMock }!
     XCTAssertEqual(captureBase3Cluster.order, 3)
     XCTAssertEqual(captureBase3Cluster.displays.count, 1)
   }
 }
-
-// swiftlint:enable all

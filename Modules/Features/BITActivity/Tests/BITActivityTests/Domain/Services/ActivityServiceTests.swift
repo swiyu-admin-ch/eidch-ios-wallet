@@ -50,7 +50,7 @@ final class ActivityServiceTests: XCTestCase {
   // MARK: Private
 
   private let credentialIdMock = UUID(uuidString: "9d0e30cd-e8ff-43b4-ba46-efe9047770a1")!
-  private let activityMock = Activity.Mock.issueTrusted
+  private let activityMock = Activity.Mock.default
 
   private var repositorySpy: ActivityRepositoryProtocolSpy!
 
@@ -64,6 +64,6 @@ final class ActivityServiceTests: XCTestCase {
 
   private func setupSuccessState() {
     repositorySpy.isActivityHistoryEnabledReturnValue = true
-    repositorySpy.createCredentialIdReturnValue = activityMock
+    repositorySpy.createCredentialIdReturnValue = UUID()
   }
 }

@@ -32,9 +32,9 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     _ = try await useCase.execute(anyCredential: anyCredentialSpy)
 
     XCTAssertEqual(fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReceivedAnyCredential?.raw, anyCredentialSpy.raw)
-    XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.count, 1)
-    XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.dictionary.keys.first, keyMock)
-    XCTAssertEqual(jsonSchemaValidatorSpy.validateDictionaryWithReceivedArguments?.jsonSchema, vcSdJwtJsonSchemaMock)
+    XCTAssertEqual(jsonSchemaValidatorSpy.validateJsonWithReceivedArguments?.json.keys.count, 1)
+    XCTAssertEqual(jsonSchemaValidatorSpy.validateJsonWithReceivedArguments?.json.keys.first, keyMock)
+    XCTAssertEqual(jsonSchemaValidatorSpy.validateJsonWithReceivedArguments?.jsonSchema, vcSdJwtJsonSchemaMock)
   }
 
   func testExecute_vcSdJwtNilVcSchemaAndNilOca_returnsNil() async throws {
@@ -53,7 +53,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     let ocaBundle = try await useCase.execute(anyCredential: anyCredentialSpy)
 
     XCTAssertNotNil(ocaBundle)
-    XCTAssertFalse(jsonSchemaValidatorSpy.validateDictionaryWithCalled)
+    XCTAssertFalse(jsonSchemaValidatorSpy.validateJsonWithCalled)
   }
 
   func testExecute_vcSdJwtFailure_throwsError() async throws {
@@ -70,7 +70,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
 
   func testExecute_jsonSchemaInvalid_throwsError() async throws {
     success(format: .vcSdJwt)
-    jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = false
+    jsonSchemaValidatorSpy.validateJsonWithReturnValue = false
 
     do {
       _ = try await useCase.execute(anyCredential: anyCredentialSpy)
@@ -82,7 +82,7 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
 
   func testExecute_jsonSchemaValidatorFailure_throwsError() async throws {
     success(format: .vcSdJwt)
-    jsonSchemaValidatorSpy.validateDictionaryWithThrowableError = TestingError.error
+    jsonSchemaValidatorSpy.validateJsonWithThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(anyCredential: anyCredentialSpy)
@@ -129,9 +129,9 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     case .vcSdJwt:
       anyCredentialSpy.format = CredentialFormat.vcSdJwt.rawValue
       anyCredentialSpy.raw = "vcSdJwtPayload"
-      anyCredentialSpy.getClaimsDictionaryReturnValue = [keyMock: "testValue"]
+      anyCredentialSpy.getClaimsJSONReturnValue = [keyMock: "testValue"]
       fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReturnValue = (vcSdJwtJsonSchemaMock, vcSdJwtOcaBundleMock)
-      jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = true
+      jsonSchemaValidatorSpy.validateJsonWithReturnValue = true
     }
   }
 }

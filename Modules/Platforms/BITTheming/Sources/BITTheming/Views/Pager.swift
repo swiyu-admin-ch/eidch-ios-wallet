@@ -43,7 +43,7 @@ public struct Pager<Content: View>: View {
       .onAppear {
         updateAccessibilityFocus()
       }
-      .onChange(of: UIDevice.current.orientation) { _ in
+      .onChange(of: UIDevice.current.orientation) {
         // Reapply the focus after orientation change
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
           updateAccessibilityFocus()

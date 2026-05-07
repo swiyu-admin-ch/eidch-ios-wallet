@@ -7,6 +7,8 @@ extension Activity {
       type: .issuance,
       actorTrust: trustInformation.actorTrust,
       vcSchemaTrust: trustInformation.vcSchemaTrust,
+      actorCompliance: trustInformation.actorComplianceStatus,
+      nonComplianceReasonDisplays: trustInformation.nonComplianceReasonDisplays,
       actorDisplays: credential.issuerDisplays.map(ActivityActorDisplay.init))
   }
 }

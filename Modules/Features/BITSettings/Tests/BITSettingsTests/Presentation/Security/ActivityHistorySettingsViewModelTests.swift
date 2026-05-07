@@ -1,4 +1,5 @@
 // swiftlint:disable force_unwrapping implicitly_unwrapped_optional
+import Combine
 import Factory
 import XCTest
 @testable import BITActivity
@@ -14,40 +15,17 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
   override func setUp() {
     Container.shared.reset()
     registerMocks()
-    viewModel = ActivityHistorySettingsViewModel()
     createSuccessState()
+    viewModel = ActivityHistorySettingsViewModel(getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
   }
 
   func testInit_returnsDefaults() {
     XCTAssertEqual(viewModel.isActivityHistoryEnabled, false)
     XCTAssertEqual(viewModel.isConfirmHistoryDisablingAlertPresented, false)
     XCTAssertEqual(viewModel.isConfirmDeletionAlertPresented, false)
-    XCTAssertEqual(viewModel.isToastPresented, false)
-    XCTAssertEqual(viewModel.toastType, .success)
-  }
+    XCTAssertNil(viewModel.toast)
 
-  func testOnAppear_historyEnabled_returnsHistoryEnabled() async {
-    await viewModel.send(.onAppear)
-
-    XCTAssertEqual(viewModel.isActivityHistoryEnabled, true)
-    XCTAssertEqual(isActivityHistoryEnabledUseCaseSpy.callAsFunctionCallsCount, 1)
-  }
-
-  func testOnAppear_historyDisabled_returnsHistoryDisabled() async {
-    isActivityHistoryEnabledUseCaseSpy.callAsFunctionReturnValue = false
-
-    await viewModel.send(.onAppear)
-
-    XCTAssertEqual(viewModel.isActivityHistoryEnabled, false)
-  }
-
-  func testOnAppear_repositoryThrows_showsErrorToast() async {
-    isActivityHistoryEnabledUseCaseSpy.callAsFunctionThrowableError = TestingError.error
-
-    await viewModel.send(.onAppear)
-
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertEqual(viewModel.toastType, .error)
+    XCTAssertEqual(getActivityHistoryEnabledSubjectUseCaseSpy.callAsFunctionCallsCount, 1)
   }
 
   func testToggleActivityHistory_historyEnabled_confirmationIsPresented() async {
@@ -59,10 +37,9 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
     XCTAssertFalse(setActivityHistoryEnabledUseCaseSpy.callAsFunctionCalled)
   }
 
-  func testToggleActivityHistory_historyDisabled_returnsHistoryEnabled() async {
+  func testToggleActivityHistory_historyDisabled_argumentsPassed() async {
     await viewModel.send(.toggleActivityHistory)
 
-    XCTAssertEqual(viewModel.isActivityHistoryEnabled, true)
     XCTAssertEqual(setActivityHistoryEnabledUseCaseSpy.callAsFunctionReceivedIsEnabled, true)
   }
 
@@ -72,8 +49,8 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
     await viewModel.send(.toggleActivityHistory)
 
     XCTAssertEqual(viewModel.isActivityHistoryEnabled, false)
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertEqual(viewModel.toastType, .error)
+    XCTAssertNotNil(viewModel.toast)
+    XCTAssertEqual(viewModel.toast?.type, .error)
   }
 
   func testDeleteActivityHistory_confirmationIsPresented() async {
@@ -83,14 +60,13 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
     XCTAssertFalse(deleteAllActivitiesUseCaseSpy.callAsFunctionCalled)
   }
 
-  func testConfirmHistoryDisabling_historyEnabled_returnsHistoryDisabled() async {
+  func testConfirmHistoryDisabling_historyEnabled_hidesAlertAndPassesArguments() async {
     viewModel.isConfirmHistoryDisablingAlertPresented = true
     viewModel.isActivityHistoryEnabled = true
 
     await viewModel.send(.confirmHistoryDisabling)
 
     XCTAssertEqual(viewModel.isConfirmHistoryDisablingAlertPresented, false)
-    XCTAssertEqual(viewModel.isActivityHistoryEnabled, false)
     XCTAssertEqual(setActivityHistoryEnabledUseCaseSpy.callAsFunctionReceivedIsEnabled, false)
   }
 
@@ -103,8 +79,8 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.isConfirmHistoryDisablingAlertPresented, false)
     XCTAssertEqual(viewModel.isActivityHistoryEnabled, true)
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertEqual(viewModel.toastType, .error)
+    XCTAssertNotNil(viewModel.toast)
+    XCTAssertEqual(viewModel.toast?.type, .error)
   }
 
   func testConfirmDeletion_deletesActivitiesAndPresentsToast() async {
@@ -114,8 +90,8 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
 
     XCTAssertTrue(deleteAllActivitiesUseCaseSpy.callAsFunctionCalled)
     XCTAssertEqual(viewModel.isConfirmDeletionAlertPresented, false)
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertEqual(viewModel.toastType, .success)
+    XCTAssertNotNil(viewModel.toast)
+    XCTAssertEqual(viewModel.toast?.type, .success)
   }
 
   func testConfirmDeletion_deletionThrows_showsErrorToast() async {
@@ -125,29 +101,40 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
     await viewModel.send(.confirmDeletion)
 
     XCTAssertEqual(viewModel.isConfirmDeletionAlertPresented, false)
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertEqual(viewModel.toastType, .error)
+    XCTAssertNotNil(viewModel.toast)
+    XCTAssertEqual(viewModel.toast?.type, .error)
+  }
+
+  func testGetActivityHistoryEnabledSubjectReceive_newValue_setsValue() async {
+    subjectMock.send(true)
+
+    try? await Task.sleep(nanoseconds: 1_000_000)
+
+    XCTAssertTrue(viewModel.isActivityHistoryEnabled)
   }
 
   // MARK: Private
 
   private var viewModel: ActivityHistorySettingsViewModel!
 
-  private var isActivityHistoryEnabledUseCaseSpy: IsActivityHistoryEnabledUseCaseProtocolSpy!
+  private var subjectMock: CurrentValueSubject<Bool, Never>!
+
+  private var getActivityHistoryEnabledSubjectUseCaseSpy: GetActivityHistoryEnabledSubjectUseCaseProtocolSpy!
   private var setActivityHistoryEnabledUseCaseSpy: SetActivityHistoryEnabledUseCaseProtocolSpy!
   private var deleteAllActivitiesUseCaseSpy: DeleteAllActivitiesUseCaseProtocolSpy!
 
   private func registerMocks() {
-    isActivityHistoryEnabledUseCaseSpy = IsActivityHistoryEnabledUseCaseProtocolSpy()
+    subjectMock = CurrentValueSubject(false)
+    getActivityHistoryEnabledSubjectUseCaseSpy = GetActivityHistoryEnabledSubjectUseCaseProtocolSpy()
     setActivityHistoryEnabledUseCaseSpy = SetActivityHistoryEnabledUseCaseProtocolSpy()
     deleteAllActivitiesUseCaseSpy = DeleteAllActivitiesUseCaseProtocolSpy()
 
-    Container.shared.isActivityHistoryEnabledUseCase.register { self.isActivityHistoryEnabledUseCaseSpy }
-    Container.shared.setActivityHistoryEnabledUseCase.register { self.setActivityHistoryEnabledUseCaseSpy }
-    Container.shared.deleteAllActivitiesUseCase.register { self.deleteAllActivitiesUseCaseSpy }
+    Container.shared.getActivityHistoryEnabledSubjectUseCase.register { @MainActor in self.getActivityHistoryEnabledSubjectUseCaseSpy }
+    Container.shared.setActivityHistoryEnabledUseCase.register { @MainActor in self.setActivityHistoryEnabledUseCaseSpy }
+    Container.shared.deleteAllActivitiesUseCase.register { @MainActor in self.deleteAllActivitiesUseCaseSpy }
   }
 
   private func createSuccessState() {
-    isActivityHistoryEnabledUseCaseSpy.callAsFunctionReturnValue = true
+    getActivityHistoryEnabledSubjectUseCaseSpy.callAsFunctionReturnValue = subjectMock
   }
 }

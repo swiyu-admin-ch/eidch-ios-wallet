@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 // MARK: - RequestObject.Mock
 
@@ -23,6 +23,7 @@ extension RequestObject {
       public static let sampleWithUnsupportedClientId: RequestObject = Mocker.decode(fromFile: "request-object-with-unsupported-client-id", bundle: Bundle.module)
       public static let sampleWithoutAnyConstraintsFields: RequestObject = Mocker.decode(fromFile: "request-object-no-constraints-fields", bundle: Bundle.module)
       public static let sampleWithInvalidContraintPath: RequestObject = Mocker.decode(fromFile: "request-object-with-invalid-constraint-path", bundle: Bundle.module)
+      public static let sampleWithTransactionData: RequestObject = Mocker.decode(fromFile: "request-object-multipass-with-transaction-data", bundle: Bundle.module)
 
       public static let jsonSampleData: Data = Mocker.getData(fromFile: "request-object-multipass", bundle: Bundle.module) ?? Data()
       public static let sampleWithoutClientMetadataData: Data = Mocker.getData(fromFile: "request-object-multipass-no-metadata", bundle: Bundle.module) ?? Data()

@@ -65,6 +65,7 @@ public struct ButtonLinkText: View {
     })
     .accessibilityElement(children: .combine)
     .accessibilityLabel(text)
+    .accessibilityHint(L10n.tkGlobalExternalLinkAlt)
     .accessibilityRemoveTraits(.isButton)
     .accessibilityAddTraits(.isLink)
   }

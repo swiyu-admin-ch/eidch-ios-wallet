@@ -6,7 +6,7 @@ let package = Package(
   name: "BITTheming",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -18,7 +18,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCore"),
     .package(url: "https://github.com/siteline/swiftui-introspect", exact: "1.3.0"),
     .package(url: "https://github.com/airbnb/lottie-ios", exact: "4.5.1"),
-    .package(url: "https://github.com/hmlongco/Navigator", exact: "1.3.1"),
+    .package(url: "https://github.com/hmlongco/Navigator", exact: "2.0.2"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
   ],
   targets: [

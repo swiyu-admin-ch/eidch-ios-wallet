@@ -1,9 +1,11 @@
 import BITL10n
+import BITTheming
 import Factory
 import SwiftUI
 
 @MainActor
-class ActivityListViewModel: ObservableObject {
+@Observable
+class ActivityListViewModel {
 
   // MARK: Lifecycle
 
@@ -19,9 +21,8 @@ class ActivityListViewModel: ObservableObject {
     case error(Error)
   }
 
-  @Published private(set) var state = State.loading
-  @Published var isToastPresented = false
-  @Published private(set) var toastMessage: String?
+  private(set) var state = State.loading
+  var toast: Toast?
 
   func fetchActivities() async {
     withAnimation {
@@ -35,19 +36,13 @@ class ActivityListViewModel: ObservableObject {
   }
 
   func showActivityDeleted() {
-    toastMessage = L10n.tkActivityActivityListEntryDeletedTitle
-    isToastPresented = true
-  }
-
-  func clearToast() {
-    isToastPresented = false
-    toastMessage = nil
+    toast = Toast(L10n.tkActivityActivityListEntryDeletedTitle)
   }
 
   // MARK: Private
 
   private let credentialId: UUID
 
-  @Injected(\.getCredentialActivitiesUseCase) private var getCredentialActivitiesUseCase
+  @ObservationIgnored @Injected(\.getCredentialActivitiesUseCase) private var getCredentialActivitiesUseCase
 
 }

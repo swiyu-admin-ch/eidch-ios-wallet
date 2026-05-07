@@ -12,7 +12,7 @@ struct SecuritySettingsView: View {
 
   init(path: Binding<NavigationPath>) {
     _path = path
-    _viewModel = StateObject(wrappedValue: Container.shared.securitySettingsViewModel())
+    _viewModel = State(initialValue: Container.shared.securitySettingsViewModel())
   }
 
   // MARK: Internal
@@ -63,16 +63,13 @@ struct SecuritySettingsView: View {
       case .diagnosticData: DiagnosticDataSettingsView()
       }
     }
-    .toastMessage(
-      isPresented: $viewModel.isToastPresented,
-      message: viewModel.toastMessage,
-      clearAction: viewModel.clearToast)
+    .toast($viewModel.toast)
   }
 
   // MARK: Private
 
   @Binding private var path: NavigationPath
-  @StateObject private var viewModel: SecuritySettingsViewModel
+  @State private var viewModel: SecuritySettingsViewModel
 }
 
 // MARK: - SecuritySettings

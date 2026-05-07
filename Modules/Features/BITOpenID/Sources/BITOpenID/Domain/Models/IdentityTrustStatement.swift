@@ -11,7 +11,7 @@ public struct IdentityTrustStatementJWT: TrustStatement, Codable, Equatable {
 
   // MARK: Public
 
-  public let type: String? = "vc+sd-jwt"
+  public let type: String? = VcSdJwt.legacyType
 
   public let vct: String
   public let issuer: String?
@@ -25,6 +25,10 @@ public struct IdentityTrustStatementJWT: TrustStatement, Codable, Equatable {
   public let _entityNames: [String: String]?
   public let _registryIds: [RegistryId]?
   public let _isStateActor: Bool?
+
+  public var acceptedTypes: [String]? {
+    [VcSdJwt.legacyType, VcSdJwt.currentType]
+  }
 
   public var entityNames: [String: String] {
     _entityNames ?? [:]
@@ -76,5 +80,19 @@ extension IdentityTrustStatementJWT {
 extension IdentityTrustStatementJWT {
   public var audience: String? {
     nil
+  }
+}
+
+// MARK: Swift.Hashable
+
+extension IdentityTrustStatementJWT: Swift.Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(type)
+    hasher.combine(vct)
+    hasher.combine(issuer)
+    hasher.combine(subject)
+    hasher.combine(issuedAt)
+    hasher.combine(activatedAt)
+    hasher.combine(expiredAt)
   }
 }

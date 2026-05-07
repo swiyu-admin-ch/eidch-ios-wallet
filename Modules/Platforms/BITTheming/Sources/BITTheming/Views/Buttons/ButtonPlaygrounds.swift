@@ -79,12 +79,8 @@ struct ButtonPlaygrounds: View {
         .controlSize(.regular)
       button(label: label, style: style, isDisabled: isDisabled)
         .controlSize(.large)
-      if #available(iOS 17.0, *) {
-        button(label: label, style: style, isDisabled: isDisabled)
-          .controlSize(.extraLarge)
-      } else {
-        // Fallback on earlier versions
-      }
+      button(label: label, style: style, isDisabled: isDisabled)
+        .controlSize(.extraLarge)
     }
   }
 
@@ -102,13 +98,9 @@ struct ButtonPlaygrounds: View {
       button(label: label, style: style, isDisabled: isDisabled)
         .controlSize(.large)
         .clipShape(.circle)
-      if #available(iOS 17.0, *) {
-        button(label: label, style: style, isDisabled: isDisabled)
-          .controlSize(.extraLarge)
-          .clipShape(.circle)
-      } else {
-        // Fallback on earlier versions
-      }
+      button(label: label, style: style, isDisabled: isDisabled)
+        .controlSize(.extraLarge)
+        .clipShape(.circle)
     }
   }
 

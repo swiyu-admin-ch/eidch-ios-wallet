@@ -24,6 +24,7 @@ extension EIDRequestCaseEntity {
     firstName = requestCase.firstName
     lastName = requestCase.lastName
     createdAt = requestCase.createdAt
+    filesSubmitted = requestCase.filesSubmitted
 
     if let credential = requestCase.deferredCredential, credential.id != self.credential?.id {
       self.credential = CredentialEntity(deferredCredential: credential)

@@ -16,9 +16,9 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
     fetchWalletPairingOfferUseCase = FetchWalletPairingOfferUseCaseProtocolSpy()
     context = EIDRequestContext()
 
-    Container.shared.walletPairingPollingManager.register { self.pollingManager }
-    Container.shared.fetchWalletPairingOfferUseCase.register { self.fetchWalletPairingOfferUseCase }
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.walletPairingPollingManager.register { @MainActor in self.pollingManager }
+    Container.shared.fetchWalletPairingOfferUseCase.register { @MainActor in self.fetchWalletPairingOfferUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
 
     sut = WalletPairingOfferViewModel({ _ in self.didCallHandler = true })
   }

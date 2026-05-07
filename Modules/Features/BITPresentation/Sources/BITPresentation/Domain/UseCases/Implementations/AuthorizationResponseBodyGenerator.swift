@@ -1,6 +1,7 @@
 import BITAnalytics
 import BITAnyCredentialFormat
 import BITAppAuth
+import BITCredential
 import BITCredentialShared
 import BITCrypto
 import BITOpenID
@@ -46,7 +47,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
       let payload = try generateDcql(for: compatibleCredential, requestObject: requestObject)
       return try buildResponseBody(for: payload, requestObject: requestObject, responseType: .dcql)
     }
-    throw RequestObjectError.invalidPayload
+    throw RequestObjectError.invalidPayload()
   }
 
   // MARK: Private
@@ -59,6 +60,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.jweEncrypter) private var jweEncrypter: JWEEncrypterProtocol
   @Injected(\.isPayloadEncryptionEnabled) private var isPayloadEncryptionEnabled
+  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
 
   private func generateDif(
     for compatibleCredential: CompatibleCredential,
@@ -75,7 +77,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
       let definitionId = requestObject.presentationDefinition?.id,
       !definitionId.isEmpty
     else {
-      throw RequestObjectError.invalidPayload
+      throw RequestObjectError.invalidPayload()
     }
     let presentationSubmission = AuthorizationResponse.PresentationSubmission(
       id: UUID().uuidString,
@@ -100,7 +102,9 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
 
     let vpToken = try createVpToken(credential: credential, requestObject: requestObject, fields: fields)
 
-    return AuthorizationResponse(vpTokenByCredentialQueryId: [dcqlQueryId: [vpToken]])
+    return AuthorizationResponse(
+      vpTokenByCredentialQueryId: [dcqlQueryId: [vpToken]],
+      responseMode: requestObject.responseMode)
   }
 
   private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, fields: [String]) throws -> VpToken {
@@ -112,12 +116,18 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
       throw UserSessionError.notLoggedIn
     }
 
-    let anyCredential = try createAnyCredentialUseCase.execute(from: credential.payload, format: credential.format)
+    let bundleItem = try selectCredentialBundleItemUseCase(credential)
+
+    let anyCredential = try createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
     let query = try QueryBuilder()
       .setContext(context)
       .build()
     var keyPair: VaultKeyPair? = nil
-    if let identifier = credential.keyBinding?.id, let algorithm = credential.keyBinding?.algorithm, let vaultAlgorithm = VaultAlgorithm(rawValue: algorithm) {
+    if
+      let identifier = bundleItem.keyBinding?.id,
+      let algorithm = bundleItem.keyBinding?.algorithm,
+      let vaultAlgorithm = VaultAlgorithm(rawValue: algorithm)
+    {
       do {
         keyPair = try keyManager.getKeyPair(withIdentifier: identifier.uuidString, algorithm: vaultAlgorithm, query: query)
       } catch {

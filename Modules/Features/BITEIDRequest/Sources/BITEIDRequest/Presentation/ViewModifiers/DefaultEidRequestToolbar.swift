@@ -18,8 +18,9 @@ struct DefaultEidRequestToolbar: ViewModifier {
   func body(content: Content) -> some View {
     content
       .toolbar {
-        CloseButtonToolbar(accessibilityIdentifier: "closeButton") {
+        CloseButtonToolbar {
           handleClose()
+
         }
       }
   }

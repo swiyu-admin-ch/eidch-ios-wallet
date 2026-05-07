@@ -345,11 +345,11 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
     deleteEIDRequestCaseFileUseCase = DeleteEIDRequestCaseFileUseCaseProtocolSpy()
     submitEIDRequestUseCase = SubmitEIDRequestUseCaseProtocolSpy()
 
-    Container.shared.eidRequestContext.register { self.context }
-    Container.shared.getEIDRequestCaseFilesUseCase.register { self.getEIDRequestFilesUseCase }
-    Container.shared.submitEIDRequestFileUseCase.register { self.submitEIDRequestFileUseCase }
-    Container.shared.submitEIDRequestUseCase.register { self.submitEIDRequestUseCase }
-    Container.shared.deleteEIDRequestCaseFileUseCase.register { self.deleteEIDRequestCaseFileUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.getEIDRequestCaseFilesUseCase.register { @MainActor in self.getEIDRequestFilesUseCase }
+    Container.shared.submitEIDRequestFileUseCase.register { @MainActor in self.submitEIDRequestFileUseCase }
+    Container.shared.submitEIDRequestUseCase.register { @MainActor in self.submitEIDRequestUseCase }
+    Container.shared.deleteEIDRequestCaseFileUseCase.register { @MainActor in self.deleteEIDRequestCaseFileUseCase }
   }
 
   private func success() {

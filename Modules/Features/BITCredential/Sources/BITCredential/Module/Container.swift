@@ -3,7 +3,7 @@ import BITJWT
 import BITOpenID
 import BITVault
 import Factory
-import SwiftUI
+import NavigatorUI
 
 extension Container {
 
@@ -13,14 +13,22 @@ extension Container {
     self { TrustInformationService() }
   }
 
+  public var selectCredentialBundleItemUseCase: Factory<SelectCredentialBundleItemUseCaseProtocol> {
+    self { SelectCredentialBundleItemUseCase() }
+  }
+
+  public var rotateNextPresentableBundleItemUseCase: Factory<RotateNextPresentableBundleItemUseCaseProtocol> {
+    self { RotateNextPresentableBundleItemUseCase() }
+  }
+
   // MARK: Internal
 
   var fetchDeferredCredentialService: Factory<FetchDeferredCredentialServiceProtocol> {
     self { FetchDeferredCredentialService() }
   }
 
-  var holderBindingContextGenerator: Factory<HolderBindingContextGeneratorProtocol> {
-    self { HolderBindingContextGenerator() }
+  var holderBindingsGenerator: Factory<HolderBindingsGeneratorProtocol> {
+    self { HolderBindingsGenerator() }
   }
 
   var overlayAttributeDateParser: Factory<OverlayAttributeDateParserProtocol> {
@@ -52,18 +60,9 @@ extension Container {
 
 extension Container {
 
-  var credentialDetailRouter: Factory<CredentialDetailRouter> {
-    self { CredentialDetailRouter() }
-  }
-
   @MainActor
-  var credentialDetailViewModel: ParameterFactory<(CredentialProtocol, CredentialDetailDelegate?), CredentialDetailViewModel> {
-    self { CredentialDetailViewModel($0, delegate: $1) }
-  }
-
-  @MainActor
-  var credentialDetailModule: ParameterFactory<(CredentialProtocol, CredentialDetailDelegate?), CredentialDetailModule> {
-    self { CredentialDetailModule(credential: $0, delegate: $1) }
+  var credentialDetailViewModel: ParameterFactory<CredentialProtocol, CredentialDetailViewModel> {
+    self { @MainActor in CredentialDetailViewModel($0, getActivityHistoryEnabledSubject: self.getActivityHistoryEnabledSubjectUseCase()) }
   }
 }
 
@@ -111,12 +110,20 @@ extension Container {
 
   // MARK: Internal
 
+  var valueTypeResolver: Factory<ValueTypeResolverProtocol> {
+    self { ValueTypeResolver() }
+  }
+
   var checkAndUpdateCredentialStatusUseCase: Factory<CheckAndUpdateCredentialStatusUseCaseProtocol> {
     self { CheckAndUpdateCredentialStatusUseCase() }
   }
 
   var refreshDeferredCredentialUseCase: Factory<RefreshDeferredCredentialUseCaseProtocol> {
     self { RefreshDeferredCredentialUseCase() }
+  }
+
+  var mapCredentialsToKeyBindingsUseCase: Factory<MapCredentialsToKeyBindingsUseCaseProtocol> {
+    self { MapCredentialsToKeyBindingsUseCase() }
   }
 
 }

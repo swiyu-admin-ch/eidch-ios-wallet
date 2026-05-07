@@ -6,6 +6,12 @@ import SwiftUI
 
 struct AVIdentityCheckView: View {
 
+  // MARK: Lifecycle
+
+  init(caseId: String) {
+    _viewModel = State(initialValue: Container.shared.avIdentityCheckViewModel(caseId))
+  }
+
   // MARK: Internal
 
   var body: some View {
@@ -37,10 +43,9 @@ struct AVIdentityCheckView: View {
     case tertiaryTipText
   }
 
-  @InjectedObject(\.avIdentityCheckViewModel) private var viewModel
-
+  @State private var viewModel: AVIdentityCheckViewModel
 }
 
 #Preview {
-  AVIdentityCheckView()
+  AVIdentityCheckView(caseId: "caseId")
 }

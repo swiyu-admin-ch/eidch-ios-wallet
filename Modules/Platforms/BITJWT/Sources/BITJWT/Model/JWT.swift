@@ -7,6 +7,7 @@ import Foundation
 
 public protocol JWT: Codable, Equatable {
   var type: String? { get }
+  var acceptedTypes: [String]? { get }
   var issuer: String? { get }
   var audience: String? { get }
   var subject: String? { get }
@@ -17,6 +18,11 @@ public protocol JWT: Codable, Equatable {
 }
 
 extension JWT {
+
+  public var acceptedTypes: [String]? {
+    guard let type else { return nil }
+    return [type]
+  }
 
   public var isExpired: Bool {
     guard let expiredAt else {

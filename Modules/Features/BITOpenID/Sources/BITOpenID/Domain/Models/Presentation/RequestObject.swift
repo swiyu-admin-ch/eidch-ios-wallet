@@ -6,17 +6,29 @@ import Foundation
 
 // MARK: - RequestObjectError
 
-public enum RequestObjectError: Error {
-  case invalidPayload
+public enum RequestObjectError: Error, Equatable {
+  case invalidPayload(_ underlyingError: Error? = nil)
   case invalidInputDescriptorFormat
   case invalidDcqlQuery
   case missingQueryType
+
+  public static func == (lhs: RequestObjectError, rhs: RequestObjectError) -> Bool {
+    switch (lhs, rhs) {
+    case (.invalidDcqlQuery, .invalidDcqlQuery),
+         (.invalidInputDescriptorFormat, .invalidInputDescriptorFormat),
+         (.invalidPayload, .invalidPayload),
+         (.missingQueryType, .missingQueryType):
+      true
+    default:
+      false
+    }
+  }
 }
 
 // MARK: - RequestObject
 
 /// A structure representing OpenID Authorization Request
-/// https://openid.net/specs/openid-4-verifiable-presentations-1_0-20.html#name-authorization-request
+/// https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#name-authorization-request
 public class RequestObject: Codable {
 
   // MARK: Lifecycle
@@ -24,12 +36,13 @@ public class RequestObject: Codable {
   init(
     queryType: PresentationRequestQueryType,
     nonce: String?,
-    responseUri: URL,
+    responseUri: URL?,
     clientMetadata: ClientMetadata?,
     responseType: String,
     clientId: String,
     clientIdScheme: String?,
-    responseMode: ResponseMode)
+    responseMode: ResponseMode,
+    transactionData: [String]?)
   {
     self.queryType = queryType
     self.nonce = nonce
@@ -39,18 +52,20 @@ public class RequestObject: Codable {
     self.clientId = clientId
     self.clientIdScheme = clientIdScheme
     self.responseMode = responseMode
+    self.transactionData = transactionData
   }
 
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
     nonce = try container.decodeIfPresent(String.self, forKey: .nonce)
-    responseUri = try container.decode(URL.self, forKey: .responseUri)
+    responseUri = try container.decodeIfPresent(URL.self, forKey: .responseUri)
     clientMetadata = try container.decodeIfPresent(ClientMetadata.self, forKey: .clientMetadata)
     responseType = try container.decode(String.self, forKey: .responseType)
     clientId = try container.decode(String.self, forKey: .clientId)
     clientIdScheme = try container.decodeIfPresent(String.self, forKey: .clientIdScheme)
     responseMode = try container.decode(ResponseMode.self, forKey: .responseMode)
+    transactionData = try container.decodeIfPresent([String].self, forKey: .transactionData)
 
     queryType = try PresentationRequestQueryType(from: decoder)
   }
@@ -59,12 +74,13 @@ public class RequestObject: Codable {
 
   public let queryType: PresentationRequestQueryType
   public let nonce: String?
-  public let responseUri: URL
+  public let responseUri: URL?
   public let clientMetadata: ClientMetadata?
   public let responseType: String
   public let clientId: String
   public let clientIdScheme: String?
   public let responseMode: ResponseMode
+  public let transactionData: [String]?
   public var raw: Data?
 
   public var presentationDefinition: PresentationDefinition? {
@@ -94,7 +110,8 @@ public class RequestObject: Codable {
     try container.encodeIfPresent(responseType, forKey: .responseType)
     try container.encodeIfPresent(clientId, forKey: .clientId)
     try container.encodeIfPresent(clientIdScheme, forKey: .clientIdScheme)
-    try container.encodeIfPresent(responseMode, forKey: .responseMode)
+    try container.encode(responseMode, forKey: .responseMode)
+    try container.encodeIfPresent(transactionData, forKey: .transactionData)
 
     try queryType.encode(to: encoder)
   }
@@ -108,7 +125,8 @@ public class RequestObject: Codable {
       responseUri == other.responseUri &&
       nonce == other.nonce &&
       clientMetadata == other.clientMetadata &&
-      queryType == other.queryType
+      queryType == other.queryType &&
+      transactionData == other.transactionData
   }
 
   // MARK: Internal
@@ -121,6 +139,7 @@ public class RequestObject: Codable {
     case clientId = "client_id"
     case clientIdScheme = "client_id_scheme"
     case responseMode = "response_mode"
+    case transactionData = "transaction_data"
   }
 
 }
@@ -131,6 +150,7 @@ extension RequestObject {
   public enum ResponseMode: String, Codable {
     case directPost = "direct_post"
     case directPostJWT = "direct_post.jwt"
+    case dcApiJWT = "dc_api.jwt"
   }
 }
 
@@ -298,7 +318,7 @@ public struct InputDescriptor: Codable, Equatable {
     if let vcSdJwt = try formatContainer.decodeIfPresent(VcSdJwtFormat.self, forKey: .vcSdJwt) {
       formats.append(.vcSdJwt(vcSdJwt))
     }
-    if formats.isEmpty { throw RequestObjectError.invalidPayload }
+    if formats.isEmpty { throw RequestObjectError.invalidPayload() }
 
     self.formats = formats
   }

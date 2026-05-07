@@ -20,7 +20,7 @@ public enum OverlayType {
     case .characterEncoding:
       [.characterEncoding1_0]
     case .dataSource:
-      [.dataSource1_0]
+      [.dataSource2_0, .dataSource1_0]
     case .entry:
       [.entry1_0]
     case .entryCode:

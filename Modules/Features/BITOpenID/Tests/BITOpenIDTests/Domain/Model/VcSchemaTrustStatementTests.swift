@@ -20,7 +20,7 @@ final class VcSchemaTrustStatementTests: XCTestCase {
 
     let trustStatement = try decoder.decode(VcSchemaTrustStatementJWT.self, from: rawSdJwt)
 
-    assertTrustStatement(trustStatement.payload, vct: "TrustStatementIssuanceV1")
+    assertTrustStatement(trustStatement.resolvedPayload, vct: "TrustStatementIssuanceV1")
   }
 
   func testDecode_verification() throws {
@@ -28,12 +28,12 @@ final class VcSchemaTrustStatementTests: XCTestCase {
 
     let trustStatement = try decoder.decode(VcSchemaTrustStatementJWT.self, from: rawSdJwt)
 
-    assertTrustStatement(trustStatement.payload, vct: "TrustStatementVerificationV1")
+    assertTrustStatement(trustStatement.resolvedPayload, vct: "TrustStatementVerificationV1")
   }
 
   // MARK: Private
 
-  private var decoder = SdJWSDecoder()
+  private var decoder = VcSdJWSDecoder()
 
   private func assertTrustStatement(_ trustStatement: VcSchemaTrustStatementJWT, vct: String) {
     let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 30, uri: "status_list_uri"))

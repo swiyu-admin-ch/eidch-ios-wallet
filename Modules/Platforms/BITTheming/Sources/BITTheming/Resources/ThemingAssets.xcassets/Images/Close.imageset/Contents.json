@@ -1,9 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "Button.png",
-      "idiom" : "universal",
-      "scale" : "1x"
+      "filename" : "Icon Button.svg",
+      "idiom" : "universal"
     },
     {
       "appearances" : [
@@ -12,41 +11,8 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Icon Button.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "Button2.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
-        }
-      ],
-      "filename" : "close@2x.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "Button3.png",
-      "idiom" : "universal",
-      "scale" : "3x"
-    },
-    {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
-        }
-      ],
-      "filename" : "close@3x.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "Button.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

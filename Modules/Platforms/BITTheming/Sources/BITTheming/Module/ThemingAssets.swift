@@ -128,6 +128,7 @@ public enum ThemingAssets {
   public enum Label {
     public static let primary = ColorAsset(name: "Label/primary")
     public static let secondary = ColorAsset(name: "Label/secondary")
+    public static let sectionHeader = ColorAsset(name: "Label/section-header")
     public static let tertiary = ColorAsset(name: "Label/tertiary")
   }
 
@@ -150,6 +151,8 @@ public enum ThemingAssets {
   public static let federalOfficeLogo = ImageAsset(name: "federal-office-logo")
   public static let inAppLogo = ImageAsset(name: "in-app-logo")
   public static let xmark = ImageAsset(name: "xmark")
+  public static let qrCodeIcon = ImageAsset(name: "QRCodeIcon")
+  public static let scanIcon = ImageAsset(name: "ScanIcon")
   public static let navigationAccent = ColorAsset(name: "navigationAccent")
   public static let accentColor = ColorAsset(name: "AccentColor")
   public static let background = ColorAsset(name: "Background")

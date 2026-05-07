@@ -45,9 +45,9 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
 
     let metadata = NonComplianceExcessiveDataReportBody.Metadata(
       verifierDid: requestObject.clientId,
-      verifierUrl: requestObject.responseUri.absoluteString,
+      verifierUrl: requestObject.responseUri?.absoluteString,
       presentationActionCreatedAt: excessiveDataReport.activity.createdAt,
-      presentedCredentialIssuerDid: excessiveDataReport.credential.issuer,
+      presentedCredentialIssuerDid: excessiveDataReport.activity.issuer,
       presentationRequestJwt: excessiveDataReport.activity.nonComplianceData,
       presentationRequestFields: presentationRequestFields)
 

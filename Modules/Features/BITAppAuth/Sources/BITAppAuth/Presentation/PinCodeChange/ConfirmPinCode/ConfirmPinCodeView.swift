@@ -6,7 +6,7 @@ import SwiftUI
 struct ConfirmPinCodeView: View {
 
   init(_ router: ChangePinCodeInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.confirmPinCodeViewModel(router))
+    _viewModel = State(initialValue: Container.shared.confirmPinCodeViewModel(router))
   }
 
   var body: some View {
@@ -20,6 +20,6 @@ struct ConfirmPinCodeView: View {
       .navigationTitle(L10n.tkGlobalNewpassword)
   }
 
-  @StateObject private var viewModel: ConfirmPinCodeViewModel
+  @State private var viewModel: ConfirmPinCodeViewModel
 
 }

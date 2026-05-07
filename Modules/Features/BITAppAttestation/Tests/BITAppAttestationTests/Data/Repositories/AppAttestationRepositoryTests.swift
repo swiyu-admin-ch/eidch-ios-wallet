@@ -4,7 +4,9 @@ import XCTest
 @testable import BITAppAttestation
 @testable import BITCrypto
 @testable import BITJWT
+@testable import BITLocalAuthentication
 @testable import BITTestingCore
+@testable import BITVault
 
 // swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 
@@ -84,13 +86,14 @@ final class AppAttestationRepositoryTests: XCTestCase {
     let response = try await repository.fetchKeyAttestation(body: mockKeyAttestationRequestBody, clientAttestation: mockClientAttestation)
 
     XCTAssertEqual(response.payload, expectedResponse.payload)
-    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.body as? KeyAttestationRequestBody, mockKeyAttestationRequestBody)
-    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.audience, mockClientAttestation.payload.issuer)
-    XCTAssertEqual(proofOfPossessionGenerator.generateForAudienceChallengeEndpointReceivedArguments?.challengeEndpoint, URL(target: AttestationServiceEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.body as? KeyAttestationRequestBody, mockKeyAttestationRequestBody)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, mockClientAttestation.payload.issuer)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, URL(target: AttestationServiceEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
   }
 
   func testFetchKeyAttestation_generateProofOfPossessionFails_throwsError() async throws {
-    proofOfPossessionGenerator.generateForAudienceChallengeEndpointThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
 
     do {
       _ = try await repository.fetchKeyAttestation(body: mockKeyAttestationRequestBody, clientAttestation: mockClientAttestation)
@@ -117,7 +120,6 @@ final class AppAttestationRepositoryTests: XCTestCase {
   private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
   private let mockClientAttestationRequestBody = ClientAttestationRequestBody.Mock.sample
   private let mockKeyAttestationRequestBody = KeyAttestationRequestBody.Mock.sample
-
   private var repository: AppAttestationRepository!
   private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocolSpy!
 
@@ -128,7 +130,7 @@ final class AppAttestationRepositoryTests: XCTestCase {
   }
 
   private func createSuccessState() {
-    proofOfPossessionGenerator.generateForAudienceChallengeEndpointReturnValue = (mockClientAttestation, mockClientAttestationProofOfPossession)
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReturnValue = mockClientAttestationProofOfPossession
   }
 
   private func registerMocks() {

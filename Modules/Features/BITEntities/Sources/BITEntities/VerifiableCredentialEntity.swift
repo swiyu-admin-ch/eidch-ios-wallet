@@ -8,20 +8,8 @@ public class VerifiableCredentialEntity: Object {
     case unaccepted
   }
 
-  public enum CredentialStatus: String, PersistableEnum {
-    case valid
-    case revoked
-    case suspended
-    case expired
-    case notYetValid
-    case unsupported
-    case unknown
-  }
-
   @Persisted(primaryKey: true) public var id: UUID
-  @Persisted public var status: CredentialStatus
   @Persisted public var progressionState: ProgressionState
-  @Persisted public var payload: Data
   @Persisted public var issuer: String
 
   @Persisted public var validFrom: Date?
@@ -29,5 +17,9 @@ public class VerifiableCredentialEntity: Object {
 
   @Persisted public var createdAt = Date()
 
+  @Persisted public var bundleItems = List<BundleItemEntity>()
+  @Persisted public var nextPresentableBundleItemId: UUID
   @Persisted public var clusters = List<CredentialClaimClusterEntity>()
+
+  @Persisted public var batchData: BatchDataEntity?
 }

@@ -15,27 +15,43 @@ final class GetCredentialActivitiesUseCaseTest: XCTestCase {
     createSuccessState()
   }
 
-  func testExecute_noLimit_returnsAll() throws {
+  func testCallAsFunction_noLimit_returnsAll() throws {
     let activites = try useCase(for: credentialIdMock)
 
-    XCTAssertEqual(activites, activityMocks)
+    XCTAssertEqual(activites, activityItemMocks)
     XCTAssertEqual(repositorySpy.getAllForLimitCallsCount, 1)
     XCTAssertEqual(repositorySpy.getAllForLimitReceivedArguments?.credentialId, credentialIdMock)
     XCTAssertEqual(repositorySpy.getAllForLimitReceivedArguments?.limit, Int.max)
   }
 
-  func testExecute_limit_passesLimit() throws {
+  func testCallAsFunction_limit_passesLimit() throws {
     let limit = 3
     let activites = try useCase(for: credentialIdMock, limit: limit)
 
-    XCTAssertEqual(activites, activityMocks)
+    XCTAssertEqual(activites, activityItemMocks)
     XCTAssertEqual(repositorySpy.getAllForLimitCallsCount, 1)
     XCTAssertEqual(repositorySpy.getAllForLimitReceivedArguments?.credentialId, credentialIdMock)
     XCTAssertEqual(repositorySpy.getAllForLimitReceivedArguments?.limit, limit)
   }
 
-  func testExecute_repositoryError_throws() throws {
+  func testCallAsFunction_activityHistoryDisabled_returnsEmptyList() throws {
+    repositorySpy.isActivityHistoryEnabledReturnValue = false
+
+    let activites = try useCase(for: credentialIdMock)
+
+    XCTAssertTrue(activites.isEmpty)
+  }
+
+  func testCallAsFunction_repositoryGetAllError_throws() throws {
     repositorySpy.getAllForLimitThrowableError = TestingError.error
+
+    XCTAssertThrowsError(try useCase(for: credentialIdMock)) { error in
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testCallAsFunction_repositoryIsActivityHistoryEnabledError_throws() throws {
+    repositorySpy.isActivityHistoryEnabledThrowableError = TestingError.error
 
     XCTAssertThrowsError(try useCase(for: credentialIdMock)) { error in
       XCTAssertEqual(error as? TestingError, .error)
@@ -45,7 +61,7 @@ final class GetCredentialActivitiesUseCaseTest: XCTestCase {
   // MARK: Private
 
   private var useCase: GetCredentialActivitiesUseCase!
-  private var activityMocks: [Activity] = [.Mock.issueTrusted, .Mock.presentationAcceptedTrusted]
+  private var activityItemMocks: [ActivityListItem] = [.Mock.issuance, .Mock.acceptedPresentation]
   private var credentialIdMock = UUID()
   private var repositorySpy = ActivityRepositoryProtocolSpy()
 
@@ -55,7 +71,8 @@ final class GetCredentialActivitiesUseCaseTest: XCTestCase {
   }
 
   private func createSuccessState() {
-    repositorySpy.getAllForLimitReturnValue = activityMocks
+    repositorySpy.getAllForLimitReturnValue = activityItemMocks
+    repositorySpy.isActivityHistoryEnabledReturnValue = true
   }
 
 }

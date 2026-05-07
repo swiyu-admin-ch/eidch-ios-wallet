@@ -1,4 +1,5 @@
 import Factory
+import NavigatorUI
 import XCTest
 @testable import BITCredential
 @testable import BITOpenID
@@ -16,13 +17,13 @@ final class DeclinePresentationViewModelTests: XCTestCase {
     super.setUp()
 
     registerMocks()
-    viewModel = DeclinePresentationViewModel(context: context, router: router)
+    viewModel = DeclinePresentationViewModel(context: context)
   }
 
   func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
     Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
-    viewModel = DeclinePresentationViewModel(context: context, router: router)
+    viewModel = DeclinePresentationViewModel(context: context)
 
     XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
     XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
@@ -30,39 +31,31 @@ final class DeclinePresentationViewModelTests: XCTestCase {
   }
 
   func testDeclineRequest_success() async {
-    await viewModel.declineRequest()
+    await viewModel.declineRequest(Navigator(configuration: NavigationConfiguration()))
 
-    XCTAssertEqual(declinePresentationUseCase.callAsFunctionUrlCallsCount, 1)
-    XCTAssertEqual(declinePresentationUseCase.callAsFunctionUrlReceivedUrl, context.responseUri)
-
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextCallsCount, 1)
+    XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextReceivedContext, context)
   }
 
   func testDeclineRequest_useCaseThrowsError_retry() async {
-    declinePresentationUseCase.callAsFunctionUrlThrowableError = TestingError.error
+    declinePresentationUseCase.callAsFunctionContextThrowableError = TestingError.error
 
-    await viewModel.declineRequest()
+    await viewModel.declineRequest(Navigator(configuration: NavigationConfiguration()))
 
-    XCTAssertTrue(presentationFinishDelegateMock.retryCalled)
+    XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextCallsCount, 1)
   }
 
   // MARK: Private
 
   private var viewModel: DeclinePresentationViewModel!
-  private var router: MockPresentationRouter!
-  private var presentationFinishDelegateMock: MockPresentationFinishDelegate!
   private var declinePresentationUseCase: DeclinePresentationUseCaseProtocolSpy!
 
   private let context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
 
   private func registerMocks() {
     declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
-    presentationFinishDelegateMock = MockPresentationFinishDelegate()
 
-    Container.shared.declinePresentationUseCase.register { self.declinePresentationUseCase }
+    Container.shared.declinePresentationUseCase.register { @MainActor in self.declinePresentationUseCase }
     Container.shared.declinePresentationRequestDelay.register { 0 }
-
-    router = MockPresentationRouter()
-    router.delegate = presentationFinishDelegateMock
   }
 }

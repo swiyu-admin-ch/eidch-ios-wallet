@@ -6,7 +6,7 @@ GREEN := \033[0;32m
 BLUE := \033[0;34m
 
 # Main setup target
-setup: .install-mise .configure-mise .install-mise-tools .bundler .list-tools .list-tasks .warm generate
+setup: .install-mise .configure-mise .install-mise-tools .install-git-hooks .bundler .list-tools .list-tasks .warm generate
 	@printf "$(GREEN)=> Setup completed successfully!$(RESET)\n"
 	@printf "$(BLUE)=> Opening up swiyu$(RESET)\n"
 	@printf "$(BLUE)=> Note: From now on, you can simply use make to open the project$(RESET)\n"
@@ -54,6 +54,10 @@ setup-ci: .install-mise-github-action .install-mise-tools
 	mise settings experimental=true
 	mise install
 
+.install-git-hooks:
+	@printf "$(GREEN)=> Configuring git hooks$(RESET)\n"
+	mise install-git-hooks
+
 # List installed tools
 .list-tools:
 	@printf "$(GREEN)=> Installed tools$(RESET)\n"
@@ -90,7 +94,11 @@ help:
 	@echo "  setup                    - Project setup"
 	@echo "  generate (gen)           - Generate & Open project"
 	@echo "  regenerate (regen)       - Regenerate & Open project without applying formatting tools (swiftgen, swiftformat, ...)"
+	@echo "  clean-swiftpm            - Remove all .build and .swiftpm directories in the repo"
 	@echo "  help                     - Show this help message"
 	@echo "mise tasks"
 
-.PHONY: setup help generate gen regenerate regen
+clean-swiftpm:
+	@.resources/scripts/clean_swiftpm_dirs.sh
+
+.PHONY: setup help generate gen regenerate regen clean-swiftpm

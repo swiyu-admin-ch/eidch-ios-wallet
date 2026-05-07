@@ -8,34 +8,56 @@ struct ScanDocumentSubmitView: View {
   // MARK: Lifecycle
 
   init(_ scanDocumentOutput: ScanDocumentOutput) {
-    _viewModel = StateObject(wrappedValue: Container.shared.scanDocumentSubmitViewModel(scanDocumentOutput))
+    _viewModel = State(initialValue: Container.shared.scanDocumentSubmitViewModel(scanDocumentOutput))
   }
 
   // MARK: Internal
 
   var body: some View {
-    InformationView2(
-      contents: [
-        .heroCard {
-          Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) {
-            ProgressBar(image: ThemingAssets.Gradient.gradient3.swiftUIImage, sequence: .infiniteRandomSequence)
-          }
-          .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
-          .accessibilityHidden(true)
-        },
-        .title(L10n.tkEidRequestScanDocumentInitializationPrimary, identifier: "primaryText"),
-        .body(L10n.tkEidRequestScanDocumentInitializationSecondary, identifier: "secondaryText"),
-      ])
-      .task {
-        await viewModel.submit()
+    ZStack {
+      ThemingAssets.Background.secondary.swiftUIColor
+        .frame(maxWidth: .infinity)
+        .ignoresSafeArea()
+      List {
+        Section {
+          ScanResultListView(entries: viewModel.scanImages)
+        }
+        .listRowInsets(EdgeInsets())
+        .textCase(nil)
       }
-      .navigationBarBackButtonHidden()
-      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
-      .navigate(to: $viewModel.destination)
-      .toolbar(.visible)
+      .frame(maxWidth: 635)
+      .scrollContentBackground(.hidden)
+    }
+    .safeAreaInset(edge: .bottom) {
+      VStack(spacing: .x4) {
+        AsyncButton(action: viewModel.submit, label: {
+          Text(L10n.tkGlobalContinue)
+            .frame(maxWidth: .infinity)
+        })
+        .buttonStyle(.primary)
+        .controlSize(.large)
+
+        Button(action: {
+          navigator.returnToCheckpointSafely(EIDRequestCheckpoints.scanDocumentInformation)
+        }, label: {
+          Text(L10n.tkEidRequestScanDocumentSubmitSecondaryButton)
+            .frame(maxWidth: .infinity)
+        })
+        .buttonStyle(.secondary)
+        .controlSize(.large)
+      }
+      .padding(.horizontal, .x4)
+    }
+    .defaultEidRequestToolbar()
+    .navigate(to: $viewModel.destination)
+    .toolbarBackground(ThemingAssets.Background.secondary.swiftUIColor)
+    .navigationBarBackButtonHidden()
+    .navigationTitle(L10n.tkEidRequestScanDocumentSubmitTitle)
+    .navigationBarTitleDisplayMode(.inline)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: ScanDocumentSubmitViewModel
+  @Environment(\.navigator) private var navigator
+  @State private var viewModel: ScanDocumentSubmitViewModel
 }

@@ -3,16 +3,16 @@ import BITNetworking
 import BITTheming
 import Factory
 import Foundation
-import NavigatorUI
 
 
 @MainActor
-class SubmitEIDRequestFilesViewModel: ObservableObject {
+@Observable
+class SubmitEIDRequestFilesViewModel {
 
   // MARK: Internal
 
-  @Published var fileUploads = [UUID: FileUploadInfo]()
-  @Published var destination: EIDRequestDestinations?
+  var fileUploads = [UUID: FileUploadInfo]()
+  var destination: EIDRequestDestinations?
 
   /// Overall upload progress (0.0 to 1.0)
   var overallProgress: Double {
@@ -103,7 +103,7 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
       try await deleteEIDRequestCaseFileUseCase.execute(forRequestCaseId: caseId)
 
       Container.shared.eidRequestContext.reset()
-      destination = .success
+      destination = .success(caseId: caseId)
     } catch {
       destination = .error(.retry(error, { [weak self] _ in
         Task {
@@ -121,12 +121,12 @@ class SubmitEIDRequestFilesViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
 
-  @Injected(\.getEIDRequestCaseFilesUseCase) private var getEIDRequestFilesUseCase
-  @Injected(\.submitEIDRequestFileUseCase) private var submitEIDRequestFileUseCase
-  @Injected(\.submitEIDRequestUseCase) private var submitEIDRequestUseCase
-  @Injected(\.deleteEIDRequestCaseFileUseCase) private var deleteEIDRequestCaseFileUseCase: DeleteEIDRequestCaseFileUseCaseProtocol
+  @ObservationIgnored @Injected(\.getEIDRequestCaseFilesUseCase) private var getEIDRequestFilesUseCase
+  @ObservationIgnored @Injected(\.submitEIDRequestFileUseCase) private var submitEIDRequestFileUseCase
+  @ObservationIgnored @Injected(\.submitEIDRequestUseCase) private var submitEIDRequestUseCase
+  @ObservationIgnored @Injected(\.deleteEIDRequestCaseFileUseCase) private var deleteEIDRequestCaseFileUseCase: DeleteEIDRequestCaseFileUseCaseProtocol
 
   private func sendFiles(_ files: [EIDRequestCaseFile]) async {
     guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else {

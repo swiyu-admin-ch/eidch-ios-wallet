@@ -2,7 +2,8 @@ import BITL10n
 import Factory
 import Foundation
 
-class VersionEnforcementViewModel: ObservableObject {
+@Observable
+class VersionEnforcementViewModel {
 
   // MARK: Lifecycle
 

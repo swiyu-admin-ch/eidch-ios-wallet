@@ -48,11 +48,13 @@ extension Container {
 @MainActor
 extension Container {
 
+  @MainActor
   var versionEnforcementModule: ParameterFactory<VersionEnforcement, VersionEnforcementModule> {
-    self { VersionEnforcementModule(versionEnforcement: $0) }
+    self { @MainActor in VersionEnforcementModule(versionEnforcement: $0) }
   }
 
+  @MainActor
   var versionEnforcementViewModel: ParameterFactory<(VersionEnforcementRouterRoutes, VersionEnforcement), VersionEnforcementViewModel> {
-    self { VersionEnforcementViewModel(router: $0, versionEnforcement: $1) }
+    self { @MainActor in VersionEnforcementViewModel(router: $0, versionEnforcement: $1) }
   }
 }

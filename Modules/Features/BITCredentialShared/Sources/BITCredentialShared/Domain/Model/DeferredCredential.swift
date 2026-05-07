@@ -13,7 +13,6 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     transactionId: String,
     createdAt: Date = Date(),
     progressionState: ProgressionState = .inProgress,
-    accessToken: String,
     endpoint: String,
     format: String,
     issuerUrl: String,
@@ -21,13 +20,13 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     issuerDisplays: [CredentialIssuerDisplay] = [],
     displays: [CredentialDisplay] = [],
     pollingInterval: Int = Self.defaultPollingInterval,
-    keyBinding: CredentialKeyBinding? = nil,
+    keyBindings: [KeyBinding] = [],
     rawCredentialData: RawCredentialData? = nil,
-    polledAt: Date? = nil)
+    polledAt: Date? = nil,
+    authentication: CredentialAuthentication)
   {
     self.id = id
     self.transactionId = transactionId
-    self.accessToken = accessToken
     self.createdAt = createdAt
     self.endpoint = endpoint
     self.progressionState = progressionState
@@ -38,8 +37,9 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     self.issuerDisplays = issuerDisplays
     self.displays = displays
     self.rawCredentialData = rawCredentialData
-    self.keyBinding = keyBinding
+    self.keyBindings = keyBindings
     self.selectedConfigurationId = selectedConfigurationId
+    self.authentication = authentication
   }
 
   public init(_ entity: CredentialEntity) throws {
@@ -58,7 +58,6 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       transactionId: deferredCredential.id,
       createdAt: entity.createdAt,
       progressionState: progressState,
-      accessToken: deferredCredential.accessToken,
       endpoint: deferredCredential.endpoint,
       format: entity.format,
       issuerUrl: entity.issuerUrl,
@@ -66,9 +65,10 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       issuerDisplays: issuerDisplays,
       displays: displays,
       pollingInterval: entity.deferredCredential?.pollingInterval ?? Self.defaultPollingInterval,
-      keyBinding: entity.keyBinding.flatMap(CredentialKeyBinding.init),
+      keyBindings: Array(entity.deferredCredential?.keyBindings.map(KeyBinding.init) ?? []),
       rawCredentialData: entity.rawCredentialData.flatMap(RawCredentialData.init),
-      polledAt: entity.deferredCredential?.polledAt)
+      polledAt: entity.deferredCredential?.polledAt,
+      authentication: CredentialAuthentication(entity.authentication))
   }
 
   // MARK: Public
@@ -91,22 +91,19 @@ public struct DeferredCredential: Codable, CredentialProtocol {
   public var polledAt: Date?
 
   public let transactionId: String
-  public let accessToken: String
+  public let authentication: CredentialAuthentication
   public let endpoint: String
 
-  public var keyBinding: CredentialKeyBinding?
+  public var keyBindings: [KeyBinding]
   public var rawCredentialData: RawCredentialData?
-
   public var progressionState: ProgressionState
 
   public var id: UUID
-
 }
 
 // MARK: Equatable
 
 extension DeferredCredential: Equatable {
-
   public static func == (lhs: DeferredCredential, rhs: DeferredCredential) -> Bool {
     lhs.format == rhs.format &&
       lhs.issuerUrl == rhs.issuerUrl &&
@@ -116,7 +113,7 @@ extension DeferredCredential: Equatable {
       lhs.progressionState == rhs.progressionState &&
       lhs.pollingInterval == rhs.pollingInterval &&
       lhs.polledAt == rhs.polledAt &&
-      lhs.accessToken == rhs.accessToken &&
+      lhs.authentication == rhs.authentication &&
       lhs.endpoint == rhs.endpoint &&
       lhs.transactionId == rhs.transactionId &&
       lhs.selectedConfigurationId == rhs.selectedConfigurationId
@@ -126,7 +123,6 @@ extension DeferredCredential: Equatable {
 // MARK: Hashable
 
 extension DeferredCredential: Hashable {
-
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(format)
@@ -134,7 +130,7 @@ extension DeferredCredential: Hashable {
     hasher.combine(progressionState)
     hasher.combine(pollingInterval)
     hasher.combine(polledAt)
-    hasher.combine(accessToken)
+    hasher.combine(authentication)
     hasher.combine(transactionId)
     hasher.combine(selectedConfigurationId)
     hasher.combine(endpoint)

@@ -31,6 +31,6 @@ public struct ProgressBar: View {
 
   // MARK: Private
 
-  @StateObject private var animationManager = AnimationStateManager()
+  @State private var animationManager = AnimationStateManager()
 
 }

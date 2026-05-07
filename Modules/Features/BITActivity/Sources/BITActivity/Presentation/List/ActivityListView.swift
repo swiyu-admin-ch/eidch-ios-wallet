@@ -11,8 +11,7 @@ public struct ActivityListView: View {
   // MARK: Lifecycle
 
   public init(credentialId: UUID) {
-    self.credentialId = credentialId
-    _viewModel = StateObject(wrappedValue: Container.shared.activityListViewModel(credentialId))
+    _viewModel = State(initialValue: Container.shared.activityListViewModel(credentialId))
   }
 
   // MARK: Public
@@ -30,18 +29,14 @@ public struct ActivityListView: View {
       .task {
         await viewModel.fetchActivities()
       }
-      .toastMessage(
-        isPresented: $viewModel.isToastPresented,
-        message: viewModel.toastMessage,
-        clearAction: viewModel.clearToast)
+      .toast($viewModel.toast)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: ActivityListViewModel
+  @State private var viewModel: ActivityListViewModel
   @Environment(\.navigator) private var navigator
-
-  private let credentialId: UUID
+  @AccessibilityFocusState private var focusedItemID: UUID?
 
   private var content: some View {
     ZStack {
@@ -67,12 +62,20 @@ public struct ActivityListView: View {
   }
 
   private func list(_ viewModels: [ActivityCellViewModel]) -> some View {
-    List(viewModels) { viewModel in
-      ActivityCell(viewModel) {
-        navigator.navigate(
-          to: ActivityDestinations.activityDetail(activity: viewModel.activity, credentialId: credentialId))
+    List {
+      ForEach(viewModels) { viewModel in
+        ActivityCell(viewModel) {
+          navigator.navigate(
+            to: ActivityDestinations.activityDetail(activityId: viewModel.id))
+        }
+        .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
+        .accessibilityFocused($focusedItemID, equals: viewModel.id)
       }
-      .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
+    }
+    .onAppear {
+      DispatchQueue.main.async {
+        focusedItemID = viewModels.first?.id
+      }
     }
     .listStyle(.insetGrouped)
     .scrollIndicators(.hidden)

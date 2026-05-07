@@ -7,20 +7,21 @@ public struct ErrorView: View {
 
   // MARK: Lifecycle
 
-  public init(dataset: ErrorDataset) {
+  public init(dataset: ErrorDataset, onClose: (() -> Void)? = nil) {
     self.dataset = dataset
+    self.onClose = onClose
   }
 
   // MARK: Public
 
   public var body: some View {
     InformationView2(
-      image: ThemingAssets.closeCircle.swiftUIImage,
       contents: dataset.contents,
       actions: dataset.actions)
       .navigationBarBackButtonHidden()
       .toolbar {
         CloseButtonToolbar {
+          onClose?()
           navigator.dismiss()
         }
       }
@@ -31,5 +32,6 @@ public struct ErrorView: View {
   @Environment(\.navigator) private var navigator
 
   private let dataset: ErrorDataset
+  private let onClose: (() -> Void)?
 
 }

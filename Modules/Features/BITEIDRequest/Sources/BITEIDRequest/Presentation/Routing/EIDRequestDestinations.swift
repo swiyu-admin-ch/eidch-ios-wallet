@@ -7,7 +7,7 @@ import NavigatorUI
 import SwiftUI
 
 
-enum EIDRequestDestinations: NavigationDestination {
+public enum EIDRequestDestinations: NavigationDestination {
   case introduction
   case dataPrivacyView
 
@@ -31,14 +31,15 @@ enum EIDRequestDestinations: NavigationDestination {
   case scanDocumentInformation(isBackEnabled: Bool)
   case scanDocument
   case scanDocumentSubmit(_ output: ScanDocumentOutput)
+  case scanDocumentSecondPageInstructions(_ callback: Callback<Void>)
 
   // Wallet pairing
   case walletPairing
-  case walletPairingList
+  case walletPairingList(caseId: String)
   case walletPairingOffer(_ completionHandler: Callback<Void>)
   case walletPairingOfferRejected(_ onRetry: Callback<Void>)
 
-  case avIdentityCheck
+  case avIdentityCheck(caseId: String)
 
   // NFC
   case nfcScan
@@ -54,109 +55,51 @@ enum EIDRequestDestinations: NavigationDestination {
   case submitEidRequest
   case timeout
 
-  case success
+  case success(caseId: String)
 
-  // MARK: Internal
+  case avWelcome(caseId: String)
 
-  var method: NavigationMethod {
+  case external(EIDRequestExternalDestination)
+
+  // MARK: Public
+
+  public var method: NavigationMethod {
     switch self {
     case .walletPairingOffer:
       .managedSheet
+    case .scanDocumentSecondPageInstructions:
+      .managedCover
     default:
       .push
     }
   }
 
-  var body: some View {
-    switch self {
-    case .introduction:
-      IntroductionView()
-    case .dataPrivacyView:
-      DataPrivacyView()
-    case .setupSDK:
-      SetupView()
-    case .legalRepresentant:
-      LegalRepresentantView()
-    case .legalRepresentantConsent(let caseId):
-      LegalRepresentantConsentView(caseId: caseId)
-    case .legalRepresentantQRCode(let caseId):
-      LegalRepresentantQRCodeView(caseId: caseId)
-    case .legalRepresentantVerification(let caseId):
-      LegalRepresentantVerificationView(caseId: caseId)
-    case .legalRepresentantConsentState(let state):
-      LegalRepresentantConsentStateView(state: state)
-    case .queueInformation(let date):
-      QueueInformationView(onlineSessionStartDate: date)
-    case .setupSDKError(let error, let callback):
-      SetupSDKErrorView(error: error, callback: callback.handler)
-    case .documentSelection:
-      DocumentSelectionView()
-    case .mrzMockData:
-      MRZMockDataView()
-    case .scanDocumentInformation(let isBackEnabled):
-      ScanDocumentInformationView(isBackEnabled: isBackEnabled)
-    case .scanDocument:
-      ScanDocumentView()
-    case .scanDocumentSubmit(let output):
-      ScanDocumentSubmitView(output)
-    case .avIdentityCheck:
-      AVIdentityCheckView()
-    case .walletPairing:
-      WalletPairingView()
-    case .walletPairingList:
-      WalletPairingListView()
-    case .walletPairingOffer(let completionCallback):
-      WalletPairingOfferView(completionCallback.handler)
-        .navigationDestination(EIDRequestDestinations.self)
-    case .walletPairingOfferRejected(let onRetry):
-      WalletPairingOfferRejected(onRetry: onRetry.handler)
-    case .nfcScan:
-      NFCScanView()
-    case .recordDocumentInformation:
-      RecordDocumentInformationView()
-    case .recordDocument:
-      RecordDocumentView()
-    case .avIntroSelfieVideo:
-      AVIntroSelfieVideoView()
-    case .recordSelfie:
-      RecordSelfieView()
-    case .submitEidRequest:
-      SubmitEIDRequestView()
-    case .nfcScanResult(let packageResult):
-      NFCScanResultView(packageResult: packageResult)
-    case .timeout:
-      TimeoutView()
-    case .success:
-      SuccessView()
-    case .error(let dataset):
-      ErrorView(dataset: dataset)
-    }
+  public var body: some View {
+    EIDRequestDestinationView(destination: self)
   }
-
 }
 
 // MARK: - ErrorWrapper
 
-struct ErrorWrapper: Hashable {
+public struct ErrorWrapper: Hashable {
 
   // MARK: Lifecycle
 
-  init(_ error: Error) {
+  public init(_ error: Error) {
     self.error = error
   }
 
-  // MARK: Internal
+  // MARK: Public
 
-  let error: Error
+  public let error: Error
 
-  static func == (lhs: ErrorWrapper, rhs: ErrorWrapper) -> Bool {
+  public static func == (lhs: ErrorWrapper, rhs: ErrorWrapper) -> Bool {
     type(of: lhs.error) == type(of: rhs.error)
       && lhs.error.localizedDescription == rhs.error.localizedDescription
   }
 
-  func hash(into hasher: inout Hasher) {
+  public func hash(into hasher: inout Hasher) {
     hasher.combine(String(describing: type(of: error)))
     hasher.combine(error.localizedDescription)
   }
-
 }

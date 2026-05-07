@@ -2,22 +2,24 @@ import BITActivity
 import BITAnalytics
 import BITCredentialShared
 import BITTheming
+import Combine
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 import UIKit
 
 // MARK: - CredentialDetailViewModel
 
 @MainActor
-class CredentialDetailViewModel: ObservableObject {
+@Observable
+class CredentialDetailViewModel {
 
   // MARK: Lifecycle
 
-  init(_ credential: CredentialProtocol, delegate: CredentialDetailDelegate?) {
+  init(_ credential: CredentialProtocol, getActivityHistoryEnabledSubject: GetActivityHistoryEnabledSubjectUseCaseProtocol) {
     self.credential = credential
-    self.delegate = delegate
-    configureObservers()
+    configureObservers(getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubject)
   }
 
   // MARK: Internal
@@ -27,12 +29,13 @@ class CredentialDetailViewModel: ObservableObject {
     case deleteCredentialError(_ error: Error)
   }
 
-  @Published var credentialViewModel: (any CredentialViewModelProtocol & CredentialCardViewModelProtocol)?
-  @Published var isDeleteCredentialAlertPresented = false
-  @Published var isCredentialDeleted = false
-  @Published var activities = [ActivityCellViewModel]()
+  var credentialViewModel: (any CredentialViewModelProtocol & CredentialCardViewModelProtocol)?
+  var isDeleteCredentialAlertPresented = false
+  var isCredentialDeleted = false
+  var activities = [ActivityCellViewModel]()
+  var isActivityHistoryEnabled = true
 
-  @Published var credential: CredentialProtocol {
+  var credential: CredentialProtocol {
     didSet {
       updateCredentialViewModel(with: colorScheme)
     }
@@ -42,7 +45,6 @@ class CredentialDetailViewModel: ObservableObject {
     do {
       try await deleteCredentialUseCase.execute(credential)
       isCredentialDeleted = true
-      delegate?.onCredentialDeleted()
     } catch {
       analytics.log(AnalyticsEvent.deleteCredentialError(error))
     }
@@ -71,13 +73,14 @@ class CredentialDetailViewModel: ObservableObject {
 
   // MARK: Private
 
-  private weak var delegate: CredentialDetailDelegate?
   private var colorScheme = String()
 
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
-  @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
-  @Injected(\.getCredentialActivitiesUseCase) private var getCredentialActivitiesUseCase
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
+  @ObservationIgnored @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
+  @ObservationIgnored @Injected(\.getCredentialActivitiesUseCase) private var getCredentialActivitiesUseCase
+
+  @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
   private func fetchActivities() {
     guard let verifiableCredential = credential as? VerifiableCredential else {
@@ -102,11 +105,17 @@ class CredentialDetailViewModel: ObservableObject {
     self.credential = credential
   }
 
-  private func configureObservers() {
+  private func configureObservers(getActivityHistoryEnabledSubject: GetActivityHistoryEnabledSubjectUseCaseProtocol) {
     NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
       Task { @MainActor [weak self] in
         self?.isDeleteCredentialAlertPresented = false
       }
     }
+    getActivityHistoryEnabledSubject()
+      .receive(on: DispatchQueue.main)
+      .sink(receiveValue: { [weak self] in
+        self?.isActivityHistoryEnabled = $0
+        self?.fetchActivities()
+      }).store(in: &cancellables)
   }
 }

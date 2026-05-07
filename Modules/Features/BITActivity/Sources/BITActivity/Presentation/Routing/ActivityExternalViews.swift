@@ -4,5 +4,6 @@ import NavigatorUI
 // MARK: - ActivityExternalViews
 
 public enum ActivityExternalViews: NavigationViews {
-  case activityDetail(activity: Activity, credentialId: UUID)
+  case activityDetail(activityId: UUID)
+  case settings
 }

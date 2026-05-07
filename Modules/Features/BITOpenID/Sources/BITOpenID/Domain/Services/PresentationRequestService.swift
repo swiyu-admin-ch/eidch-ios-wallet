@@ -8,7 +8,7 @@ import Spyable
 @Spyable
 public protocol PresentationRequestServiceProtocol {
   func fetch(from url: URL) async throws -> PresentationRequest
-  func decline(url: URL, with error: PresentationErrorRequestBody.ErrorType) async throws
+  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws
 }
 
 // MARK: - PresentationRequestService
@@ -20,16 +20,16 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
   func fetch(from url: URL) async throws -> PresentationRequest {
     let requestURL = try urlParser.parse(url)
     let request = try await repository.fetch(from: requestURL.url)
-    guard
-      validateClientId(url: requestURL, requestObject: request.requestObject),
-      try await validateRequest(request)
-    else {
-      throw FetchPresentationRequestError.invalid(request: request)
+    guard validateClientId(url: requestURL, requestObject: request.requestObject) else {
+      throw FetchPresentationRequestError.invalid(request: request, error: .invalidRequest)
+    }
+    guard try await validateRequest(request) else {
+      throw FetchPresentationRequestError.invalid(request: request, error: .invalidRequest)
     }
     return request
   }
 
-  func decline(url: URL, with error: PresentationErrorRequestBody.ErrorType) async throws {
+  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws {
     try await repository.decline(url: url, with: error)
   }
 

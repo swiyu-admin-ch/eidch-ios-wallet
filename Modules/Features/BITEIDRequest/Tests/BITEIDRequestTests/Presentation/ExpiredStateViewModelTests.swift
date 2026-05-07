@@ -14,7 +14,7 @@ class ExpiredStateViewModelTests: XCTestCase {
     delegate = RequestCaseViewStateDelegateSpy()
     deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
 
-    Container.shared.deleteEIDRequestCaseUseCase.register { self.deleteEIDRequestCaseUseCase }
+    Container.shared.deleteEIDRequestCaseUseCase.register { @MainActor in self.deleteEIDRequestCaseUseCase }
   }
 
   func testInit_validRequestCase_success() throws {

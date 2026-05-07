@@ -11,7 +11,6 @@ import Spyable
 public enum FetchAnyVerifiableCredentialError: Error {
   case unsupportedAlgorithm
   case credentialEndpointCreationError
-  case expiredInvitation
   case selectedCredentialNotFound
   case unknownIssuer
   case validationFailed
@@ -27,7 +26,7 @@ public enum FetchAnyVerifiableCredentialError: Error {
 
 @Spyable
 public protocol FetchAnyVerifiableCredentialUseCaseProtocol {
-  func execute(from offer: CredentialOffer, metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> FetchAnyCredentialResult
+  func callAsFunction(from offer: CredentialOffer, metadataWrapper: CredentialIssuerMetadataWrapper, holderBindings: [HolderBinding]?) async throws -> FetchAnyCredentialResult
 }
 
 // MARK: - FetchAnyVerifiableCredentialUseCase
@@ -36,35 +35,41 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
 
   // MARK: Internal
 
-  func execute(from offer: CredentialOffer, metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> FetchAnyCredentialResult {
+  func callAsFunction(from offer: CredentialOffer, metadataWrapper: CredentialIssuerMetadataWrapper, holderBindings: [HolderBinding]?) async throws -> FetchAnyCredentialResult {
     let credentialEndpoint = try getCredentialEndpoint(from: metadataWrapper)
     let issuerUrl = try getIssuerUrl(from: offer)
     let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
     let accessToken = try await fetchAccessToken(tokenEndpoint: configuration.tokenEndpoint, credentialOffer: offer)
-    let nonce = try await fetchNonceIfNeeded(from: metadataWrapper, holderBindingContext: holderBindingContext)
+    let firstHolderBinding = holderBindings?.first
+    let nonce = try await fetchNonceIfNeeded(from: metadataWrapper, holderBinding: firstHolderBinding)
     var credentialEncryptionContext: CredentialEncryptionContext?
     #warning("remove feature flag, once OMNI is feature ready. Per default only enabled on DEV")
     if isPayloadEncryptionEnabled {
-      credentialEncryptionContext = try credentialEncryptionContextGenerator(for: metadataWrapper.credentialMetadata)
+      credentialEncryptionContext = try credentialEncryptionContextGenerator(for: metadataWrapper.credentialIssuerMetadata)
     }
 
     let context = FetchCredentialContext(
       credentialConfigurationId: metadataWrapper.credentialConfigurationId,
       format: metadataWrapper.selectedCredential.format,
       selectedCredential: metadataWrapper.selectedCredential,
-      credentialIssuer: metadataWrapper.credentialMetadata.credentialIssuer,
-      holderBindingContext: holderBindingContext,
+      credentialIssuer: metadataWrapper.credentialIssuerMetadata.credentialIssuer,
+      holderBindings: holderBindings,
       accessToken: accessToken,
       nonce: nonce,
       credentialEndpoint: credentialEndpoint,
       credentialEncryptionContext: credentialEncryptionContext,
-      deferredCredentialEndpoint: metadataWrapper.credentialMetadata.deferredCredentialEndpoint)
+      deferredCredentialEndpoint: metadataWrapper.credentialIssuerMetadata.deferredCredentialEndpoint)
 
     guard let credentialFormat = CredentialFormat(rawValue: context.format), let dispatcherFormat = dispatcher[credentialFormat] else {
       throw CredentialFormatError.formatNotSupported
     }
 
-    return try await dispatcherFormat.execute(for: context)
+    let credentials = try await dispatcherFormat.execute(for: context)
+    return FetchAnyCredentialResult(
+      credentials: credentials,
+      accessToken: accessToken.accessToken,
+      tokenType: accessToken.tokenType,
+      refreshToken: accessToken.refreshToken)
   }
 
   // MARK: Private
@@ -74,9 +79,9 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
   @Injected(\.credentialEncryptionContextGenerator) private var credentialEncryptionContextGenerator: CredentialEncryptionContextGeneratorProtocol
   @Injected(\.isPayloadEncryptionEnabled) private var isPayloadEncryptionEnabled
 
-  private func getCredentialEndpoint(from metadata: CredentialMetadataWrapper) throws -> URL {
+  private func getCredentialEndpoint(from metadata: CredentialIssuerMetadataWrapper) throws -> URL {
     guard
-      let credentialEndpoint = URL(string: metadata.credentialMetadata.credentialEndpoint),
+      let credentialEndpoint = URL(string: metadata.credentialIssuerMetadata.credentialEndpoint),
       credentialEndpoint.isValidHttpUrl
     else {
       throw FetchAnyVerifiableCredentialError.credentialEndpointCreationError
@@ -93,18 +98,13 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
   }
 
   private func fetchAccessToken(tokenEndpoint: URL, credentialOffer: CredentialOffer) async throws -> AccessToken {
-    do {
-      return try await repository.fetchAccessToken(from: tokenEndpoint, preAuthorizedCode: credentialOffer.preAuthorizedCode)
-    } catch {
-      guard let err = error as? NetworkError, err.status == .invalidGrant else { throw error }
-      throw FetchAnyVerifiableCredentialError.expiredInvitation
-    }
+    try await repository.fetchAccessToken(from: tokenEndpoint, preAuthorizedCode: credentialOffer.preAuthorizedCode)
   }
 
-  private func fetchNonceIfNeeded(from metadataWrapper: CredentialMetadataWrapper, holderBindingContext: HolderBindingContext?) async throws -> Nonce? {
-    guard holderBindingContext != nil else { return nil }
+  private func fetchNonceIfNeeded(from metadataWrapper: CredentialIssuerMetadataWrapper, holderBinding: HolderBinding?) async throws -> Nonce? {
+    guard holderBinding != nil else { return nil }
 
-    if let nonceEndpoint = metadataWrapper.credentialMetadata.nonceEndpoint {
+    if let nonceEndpoint = metadataWrapper.credentialIssuerMetadata.nonceEndpoint {
       return try await repository.fetchNonce(from: nonceEndpoint)
     }
     return nil

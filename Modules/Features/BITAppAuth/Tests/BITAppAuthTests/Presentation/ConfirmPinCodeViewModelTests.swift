@@ -23,8 +23,8 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
     validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
     updatePinCodeUseCase = UpdatePinCodeUseCaseProtocolSpy()
 
-    Container.shared.validatePinCodeRuleUseCase.register { self.validatePinCodeRuleUseCase }
-    Container.shared.updatePinCodeUseCase.register { self.updatePinCodeUseCase }
+    Container.shared.validatePinCodeRuleUseCase.register { @MainActor in self.validatePinCodeRuleUseCase }
+    Container.shared.updatePinCodeUseCase.register { @MainActor in self.updatePinCodeUseCase }
   }
 
   override func tearDown() {

@@ -11,6 +11,7 @@ extension CredentialActivityEntity {
     setValues(from: activity)
     claims.append(objectsIn: activity.claims.map(ActivityClaimEntity.init))
     actorDisplays.append(objectsIn: activity.actorDisplays.map(ActivityActorDisplayEntity.init))
+    nonComplianceReasonDisplays.append(objectsIn: (activity.nonComplianceReasonDisplays).map(NonComplianceReasonDisplayEntity.init))
   }
 
   // MARK: Public
@@ -20,6 +21,7 @@ extension CredentialActivityEntity {
     createdAt = activity.createdAt
     actorTrust = activity.actorTrust.rawValue
     vcSchemaTrust = activity.vcSchemaTrust.rawValue
+    actorCompliance = activity.actorCompliance.rawValue
     nonComplianceData = activity.nonComplianceData
   }
 }

@@ -15,9 +15,7 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
 
-    router = MockEIDRequestRouter()
-
-    viewModel = LegalRepresentantVerificationViewModel(router: router, caseId: mockCaseId)
+    viewModel = LegalRepresentantVerificationViewModel(caseId: mockCaseId)
   }
 
   func testStartVerification_success_validRouteCalled() async {
@@ -26,13 +24,16 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
 
     await viewModel.startVerification()
 
-    XCTAssertEqual(router.startPresentationContext?.requestObject, context.requestObject)
+    if case .external(.presentation(let destinationContext)) = viewModel.destination {
+      XCTAssertEqual(destinationContext.requestObject, context.requestObject)
+    } else {
+      XCTFail("Expected destination: .external(.presentation)")
+    }
   }
 
-  func testStartVerification_notRequiredError_constentStateRouteCalled() async throws {
+  func testStartVerification_notRequiredError_constentStateRouteCalled() async {
     getLegalRepresentantPresentationRequestContextUseCaseSpy.executeForThrowableError = EIDRequestRepository.Error.legalRepresentantNotRequired
     let mockRequestCase = EIDRequestCase.Mock.sampleInQueue
-    let mockRequestCaseStateView = try RequestCaseViewState(mockRequestCase)
     updateEIDRequestCaseStatusUseCaseSpy.executeForReturnValue = mockRequestCase
 
     await viewModel.startVerification()
@@ -60,7 +61,6 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
 
   private let mockCaseId = "caseId"
 
-  private var router: MockEIDRequestRouter!
   private var viewModel: LegalRepresentantVerificationViewModel!
   private var getLegalRepresentantPresentationRequestContextUseCaseSpy: GetLegalRepresentantPresentationRequestContextUseCaseProtocolSpy!
   private var updateEIDRequestCaseStatusUseCaseSpy: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
@@ -69,8 +69,8 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
     getLegalRepresentantPresentationRequestContextUseCaseSpy = GetLegalRepresentantPresentationRequestContextUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCaseSpy = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
 
-    Container.shared.getLegalRepresentantPresentationRequestContextUseCase.register { self.getLegalRepresentantPresentationRequestContextUseCaseSpy }
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCaseSpy }
+    Container.shared.getLegalRepresentantPresentationRequestContextUseCase.register { @MainActor in self.getLegalRepresentantPresentationRequestContextUseCaseSpy }
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCaseSpy }
   }
 
 }

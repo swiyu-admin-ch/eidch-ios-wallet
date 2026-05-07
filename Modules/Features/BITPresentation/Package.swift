@@ -7,7 +7,7 @@ let package = Package(
   name: "BITPresentation",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -32,7 +32,8 @@ let package = Package(
     .package(path: "../../Platforms/BITAnyCredentialFormat"),
     .package(path: "../../Platforms/BITSwiyuSharedKMP"),
     .package(path: "../BITOpenID"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
+    .package(url: "https://github.com/hmlongco/Navigator", exact: "2.0.2"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.33"),
   ],
@@ -59,6 +60,7 @@ let package = Package(
         .product(name: "BITAnyCredentialFormat", package: "BITAnyCredentialFormat"),
         .product(name: "BITSwiyuSharedKMP", package: "BITSwiyuSharedKMP"),
         .product(name: "BITOpenID", package: "BITOpenID"),
+        .product(name: "NavigatorUI", package: "Navigator"),
       ],
       resources: [.process("Resources")],
       swiftSettings: [.define("DEBUG", .when(configuration: .debug))]),
@@ -66,11 +68,11 @@ let package = Package(
       name: "BITPresentationTests",
       dependencies: [
         "BITPresentation",
+        .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
-        .product(name: "BITSdJWTMocks", package: "BITSdJWT"),
+        .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "BITJWT", package: "BITJWT"),
-        .product(name: "BITNavigationTestCore", package: "BITNavigation"),
         .product(name: "BITAnalyticsMocks", package: "BITAnalytics"),
       ],
       swiftSettings: [.define("DEBUG", .when(configuration: .debug))]),

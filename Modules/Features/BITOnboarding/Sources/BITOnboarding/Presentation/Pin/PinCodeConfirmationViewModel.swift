@@ -8,7 +8,8 @@ import SwiftUI
 // MARK: - PinCodeConfirmationViewModel
 
 @MainActor
-public class PinCodeConfirmationViewModel: ObservableObject {
+@Observable
+public class PinCodeConfirmationViewModel {
 
   // MARK: Lifecycle
 
@@ -22,10 +23,10 @@ public class PinCodeConfirmationViewModel: ObservableObject {
 
   let originPinCode: String
 
-  @Published var inputFieldMessage: String?
-  @Published var attempts = 0
+  var inputFieldMessage: String?
+  var attempts = 0
 
-  @Published var pinCode = "" {
+  var pinCode = "" {
     didSet {
       guard userDidRequestValidation else { return }
       do {
@@ -57,10 +58,10 @@ public class PinCodeConfirmationViewModel: ObservableObject {
 
   private weak var delegate: PinCodeDelegate?
 
-  @Injected(\.attemptsLimit) private var attemptsLimit: Int
-  @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
+  @ObservationIgnored @Injected(\.attemptsLimit) private var attemptsLimit: Int
+  @ObservationIgnored @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
 
-  @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
+  @ObservationIgnored @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
 
   private var attemptLeft: Int {
     attemptsLimit - attempts

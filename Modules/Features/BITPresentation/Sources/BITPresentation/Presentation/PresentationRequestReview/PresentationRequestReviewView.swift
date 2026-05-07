@@ -3,6 +3,7 @@ import BITCredentialShared
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - PresentationRequestReviewView
@@ -11,9 +12,8 @@ struct PresentationRequestReviewView: View {
 
   // MARK: Lifecycle
 
-  init(context: PresentationRequestContext, router: PresentationInternalRoutes) {
-    self.router = router
-    _viewModel = StateObject(wrappedValue: Container.shared.presentationRequestReviewViewModel((context, router)))
+  init(context: PresentationRequestContext) {
+    _viewModel = State(wrappedValue: Container.shared.presentationRequestReviewViewModel(context))
   }
 
   // MARK: Internal
@@ -28,19 +28,20 @@ struct PresentationRequestReviewView: View {
     Content(
       state: viewModel.state,
       isUnknownAlertPresented: $viewModel.isUnknownVerifierAlertShown,
-      isSessionTimeoutPresented: $viewModel.isSessionTimeoutPresented,
       eventAction: { event in Task { await viewModel.send(event) } },
-      badgeAction: { badgeType in router.badgeInformation(badgeType: badgeType) })
+      badgeAction: { badgeType in
+        navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
+      })
       .onColorSchemeChange { scheme in
         viewModel.updateCredential(with: scheme.rawValue)
       }
+      .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: PresentationRequestReviewViewModel
-
-  private let router: PresentationInternalRoutes
+  @Environment(\.navigator) private var navigator
+  @State private var viewModel: PresentationRequestReviewViewModel
 }
 
 // MARK: PresentationRequestReviewView.Content
@@ -53,13 +54,11 @@ extension PresentationRequestReviewView {
     init(
       state: PresentationRequestReviewState,
       isUnknownAlertPresented: Binding<Bool>,
-      isSessionTimeoutPresented: Binding<Bool>,
       eventAction: @escaping (PresentationRequestReviewViewModel.Event) -> Void = { _ in },
       badgeAction: @escaping (BadgeType) -> Void = { _ in })
     {
       self.state = state
       self.isUnknownAlertPresented = isUnknownAlertPresented
-      self.isSessionTimeoutPresented = isSessionTimeoutPresented
       self.eventAction = eventAction
       self.badgeAction = badgeAction
     }
@@ -86,7 +85,6 @@ extension PresentationRequestReviewView {
 
     private let state: PresentationRequestReviewState
     private let isUnknownAlertPresented: Binding<Bool>
-    private let isSessionTimeoutPresented: Binding<Bool>
     private let eventAction: (PresentationRequestReviewViewModel.Event) -> Void
     private let badgeAction: (BadgeType) -> Void
 
@@ -149,22 +147,9 @@ extension PresentationRequestReviewView.Content {
       Button(L10n.tkPresentReviewConfirmPresentationButtonPrimary) {
         eventAction(.submit(viewState, true))
       }
-      Button(L10n.tkGlobalCancel, role: .cancel) { }
+      Button(L10n.tkGlobalCancel, role: .cancel) {}
     } message: {
       Text(L10n.tkPresentReviewConfirmPresentationSecondary)
-    }
-    .alert(isPresented: isSessionTimeoutPresented) {
-      Alert(
-        title: Text(L10n.tkPresentReviewSessionTimeoutTitle),
-        message: Text(L10n.tkPresentReviewSessionTimeoutBody),
-        primaryButton: .default(Text(L10n.tkPresentReviewSessionTimeoutPrimaryButton), action: { eventAction(.login) }),
-        secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
-    }
-    .accessibilityAction(named: L10n.tkPresentReviewPrimaryButtonAlt) {
-      eventAction(.submit(viewState, true))
-    }
-    .accessibilityAction(named: L10n.tkPresentReviewSecondaryButtonAlt) {
-      eventAction(.deny)
     }
   }
 
@@ -200,7 +185,6 @@ extension PresentationRequestReviewView.Content {
 // MARK: - Processing
 
 extension PresentationRequestReviewView.Content {
-
   private func processingView(_ viewState: PresentationRequestReviewState.Processing) -> some View {
     VStack {
       actorHeader(viewState.verifierDisplay)
@@ -220,7 +204,7 @@ extension PresentationRequestReviewView.Content {
           Spacer()
         }
         Spacer(minLength: .x4)
-        loader(isMessagePresented: viewState.isMessagePresented)
+        loader(isMessagePresented: viewState.isMessagePresented, progress: viewState.progress)
       }
       .padding(.bottom, .x10)
       .padding(.horizontal, .x6)
@@ -231,10 +215,14 @@ extension PresentationRequestReviewView.Content {
     .ignoresSafeArea(edges: .bottom)
   }
 
-  private func loader(isMessagePresented: Bool) -> some View {
+  private func loader(isMessagePresented: Bool, progress: Double?) -> some View {
     VStack(spacing: .x3) {
-      ProgressView()
-        .controlSize(.large)
+      if let progress {
+        progressView(progress: progress)
+      } else {
+        ProgressView()
+          .controlSize(.large)
+      }
 
       if isMessagePresented {
         Text(L10n.tkPresentReviewLoading)
@@ -242,12 +230,25 @@ extension PresentationRequestReviewView.Content {
           .accessibilityLabel(L10n.tkPresentReviewLoadingAlt)
       }
     }
+    .tint(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
     .animation(.default, value: isMessagePresented)
+  }
+
+  private func progressView(progress: Double) -> some View {
+    ProgressView(
+      value: progress,
+      label: {},
+      currentValueLabel: {
+        Text(progress.formatted(.percent.precision(.fractionLength(0))))
+          .foregroundStyle(ThemingAssets.Brand.Accent.purple.swiftUIColor)
+      })
+      .progressViewStyle(.linearGradient)
+      .frame(width: 240)
   }
 }
 
 #if DEBUG
 #Preview {
-  PresentationRequestReviewView.Content(state: .Mock.result, isUnknownAlertPresented: .constant(false), isSessionTimeoutPresented: .constant(false))
+  PresentationRequestReviewView.Content(state: .Mock.result, isUnknownAlertPresented: .constant(false))
 }
 #endif

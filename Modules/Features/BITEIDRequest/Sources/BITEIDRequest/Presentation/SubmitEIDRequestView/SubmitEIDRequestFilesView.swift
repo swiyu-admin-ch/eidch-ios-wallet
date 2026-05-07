@@ -27,7 +27,7 @@ struct SubmitEIDRequestView: View {
 
   @Environment(\.navigator) private var navigator
 
-  @InjectedObject(\.submitEIDRequestFilesViewModel) private var viewModel
+  @InjectedObservable(\.submitEIDRequestFilesViewModel) private var viewModel: SubmitEIDRequestFilesViewModel
 
   private func progressView() -> some View {
     ProgressView(

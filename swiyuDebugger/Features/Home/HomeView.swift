@@ -1,9 +1,12 @@
 import BITCredential
 import BITCredentialShared
+import BITDeeplink
 import BITL10n
 import BITTheming
 import Factory
 import SwiftUI
+
+// MARK: - HomeView
 
 struct HomeView: View {
 
@@ -28,7 +31,7 @@ struct HomeView: View {
       }
     }
     .safeAreaInset(edge: .bottom) {
-      Button(action: { isScannerOpen.toggle() }, label: {
+      Button(action: { scannerRequest = ScannerRequest(url: nil) }, label: {
         Label(title: { Text(L10n.tkGlobalScanPrimarybutton) }, icon: { Image(systemName: "qrcode") })
           .frame(maxWidth: .infinity)
           .padding()
@@ -44,19 +47,25 @@ struct HomeView: View {
         await fetchCredentials()
       }
     }
-    .sheet(isPresented: $isScannerOpen, onDismiss: {
+    .onOpenURL { url in
+      guard (try? deeplinkManager.dispatchFirst(url)) != nil else { return }
+      scannerRequest = ScannerRequest(url: url)
+    }
+    .sheet(item: $scannerRequest, onDismiss: {
       Task {
         await fetchCredentials()
       }
     }) {
-      ScanCameraView()
+      ScanCameraView(url: $0.url)
     }
   }
 
   // MARK: Private
 
-  @State private var isScannerOpen = false
+  @State private var scannerRequest: ScannerRequest?
   @State private var credentials = [any CredentialProtocol]()
+
+  private let deeplinkManager = DeeplinkManager(allowedRoutes: RootDeeplinkRoute.allCases)
 
   @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
 
@@ -99,6 +108,13 @@ struct HomeView: View {
     }
   }
 
+}
+
+// MARK: - ScannerRequest
+
+private struct ScannerRequest: Identifiable {
+  let id = UUID()
+  let url: URL?
 }
 
 #Preview {

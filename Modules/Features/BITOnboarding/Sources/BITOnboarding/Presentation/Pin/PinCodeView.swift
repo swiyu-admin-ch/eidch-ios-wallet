@@ -11,7 +11,7 @@ struct PinCodeView: View {
   // MARK: Lifecycle
 
   init(router: OnboardingInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.pinCodeViewModel(router))
+    _viewModel = State(initialValue: Container.shared.pinCodeViewModel(router))
   }
 
   // MARK: Internal
@@ -51,7 +51,7 @@ struct PinCodeView: View {
     case input, inputText, continueButton, error
   }
 
-  @StateObject private var viewModel: PinCodeViewModel
+  @State private var viewModel: PinCodeViewModel
   @FocusState private var inputFocused: Bool
   @AccessibilityFocusState private var focus: Focus?
   @Environment(\.sizeCategory) private var sizeCategory

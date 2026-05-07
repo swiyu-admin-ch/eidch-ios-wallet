@@ -10,7 +10,7 @@ class LegalRepresentantViewModelTests: XCTestCase {
 
   override func setUp() {
     context = EIDRequestContext()
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
 
     viewModel = LegalRepresentantViewModel()
   }

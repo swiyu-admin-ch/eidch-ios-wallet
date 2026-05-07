@@ -26,9 +26,10 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
 
   func testUseCase_success_assertParametersAndCount() async throws {
     _ = try await useCase(for: mockCredential)
+    let selectedBundleItem = try selectCredentialBundleItemUseCaseSpy(mockCredential)
 
     XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatCallsCount, 1)
-    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, mockCredential.payload)
+    XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, selectedBundleItem.payload)
     XCTAssertEqual(createAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, mockCredential.format)
 
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdCallsCount, 1)
@@ -57,6 +58,7 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
   private var useCase: FetchIssuanceTrustInformationUseCase!
   private var trustInformationService: TrustInformationServiceProtocolSpy!
   private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocolSpy!
+  private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private func registerMocks() {
     trustInformationService = TrustInformationServiceProtocolSpy()
@@ -64,6 +66,11 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
 
     Container.shared.trustInformationService.register { self.trustInformationService }
     Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCase }
+
+    selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
+      guard let first = $0.bundleItems.first else { throw CredentialError.noBundleItem }
+      return first
+    }
   }
 
   private func createSuccess() {

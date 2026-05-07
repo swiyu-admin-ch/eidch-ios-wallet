@@ -15,7 +15,7 @@ extension PresentationRequestReviewState.Result {
 
 extension ClaimBadgeViewModel {
   fileprivate init(_ claim: CredentialClaim) {
-    name = claim.preferredDisplay.name ?? claim.key
+    name = claim.preferredDisplay.name ?? claim.path.stringValue
     isSensitive = claim.isSensitive
   }
 }
@@ -25,5 +25,6 @@ extension PresentationRequestReviewState.Processing {
     credential = result.credential
     verifierDisplay = result.verifierDisplay
     isMessagePresented = false
+    progress = nil
   }
 }

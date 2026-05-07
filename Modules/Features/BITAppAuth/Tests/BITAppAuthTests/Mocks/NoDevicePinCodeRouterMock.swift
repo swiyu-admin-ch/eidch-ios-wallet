@@ -1,5 +1,5 @@
 import BITAppAuth
-@testable import BITNavigationTestCore
+@testable import BITNavigation
 
 class NoDevicePinCodeRouterMock: ClosableRoutesMock, NoDevicePinCodeRouterRoutes {
   var didCallExternalSettings = false

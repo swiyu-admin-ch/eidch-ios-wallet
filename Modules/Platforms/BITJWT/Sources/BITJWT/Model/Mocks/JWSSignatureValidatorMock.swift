@@ -1,5 +1,4 @@
 #if DEBUG
-import XCTest
 
 public class JWSSignatureValidatorMock<U: JWT>: JWSSignatureValidatorProtocol {
 

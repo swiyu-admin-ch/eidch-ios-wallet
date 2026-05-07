@@ -9,7 +9,7 @@ struct SetupSDKErrorView: View {
   // MARK: Lifecycle
 
   init(error: ErrorWrapper, callback: @escaping (Void) -> Void) {
-    _viewModel = StateObject(wrappedValue: Container.shared.setupSDKErrorViewModel((error, callback)))
+    _viewModel = State(initialValue: Container.shared.setupSDKErrorViewModel((error, callback)))
   }
 
   // MARK: Internal
@@ -29,7 +29,7 @@ struct SetupSDKErrorView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: SetupSDKErrorViewModel
+  @State private var viewModel: SetupSDKErrorViewModel
 
   @Environment(\.navigator) private var navigator
 

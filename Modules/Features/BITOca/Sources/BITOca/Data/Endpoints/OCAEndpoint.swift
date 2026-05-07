@@ -1,3 +1,4 @@
+import BITCore
 import BITNetworking
 import Foundation
 import Moya
@@ -42,7 +43,10 @@ extension OCAEndpoint: TargetType {
   var headers: [String: String]? {
     switch self {
     case .bundle:
-      NetworkHeader.standard.raw
+      [
+        NetworkHeader.accept(ContentType.json.rawValue),
+        NetworkHeader.acceptLanguage(UserLocale.LocaleIdentifier.allCases.map(\.rawValue)),
+      ].raw
     }
   }
 }

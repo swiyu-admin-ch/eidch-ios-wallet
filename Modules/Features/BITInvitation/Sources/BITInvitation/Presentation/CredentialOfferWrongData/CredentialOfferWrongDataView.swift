@@ -1,17 +1,12 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - CredentialOfferWrongDataView
 
 struct CredentialOfferWrongDataView: View {
-
-  // MARK: Lifecycle
-
-  init(router: CredentialOfferInternalRoutes) {
-    viewModel = Container.shared.credentialOfferWrongDataViewModel(router)
-  }
 
   // MARK: Internal
 
@@ -37,12 +32,12 @@ struct CredentialOfferWrongDataView: View {
 
   // MARK: Private
 
-  private var viewModel: CredentialOfferWrongDataViewModel
+  @Environment(\.navigator) private var navigator: Navigator
 
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
+      Button(action: { navigator.pop() }, label: {
         Assets.close.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClose)
@@ -53,6 +48,6 @@ struct CredentialOfferWrongDataView: View {
 
 #if DEBUG
 #Preview {
-  CredentialOfferWrongDataView(router: CredentialOfferRouter())
+  CredentialOfferWrongDataView()
 }
 #endif

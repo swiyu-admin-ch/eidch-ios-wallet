@@ -122,32 +122,6 @@ schemes:
       customArchiveName: swiyu-Prod
       revealArchiveInOrganizer: true
 
-  swiyu UITests:
-    build:
-      targets:
-        swiyuUITests-App: all
-    run:
-      config: Test (debug)
-    test:
-      config: Test (debug)
-      targets:
-        - target:
-            local: swiyuUITests-App
-          <<: *parallel_test_target
-      commandLineArguments: 
-        -disable-secure-enclave: true
-        -disable-device-pin: true
-    profile:
-      config: Test (release)
-    analyze:
-      config: Test (debug)
-    archive:
-      config: Test (release)
-      targets:
-        swiyuUITests-App: all
-      customArchiveName: swiyu-Runner
-      revealArchiveInOrganizer: true
-
   swiyu-debugger:
     build:
       targets:
@@ -156,3 +130,7 @@ schemes:
       config: Dev (debug)
       commandLineArguments: 
         <<: *launch_arguments
+    archive:
+      config: Dev (release)
+      customArchiveName: swiyu-debugger-Dev
+      revealArchiveInOrganizer: true

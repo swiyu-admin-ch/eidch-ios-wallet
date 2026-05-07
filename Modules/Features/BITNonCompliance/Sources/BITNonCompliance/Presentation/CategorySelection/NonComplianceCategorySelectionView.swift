@@ -8,7 +8,8 @@ struct NonComplianceCategorySelectionView: View {
 
   // MARK: Internal
 
-  let activity: Activity
+  let activityType: ActivityType
+  let activityId: UUID
 
   var body: some View {
     ZStack(alignment: .top) {
@@ -32,14 +33,14 @@ struct NonComplianceCategorySelectionView: View {
   @Environment(\.navigator) private var navigator
 
   private var categories: [NonComplianceCategory] {
-    activity.type.nonComplianceCategories
+    activityType.nonComplianceCategories
   }
 
   private var content: some View {
     List {
       Section {
         ForEach(categories) { category in
-          NavigationLink(to: NonComplianceInternalDestinations.info(category: category, activityId: activity.id)) {
+          NavigationLink(to: NonComplianceInternalDestinations.info(category: category, activityId: activityId)) {
             category.cell
           }
         }

@@ -27,17 +27,17 @@ final class BiometricChangeViewModelTests: XCTestCase {
     getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
     getBiometricTypeUseCase.executeReturnValue = .faceID
 
-    Container.shared.getUniquePassphraseUseCase.register { self.getUniquePassphraseUseCase }
-    Container.shared.changeBiometricStatusUseCase.register { self.changeBiometricStatusUseCase }
-    Container.shared.hasBiometricAuthUseCase.register { self.hasBiometricAuthUseCase }
+    Container.shared.getUniquePassphraseUseCase.register { @MainActor in self.getUniquePassphraseUseCase }
+    Container.shared.changeBiometricStatusUseCase.register { @MainActor in self.changeBiometricStatusUseCase }
+    Container.shared.hasBiometricAuthUseCase.register { @MainActor in self.hasBiometricAuthUseCase }
 
-    Container.shared.lockWalletUseCase.register { self.lockWalletUseCase }
-    Container.shared.registerLoginAttemptCounterUseCase.register { self.registerLoginAttemptCounterUseCase }
-    Container.shared.getLoginAttemptCounterUseCase.register { self.getLoginAttemptCounterUseCase }
-    Container.shared.resetLoginAttemptCounterUseCase.register { self.resetLoginAttemptCounterUseCase }
-    Container.shared.isBiometricUsageAllowedUseCase.register { self.isBiometricUsageAllowedUseCase }
-    Container.shared.getBiometricTypeUseCase.register { self.getBiometricTypeUseCase }
-    Container.shared.pinCodeMinimumSize.register { self.pinCodeSize }
+    Container.shared.lockWalletUseCase.register { @MainActor in self.lockWalletUseCase }
+    Container.shared.registerLoginAttemptCounterUseCase.register { @MainActor in self.registerLoginAttemptCounterUseCase }
+    Container.shared.getLoginAttemptCounterUseCase.register { @MainActor in self.getLoginAttemptCounterUseCase }
+    Container.shared.resetLoginAttemptCounterUseCase.register { @MainActor in self.resetLoginAttemptCounterUseCase }
+    Container.shared.isBiometricUsageAllowedUseCase.register { @MainActor in self.isBiometricUsageAllowedUseCase }
+    Container.shared.getBiometricTypeUseCase.register { @MainActor in self.getBiometricTypeUseCase }
+    Container.shared.pinCodeMinimumSize.register { @MainActor in self.pinCodeSize }
   }
 
   override func tearDown() {

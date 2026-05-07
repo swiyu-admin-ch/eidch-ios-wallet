@@ -6,6 +6,7 @@
   "firstName": "John",
   "lastName": "Do",
   "createdAt": "1997-06-16T19:20:30+01:00",
+  "filesSubmitted": false,
   "state": {
     "id": "a17f450c-0f3a-40d9-a6eb-075c3f1ed097",
     "state": "IN_QUEUING",

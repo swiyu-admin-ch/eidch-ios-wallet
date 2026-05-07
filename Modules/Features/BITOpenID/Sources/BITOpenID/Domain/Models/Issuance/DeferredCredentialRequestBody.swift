@@ -1,7 +1,7 @@
 import BITNetworking
 import Foundation
 
-public enum DeferredCredentialRequestBody: Encodable {
+public enum DeferredCredentialRequestBody: Encodable, Equatable {
   case json(DeferredCredentialRequest)
   case jwe(String)
 

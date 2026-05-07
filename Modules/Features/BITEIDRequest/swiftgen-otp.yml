@@ -1,0 +1,8 @@
+xcassets:
+  inputs:
+    - Sources/BITOTP/Resources/Assets.xcassets
+  outputs:
+    - templateName: swift5
+      output: Sources/BITOTP/Module/Assets.swift
+      params:
+        enumName: Assets

@@ -6,17 +6,19 @@ import Foundation
 
 // MARK: - InvitationError
 
-public enum InvitationError: Error {
-  // Network related errors
+public enum InvitationError: Error, Equatable {
+  /// network
   case noConnection
-  case invalidQRCode
+  case oAuth(OpenIdRepositoryError)
 
-  // Credential related errors
+  /// credential
   case expiredInvitation
   case unknownIssuer
   case validationFailed
+  case invalidQRCode
+  case credentialRequest(OpenIdRepositoryError)
 
-  /// Presentation related errors
+  /// presentation
   case invalidPresentationRequest
 }
 
@@ -41,6 +43,44 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
       return invitationError
     }
 
+    if let openIdError = error as? OpenIdRepositoryError {
+      switch openIdError {
+      case .expiredAccessToken:
+        return InvitationError.expiredInvitation
+      case .invalidCredential:
+        return InvitationError.validationFailed
+      case
+        .insufficientScope,
+        .invalidClient,
+        .invalidGrant,
+        .invalidRequest,
+        .invalidScope,
+        .invalidToken,
+        .unauthorizedClient,
+        .unsupportedGrantType:
+        return InvitationError.oAuth(openIdError)
+      case
+        .credentialRequestDenied,
+        .invalidCredentialRequest,
+        .invalidEncryptionParameters,
+        .invalidNonce,
+        .invalidProof,
+        .invalidTransactionId,
+        .unknownCredentialConfiguration,
+        .unknownCredentialIdentifier:
+        return InvitationError.credentialRequest(openIdError)
+      case
+        .invalidCredentialIssuerMetadata,
+        .invalidCredentialIssuerMetadataJWT,
+        .invalidOpenIdConfigurationJWT,
+        .missingCredentialResponsePrivateKey,
+        .missingDeferredCredentialEndpoint,
+        .missingImmediateCredentialData,
+        .unsupportedCredentialStatusCode:
+        return InvitationError.invalidQRCode
+      }
+    }
+
     if let networkError = error as? NetworkError {
       switch networkError.status {
       case .noConnection,
@@ -53,8 +93,6 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
 
     if let fetchError = error as? FetchAnyVerifiableCredentialError {
       switch fetchError {
-      case .expiredInvitation:
-        return InvitationError.expiredInvitation
       case .unknownIssuer:
         return InvitationError.unknownIssuer
       case .validationFailed:
@@ -74,9 +112,8 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
 
     if let fetchError = error as? FetchPresentationRequestUseCaseError {
       switch fetchError {
-      case .expiredRequest:
-        return InvitationError.expiredInvitation
-      case .invalidRequest:
+      case .expiredRequest,
+           .invalidRequest:
         return InvitationError.invalidPresentationRequest
       case .invalidUrl:
         return InvitationError.invalidQRCode

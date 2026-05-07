@@ -3,7 +3,6 @@ import XCTest
 @testable import BITAnyCredentialFormatMocks
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 
 // MARK: - VcSdJwtCredentialJsonGeneratorTests
 

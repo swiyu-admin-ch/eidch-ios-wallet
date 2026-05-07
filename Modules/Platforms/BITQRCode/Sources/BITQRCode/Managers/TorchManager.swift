@@ -1,6 +1,5 @@
 import AVFoundation
 import Foundation
-import SwiftUI
 
 // MARK: - TorchError
 
@@ -23,7 +22,8 @@ public enum TorchError: Error, LocalizedError {
 
 // MARK: - TorchManager
 
-public class TorchManager: ObservableObject {
+@Observable
+public class TorchManager {
 
   // MARK: Lifecycle
 
@@ -31,8 +31,8 @@ public class TorchManager: ObservableObject {
 
   // MARK: Public
 
-  @Published public private(set) var torchError: TorchError?
-  @Published public private(set) var isEnabled = AVCaptureDevice.FlashMode.off
+  public private(set) var torchError: TorchError?
+  public private(set) var isEnabled = AVCaptureDevice.FlashMode.off
 
   public func turnOff() {
     do {

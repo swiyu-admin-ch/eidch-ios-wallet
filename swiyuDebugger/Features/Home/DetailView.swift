@@ -152,6 +152,8 @@ struct DetailView: View {
 
 }
 
+#if DEBUG
 #Preview {
   DetailView(credential: VerifiableCredential.Mock.sample)
 }
+#endif

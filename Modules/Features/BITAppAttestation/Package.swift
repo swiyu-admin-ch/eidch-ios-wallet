@@ -7,7 +7,7 @@ let package = Package(
   name: "BITAppAttestation",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -23,7 +23,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCrypto"),
     .package(path: "../../Platforms/BITDataStore"),
     .package(path: "../../Platforms/BITNetworking"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
   ],
   targets: [
     .target(
@@ -32,7 +32,7 @@ let package = Package(
         .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "BITCrypto", package: "BITCrypto"),
-        .product(name: "BITTestingCore", package: "BITCore"),
+        .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITDataStore", package: "BITDataStore"),
         .product(name: "BITNetworking", package: "BITNetworking"),

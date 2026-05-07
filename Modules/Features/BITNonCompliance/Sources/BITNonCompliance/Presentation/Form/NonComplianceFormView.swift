@@ -12,7 +12,7 @@ struct NonComplianceFormView: View {
   // MARK: Lifecycle
 
   init(category: NonComplianceCategory, activityId: UUID) {
-    _viewModel = StateObject(wrappedValue: NonComplianceFormViewModel(category: category, activityId: activityId))
+    _viewModel = State(initialValue: NonComplianceFormViewModel(category: category, activityId: activityId))
   }
 
   // MARK: Internal
@@ -35,20 +35,20 @@ struct NonComplianceFormView: View {
           navigator.dismiss()
         })
       }
-      .onChange(of: viewModel.state) { state in
+      .onChange(of: viewModel.state) { _, state in
         guard state == .final else { return }
-        navigator.returnToCheckpoint(ActivityCheckpoints.activityDetail, value: true)
+        navigator.returnToCheckpointSafely(ActivityCheckpoints.activityDetail, value: true)
         navigator.dismiss()
       }
       .task {
-        await viewModel.send(.fetchActivity)
+        await viewModel.send(.fetchActorDisplay)
       }
   }
 
   // MARK: Private
 
   @Environment(\.navigator) private var navigator
-  @StateObject private var viewModel: NonComplianceFormViewModel
+  @State private var viewModel: NonComplianceFormViewModel
 }
 
 // MARK: NonComplianceFormView.Content

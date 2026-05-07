@@ -56,7 +56,7 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
   @MainActor
   func testAttemptsInfoPresented() {
     let maxAttempts = 2
-    Container.shared.attemptsLimit.register { maxAttempts }
+    Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
     viewModel = PinCodeConfirmationViewModel(router: router)
 
     viewModel.pinCode = "111111"
@@ -79,7 +79,7 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
   @MainActor
   func testMaxAttemptReached() {
     let maxAttempts = 2
-    Container.shared.attemptsLimit.register { maxAttempts }
+    Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
     viewModel = PinCodeConfirmationViewModel(router: router)
 
     let pinCode = "111111"

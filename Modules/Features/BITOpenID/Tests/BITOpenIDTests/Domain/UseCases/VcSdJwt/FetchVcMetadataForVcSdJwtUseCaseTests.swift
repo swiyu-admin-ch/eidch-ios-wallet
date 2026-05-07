@@ -7,7 +7,6 @@ import XCTest
 @testable import BITOca
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 // MARK: - FetchVcMetadataForVcSdJwtUseCaseTests
@@ -155,7 +154,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   private static let vctIntegrityMock = "vctIntegrity"
 
   private let vcSdJWSMock = VcSdJWS.Mock.sample
-  private let vcSdJwtMetadataMock = CredentialMetadata.VcSdJwtCredentialConfigurationSupported(format: "format", vct: vctMock, vctIntegrity: vctIntegrityMock)
+  private let vcSdJwtMetadataMock = CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported(format: "format", vct: vctMock, vctIntegrity: vctIntegrityMock)
   private let ocaBundleMock = "rawOcaBundle".data(using: .utf8)!
   private let vcSchemaMock = "vcSchema".data(using: .utf8)!
   private let typeMetadataMock = TypeMetadata.Mock.sampleMultipleDisplays

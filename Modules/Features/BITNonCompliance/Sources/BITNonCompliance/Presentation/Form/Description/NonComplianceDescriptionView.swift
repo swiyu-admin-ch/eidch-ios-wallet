@@ -11,7 +11,7 @@ struct NonComplianceDescriptionView: View {
   // MARK: Lifecycle
 
   init(initialValue: String) {
-    viewModel = NonComplianceDescriptionViewModel(initialValue: initialValue)
+    _viewModel = State(initialValue: NonComplianceDescriptionViewModel(initialValue: initialValue))
   }
 
   // MARK: Internal
@@ -51,7 +51,7 @@ struct NonComplianceDescriptionView: View {
   @Environment(\.navigator) private var navigator
 
   @FocusState private var focusField: Bool
-  @ObservedObject private var viewModel: NonComplianceDescriptionViewModel
+  @State private var viewModel: NonComplianceDescriptionViewModel
 
   private var inputField: some View {
     Form {
@@ -99,7 +99,7 @@ struct NonComplianceDescriptionView: View {
   }
 
   private func navigateBack() {
-    navigator.returnToCheckpoint(
+    navigator.returnToCheckpointSafely(
       NonComplianceCheckpoints.form,
       value: NonComplianceFormCheckpointUpdate(field: .description, value: viewModel.value))
   }

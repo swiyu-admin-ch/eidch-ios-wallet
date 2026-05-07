@@ -12,10 +12,35 @@ struct RecordDocumentView: View {
   // MARK: Internal
 
   var body: some View {
+    GeometryReader { geo in
+      content()
+        .cameraPermission { state in
+          if state == .authorized {
+            viewModel.checkInitializationState()
+          }
+        }
+        .disablePhoneLock()
+        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .font(.custom.body)
+        .animation(.easeInOut(duration: 0.4), value: viewModel.state)
+        .readSize { size in
+          self.size = size
+        }
+        .suspendInactivityTimeout()
+        .onDisappear {
+          viewModel.stop()
+        }
+        .toolbar { toolbarContent() }
+        .navigationBarBackButtonHidden()
+        .navigate(to: $viewModel.destination)
+        .transparentToolbarBackground(isActive: true, topInset: geo.safeAreaInsets.top)
+    }
+  }
+
+  func content() -> some View {
     ZStack {
       Color.clear
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(ThemingAssets.Background.secondary.swiftUIColor)
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .ignoresSafeArea(edges: .bottom)
 
@@ -28,35 +53,25 @@ struct RecordDocumentView: View {
           primary: L10n.tkLoaderInitializationPrimary,
           secondary: L10n.tkLoaderInitializationSecondary,
           action: LoadingView.Action(
-            action: viewModel.cancelInitialization,
+            action: { viewModel.cancelInitialization(navigator) },
             buttonText: L10n.tkGlobalCancel))
           .transition(.opacity)
-          .task {
-            viewModel.initializeSDK()
-          }
       }
     }
-    .cameraPermission()
-    .disablePhoneLock()
-    .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-    .font(.custom.body)
-    .animation(.easeInOut(duration: 0.4), value: viewModel.state)
-    .readSize { size in
-      self.size = size
-    }
-    .onDisappear(perform: viewModel.stop)
-    .defaultEidRequestToolbar()
-    .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
+
+  @Environment(\.navigator) private var navigator
 
   @State private var size = CGSize.zero
   @State private var rotationAngle: Double = 0
   @State private var currentDisplayState = RecordDocumentViewModel.ScanningState.recto
   @State private var scale = 1.0
 
-  @InjectedObject(\.recordDocumentViewModel) private var viewModel
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator: EIDRequestFlowCoordinatorProtocol
+
+  @InjectedObservable(\.recordDocumentViewModel) private var viewModel: RecordDocumentViewModel
 
   @Orientation private var orientation
 
@@ -76,8 +91,7 @@ extension RecordDocumentView {
       GLViewWrapper(viewModel.avBeam.getGLView)
         .background(ThemingAssets.Background.secondary.swiftUIColor)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+        .ignoresSafeArea()
 
       ZStack {
         viewModel.overlayImage.front
@@ -89,6 +103,7 @@ extension RecordDocumentView {
             .degrees(rotationAngle),
             axis: axis)
           .opacity(rotationVisibilityRange.contains(rotationAngle) ? 0 : 1)
+          .accessibilityLabel(L10n.tkEidRequestRecordDocumentOverlayFrontAlt)
 
         viewModel.overlayImage.back
           .resizable()
@@ -99,6 +114,7 @@ extension RecordDocumentView {
             .degrees(rotationAngle + oppositeRotationAngle),
             axis: axis)
           .opacity(rotationVisibilityRange.contains(rotationAngle) ? 1 : 0)
+          .accessibilityLabel(L10n.tkEidRequestRecordDocumentOverlayBackAlt)
 
         if orientation.isLandscape {
           recordButtonView()
@@ -106,7 +122,7 @@ extension RecordDocumentView {
             .padding(.horizontal, .x4)
         }
       }
-      .onReceive(viewModel.$scanningState) { newState in
+      .onChange(of: viewModel.scanningState) { _, newState in
         if newState != currentDisplayState {
           currentDisplayState = newState
 
@@ -123,6 +139,7 @@ extension RecordDocumentView {
         }
       }
     }
+    .ignoresSafeArea(edges: orientation.isLandscape ? [.horizontal] : [])
     .popup(isPresented: $viewModel.isNotificationPresented, view: {
       popupView(viewModel.notification)
     }) {
@@ -132,7 +149,6 @@ extension RecordDocumentView {
         .closeOnTapOutside(false)
         .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
     }
-    .navigationTitle(viewModel.title)
     .safeAreaInset(edge: .bottom) {
       if !orientation.isLandscape {
         recordButtonView()
@@ -142,9 +158,37 @@ extension RecordDocumentView {
 
   private func recordButtonView() -> some View {
     RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startRecordDocument, onTapRecord: viewModel.stopRecordDocument)
-      .accessibilityLabel(L10n.tkEidRequestRecordDocumentRecordButtonAlt)
+      .accessibilityLabel(viewModel.buttonStateAccessibilityLabel)
       .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
+
+  @ToolbarContentBuilder
+  private func toolbarContent() -> some ToolbarContent {
+    if viewModel.state == .camera {
+      ToolbarItem(placement: .principal) {
+        Text(viewModel.title)
+          .font(.custom.body)
+          .fontWeight(.semibold)
+          .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
+          .colorScheme(.light)
+          .lineLimit(1)
+      }
+    }
+
+    ToolbarItem(placement: .topBarTrailing) {
+      Button(action: close, label: {
+        viewModel.state == .camera ? Assets.closeCamera.swiftUIImage : ThemingAssets.close.swiftUIImage
+      })
+      .accessibilityLabel(L10n.tkGlobalClose)
+      .accessibilityIdentifier("closeButton")
+    }
+  }
+
+  private func close() {
+    coordinator.cleanup()
+    navigator.dismiss()
+  }
+
 }
 
 extension RecordDocumentView {

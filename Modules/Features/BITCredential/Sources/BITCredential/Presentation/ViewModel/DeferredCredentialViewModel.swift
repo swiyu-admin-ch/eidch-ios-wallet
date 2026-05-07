@@ -41,6 +41,10 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
     }
   }
 
+  public var statusBadgeAccessibilityText: String {
+    statusText
+  }
+
   public var statusTextAlt: String {
     switch credential.progressionState {
     case .inProgress: L10n.tkDeferredCredentialStatusInProgress

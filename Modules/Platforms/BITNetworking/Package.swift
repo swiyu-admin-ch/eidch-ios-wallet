@@ -7,7 +7,7 @@ let package = Package(
   name: "BITNetworking",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -19,7 +19,7 @@ let package = Package(
     .package(path: "../BITAnalytics"),
     .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.6.0"),
     .package(url: "https://github.com/Moya/Moya.git", from: "15.0.3"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
   ],
   targets: [
     .target(

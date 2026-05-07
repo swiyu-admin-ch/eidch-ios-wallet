@@ -158,6 +158,14 @@ custom_rules:
     message: "Don't commit `print(…)`, `debugPrint(…)`, or `dump(…)` as they write to standard out in release. Either log to a dedicated logging system or silence this warning in debug-only scenarios explicitly using `// swiftlint:disable:next no_direct_standard_out_logs`"
     severity: warning
 
+  bit_testing_core_only_in_tests:
+    name: "BITTestingCore only in test targets"
+    included: ".*\\.swift$"
+    excluded: "(.*/Tests/.*|.*/swiyuTests/.*|.*/swiyuUITests/.*|.*/swiyuUITests-App/.*)"
+    regex: "\\bimport\\s+BITTestingCore\\b"
+    message: "BITTestingCore may only be imported from test code."
+    severity: error
+
   # avoid_service_locator_usage:
   #   name: "Avoid Service Locator (Container.shared)"
   #   included: ".*\\.swift"

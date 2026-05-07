@@ -1,7 +1,7 @@
 // swiftlint: disable implicitly_unwrapped_optional force_try
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension NonCompliantActorsResponse: Mockable {
   public struct Mock {

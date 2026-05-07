@@ -1,6 +1,6 @@
 import Factory
 
-public enum TrustEnvironment: Equatable {
+public enum TrustEnvironment: String, Equatable, Codable {
   case swiyu
   case swiyuInt
   case external

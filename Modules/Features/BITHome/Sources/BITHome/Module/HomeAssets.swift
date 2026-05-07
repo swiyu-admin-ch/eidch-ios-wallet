@@ -24,6 +24,7 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 enum HomeAssets {
   static let emptyWalletIcon = ImageAsset(name: "EmptyWalletIcon")
   static let menuButton = ImageAsset(name: "MenuButton")
+  static let menuButtonSmall = ImageAsset(name: "MenuButtonSmall")
   static let scannerButton = ImageAsset(name: "ScannerButton")
   static let menuHelp = ImageAsset(name: "menuHelp")
   static let menuID = ImageAsset(name: "menuID")

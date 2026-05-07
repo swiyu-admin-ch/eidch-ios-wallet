@@ -127,9 +127,9 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
 
     try await repository.save(files: expectedFiles, forRequestCaseId: eIDRequest.id)
 
-    let file = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample.jpg", category: .documentScan)
+    let file = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample3.jpg", category: .documentScan)
 
-    XCTAssertEqual(file, expectedFiles.first)
+    XCTAssertEqual(file, expectedFiles.last)
   }
 
   func testGetFilesByNameAndCategory_fileNotExisiting_throwsError() async throws {
@@ -139,7 +139,7 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
     try await repository.save(files: [fileToSave], forRequestCaseId: eIDRequest.id)
 
     do {
-      _ = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample.jpg", category: .documentScan)
+      _ = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample3.jpg", category: .documentScan)
     } catch {
       XCTAssertEqual(error as? EIDRequestCaseRepositoryError, .notFound)
     }

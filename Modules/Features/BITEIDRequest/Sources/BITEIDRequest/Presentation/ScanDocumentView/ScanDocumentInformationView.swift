@@ -16,7 +16,7 @@ struct ScanDocumentInformationView: View {
 
   var body: some View {
     InformationView2(
-      image: Assets.scanDocument.swiftUIImage,
+      image: Assets.scanDocumentPreview.swiftUIImage,
       contents: [
         .title(L10n.tkEidRequestScanDocumentInformationPrimary, identifier: "primaryText"),
         .body(L10n.tkEidRequestScanDocumentInformationSecondary, identifier: "secondaryText"),

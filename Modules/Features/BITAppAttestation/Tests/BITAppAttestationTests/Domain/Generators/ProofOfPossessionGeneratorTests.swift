@@ -21,7 +21,11 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
   }
 
   func testGenerate_assertParameters_success() async throws {
-    let (_, pop) = try await generator.generate(for: mockBody, audience: mockAudience, challengeEndpoint: mockChallengeEndpoint)
+    let pop = try await generator(
+      for: mockBody,
+      audience: mockAudience,
+      challengeEndpoint: mockChallengeEndpoint,
+      clientAttestation: mockClientAttestation)
 
     XCTAssertEqual(pop, mockClientAttestationProofOfPossession)
     XCTAssertEqual(pop.payload.nonce, mockChallenge.challenge)
@@ -29,16 +33,18 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
     XCTAssertEqual(pop.payload.issuer, mockClientAttestation.payload.subject)
 
     XCTAssertEqual(urlSession.dataFromReceivedUrl, mockChallengeEndpoint)
-    XCTAssertTrue(clientAttestationRepository.getCalled)
     XCTAssertEqual(appAttestationKeyRepository.getForReceivedType, .client)
     XCTAssertEqual(jsonCanonicalizer.canonicalizeDataReceivedData, try JSONEncoder().encode(mockBody))
   }
 
   func testGenerate_assertCount_success() async throws {
-    _ = try await generator.generate(for: mockBody, audience: mockAudience, challengeEndpoint: mockChallengeEndpoint)
+    _ = try await generator(
+      for: mockBody,
+      audience: mockAudience,
+      challengeEndpoint: mockChallengeEndpoint,
+      clientAttestation: mockClientAttestation)
 
     XCTAssertEqual(urlSession.dataFromCallsCount, 1)
-    XCTAssertEqual(clientAttestationRepository.getCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.getForCallsCount, 1)
     XCTAssertEqual(jsonCanonicalizer.canonicalizeDataCallsCount, 1)
   }
@@ -47,18 +53,11 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
     urlSession.dataFromThrowableError = TestingError.error
 
     do {
-      _ = try await generator.generate(for: mockBody, audience: mockAudience, challengeEndpoint: mockChallengeEndpoint)
-      XCTFail("Expected error")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
-  }
-
-  func testGenerate_getClientAttestationFails_throwsError() async throws {
-    clientAttestationRepository.getThrowableError = TestingError.error
-
-    do {
-      _ = try await generator.generate(for: mockBody, audience: mockAudience, challengeEndpoint: mockChallengeEndpoint)
+      _ = try await generator(
+        for: mockBody,
+        audience: mockAudience,
+        challengeEndpoint: mockChallengeEndpoint,
+        clientAttestation: mockClientAttestation)
       XCTFail("Expected error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -69,7 +68,11 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
     appAttestationKeyRepository.getForThrowableError = TestingError.error
 
     do {
-      _ = try await generator.generate(for: mockBody, audience: mockAudience, challengeEndpoint: mockChallengeEndpoint)
+      _ = try await generator(
+        for: mockBody,
+        audience: mockAudience,
+        challengeEndpoint: mockChallengeEndpoint,
+        clientAttestation: mockClientAttestation)
       XCTFail("Expected error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -80,7 +83,11 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
     jsonCanonicalizer.canonicalizeDataThrowableError = TestingError.error
 
     do {
-      _ = try await generator.generate(for: mockBody, audience: mockAudience, challengeEndpoint: mockChallengeEndpoint)
+      _ = try await generator(
+        for: mockBody,
+        audience: mockAudience,
+        challengeEndpoint: mockChallengeEndpoint,
+        clientAttestation: mockClientAttestation)
       XCTFail("Expected error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -101,14 +108,12 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
   private var generator: ProofOfPossessionGenerator!
   private var jwsEncoder: JWSEncoderMock<ClientAttestationProofOfPossessionJWT>!
   private var jsonCanonicalizer: JsonCanonicalizerProtocolSpy!
-  private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!
   private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy!
   private var urlSession: URLSessionProtocolSpy!
 
   private func createSuccessState() {
     jwsEncoder.encodeReturnValue = mockClientAttestationProofOfPossession
     jsonCanonicalizer.canonicalizeDataReturnValue = try! JSONEncoder().encode(mockBody)
-    clientAttestationRepository.getReturnValue = mockClientAttestation
     appAttestationKeyRepository.getForReturnValue = mockSecKey
     urlSession.dataFromReturnValue = (mockChallengeData, URLResponse())
   }
@@ -117,12 +122,10 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
     jwsEncoder = JWSEncoderMock()
     jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
     urlSession = URLSessionProtocolSpy()
-    clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
     appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
 
     Container.shared.jwsEncoder.register { self.jwsEncoder }
     Container.shared.jsonCanonicalizer.register { self.jsonCanonicalizer }
-    Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
     Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
     NetworkContainer.shared.urlSession.register { self.urlSession }
   }

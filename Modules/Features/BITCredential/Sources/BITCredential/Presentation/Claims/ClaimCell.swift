@@ -36,6 +36,7 @@ public struct ClaimCell: View {
         }.padding(.trailing, .x6)
           .frame(minHeight: Defaults.minHeight)
           .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityLabel(viewModel.accessibilityValueLabel)
       }
       if showDivider {
         Divider()

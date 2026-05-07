@@ -12,17 +12,17 @@ import Spyable
 @Spyable
 protocol CredentialGeneratorProtocol {
   func generate(
-    for anyCredential: AnyCredential,
-    keyBinding: CredentialKeyBinding?,
+    for credentialsWithKeyBinding: [CredentialWithKeyBinding],
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialMetadataWrapper,
-    trustStatement: IdentityTrustStatementJWT?) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper,
+    trustStatement: IdentityTrustStatementJWT?,
+    authentication: CredentialAuthentication) throws
     -> VerifiableCredential
   func generateDeferred(
     _ deferredCredentialContext: DeferredCredentialContext,
-    keyBinding: CredentialKeyBinding?,
+    keyBindings: [KeyBinding],
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialMetadataWrapper) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper) throws
     -> DeferredCredential
 }
 
@@ -33,39 +33,50 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
   // MARK: Internal
 
   func generate(
-    for anyCredential: AnyCredential,
-    keyBinding: CredentialKeyBinding?,
+    for credentialsWithKeyBinding: [CredentialWithKeyBinding],
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialMetadataWrapper,
-    trustStatement: IdentityTrustStatementJWT?) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper,
+    trustStatement: IdentityTrustStatementJWT?,
+    authentication: CredentialAuthentication) throws
     -> VerifiableCredential
   {
-    let (context, ocaBundle) = try generateContext(keyBinding: keyBinding, rawOcaBundle: rawOcaBundle, metadataWrapper: metadataWrapper, trustStatement: trustStatement)
+    let (context, ocaBundle) = try generateContext(
+      rawOcaBundle: rawOcaBundle,
+      metadataWrapper: metadataWrapper,
+      trustStatement: trustStatement,
+      authentication: authentication)
 
-    return if let ocaBundle {
-      try ocaCredentialGenerator.generate(for: anyCredential, ocaBundle: ocaBundle, context: context)
-    } else {
-      try metadataCredentialGenerator.generate(for: anyCredential, selectedCredential: metadataWrapper.selectedCredential, context: context)
+    if let ocaBundle {
+      return try ocaCredentialGenerator.generate(for: credentialsWithKeyBinding, ocaBundle: ocaBundle, context: context)
     }
+    return try metadataCredentialGenerator.generate(for: credentialsWithKeyBinding, selectedCredential: metadataWrapper.selectedCredential, context: context)
   }
 
   func generateDeferred(
     _ deferredCredentialContext: DeferredCredentialContext,
-    keyBinding: CredentialKeyBinding?,
+    keyBindings: [KeyBinding],
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialMetadataWrapper) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper) throws
     -> DeferredCredential
   {
     let (context, ocaBundle) = try generateContext(
-      keyBinding: keyBinding,
       rawOcaBundle: rawOcaBundle,
       metadataWrapper: metadataWrapper,
-      trustStatement: nil)
+      trustStatement: nil,
+      authentication: CredentialAuthentication(accessToken: deferredCredentialContext.accessToken, tokenType: .bearer, refreshToken: deferredCredentialContext.refreshToken))
 
     return if let ocaBundle {
-      try ocaCredentialGenerator.generateDeferred(deferredCredentialContext, ocaBundle: ocaBundle, context: context)
+      try ocaCredentialGenerator.generateDeferred(
+        deferredCredentialContext,
+        keyBindings: keyBindings,
+        ocaBundle: ocaBundle,
+        context: context)
     } else {
-      try metadataCredentialGenerator.generateDeferred(deferredCredentialContext, selectedCredential: metadataWrapper.selectedCredential, context: context)
+      try metadataCredentialGenerator.generateDeferred(
+        deferredCredentialContext,
+        keyBindings: keyBindings,
+        selectedCredential: metadataWrapper.selectedCredential,
+        context: context)
     }
   }
 
@@ -76,30 +87,40 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
   @Injected(\.metadataCredentialGenerator) private var metadataCredentialGenerator: MetadataCredentialGeneratorProtocol
 
   private func generateContext(
-    keyBinding: CredentialKeyBinding?,
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialMetadataWrapper,
-    trustStatement: IdentityTrustStatementJWT?) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper,
+    trustStatement: IdentityTrustStatementJWT?,
+    authentication: CredentialAuthentication) throws
     -> (CredentialGeneratorContext, OcaBundle?)
   {
     let id = UUID()
-    let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialMetadata.display, credentialId: id, trustStatement: trustStatement)
+    let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialIssuerMetadata.display, credentialId: id, trustStatement: trustStatement)
     let ocaBundle = rawOcaBundle.flatMap { try? ocaBundler.createOcaBundle($0) }
     let rawCredentialData = RawCredentialData(rawOIDMetadata: metadataWrapper.rawData, rawOcaBundle: rawOcaBundle)
+    let batchData = createBatchData(batchSize: metadataWrapper.credentialIssuerMetadata.batchCredentialIssuance?.batchSize)
 
     return (
       CredentialGeneratorContext(
         credentialId: id,
-        issuerUrl: metadataWrapper.credentialMetadata.credentialIssuer,
+        issuerUrl: metadataWrapper.credentialIssuerMetadata.credentialIssuer,
         credentialConfigurationId: metadataWrapper.credentialConfigurationId,
-        keyBinding: keyBinding,
+        batchData: batchData,
+        authentication: authentication,
         issuerDisplays: issuerDisplays,
         rawCredentialData: rawCredentialData),
       ocaBundle)
   }
 
+  private func createBatchData(batchSize: Int?) -> BatchData? {
+    guard let batchSize else {
+      return nil
+    }
+
+    return BatchData(batchSize: batchSize)
+  }
+
   private func createIssuerDisplays(
-    from displays: [CredentialMetadata.CredentialMetadataDisplay]?,
+    from displays: [CredentialIssuerMetadata.Display]?,
     credentialId: UUID,
     trustStatement: IdentityTrustStatementJWT?)
     -> [CredentialIssuerDisplay]
@@ -127,7 +148,7 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
       }
   }
 
-  private func displayImage(for locale: String, in displays: [CredentialMetadata.CredentialMetadataDisplay]) -> Data? {
+  private func displayImage(for locale: String, in displays: [CredentialIssuerMetadata.Display]) -> Data? {
     if let exactMatch = displays.first(where: { $0.locale == locale }) {
       return exactMatch.logo?.url?.dataURLData
     }

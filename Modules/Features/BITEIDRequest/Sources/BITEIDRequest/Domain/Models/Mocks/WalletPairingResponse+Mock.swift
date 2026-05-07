@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension WalletPairingResponse: Mockable {
   struct Mock {

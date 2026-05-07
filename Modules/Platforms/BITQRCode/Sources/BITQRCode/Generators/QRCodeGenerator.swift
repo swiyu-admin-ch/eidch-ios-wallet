@@ -14,11 +14,24 @@ public protocol QRCodeGeneratorProtocol {
   ///   - scale: Scale value for output image
   /// - Returns: The generated QR Code as data
   func generate(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel, scale: CGFloat) -> Data?
+
+  /// Generate a QR code based on the following parameters
+  ///
+  /// - Parameters:
+  ///   - input: A string representing the data to be encoded as a QR Code
+  ///   - correctionLevel: Error correction format
+  ///   - scale: Scale value for output image
+  /// - Returns: The generated QR Code as CIImage
+  func generateImage(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel, scale: CGFloat) -> CIImage?
 }
 
 extension QRCodeGeneratorProtocol {
   public func generate(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel = .high, scale: CGFloat = 4) -> Data? {
     generate(from: input, correctionLevel: correctionLevel, scale: scale)
+  }
+
+  public func generateImage(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel = .high, scale: CGFloat = 4) -> CIImage? {
+    generateImage(from: input, correctionLevel: correctionLevel, scale: scale)
   }
 }
 
@@ -26,18 +39,21 @@ extension QRCodeGeneratorProtocol {
 
 struct QRCodeGenerator: QRCodeGeneratorProtocol {
 
-  func generate(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel, scale: CGFloat) -> Data? {
-    let context = CIContext()
+  func generateImage(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel, scale: CGFloat) -> CIImage? {
     let filter = CIFilter.qrCodeGenerator()
     filter.message = Data(input.utf8)
     filter.correctionLevel = correctionLevel.rawValue
+    return filter.outputImage
+  }
 
-    guard let outputImage = filter.outputImage else {
+  func generate(from input: String, correctionLevel: QRCodeGeneratorCorrectionLevel, scale: CGFloat) -> Data? {
+    guard let outputImage = generateImage(from: input, correctionLevel: correctionLevel, scale: scale) else {
       return nil
     }
 
     let transform = CGAffineTransform(scaleX: scale, y: scale)
     let scaledImage = outputImage.transformed(by: transform)
+    let context = CIContext()
 
     guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else {
       return nil

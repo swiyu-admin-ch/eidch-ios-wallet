@@ -40,16 +40,6 @@ public struct OcaBundle {
     }
   }
 
-  /// Retrieves OverlayBundleAttribute associated to the given JSONPath.
-  /// - Parameters:
-  ///   - jsonPath: JSONPath
-  /// - Returns: The capture Base attribute associated `OverlayBundleAttribute`.
-  public func getAttributeForJsonPath(jsonPath: JsonPath) -> OverlayBundleAttribute? {
-    getAttributes().first { attribute in
-      attribute.dataSources.values.contains { $0 == jsonPath }
-    }
-  }
-
   public func getLatestOverlaysOfType(overlayType: OverlayType, digest: String? = nil) -> [any Overlay] {
     let specType = getLatestOverlaySpecType(for: overlayType, digest: digest)
     return getOverlays(digest: digest).filter { $0.type == specType }

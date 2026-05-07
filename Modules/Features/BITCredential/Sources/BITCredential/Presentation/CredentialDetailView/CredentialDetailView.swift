@@ -1,6 +1,7 @@
 import BITActivity
 import BITCredentialShared
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -13,8 +14,8 @@ struct CredentialDetailView: View {
 
   // MARK: Lifecycle
 
-  init(credential: CredentialProtocol, delegate: CredentialDetailDelegate?) {
-    _viewModel = StateObject(wrappedValue: Container.shared.credentialDetailViewModel((credential, delegate)))
+  init(credential: CredentialProtocol) {
+    _viewModel = State(initialValue: Container.shared.credentialDetailViewModel(credential))
   }
 
   // MARK: Internal
@@ -42,9 +43,17 @@ struct CredentialDetailView: View {
           secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
       }
       .background(ThemingAssets.Background.secondary.swiftUIColor)
-      .navigationBarHidden(true)
+      .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
       .navigationBarBackButtonHidden()
-      .navigationDismiss(trigger: $viewModel.isCredentialDeleted)
+      .navigationTitle(viewModel.credentialViewModel?.credentialDisplay?.name ?? "")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        navigationToolbar
+      }
+      .navigationReturnToCheckpoint(
+        trigger: $viewModel.isCredentialDeleted,
+        checkpoint: Checkpoints.home,
+        value: HomeCheckpointsState.deletedCredential)
       .task {
         await viewModel.onAppear()
       }
@@ -61,10 +70,26 @@ struct CredentialDetailView: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.navigator) private var navigator
 
-  @State private var topSafeAreaHeight: CGFloat = 0
-  @StateObject private var viewModel: CredentialDetailViewModel
+  @State private var viewModel: CredentialDetailViewModel
 
   @Orientation private var orientation
+
+  @ToolbarContentBuilder
+  private var navigationToolbar: some ToolbarContent {
+    ToolbarItem(placement: .navigationBarLeading) {
+      if let credentialViewModel = viewModel.credentialViewModel {
+        menu(credentialViewModel)
+      }
+    }
+
+    ToolbarItem(placement: .navigationBarTrailing) {
+      Button(action: { navigator.dismiss() }, label: {
+        ThemingAssets.close.swiftUIImage
+      })
+      .accessibilityLabel(L10n.tkGlobalClosedetailsAlt)
+      .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
+    }
+  }
 
   @ViewBuilder
   private func content() -> some View {
@@ -74,33 +99,27 @@ struct CredentialDetailView: View {
       landscapeLayout()
     }
   }
+
 }
 
 // MARK: - Portrait layout
 
 extension CredentialDetailView {
   private func portraitLayout() -> some View {
-    GeometryReader { geometry in
-      ScrollView(showsIndicators: false) {
-        VStack(spacing: .x6) {
-          if let credentialViewModel = viewModel.credentialViewModel {
-            credentialCard(credentialViewModel)
-              .frame(height: geometry.size.height * 0.8)
-          }
-
-          contentSection()
+    ScrollView(showsIndicators: false) {
+      VStack(spacing: .x6) {
+        if let credentialViewModel = viewModel.credentialViewModel {
+          credentialCard(credentialViewModel)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, .x4)
+            .padding(.top, .defaultVertical)
         }
+
+        contentSection()
       }
-      .refresher {
-        await viewModel.refresh()
-      }
-      .onAppear {
-        self.topSafeAreaHeight = geometry.safeAreaInsets.top
-      }
-      .onChange(of: geometry.safeAreaInsets) { newInsets in
-        self.topSafeAreaHeight = newInsets.top
-      }
-      .padding(.top, -topSafeAreaHeight)
+    }
+    .refresher {
+      await viewModel.refresh()
     }
   }
 }
@@ -109,10 +128,13 @@ extension CredentialDetailView {
 
 extension CredentialDetailView {
   private func landscapeLayout() -> some View {
-    HStack {
+    HStack(alignment: .top, spacing: .x6) {
       if let credentialViewModel = viewModel.credentialViewModel {
         credentialCard(credentialViewModel)
+          .frame(maxWidth: .infinity)
+          .padding(.top, .x4)
       }
+
       ScrollView(showsIndicators: false) {
         contentSection()
       }
@@ -120,6 +142,7 @@ extension CredentialDetailView {
         await viewModel.refresh()
       }
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
   }
 }
 
@@ -149,35 +172,17 @@ extension CredentialDetailView {
       statusBadgeImage: credentialViewModel.statusImage,
       statusBadgeStyle: credentialViewModel.cardStatusBadgeStyle,
       style: credentialViewModel.cardStyle)
-    {
-      HStack {
-        menu(credentialViewModel)
-
-        Spacer()
-
-        Button(action: { navigator.dismiss() }, label: {
-          ThemingAssets.xmark.swiftUIImage
-            .colorMultiply(ThemingAssets.Brand.Core.black.swiftUIColor)
-            .frame(width: 32, height: 32)
-            .background(.ultraThickMaterial.opacity(0.70))
-            .clipShape(.circle)
-        })
-        .accessibilityLabel(L10n.tkGlobalClosedetailsAlt)
-        .accessibilitySortPriority(AccessibilityPriority.x5.rawValue)
-        .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
-      }
-      .padding(.top, self.topSafeAreaHeight)
-    }
-    .accessibilityElement(children: .contain)
-    .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
-    .controlSize(.large)
+      .accessibilityElement(children: .combine)
+      .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)
+      .accessibilityPriorityFocus()
+      .controlSize(.large)
   }
 
   private func menu(_ credentialViewModel: CredentialCardViewModelProtocol) -> some View {
     Menu {
       if credentialViewModel is VerifiableCredentialViewModel {
         Section {
-          Button(action: { navigator.navigate(to: CredentialDetailDestinations.wrongData) }, label: {
+          Button(action: { navigator.navigate(to: CredentialDestinations.wrongData) }, label: {
             Label(title: { Text(L10n.tkGlobalWrongdata) }, icon: { Assets.warning.swiftUIImage })
           })
           .accessibilityLabel(L10n.tkGlobalWrongdata)
@@ -196,12 +201,21 @@ extension CredentialDetailView {
       ThemingAssets.elipsis.swiftUIImage
         .colorMultiply(ThemingAssets.Brand.Core.black.swiftUIColor)
         .frame(width: 32, height: 32)
-        .background(.ultraThickMaterial.opacity(0.70))
+        .background(ThemingAssets.navigationAccent.swiftUIColor.opacity(0.12))
         .clipShape(.circle)
     }
-    .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
     .accessibilityLabel(L10n.tkGlobalMoreoptionsAlt)
     .accessibilityIdentifier(AccessibilityIdentifier.menuButton.rawValue)
+    .accessibilityActions {
+      if credentialViewModel is VerifiableCredentialViewModel {
+        Button(L10n.tkGlobalWrongdata) {
+          navigator.navigate(to: CredentialDestinations.wrongData)
+        }
+      }
+      Button(L10n.tkDisplaydeleteCredentialmenuPrimarybutton) {
+        viewModel.isDeleteCredentialAlertPresented.toggle()
+      }
+    }
   }
 }
 
@@ -237,7 +251,7 @@ extension CredentialDetailView {
         image: Assets.warning.swiftUIImage,
         text: L10n.tkReceiveIncorrectdataTitle,
         disclosureIndicator: .navigation,
-        onTap: { navigator.navigate(to: CredentialDetailDestinations.wrongData) })
+        onTap: { navigator.navigate(to: CredentialDestinations.wrongData) })
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .padding(.horizontal, .x6)
         .padding(.vertical, .x2)
@@ -246,7 +260,7 @@ extension CredentialDetailView {
 
   private func verifiableCredentialContent(_ verifiableCredentialViewModel: VerifiableCredentialViewModel) -> some View {
     VStack(alignment: .leading, spacing: .x6) {
-      RecentActivitiesWidget(viewModel.activities, credentialId: viewModel.credential.id)
+      RecentActivitiesWidget(viewModel.activities, credentialId: viewModel.credential.id, isActivityHistoryEnabled: viewModel.isActivityHistoryEnabled)
       ClaimClusterList(verifiableCredentialViewModel.credential.clusters)
       issuerSection
       wrongDataSection
@@ -269,8 +283,13 @@ extension CredentialDetailView {
         Text(L10n.tkDeferredCredentialDetailsInProgressContentBody)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+          .multilineTextAlignment(.leading)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .fixedSize(horizontal: false, vertical: true)
       }
-      .padding(.x6)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, .x6)
+      .padding(.vertical, .x4)
     }
   }
 
@@ -285,7 +304,11 @@ extension CredentialDetailView {
           Text(L10n.tkDeferredCredentialDetailsInvalidContentBody)
             .font(.custom.body)
             .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
 
         VStack(alignment: .leading) {
           Text(L10n.tkDeferredCredentialDetailsInvalidContentTitle2)
@@ -295,7 +318,11 @@ extension CredentialDetailView {
           Text(L10n.tkDeferredCredentialDetailsInvalidContentBody2)
             .font(.custom.body)
             .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, .x2)
 
         Button(action: { viewModel.isDeleteCredentialAlertPresented.toggle() }) {
@@ -308,7 +335,9 @@ extension CredentialDetailView {
         .padding(.top, .x2)
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
       }
-      .padding(.x6)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, .x6)
+      .padding(.vertical, .x4)
     }
   }
 
@@ -326,6 +355,6 @@ extension CredentialDetailView {
 
 #if DEBUG
 #Preview {
-  CredentialDetailView(credential: VerifiableCredential.Mock.sample, delegate: nil)
+  CredentialDetailView(credential: DeferredCredential.Mock.sample)
 }
 #endif

@@ -10,7 +10,8 @@ import NavigatorUI
 // MARK: - NFCScanViewModel
 
 @MainActor
-class NFCScanViewModel: ObservableObject {
+@Observable
+final class NFCScanViewModel {
 
   // MARK: Lifecycle
 
@@ -22,7 +23,7 @@ class NFCScanViewModel: ObservableObject {
   // MARK: Internal
 
   enum State {
-    case sdkInitializing
+    case loading
     case ready
   }
 
@@ -30,26 +31,24 @@ class NFCScanViewModel: ObservableObject {
     case nfcScanFailed
   }
 
-  @Published var state = State.sdkInitializing
-  @Published var destination: EIDRequestDestinations?
+  var state = State.loading
+  var destination: EIDRequestDestinations?
 
-  func initializeSDK() {
-    if avBeam.state == .initializing {
-      return
-    }
+  func checkInitializationState() {
+    switch avBeam.state {
+    case .notInitialized:
+      avBeam.shutdown()
+      do {
+        let config = AVBeamInitConfig(appId: avBeamAppID)
+        try avBeam.initialize(using: config)
+      } catch {
+        handleError(error)
+      }
 
-    if avBeam.state == .initialized {
-      return state = .ready
-    }
+    case .initializing:
+      state = .loading
 
-    let config = AVBeamInitConfig(appId: avBeamAppID)
-
-    do {
-      try avBeam.initialize(using: config)
-    } catch {
-      handleError(error, action: { [weak self] in
-        try? self?.avBeam.initialize(using: config)
-      })
+    case .initialized: break
     }
   }
 
@@ -63,17 +62,20 @@ class NFCScanViewModel: ObservableObject {
         throw EIDRequestError.missingAuthenticationToken
       }
 
-      let config = try await avBeamNFCConfigurator.configure(for: caseId, authenticationToken: authenticationToken)
+      let config = try await avBeamNFCConfigurator.configure(
+        for: caseId, authenticationToken: authenticationToken)
 
       NotificationCenter.default.post(name: .permissionAlertPresented, object: nil)
       try avBeam.startNfcScan(config: config)
     } catch {
       NotificationCenter.default.post(name: .permissionAlertFinished, object: nil)
-      handleError(error, action: { [weak self] in
-        Task {
-          await self?.startNFCScan()
-        }
-      })
+      handleError(
+        error,
+        action: { [weak self] in
+          Task {
+            await self?.startNFCScan()
+          }
+        })
     }
   }
 
@@ -81,13 +83,19 @@ class NFCScanViewModel: ObservableObject {
 
   private var scanResult: AVBeamPackageResult?
   private var failedNFCScanAttempts = 0
-  @Injected(\.maxFailedNFCScanAttempts) private var maxFailedNFCScanAttempts
+  @ObservationIgnored @Injected(\.maxFailedNFCScanAttempts) private var maxFailedNFCScanAttempts
 
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.avBeam) private var avBeam
-  @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.avBeamNFCConfigurator) private var avBeamNFCConfigurator: AVBeamNFCConfiguratorProtocol
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.avBeam) private var avBeam
+  @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.avBeamNFCConfigurator) private var avBeamNFCConfigurator:
+    AVBeamNFCConfiguratorProtocol
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
+
+  private func continueAction(_ navigator: Navigator) {
+    navigator.navigate(to: getNextDestination())
+  }
 
   private func getNextDestination() -> EIDRequestDestinations {
     guard let response = context.autoVerificationResponse else {
@@ -104,51 +112,6 @@ class NFCScanViewModel: ObservableObject {
 
     return .avIntroSelfieVideo
   }
-
-  private func handleError(_ error: Error, action: (() -> Void)? = nil) {
-    analytics.log(error)
-    destination = .error(.retry(error, { navigator in
-      navigator.pop()
-      action?() }))
-  }
-
-  private func handleScanFailure(_ error: Error) {
-    analytics.log(error)
-    failedNFCScanAttempts += 1
-    destination = .error(nfcFailureDataset(error))
-  }
-
-  private func nfcFailureDataset(_ error: Error) -> ErrorDataset {
-    if failedNFCScanAttempts >= maxFailedNFCScanAttempts {
-      return .nfcScanFailedRetryOrContinue(
-        error,
-        continueAction: { [weak self] navigator in
-          self?.continueAction(navigator)
-        },
-        retryAction: { [weak self] navigator in
-          self?.retryAction(navigator)
-        })
-    }
-
-    return .nfcScanRetryOnly(error) { [weak self] navigator in
-      self?.retryAction(navigator)
-    }
-  }
-
-  private func retryAction(_ navigator: Navigator) {
-    analytics.log(EIDRequestAnalyticsEvent.nfcScanRetry(attemptNumber: failedNFCScanAttempts + 1))
-    navigator.pop()
-    Task {
-      await startNFCScan()
-    }
-  }
-
-  private func continueAction(_ navigator: Navigator) {
-    analytics.log(EIDRequestAnalyticsEvent.nfcScanSkipped(afterAttempts: failedNFCScanAttempts))
-    failedNFCScanAttempts = 0
-    navigator.navigate(to: getNextDestination())
-  }
-
 }
 
 // MARK: AVBeamMessageDelegate
@@ -177,7 +140,9 @@ extension NFCScanViewModel: AVBeamMessageDelegate {
 extension NFCScanViewModel: AVBeamNfcDelegate {
   func didCompleteNfcScan(packageResult: AVBeamPackageResult) {
     NotificationCenter.default.post(name: .permissionAlertFinished, object: nil)
+
     guard packageResult.data.nfcError == .none else {
+      if packageResult.data.nfcError == .nfcSessionInvalidated { return } // nfc timeout - do nothing.
       return handleScanFailure(packageResult.data.nfcError)
     }
 
@@ -194,38 +159,80 @@ extension NFCScanViewModel: AVBeamNfcDelegate {
   }
 }
 
-extension ErrorDataset {
-  static func nfcScanRetryOnly(_ error: Error, _ retryAction: @escaping (Navigator) -> Void) -> ErrorDataset {
-    ErrorDataset(nfcScanErrorContents(error: error), actions: [
-      .primary(L10n.tkEidRequestNfcScanErrorButtonRetry, retryAction),
-    ])
+// MARK: - Error Handling
+
+extension NFCScanViewModel {
+
+  private func handleError(_ error: Error, action: (() -> Void)? = nil) {
+    destination = .error(errorDataset(for: error, action: action))
   }
 
-  static func nfcScanFailedRetryOrContinue(
-    _ error: Error,
-    continueAction: @escaping (Navigator) -> Void,
-    retryAction: @escaping (Navigator) -> Void)
-    -> ErrorDataset
-  {
-    ErrorDataset(nfcScanFailedContents(error: error), actions: [
-      .primary(L10n.tkEidRequestNfcScanErrorFailedButtonContinue, continueAction),
-      .secondary(L10n.tkEidRequestNfcScanErrorFailedButtonRetry, retryAction),
-    ])
+  private func handleScanFailure(_ error: Error) {
+    analytics.log(error)
+    failedNFCScanAttempts += 1
+
+    destination = .error(scanFailureDataset(for: error))
   }
 
-  static func nfcScanErrorContents(error: Error) -> [InformationView2.ContentType] {
-    [
-      .title(L10n.tkEidRequestNfcScanErrorPrimary),
-      .body(L10n.tkEidRequestNfcScanErrorSecondary),
-      .captionErrorDescription(error),
-    ]
+  private func nfcFailureDataset(_ error: Error) -> ErrorDataset {
+    guard failedNFCScanAttempts >= maxFailedNFCScanAttempts else {
+      return .NFC.retry(error) { [weak self] navigator in
+        self?.retryNFCScan(navigator)
+      }
+    }
+
+    return .NFC.retryOrContinue(
+      error,
+      continueAction: { [weak self] navigator in
+        self?.continueAction(navigator)
+      },
+      retryAction: { [weak self] navigator in
+        self?.retryNFCScan(navigator)
+      })
+
   }
 
-  static func nfcScanFailedContents(error: Error) -> [InformationView2.ContentType] {
-    [
-      .title(L10n.tkEidRequestNfcScanErrorFailedPrimary),
-      .body(L10n.tkEidRequestNfcScanErrorFailedSecondary),
-      .captionErrorDescription(error),
-    ]
+  private func scanFailureDataset(for error: Error) -> ErrorDataset {
+    guard let avBeamError = error as? AVBeamError else {
+      return nfcFailureDataset(error)
+    }
+
+    switch avBeamError.errorType {
+    case .critical:
+      return .NFC.critical(avBeamError, closeAction: closeHandler())
+    case .error,
+         .warning:
+      return nfcFailureDataset(avBeamError)
+    }
+  }
+
+  private func retryNFCScan(_ navigator: Navigator) {
+    analytics.log(EIDRequestAnalyticsEvent.nfcScanRetry(attemptNumber: failedNFCScanAttempts + 1))
+    navigator.pop()
+    Task {
+      await startNFCScan()
+    }
+  }
+
+  private func retryHandler(_ action: (() -> Void)? = nil) -> (Navigator) -> Void {
+    { navigator in
+      navigator.pop()
+      action?()
+    }
+  }
+
+  private func errorDataset(for error: Error, action: (() -> Void)? = nil) -> ErrorDataset {
+    guard let avBeamError = error as? AVBeamError else {
+      return ErrorDataset.retry(error, retryHandler(action))
+    }
+
+    return .avBeamError(
+      avBeamError, retryAction: retryHandler(action), closeAction: closeHandler())
+  }
+
+  private func closeHandler() -> () -> Void {
+    { [weak self] in
+      self?.coordinator.cleanup()
+    }
   }
 }

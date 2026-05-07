@@ -15,11 +15,10 @@ struct SetupView: View {
       primary: L10n.tkEidRequestAttestationPrimary,
       secondary: L10n.tkEidRequestAttestationSecondary,
       action: LoadingView.Action(
-        action: viewModel.cancelInitialization,
+        action: { viewModel.cancelInitialization(navigator) },
         buttonText: L10n.tkGlobalCancel),
       progressViewStyle: .infinite)
       .navigate(to: $viewModel.destination)
-      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .onFirstAppear {
         Task {
           await viewModel.fetchAttestations()
@@ -29,7 +28,9 @@ struct SetupView: View {
 
   // MARK: Private
 
-  @InjectedObject(\.setupViewModel) private var viewModel
+  @Environment(\.navigator) private var navigator
+
+  @InjectedObservable(\.setupViewModel) private var viewModel: SetupViewModel
 }
 
 #Preview {

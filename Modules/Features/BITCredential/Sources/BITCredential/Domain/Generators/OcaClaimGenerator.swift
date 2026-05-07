@@ -12,7 +12,7 @@ import Spyable
 
 @Spyable
 protocol OcaClaimGeneratorProtocol {
-  func generate(for anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute) -> CredentialClaim
+  func generate(for anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute) throws -> CredentialClaim
 }
 
 // MARK: - OcaClaimGenerator
@@ -21,7 +21,7 @@ struct OcaClaimGenerator: OcaClaimGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute) -> CredentialClaim {
+  func generate(for anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute) throws -> CredentialClaim {
     var value = anyClaim.value?.rawValue
     var valueType: ValueType?
     var valueDisplayInfo: String?
@@ -34,10 +34,17 @@ struct OcaClaimGenerator: OcaClaimGeneratorProtocol {
       valueDisplayInfo = result?.format.rawValue
       valueType = .dateTime
     }
+
+    let finalValueType = valueType ?? ValueType(ocaAttribute)
+
+    if finalValueType.isImage, let value {
+      try imageValidator.validate(base64Image: value, against: finalValueType)
+    }
+
     return CredentialClaim(
-      key: anyClaim.key.replacing("$.", with: ""),
+      path: anyClaim.path,
       value: value,
-      valueType: valueType?.rawValue ?? ValueType(ocaAttribute).rawValue,
+      valueType: finalValueType.rawValue,
       valueDisplayInfo: valueDisplayInfo,
       order: ocaAttribute.order ?? Int(Int16.max),
       isSensitive: ocaAttribute.isSensitive,
@@ -46,6 +53,7 @@ struct OcaClaimGenerator: OcaClaimGeneratorProtocol {
 
   // MARK: Private
 
+  @Injected(\.imageValidator) private var imageValidator: ImageValidatorProtocol
   @Injected(\.overlayAttributeDateParser) private var overlayAttributeDateParser: OverlayAttributeDateParserProtocol
 
   private func parseDataURL(_ string: String) -> (ValueType, String)? {

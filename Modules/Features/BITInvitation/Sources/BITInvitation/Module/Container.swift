@@ -1,41 +1,31 @@
 import BITCredential
 import BITCredentialShared
+import BITPresentation
 import Factory
 import Foundation
+import NavigatorUI
 
 @MainActor
 extension Container {
-
   // MARK: - Credential offer
 
-  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State, router: CredentialOfferInternalRoutes, delegate: InvitationDelegate?), CredentialOfferViewModel> {
-    self { CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2, router: $3, delegate: $4) }
-  }
-
-  var credentialOfferModule: ParameterFactory<(VerifiableCredential, TrustInformation?, InvitationDelegate?), CredentialOfferModule> {
-    self { CredentialOfferModule(credential: $0, trustInformation: $1, delegate: $2) }
+  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State), CredentialOfferViewModel> {
+    self { @MainActor in CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2) }
   }
 
   // MARK: - Camera
 
-  var cameraPermissionViewModel: ParameterFactory<(InvitationRouterRoutes, InvitationDelegate?), CameraPermissionViewModel> {
-    self { CameraPermissionViewModel(router: $0, delegate: $1) }
+  var cameraViewModel: Factory<CameraViewModel> {
+    self { @MainActor in CameraViewModel() }
   }
 
-  var cameraViewModel: ParameterFactory<(InvitationRouterRoutes, InvitationDelegate?), CameraViewModel> {
-    self { CameraViewModel(router: $0, delegate: $1) }
+  var deeplinkViewModel: ParameterFactory<URL, DeeplinkViewModel> {
+    self { @MainActor in DeeplinkViewModel(url: $0) }
   }
 
-  var deeplinkViewModel: ParameterFactory<(URL, InvitationRouterRoutes), DeeplinkViewModel> {
-    self { DeeplinkViewModel(url: $0, router: $1) }
+  var proximityEngagementViewModel: Factory<ProximityEngagementViewModel> {
+    self { @MainActor in ProximityEngagementViewModel() }
   }
-
-  // MARK: - Beta ID
-
-  var betaIdViewModel: ParameterFactory<InvitationRouterRoutes, BetaIdViewModel> {
-    self { BetaIdViewModel(router: $0) }
-  }
-
 }
 
 extension Container {
@@ -43,36 +33,40 @@ extension Container {
   // MARK: Public
 
   public var fetchPresentationRequestUseCase: Factory<FetchPresentationRequestUseCaseProtocol> {
-    self { FetchPresentationRequestUseCase() }
+    self { @MainActor in FetchPresentationRequestUseCase() }
   }
 
   public var invitationErrorMapper: Factory<InvitationErrorMapping> {
-    self { InvitationErrorMapper() }
+    self { @MainActor in InvitationErrorMapper() }
   }
 
   public var invitationRouter: Factory<InvitationRouter> {
-    self { InvitationRouter() }
+    self { @MainActor in InvitationRouter() }
+  }
+
+  public var startProximityEngagementUseCase: Factory<StartProximityEngagementUseCaseProtocol> {
+    self { @MainActor in StartProximityEngagementUseCase() }
   }
 
   public var delayAfterAcceptingCredential: Factory<UInt64> {
-    self { 2_000_000_000 }
+    self { @MainActor in 2_000_000_000 }
+  }
+
+  public var invitationExternalViewProvider: Factory<(any NavigationViewProviding<InvitationExternalDestinations>)?> {
+    self { @MainActor in nil }
   }
 
   // MARK: Internal
 
-  var credentialOfferWrongDataViewModel: ParameterFactory<CredentialOfferInternalRoutes, CredentialOfferWrongDataViewModel> {
-    self { CredentialOfferWrongDataViewModel(router: $0) }
-  }
-
-  var credentialOfferRouter: Factory<CredentialOfferRouter> {
-    self { CredentialOfferRouter() }
+  var requestBluetoothPermissionUseCase: Factory<RequestBluetoothPermissionUseCaseProtocol> {
+    self { @MainActor in RequestBluetoothPermissionUseCase() }
   }
 
   var scannerDelay: Factory<UInt64> {
-    self { 2_000_000_000 }
+    self { @MainActor in 2_000_000_000 }
   }
 
   var getCredentialsCountUseCase: Factory<GetCredentialsCountUseCaseProtocol> {
-    self { GetCredentialsCountUseCase() }
+    self { @MainActor in GetCredentialsCountUseCase() }
   }
 }

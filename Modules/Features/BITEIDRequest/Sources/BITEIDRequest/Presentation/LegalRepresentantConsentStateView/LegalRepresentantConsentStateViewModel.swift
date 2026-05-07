@@ -5,7 +5,8 @@ import Factory
 import SwiftUI
 
 @MainActor
-class LegalRepresentantConsentStateViewModel: ObservableObject {
+@Observable
+class LegalRepresentantConsentStateViewModel {
 
   // MARK: Lifecycle
 
@@ -16,8 +17,8 @@ class LegalRepresentantConsentStateViewModel: ObservableObject {
   // MARK: Internal
 
   let state: RequestCaseViewState
-  @Published var isNavigationCloseTriggered = false
-  @Published var destination: EIDRequestDestinations?
+  var isNavigationCloseTriggered = false
+  var destination: EIDRequestDestinations?
 
   var image: Image {
     switch state {
@@ -27,9 +28,10 @@ class LegalRepresentantConsentStateViewModel: ObservableObject {
          .autoVerification,
          .cancelled,
          .closed,
-         .declined,
          .expired,
          .issuing,
+         .readyForFinalEntitlementCheck,
+         .refused,
          .unknown,
          .walletPairing: Assets.closeCircle.swiftUIImage
     }
@@ -44,8 +46,9 @@ class LegalRepresentantConsentStateViewModel: ObservableObject {
          .autoVerification,
          .cancelled,
          .closed,
-         .declined,
          .issuing,
+         .readyForFinalEntitlementCheck,
+         .refused,
          .unknown,
          .walletPairing: ""
     }
@@ -59,9 +62,10 @@ class LegalRepresentantConsentStateViewModel: ObservableObject {
          .autoVerification,
          .cancelled,
          .closed,
-         .declined,
          .issuing,
+         .readyForFinalEntitlementCheck,
          .readyForOnlineSession,
+         .refused,
          .unknown,
          .walletPairing: ""
     }
@@ -77,7 +81,7 @@ class LegalRepresentantConsentStateViewModel: ObservableObject {
   func primaryAction() {
     switch state {
     case .readyForOnlineSession where state.isLegalRepresentantConsentVerified:
-      destination = .avIdentityCheck
+      destination = .avIdentityCheck(caseId: state.id)
     default:
       close()
     }
@@ -85,7 +89,7 @@ class LegalRepresentantConsentStateViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func close() {
     coordinator.cleanup()

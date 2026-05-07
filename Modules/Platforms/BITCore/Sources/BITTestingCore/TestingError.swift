@@ -1,19 +1,17 @@
-#if DEBUG
 import Foundation
 
 // MARK: - TestingError
 
-enum TestingError: Error {
+public enum TestingError: Error {
   case error
 }
 
 // MARK: CustomStringConvertible
 
 extension TestingError: CustomStringConvertible {
-  var description: String {
+  public var description: String {
     switch self {
     case .error: "error"
     }
   }
 }
-#endif

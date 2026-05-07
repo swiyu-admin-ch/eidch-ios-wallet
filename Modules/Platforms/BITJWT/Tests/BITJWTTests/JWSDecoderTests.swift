@@ -87,6 +87,23 @@ final class JWSDecoderTests: XCTestCase {
     }
   }
 
+  func testDecode_ValidJWSWithAlternativeAcceptedType_ReturnsJWS() throws {
+    let data = RegisteredClaimsJWT.Mock.invalidTypeData
+
+    let jws = try decoder.decode(TestAlternativeTypePayload.self, from: data)
+
+    XCTAssertEqual(jws.header.type, "invalid")
+    XCTAssertEqual(jws.payload.test, "value")
+  }
+
+  func testDecode_MissingTypeWithAcceptedTypes_ThrowsError() throws {
+    let data = RegisteredClaimsJWT.Mock.noTypeData
+
+    XCTAssertThrowsError(try decoder.decode(TestTypedEmptyPayload.self, from: data)) { error in
+      XCTAssertEqual(error as? JWSDecoderError, .invalidType)
+    }
+  }
+
   // MARK: Private
 
   private var decoder = JWSDecoder()
@@ -186,6 +203,80 @@ private struct TestEmptyPayload: JWT {
     nil
   }
 
+}
+
+// MARK: - TestAlternativeTypePayload
+
+private struct TestAlternativeTypePayload: JWT {
+
+  enum CodingKeys: String, CodingKey {
+    case test
+  }
+
+  let test: String
+
+  let type: String? = "test"
+
+  var acceptedTypes: [String]? {
+    [type, "invalid"].compactMap { $0 }
+  }
+
+  var issuer: String? {
+    nil
+  }
+
+  var audience: String? {
+    nil
+  }
+
+  var subject: String? {
+    nil
+  }
+
+  var issuedAt: Date? {
+    nil
+  }
+
+  var expiredAt: Date? {
+    nil
+  }
+
+  var activatedAt: Date? {
+    nil
+  }
+}
+
+// MARK: - TestTypedEmptyPayload
+
+private struct TestTypedEmptyPayload: JWT {
+
+  enum CodingKeys: CodingKey {}
+
+  let type: String? = "test"
+
+  var issuer: String? {
+    nil
+  }
+
+  var audience: String? {
+    nil
+  }
+
+  var subject: String? {
+    nil
+  }
+
+  var issuedAt: Date? {
+    nil
+  }
+
+  var expiredAt: Date? {
+    nil
+  }
+
+  var activatedAt: Date? {
+    nil
+  }
 }
 
 // swiftlint: enable force_unwrapping force_cast

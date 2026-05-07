@@ -6,12 +6,6 @@ import Factory
 import Foundation
 import Spyable
 
-// MARK: - SubmitNonComplianceReportUseCaseError
-
-enum SubmitNonComplianceReportUseCaseError: Error {
-  case linkedCredentialError
-}
-
 // MARK: - SubmitNonComplianceReportUseCaseProtocol
 
 @Spyable
@@ -20,7 +14,7 @@ protocol SubmitNonComplianceReportUseCaseProtocol {
     category: NonComplianceCategory,
     description: String,
     email: String?,
-    activity: Activity) async throws
+    activityId: UUID) async throws
 }
 
 // MARK: - SubmitNonComplianceReportUseCase
@@ -33,18 +27,16 @@ struct SubmitNonComplianceReportUseCase: SubmitNonComplianceReportUseCaseProtoco
     category: NonComplianceCategory,
     description: String,
     email: String?,
-    activity: Activity) async throws
+    activityId: UUID) async throws
   {
-    guard let credential = activity.credential else {
-      throw SubmitNonComplianceReportUseCaseError.linkedCredentialError
-    }
-    let report = createReport(category: category, description: description, email: email, activity: activity, credential: credential)
+    let activity = try nonComplianceRepository.getActivity(activityId)
+    let report = createReport(category: category, description: description, email: email, activity: activity)
 
     guard userSession.isLoggedIn, let context = userSession.context else {
       throw UserSessionError.notLoggedIn
     }
     // ensuring existing client attestation
-    _ = try await fetchClientAttestationUseCase.execute(context)
+    _ = try await clientAttestationRepository.get(using: context)
 
     try await nonComplianceRepository.create(report)
   }
@@ -52,23 +44,21 @@ struct SubmitNonComplianceReportUseCase: SubmitNonComplianceReportUseCaseProtoco
   // MARK: Private
 
   @Injected(\.nonComplianceRepository) private var nonComplianceRepository: NonComplianceRepositoryProtocol
-  @Injected(\.fetchClientAttestationUseCase) private var fetchClientAttestationUseCase: FetchClientAttestationUseCaseProtocol
+  @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
   @Injected(\.userSession) private var userSession: Session
 
   private func createReport(
     category: NonComplianceCategory,
     description: String,
     email: String?,
-    activity: Activity,
-    credential: VerifiableCredential)
+    activity: NonComplianceActivity)
     -> NonComplianceReport
   {
     switch category {
     case .excessiveDataRequest: NonComplianceExcessiveDataReport(
         description: description,
         email: email,
-        activity: activity,
-        credential: credential)
+        activity: activity)
     }
   }
 }

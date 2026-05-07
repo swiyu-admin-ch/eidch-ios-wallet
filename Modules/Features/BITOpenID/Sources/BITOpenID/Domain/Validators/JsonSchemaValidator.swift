@@ -1,3 +1,4 @@
+import BITCore
 import Foundation
 import JsonSchemaValidator
 import Spyable
@@ -13,8 +14,8 @@ struct JsonSchemaValidator: JsonSchemaValidatorProtocol {
     return try Validator(schema: schemaString).isValid(instance: jsonInstanceString)
   }
 
-  func validate(dictionary: [String: Any?], with jsonSchema: Data) throws -> Bool {
-    let jsonData = try JSONSerialization.data(withJSONObject: dictionary)
+  func validate(json: JSON, with jsonSchema: Data) throws -> Bool {
+    let jsonData = try JSONSerialization.data(withJSONObject: json)
     guard
       let jsonString = String(data: jsonData, encoding: .utf8),
       let schemaString = String(data: jsonSchema, encoding: .utf8) else { return false }
@@ -43,10 +44,10 @@ public protocol JsonSchemaValidatorProtocol {
   /// Validates the provided JSON object against the given JSON Schema
   ///
   /// - Parameters:
-  ///   - dicationary: The JSON object to be validated.
+  ///   - json: The JSON object to be validated.
   ///   - jsonSchema: The raw JSON schema to be used for validation.
   ///
   /// - Returns: `true` if the JSON object is valid according to the schema;
   ///             otherwise `false`.
-  func validate(dictionary: [String: Any?], with jsonSchema: Data) throws -> Bool
+  func validate(json: JSON, with jsonSchema: Data) throws -> Bool
 }

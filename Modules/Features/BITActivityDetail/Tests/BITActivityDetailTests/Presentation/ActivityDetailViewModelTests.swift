@@ -7,6 +7,7 @@ import XCTest
 @testable import BITCredentialShared
 @testable import BITL10n
 @testable import BITTestingCore
+@testable import BITTheming
 
 @MainActor
 final class ActivityDetailViewModelTests: XCTestCase {
@@ -17,53 +18,33 @@ final class ActivityDetailViewModelTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
     registerMocks()
-    viewModel = ActivityDetailViewModel(activityMock, credentialId: credentialIdMock)
+    viewModel = ActivityDetailViewModel(activityIdMock)
     createSuccessState()
   }
 
-  func testFetchCredential_activityWithClaims_stateIsResultWithCredential() async {
-    await viewModel.fetchCredential()
+  func testOnColorScheme_success_stateIsResult() async {
+    await viewModel.send(.onColorSchemeChange(colorScheme: colorSchemeMock))
 
-    if case .result(let activity, let credential) = viewModel.state {
-      XCTAssertEqual(activity.activity, activityMock)
-      XCTAssertNotNil(credential?.name)
-      XCTAssertEqual(credential?.clusters.count, 1)
+    if case .result(let result) = viewModel.state {
+      XCTAssertEqual(result.activity.id, activityDetailMock.id)
+      XCTAssertEqual(result.credential.name, activityDetailMock.credential.displays.first?.name)
+      XCTAssertEqual(result.credential.clusters.count, 1)
+      XCTAssertEqual(result.actor.name, activityDetailMock.actorDisplay?.name)
     } else {
       XCTFail("Expected result state")
     }
   }
 
-  func testFetchCredential_activityNoClaims_stateIsResultWithCredentialAndNoClusters() async {
-    let activityMock = Activity.Mock.presentationAcceptedTrusted
-    viewModel = ActivityDetailViewModel(activityMock, credentialId: credentialIdMock)
+  func testOnColorScheme_success_passesArguments() async {
+    await viewModel.send(.onColorSchemeChange(colorScheme: colorSchemeMock))
 
-    await viewModel.fetchCredential()
-
-    if case .result(let activity, let credential) = viewModel.state {
-      XCTAssertEqual(activity.activity, activityMock)
-      XCTAssertNotNil(credential?.name)
-      XCTAssertTrue(credential?.clusters.isEmpty == true)
-    } else {
-      XCTFail("Expected result state")
-    }
+    XCTAssertEqual(getActivityDetailUseCaseSpy.callAsFunctionReceivedActivityId, activityIdMock)
   }
 
-  func testFetchCredential_deferredCredential_stateIsError() async {
-    getCredentialUseCaseSpy.callAsFunctionIdReturnValue = DeferredCredential.Mock.sample
+  func testOnColorScheme_useCaseThrowsError_stateIsError() async {
+    getActivityDetailUseCaseSpy.callAsFunctionThrowableError = TestingError.error
 
-    await viewModel.fetchCredential()
-
-    if case .error(let error) = viewModel.state {
-      XCTAssertEqual(error as? ActivityDetailViewModelError, .unsupportedCredentialType)
-    } else {
-      XCTFail("Expected error state")
-    }
-  }
-
-  func testFetchCredential_useCaseThrowsError_stateIsError() async {
-    getCredentialUseCaseSpy.callAsFunctionIdThrowableError = TestingError.error
-
-    await viewModel.fetchCredential()
+    await viewModel.send(.onColorSchemeChange(colorScheme: colorSchemeMock))
 
     if case .error(let error) = viewModel.state {
       XCTAssertEqual(error as? TestingError, .error)
@@ -72,71 +53,68 @@ final class ActivityDetailViewModelTests: XCTestCase {
     }
   }
 
-  func testShowDeleteActivityConfirmation_deleteConfirmationPresented() {
+  func testDeleteActivity_deleteConfirmationPresented() async {
     XCTAssertFalse(viewModel.isDeleteConfirmationPresented)
 
-    viewModel.showDeleteActivityConfirmation()
+    await viewModel.send(.deleteActivity)
 
     XCTAssertTrue(viewModel.isDeleteConfirmationPresented)
   }
 
-  func testDeleteActivity_success_hidesDeleteConfirmation() {
+  func testActivityDeletionConfirmed_success_hidesDeleteConfirmation() async {
     viewModel.isDeleteConfirmationPresented = true
 
-    viewModel.deleteActivity()
+    await viewModel.send(.activityDeletionConfirmed)
 
     XCTAssertFalse(viewModel.isDeleteConfirmationPresented)
     XCTAssertEqual(deleteActivityUseCaseSpy.callAsFunctionCallsCount, 1)
-    XCTAssertEqual(deleteActivityUseCaseSpy.callAsFunctionReceivedActivityId, activityMock.id)
+    XCTAssertEqual(deleteActivityUseCaseSpy.callAsFunctionReceivedActivityId, activityIdMock)
   }
 
-  func testDeleteActivity_useCaseThrowsError_justRuns() {
+  func testActivityDeletionConfirmed_useCaseThrowsError_justRuns() async {
     viewModel.isDeleteConfirmationPresented = true
     deleteActivityUseCaseSpy.callAsFunctionThrowableError = TestingError.error
 
-    viewModel.deleteActivity()
+    await viewModel.send(.activityDeletionConfirmed)
 
     XCTAssertFalse(viewModel.isDeleteConfirmationPresented)
   }
 
-  func testShowNonComplianceReportSent_setsToast() {
-    XCTAssertNil(viewModel.toastMessage)
-    XCTAssertFalse(viewModel.isToastPresented)
+  func testNonComplianceReportSent_setsToast() async {
+    XCTAssertNil(viewModel.toast)
 
-    viewModel.showNonComplianceReportSent()
+    await viewModel.send(.nonComplianceReportSent)
 
-    XCTAssertEqual(viewModel.toastMessage, L10n.tkActivityActivityListNonComplianceReportSentTitle)
-    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertNotNil(viewModel.toast)
   }
 
-  func testClearToast_resetsToastState() {
-    viewModel.showNonComplianceReportSent()
+  func testClearToast_resetsToastState() async {
+    viewModel.toast = Toast("test")
 
-    viewModel.clearToast()
+    await viewModel.send(.clearToast)
 
-    XCTAssertNil(viewModel.toastMessage)
-    XCTAssertFalse(viewModel.isToastPresented)
+    XCTAssertNil(viewModel.toast)
   }
 
   // MARK: Private
 
-  private let credentialIdMock = UUID()
-  private let activityMock = Activity.Mock.issueTrusted
-  private let credentialMock = VerifiableCredential.Mock.sample
+  private let colorSchemeMock = "colorScheme"
+  private let activityIdMock = UUID()
+  private let activityDetailMock = ActivityDetail.Mock.trustedIssuance
 
-  private var getCredentialUseCaseSpy: GetCredentialUseCaseProtocolSpy!
+  private var getActivityDetailUseCaseSpy: GetActivityDetailUseCaseProtocolSpy!
   private var deleteActivityUseCaseSpy: DeleteActivityUseCaseProtocolSpy!
 
   private var viewModel: ActivityDetailViewModel!
 
   private func registerMocks() {
-    getCredentialUseCaseSpy = GetCredentialUseCaseProtocolSpy()
+    getActivityDetailUseCaseSpy = GetActivityDetailUseCaseProtocolSpy()
     deleteActivityUseCaseSpy = DeleteActivityUseCaseProtocolSpy()
-    Container.shared.getCredentialUseCase.register { self.getCredentialUseCaseSpy }
-    Container.shared.deleteActivityUseCase.register { self.deleteActivityUseCaseSpy }
+    Container.shared.getActivityDetailUseCase.register { @MainActor in self.getActivityDetailUseCaseSpy }
+    Container.shared.deleteActivityUseCase.register { @MainActor in self.deleteActivityUseCaseSpy }
   }
 
   private func createSuccessState() {
-    getCredentialUseCaseSpy.callAsFunctionIdReturnValue = credentialMock
+    getActivityDetailUseCaseSpy.callAsFunctionReturnValue = activityDetailMock
   }
 }

@@ -3,7 +3,8 @@ import SwiftUI
 
 // MARK: - NonComplianceDescriptionViewModel
 
-class NonComplianceDescriptionViewModel: ObservableObject {
+@Observable
+class NonComplianceDescriptionViewModel {
 
   // MARK: Lifecycle
 
@@ -16,9 +17,9 @@ class NonComplianceDescriptionViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published private(set) var validation = NonComplianceFormFieldValidation.valid
+  private(set) var validation = NonComplianceFormFieldValidation.valid
 
-  @Published var value: String {
+  var value: String {
     didSet {
       validation = nonComplianceFormValidator.validate(value, for: .description)
     }
@@ -26,6 +27,6 @@ class NonComplianceDescriptionViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.nonComplianceFormValidator) private var nonComplianceFormValidator
+  @ObservationIgnored @Injected(\.nonComplianceFormValidator) private var nonComplianceFormValidator
 
 }

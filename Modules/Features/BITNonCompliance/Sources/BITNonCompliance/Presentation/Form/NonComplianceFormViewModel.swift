@@ -7,13 +7,14 @@ import SwiftUI
 // MARK: - NonComplianceFormViewModelError
 
 enum NonComplianceFormViewModelError: Error, Equatable {
-  case activityNotFound
+  case actorDisplayNotFound
 }
 
 // MARK: - NonComplianceFormViewModel
 
 @MainActor
-class NonComplianceFormViewModel: ObservableObject {
+@Observable
+class NonComplianceFormViewModel {
 
   // MARK: Lifecycle
 
@@ -25,21 +26,21 @@ class NonComplianceFormViewModel: ObservableObject {
   // MARK: Internal
 
   enum Event {
-    case fetchActivity
+    case fetchActorDisplay
     case updateForm(NonComplianceFormCheckpointUpdate)
     case sendReport
   }
 
-  @Published private(set) var state = NonComplianceFormViewState.loading
-  @Published var destination: NonComplianceInternalDestinations?
+  private(set) var state = NonComplianceFormViewState.loading
+  var destination: NonComplianceInternalDestinations?
 
-  @Published var description = "" {
+  var description = "" {
     didSet {
       validate(.description, value: description)
     }
   }
 
-  @Published var email = "" {
+  var email = "" {
     didSet {
       validate(.email, value: email)
     }
@@ -53,7 +54,7 @@ class NonComplianceFormViewModel: ObservableObject {
 
   func send(_ event: Event) async {
     switch event {
-    case .fetchActivity: await fetchActivity()
+    case .fetchActorDisplay: await fetchActorDisplay()
     case .updateForm(let update): updateForm(update)
     case .sendReport: await sendReport()
     }
@@ -63,11 +64,11 @@ class NonComplianceFormViewModel: ObservableObject {
 
   private let category: NonComplianceCategory
   private let activityId: UUID
-  private var activity: Activity?
+  private var actorDisplay: ActivityActorDisplay?
 
-  @Injected(\.getActivityUseCase) private var getActivityUseCase
-  @Injected(\.nonComplianceFormValidator) private var nonComplianceFormValidator
-  @Injected(\.submitNonComplianceReportUseCase) private var submitNonComplianceReportUseCase
+  @ObservationIgnored @Injected(\.getActivityActorDisplayUseCase) private var getActivityActorDisplayUseCase
+  @ObservationIgnored @Injected(\.nonComplianceFormValidator) private var nonComplianceFormValidator
+  @ObservationIgnored @Injected(\.submitNonComplianceReportUseCase) private var submitNonComplianceReportUseCase
 
   private func updateForm(_ update: NonComplianceFormCheckpointUpdate) {
     switch update.field {
@@ -78,29 +79,25 @@ class NonComplianceFormViewModel: ObservableObject {
 
   private func sendReport() async {
     do {
-      guard let activity else {
-        throw NonComplianceFormViewModelError.activityNotFound
-      }
       try await submitNonComplianceReportUseCase.execute(
         category: category,
         description: description,
         email: email.isEmpty ? nil : email,
-        activity: activity)
+        activityId: activityId)
       state = .final
     } catch {
       onError(error)
     }
   }
 
-  private func fetchActivity() async {
+  private func fetchActorDisplay() async {
     if case .result = state { return }
     do {
-      activity = try getActivityUseCase(activityId)
-      let display = activity?.actorDisplays.findDisplayWithFallback()
-      let resultState = NonComplianceFormViewState.Result(actorImage: display?.image, actorName: display?.name, isSendingEnabled: false, validations: [:])
+      actorDisplay = try getActivityActorDisplayUseCase(activityId)
+      let resultState = NonComplianceFormViewState.Result(actorImage: actorDisplay?.image, actorName: actorDisplay?.name, isSendingEnabled: false, validations: [:])
       state = .result(resultState)
     } catch {
-      state = .error(.activityNotFound)
+      state = .error(.actorDisplayNotFound)
     }
   }
 

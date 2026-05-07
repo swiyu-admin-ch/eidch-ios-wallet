@@ -6,6 +6,12 @@ import SwiftUI
 
 struct AVWelcomeView: View {
 
+  // MARK: Lifecycle
+
+  init(caseId: String) {
+    context.caseId = caseId
+  }
+
   // MARK: Internal
 
   var body: some View {
@@ -19,27 +25,19 @@ struct AVWelcomeView: View {
         .caption(L10n.tkEidRequestAutoVerificationWelcomeTertiary),
       ],
       actions: [
-        .primary(L10n.tkEidRequestAutoVerificationWelcomeButton, identifier: "primaryButton", { _ in
-          viewModel.primaryAction()
-        }),
+        .primary(L10n.tkEidRequestAutoVerificationWelcomeButton, identifier: "primaryButton") { navigator in
+          navigator.push(EIDRequestDestinations.walletPairing)
+        },
       ])
-      .navigate(to: $viewModel.destination)
       .defaultEidRequestToolbar()
+      .navigationCheckpoint(EIDRequestCheckpoints.start)
   }
 
   // MARK: Private
 
-  private enum AccessibilityIdentifier: String {
-    case primaryText
-    case secondaryText
-    case tertiaryText
-    case tertiaryTipText
-  }
-
-  @InjectedObject(\.avWelcomeViewModel) private var viewModel
-
+  @Injected(\.eidRequestContext) private var context
 }
 
 #Preview {
-  AVWelcomeView()
+  AVWelcomeView(caseId: "caseId")
 }

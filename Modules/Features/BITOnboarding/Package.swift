@@ -7,7 +7,7 @@ let package = Package(
   name: "BITOnboarding",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -15,7 +15,7 @@ let package = Package(
       targets: ["BITOnboarding"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITAnalytics"),
@@ -42,5 +42,9 @@ let package = Package(
       resources: [.process("Resources")]),
     .testTarget(
       name: "BITOnboardingTests",
-      dependencies: ["BITOnboarding"]),
+      dependencies: [
+        "BITOnboarding",
+        .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITTestingCore", package: "BITCore"),
+      ]),
   ])

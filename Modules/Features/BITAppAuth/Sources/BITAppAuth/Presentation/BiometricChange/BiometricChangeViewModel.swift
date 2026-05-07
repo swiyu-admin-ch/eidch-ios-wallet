@@ -1,11 +1,11 @@
 import BITCore
 import BITL10n
-import Combine
 import Factory
 import SwiftUI
 
 @MainActor
-class BiometricChangeViewModel: ObservableObject, Vibrating {
+@Observable
+class BiometricChangeViewModel: Vibrating {
 
   // MARK: Lifecycle
 
@@ -26,11 +26,11 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
 
   var router: BiometricChangeRouterRoutes
 
-  @Published var inputFieldMessage: String?
-  @Published var attempts = 0
-  @Published var inputFieldState = InputFieldState.normal
-  @Published var biometricType = BiometricType.none
-  @Published var state = State.password
+  var inputFieldMessage: String?
+  var attempts = 0
+  var inputFieldState = InputFieldState.normal
+  var biometricType = BiometricType.none
+  var state = State.password
 
   var isBiometricEnabled = false
 
@@ -42,7 +42,7 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
     pinCode.count >= pinCodeMinimumSize
   }
 
-  @Published var pinCode = "" {
+  var pinCode = "" {
     didSet {
       guard userDidRequestValidation else { return }
       inputFieldState = .normal
@@ -80,20 +80,18 @@ class BiometricChangeViewModel: ObservableObject, Vibrating {
   // MARK: Private
 
   private var userDidRequestValidation = false
-  private var bag = Set<AnyCancellable>()
+  @ObservationIgnored @Injected(\.getUniquePassphraseUseCase) private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocol
+  @ObservationIgnored @Injected(\.lockWalletUseCase) private var lockWalletUseCase: LockWalletUseCaseProtocol
+  @ObservationIgnored @Injected(\.registerLoginAttemptCounterUseCase) private var registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocol
+  @ObservationIgnored @Injected(\.getLoginAttemptCounterUseCase) private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocol
+  @ObservationIgnored @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
+  @ObservationIgnored @Injected(\.attemptsLimit) private var attemptsLimit: Int
 
-  @Injected(\.getUniquePassphraseUseCase) private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocol
-  @Injected(\.lockWalletUseCase) private var lockWalletUseCase: LockWalletUseCaseProtocol
-  @Injected(\.registerLoginAttemptCounterUseCase) private var registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocol
-  @Injected(\.getLoginAttemptCounterUseCase) private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocol
-  @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
-  @Injected(\.attemptsLimit) private var attemptsLimit: Int
-
-  @Injected(\.hasBiometricAuthUseCase) private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocol
-  @Injected(\.changeBiometricStatusUseCase) private var changeBiometricStatusUseCase: ChangeBiometricStatusUseCaseProtocol
-  @Injected(\.isBiometricUsageAllowedUseCase) private var isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocol
-  @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
-  @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
+  @ObservationIgnored @Injected(\.hasBiometricAuthUseCase) private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocol
+  @ObservationIgnored @Injected(\.changeBiometricStatusUseCase) private var changeBiometricStatusUseCase: ChangeBiometricStatusUseCaseProtocol
+  @ObservationIgnored @Injected(\.isBiometricUsageAllowedUseCase) private var isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocol
+  @ObservationIgnored @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
+  @ObservationIgnored @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
 
   private var attemptLeft: Int {
     attemptsLimit - attempts

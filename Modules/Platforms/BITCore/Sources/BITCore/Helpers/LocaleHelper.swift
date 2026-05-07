@@ -7,14 +7,15 @@ public typealias UserLanguageCode = String
 
 extension UserLocale {
 
-  public enum LocaleIdentifier: String {
+  public enum LocaleIdentifier: String, CaseIterable {
     case swissGerman = "de-CH"
     case swissFrench = "fr-CH"
     case swissItalian = "it-CH"
-    case swissEnglish = "en-CH"
+    case english = "en"
+    case romansh = "rm"
   }
 
-  public static var defaultLocaleIdentifier: UserLocale = LocaleIdentifier.swissGerman.rawValue
+  public static var defaultLocaleIdentifier: UserLocale = LocaleIdentifier.english.rawValue
 
 }
 

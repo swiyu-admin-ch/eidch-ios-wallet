@@ -137,10 +137,10 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_serviceInvalidError_declinesAndThrowsInvalidRequestError() async throws {
+  func testExecute_serviceInvalidRequestError_declinesAndThrowsInvalidRequestError() async throws {
     let request = PresentationRequest.plain(Self.requestObjectMock)
     createSuccessState(request: request)
-    serviceSpy.fetchFromThrowableError = FetchPresentationRequestError.invalid(request: request)
+    serviceSpy.fetchFromThrowableError = FetchPresentationRequestError.invalid(request: request, error: .invalidRequest)
 
     do {
       _ = try await useCase.execute(url: urlMock)

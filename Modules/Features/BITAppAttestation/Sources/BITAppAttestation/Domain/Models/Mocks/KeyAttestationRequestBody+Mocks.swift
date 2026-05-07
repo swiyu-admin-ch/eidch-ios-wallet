@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension KeyAttestationRequestBody: Mockable {
   struct Mock {

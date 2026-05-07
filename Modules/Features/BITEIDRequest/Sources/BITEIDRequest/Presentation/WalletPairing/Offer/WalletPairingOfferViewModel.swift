@@ -6,7 +6,8 @@ import SwiftUI
 // MARK: - WalletPairingOfferViewModel
 
 @MainActor
-class WalletPairingOfferViewModel: ObservableObject {
+@Observable
+class WalletPairingOfferViewModel {
 
   // MARK: Lifecycle
 
@@ -23,11 +24,11 @@ class WalletPairingOfferViewModel: ObservableObject {
     case result(Data)
   }
 
-  @Published var state = QRCodeViewState.loading
-  @Published var destination: EIDRequestDestinations?
-  @Published var isNavigationCloseTriggered = false
+  var state = QRCodeViewState.loading
+  var destination: EIDRequestDestinations?
+  var isNavigationCloseTriggered = false
 
-  @Injected(\.walletPairingPollingManager) var walletPairingPollingManager
+  @ObservationIgnored @Injected(\.walletPairingPollingManager) var walletPairingPollingManager
 
   func fetchPairingQRCode() async {
     guard let caseId else {
@@ -62,8 +63,8 @@ class WalletPairingOfferViewModel: ObservableObject {
 
   private var didPairWalletHandler: (Void) -> Void
 
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.fetchWalletPairingOfferUseCase) private var fetchWalletPairingOfferUseCase
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.fetchWalletPairingOfferUseCase) private var fetchWalletPairingOfferUseCase
 
   private var caseId: String? {
     context.caseId
@@ -88,7 +89,7 @@ extension WalletPairingOfferViewModel: WalletPairingPollingDelegate {
         didPairWalletHandler(Void())
         close()
       case .rejected:
-        walletPairingPollingManager.stopPolling()
+        manager.stopPolling()
         destination = .walletPairingOfferRejected(Callback(handler: { _ in }))
       case .open:
         break

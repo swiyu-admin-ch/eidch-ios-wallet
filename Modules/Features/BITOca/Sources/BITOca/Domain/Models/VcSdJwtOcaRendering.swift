@@ -15,7 +15,7 @@ public struct VcSdJwtOcaRendering: Decodable, Equatable {
 }
 
 #if DEBUG
-@testable import BITTestingCore
+@testable import BITCore
 
 extension VcSdJwtOcaRendering: Mockable {
   struct Mock {

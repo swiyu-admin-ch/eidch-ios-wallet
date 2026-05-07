@@ -1,5 +1,4 @@
 import BITCredentialShared
-import BITEntities
 import Foundation
 
 // MARK: - Activity
@@ -15,7 +14,9 @@ public struct Activity: Identifiable, Codable {
     createdAt: Date = Date(),
     actorTrust: ActorTrust,
     vcSchemaTrust: VcSchemaTrust,
+    actorCompliance: ActorComplianceStatus = .unknown,
     nonComplianceData: String? = nil,
+    nonComplianceReasonDisplays: [NonComplianceReasonDisplay] = [],
     claims: [ActivityClaim] = [],
     actorDisplays: [ActivityActorDisplay] = [])
   {
@@ -25,26 +26,11 @@ public struct Activity: Identifiable, Codable {
     self.createdAt = createdAt
     self.actorTrust = actorTrust
     self.vcSchemaTrust = vcSchemaTrust
+    self.actorCompliance = actorCompliance
     self.nonComplianceData = nonComplianceData
+    self.nonComplianceReasonDisplays = nonComplianceReasonDisplays
     self.claims = claims
     self.actorDisplays = actorDisplays
-  }
-
-  public init(_ entity: CredentialActivityEntity) {
-    var credential: VerifiableCredential?
-    if let credentialEntity = entity.credential.first {
-      credential = try? VerifiableCredential(credentialEntity)
-    }
-    self.init(
-      id: entity.id,
-      credential: credential,
-      type: ActivityType(rawValue: entity.type) ?? .issuance,
-      createdAt: entity.createdAt,
-      actorTrust: ActorTrust(rawValue: entity.actorTrust) ?? .unknown,
-      vcSchemaTrust: VcSchemaTrust(rawValue: entity.vcSchemaTrust) ?? .notProtected,
-      nonComplianceData: entity.nonComplianceData,
-      claims: Array(entity.claims.map(ActivityClaim.init)),
-      actorDisplays: Array(entity.actorDisplays.map(ActivityActorDisplay.init)))
   }
 
   // MARK: Public
@@ -55,7 +41,9 @@ public struct Activity: Identifiable, Codable {
   public var createdAt: Date
   public var actorTrust: ActorTrust
   public var vcSchemaTrust: VcSchemaTrust
+  public var actorCompliance: ActorComplianceStatus
   public var nonComplianceData: String?
+  public var nonComplianceReasonDisplays: [NonComplianceReasonDisplay]
   public var claims: [ActivityClaim]
   public var actorDisplays: [ActivityActorDisplay]
 }
@@ -85,7 +73,9 @@ extension Activity: Equatable {
       lhs.createdAt == rhs.createdAt &&
       lhs.actorTrust == rhs.actorTrust &&
       lhs.vcSchemaTrust == rhs.vcSchemaTrust &&
+      lhs.actorCompliance == rhs.actorCompliance &&
       lhs.nonComplianceData == rhs.nonComplianceData &&
+      lhs.nonComplianceReasonDisplays == rhs.nonComplianceReasonDisplays &&
       lhs.claims.allSatisfy(rhs.claims.contains) && rhs.claims.allSatisfy(lhs.claims.contains) &&
       lhs.actorDisplays.allSatisfy(rhs.actorDisplays.contains) && rhs.actorDisplays.allSatisfy(lhs.actorDisplays.contains)
   }

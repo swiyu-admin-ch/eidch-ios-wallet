@@ -35,7 +35,13 @@ public struct JWSDecoder: JWSDecoderProtocol {
     let payload: T = try decodePayload(from: jws.payload.data())
     let rawPayload = try decodeRawPayload(from: jws.payload.data())
     let header = try createHeader(from: jws)
-    if let type = payload.type, header.type != type { throw JWSDecoderError.invalidType }
+
+    #warning("To be deleted when contraction on dc+sd-jwt happens")
+    if let acceptedTypes = payload.acceptedTypes {
+      guard let headerType = header.type, acceptedTypes.contains(headerType) else {
+        throw JWSDecoderError.invalidType
+      }
+    }
     return JWS(
       payload: payload,
       rawPayload: rawPayload,

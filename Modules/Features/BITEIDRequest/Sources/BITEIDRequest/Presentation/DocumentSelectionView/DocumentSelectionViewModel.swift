@@ -4,11 +4,12 @@ import BITNavigation
 import Factory
 import SwiftUI
 
-class DocumentSelectionViewModel: ObservableObject {
+@Observable
+class DocumentSelectionViewModel {
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
   func didSelect(_ type: IdentityType) {
     context.identityType = type
@@ -21,5 +22,5 @@ class DocumentSelectionViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
 }

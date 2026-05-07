@@ -28,6 +28,7 @@ protocol OnboardingInternalRoutes: ClosableRoutes {
 
   func infoScreenWelcome()
   func infoScreenCredential()
+  func infoScreenActivities()
   func infoScreenSecurity()
   func privacyPermission()
   func pinCodeInformation()
@@ -52,6 +53,11 @@ extension OnboardingInternalRoutes where Self: RouterProtocol {
 
   func infoScreenSecurity() {
     let viewController = UIHostingController(rootView: SecurityIntroductionView(router: self))
+    open(viewController, as: NavigationPushOpeningStyle())
+  }
+
+  func infoScreenActivities() {
+    let viewController = UIHostingController(rootView: ActivitiesIntroductionView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
   }
 

@@ -4,6 +4,7 @@ import BITNetworking
 import Moya
 import XCTest
 @testable import BITOpenID
+@testable import BITTestingCore
 
 final class PresentationRequestRepositoryTests: XCTestCase {
 
@@ -95,8 +96,8 @@ final class PresentationRequestRepositoryTests: XCTestCase {
       _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .presentationFailed)
+      guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
+      XCTAssertEqual(error.status, .internalServerError)
     }
   }
 
@@ -112,51 +113,27 @@ final class PresentationRequestRepositoryTests: XCTestCase {
     }
   }
 
-  func testSubmit_UnprocessableEntity_ReturnsPresentationFailed() async throws {
+  func testSubmit_UnprocessableEntity_ReturnsNetworkErrorUnprocessableEntity() async throws {
     mockResponse(code: 422)
 
     do {
       _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .presentationFailed)
+      guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
+      XCTAssertEqual(error.status, .unprocessableEntity)
     }
   }
 
-  func testSubmit_BadRequest_ReturnsCredentialInvalid() async throws {
+  func testSubmit_BadRequest_ReturnsNetworkErrorBadRequest() async throws {
     mockResponse(code: 400)
 
     do {
       _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .presentationFailed)
-    }
-  }
-
-  func testSubmit_InvalidCredential_ReturnsCredentialInvalid() async throws {
-    try mockResponse(code: 400, data: XCTUnwrap("{\"error\":\"invalid_credential\"}".data(using: .utf8)))
-
-    do {
-      _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .invalidCredential)
-    }
-  }
-
-  func testSubmit_InvalidRequest_ReturnsPresentationFailed() async throws {
-    try mockResponse(code: 400, data: XCTUnwrap("{\"error\":\"invalid_request\"}".data(using: .utf8)))
-
-    do {
-      _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .presentationFailed)
+      guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
+      XCTAssertEqual(error.status, .badRequest)
     }
   }
 
@@ -167,34 +144,45 @@ final class PresentationRequestRepositoryTests: XCTestCase {
       _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .presentationFailed)
+      guard let error = error as? PresentationRequestRepositoryError else { return XCTFail("Expected a NetworkError") }
+      XCTAssertEqual(error, .presentationResponseError(nil, nil))
     }
   }
 
-  func testSubmit_ProcessClosed_ReturnsProcessClosed() async throws {
+  func testSubmit_ProcessClosed_returnsPresentationResponseError() async throws {
     try mockResponse(code: 400, data: XCTUnwrap("{\"error\":\"verification_process_closed\"}".data(using: .utf8)))
+
+    await XCTAssertThrowsErrorAsync(try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)) { error in
+      guard let error = error as? PresentationRequestRepositoryError else { return XCTFail("Expected a PresentationRequestRepositoryError") }
+      guard case .presentationResponseError(let rawErrorCode, let errorDescription) = error else { return XCTFail("Wrong error: \(error)") }
+      XCTAssertEqual(rawErrorCode, "verification_process_closed")
+      XCTAssertNil(errorDescription)
+    }
+  }
+
+  func testSubmit_InvalidGrant_returnsInvalidGrant() async throws {
+    try mockResponse(code: 400, data: XCTUnwrap("{\"error\":\"invalid_grant\"}".data(using: .utf8)))
 
     do {
       _ = try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      guard let error = error as? SubmitPresentationError else { return XCTFail("Expected a PresentationError") }
-      XCTAssertEqual(error, .processClosed)
+      guard let error = error as? PresentationRequestRepositoryError else { return XCTFail("Expected a PresentationRequestRepositoryError") }
+      guard case .invalidGrant = error else { return XCTFail("Wrong error: \(error)") }
     }
   }
 
   // MARK: - Decline
 
   func testDecline_success() async throws {
-    try await repository.decline(url: urlMock, with: .clientRejected)
+    try await repository.decline(url: urlMock, with: .accessDenied)
   }
 
   func testDecline_Failure() async throws {
     mockResponse(code: 500)
 
     do {
-      try await repository.decline(url: urlMock, with: .clientRejected)
+      try await repository.decline(url: urlMock, with: .accessDenied)
       XCTFail("Should have thrown an error")
     } catch {
       guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }

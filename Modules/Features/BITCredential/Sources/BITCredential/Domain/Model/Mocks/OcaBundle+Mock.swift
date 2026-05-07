@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
+@testable import BITCore
 @testable import BITOca
-@testable import BITTestingCore
 
 extension OcaBundle {
   enum Mock {

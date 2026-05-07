@@ -7,7 +7,7 @@ let package = Package(
   name: "BITInvitation",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -21,6 +21,7 @@ let package = Package(
     .package(path: "../../Platforms/BITDeeplink"),
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITQRCode"),
+    .package(path: "../../Platforms/BITSwiyuSharedKMP"),
     .package(path: "../../Platforms/BITSdJWT"),
     .package(path: "../../Platforms/BITAnalytics"),
     .package(path: "../../Platforms/BITAnyCredentialFormat"),
@@ -28,7 +29,7 @@ let package = Package(
     .package(path: "../../Features/BITCredentialShared"),
     .package(path: "../../Features/BITPresentation"),
     .package(path: "../../Features/BITOpenID"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
@@ -43,6 +44,7 @@ let package = Package(
         .product(name: "BITDeeplink", package: "BITDeeplink"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "BITQRCode", package: "BITQRCode"),
+        .product(name: "BITSwiyuSharedKMP", package: "BITSwiyuSharedKMP"),
         .product(name: "BITCredential", package: "BITCredential"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITPresentation", package: "BITPresentation"),
@@ -57,8 +59,8 @@ let package = Package(
       dependencies: [
         "BITInvitation",
         .product(name: "BITTestingCore", package: "BITCore"),
-        .product(name: "BITNavigationTestCore", package: "BITNavigation"),
-        .product(name: "BITSdJWTMocks", package: "BITSdJWT"),
+        .product(name: "BITNavigation", package: "BITNavigation"),
+        .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "BITAnalyticsMocks", package: "BITAnalytics"),
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
         .product(name: "Spyable", package: "swift-spyable"),

@@ -14,20 +14,20 @@ extension Container {
     self { GetCredentialActivitiesUseCase() }
   }
 
-  public var getActivityUseCase: Factory<GetActivityUseCaseProtocol> {
-    self { GetActivityUseCase() }
+  public var getActivityDetailUseCase: Factory<GetActivityDetailUseCaseProtocol> {
+    self { GetActivityDetailUseCase() }
   }
 
   public var deleteActivityUseCase: Factory<DeleteActivityUseCaseProtocol> {
     self { DeleteActivityUseCase() }
   }
 
-  public var activityDetailViewProvider: Factory<(any NavigationViewProviding<ActivityExternalViews>)?> {
+  public var activityExternalViewProvider: Factory<(any NavigationViewProviding<ActivityExternalViews>)?> {
     self { nil }
   }
 
-  public var isActivityHistoryEnabledUseCase: Factory<IsActivityHistoryEnabledUseCaseProtocol> {
-    self { IsActivityHistoryEnabledUseCase() }
+  public var getActivityHistoryEnabledSubjectUseCase: Factory<GetActivityHistoryEnabledSubjectUseCaseProtocol> {
+    self { GetActivityHistoryEnabledSubjectUseCase() }
   }
 
   public var setActivityHistoryEnabledUseCase: Factory<SetActivityHistoryEnabledUseCaseProtocol> {
@@ -39,13 +39,33 @@ extension Container {
   }
 
   public var activityRepository: Factory<ActivityRepositoryProtocol> {
-    self { ActivityRepository() }
+    self { ActivityRepository() }.cached
+  }
+
+  public var activityActorDisplayFactory: Factory<ActivityActorDisplayFactoryProtocol> {
+    self { ActivityActorDisplayFactory() }
+  }
+
+  public var activityDetailFactory: Factory<ActivityDetailFactoryProtocol> {
+    self { ActivityDetailFactory() }
+  }
+
+  public var activityListItemFactory: Factory<ActivityListItemFactoryProtocol> {
+    self { ActivityListItemFactory() }
   }
 
   // MARK: Internal
 
   @MainActor
   var activityListViewModel: ParameterFactory<UUID, ActivityListViewModel> {
-    self { ActivityListViewModel($0) }
+    self { @MainActor in ActivityListViewModel($0) }
+  }
+
+  var activityDetailCredentialFactory: Factory<ActivityDetailCredentialFactoryProtocol> {
+    self { ActivityDetailCredentialFactory() }
+  }
+
+  var nonComplianceReasonDisplayFactory: Factory<NonComplianceReasonDisplayFactoryProtocol> {
+    self { NonComplianceReasonDisplayFactory() }
   }
 }

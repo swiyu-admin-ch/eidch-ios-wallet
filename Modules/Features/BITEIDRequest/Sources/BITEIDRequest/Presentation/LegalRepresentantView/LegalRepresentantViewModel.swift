@@ -2,11 +2,12 @@ import Factory
 import SwiftUI
 
 @MainActor
-class LegalRepresentantViewModel: ObservableObject {
+@Observable
+class LegalRepresentantViewModel {
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
   func action(_ value: Bool) {
     context.hasLegalRepresentant = value
@@ -15,6 +16,6 @@ class LegalRepresentantViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
 
 }

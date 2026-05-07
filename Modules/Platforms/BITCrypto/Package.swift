@@ -7,7 +7,7 @@ let package = Package(
   name: "BITCrypto",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -25,7 +25,6 @@ let package = Package(
       name: "BITCrypto",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
-        .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "CryptoSwift", package: "CryptoSwift"),
         .product(name: "JOSESwift", package: "JOSESwift"),

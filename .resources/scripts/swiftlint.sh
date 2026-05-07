@@ -1,11 +1,10 @@
 #!/bin/sh
 
-# Adds support for Apple Silicon brew directory
-
-export PATH="$PATH:/opt/homebrew/bin"
-
-if which swiftlint >/dev/null; then
-  swiftlint
-else
-  echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+MISE="$HOME/.local/bin/mise"
+[ -x "$MISE" ] || MISE="/opt/homebrew/bin/mise"
+if [ ! -x "$MISE" ]; then
+  echo "error: mise not found at ~/.local/bin/mise or /opt/homebrew/bin/mise"
+  exit 1
 fi
+
+$MISE exec -- swiftlint

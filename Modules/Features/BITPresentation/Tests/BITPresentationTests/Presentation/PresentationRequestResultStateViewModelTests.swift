@@ -4,7 +4,6 @@ import XCTest
 @testable import BITCredential
 @testable import BITOpenID
 @testable import BITPresentation
-@testable import BITTestingCore
 
 class PresentationRequestResultStateViewModelTests: XCTestCase {
 
@@ -13,17 +12,15 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
   @MainActor
   override func setUp() {
     Container.shared.reset()
-    router = MockPresentationRouter()
-    router.delegate = presentationFinishDelegateMock
 
-    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context, router: router)
+    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
   }
 
   @MainActor
   func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
     Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
-    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context, router: router)
+    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
 
     XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
     XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
@@ -31,24 +28,16 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testFinish_delegateFinishCalled() async {
-    await viewModel.finish()
-
-    XCTAssertEqual(presentationFinishDelegateMock.finishCalled, true)
-  }
-
-  @MainActor
   func testRetry_delegateRetryCalled() {
+    XCTAssertFalse(viewModel.isNavigationBackTriggered)
     viewModel.retry()
 
-    XCTAssertEqual(presentationFinishDelegateMock.retryCalled, true)
+    XCTAssertTrue(viewModel.isNavigationBackTriggered)
   }
 
   // MARK: Private
 
   private var viewModel: PresentationRequestResultStateViewModel!
   private let context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
-  private var router = MockPresentationRouter()
-  private let presentationFinishDelegateMock = MockPresentationFinishDelegate()
   // swiftlint:enable all
 }

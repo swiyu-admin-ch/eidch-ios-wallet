@@ -8,8 +8,8 @@ import Spyable
 // MARK: - KeyAttestationValidatorProtocol
 
 @Spyable
-protocol KeyAttestationValidatorProtocol {
-  func validate(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool
+public protocol KeyAttestationValidatorProtocol {
+  func callAsFunction(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool
 }
 
 // MARK: - KeyAttestationValidator
@@ -18,7 +18,7 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
 
   // MARK: Internal
 
-  func validate(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool {
+  func callAsFunction(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool {
     do {
       guard
         keyAttestation.header.algorithm == .ES256,

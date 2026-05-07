@@ -1,4 +1,5 @@
 import BITAnalytics
+import BITClaimsPathPointer
 import Factory
 import Foundation
 import Spyable
@@ -60,7 +61,7 @@ struct OverlayBundleAttributesGenerator: OverlayBundleAttributesGeneratorProtoco
     }
   }
 
-  private func getDataSourcesForAttributes(for base: any CaptureBase, ocaBundle: OcaBundle) -> [AttributeKey: [DataSourceFormat: JsonPath]] {
+  private func getDataSourcesForAttributes(for base: any CaptureBase, ocaBundle: OcaBundle) -> [AttributeKey: [DataSourceFormat: ClaimsPathPointer]] {
     let overlays = ocaBundle.getLatestOverlaysOfType(overlayType: .dataSource, digest: base.digest)
       .compactMap { $0 as? any DataSourceOverlay }
     let attributes = base.attributes.map(\.key)

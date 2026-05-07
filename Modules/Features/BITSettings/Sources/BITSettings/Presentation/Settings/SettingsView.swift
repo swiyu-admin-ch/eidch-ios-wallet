@@ -7,12 +7,6 @@ import SwiftUI
 
 struct SettingsView: View {
 
-  // MARK: Lifecycle
-
-  init() {
-    _viewModel = StateObject(wrappedValue: Container.shared.settingsViewModel())
-  }
-
   // MARK: Internal
 
   var body: some View {
@@ -35,6 +29,23 @@ struct SettingsView: View {
           SettingsItem(image: Assets.licenses.swiftUIImage, title: L10n.tkSettingsGeneralLicences, type: .navigation { path.append(Setting.licenses) })
           SettingsItem(image: Assets.imprint.swiftUIImage, title: L10n.tkSettingsGeneralImprint, type: .navigation { path.append(Setting.imprint) }, hasDivider: false)
         }
+
+        if viewModel.isOTPDebugToggleVisible || viewModel.isLottieViewerEnabled {
+          SettingsSection(title: "Debug") {
+
+            if viewModel.isOTPDebugToggleVisible {
+              SettingsItem(
+                icon: .none,
+                title: "Enable OTP flow",
+                type: .toggle(isOn: $viewModel.isOTPEnabled) { viewModel.toggleOTPEnabled() },
+                hasDivider: false)
+            }
+
+            if viewModel.isLottieViewerEnabled {
+              SettingsItem(image: Assets.diagnostic.swiftUIImage, title: "Lottie animation", type: .navigation { path.append(Setting.lottie) }, hasDivider: false)
+            }
+          }
+        }
       }
       .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
       .toolbar {
@@ -45,6 +56,7 @@ struct SettingsView: View {
         case .security: SecuritySettingsView(path: $path)
         case .licenses: LicencesListView(path: $path)
         case .imprint: ImprintView()
+        case .lottie: LottieViewer()
         }
       }
     }
@@ -53,8 +65,9 @@ struct SettingsView: View {
   // MARK: Private
 
   @State private var path = NavigationPath()
-  @StateObject private var viewModel: SettingsViewModel
   @Environment(\.dismiss) private var dismiss
+
+  @InjectedObservable(\.settingsViewModel) private var viewModel: SettingsViewModel
 }
 
 // MARK: - Setting
@@ -63,6 +76,7 @@ enum Setting: Hashable {
   case security
   case licenses
   case imprint
+  case lottie
 }
 
 #if DEBUG

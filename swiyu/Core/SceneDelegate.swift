@@ -3,6 +3,7 @@ import BITHome
 import BITTheming
 import Factory
 import SwiftUI
+import UIKit
 
 // MARK: - SceneDelegate
 
@@ -32,7 +33,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   func sceneWillEnterForeground(_ scene: UIScene) {
-    hidePrivacyOverlayView()
+    hidePrivacyOverlay()
     NotificationCenter.default.post(name: .willEnterForeground, object: nil)
     currentScene.willEnterForeground()
   }
@@ -42,15 +43,20 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   func sceneDidBecomeActive(_ scene: UIScene) {
-    hidePrivacyOverlayView()
+    hidePrivacyOverlay()
   }
 
   func sceneWillResignActive(_ scene: UIScene) {
     if permissionAlertPresented { return }
-    showPrivacyOverlayView()
+    guard let windowScene = scene as? UIWindowScene else { return }
+    showPrivacyOverlay(on: windowScene)
   }
 
   func sceneDidEnterBackground(_ scene: UIScene) {
+    if let windowScene = scene as? UIWindowScene {
+      showPrivacyOverlay(on: windowScene)
+    }
+
     NotificationCenter.default.post(name: .didEnterBackground, object: nil)
     currentScene.didEnterBackground()
   }
@@ -58,14 +64,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   // MARK: Private
 
   private var currentScene: SceneManagerProtocol = SplashScreenScene()
-
-  private lazy var privacyOverlayView: UIView = {
-    let splashscreenView = SplashScreen()
-    let splashscreenHostingController = UIHostingController(rootView: splashscreenView)
-    splashscreenHostingController.view.frame = UIScreen.main.bounds
-
-    return splashscreenHostingController.view
-  }()
+  private var privacyOverlayWindow: UIWindow?
 
   private func registerNotifications() {
     NotificationCenter.default.addObserver(forName: .permissionAlertPresented, object: nil, queue: .main) { [weak self] _ in
@@ -77,8 +76,29 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     NotificationCenter.default.addObserver(forName: .didLoginClose, object: nil, queue: .main) { [weak self] _ in
-      self?.hidePrivacyOverlayView()
+      self?.hidePrivacyOverlay()
     }
+  }
+}
+
+// MARK: - Privacy Overlay
+
+extension SceneDelegate {
+
+  private func showPrivacyOverlay(on windowScene: UIWindowScene) {
+    guard privacyOverlayWindow == nil else { return }
+
+    let overlayWindow = UIWindow(windowScene: windowScene)
+    overlayWindow.windowLevel = .alert + 1
+    overlayWindow.rootViewController = UIHostingController(rootView: PrivacyOverlayView())
+    overlayWindow.isHidden = false
+
+    privacyOverlayWindow = overlayWindow
+  }
+
+  private func hidePrivacyOverlay() {
+    privacyOverlayWindow?.isHidden = true
+    privacyOverlayWindow = nil
   }
 }
 
@@ -128,23 +148,6 @@ extension SceneDelegate: SceneManagerDelegate {
     scene.didPresentScene(from: previousScene)
   }
 
-}
-
-// MARK: - ProtectionView
-
-extension SceneDelegate {
-
-  private func showPrivacyOverlayView() {
-    window?.addSubview(privacyOverlayView)
-  }
-
-  private func hidePrivacyOverlayView() {
-    guard let subview = window?.subviews.last, subview == privacyOverlayView else {
-      return
-    }
-
-    subview.removeFromSuperview()
-  }
 }
 
 // MARK: - Deeplink

@@ -11,7 +11,7 @@ import Spyable
 @Spyable
 public protocol FetchVcMetadataForCredentialUseCaseProtocol {
   func execute(anyCredential: AnyCredential) async throws -> (VcSchema?, RawOcaBundle?)
-  func execute(metadata: any CredentialMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?)
+  func execute(metadata: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?)
 }
 
 // MARK: - FetchVcMetadataForVcSdJwtUseCase
@@ -25,8 +25,8 @@ struct FetchVcMetadataForVcSdJwtUseCase: FetchVcMetadataForCredentialUseCaseProt
     return try await fetchMetadata(from: vcSdJWS.payload.typeMetadataUri, vct: vcSdJWS.payload.vct)
   }
 
-  func execute(metadata: any CredentialMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?) {
-    guard let vcSdJwtMetadata = metadata as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported else { throw CredentialFormatError.formatNotSupported }
+  func execute(metadata: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?) {
+    guard let vcSdJwtMetadata = metadata as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported else { throw CredentialFormatError.formatNotSupported }
     return try await fetchMetadata(from: vcSdJwtMetadata.typeMetadataUri, vct: vcSdJwtMetadata.vct)
   }
 

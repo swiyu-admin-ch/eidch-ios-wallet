@@ -29,7 +29,9 @@ enum Assets {
   static let checkmark = ImageAsset(name: "checkmark")
   static let demo = ImageAsset(name: "demo")
   static let diagnostic = ImageAsset(name: "diagnostic")
+  static let docRecordAnimation = DataAsset(name: "doc_record_animation")
   static let external = ImageAsset(name: "external")
+  static let faceRecordAnimation = DataAsset(name: "face_record_animation")
   static let feedback = ImageAsset(name: "feedback")
   static let help = ImageAsset(name: "help")
   static let imprint = ImageAsset(name: "imprint")
@@ -45,9 +47,35 @@ enum Assets {
   static let verificationQrCode = ImageAsset(name: "verificationQrCode")
 }
 
-// MARK: - ImageAsset
+// MARK: - DataAsset
 
 // swiftlint:enable identifier_name line_length nesting type_body_length type_name
+
+struct DataAsset {
+  fileprivate(set) var name: String
+
+  @available(iOS 9.0, tvOS 9.0, watchOS 6.0, macOS 10.11, *)
+  var data: NSDataAsset {
+    guard let data = NSDataAsset(asset: self) else {
+      fatalError("Unable to load data asset named \(name).")
+    }
+    return data
+  }
+}
+
+@available(iOS 9.0, tvOS 9.0, watchOS 6.0, macOS 10.11, *)
+extension NSDataAsset {
+  convenience init?(asset: DataAsset) {
+    let bundle = BundleToken.bundle
+    #if os(iOS) || os(tvOS) || os(watchOS)
+    self.init(name: asset.name, bundle: bundle)
+    #elseif os(macOS)
+    self.init(name: NSDataAsset.Name(asset.name), bundle: bundle)
+    #endif
+  }
+}
+
+// MARK: - ImageAsset
 
 struct ImageAsset {
   #if os(macOS)

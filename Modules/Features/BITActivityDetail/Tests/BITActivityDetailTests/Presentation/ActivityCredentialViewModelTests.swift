@@ -17,39 +17,54 @@ final class ActivityCredentialViewModelTests: XCTestCase {
     Container.shared.reset()
   }
 
-  func testInit_activityWithClaims_clustersAvailable() throws {
-    viewModel = ActivityCredentialViewModel(credential: credentialMock, activity: activityMock)
+  func testInit_noMatchingColorScheme_takesFirstDisplay() throws {
+    viewModel = ActivityCredentialViewModel(detail: activityDetailMock, colorScheme: "other")
 
-    XCTAssertNotNil(viewModel.name)
-    XCTAssertNotNil(viewModel.summary)
-    XCTAssertNotNil(viewModel.backgroundColor)
-    XCTAssertNotNil(viewModel.logoBase64)
-    XCTAssertEqual(viewModel.environment, .external)
+    XCTAssertEqual(viewModel.name, "name dark")
+    XCTAssertEqual(viewModel.summary, "summary dark")
+    XCTAssertEqual(viewModel.backgroundColor, "#FFFFFF")
+    XCTAssertEqual(viewModel.logoBase64, "logo dark".data(using: .utf8))
+    XCTAssertEqual(viewModel.environment, .swiyu)
 
     XCTAssertEqual(viewModel.clusters.count, 1)
     let cluster = try XCTUnwrap(viewModel.clusters.first)
-    XCTAssertEqual(cluster.claims.count, 1)
-    XCTAssertEqual(cluster.claims.first?.id.uuidString, "416A2EC2-213B-438C-B9DA-47A2FF596A0C")
-    XCTAssertTrue(cluster.childClusters.isEmpty)
+    XCTAssertEqual(cluster.id, UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
+    XCTAssertEqual(cluster.claims.count, 3)
   }
 
-  func testInit_activityNoClaims_noClusters() {
-    let activityMock = Activity.Mock.presentationAcceptedTrusted
-    viewModel = ActivityCredentialViewModel(credential: credentialMock, activity: activityMock)
+  func testInit_validColorScheme_takesDisplayInColorScheme() throws {
+    viewModel = ActivityCredentialViewModel(detail: activityDetailMock, colorScheme: "light")
 
-    XCTAssertNotNil(viewModel.name)
-    XCTAssertNotNil(viewModel.summary)
-    XCTAssertNotNil(viewModel.backgroundColor)
-    XCTAssertNotNil(viewModel.logoBase64)
-    XCTAssertEqual(viewModel.environment, .external)
+    XCTAssertEqual(viewModel.name, "name light")
+    XCTAssertEqual(viewModel.summary, "summary light")
+    XCTAssertEqual(viewModel.backgroundColor, "#000000")
+    XCTAssertEqual(viewModel.logoBase64, "logo light".data(using: .utf8))
+    XCTAssertEqual(viewModel.environment, .swiyu)
 
-    XCTAssertTrue(viewModel.clusters.isEmpty == true)
+    XCTAssertEqual(viewModel.clusters.count, 1)
+    let cluster = try XCTUnwrap(viewModel.clusters.first)
+    XCTAssertEqual(cluster.id, UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
+    XCTAssertEqual(cluster.claims.count, 3)
+  }
+
+  func testInit_noDisplay_hasNilValues() throws {
+    viewModel = ActivityCredentialViewModel(detail: ActivityDetail.Mock.noCredentialDisplays, colorScheme: "light")
+
+    XCTAssertNil(viewModel.name)
+    XCTAssertNil(viewModel.summary)
+    XCTAssertNil(viewModel.backgroundColor)
+    XCTAssertNil(viewModel.logoBase64)
+    XCTAssertEqual(viewModel.environment, .swiyu)
+
+    XCTAssertEqual(viewModel.clusters.count, 1)
+    let cluster = try XCTUnwrap(viewModel.clusters.first)
+    XCTAssertEqual(cluster.id, UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
+    XCTAssertEqual(cluster.claims.count, 3)
   }
 
   // MARK: Private
 
-  private let activityMock = Activity.Mock.issueTrusted
-  private let credentialMock = VerifiableCredential.Mock.sample
+  private let activityDetailMock = ActivityDetail.Mock.trustedIssuance
 
   private var viewModel: ActivityCredentialViewModel!
 }

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Git passes 1 for branch checkouts and 0 for path checkouts.
+is_branch_checkout="${3:-0}"
+if [[ "${is_branch_checkout}" != "1" ]]; then
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+"${repo_root}/.resources/scripts/clean_swiftpm_dirs.sh"

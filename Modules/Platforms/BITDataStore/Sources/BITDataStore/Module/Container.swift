@@ -8,9 +8,7 @@ extension Container {
   // MARK: Public
 
   public var dataStore: Factory<RealmDataStoreProtocol> {
-    self {
-      RealmDataStore(configuration: self.realmDataStoreConfiguration())
-    }
+    self { RealmDataStore() }
   }
 
   public var dataStoreConfigurationManager: Factory<DataStoreConfigurationManagerProtocol> {
@@ -19,8 +17,8 @@ extension Container {
 
   public var realmDataStoreConfiguration: Factory<Realm.Configuration> {
     self {
-      // Database scheme v6.2
-      let schemaVersion: UInt64 = 16
+      // Database schema v6.8
+      let schemaVersion: UInt64 = 25
 
       let config = Realm.Configuration(
         schemaVersion: schemaVersion,

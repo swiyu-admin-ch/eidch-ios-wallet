@@ -1,6 +1,6 @@
 import Foundation
 @testable import BITAppAuth
-@testable import BITNavigationTestCore
+@testable import BITNavigation
 
 // MARK: - ChangePinRouterMock
 

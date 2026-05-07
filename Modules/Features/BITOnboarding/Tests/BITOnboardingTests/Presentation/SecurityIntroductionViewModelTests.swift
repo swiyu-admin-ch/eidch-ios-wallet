@@ -9,7 +9,7 @@ class SecurityIntroductionViewModelTests: XCTestCase {
     let viewModel = SecurityIntroductionViewModel(router: router)
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.infoScreenCredentialCalled)
+    XCTAssertTrue(router.infoScreenActivitiesCalled)
   }
 
   func testSecondaryAction() {

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct MockAnyCredentialConfigurationSupported: CredentialMetadata.AnyCredentialConfigurationSupported {
+public struct MockAnyCredentialConfigurationSupported: CredentialIssuerMetadata.AnyCredentialConfigurationSupported {
 
   // MARK: Lifecycle
 
@@ -14,16 +14,12 @@ public struct MockAnyCredentialConfigurationSupported: CredentialMetadata.AnyCre
 
   public var scope: String?
 
-  public var cryptographicBindingMethodsSupported: [CredentialMetadata.CryptographicBindingMethod]?
+  public var cryptographicBindingMethodsSupported: [CredentialIssuerMetadata.CryptographicBindingMethod]?
 
   public var credentialSigningAlgValuesSupported: [String]?
 
-  public var display: [CredentialMetadata.CredentialSupportedDisplay]?
+  public var proofTypesSupported = [CredentialIssuerMetadata.ProofType]()
 
-  public var proofTypesSupported = [CredentialMetadata.ProofType]()
-
-  public var orderClaims: [String]?
-
-  public var claims = [CredentialMetadata.Claim]()
+  public var credentialMetadata: CredentialIssuerMetadata.CredentialMetadata?
 
 }

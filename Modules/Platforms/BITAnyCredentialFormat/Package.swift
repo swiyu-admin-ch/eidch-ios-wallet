@@ -7,7 +7,7 @@ let package = Package(
   name: "BITAnyCredentialFormat",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -34,8 +34,8 @@ let package = Package(
       name: "BITAnyCredentialFormatMocks",
       dependencies: [
         "BITAnyCredentialFormat",
-        .product(name: "BITSdJWTMocks", package: "BITSdJWT"),
-        .product(name: "BITTestingCore", package: "BITCore"),
+        .product(name: "BITSdJWT", package: "BITSdJWT"),
+        .product(name: "BITCore", package: "BITCore"),
       ],
       resources: [.process("Resources")]),
     .testTarget(

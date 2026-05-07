@@ -4,7 +4,6 @@ import XCTest
 @testable import BITOca
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
@@ -63,8 +62,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
     XCTAssertTrue(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.context === fetchCredentialContextMock)
     XCTAssertEqual(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.proofs?.jwt.first, Self.jwtStringMock)
-    XCTAssertEqual(jwsEncoderMock.receivedKeyPair, fetchCredentialContextMock.holderBindingContext?.keyPair)
-    XCTAssertEqual(jwsEncoderMock.receivedAdditionalHeaderParameters["key_attestation"] as? String, fetchCredentialContextMock.holderBindingContext?.keyAttestationJWS)
+    XCTAssertEqual(jwsEncoderMock.receivedKeyPair, fetchCredentialContextMock.holderBindings?.first?.keyPair)
+    XCTAssertEqual(jwsEncoderMock.receivedAdditionalHeaderParameters["key_attestation"] as? String, fetchCredentialContextMock.holderBindings?.first?.keyAttestationJWS)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.audience, fetchCredentialContextMock.credentialIssuer)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.nonce, fetchCredentialContextMock.nonce?.cNonce)
     XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidReceivedJws as? VcSdJWS, vcSdJWSMock)
@@ -78,6 +77,48 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     if case .credential(let credential) = result {
       XCTAssertEqual(credential.raw, vcSdJWSMock.raw)
       XCTAssertEqual(credential as? SdJWS<VcSdJwt>, vcSdJWSMock)
+    }
+  }
+
+  func testExecute_batchCredential_returnsValidatedBatch() async throws {
+    let context = FetchCredentialContext.Mock.sampleVcSdJwtBatch
+    repositorySpy.fetchCredentialWithCredentialRequestReturnValue = .batch(
+      credentials: [vcSdJWSMock, vcSdJWSMock])
+
+    let result = try await useCase.execute(for: context)
+
+    if case .batch(let credentials) = result {
+      XCTAssertEqual(credentials.count, 2)
+      XCTAssertEqual(credentials[0].raw, vcSdJWSMock.raw)
+      XCTAssertEqual(credentials[1].raw, vcSdJWSMock.raw)
+      XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 2)
+    } else {
+      XCTFail("Expected batch result")
+    }
+  }
+
+  func testExecute_batchHolderBinding_generatesOneProofPerBinding() async throws {
+    let context = FetchCredentialContext.Mock.sampleVcSdJwtBatch
+    repositorySpy.fetchCredentialWithCredentialRequestReturnValue = .batch(
+      credentials: [vcSdJWSMock, vcSdJWSMock])
+
+    _ = try await useCase.execute(for: context)
+
+    XCTAssertEqual(credentialRequestBodyGeneratorSpy.generateForProofsReceivedArguments?.proofs?.jwt.count, 2)
+    XCTAssertEqual(jwsEncoderMock.receivedKeyPair, context.holderBindings?.last?.keyPair)
+  }
+
+  func testExecute_batchCredential_validationFails_throwsError() async throws {
+    repositorySpy.fetchCredentialWithCredentialRequestReturnValue = .batch(
+      credentials: [vcSdJWSMock, vcSdJWSMock])
+    jwsSignatureValidatorMock.validateIssuerDidThrowableError = TestingError.error
+
+    do {
+      _ = try await useCase.execute(for: FetchCredentialContext.Mock.sampleVcSdJwtBatch)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 1)
     }
   }
 
@@ -118,7 +159,7 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
 
     _ = try await useCase.execute(for: context)
 
-    XCTAssertEqual(jwsEncoderMock.receivedKeyPair, context.holderBindingContext?.keyPair)
+    XCTAssertEqual(jwsEncoderMock.receivedKeyPair, context.holderBindings?.first?.keyPair)
     XCTAssertTrue(jwsEncoderMock.receivedAdditionalHeaderParameters.isEmpty)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.audience, context.credentialIssuer)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.nonce, context.nonce?.cNonce)

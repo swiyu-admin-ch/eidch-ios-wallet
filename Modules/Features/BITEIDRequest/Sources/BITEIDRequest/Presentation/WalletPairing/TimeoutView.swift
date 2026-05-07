@@ -1,5 +1,6 @@
 import BITL10n
 import BITTheming
+import Factory
 import SwiftUI
 
 struct TimeoutView: View {
@@ -24,6 +25,13 @@ struct TimeoutView: View {
 
   // MARK: Private
 
-  private func close() {}
+  @Environment(\.navigator) private var navigator
+
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+
+  private func close() {
+    coordinator.cleanup()
+    navigator.returnToCheckpointSafely(EIDRequestCheckpoints.start)
+  }
 
 }

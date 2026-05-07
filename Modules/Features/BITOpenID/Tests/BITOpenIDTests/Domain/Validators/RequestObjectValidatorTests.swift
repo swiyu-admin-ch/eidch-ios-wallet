@@ -70,6 +70,14 @@ final class RequestObjectValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
+  func testValidationWithTransactionData() {
+    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithTransactionData
+
+    let result = validator.validate(mockRequestObject)
+
+    XCTAssertFalse(result)
+  }
+
   // MARK: Private
 
   private var validator = RequestObjectValidator()

@@ -27,11 +27,11 @@ final class BiometricViewModelTests: XCTestCase {
     context = OnboardingContext()
     internalLAContext = LAContextProtocolSpy()
 
-    Container.shared.getBiometricTypeUseCase.register { self.getBiometricTypeUseCase }
-    Container.shared.hasBiometricAuthUseCase.register { self.hasBiometricAuthUseCase }
-    Container.shared.requestBiometricAuthUseCase.register { self.requestBiometricAuthUseCase }
-    Container.shared.allowBiometricUsageUseCase.register { self.allowBiometricUsageUseCase }
-    Container.shared.internalLAContext.register { self.internalLAContext }
+    Container.shared.getBiometricTypeUseCase.register { @MainActor in self.getBiometricTypeUseCase }
+    Container.shared.hasBiometricAuthUseCase.register { @MainActor in self.hasBiometricAuthUseCase }
+    Container.shared.requestBiometricAuthUseCase.register { @MainActor in self.requestBiometricAuthUseCase }
+    Container.shared.allowBiometricUsageUseCase.register { @MainActor in self.allowBiometricUsageUseCase }
+    Container.shared.internalLAContext.register { @MainActor in self.internalLAContext }
 
     viewModel = BiometricsViewModel(router: router)
   }

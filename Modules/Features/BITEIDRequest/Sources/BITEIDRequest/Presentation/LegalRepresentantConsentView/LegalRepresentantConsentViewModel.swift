@@ -2,7 +2,8 @@ import Factory
 import SwiftUI
 
 @MainActor
-class LegalRepresentantConsentViewModel: ObservableObject {
+@Observable
+class LegalRepresentantConsentViewModel {
 
   // MARK: Lifecycle
 
@@ -12,7 +13,7 @@ class LegalRepresentantConsentViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
   func obtainConsent() {
     destination = .legalRepresentantQRCode(caseId: caseId)

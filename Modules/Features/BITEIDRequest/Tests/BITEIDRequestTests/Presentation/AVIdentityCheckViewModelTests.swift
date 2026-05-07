@@ -15,10 +15,10 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
     context = EIDRequestContext()
     context.caseId = "caseId"
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
 
     registerMocks()
-    viewModel = AVIdentityCheckViewModel()
+    viewModel = AVIdentityCheckViewModel(caseId: "caseId")
   }
 
   func testPrimaryAction_nfcRequired_success() async {
@@ -108,11 +108,11 @@ class AVIdentityCheckViewModelTests: XCTestCase {
 
   private func registerMocks() {
     startAutoVerificationUseCase = StartAutoVerificationUseCaseProtocolSpy()
-    Container.shared.startAutoVerificationUseCase.register { self.startAutoVerificationUseCase }
+    Container.shared.startAutoVerificationUseCase.register { @MainActor in self.startAutoVerificationUseCase }
 
     avBeam = AVBeamProtocolSpy()
     avBeam.state = .initialized
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.avBeamAppID.register { self.appId }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.avBeamAppID.register { @MainActor in self.appId }
   }
 }

@@ -1,3 +1,5 @@
+import BITClaimsPathPointer
+
 public struct OverlayBundleAttribute: Equatable {
 
   // MARK: Lifecycle
@@ -7,7 +9,7 @@ public struct OverlayBundleAttribute: Equatable {
     name: String,
     attributeType: AttributeType,
     characterEncoding: CharacterEncoding? = nil,
-    dataSources: [DataSourceFormat: JsonPath] = [:],
+    dataSources: [DataSourceFormat: ClaimsPathPointer] = [:],
     entryMapping: [Locale: [EntryCode: String]] = [:],
     format: String? = nil,
     labels: [Locale: String] = [:],
@@ -34,7 +36,7 @@ public struct OverlayBundleAttribute: Equatable {
   public let name: String
   public let attributeType: AttributeType
   public let characterEncoding: CharacterEncoding?
-  public let dataSources: [DataSourceFormat: JsonPath]
+  public let dataSources: [DataSourceFormat: ClaimsPathPointer]
   public let entryMapping: [Locale: [EntryCode: String]]
   public let format: String?
   public let labels: [Locale: String]

@@ -1,21 +1,24 @@
 import SwiftUI
+import UIKit
 
 // MARK: - GLViewWrapper
 
 struct GLViewWrapper: UIViewRepresentable {
   let getGLView: (Int, Int) -> UIView
+  let orientation: UIDeviceOrientation
 
-  init(_ getGLView: @escaping (Int, Int) -> UIView) {
+  init(_ getGLView: @escaping (Int, Int) -> UIView, orientation: UIDeviceOrientation = .portrait) {
     self.getGLView = getGLView
+    self.orientation = orientation
   }
 
   func makeUIView(context _: Context) -> ContainerView {
-    ContainerView(getGLView: getGLView)
+    ContainerView(getGLView: getGLView, orientation: orientation)
   }
 
   func updateUIView(_ uiView: ContainerView, context _: Context) {
-    // Update if the getGLView closure changes
     uiView.updateGLViewClosure(getGLView)
+    uiView.updateOrientation(orientation)
   }
 }
 
@@ -25,8 +28,9 @@ class ContainerView: UIView {
 
   // MARK: Lifecycle
 
-  init(getGLView: @escaping (Int, Int) -> UIView) {
+  init(getGLView: @escaping (Int, Int) -> UIView, orientation: UIDeviceOrientation) {
     self.getGLView = getGLView
+    self.orientation = orientation
     super.init(frame: .zero)
   }
 
@@ -40,27 +44,32 @@ class ContainerView: UIView {
   override func layoutSubviews() {
     super.layoutSubviews()
 
-    // Remove existing GL view
-    glView?.removeFromSuperview()
-    glView = nil
-
-    // Create new GL view with current dimensions
     let width = Int(bounds.width)
     let height = Int(bounds.height)
 
-    if width > 0, height > 0 {
-      glView = getGLView(width, height)
-      glView?.frame = bounds
-      glView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    guard width > 0, height > 0 else { return }
 
-      if let glView {
-        addSubview(glView)
-      }
+    let shouldReplaceGLView: Bool = if let glViewSize {
+      glView == nil || glViewSize.0 != width || glViewSize.1 != height
+    } else {
+      true
     }
+
+    if shouldReplaceGLView {
+      replaceGLView(width: width, height: height)
+      glViewSize = (width, height)
+    }
+
+    applyOrientationTransform()
   }
 
   func updateGLViewClosure(_ newClosure: @escaping (Int, Int) -> UIView) {
     getGLView = newClosure
+  }
+
+  func updateOrientation(_ newOrientation: UIDeviceOrientation) {
+    guard orientation != newOrientation else { return }
+    orientation = newOrientation
     setNeedsLayout()
   }
 
@@ -68,4 +77,40 @@ class ContainerView: UIView {
 
   private var getGLView: (Int, Int) -> UIView
   private var glView: UIView?
+  private var glViewSize: (Int, Int)?
+  private var orientation: UIDeviceOrientation
+
+  private func replaceGLView(width: Int, height: Int) {
+    glView?.removeFromSuperview()
+
+    let newGLView = getGLView(width, height)
+    newGLView.autoresizingMask = []
+    addSubview(newGLView)
+    glView = newGLView
+  }
+
+  private func applyOrientationTransform() {
+    guard let glView else { return }
+
+    let angle: CGFloat = switch orientation {
+    case .landscapeLeft:
+      -.pi / 2
+    case .landscapeRight:
+      .pi / 2
+    case .portraitUpsideDown:
+      .pi
+    default:
+      0
+    }
+
+    glView.transform = .identity
+    glView.bounds = CGRect(origin: .zero, size: bounds.size)
+
+    if angle != 0 {
+      glView.bounds = CGRect(origin: .zero, size: CGSize(width: bounds.height, height: bounds.width))
+      glView.transform = CGAffineTransform(rotationAngle: angle)
+    }
+
+    glView.center = CGPoint(x: bounds.midX, y: bounds.midY)
+  }
 }

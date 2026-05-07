@@ -15,16 +15,19 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
   override func setUp() {
     context = EIDRequestContext()
     context.hasLegalRepresentant = true
+    context.identityType = .passport
     applyEIDRequestUseCase = ApplyEIDRequestUseCaseProtocolSpy()
 
-    Container.shared.eidRequestContext.register { self.context }
-    Container.shared.applyEIDRequestUseCase.register { self.applyEIDRequestUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.applyEIDRequestUseCase.register { @MainActor in self.applyEIDRequestUseCase }
 
     success()
   }
 
   func testInitialState() {
     XCTAssertNil(viewModel.destination)
+    XCTAssertFalse(viewModel.isNavigationCloseTriggered)
+    XCTAssertEqual(viewModel.scanImages.count, 2)
   }
 
   func testSubmit_arguments() async {
@@ -124,5 +127,3 @@ class ScanDocumentSubmitViewModelTests: XCTestCase {
   }
 
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

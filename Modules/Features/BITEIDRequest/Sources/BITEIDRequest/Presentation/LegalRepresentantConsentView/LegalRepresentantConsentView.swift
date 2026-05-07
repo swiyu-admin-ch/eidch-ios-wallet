@@ -11,7 +11,7 @@ struct LegalRepresentantConsentView: View {
   // MARK: Lifecycle
 
   init(caseId: String) {
-    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantConsentViewModel(caseId))
+    _viewModel = State(initialValue: Container.shared.legalRepresentantConsentViewModel(caseId))
   }
 
   // MARK: Internal
@@ -38,7 +38,7 @@ struct LegalRepresentantConsentView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: LegalRepresentantConsentViewModel
+  @State private var viewModel: LegalRepresentantConsentViewModel
 }
 
 #Preview {

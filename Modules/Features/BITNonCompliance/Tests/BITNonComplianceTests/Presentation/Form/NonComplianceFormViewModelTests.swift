@@ -78,14 +78,14 @@ final class NonComplianceFormViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchActivity_loading_stateIsResult() async {
+  func testFetchActorDisplay_loading_stateIsResult() async {
     viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
 
-    await viewModel.send(.fetchActivity)
+    await viewModel.send(.fetchActorDisplay)
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(resultState.actorImage, activityMock.actorDisplays.findDisplayWithFallback()?.image)
-      XCTAssertEqual(resultState.actorName, activityMock.actorDisplays.findDisplayWithFallback()?.name)
+      XCTAssertEqual(resultState.actorImage, actorDisplayMock.image)
+      XCTAssertEqual(resultState.actorName, actorDisplayMock.name)
       XCTAssertEqual(resultState.isSendingEnabled, false)
       XCTAssertTrue(resultState.validations.isEmpty)
     } else {
@@ -93,27 +93,27 @@ final class NonComplianceFormViewModelTests: XCTestCase {
     }
   }
 
-  func testFetchActivity_loading_argumentsPassed() async {
-    XCTAssertEqual(getActivityUseCaseSpy.callAsFunctionCallsCount, 1)
+  func testFetchActorDisplay_loading_argumentsPassed() async {
+    XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 1)
     viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
 
-    await viewModel.send(.fetchActivity)
+    await viewModel.send(.fetchActorDisplay)
 
     if case .result = viewModel.state {
-      XCTAssertEqual(getActivityUseCaseSpy.callAsFunctionCallsCount, 2)
-      XCTAssertEqual(getActivityUseCaseSpy.callAsFunctionReceivedActivityId, activityIdMock)
+      XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 2)
+      XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionReceivedActivityId, activityIdMock)
     } else {
       XCTFail("Wrong state: \(viewModel.state)")
     }
   }
 
-  func testFetchActivity_result_doesNothing() async {
-    XCTAssertEqual(getActivityUseCaseSpy.callAsFunctionCallsCount, 1)
+  func testFetchActorDisplay_result_doesNothing() async {
+    XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 1)
     if case .result(let oldState) = viewModel.state {
-      await viewModel.send(.fetchActivity)
+      await viewModel.send(.fetchActorDisplay)
 
       if case .result(let resultState) = viewModel.state {
-        XCTAssertEqual(getActivityUseCaseSpy.callAsFunctionCallsCount, 1)
+        XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 1)
         XCTAssertEqual(resultState, oldState)
         return
       }
@@ -121,14 +121,14 @@ final class NonComplianceFormViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
-  func testFetchActivity_getActivityThrows_errorState() async {
-    getActivityUseCaseSpy.callAsFunctionThrowableError = TestingError.error
+  func testFetchActorDisplay_getActivityThrows_errorState() async {
+    getActivityActorDisplayUseCaseSpy.callAsFunctionThrowableError = TestingError.error
     viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
 
-    await viewModel.send(.fetchActivity)
+    await viewModel.send(.fetchActorDisplay)
 
     if case .error(let error) = viewModel.state {
-      XCTAssertEqual(error, .activityNotFound)
+      XCTAssertEqual(error, .actorDisplayNotFound)
     } else {
       XCTFail("Expected NonComplianceFormViewModelError")
     }
@@ -166,22 +166,22 @@ final class NonComplianceFormViewModelTests: XCTestCase {
   private let activityIdMock = UUID()
   private let credentialIdMock = UUID()
   private let categoryMock = NonComplianceCategory.excessiveDataRequest
-  private let activityMock = Activity.Mock.issueTrusted
+  private let actorDisplayMock = ActivityActorDisplay.Mock.default
 
-  private var getActivityUseCaseSpy: GetActivityUseCaseProtocolSpy!
+  private var getActivityActorDisplayUseCaseSpy: GetActivityActorDisplayUseCaseProtocolSpy!
   private var nonComplianceFormValidatorSpy: NonComplianceFormValidatorProtocolSpy!
 
   private func registerMocks() {
-    getActivityUseCaseSpy = GetActivityUseCaseProtocolSpy()
+    getActivityActorDisplayUseCaseSpy = GetActivityActorDisplayUseCaseProtocolSpy()
     nonComplianceFormValidatorSpy = NonComplianceFormValidatorProtocolSpy()
 
-    Container.shared.getActivityUseCase.register { self.getActivityUseCaseSpy }
-    Container.shared.nonComplianceFormValidator.register { self.nonComplianceFormValidatorSpy }
+    Container.shared.getActivityActorDisplayUseCase.register { @MainActor in self.getActivityActorDisplayUseCaseSpy }
+    Container.shared.nonComplianceFormValidator.register { @MainActor in self.nonComplianceFormValidatorSpy }
   }
 
   private func createSuccessState() async {
-    getActivityUseCaseSpy.callAsFunctionReturnValue = activityMock
+    getActivityActorDisplayUseCaseSpy.callAsFunctionReturnValue = actorDisplayMock
     nonComplianceFormValidatorSpy.validateForReturnValue = .valid
-    await viewModel.send(.fetchActivity)
+    await viewModel.send(.fetchActorDisplay)
   }
 }

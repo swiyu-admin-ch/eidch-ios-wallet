@@ -11,8 +11,8 @@ final class NonComplianceFormValidatorTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-    Container.shared.descriptionFormFieldMinimumLength.register { Self.minimumDescriptionLengthMock }
-    Container.shared.descriptionFormFieldMaximumLength.register { Self.maximumDescriptionLengthMock }
+    Container.shared.descriptionFormFieldMinimumLength.register { @MainActor in Self.minimumDescriptionLengthMock }
+    Container.shared.descriptionFormFieldMaximumLength.register { @MainActor in Self.maximumDescriptionLengthMock }
     validator = NonComplianceFormValidator()
   }
 

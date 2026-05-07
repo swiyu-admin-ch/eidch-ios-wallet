@@ -10,7 +10,7 @@ struct LegalRepresentantQRCodeView: View {
   // MARK: Lifecycle
 
   init(caseId: String) {
-    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantQRCodeViewModel(caseId))
+    _viewModel = State(initialValue: Container.shared.legalRepresentantQRCodeViewModel(caseId))
   }
 
   // MARK: Internal
@@ -33,7 +33,7 @@ struct LegalRepresentantQRCodeView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: LegalRepresentantQRCodeViewModel
+  @State private var viewModel: LegalRepresentantQRCodeViewModel
 
   private let qrCodeSize = 200.0
 }

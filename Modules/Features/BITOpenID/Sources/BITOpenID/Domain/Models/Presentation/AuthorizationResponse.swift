@@ -11,12 +11,14 @@ public struct AuthorizationResponse: DictionarySerializable, Equatable {
     self.vpToken = vpToken
     self.presentationSubmission = presentationSubmission
     vpTokenByCredentialQueryId = nil
+    responseMode = nil
   }
 
-  public init(vpTokenByCredentialQueryId: [String: [String]]) {
+  public init(vpTokenByCredentialQueryId: [String: [String]], responseMode: RequestObject.ResponseMode? = nil) {
     vpToken = nil
     presentationSubmission = nil
     self.vpTokenByCredentialQueryId = vpTokenByCredentialQueryId
+    self.responseMode = responseMode
   }
 
   // MARK: Public
@@ -40,6 +42,11 @@ public struct AuthorizationResponse: DictionarySerializable, Equatable {
       }
 
       if let vpTokenByCredentialQueryId {
+        if responseMode == .dcApiJWT {
+          dictionary["vp_token"] = vpTokenByCredentialQueryId
+          return dictionary
+        }
+
         guard let vpTokenByCredentialQueryIdString = try String(data: encoder.encode(vpTokenByCredentialQueryId), encoding: .utf8) else {
           return dictionary
         }
@@ -58,6 +65,10 @@ public struct AuthorizationResponse: DictionarySerializable, Equatable {
   let vpToken: String?
   let presentationSubmission: PresentationSubmission?
   let vpTokenByCredentialQueryId: [String: [String]]?
+
+  // MARK: Private
+
+  private let responseMode: RequestObject.ResponseMode?
 }
 
 extension AuthorizationResponse {

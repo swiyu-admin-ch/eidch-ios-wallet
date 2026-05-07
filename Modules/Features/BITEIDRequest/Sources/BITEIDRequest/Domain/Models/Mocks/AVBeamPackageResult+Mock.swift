@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
 @testable import BITAVWrapper
-@testable import BITTestingCore
+@testable import BITCore
 
 extension AVBeamPackageResult: Mockable {
 

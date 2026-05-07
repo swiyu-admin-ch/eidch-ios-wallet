@@ -2,7 +2,8 @@ import BITAppInfo
 import Factory
 import Foundation
 
-class ImprintViewModel: ObservableObject {
+@Observable
+class ImprintViewModel {
 
   // MARK: Lifecycle
 

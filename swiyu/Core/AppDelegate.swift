@@ -6,8 +6,13 @@ import BITAppAuth
 import BITCredential
 import BITDataStore
 import BITEIDRequest
+import BITHome
+import BITInvitation
 import BITLocalAuthentication
 import BITNetworking
+import BITOTP
+import BITPresentation
+import BITSettings
 import BITTheming
 import Factory
 import LocalAuthentication
@@ -48,7 +53,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   // MARK: Private
 
   private let analytics = Container.shared.analytics()
-
 }
 
 extension AppDelegate {
@@ -85,6 +89,7 @@ extension AppDelegate {
       "rootOnboardingIsEnabled": true,
       "isBiometricUsageAllowed": false,
       "eIDRequestAfterOnboardingEnabled": true,
+      "otpEnabled": true,
       "isTranslationSwitchEnabled": false,
     ])
   }
@@ -107,16 +112,76 @@ extension AppDelegate {
   }
 
   private func configureOpenIDSchemes() {
-    Container.shared.additionalPresentationSchemes.register { [ "swiyu-verify" ] }
-    Container.shared.additionalCredentialOfferSchemes.register { [ "swiyu" ] }
+    Container.shared.additionalPresentationSchemes.register { ["swiyu-verify"] }
+    Container.shared.additionalCredentialOfferSchemes.register { ["swiyu"] }
   }
 
   private func registerViewProviders() {
-    Container.shared.activityDetailViewProvider.register {
+    Container.shared.activityExternalViewProvider.register {
       NavigationViewProvider {
         switch $0 {
-        case .activityDetail(let activity, let credentialId):
-          ActivityDetailDestinations.activityDetail(activity: activity, credentialId: credentialId)
+        case .activityDetail(let activityId):
+          ActivityDetailDestinations.activityDetail(activityId: activityId)
+        case .settings:
+          ActivityHistorySettingsView(showNavigationBar: true)
+        }
+      }
+    }
+
+    Container.shared.otpExternalViewProvider.register {
+      NavigationViewProvider {
+        switch $0 {
+        case .eidRequest:
+          EIDRequestDestinations.introduction
+        }
+      }
+    }
+
+    Container.shared.eIDRequestExternalViewProvider.register {
+      NavigationViewProvider {
+        switch $0 {
+        case .presentation(let context):
+          PresentationDestinations.start(context)
+        }
+      }
+    }
+
+    Container.shared.invitationExternalViewProvider.register {
+      NavigationViewProvider {
+        switch $0 {
+        case .presentation(let context):
+          PresentationDestinations.start(context)
+        }
+      }
+    }
+
+    Container.shared.homeExternalViewProvider.register {
+      NavigationViewProvider {
+        switch $0 {
+        case .invitation(let tab):
+          InvitationDestinations.scan(tab)
+        case .deeplink(let url):
+          InvitationDestinations.deeplink(url)
+        case .offer(let credential, let trustInformation):
+          InvitationDestinations.offer(credential, trustInformation)
+        case .credentialDetail(let input):
+          CredentialDestinations.detail(input)
+        case .settings:
+          SettingsDestinations.settings
+        case .betaId:
+          InvitationDestinations.betaId
+        case .otp:
+          OTPDestinations.intro
+        case .eIDRequest:
+          EIDRequestDestinations.introduction
+        case .autoVerification(let caseId):
+          EIDRequestDestinations.avWelcome(caseId: caseId)
+        case .obtainConsent(let caseId):
+          EIDRequestDestinations.legalRepresentantConsent(caseId: caseId)
+        case .walletPairing(let caseId):
+          EIDRequestDestinations.walletPairingList(caseId: caseId)
+        case .identityCheck(let caseId):
+          EIDRequestDestinations.avIdentityCheck(caseId: caseId)
         }
       }
     }

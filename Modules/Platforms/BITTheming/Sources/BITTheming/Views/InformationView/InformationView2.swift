@@ -1,3 +1,4 @@
+import BITL10n
 import NavigatorUI
 import SwiftUI
 
@@ -31,6 +32,7 @@ public struct InformationView2: View {
       primaryContent: leftContent,
       secondaryContent: rightContent,
       footer: footerContent)
+      .navigationBar(.default, scrollEdgeAppearance: .default)
   }
 
   // MARK: Internal
@@ -45,21 +47,11 @@ public struct InformationView2: View {
   private var actions: [ActionType]
 
   private var heroContent: ContentType? {
-    for content in contents {
-      if case .hero = content {
-        return content
-      }
-    }
-    return nil
+    contents.first(where: \.isHero)
   }
 
   private var bodyContents: [ContentType] {
-    contents.filter { content in
-      if case .hero = content {
-        return false
-      }
-      return true
-    }
+    contents.filter { $0.isHero == false }
   }
 
   private func leftContent() -> some View {
@@ -73,7 +65,6 @@ public struct InformationView2: View {
       }
     }
     .padding(.horizontal, .x6)
-    .accessibilityPriorityFocus()
     .accessibilityElement(children: .contain)
     .frame(maxWidth: .infinity)
   }
@@ -148,6 +139,15 @@ extension InformationView2 {
     public static func anyView(@ViewBuilder _ content: () -> some View) -> ContentType {
       .anyView(AnyView(content()))
     }
+
+    // MARK: Internal
+
+    var isHero: Bool {
+      if case .hero = self {
+        return true
+      }
+      return false
+    }
   }
 
   // MARK: - ActionType
@@ -195,7 +195,6 @@ struct ContentTypeView: View {
         .multilineTextAlignment(.leading)
         .minimumScaleFactor(0.5)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityPriorityFocus()
         .accessibilityLabel(alt ?? label)
         .accessibilityAddTraits(.isHeader)
         .accessibility(identifier: identifier ?? alt ?? label)
@@ -240,7 +239,8 @@ struct ContentTypeView: View {
       ButtonLinkText(label, { action(navigator) })
         .font(.custom.footnote)
         .foregroundColor(ThemingAssets.Component.Link.label.swiftUIColor)
-        .accessibilityLabel(alt ?? label)
+        .accessibilityLabel((alt ?? label) + ", " + L10n.tkGlobalExternalLinkAlt)
+        .accessibilityAddTraits(.isLink)
         .accessibility(identifier: identifier ?? alt ?? label)
     case .anyView(let view):
       view
@@ -330,9 +330,15 @@ struct ActionTypeView: View {
   }
 }
 
+extension [InformationView2.ContentType] {
+  public func containsHero() -> Bool {
+    contains(where: \.isHero)
+  }
+}
+
 #if DEBUG
 #Preview {
-  NavigationView {
+  NavigationStack {
     InformationView2(
       image: ThemingAssets.camera.swiftUIImage,
       contents: [
@@ -346,7 +352,7 @@ struct ActionTypeView: View {
 }
 
 #Preview("Error") {
-  NavigationView {
+  NavigationStack {
     InformationView2(
       image: ThemingAssets.closeCircle.swiftUIImage,
       contents: [

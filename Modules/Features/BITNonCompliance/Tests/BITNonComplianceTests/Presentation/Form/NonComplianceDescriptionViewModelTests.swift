@@ -70,7 +70,7 @@ final class NonComplianceDescriptionViewModelTests: XCTestCase {
   private func registerMocks() {
     nonComplianceFormValidatorSpy = NonComplianceFormValidatorProtocolSpy()
 
-    Container.shared.nonComplianceFormValidator.register { self.nonComplianceFormValidatorSpy }
+    Container.shared.nonComplianceFormValidator.register { @MainActor in self.nonComplianceFormValidatorSpy }
   }
 
   private func createSuccessState() {

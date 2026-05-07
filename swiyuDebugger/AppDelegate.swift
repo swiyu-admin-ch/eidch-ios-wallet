@@ -16,15 +16,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
   // MARK: Private
 
   private func setupAdditionalConfigurationsIfNeeded() {
-    #if DEBUG
     try? Container.shared.registerPinCodeUseCase().execute(pinCode: "000000")
     Container.shared.additionalPresentationSchemes.register { [ "swiyu-verify" ] }
     Container.shared.additionalCredentialOfferSchemes.register { [ "swiyu" ] }
     Container.shared.credentialRepository.register { LocalCredentialRepository() }.singleton
     Container.shared.activityRepository.register { LocalActivityRepository() }
     Container.shared.invitationErrorMapper.register { DebuggerInvitationErrorMapper() }
-    #else
-    // nothing
-    #endif
   }
 }

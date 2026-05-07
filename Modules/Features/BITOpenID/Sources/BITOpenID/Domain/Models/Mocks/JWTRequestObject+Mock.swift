@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
+@testable import BITCore
 @testable import BITJWT
-@testable import BITTestingCore
 
 // swiftlint: disable force_try
 
@@ -10,7 +10,7 @@ extension RequestObjectJWS: Mockable {
     private static let jwsHeader = JWSHeader(algorithm: JWTAlgorithm.ES256)
     public static let sample: RequestObjectJWS = createObject(header: jwsHeader)
     public static let sampleData: Data = getData(fromFile: "jwt-request-object-sample", ofType: "txt", bundle: Bundle.module) ?? Data()
-    static let sampleJWT: RequestObjectJWT = decode(fromFile: "jwt-request-object-payload-sample", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    public static let sampleJWT: RequestObjectJWT = decode(fromFile: "jwt-request-object-payload-sample", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let noVctPayload: RequestObjectJWT = decode(fromFile: "jwt-request-object-payload-no-vct", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let clientIdMismatchPayload: RequestObjectJWT = decode(fromFile: "jwt-request-object-client-id-mismatch", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     static let noVct: RequestObjectJWS = createObject(header: jwsHeader, payload: noVctPayload)

@@ -1,4 +1,6 @@
+import BITL10n
 import Factory
+import NavigatorUI
 import XCTest
 @testable import BITAVWrapper
 @testable import BITEIDRequest
@@ -20,17 +22,17 @@ class NFCScanViewModelTests: XCTestCase {
     createSuccessCase()
   }
 
-  func testInitialState() {
+  func testInitialState_whenSDKInitialized_stateIsReady() {
     XCTAssertNotNil(avBeam.messageDelegate)
     XCTAssertNotNil(avBeam.nfcDelegate)
-    XCTAssertEqual(viewModel.state, .sdkInitializing)
+    XCTAssertEqual(viewModel.state, .loading)
     XCTAssertNil(viewModel.destination)
   }
 
   func testInitializateSDK_notInitialized_callInitialize() {
     avBeam.state = .notInitialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertEqual(avBeam.initializeUsingCallsCount, 1)
   }
@@ -38,16 +40,16 @@ class NFCScanViewModelTests: XCTestCase {
   func testInitializateSDK_initialized_stateIsReady() {
     avBeam.state = .initialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
-    XCTAssertEqual(viewModel.state, .ready)
+    XCTAssertEqual(viewModel.state, .loading)
   }
 
   func testInitializateSDK_initializeThrowsError_routeToError() {
     avBeam.state = .notInitialized
     avBeam.initializeUsingThrowableError = TestingError.error
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     if case .error = viewModel.destination {
       XCTAssertTrue(true)
@@ -122,7 +124,7 @@ class NFCScanViewModelTests: XCTestCase {
   func testDidCompleteNfcScan_nfcError_routeToError() async {
     mockContext = EIDRequestContext.Mock.scanDocumentSample
 
-    Container.shared.eidRequestContext.register { self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
     viewModel = NFCScanViewModel()
 
     let error = AVBeamError.nfcTechnicalError
@@ -131,13 +133,21 @@ class NFCScanViewModelTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000)
 
-    XCTAssertEqual(viewModel.destination, .error(.nfcScanRetryOnly(error, { _ in })))
+    XCTAssertEqual(viewModel.destination, .error(.NFC.retry(error, { _ in })))
+  }
+
+  func testDidCompleteNfcScan_nfcTimeout_doesNothing() async {
+    viewModel.didCompleteNfcScan(packageResult: .Mock.with(nfcError: .nfcSessionInvalidated))
+
+    try? await Task.sleep(nanoseconds: 100_000)
+
+    XCTAssertNil(viewModel.destination)
   }
 
   func testDidCompleteNfcScan_avError_routeToError() async {
     mockContext = EIDRequestContext.Mock.scanDocumentSample
 
-    Container.shared.eidRequestContext.register { self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
     viewModel = NFCScanViewModel()
 
     let error = AVBeamError.faceCaptureGeneric
@@ -146,13 +156,14 @@ class NFCScanViewModelTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000)
 
-    XCTAssertEqual(viewModel.destination, .error(.nfcScanRetryOnly(error, { _ in })))
+    XCTAssertEqual(viewModel.destination, .error(.NFC.retry(error, { _ in })))
   }
 
   func testDidCompleteNfcScan_thirdFailure_routeToRetryAndContinue() async {
     mockContext = EIDRequestContext.Mock.scanDocumentSample
 
-    Container.shared.eidRequestContext.register { self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
+    Container.shared.maxFailedNFCScanAttempts.register { 3 }
     viewModel = NFCScanViewModel()
 
     let error = AVBeamError.nfcTechnicalError
@@ -163,7 +174,7 @@ class NFCScanViewModelTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000)
 
-    XCTAssertEqual(viewModel.destination, .error(.nfcScanFailedRetryOrContinue(error, continueAction: { _ in }, retryAction: { _ in })))
+    XCTAssertEqual(viewModel.destination, .error(.NFC.retryOrContinue(error, continueAction: { _ in }, retryAction: { _ in })))
   }
 
   // MARK: Private
@@ -186,9 +197,9 @@ class NFCScanViewModelTests: XCTestCase {
 
     mockContext = EIDRequestContext(caseId: mockCaseId, autoVerificationResponse: mockAutoVerificationResponse)
 
-    Container.shared.eidRequestContext.register { self.mockContext }
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.avBeamNFCConfigurator.register { self.avBeamNFCConfigurator }
+    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.avBeamNFCConfigurator.register { @MainActor in self.avBeamNFCConfigurator }
     Container.shared.maxFailedNFCScanAttempts.register { 3 }
   }
 
@@ -202,7 +213,7 @@ class NFCScanViewModelTests: XCTestCase {
 extension NFCScanViewModel.State: Equatable {
   public static func == (lhs: NFCScanViewModel.State, rhs: NFCScanViewModel.State) -> Bool {
     switch (lhs, rhs) {
-    case (.sdkInitializing, .sdkInitializing):
+    case (.loading, .loading):
       true
     case (.ready, .ready):
       true

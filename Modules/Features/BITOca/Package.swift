@@ -7,7 +7,7 @@ let package = Package(
   name: "BITOca",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -20,7 +20,8 @@ let package = Package(
     .package(path: "../../Platforms/BITCrypto"),
     .package(path: "../../Platforms/BITNetworking"),
     .package(path: "../../Platforms/BITJsonCanonicalizer"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(path: "../../Platforms/BITClaimsPathPointer"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
@@ -32,6 +33,7 @@ let package = Package(
         .product(name: "BITCrypto", package: "BITCrypto"),
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITJsonCanonicalizer", package: "BITJsonCanonicalizer"),
+        .product(name: "BITClaimsPathPointer", package: "BITClaimsPathPointer"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "Factory", package: "Factory"),
       ],

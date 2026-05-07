@@ -5,7 +5,7 @@ targets:
       - swiyu-debugger-deps
     type: application
     platform: iOS
-    deploymentTarget: "26.0"
+    deploymentTarget: 17.0
     sources:
       - path: ../../../swiyuDebugger
         excludes:
@@ -40,12 +40,13 @@ targets:
         UILaunchStoryboardName:
           LaunchScreen.storyboard
         NSCameraUsageDescription: 'swiyu-debugger app would like to use your camera to scan QRCodes.'
+        NSBluetoothAlwaysUsageDescription: 'swiyu-debugger app would like to use Bluetooth for proximity verification.'
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu-debugger
         CODE_SIGN_IDENTITY: iPhone Developer
         PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu-debugger
-        IPHONEOS_DEPLOYMENT_TARGET: 26.0
+        IPHONEOS_DEPLOYMENT_TARGET: 17.0
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 0.1
         PRODUCT_NAME: swiyu-debugger

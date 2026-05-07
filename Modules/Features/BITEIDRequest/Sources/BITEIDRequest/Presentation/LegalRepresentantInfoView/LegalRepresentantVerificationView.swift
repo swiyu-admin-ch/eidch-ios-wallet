@@ -1,4 +1,6 @@
 import BITL10n
+import BITNavigation
+import BITPresentation
 import BITTheming
 import Factory
 import SwiftUI
@@ -8,7 +10,7 @@ struct LegalRepresentantVerificationView: View {
   // MARK: Lifecycle
 
   init(caseId: String) {
-    viewModel = Container.shared.legalRepresentantVerificationViewModel(caseId)
+    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantVerificationViewModel(caseId))
   }
 
   // MARK: Internal
@@ -22,17 +24,23 @@ struct LegalRepresentantVerificationView: View {
         .caption(L10n.tkEidRequestGuardianVerificationTertiary, identifier: "tertiaryText"),
       ],
       actions: [
-        .primaryAsync(L10n.tkEidRequestGuardianVerificationButtonStart, identifier: "primaryButton", { _ in
+        .primaryAsync(L10n.tkEidRequestGuardianVerificationButtonStart, identifier: "primaryButton") { _ in
           await viewModel.startVerification()
-        }),
+        },
       ])
       .toolbar(.visible)
+      .navigate(to: $viewModel.destination)
+      .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+      .navigationCheckpoint(PresentationCheckpoints.didFinish) { state in
+        Task {
+          await viewModel.finish(with: state)
+        }
+      }
   }
 
   // MARK: Private
 
-  private var viewModel: LegalRepresentantVerificationViewModel
-
+  @StateObject private var viewModel: LegalRepresentantVerificationViewModel
 }
 
 #Preview {

@@ -14,146 +14,195 @@ struct ActivityDetailView: View {
 
   // MARK: Lifecycle
 
-  init(_ activity: Activity, credentialId: UUID) {
-    _viewModel = StateObject(wrappedValue: Container.shared.activityDetailViewModel((activity, credentialId)))
+  init(_ activityId: UUID) {
+    _viewModel = State(initialValue: Container.shared.activityDetailViewModel(activityId))
   }
 
   // MARK: Internal
 
   var body: some View {
-    ZStack(alignment: .top) {
-      ThemingAssets.Background.secondary.swiftUIColor
-        .frame(maxWidth: .infinity)
-        .ignoresSafeArea()
-      content
-        .landscapeMaxWidth()
-        .applyScrollViewIfNeeded()
-    }
-    .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
-    .navigationTitle(L10n.tkActivityActivityDetailTitle)
-    .navigationBarTitleDisplayMode(.inline)
-    .navigationCheckpoint(ActivityCheckpoints.activityDetail) { submitted in
-      guard submitted else { return }
-      viewModel.showNonComplianceReportSent()
-    }
-    .task {
-      await viewModel.fetchCredential()
-    }
-    .alert(isPresented: $viewModel.isDeleteConfirmationPresented) {
-      Alert(
-        title: Text(L10n.tkActivityActivityDetailDeleteConfirmationTitle),
-        message: Text(L10n.tkActivityActivityDetailDeleteConfirmationBody),
-        primaryButton: .destructive(Text(L10n.tkGlobalDelete), action: {
-          viewModel.deleteActivity()
-          navigator.returnToCheckpoint(ActivityCheckpoints.activities, value: true)
-        }),
-        secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
-    }
-    .toastMessage(
-      isPresented: $viewModel.isToastPresented,
-      message: viewModel.toastMessage,
-      clearAction: viewModel.clearToast)
+    Content(
+      state: viewModel.state,
+      isDeleteConfirmationPresented: $viewModel.isDeleteConfirmationPresented,
+      toast: $viewModel.toast,
+      eventAction: { event in Task { await viewModel.send(event) } })
+      .onColorSchemeChange { scheme in
+        Task {
+          await viewModel.send(.onColorSchemeChange(colorScheme: scheme.rawValue))
+        }
+      }
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: ActivityDetailViewModel
+  @State private var viewModel: ActivityDetailViewModel
+}
 
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @Environment(\.navigator) private var navigator
+// MARK: ActivityDetailView.Content
 
-  @ViewBuilder
-  private var content: some View {
-    switch viewModel.state {
-    case .result(let activity, let credential):
-      resultContent(cellViewModel: activity, credentialViewModel: credential)
-    case .error(let error):
-      EmptyStateView(.error(error: error)) {}
+extension ActivityDetailView {
+  fileprivate struct Content: View {
+
+    // MARK: Lifecycle
+
+    init(
+      state: ActivityDetailState,
+      isDeleteConfirmationPresented: Binding<Bool>,
+      toast: Binding<Toast?>,
+      eventAction: @escaping (ActivityDetailViewModel.Event) -> Void = { _ in })
+    {
+      self.state = state
+      self.isDeleteConfirmationPresented = isDeleteConfirmationPresented
+      self.toast = toast
+      self.eventAction = eventAction
     }
-  }
 
-  private var actorInfo: some View {
-    SectionView(title: viewModel.actorTitle, minHeight: nil) {
-      HStack(alignment: dynamicTypeSize.isAccessibilitySize ? .top : .center, spacing: .x4) {
-        NormalizedLogoCircular(viewModel.actorImage)
-        Text(viewModel.actorName ?? L10n.tkErrorNotregisteredTitle)
-          .font(.custom.body)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
-          .multilineTextAlignment(.leading)
+    // MARK: Internal
+
+    var body: some View {
+      ZStack(alignment: .top) {
+        ThemingAssets.Background.secondary.swiftUIColor
+          .frame(maxWidth: .infinity)
+          .ignoresSafeArea()
+        ScrollView(showsIndicators: false) {
+          content
+            .landscapeMaxWidth()
+        }
       }
-      .padding(.horizontal, .x4)
+      .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
+      .navigationTitle(L10n.tkActivityActivityDetailTitle)
+      .navigationBarTitleDisplayMode(.inline)
+      .navigationCheckpoint(ActivityCheckpoints.activityDetail) { submitted in
+        guard submitted else { return }
+        eventAction(.nonComplianceReportSent)
+      }
+      .alert(isPresented: isDeleteConfirmationPresented) {
+        Alert(
+          title: Text(L10n.tkActivityActivityDetailDeleteConfirmationTitle),
+          message: Text(L10n.tkActivityActivityDetailDeleteConfirmationBody),
+          primaryButton: .destructive(Text(L10n.tkGlobalDelete), action: {
+            eventAction(.activityDeletionConfirmed)
+            navigator.returnToCheckpointSafely(ActivityCheckpoints.activities, value: true)
+          }),
+          secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
+      }
+      .toast(toast)
     }
-  }
 
-  private func resultContent(cellViewModel: ActivityCellViewModel, credentialViewModel: ActivityCredentialViewModel?) -> some View {
-    VStack(spacing: .x4) {
-      SectionView(minHeight: nil) {
-        ActivityCell(cellViewModel, configuration: .compact)
+    // MARK: Private
+
+    @Environment(\.navigator) private var navigator
+
+    private let state: ActivityDetailState
+    private let isDeleteConfirmationPresented: Binding<Bool>
+    private let toast: Binding<Toast?>
+    private let eventAction: (ActivityDetailViewModel.Event) -> Void
+
+    @Injected(\.isNonComplianceEnabled) private var isNonComplianceEnabled
+
+    @ViewBuilder
+    private var content: some View {
+      switch state {
+      case .loading:
+        ProgressView()
+          .controlSize(.large)
+      case .result(let result):
+        resultContent(result: result)
+      case .error(let error):
+        EmptyStateView(.error(error: error)) {}
+      }
+    }
+
+    private func actorInfo(actor: ActivityDetailState.Actor, activityType: ActivityType) -> some View {
+      SectionView(title: actor.title, footer: activityType.actorTrustFooter, minHeight: nil, hasContentPadding: false) {
+        ActorHeaderView(name: actor.name, badgeTypes: actor.badges, imageData: actor.image) { badgeType in
+          navigator.navigate(
+            to: ActivityDetailInternalDestinations.badgeDetail(
+              badgeType: badgeType))
+        }
+        .padding(.bottom, .x1)
+      }
+    }
+
+    private func resultContent(result: ActivityDetailState.Result) -> some View {
+      VStack(spacing: .x4) {
+        SectionView(minHeight: nil) {
+          ActivityCell(result.activity, configuration: .compact)
+            .padding(.vertical, .x1)
+            .padding(.horizontal, .x4)
+        }
+        actorInfo(actor: result.actor, activityType: result.activity.type)
+        credentialInfo(result.credential, title: result.activity.type.credentialInfoTitle)
+        if !result.credential.clusters.isEmpty {
+          ClaimClusterList(result.credential.clusters)
+        }
+        SectionView(minHeight: nil, hasContentPadding: false) {
+          if isNonComplianceEnabled {
+            ButtonCell(
+              icon: Assets.flag.swiftUIImage,
+              title: result.activity.type.reportActorButtonTitle,
+              role: .destructive,
+              hasDivider: true)
+            {
+              navigator.navigate(to: NonComplianceDestinations.categories(activityType: result.activity.type, activityId: result.activity.id))
+            }
+          }
+          ButtonCell(
+            icon: Assets.trash.swiftUIImage,
+            title: L10n.tkActivityActivityDetailDeleteEntryButton,
+            role: .destructive)
+          {
+            eventAction(.deleteActivity)
+          }
+        }
+      }
+      .padding(.vertical, .x4)
+    }
+
+    private func credentialInfo(_ viewModel: ActivityCredentialViewModel, title: String?) -> some View {
+      VStack(alignment: .leading, spacing: 0) {
+        if let title {
+          Text(title)
+            .fontWeight(.medium)
+            .font(.custom.title3)
+            .padding(.top, .x4)
+            .padding(.horizontal, .x8)
+            .accessibilityAddTraits(.isHeader)
+        }
+        SectionView(title: L10n.tkActivityActivityDetailCredentialTitle, footer: L10n.tkActivityActivityDetailCredentialFooter, minHeight: nil) {
+          HStack(alignment: .center, spacing: .x3) {
+            CredentialCard(
+              name: viewModel.name,
+              summary: viewModel.summary,
+              background: viewModel.backgroundColor,
+              logoBase64: viewModel.logoBase64,
+              environment: viewModel.environment)
+              .controlSize(.mini)
+            VStack(alignment: .leading, spacing: 0) {
+              Text(viewModel.name ?? L10n.tkCredentialFallbackTitle)
+                .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+                .font(.custom.body)
+              if let summary = viewModel.summary {
+                Text(summary)
+                  .font(.custom.body)
+                  .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+              }
+            }.accessibilityElement(children: .combine)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.vertical, .x1)
           .padding(.horizontal, .x4)
-      }
-      actorInfo
-      if let credentialViewModel {
-        credentialInfo(credentialViewModel)
-        if !credentialViewModel.clusters.isEmpty {
-          ClaimClusterList(credentialViewModel.clusters)
-        }
-      }
-      SectionView(minHeight: nil, hasContentPadding: false) {
-        if viewModel.isNonComplianceEnabled {
-          ButtonCell(
-            icon: Assets.flag.swiftUIImage,
-            title: viewModel.activity.type.reportActorButtonTitle,
-            role: .destructive,
-            hasDivider: true)
-          {
-            navigator.navigate(to: NonComplianceDestinations.categories(activity: viewModel.activity))
-          }
-        }
-        ButtonCell(
-          icon: Assets.trash.swiftUIImage,
-          title: L10n.tkActivityActivityDetailDeleteEntryButton,
-          role: .destructive)
-        {
-          viewModel.showDeleteActivityConfirmation()
         }
       }
     }
-    .padding(.vertical, .x4)
   }
-
-  private func credentialInfo(_ viewModel: ActivityCredentialViewModel) -> some View {
-    SectionView(title: L10n.tkActivityActivityDetailCredentialTitle, minHeight: nil) {
-      HStack(alignment: .center, spacing: .x3) {
-        CredentialCard(
-          name: viewModel.name,
-          summary: viewModel.summary,
-          background: viewModel.backgroundColor,
-          logoBase64: viewModel.logoBase64,
-          environment: viewModel.environment)
-          .controlSize(.mini)
-        VStack(alignment: .leading, spacing: 0) {
-          Text(viewModel.name ?? L10n.tkCredentialFallbackTitle)
-            .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-            .font(.custom.body)
-          if let summary = viewModel.summary {
-            Text(summary)
-              .font(.custom.body)
-              .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-          }
-        }.accessibilityElement(children: .combine)
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.vertical, .x1)
-      .padding(.horizontal, .x4)
-    }
-  }
-
 }
 
 #if DEBUG
 #Preview {
-  ActivityDetailView(.Mock.issueTrusted, credentialId: VerifiableCredential.Mock.sample.id)
+  ActivityDetailView.Content(
+    state: .Mock.result,
+    isDeleteConfirmationPresented: .constant(false),
+    toast: .constant(nil))
 }
 #endif

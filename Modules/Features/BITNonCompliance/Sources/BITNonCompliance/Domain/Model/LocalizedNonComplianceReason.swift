@@ -1,7 +1,7 @@
 import BITCore
 import Factory
 
-public struct LocalizedNonComplianceReason: Equatable {
+public struct LocalizedNonComplianceReason: Equatable, Hashable {
 
   // MARK: Lifecycle
 
@@ -17,7 +17,7 @@ public struct LocalizedNonComplianceReason: Equatable {
       .first ?? localizedValues.values.first
   }
 
-  // MARK: Private
+  // MARK: Public
 
-  private let localizedValues: [String: String]
+  public let localizedValues: [String: String]
 }

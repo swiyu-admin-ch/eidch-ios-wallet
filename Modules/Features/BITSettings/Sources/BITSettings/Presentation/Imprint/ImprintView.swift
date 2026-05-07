@@ -9,7 +9,7 @@ public struct ImprintView: View {
   // MARK: Lifecycle
 
   public init() {
-    _viewModel = StateObject(wrappedValue: ImprintViewModel())
+    _viewModel = State(initialValue: ImprintViewModel())
   }
 
   // MARK: Public
@@ -72,7 +72,7 @@ public struct ImprintView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: ImprintViewModel
+  @State private var viewModel: ImprintViewModel
 }
 
 #Preview {

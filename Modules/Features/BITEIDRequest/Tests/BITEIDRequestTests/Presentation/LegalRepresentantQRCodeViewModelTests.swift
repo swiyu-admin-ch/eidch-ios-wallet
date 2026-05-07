@@ -13,13 +13,13 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
   override func setUp() {
     context = EIDRequestContext()
     context.caseId = mockCaseId
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
 
     getLegalRepresentantVerificationQRCodeUseCase = GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
 
-    Container.shared.getLegalRepresentantVerificationQRCodeUseCase.register { self.getLegalRepresentantVerificationQRCodeUseCase }
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCase }
+    Container.shared.getLegalRepresentantVerificationQRCodeUseCase.register { @MainActor in self.getLegalRepresentantVerificationQRCodeUseCase }
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
 
     viewModel = LegalRepresentantQRCodeViewModel(caseId: mockCaseId)
   }

@@ -73,4 +73,11 @@ final class Tests: XCTestCase {
     }
   }
 
+  func test_sessionUsesSanitizedUserAgent() {
+    let session = NetworkContainer.shared.session()
+    let userAgent = session.sessionConfiguration.headers["User-Agent"]
+
+    XCTAssertEqual(userAgent, "swiyu")
+  }
+
 }

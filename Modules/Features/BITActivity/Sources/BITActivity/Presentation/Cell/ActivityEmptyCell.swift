@@ -4,6 +4,12 @@ import SwiftUI
 
 struct ActivityEmptyCell: View {
 
+  // MARK: Lifecycle
+
+  init(isActivityHistoryEnabled: Bool = true) {
+    self.isActivityHistoryEnabled = isActivityHistoryEnabled
+  }
+
   // MARK: Internal
 
   var body: some View {
@@ -18,7 +24,7 @@ struct ActivityEmptyCell: View {
         Text(L10n.tkActivityLatestActivitiesNoHistoryTitle)
           .font(.custom.body)
           .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
-        Text(L10n.tkActivityLatestActivitiesNoHistoryBody)
+        Text(isActivityHistoryEnabled ? L10n.tkActivityLatestActivitiesNoHistoryBody : L10n.tkActivityLatestActivitiesDisabledHistoryBody)
           .font(.custom.caption1)
           .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
       }
@@ -31,4 +37,6 @@ struct ActivityEmptyCell: View {
   // MARK: Private
 
   @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 30
+
+  private let isActivityHistoryEnabled: Bool
 }

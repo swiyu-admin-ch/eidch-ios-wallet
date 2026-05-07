@@ -2,6 +2,8 @@ import BITL10n
 import BITTheming
 import SwiftUI
 
+// MARK: - RequestCaseNotificationView
+
 struct RequestCaseNotificationView: View {
 
   // MARK: Lifecycle
@@ -36,6 +38,13 @@ struct RequestCaseNotificationView: View {
       }
     }
     .frame(maxWidth: .infinity)
+    .padding(.x6)
+    .background(ThemingAssets.Background.secondary.swiftUIColor)
+    .cornerRadius(.x5)
+    .contentShape(.accessibility, RoundedRectangle(cornerRadius: .x5))
+    .accessibilityElement(children: .combine)
+    .accessibilityLabel("\(title). \(content)")
+    .accessibilityNotificationActions(notificationType)
   }
 
   // MARK: Private
@@ -51,14 +60,12 @@ struct RequestCaseNotificationView: View {
       Text(title)
         .font(.custom.footnoteEmphasized)
         .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
-        .accessibilityAddTraits(.isHeader)
-        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
       Text(content)
         .font(.custom.footnote)
         .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
-        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   @ViewBuilder
@@ -73,7 +80,6 @@ struct RequestCaseNotificationView: View {
       .controlSize(.regular)
       .padding(.top, .x2)
       .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-      .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     }
 
     Spacer()
@@ -87,10 +93,9 @@ struct RequestCaseNotificationView: View {
       Task { action() }
     }, label: {
       ThemingAssets.close.swiftUIImage
-        .accessibilityLabel(L10n.tkEidRequestNotificationCloseButton)
-        .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     })
     .buttonStyle(.borderless)
+    .accessibilityHidden(true)
   }
 
   private func completeCellView(primaryActionLabel: String, primaryAction: @escaping () -> Void, dismissAction: @escaping () -> Void, buttonStyle: CustomButtonStyle) -> some View {
@@ -101,9 +106,43 @@ struct RequestCaseNotificationView: View {
         Task { dismissAction() }
       }, label: {
         ThemingAssets.close.swiftUIImage
-          .accessibilityLabel(L10n.tkEidRequestNotificationCloseButton)
-          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       })
+      .accessibilityHidden(true)
+    }
+  }
+}
+
+
+extension View {
+  fileprivate func accessibilityNotificationActions(_ notificationType: RequestCaseNotificationView.NotificationType) -> some View {
+    modifier(AccessibilityActionsModifier(notificationType: notificationType))
+  }
+}
+
+// MARK: - AccessibilityActionsModifier
+
+fileprivate struct AccessibilityActionsModifier: ViewModifier {
+  let notificationType: RequestCaseNotificationView.NotificationType
+
+  func body(content: Content) -> some View {
+    switch notificationType {
+    case .default:
+      content
+
+    case .dismiss(let action):
+      content
+        .accessibilityAction(named: L10n.tkEidRequestNotificationCloseButton, action)
+
+    case .primary(let label, let action, _):
+      content
+        .accessibilityAction(named: label, action)
+
+    case .complete(let label, let action, _, let dismissAction):
+      content
+        .accessibilityActions {
+          Button(label, action: action)
+          Button(L10n.tkEidRequestNotificationCloseButton, action: dismissAction)
+        }
     }
   }
 }

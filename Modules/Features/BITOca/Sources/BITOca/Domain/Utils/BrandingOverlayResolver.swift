@@ -1,3 +1,4 @@
+import BITClaimsPathPointer
 import RegexBuilder
 import Spyable
 
@@ -51,13 +52,17 @@ public class BrandingOverlayResolver: BrandingOverlayResolverProtocol {
   }
 
   private func resolveAttributeWithOverlays(_ brandingOverlay: BrandingOverlay1x1, _ attribute: String, _ overlays: [any Overlay]) -> String? {
-    let dataSourceOverlays = overlays
-      .compactMap { $0 as? any DataSourceOverlay }
+    var dataSourceOverlays: [any DataSourceOverlay] = overlays
+      .compactMap { $0 as? DataSourceOverlay2x0 }
+    if dataSourceOverlays.isEmpty {
+      dataSourceOverlays = overlays
+        .compactMap { $0 as? DataSourceOverlay1x0 }
+    }
 
     if let (referenceDigest, key) = extractDigestAndKey(attribute) {
       let digest = referenceDigest ?? brandingOverlay.captureBaseDigest
       if let dataSourceOverlay = dataSourceOverlays.first(where: { $0.captureBaseDigest == digest }) {
-        return dataSourceOverlay.attributeSources[key]?.rawString
+        return dataSourceOverlay.attributeSources[key]?.stringValue
       }
     }
     return attribute

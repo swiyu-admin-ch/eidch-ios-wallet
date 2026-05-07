@@ -21,8 +21,7 @@ final class SecuritySettingsViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isAnalyticsEnabled)
     XCTAssertFalse(viewModel.isAnalyticsLoading)
     XCTAssertEqual(viewModel.biometricType, .none)
-    XCTAssertEqual(viewModel.isToastPresented, false)
-    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertNil(viewModel.toast)
   }
 
   func testOnAppear_faceIDAllowedAndEnabled_faceIDIsEnabled() {

@@ -33,36 +33,36 @@
   ],
   "overlays":[
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IJngsgWBS-8m5IVEdatgnJkLrC5ftqR6nzLKwvcIh0St",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "capture_base_3":"$.capture_base_3",
-        "capture_base_2":"$.capture_base_2"
+        "capture_base_3":["capture_base_3"],
+        "capture_base_2":["capture_base_2"]
       }
     },
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IJt3I51rFWxKKu1wqDci9R1mpE3b-XJRnqta1NukyTQO",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "capture_base_1_claim_1":"$.capture_base_1_claim_1"
+        "capture_base_1_claim_1":["capture_base_1_claim_1"]
       }
     },
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IPxI3Nf9dMzv5Q1_EvWbFN09ro1Bg_tMegPZvvqPmysN",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "capture_base_2_claim_1":"$.capture_base_2.claim_1"
+        "capture_base_2_claim_1":["capture_base_2", "claim_1"]
       }
     },
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IFuSBD6W7_wIB0PIX8B-_N1S_fSRUzrz2Aq6jjOTdGTa",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "capture_base_3_claim_1":"$.capture_base_3.claim_1"
+        "capture_base_3_claim_1":["capture_base_3", "claim_1"]
       }
     },
     {

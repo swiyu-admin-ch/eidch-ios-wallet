@@ -10,7 +10,7 @@ struct VersionEnforcementView: View {
   // MARK: Lifecycle
 
   init(viewModel: VersionEnforcementViewModel) {
-    _viewModel = StateObject(wrappedValue: viewModel)
+    _viewModel = State(initialValue: viewModel)
   }
 
   // MARK: Internal
@@ -44,7 +44,7 @@ struct VersionEnforcementView: View {
     static let contentMaxWidth = 530.0
   }
 
-  @StateObject private var viewModel: VersionEnforcementViewModel
+  @State private var viewModel: VersionEnforcementViewModel
 
   private func content() -> some View {
     ViewThatFits(in: .vertical) {

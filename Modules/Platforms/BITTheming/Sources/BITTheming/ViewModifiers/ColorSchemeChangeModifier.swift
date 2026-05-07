@@ -10,10 +10,7 @@ public struct ColorSchemeChangeViewModifier: ViewModifier {
   public func body(content: Content) -> some View {
     content
       // forwards color scheme info at appearance time to initate view model setters
-      .onAppear {
-        onChange(colorScheme)
-      }
-      .onChange(of: colorScheme) { newScheme in
+      .onChange(of: colorScheme, initial: true) { _, newScheme in
         onChange(newScheme)
       }
   }

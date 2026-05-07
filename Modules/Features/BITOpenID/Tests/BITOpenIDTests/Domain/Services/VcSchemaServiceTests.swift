@@ -4,7 +4,6 @@ import XCTest
 @testable import BITCrypto
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 final class VcSchemaServiceTests: XCTestCase {

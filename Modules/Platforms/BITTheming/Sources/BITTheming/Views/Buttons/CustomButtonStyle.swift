@@ -56,6 +56,7 @@ public struct CircleButton<Label: View>: View {
   @MainActor public var body: some View {
     Button(action: action, label: label)
       .clipShape(.circle)
+      .contentShape(.accessibility, .circle)
   }
 
   // MARK: Internal
@@ -95,10 +96,14 @@ public struct CustomButton: View {
       .foregroundColor(isEnabled ? buttonConfiguration.foregroundColor : buttonConfiguration.foregroundColorDisabled)
       .progressViewStyle(CircularProgressViewStyle(tint: isEnabled ? buttonConfiguration.progressViewTint : ThemingAssets.Label.tertiary.swiftUIColor))
       .if(!sizeCategory.isAccessibilityCategory) {
-        $0.clipShape(.capsule)
+        $0
+          .clipShape(.capsule)
+          .contentShape(.accessibility, .capsule)
       }
       .if(sizeCategory.isAccessibilityCategory) {
-        $0.clipShape(RoundedRectangle(cornerRadius: .x6))
+        $0
+          .clipShape(RoundedRectangle(cornerRadius: .x6))
+          .contentShape(.accessibility, RoundedRectangle(cornerRadius: .x6))
       }
       .scaleEffect(configuration.isPressed ? CGSize(width: 0.95, height: 0.95) : CGSize(width: 1.0, height: 1.0))
       .animation(.interactiveSpring, value: configuration.isPressed)

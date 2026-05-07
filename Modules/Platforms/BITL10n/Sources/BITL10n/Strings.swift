@@ -10,669 +10,158 @@ import Foundation
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
 public enum L10n {
-  /// Camera access denied.
-  public static var avbeamErrorCameraAccessForbidden: String {
-    L10n.tr("Localizable", "avbeam_error_cameraAccessForbidden", fallback: "Camera access denied.")
+  /// An unexpected error occurred and couldn’t be resolved. Please restart the process and try again.
+  public static var avbeamErrorFaceCaptureIntegrityCheckFailedContent: String {
+    L10n.tr("Localizable", "avbeam_error_faceCaptureIntegrityCheckFailed_content", fallback: "An unexpected error occurred and couldn’t be resolved. Please restart the process and try again.")
   }
 
-  /// Camera error.
-  public static var avbeamErrorCameraFailure: String {
-    L10n.tr("Localizable", "avbeam_error_cameraFailure", fallback: "Camera error.")
+  /// Something went wrong
+  public static var avbeamErrorFaceCaptureIntegrityCheckFailedTitle: String {
+    L10n.tr("Localizable", "avbeam_error_faceCaptureIntegrityCheckFailed_title", fallback: "Something went wrong")
   }
 
-  /// Face data does not match.
-  public static var avbeamErrorDataDecryptionFaceNoMatch: String {
-    L10n.tr("Localizable", "avbeam_error_dataDecryptionFaceNoMatch", fallback: "Face data does not match.")
+  /// We couldn’t see your face in the selfie video. Make sure your face is well lit, centered, and unobstructed.
+  public static var avbeamErrorFaceNotRecognizedContent: String {
+    L10n.tr("Localizable", "avbeam_error_faceNotRecognized_content", fallback: "We couldn’t see your face in the selfie video. Make sure your face is well lit, centered, and unobstructed.")
   }
 
-  /// Error decrypting data.
-  public static var avbeamErrorDataDecryptionGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_dataDecryptionGeneric", fallback: "Error decrypting data.")
+  /// Face not detected
+  public static var avbeamErrorFaceNotRecognizedTitle: String {
+    L10n.tr("Localizable", "avbeam_error_faceNotRecognized_title", fallback: "Face not detected")
   }
 
-  /// Data encryption error.
-  public static var avbeamErrorDataEncryptionGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_dataEncryptionGeneric", fallback: "Data encryption error.")
+  /// The information on the document couldn’t be read. Try scanning the page again.
+  public static var avbeamErrorIdBadMrzFieldsContent: String {
+    L10n.tr("Localizable", "avbeam_error_idBadMrzFields_content", fallback: "The information on the document couldn’t be read. Try scanning the page again.")
   }
 
-  /// Device integrity compromised.
-  public static var avbeamErrorDeviceIntegrityCompromised: String {
-    L10n.tr("Localizable", "avbeam_error_deviceIntegrityCompromised", fallback: "Device integrity compromised.")
+  /// Not readable
+  public static var avbeamErrorIdBadMrzFieldsTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idBadMrzFields_title", fallback: "Not readable")
   }
 
-  /// Document error.
-  public static var avbeamErrorDocGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_docGeneric", fallback: "Document error.")
+  /// The document used has expired. Use a valid document or renew it before continuing.
+  public static var avbeamErrorIdExpiredContent: String {
+    L10n.tr("Localizable", "avbeam_error_idExpired_content", fallback: "The document used has expired. Use a valid document or renew it before continuing.")
   }
 
-  /// Document recording error.
-  public static var avbeamErrorDocRecordingGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_docRecordingGeneric", fallback: "Document recording error.")
+  /// Document expired
+  public static var avbeamErrorIdExpiredTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idExpired_title", fallback: "Document expired")
   }
 
-  /// Document processing timed out.
-  public static var avbeamErrorDocTimeoutExpired: String {
-    L10n.tr("Localizable", "avbeam_error_docTimeoutExpired", fallback: "Document processing timed out.")
-  }
-
-  /// Document liveness check failed.
-  public static var avbeamErrorDocumentLivenessFailure: String {
-    L10n.tr("Localizable", "avbeam_error_documentLivenessFailure", fallback: "Document liveness check failed.")
-  }
-
-  /// The document is upside down.
-  public static var avbeamErrorDocumentUpsidedown: String {
-    L10n.tr("Localizable", "avbeam_error_documentUpsidedown", fallback: "The document is upside down.")
-  }
-
-  /// Face capture error.
-  public static var avbeamErrorFaceCaptureGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_faceCaptureGeneric", fallback: "Face capture error.")
-  }
-
-  /// Face capture is incomplete.
-  public static var avbeamErrorFaceCaptureIncomplete: String {
-    L10n.tr("Localizable", "avbeam_error_faceCaptureIncomplete", fallback: "Face capture is incomplete.")
-  }
-
-  /// Face capture integrity check failed.
-  public static var avbeamErrorFaceCaptureIntegrityCheckFailed: String {
-    L10n.tr("Localizable", "avbeam_error_faceCaptureIntegrityCheckFailed", fallback: "Face capture integrity check failed.")
-  }
-
-  /// Face frame similarity check failed.
-  public static var avbeamErrorFaceFrameSimilarityFailed: String {
-    L10n.tr("Localizable", "avbeam_error_faceFrameSimilarityFailed", fallback: "Face frame similarity check failed.")
-  }
-
-  /// Face layout validation failed.
-  public static var avbeamErrorFaceLayoutValidation: String {
-    L10n.tr("Localizable", "avbeam_error_faceLayoutValidation", fallback: "Face layout validation failed.")
-  }
-
-  /// Face liveness check failed.
-  public static var avbeamErrorFaceLivenessFailed: String {
-    L10n.tr("Localizable", "avbeam_error_faceLivenessFailed", fallback: "Face liveness check failed.")
-  }
-
-  /// Face not recognized.
-  public static var avbeamErrorFaceNotRecognized: String {
-    L10n.tr("Localizable", "avbeam_error_faceNotRecognized", fallback: "Face not recognized.")
-  }
-
-  /// Face not verified.
-  public static var avbeamErrorFaceNotVerified: String {
-    L10n.tr("Localizable", "avbeam_error_faceNotVerified", fallback: "Face not verified.")
-  }
-
-  /// Face is static.
-  public static var avbeamErrorFaceStatic: String {
-    L10n.tr("Localizable", "avbeam_error_faceStatic", fallback: "Face is static.")
-  }
-
-  /// Function not implemented.
-  public static var avbeamErrorFunctionNotImplemented: String {
-    L10n.tr("Localizable", "avbeam_error_functionNotImplemented", fallback: "Function not implemented.")
-  }
-
-  /// This function is not included in the SDK.
-  public static var avbeamErrorFunctionNotIncluded: String {
-    L10n.tr("Localizable", "avbeam_error_functionNotIncluded", fallback: "This function is not included in the SDK.")
-  }
-
-  /// Hologram detection failed.
-  public static var avbeamErrorHologramDetectionFailed: String {
-    L10n.tr("Localizable", "avbeam_error_hologramDetectionFailed", fallback: "Hologram detection failed.")
-  }
-
-  /// MRZ birth date is invalid.
-  public static var avbeamErrorIdBadMrzFieldBirthDay: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldBirthDay", fallback: "MRZ birth date is invalid.")
-  }
-
-  /// MRZ composite check digit is invalid.
-  public static var avbeamErrorIdBadMrzFieldCompositCheckDigit: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldCompositCheckDigit", fallback: "MRZ composite check digit is invalid.")
-  }
-
-  /// MRZ country field is invalid.
-  public static var avbeamErrorIdBadMrzFieldCountry: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldCountry", fallback: "MRZ country field is invalid.")
-  }
-
-  /// MRZ document number is invalid.
-  public static var avbeamErrorIdBadMrzFieldDocumentNumber: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldDocumentNumber", fallback: "MRZ document number is invalid.")
-  }
-
-  /// MRZ expiry date is invalid.
-  public static var avbeamErrorIdBadMrzFieldExpiryDay: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldExpiryDay", fallback: "MRZ expiry date is invalid.")
-  }
-
-  /// MRZ first name field is invalid.
-  public static var avbeamErrorIdBadMrzFieldFirstName: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldFirstName", fallback: "MRZ first name field is invalid.")
-  }
-
-  /// MRZ gender field is invalid.
-  public static var avbeamErrorIdBadMrzFieldGender: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldGender", fallback: "MRZ gender field is invalid.")
-  }
-
-  /// MRZ last name field is invalid.
-  public static var avbeamErrorIdBadMrzFieldLastName: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldLastName", fallback: "MRZ last name field is invalid.")
-  }
-
-  /// MRZ nationality field is invalid.
-  public static var avbeamErrorIdBadMrzFieldNationality: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFieldNationality", fallback: "MRZ nationality field is invalid.")
-  }
-
-  /// MRZ fields are invalid.
-  public static var avbeamErrorIdBadMrzFields: String {
-    L10n.tr("Localizable", "avbeam_error_idBadMrzFields", fallback: "MRZ fields are invalid.")
-  }
-
-  /// The document has expired.
-  public static var avbeamErrorIdExpired: String {
-    L10n.tr("Localizable", "avbeam_error_idExpired", fallback: "The document has expired.")
-  }
-
-  /// Failed to capture face image from the document.
-  public static var avbeamErrorIdFaceImageCaptureFailed: String {
-    L10n.tr("Localizable", "avbeam_error_idFaceImageCaptureFailed", fallback: "Failed to capture face image from the document.")
-  }
-
-  /// Final package data for upload is missing.
-  public static var avbeamErrorIdFinalPackageDataForUpload: String {
-    L10n.tr("Localizable", "avbeam_error_idFinalPackageDataForUpload", fallback: "Final package data for upload is missing.")
-  }
-
-  /// Document scan error.
-  public static var avbeamErrorIdGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_idGeneric", fallback: "Document scan error.")
-  }
-
-  /// Document data is incomplete.
-  public static var avbeamErrorIdIncompleteData: String {
-    L10n.tr("Localizable", "avbeam_error_idIncompleteData", fallback: "Document data is incomplete.")
-  }
-
-  /// Document matching failed.
-  public static var avbeamErrorIdMatchingFailed: String {
-    L10n.tr("Localizable", "avbeam_error_idMatchingFailed", fallback: "Document matching failed.")
-  }
-
-  /// MRZ matching failed.
-  public static var avbeamErrorIdMatchingFailedMrz: String {
-    L10n.tr("Localizable", "avbeam_error_idMatchingFailedMrz", fallback: "MRZ matching failed.")
-  }
-
-  /// Document does not match.
-  public static var avbeamErrorIdMismatch: String {
-    L10n.tr("Localizable", "avbeam_error_idMismatch", fallback: "Document does not match.")
-  }
-
-  /// Second page required for matching.
-  public static var avbeamErrorIdNeedSecondPageForMatching: String {
-    L10n.tr("Localizable", "avbeam_error_idNeedSecondPageForMatching", fallback: "Second page required for matching.")
-  }
-
-  /// Second page required to read the MRZ.
-  public static var avbeamErrorIdNeedSecondPageForMrz: String {
-    L10n.tr("Localizable", "avbeam_error_idNeedSecondPageForMrz", fallback: "Second page required to read the MRZ.")
-  }
-
-  /// No document data was captured.
-  public static var avbeamErrorIdNoData: String {
-    L10n.tr("Localizable", "avbeam_error_idNoData", fallback: "No document data was captured.")
-  }
-
-  /// Document not detected.
-  public static var avbeamErrorIdNotDetected: String {
-    L10n.tr("Localizable", "avbeam_error_idNotDetected", fallback: "Document not detected.")
-  }
-
-  /// Document type is not supported.
-  public static var avbeamErrorIdNotInList: String {
-    L10n.tr("Localizable", "avbeam_error_idNotInList", fallback: "Document type is not supported.")
-  }
-
-  /// Document page is missing.
-  public static var avbeamErrorIdPageMissing: String {
-    L10n.tr("Localizable", "avbeam_error_idPageMissing", fallback: "Document page is missing.")
-  }
-
-  /// Second page is missing.
-  public static var avbeamErrorIdSecondPageMissingDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_idSecondPageMissingDeprecated", fallback: "Second page is missing.")
-  }
-
-  /// Document scan timed out.
-  public static var avbeamErrorIdTimeoutExpired: String {
-    L10n.tr("Localizable", "avbeam_error_idTimeoutExpired", fallback: "Document scan timed out.")
-  }
-
-  /// Document type is invalid.
-  public static var avbeamErrorIdTypeNotValid: String {
-    L10n.tr("Localizable", "avbeam_error_idTypeNotValid", fallback: "Document type is invalid.")
-  }
-
-  /// Image anomaly detected.
-  public static var avbeamErrorImageAnomaly: String {
-    L10n.tr("Localizable", "avbeam_error_imageAnomaly", fallback: "Image anomaly detected.")
-  }
-
-  /// The image is blurry.
-  public static var avbeamErrorImageBlurred: String {
-    L10n.tr("Localizable", "avbeam_error_imageBlurred", fallback: "The image is blurry.")
-  }
-
-  /// The document is too close.
-  public static var avbeamErrorImageDocumentTooClose: String {
-    L10n.tr("Localizable", "avbeam_error_imageDocumentTooClose", fallback: "The document is too close.")
-  }
-
-  /// The document is too far away.
-  public static var avbeamErrorImageDocumentTooFar: String {
-    L10n.tr("Localizable", "avbeam_error_imageDocumentTooFar", fallback: "The document is too far away.")
-  }
-
-  /// The document is too rotated.
-  public static var avbeamErrorImageDocumentTooRotated: String {
-    L10n.tr("Localizable", "avbeam_error_imageDocumentTooRotated", fallback: "The document is too rotated.")
-  }
-
-  /// The document image appears to be from a screen.
-  public static var avbeamErrorImageFromScreen: String {
-    L10n.tr("Localizable", "avbeam_error_imageFromScreen", fallback: "The document image appears to be from a screen.")
-  }
-
-  /// Image injection detected.
-  public static var avbeamErrorImageInjection: String {
-    L10n.tr("Localizable", "avbeam_error_imageInjection", fallback: "Image injection detected.")
-  }
-
-  /// The image is in grayscale.
-  public static var avbeamErrorImageIsGreyscale: String {
-    L10n.tr("Localizable", "avbeam_error_imageIsGreyscale", fallback: "The image is in grayscale.")
-  }
-
-  /// Image resolution is not supported.
-  public static var avbeamErrorImageUnsupportedResolution: String {
-    L10n.tr("Localizable", "avbeam_error_imageUnsupportedResolution", fallback: "Image resolution is not supported.")
-  }
-
-  /// Image type is not supported.
-  public static var avbeamErrorImageUnsupportedType: String {
-    L10n.tr("Localizable", "avbeam_error_imageUnsupportedType", fallback: "Image type is not supported.")
-  }
-
-  /// Invalid input.
-  public static var avbeamErrorIncorrectInput: String {
-    L10n.tr("Localizable", "avbeam_error_incorrectInput", fallback: "Invalid input.")
-  }
-
-  /// Lenticular detection failed.
-  public static var avbeamErrorLenticularDetectionFailed: String {
-    L10n.tr("Localizable", "avbeam_error_lenticularDetectionFailed", fallback: "Lenticular detection failed.")
-  }
-
-  /// The document appears manipulated.
-  public static var avbeamErrorManipulatedDocument: String {
-    L10n.tr("Localizable", "avbeam_error_manipulatedDocument", fallback: "The document appears manipulated.")
-  }
-
-  /// Module not initialized.
-  public static var avbeamErrorModuleNotInitialized: String {
-    L10n.tr("Localizable", "avbeam_error_moduleNotInitialized", fallback: "Module not initialized.")
-  }
-
-  /// MRZ layout validation failed.
-  public static var avbeamErrorMrzLayoutValidation: String {
-    L10n.tr("Localizable", "avbeam_error_mrzLayoutValidation", fallback: "MRZ layout validation failed.")
-  }
-
-  /// MRZ not detected.
-  public static var avbeamErrorMrzNotDetected: String {
-    L10n.tr("Localizable", "avbeam_error_mrzNotDetected", fallback: "MRZ not detected.")
-  }
-
-  /// NFC backend hash algorithm not supported.
-  public static var avbeamErrorNfcBackendDataGroupsHashesWithUnsupportedAlgorithm: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendDataGroupsHashesWithUnsupportedAlgorithm", fallback: "NFC backend hash algorithm not supported.")
-  }
-
-  /// NFC backend failed to encode the face photo.
-  public static var avbeamErrorNfcBackendFailedToEncodeFacePhotoAsJpeg: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToEncodeFacePhotoAsJpeg", fallback: "NFC backend failed to encode the face photo.")
-  }
-
-  /// NFC backend failed to encode the signature photo.
-  public static var avbeamErrorNfcBackendFailedToEncodeSignaturePhotoAsJpeg: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToEncodeSignaturePhotoAsJpeg", fallback: "NFC backend failed to encode the signature photo.")
-  }
-
-  /// NFC backend failed to parse DG1.
-  public static var avbeamErrorNfcBackendFailedToParseDg1: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToParseDg1", fallback: "NFC backend failed to parse DG1.")
-  }
-
-  /// NFC backend failed to parse DG11.
-  public static var avbeamErrorNfcBackendFailedToParseDg11: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToParseDg11", fallback: "NFC backend failed to parse DG11.")
-  }
-
-  /// NFC backend failed to parse DG12.
-  public static var avbeamErrorNfcBackendFailedToParseDg12: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToParseDg12", fallback: "NFC backend failed to parse DG12.")
-  }
-
-  /// NFC backend failed to parse DG2.
-  public static var avbeamErrorNfcBackendFailedToParseDg2: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToParseDg2", fallback: "NFC backend failed to parse DG2.")
-  }
-
-  /// NFC backend failed to parse DG7.
-  public static var avbeamErrorNfcBackendFailedToParseDg7: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToParseDg7", fallback: "NFC backend failed to parse DG7.")
-  }
-
-  /// NFC backend failed to parse SOD.
-  public static var avbeamErrorNfcBackendFailedToParseSod: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendFailedToParseSod", fallback: "NFC backend failed to parse SOD.")
-  }
-
-  /// NFC backend signature verification failed.
-  public static var avbeamErrorNfcBackendSignatureVerifyException: String {
-    L10n.tr("Localizable", "avbeam_error_nfcBackendSignatureVerifyException", fallback: "NFC backend signature verification failed.")
-  }
-
-  /// NFC certificate validation failed.
-  public static var avbeamErrorNfcCertificateValidationFailed: String {
-    L10n.tr("Localizable", "avbeam_error_nfcCertificateValidationFailed", fallback: "NFC certificate validation failed.")
-  }
-
-  /// NFC chip appears cloned.
-  public static var avbeamErrorNfcClonedChip: String {
-    L10n.tr("Localizable", "avbeam_error_nfcClonedChip", fallback: "NFC chip appears cloned.")
-  }
-
-  /// NFC hashes are invalid.
-  public static var avbeamErrorNfcInvalidHashesDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcInvalidHashesDeprecated", fallback: "NFC hashes are invalid.")
-  }
-
-  /// NFC connection failed.
-  public static var avbeamErrorNfcLibConnectingFailedDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcLibConnectingFailedDeprecated", fallback: "NFC connection failed.")
-  }
-
-  /// NFC connection lost.
-  public static var avbeamErrorNfcLibConnectionLostDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcLibConnectionLostDeprecated", fallback: "NFC connection lost.")
-  }
-
-  /// More than one NFC tag found.
-  public static var avbeamErrorNfcMoreThanOneTagFound: String {
-    L10n.tr("Localizable", "avbeam_error_nfcMoreThanOneTagFound", fallback: "More than one NFC tag found.")
-  }
-
-  /// NFC mutual authentication failed.
-  public static var avbeamErrorNfcMutualAuthenticationFailedNotSatisfied: String {
-    L10n.tr("Localizable", "avbeam_error_nfcMutualAuthenticationFailedNotSatisfied", fallback: "NFC mutual authentication failed.")
-  }
-
-  /// NFC mutual authentication failed (unknown).
-  public static var avbeamErrorNfcMutualAuthenticationFailedUnknownDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcMutualAuthenticationFailedUnknownDeprecated", fallback: "NFC mutual authentication failed (unknown).")
-  }
-
-  /// NFC not connected.
-  public static var avbeamErrorNfcNotConnected: String {
-    L10n.tr("Localizable", "avbeam_error_nfcNotConnected", fallback: "NFC not connected.")
-  }
-
-  /// NFC is not supported on this device.
-  public static var avbeamErrorNfcNotSupported: String {
-    L10n.tr("Localizable", "avbeam_error_nfcNotSupported", fallback: "NFC is not supported on this device.")
-  }
-
-  /// NFC PACE/BAC failed.
-  public static var avbeamErrorNfcPaceOrBacFailedDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcPaceOrBacFailedDeprecated", fallback: "NFC PACE/BAC failed.")
-  }
-
-  /// NFC read failed.
-  public static var avbeamErrorNfcReadFailed: String {
-    L10n.tr("Localizable", "avbeam_error_nfcReadFailed", fallback: "NFC read failed.")
-  }
-
-  /// NFC session invalidated.
-  public static var avbeamErrorNfcSessionInvalidated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcSessionInvalidated", fallback: "NFC session invalidated.")
-  }
-
-  /// NFC SOD vs COM inconsistency.
-  public static var avbeamErrorNfcSodVsComInsonsitencyDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcSodVsComInsonsitencyDeprecated", fallback: "NFC SOD vs COM inconsistency.")
-  }
-
-  /// NFC tag was lost.
-  public static var avbeamErrorNfcTagWasLost: String {
-    L10n.tr("Localizable", "avbeam_error_nfcTagWasLost", fallback: "NFC tag was lost.")
-  }
-
-  /// Technical NFC error.
-  public static var avbeamErrorNfcTechnicalError: String {
-    L10n.tr("Localizable", "avbeam_error_nfcTechnicalError", fallback: "Technical NFC error.")
-  }
-
-  /// NFC data appears tampered.
-  public static var avbeamErrorNfcTemperedDataDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcTemperedDataDeprecated", fallback: "NFC data appears tampered.")
-  }
-
-  /// NFC timed out.
-  public static var avbeamErrorNfcTimeout: String {
-    L10n.tr("Localizable", "avbeam_error_nfcTimeout", fallback: "NFC timed out.")
-  }
-
-  /// Unexpected NFC error.
-  public static var avbeamErrorNfcUnexpectedException: String {
-    L10n.tr("Localizable", "avbeam_error_nfcUnexpectedException", fallback: "Unexpected NFC error.")
-  }
-
-  /// NFC session invalidated by the user.
-  public static var avbeamErrorNfcUserInvalidatedSessionDeprecated: String {
-    L10n.tr("Localizable", "avbeam_error_nfcUserInvalidatedSessionDeprecated", fallback: "NFC session invalidated by the user.")
-  }
-
-  /// Wrong NFC tag.
-  public static var avbeamErrorNfcWrongTag: String {
-    L10n.tr("Localizable", "avbeam_error_nfcWrongTag", fallback: "Wrong NFC tag.")
-  }
-
-  /// No images were captured.
-  public static var avbeamErrorNoImages: String {
-    L10n.tr("Localizable", "avbeam_error_noImages", fallback: "No images were captured.")
-  }
-
-  /// No internet connection.
-  public static var avbeamErrorNoInternetConnection: String {
-    L10n.tr("Localizable", "avbeam_error_noInternetConnection", fallback: "No internet connection.")
-  }
-
+  /// The document used doesn’t meet the requirements. You can use one of the following documents:
   ///
-  public static var avbeamErrorNone: String {
-    L10n.tr("Localizable", "avbeam_error_none", fallback: "")
+  /// Swiss Identity Card
+  /// Swiss Passport
+  /// Swiss Resident Permit
+  public static var avbeamErrorIdMatchingFailedContent: String {
+    L10n.tr("Localizable", "avbeam_error_idMatchingFailed_content", fallback: "The document used doesn’t meet the requirements. You can use one of the following documents:\n\nSwiss Identity Card\nSwiss Passport\nSwiss Resident Permit")
   }
 
-  /// Optional page is missing.
-  public static var avbeamErrorOptionalPageMissing: String {
-    L10n.tr("Localizable", "avbeam_error_optionalPageMissing", fallback: "Optional page is missing.")
+  /// No matching document
+  public static var avbeamErrorIdMatchingFailedTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idMatchingFailed_title", fallback: "No matching document")
   }
 
-  /// Optional page not detected.
-  public static var avbeamErrorOptionalPageNotDetected: String {
-    L10n.tr("Localizable", "avbeam_error_optionalPageNotDetected", fallback: "Optional page not detected.")
+  /// We couldn’t recognize the document. Please try again and use one of the following documents:
+  ///
+  /// Swiss identity card
+  /// Swiss passport
+  /// Swiss residence permit
+  public static var avbeamErrorIdNoDataContent: String {
+    L10n.tr("Localizable", "avbeam_error_idNoData_content", fallback: "We couldn’t recognize the document. Please try again and use one of the following documents:\n\nSwiss identity card\nSwiss passport\nSwiss residence permit")
   }
 
-  /// PDF document access denied or invalid file path.
-  public static var avbeamErrorPdfDocAccessDeniedOrInvalidFilePath: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocAccessDeniedOrInvalidFilePath", fallback: "PDF document access denied or invalid file path.")
+  /// Document not recognized
+  public static var avbeamErrorIdNoDataTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idNoData_title", fallback: "Document not recognized")
   }
 
-  /// PDF document is damaged or has an invalid format.
-  public static var avbeamErrorPdfDocDamagedOrInvalidFormat: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocDamagedOrInvalidFormat", fallback: "PDF document is damaged or has an invalid format.")
+  /// Not all corners of the document are placed in the overlay. Make sure you place the document within the overlay while scanning.
+  public static var avbeamErrorIdNotDetectedContent: String {
+    L10n.tr("Localizable", "avbeam_error_idNotDetected_content", fallback: "Not all corners of the document are placed in the overlay. Make sure you place the document within the overlay while scanning.")
   }
 
-  /// PDF document requires a password.
-  public static var avbeamErrorPdfDocNeedInputPassword: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocNeedInputPassword", fallback: "PDF document requires a password.")
+  /// No document detected
+  public static var avbeamErrorIdNotDetectedTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idNotDetected_title", fallback: "No document detected")
   }
 
-  /// PDF document not found.
-  public static var avbeamErrorPdfDocNotFound: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocNotFound", fallback: "PDF document not found.")
+  /// The document used doesn’t meet the requirements. You can use one of the following documents:
+  ///
+  /// Swiss Identity Card
+  /// Swiss Passport
+  /// Swiss resident permit
+  public static var avbeamErrorIdNotInListContent: String {
+    L10n.tr("Localizable", "avbeam_error_idNotInList_content", fallback: "The document used doesn’t meet the requirements. You can use one of the following documents:\n\nSwiss Identity Card\nSwiss Passport\nSwiss resident permit")
   }
 
-  /// PDF document is invalid.
-  public static var avbeamErrorPdfDocNotValid: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocNotValid", fallback: "PDF document is invalid.")
+  /// Invalid document
+  public static var avbeamErrorIdNotInListTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idNotInList_title", fallback: "Invalid document")
   }
 
-  /// Unknown PDF document error.
-  public static var avbeamErrorPdfDocUnknown: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocUnknown", fallback: "Unknown PDF document error.")
+  /// We did not receive both pages of your document.
+  ///
+  /// Make sure, you scan the 1st and the 2nd page of your document.
+  public static var avbeamErrorIdPageMissingContent: String {
+    L10n.tr("Localizable", "avbeam_error_idPageMissing_content", fallback: "We did not receive both pages of your document.\n\nMake sure, you scan the 1st and the 2nd page of your document.")
   }
 
-  /// PDF document uses unknown encryption.
-  public static var avbeamErrorPdfDocUnknownEncryption: String {
-    L10n.tr("Localizable", "avbeam_error_pdfDocUnknownEncryption", fallback: "PDF document uses unknown encryption.")
+  /// Missing page
+  public static var avbeamErrorIdPageMissingTitle: String {
+    L10n.tr("Localizable", "avbeam_error_idPageMissing_title", fallback: "Missing page")
   }
 
-  /// QR code data is invalid.
-  public static var avbeamErrorQrCodeBadData: String {
-    L10n.tr("Localizable", "avbeam_error_qrCodeBadData", fallback: "QR code data is invalid.")
+  /// The image is blurred. Clean the camera lens and ensure the focus is sharp, then try again.
+  public static var avbeamErrorImageBlurredContent: String {
+    L10n.tr("Localizable", "avbeam_error_imageBlurred_content", fallback: "The image is blurred. Clean the camera lens and ensure the focus is sharp, then try again.")
   }
 
-  /// QR code capture failed.
-  public static var avbeamErrorQrCodeCaptureFailed: String {
-    L10n.tr("Localizable", "avbeam_error_qrCodeCaptureFailed", fallback: "QR code capture failed.")
+  /// Image blurred
+  public static var avbeamErrorImageBlurredTitle: String {
+    L10n.tr("Localizable", "avbeam_error_imageBlurred_title", fallback: "Image blurred")
   }
 
-  /// QR code error.
-  public static var avbeamErrorQrCodeGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_qrCodeGeneric", fallback: "QR code error.")
+  /// Make sure your scans include the page with the Machine Readable Zone of the document.
+  public static var avbeamErrorMrzNotDetectedContent: String {
+    L10n.tr("Localizable", "avbeam_error_mrzNotDetected_content", fallback: "Make sure your scans include the page with the Machine Readable Zone of the document.")
   }
 
-  /// QR code scan timed out.
-  public static var avbeamErrorQrCodeTimeoutExpired: String {
-    L10n.tr("Localizable", "avbeam_error_qrCodeTimeoutExpired", fallback: "QR code scan timed out.")
+  /// No MRZ code detected
+  public static var avbeamErrorMrzNotDetectedTitle: String {
+    L10n.tr("Localizable", "avbeam_error_mrzNotDetected_title", fallback: "No MRZ code detected")
   }
 
-  /// Reflection detected.
-  public static var avbeamErrorReflection: String {
-    L10n.tr("Localizable", "avbeam_error_reflection", fallback: "Reflection detected.")
+  /// Reflections were detected on the document. Turn off the camera flash, avoid direct light, and make sure the document is evenly lit before scanning again.
+  public static var avbeamErrorReflectionContent: String {
+    L10n.tr("Localizable", "avbeam_error_reflection_content", fallback: "Reflections were detected on the document. Turn off the camera flash, avoid direct light, and make sure the document is evenly lit before scanning again.")
   }
 
-  /// Security features error.
-  public static var avbeamErrorSecurityFeaturesGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_securityFeaturesGeneric", fallback: "Security features error.")
+  /// Reflections detected
+  public static var avbeamErrorReflectionTitle: String {
+    L10n.tr("Localizable", "avbeam_error_reflection_title", fallback: "Reflections detected")
   }
 
-  /// Signature capture failed.
-  public static var avbeamErrorSignatureCaptureFailed: String {
-    L10n.tr("Localizable", "avbeam_error_signatureCaptureFailed", fallback: "Signature capture failed.")
+  /// Unfortunately, your device’s camera does not support the technical requirements for applying for an e-ID.
+  public static var avbeamErrorUnsupportedCameraResolutionContent: String {
+    L10n.tr("Localizable", "avbeam_error_unsupportedCameraResolution_content", fallback: "Unfortunately, your device’s camera does not support the technical requirements for applying for an e-ID.")
   }
 
-  /// Document signing error.
-  public static var avbeamErrorSignDocGeneric: String {
-    L10n.tr("Localizable", "avbeam_error_signDocGeneric", fallback: "Document signing error.")
+  /// Camera not compatible
+  public static var avbeamErrorUnsupportedCameraResolutionTitle: String {
+    L10n.tr("Localizable", "avbeam_error_unsupportedCameraResolution_title", fallback: "Camera not compatible")
   }
 
-  /// Specimen document detected.
-  public static var avbeamErrorSpecimenDetection: String {
-    L10n.tr("Localizable", "avbeam_error_specimenDetection", fallback: "Specimen document detected.")
+  /// Unfortunately, your device’s video camera does not support the technical requirements for applying for an e-ID.
+  public static var avbeamErrorUnsupportedVideoConfigurationContent: String {
+    L10n.tr("Localizable", "avbeam_error_unsupportedVideoConfiguration_content", fallback: "Unfortunately, your device’s video camera does not support the technical requirements for applying for an e-ID.")
   }
 
-  /// Failed to start camera.
-  public static var avbeamErrorStartCamera: String {
-    L10n.tr("Localizable", "avbeam_error_startCamera", fallback: "Failed to start camera.")
-  }
-
-  /// Failed to start face capture.
-  public static var avbeamErrorStartCaptureFace: String {
-    L10n.tr("Localizable", "avbeam_error_startCaptureFace", fallback: "Failed to start face capture.")
-  }
-
-  /// Failed to start document recording.
-  public static var avbeamErrorStartDocumentRecording: String {
-    L10n.tr("Localizable", "avbeam_error_startDocumentRecording", fallback: "Failed to start document recording.")
-  }
-
-  /// Failed to start front camera.
-  public static var avbeamErrorStartFrontCamera: String {
-    L10n.tr("Localizable", "avbeam_error_startFrontCamera", fallback: "Failed to start front camera.")
-  }
-
-  /// Failed to start NFC scan.
-  public static var avbeamErrorStartNfcScan: String {
-    L10n.tr("Localizable", "avbeam_error_startNfcScan", fallback: "Failed to start NFC scan.")
-  }
-
-  /// Failed to start document scan.
-  public static var avbeamErrorStartScanDocument: String {
-    L10n.tr("Localizable", "avbeam_error_startScanDocument", fallback: "Failed to start document scan.")
-  }
-
-  /// Failed to stop camera.
-  public static var avbeamErrorStopCamera: String {
-    L10n.tr("Localizable", "avbeam_error_stopCamera", fallback: "Failed to stop camera.")
-  }
-
-  /// The underlying SDK failed.
-  public static var avbeamErrorThirdPartyLibFailure: String {
-    L10n.tr("Localizable", "avbeam_error_thirdPartyLibFailure", fallback: "The underlying SDK failed.")
-  }
-
-  /// SDK license expired.
-  public static var avbeamErrorThirdPartyLibLicenseExpired: String {
-    L10n.tr("Localizable", "avbeam_error_thirdPartyLibLicenseExpired", fallback: "SDK license expired.")
-  }
-
-  /// Tracking timed out.
-  public static var avbeamErrorTrackingTimeout: String {
-    L10n.tr("Localizable", "avbeam_error_trackingTimeout", fallback: "Tracking timed out.")
-  }
-
-  /// The operation was stopped unexpectedly.
-  public static var avbeamErrorUnexpectedStop: String {
-    L10n.tr("Localizable", "avbeam_error_unexpectedStop", fallback: "The operation was stopped unexpectedly.")
-  }
-
-  /// Unknown error.
-  public static var avbeamErrorUnknown: String {
-    L10n.tr("Localizable", "avbeam_error_unknown", fallback: "Unknown error.")
-  }
-
-  /// Unsupported camera resolution.
-  public static var avbeamErrorUnsupportedCameraResolution: String {
-    L10n.tr("Localizable", "avbeam_error_unsupportedCameraResolution", fallback: "Unsupported camera resolution.")
-  }
-
-  /// Unsupported video configuration.
-  public static var avbeamErrorUnsupportedVideoConfiguration: String {
-    L10n.tr("Localizable", "avbeam_error_unsupportedVideoConfiguration", fallback: "Unsupported video configuration.")
-  }
-
-  /// SDK wrapper is not set.
-  public static var avbeamErrorWrapperNotSet: String {
-    L10n.tr("Localizable", "avbeam_error_wrapperNotSet", fallback: "SDK wrapper is not set.")
+  /// Video camera not compatible
+  public static var avbeamErrorUnsupportedVideoConfigurationTitle: String {
+    L10n.tr("Localizable", "avbeam_error_unsupportedVideoConfiguration_title", fallback: "Video camera not compatible")
   }
 
   /// Data decrypted.
@@ -1230,6 +719,21 @@ public enum L10n {
     L10n.tr("Localizable", "storageSetup_title", fallback: "Applying settings")
   }
 
+  /// Shared data
+  public static var tkAccessibilityInformationAbout: String {
+    L10n.tr("Localizable", "tk_accessibility_information_about", fallback: "Shared data")
+  }
+
+  /// The state of the credential reflects the time when the activity occurred and might have changed since then.
+  public static var tkActivityActivityDetailCredentialFooter: String {
+    L10n.tr("Localizable", "tk_activity_activityDetail_credential_footer", fallback: "The state of the credential reflects the time when the activity occurred and might have changed since then.")
+  }
+
+  /// Shared Data
+  public static var tkActivityActivityDetailCredentialInfoTitleVerification: String {
+    L10n.tr("Localizable", "tk_activity_activityDetail_credential_info_title_verification", fallback: "Shared Data")
+  }
+
   /// Credential
   public static var tkActivityActivityDetailCredentialTitle: String {
     L10n.tr("Localizable", "tk_activity_activityDetail_credential_title", fallback: "Credential")
@@ -1270,6 +774,16 @@ public enum L10n {
     L10n.tr("Localizable", "tk_activity_activityDetail_title", fallback: "Activity Detail")
   }
 
+  /// The trust status of the issuer reflects the time when the activity occurred and might have changed since then.
+  public static var tkActivityActivityDetailTrustInfoFooterIssuer: String {
+    L10n.tr("Localizable", "tk_activity_activityDetail_trust_info_footer_issuer", fallback: "The trust status of the issuer reflects the time when the activity occurred and might have changed since then.")
+  }
+
+  /// The trust status of the verifier reflects the time when the activity occurred and might have changed since then.
+  public static var tkActivityActivityDetailTrustInfoFooterVerifier: String {
+    L10n.tr("Localizable", "tk_activity_activityDetail_trust_info_footer_verifier", fallback: "The trust status of the verifier reflects the time when the activity occurred and might have changed since then.")
+  }
+
   /// Verifier
   public static var tkActivityActivityDetailVerifierTitle: String {
     L10n.tr("Localizable", "tk_activity_activityDetail_verifier_title", fallback: "Verifier")
@@ -1305,9 +819,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_activity_latestActivities_entireHistory", fallback: "Entire Credential History")
   }
 
-  /// Edit activity history settings
+  /// Edit history settings
   public static var tkActivityLatestActivitiesGoToSettings: String {
-    L10n.tr("Localizable", "tk_activity_latestActivities_goToSettings", fallback: "Edit activity history settings")
+    L10n.tr("Localizable", "tk_activity_latestActivities_goToSettings", fallback: "Edit history settings")
   }
 
   /// You’ll see your history here once credentials activities have been made.
@@ -1400,9 +914,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_credential_fallback_title", fallback: "Credential")
   }
 
-  /// Ready to activate
+  /// Ready to add
   public static var tkCredentialProgressionStateUnaccepted: String {
-    L10n.tr("Localizable", "tk_credential_progressionState_unaccepted", fallback: "Ready to activate")
+    L10n.tr("Localizable", "tk_credential_progressionState_unaccepted", fallback: "Ready to add")
   }
 
   /// Demo
@@ -1475,6 +989,96 @@ public enum L10n {
     L10n.tr("Localizable", "tk_credential_status_valid_alt", fallback: "Credential valid")
   }
 
+  /// Credential Request Denied
+  public static var tkCredentialOfferErrorCredentialRequestDeniedDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_credentialRequestDenied_description", fallback: "Credential Request Denied")
+  }
+
+  /// Insufficient Scope
+  public static var tkCredentialOfferErrorInsufficientScopeDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_insufficientScope_description", fallback: "Insufficient Scope")
+  }
+
+  /// Invalid client
+  public static var tkCredentialOfferErrorInvalidClientDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidClient_description", fallback: "Invalid client")
+  }
+
+  /// Invalid credential request
+  public static var tkCredentialOfferErrorInvalidCredentialRequestDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidCredentialRequest_description", fallback: "Invalid credential request")
+  }
+
+  /// Invalid encryption parameters
+  public static var tkCredentialOfferErrorInvalidEncryptionParametersDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidEncryptionParameters_description", fallback: "Invalid encryption parameters")
+  }
+
+  /// Invalid grant
+  public static var tkCredentialOfferErrorInvalidGrantDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidGrant_description", fallback: "Invalid grant")
+  }
+
+  /// Invalid Nonce
+  public static var tkCredentialOfferErrorInvalidNonceDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidNonce_description", fallback: "Invalid Nonce")
+  }
+
+  /// Invalid Proof
+  public static var tkCredentialOfferErrorInvalidProofDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidProof_description", fallback: "Invalid Proof")
+  }
+
+  /// Invalid request
+  public static var tkCredentialOfferErrorInvalidRequestDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidRequest_description", fallback: "Invalid request")
+  }
+
+  /// Invalid Scope
+  public static var tkCredentialOfferErrorInvalidScopeDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidScope_description", fallback: "Invalid Scope")
+  }
+
+  /// Invalid Token
+  public static var tkCredentialOfferErrorInvalidTokenDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidToken_description", fallback: "Invalid Token")
+  }
+
+  /// Invalid Transaction Id
+  public static var tkCredentialOfferErrorInvalidTransactionIdDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_invalidTransactionId_description", fallback: "Invalid Transaction Id")
+  }
+
+  /// Something went wrong
+  public static var tkCredentialOfferErrorPrimary: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_primary", fallback: "Something went wrong")
+  }
+
+  /// We’re unable to complete your request right now. This might be due to a temporary connection or system issue.
+  public static var tkCredentialOfferErrorSecondary: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_secondary", fallback: "We’re unable to complete your request right now. This might be due to a temporary connection or system issue.")
+  }
+
+  /// Unauthorized client
+  public static var tkCredentialOfferErrorUnauthorizedClientDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_unauthorizedClient_description", fallback: "Unauthorized client")
+  }
+
+  /// Unknown Credential Configuration
+  public static var tkCredentialOfferErrorUnknownCredentialConfigurationDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_unknownCredentialConfiguration_description", fallback: "Unknown Credential Configuration")
+  }
+
+  /// Unknown Credential Identifier
+  public static var tkCredentialOfferErrorUnknownCredentialIdentifierDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_unknownCredentialIdentifier_description", fallback: "Unknown Credential Identifier")
+  }
+
+  /// Unsupported grant type
+  public static var tkCredentialOfferErrorUnsupportedGrantTypeDescription: String {
+    L10n.tr("Localizable", "tk_credentialOffer_error_unsupportedGrantType_description", fallback: "Unsupported grant type")
+  }
+
   /// In progress
   public static var tkDeferredCredentialStatusInProgress: String {
     L10n.tr("Localizable", "tk_deferredCredential_status_inProgress", fallback: "In progress")
@@ -1500,11 +1104,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_deferredCredentialDetails_invalid_button", fallback: "Delete credential")
   }
 
-  /// The credential comes from a particularly secure source. After import, it automatically becomes invalid.
-  ///
-  /// Request a new credential. The existing credential remains invalid.
+  /// An error occurred during the issuance of the credential. Please contact the issuer. This credential will remain until you delete it.
   public static var tkDeferredCredentialDetailsInvalidContentBody: String {
-    L10n.tr("Localizable", "tk_deferredCredentialDetails_invalid_contentBody", fallback: "The credential comes from a particularly secure source. After import, it automatically becomes invalid.\n\nRequest a new credential. The existing credential remains invalid.")
+    L10n.tr("Localizable", "tk_deferredCredentialDetails_invalid_contentBody", fallback: "An error occurred during the issuance of the credential. Please contact the issuer. This credential will remain until you delete it.")
   }
 
   /// The existing credential remains visible until you delete it.
@@ -1560,14 +1162,14 @@ public enum L10n {
     L10n.tr("Localizable", "tk_displaydelete_wrongdata_title", fallback: "Report incorrect details")
   }
 
-  /// We are checking your identity
+  /// We’re verifying your identity - thank you for your patience.
   public static var tkEidRequestAgentReviewPrimary: String {
-    L10n.tr("Localizable", "tk_eidRequest_agentReview_primary", fallback: "We are checking your identity")
+    L10n.tr("Localizable", "tk_eidRequest_agentReview_primary", fallback: "We’re verifying your identity - thank you for your patience.")
   }
 
-  /// Your identity is being verified carefully. This can take up to several working days.
+  /// This process may take several business days. You’ll be notified as soon as it’s complete.
   public static var tkEidRequestAgentReviewSecondary: String {
-    L10n.tr("Localizable", "tk_eidRequest_agentReview_secondary", fallback: "Your identity is being verified carefully. This can take up to several working days.")
+    L10n.tr("Localizable", "tk_eidRequest_agentReview_secondary", fallback: "This process may take several business days. You’ll be notified as soon as it’s complete.")
   }
 
   /// Just a moment - Verifying compatibility
@@ -2169,6 +1771,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_nfcScanResult_passportNumber_key", fallback: "Passport number")
   }
 
+  /// Your photo
+  public static var tkEidRequestNfcScanResultPhotoAlt: String {
+    L10n.tr("Localizable", "tk_eidRequest_nfcScanResult_photo_alt", fallback: "Your photo")
+  }
+
   /// Photo
   public static var tkEidRequestNfcScanResultPhotoKey: String {
     L10n.tr("Localizable", "tk_eidRequest_nfcScanResult_photo_key", fallback: "Photo")
@@ -2187,6 +1794,11 @@ public enum L10n {
   /// Your identity is being carefully verified. This may take several business days. Once we are done, you will receive a notification.
   public static var tkEidRequestNotificationAgentReviewSecondary: String {
     L10n.tr("Localizable", "tk_eidRequest_notification_agentReview_secondary", fallback: "Your identity is being carefully verified. This may take several business days. Once we are done, you will receive a notification.")
+  }
+
+  /// Your files have been sent, please wait.
+  public static var tkEidRequestNotificationAutoVerificationFilesSubmittedSecondary: String {
+    L10n.tr("Localizable", "tk_eidRequest_notification_autoVerification_filesSubmitted_secondary", fallback: "Your files have been sent, please wait.")
   }
 
   /// Close button
@@ -2259,6 +1871,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_notification_legalRepresentantPendingConsent_readyForAV_primary", fallback: "Obtain consent")
   }
 
+  /// Your identity is being carefully verified. This may take several business days. You’ll be notified as soon as the process is complete.
+  public static var tkEidRequestNotificationReadyForFinalEntitlementCheckSecondary: String {
+    L10n.tr("Localizable", "tk_eidRequest_notification_readyForFinalEntitlementCheck_secondary", fallback: "Your identity is being carefully verified. This may take several business days. You’ll be notified as soon as the process is complete.")
+  }
+
   /// Continue
   public static var tkEidRequestNotificationWalletPairingButton: String {
     L10n.tr("Localizable", "tk_eidRequest_notification_walletPairing_button", fallback: "Continue")
@@ -2272,6 +1889,176 @@ public enum L10n {
   /// Please select your devices and verify your identity to complete your e-ID order.
   public static var tkEidRequestNotificationWalletPairingSecondary: String {
     L10n.tr("Localizable", "tk_eidRequest_notification_walletPairing_secondary", fallback: "Please select your devices and verify your identity to complete your e-ID order.")
+  }
+
+  /// Didn’t receive it? Check if your entered email address is correct.
+  public static var tkEidRequestOtpCodeBodyHelp: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_body_help", fallback: "Didn’t receive it? Check if your entered email address is correct.")
+  }
+
+  /// The code is valid for 1 hour. Please enter the code to continue.
+  public static var tkEidRequestOtpCodeBodyValidity: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_body_validity", fallback: "The code is valid for 1 hour. Please enter the code to continue.")
+  }
+
+  /// The code is incorrect. Please try again.
+  public static var tkEidRequestOtpCodeErrorInvalid: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_error_invalid", fallback: "The code is incorrect. Please try again.")
+  }
+
+  /// Enter your 6 digit code
+  public static var tkEidRequestOtpCodeFieldPlaceholder: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_field_placeholder", fallback: "Enter your 6 digit code")
+  }
+
+  /// Code
+  public static var tkEidRequestOtpCodeFieldTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_field_title", fallback: "Code")
+  }
+
+  /// Enter code
+  public static var tkEidRequestOtpCodeTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_title", fallback: "Enter code")
+  }
+
+  /// Your code has expired. Please request a new code.
+  public static var tkEidRequestOtpCodeToastExpired: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_toast_expired", fallback: "Your code has expired. Please request a new code.")
+  }
+
+  /// Too many attempts. Request a new code.
+  public static var tkEidRequestOtpCodeToastTooManyRequests: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_toast_tooManyRequests", fallback: "Too many attempts. Request a new code.")
+  }
+
+  /// Please enter your official email address with the domain @federaloffice.admin.ch. Your email address will be used to verify access to the test phase.
+  public static var tkEidRequestOtpEmailBodyPrimary: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_body_primary", fallback: "Please enter your official email address with the domain @federaloffice.admin.ch. Your email address will be used to verify access to the test phase.")
+  }
+
+  /// A one-time code will be sent to this email address to complete your registration.
+  public static var tkEidRequestOtpEmailBodySecondary: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_body_secondary", fallback: "A one-time code will be sent to this email address to complete your registration.")
+  }
+
+  /// The "order e-ID" function is currently being tested and is available to only federal government employees with an email address ending in @federaloffice.admin.ch.
+  public static var tkEidRequestOtpEmailErrorForbidden: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_error_forbidden", fallback: "The \"order e-ID\" function is currently being tested and is available to only federal government employees with an email address ending in @federaloffice.admin.ch.")
+  }
+
+  /// Something went wrong. Please try again.
+  public static var tkEidRequestOtpEmailErrorGeneric: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_error_generic", fallback: "Something went wrong. Please try again.")
+  }
+
+  /// Wrong format.
+  public static var tkEidRequestOtpEmailErrorInvalidFormat: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_error_invalid_format", fallback: "Wrong format.")
+  }
+
+  /// firstname.lastname@federaloffice.admin.ch
+  public static var tkEidRequestOtpEmailFieldPlaceholder: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_field_placeholder", fallback: "firstname.lastname@federaloffice.admin.ch")
+  }
+
+  /// Email
+  public static var tkEidRequestOtpEmailFieldTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_field_title", fallback: "Email")
+  }
+
+  /// Skip
+  public static var tkEidRequestOtpEmailSkipButton: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_skip_button", fallback: "Skip")
+  }
+
+  /// Enter email address
+  public static var tkEidRequestOtpEmailTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_email_title", fallback: "Enter email address")
+  }
+
+  /// The "order e-ID" function is currently being tested and is available to only federal government employees with an email address ending in @federaloffice.admin.ch.
+  public static var tkEidRequestOtpIntroBody: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_intro_body", fallback: "The \"order e-ID\" function is currently being tested and is available to only federal government employees with an email address ending in @federaloffice.admin.ch.")
+  }
+
+  /// Continue
+  public static var tkEidRequestOtpIntroPrimaryButton: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_intro_primaryButton", fallback: "Continue")
+  }
+
+  /// Cancel
+  public static var tkEidRequestOtpIntroSecondaryButton: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_intro_secondaryButton", fallback: "Cancel")
+  }
+
+  /// Registration for federal test phase
+  public static var tkEidRequestOtpIntroTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_intro_title", fallback: "Registration for federal test phase")
+  }
+
+  /// To take part in the test phase, please confirm your eligibility and agree to the terms of use.
+  public static var tkEidRequestOtpLegalBody: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_legal_body", fallback: "To take part in the test phase, please confirm your eligibility and agree to the terms of use.")
+  }
+
+  /// Terms & conditions
+  public static var tkEidRequestOtpLegalLinkText: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_legal_linkText", fallback: "Terms & conditions")
+  }
+
+  /// https://www.eid.admin.ch/en/swiyu-terms-e
+  public static var tkEidRequestOtpLegalLinkValue: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_legal_linkValue", fallback: "https://www.eid.admin.ch/en/swiyu-terms-e")
+  }
+
+  /// Agree and continue
+  public static var tkEidRequestOtpLegalPrimaryButton: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_legal_primaryButton", fallback: "Agree and continue")
+  }
+
+  /// Terms of use
+  public static var tkEidRequestOtpLegalTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_legal_title", fallback: "Terms of use")
+  }
+
+  /// The code could not be verified after multiple attempts.
+  public static var tkEidRequestOtpTooManyAttemptsBodyPrimary: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_tooManyAttempts_body_primary", fallback: "The code could not be verified after multiple attempts. ")
+  }
+
+  /// Please restart the registration to receive a new one-time code.
+  public static var tkEidRequestOtpTooManyAttemptsBodySecondary: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_tooManyAttempts_body_secondary", fallback: "Please restart the registration to receive a new one-time code.")
+  }
+
+  /// Too many attempts
+  public static var tkEidRequestOtpTooManyAttemptsTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_tooManyAttempts_title", fallback: "Too many attempts")
+  }
+
+  /// Registration for the test phase is temporarily not available. We kindly ask you to try again later.
+  public static var tkEidRequestOtpUnavailableBody: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_unavailable_body", fallback: "Registration for the test phase is temporarily not available. We kindly ask you to try again later.")
+  }
+
+  /// Visit status page
+  public static var tkEidRequestOtpUnavailableLinkText: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_unavailable_link_text", fallback: "Visit status page")
+  }
+
+  /// https://www.eid.admin.ch/en/swiyu-terms-e
+  public static var tkEidRequestOtpUnavailableLinkValue: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_unavailable_link_value", fallback: "https://www.eid.admin.ch/en/swiyu-terms-e")
+  }
+
+  /// Back to wallet
+  public static var tkEidRequestOtpUnavailablePrimaryButton: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_unavailable_primaryButton", fallback: "Back to wallet")
+  }
+
+  /// Registration temporarily unavailable
+  public static var tkEidRequestOtpUnavailableTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_unavailable_title", fallback: "Registration temporarily unavailable")
   }
 
   /// We have received your request. Unfortunately, your order can't be processed immediately due to high demand.
@@ -2340,11 +2127,6 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_recordDocument_notification_verso_secondary", fallback: "Place your document on a flat surface and position the front side in the frame. Make sure you have enough light.")
   }
 
-  /// Press to start recording
-  public static var tkEidRequestRecordDocumentRecordButtonAlt: String {
-    L10n.tr("Localizable", "tk_eidRequest_recordDocument_recordButton_alt", fallback: "Press to start recording")
-  }
-
   /// Camera running, please position back of the document
   public static var tkEidRequestRecordDocumentOverlayBackAlt: String {
     L10n.tr("Localizable", "tk_eidRequest_recordDocument_overlay_back_alt", fallback: "Camera running, please position back of the document")
@@ -2375,6 +2157,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_recordSelfie_buttonRecordState_alt", fallback: "Press to stop recording")
   }
 
+  /// Record your selfie
+  public static var tkEidRequestRecordSelfieNotificationPrimary: String {
+    L10n.tr("Localizable", "tk_eidRequest_recordSelfie_notification_primary", fallback: "Record your selfie")
+  }
+
   /// Position your face within the frame. Stand in front of a neutral background where there is sufficient light.
   public static var tkEidRequestRecordSelfieNotificationSecondary: String {
     L10n.tr("Localizable", "tk_eidRequest_recordSelfie_notification_secondary", fallback: "Position your face within the frame. Stand in front of a neutral background where there is sufficient light.")
@@ -2383,11 +2170,6 @@ public enum L10n {
   /// Position your face within the frame. Ask someone to help you if it doesn't work.
   public static var tkEidRequestRecordSelfiePictureFrameAlt: String {
     L10n.tr("Localizable", "tk_eidRequest_recordSelfie_pictureFrame_alt", fallback: "Position your face within the frame. Ask someone to help you if it doesn't work.")
-  }
-
-  /// Press to start recording
-  public static var tkEidRequestRecordSelfieRecordButtonAlt: String {
-    L10n.tr("Localizable", "tk_eidRequest_recordSelfie_recordButton_alt", fallback: "Press to start recording")
   }
 
   /// Record Selfie
@@ -2405,9 +2187,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_scanDocument_buttonRecordState_alt", fallback: "Press to stop scanning")
   }
 
-  /// Proceed
+  /// Continue
   public static var tkEidRequestScanDocumentInformationButtonPrimary: String {
-    L10n.tr("Localizable", "tk_eidRequest_scanDocument_information_button_primary", fallback: "Proceed")
+    L10n.tr("Localizable", "tk_eidRequest_scanDocument_information_button_primary", fallback: "Continue")
   }
 
   /// Scan your document
@@ -2424,19 +2206,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_scanDocument_information_secondary", fallback: "• Place the document on a flat surface\n• Avoid direct light or reflections\n• Align the document within the overlay\n• Hold your device steady while capturing\n• Repeat the process for the back side")
   }
 
-  /// Processing data...
-  public static var tkEidRequestScanDocumentInitializationPrimary: String {
-    L10n.tr("Localizable", "tk_eidRequest_scanDocument_initialization_primary", fallback: "Processing data...")
-  }
-
   /// Your MRZ data is being prepared and sent for validation.
   public static var tkEidRequestScanDocumentInitializationSecondary: String {
     L10n.tr("Localizable", "tk_eidRequest_scanDocument_initialization_secondary", fallback: "Your MRZ data is being prepared and sent for validation.")
-  }
-
-  /// Press to start scanning
-  public static var tkEidRequestScanDocumentRecordButtonAlt: String {
-    L10n.tr("Localizable", "tk_eidRequest_scanDocument_recordButton_alt", fallback: "Press to start scanning")
   }
 
   /// Camera running, please position back of the document
@@ -2449,14 +2221,49 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_scanDocument_overlay_front_alt", fallback: "Camera running, please position front of the document")
   }
 
-  /// Initializing Environment...
-  public static var tkEidRequestSdkInitializationPrimary: String {
-    L10n.tr("Localizable", "tk_eidRequest_sdk_initialization_primary", fallback: "Initializing Environment...")
+  /// Scan the back of your card
+  public static var tkEidRequestScanDocumentSecondPageIdCardPrimary: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocument_secondPage_idCard_primary", fallback: "Scan the back of your card")
   }
 
-  /// Sending Data...
+  /// Turn your card over and scan the side with the code at the bottom.
+  public static var tkEidRequestScanDocumentSecondPageIdCardSecondary: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocument_secondPage_idCard_secondary", fallback: "Turn your card over and scan the side with the code at the bottom.")
+  }
+
+  /// Scan the page with your signature
+  public static var tkEidRequestScanDocumentSecondPagePassportPrimary: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocument_secondPage_passport_primary", fallback: "Scan the page with your signature")
+  }
+
+  /// Scan the 2nd page of your passport with your signature.
+  public static var tkEidRequestScanDocumentSecondPagePassportSecondary: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocument_secondPage_passport_secondary", fallback: "Scan the 2nd page of your passport with your signature.")
+  }
+
+  /// First scan
+  public static var tkEidRequestScanDocumentSubmitFirstScanImageTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocumentSubmit_firstScanImageTitle", fallback: "First scan")
+  }
+
+  /// Scan again
+  public static var tkEidRequestScanDocumentSubmitSecondaryButton: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocumentSubmit_secondaryButton", fallback: "Scan again")
+  }
+
+  /// Second scan
+  public static var tkEidRequestScanDocumentSubmitSecondScanImageTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocumentSubmit_secondScanImageTitle", fallback: "Second scan")
+  }
+
+  /// Your scan
+  public static var tkEidRequestScanDocumentSubmitTitle: String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocumentSubmit_title", fallback: "Your scan")
+  }
+
+  /// Processing data
   public static var tkEidRequestSubmitDocumentsPrimary: String {
-    L10n.tr("Localizable", "tk_eidRequest_submitDocuments_primary", fallback: "Sending Data...")
+    L10n.tr("Localizable", "tk_eidRequest_submitDocuments_primary", fallback: "Processing data")
   }
 
   /// Your data is being processed and will be validated shortly.
@@ -2763,6 +2570,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_global_delete", fallback: "Delete")
   }
 
+  /// Empty
+  public static var tkGlobalEmpty: String {
+    L10n.tr("Localizable", "tk_global_empty", fallback: "Empty")
+  }
+
   /// Link leaves the app
   public static var tkGlobalExternalLinkAlt: String {
     L10n.tr("Localizable", "tk_global_externalLink_alt", fallback: "Link leaves the app")
@@ -2778,9 +2590,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_global_getbetaid_primarybutton", fallback: "Create Beta-ID")
   }
 
-  /// Show password
+  /// Password is hidden. Show password.
   public static var tkGlobalInvisibleAlt: String {
-    L10n.tr("Localizable", "tk_global_invisible_alt", fallback: "Show password")
+    L10n.tr("Localizable", "tk_global_invisible_alt", fallback: "Password is hidden. Show password.")
   }
 
   /// Login
@@ -2823,6 +2635,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_global_sensitiveData", fallback: "Sensitive")
   }
 
+  /// Still loading
+  public static var tkGlobalStillworking: String {
+    L10n.tr("Localizable", "tk_global_stillworking", fallback: "Still loading")
+  }
+
   /// https://apps.apple.com/ch/app/swiyu/id6737259614
   public static var tkGlobalStoreLink: String {
     L10n.tr("Localizable", "tk_global_store_link", fallback: "https://apps.apple.com/ch/app/swiyu/id6737259614")
@@ -2833,9 +2650,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_global_tothesettings", fallback: "Go to settings")
   }
 
-  /// Hide password
+  /// Password is visible. Hide password.
   public static var tkGlobalVisibleAlt: String {
-    L10n.tr("Localizable", "tk_global_visible_alt", fallback: "Hide password")
+    L10n.tr("Localizable", "tk_global_visible_alt", fallback: "Password is visible. Hide password.")
   }
 
   /// Welcome back
@@ -2871,6 +2688,11 @@ public enum L10n {
   /// Credential has been deleted.
   public static var tkHomeNotificationCredentialDeleted: String {
     L10n.tr("Localizable", "tk_home_notification_credential_deleted", fallback: "Credential has been deleted.")
+  }
+
+  /// Wallet
+  public static var tkHomeTitle: String {
+    L10n.tr("Localizable", "tk_home_title", fallback: "Wallet")
   }
 
   /// Authorised issuance
@@ -3319,6 +3141,16 @@ public enum L10n {
     L10n.tr("Localizable", "tk_present_credentialNotFound_title", fallback: "No matching credential available")
   }
 
+  /// Failure
+  public static var tkPresentErrorPrimary: String {
+    L10n.tr("Localizable", "tk_present_error_primary", fallback: "Failure")
+  }
+
+  /// The Authorization Response was not accepted by the verifier
+  public static var tkPresentErrorSecondary: String {
+    L10n.tr("Localizable", "tk_present_error_secondary", fallback: "The Authorization Response was not accepted by the verifier")
+  }
+
   /// Verification cancelled
   public static var tkPresentResultCanceledVerificationPrimary: String {
     L10n.tr("Localizable", "tk_present_result_canceledVerification_primary", fallback: "Verification cancelled")
@@ -3404,9 +3236,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_present_review_confirmPresentation_secondary", fallback: "This verifier is not part of the swiyu ecosystem. The trustworthiness can not be ensured. Would you like to proceed?")
   }
 
-  /// Shared information
+  /// Requested data
   public static var tkPresentReviewCredentialDataSectionPrimary: String {
-    L10n.tr("Localizable", "tk_present_review_credential_dataSection_primary", fallback: "Shared information")
+    L10n.tr("Localizable", "tk_present_review_credential_dataSection_primary", fallback: "Requested data")
   }
 
   /// Please wait
@@ -3459,19 +3291,44 @@ public enum L10n {
     L10n.tr("Localizable", "tk_present_verifier_name_unknown", fallback: "Unknown verificator")
   }
 
+  /// Close swiyu code
+  public static var tkProximityEngagementCloseAlt: String {
+    L10n.tr("Localizable", "tk_proximity_engagement_close_alt", fallback: "Close swiyu code")
+  }
+
+  /// Your personal information is shared only with your consent. Only show your swiyu code to trusted parties and take a moment to check the next steps.
+  public static var tkProximityEngagementPrimary: String {
+    L10n.tr("Localizable", "tk_proximity_engagement_primary", fallback: "Your personal information is shared only with your consent. Only show your swiyu code to trusted parties and take a moment to check the next steps.")
+  }
+
+  /// swiyu code
+  public static var tkProximityEngagementTab: String {
+    L10n.tr("Localizable", "tk_proximity_engagement_tab", fallback: "swiyu code")
+  }
+
+  /// swiyu code
+  public static var tkProximityEngagementTitle: String {
+    L10n.tr("Localizable", "tk_proximity_engagement_title", fallback: "swiyu code")
+  }
+
   /// Close QR code scanner
   public static var tkQrscannerButtonCloseAlt: String {
     L10n.tr("Localizable", "tk_qrscanner_button_close_alt", fallback: "Close QR code scanner")
   }
 
-  /// Flashlight off. Double tap to turn on
-  public static var tkQrscannerLightoffLabel: String {
-    L10n.tr("Localizable", "tk_qrscanner_lightoff_label", fallback: "Flashlight off. Double tap to turn on")
+  /// Camera is running. QR code is being searched via camera.
+  public static var tkQrscannerCameraFeedAlt: String {
+    L10n.tr("Localizable", "tk_qrscanner_camera_feed_alt", fallback: "Camera is running. QR code is being searched via camera.")
   }
 
-  /// Flashlight on. Double tap to turn off
+  /// Flashlight off. Turn on.
+  public static var tkQrscannerLightoffLabel: String {
+    L10n.tr("Localizable", "tk_qrscanner_lightoff_label", fallback: "Flashlight off. Turn on.")
+  }
+
+  /// Flashlight on. Turn off.
   public static var tkQrscannerLightonLabel: String {
-    L10n.tr("Localizable", "tk_qrscanner_lighton_label", fallback: "Flashlight on. Double tap to turn off")
+    L10n.tr("Localizable", "tk_qrscanner_lighton_label", fallback: "Flashlight on. Turn off.")
   }
 
   /// Flashlight is on
@@ -3484,9 +3341,16 @@ public enum L10n {
     L10n.tr("Localizable", "tk_qrscanner_processing_alt", fallback: "QR code scanned")
   }
 
-  /// To identify yourself or add IDs and documents.
+  /// Scan the QR code to confirm your identity or receive a document or credential.
   public static var tkQrscannerScanningBody: String {
-    L10n.tr("Localizable", "tk_qrscanner_scanning_body", fallback: "To identify yourself or add IDs and documents.")
+    L10n.tr("Localizable", "tk_qrscanner_scanning_body", fallback: "Scan the QR code to confirm your identity or receive a document or credential.")
+  }
+
+  /// Scan the QR code to confirm your identity or receive a document or credential.
+  ///
+  /// No data is shared without consent.
+  public static var tkQrscannerScanningOverlayBody: String {
+    L10n.tr("Localizable", "tk_qrscanner_scanning_overlay_body", fallback: "Scan the QR code to confirm your identity or receive a document or credential.\n\nNo data is shared without consent.")
   }
 
   /// Scan QR code
@@ -3507,6 +3371,18 @@ public enum L10n {
   /// Session timeout
   public static var tkQrscannerSessionTimeoutTitle: String {
     L10n.tr("Localizable", "tk_qrscanner_sessionTimeout_title", fallback: "Session timeout")
+  }
+
+  /// Securely connected – with Bluetooth
+  public static var tkReceiveBluetoothPermissionPrimary: String {
+    L10n.tr("Localizable", "tk_receive_bluetooth_permission_primary", fallback: "Securely connected – with Bluetooth")
+  }
+
+  /// To transfer your data securely, the app requires an active Bluetooth connection.
+  ///
+  /// This ensures that everything reaches its destination – encrypted and reliable.
+  public static var tkReceiveBluetoothPermissionSecondary: String {
+    L10n.tr("Localizable", "tk_receive_bluetooth_permission_secondary", fallback: "To transfer your data securely, the app requires an active Bluetooth connection.\n\nThis ensures that everything reaches its destination – encrypted and reliable.")
   }
 
   /// The camera is an important function. Without a camera, you cannot receive IDs and documents or identify yourself.
@@ -3820,9 +3696,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_settings_licences_title", fallback: "Licences")
   }
 
-  /// History
+  /// Activity history
   public static var tkSettingsSecurityPrivacyDataProtectionActivityHistory: String {
-    L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_activityHistory", fallback: "History")
+    L10n.tr("Localizable", "tk_settings_securityPrivacy_dataProtection_activityHistory", fallback: "Activity history")
   }
 
   /// diagnostic data
@@ -4051,6 +3927,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_eidRequest_notification_agentReview_primary", String(describing: p1), fallback: "Verification of %@'s identity in progress")
   }
 
+  /// AV files for %@ sent
+  public static func tkEidRequestNotificationAutoVerificationFilesSubmittedPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_eidRequest_notification_autoVerification_filesSubmitted_primary", String(describing: p1), fallback: "AV files for %@ sent")
+  }
+
   /// The identity verification of %@ was not successful.
   public static func tkEidRequestNotificationDeclinedPrimary(_ p1: Any) -> String {
     L10n.tr("Localizable", "tk_eidRequest_notification_declined_primary", String(describing: p1), fallback: "The identity verification of %@ was not successful.")
@@ -4096,6 +3977,26 @@ public enum L10n {
   /// Your parents’ or legal guardian’s consent is still missing.
   public static func tkEidRequestNotificationLegalRepresentantPendingConsentReadyForAVSecondary(_ p1: Any) -> String {
     L10n.tr("Localizable", "tk_eidRequest_notification_legalRepresentantPendingConsent_readyForAV_secondary", String(describing: p1), fallback: "Please verify your identity by %@, otherwise your order will be canceled.\n\nYour parents’ or legal guardian’s consent is still missing.")
+  }
+
+  /// Verification of %@ identity in progress
+  public static func tkEidRequestNotificationReadyForFinalEntitlementCheckPrimary(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_eidRequest_notification_readyForFinalEntitlementCheck_primary", String(describing: p1), fallback: "Verification of %@ identity in progress")
+  }
+
+  /// Code sent to **%@**
+  public static func tkEidRequestOtpCodeBodySent(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_eidRequest_otp_code_body_sent", String(describing: p1), fallback: "Code sent to **%@**")
+  }
+
+  /// Image of first scan %@
+  public static func tkEidRequestScanDocumentSubmitFirstScanImageAlt(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocumentSubmit_firstScanImageAlt", String(describing: p1), fallback: "Image of first scan %@")
+  }
+
+  /// Image of second scan  %@
+  public static func tkEidRequestScanDocumentSubmitSecondScanImageAlt(_ p1: Any) -> String {
+    L10n.tr("Localizable", "tk_eidRequest_scanDocumentSubmit_secondScanImageAlt", String(describing: p1), fallback: "Image of second scan  %@")
   }
 
   /// %@ devices added

@@ -8,7 +8,7 @@ struct CurrentPinCodeView: View {
   // MARK: Lifecycle
 
   init(_ router: ChangePinCodeInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.currentPinCodeViewModel(router))
+    _viewModel = State(initialValue: Container.shared.currentPinCodeViewModel(router))
   }
 
   // MARK: Internal
@@ -28,6 +28,6 @@ struct CurrentPinCodeView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: CurrentPinCodeViewModel
+  @State private var viewModel: CurrentPinCodeViewModel
 
 }

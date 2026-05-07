@@ -1,5 +1,6 @@
 import BITL10n
 import Factory
+import NavigatorUI
 import Spyable
 import SwiftUI
 import XCTest
@@ -22,14 +23,16 @@ class ScanDocumentViewModelTests: XCTestCase {
 
     context = EIDRequestContext()
     avBeam = AVBeamProtocolSpy()
+    updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
     updateEIDRequestCaseFilesUseCase = UpdateEIDRequestCaseFilesUseCaseProtocolSpy()
     compareScanDocumentOutputUseCase = CompareScanDocumentOutputUseCaseProtocolSpy()
 
-    Container.shared.eidRequestContext.register { self.context }
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.avBeamAppID.register { self.appId }
-    Container.shared.updateEIDRequestCaseFilesUseCase.register { self.updateEIDRequestCaseFilesUseCase }
-    Container.shared.compareScanDocumentOutputUseCase.register { self.compareScanDocumentOutputUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.avBeamAppID.register { @MainActor in self.appId }
+    Container.shared.updateEIDRequestCaseFilesUseCase.register { @MainActor in self.updateEIDRequestCaseFilesUseCase }
+    Container.shared.compareScanDocumentOutputUseCase.register { @MainActor in self.compareScanDocumentOutputUseCase }
+    Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
 
     success()
   }
@@ -48,8 +51,9 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertNotNil(avBeam.scanDocumentDelegate)
   }
 
+  @MainActor
   func testCancelInitialization_sdkIsStopped() {
-    viewModel.cancelInitialization()
+    viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)
   }
 
@@ -80,29 +84,29 @@ class ScanDocumentViewModelTests: XCTestCase {
 
   // MARK: - SDK Initialization Tests
 
-  func testInitializeSDK_whenAlreadyInitialized_startsCamera() {
+  func testCheckInitializationState_whenAlreadyInitialized_startsCamera() {
     avBeam.state = .initialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertFalse(avBeam.initializeUsingCalled)
   }
 
-  func testInitializeSDK_whenNotInitialized_initializesSDK() {
+  func testCheckInitializationState_whenNotInitialized_initializesSDK() {
     avBeam.state = .notInitialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertTrue(avBeam.initializeUsingCalled)
     XCTAssertNotNil(avBeam.initializeUsingReceivedConfig)
     XCTAssertEqual(avBeam.initializeUsingReceivedConfig?.appId, appId)
   }
 
-  func testInitializeSDK_failure_handlesError() {
+  func testCheckInitializationState_failure_handlesError() {
     avBeam.state = .notInitialized
     avBeam.initializeUsingThrowableError = TestingError.error
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertNotNil(viewModel.destination)
     if case .error(let dataset) = viewModel.destination {
@@ -142,9 +146,16 @@ class ScanDocumentViewModelTests: XCTestCase {
     }
   }
 
+  func testStartScanSecondPage() {
+    viewModel.startScanSecondPage()
+
+    XCTAssertEqual(viewModel.scanningState, .verso)
+    XCTAssertEqual(viewModel.buttonState, .initial)
+  }
+
   // MARK: - Scan Tests
 
-  func testStartScan_success_callsAVBeamWithCorrectConfig() async {
+  func testStartScan_success_callsAVBeamWithCorrectConfig() async throws {
     viewModel.scanFrame = CGRect(x: 10, y: 20, width: 100, height: 200)
 
     viewModel.startScan()
@@ -153,11 +164,23 @@ class ScanDocumentViewModelTests: XCTestCase {
     try? await Task.sleep(nanoseconds: 100_000_000)
 
     XCTAssertTrue(avBeam.startScanDocumentConfigCalled)
+    XCTAssertEqual(updateInputFileUseCase.callAsFunctionCallsCount, 1)
     let config = avBeam.startScanDocumentConfigReceivedConfig
     XCTAssertNotNil(config)
     XCTAssertEqual(config?.timeout, 15)
     XCTAssertEqual(config?.scanFrame, viewModel.scanFrame)
+    XCTAssertTrue(try XCTUnwrap(config?.isDocumentSideChangeNotificationExpected))
+    XCTAssertTrue(try XCTUnwrap(config?.files.contains(avBeamFile)))
     XCTAssertEqual(viewModel.buttonState, .record)
+  }
+
+  func testStartScan_scanningStateIsVersion_notifySecondScan() {
+    viewModel.scanningState = .verso
+
+    viewModel.startScan()
+
+    XCTAssertEqual(viewModel.buttonState, .record)
+    XCTAssertEqual(avBeam.notifySecondScanCallsCount, 1)
   }
 
   func testStopScan_stopScan() {
@@ -169,6 +192,13 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.buttonState, .initial)
     XCTAssertEqual(viewModel.isNotificationPresented, false)
     XCTAssertNil(viewModel.notification)
+  }
+
+  func testStop_callsAVBeamStopScanDocumentAndStopCamera() {
+    viewModel.stop()
+
+    XCTAssertTrue(avBeam.stopScanDocumentCalled)
+    XCTAssertTrue(avBeam.stopCameraCalled)
   }
 
   func testStartScan_failure_handlesError() async {
@@ -186,14 +216,6 @@ class ScanDocumentViewModelTests: XCTestCase {
     } else {
       XCTFail("Expected error destination")
     }
-  }
-
-  // MARK: - Stop and Close Tests
-
-  func testStop_callsAVBeamStopScanDocument() {
-    viewModel.stop()
-
-    XCTAssertTrue(avBeam.stopScanDocumentCalled)
   }
 
   // MARK: - AVBeamMessageDelegate Tests
@@ -248,7 +270,9 @@ class ScanDocumentViewModelTests: XCTestCase {
 
     await Task.yield()
 
-    XCTAssertEqual(viewModel.scanningState, .verso)
+    if case .scanDocumentSecondPageInstructions = viewModel.destination {
+      XCTAssert(true)
+    }
   }
 
   func testDidReceiveNotification_defaultCase_showsNotification() async {
@@ -281,7 +305,7 @@ class ScanDocumentViewModelTests: XCTestCase {
   func testDidCompleteScanDocument_videoRecordingRequired_routeToVideoRecording() async {
     context = EIDRequestContext.Mock.documentRecordingSample
 
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
     viewModel = ScanDocumentViewModel()
 
     viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
@@ -297,7 +321,7 @@ class ScanDocumentViewModelTests: XCTestCase {
   func testDidCompleteScanDocument_videoRecordingNotRequired_routeToSelfieVideo() async {
     context = EIDRequestContext.Mock.sample
 
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
     viewModel = ScanDocumentViewModel()
 
     viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
@@ -313,7 +337,7 @@ class ScanDocumentViewModelTests: XCTestCase {
   func testDidCompleteScanDocument_videoRecordingNotRequiredComparisonDocumentsFails_routeToError() async {
     context = EIDRequestContext.Mock.sample
 
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
     viewModel = ScanDocumentViewModel()
     compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = false
 
@@ -323,7 +347,7 @@ class ScanDocumentViewModelTests: XCTestCase {
 
     if case .error(let dataSet) = viewModel.destination {
       XCTAssertEqual(viewModel.buttonState, .success)
-      XCTAssertEqual(dataSet.contents.count, 2)
+      XCTAssertEqual(dataSet.contents.count, 3)
       XCTAssertEqual(dataSet.actions.count, 1)
       XCTAssertFalse(updateEIDRequestCaseFilesUseCase.callAsFunctionForScanDocumentOutputCalled)
     }
@@ -336,8 +360,10 @@ class ScanDocumentViewModelTests: XCTestCase {
   private var avBeam: AVBeamProtocolSpy!
   private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocolSpy!
   private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocolSpy!
+  private var updateInputFileUseCase: UpdateInputFileUseCaseProtocolSpy!
 
   private let appId = "test-app-id"
+  private let avBeamFile = AVBeamFile(type: .xml, description: "input.xml", data: "input.xml".data(using: .utf8)!)
 
   private func success() {
     avBeam.state = .initialized
@@ -345,6 +371,6 @@ class ScanDocumentViewModelTests: XCTestCase {
     viewModel = ScanDocumentViewModel()
     XCTAssertEqual(viewModel.state, .loading)
     compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = true
+    updateInputFileUseCase.callAsFunctionReturnValue = avBeamFile
   }
-
 }

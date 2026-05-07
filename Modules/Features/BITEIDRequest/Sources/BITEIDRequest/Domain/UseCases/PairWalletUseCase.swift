@@ -9,6 +9,7 @@ import Spyable
 
 @Spyable
 protocol PairWalletUseCaseProtocol {
+  @discardableResult
   func execute(for caseId: String) async throws -> String
 }
 

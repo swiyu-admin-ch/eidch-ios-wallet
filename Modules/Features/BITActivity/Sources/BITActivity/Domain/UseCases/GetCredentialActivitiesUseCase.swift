@@ -6,11 +6,11 @@ import Spyable
 
 @Spyable
 public protocol GetCredentialActivitiesUseCaseProtocol {
-  func callAsFunction(for credentialId: UUID, limit: Int) throws -> [Activity]
+  func callAsFunction(for credentialId: UUID, limit: Int) throws -> [ActivityListItem]
 }
 
 extension GetCredentialActivitiesUseCaseProtocol {
-  public func callAsFunction(for credentialId: UUID) throws -> [Activity] {
+  public func callAsFunction(for credentialId: UUID) throws -> [ActivityListItem] {
     try callAsFunction(for: credentialId, limit: Int.max)
   }
 }
@@ -19,8 +19,11 @@ extension GetCredentialActivitiesUseCaseProtocol {
 
 struct GetCredentialActivitiesUseCase: GetCredentialActivitiesUseCaseProtocol {
 
-  func callAsFunction(for credentialId: UUID, limit: Int = Int.max) throws -> [Activity] {
-    try activityRepository.getAll(for: credentialId, limit: limit)
+  func callAsFunction(for credentialId: UUID, limit: Int = Int.max) throws -> [ActivityListItem] {
+    if try activityRepository.isActivityHistoryEnabled() {
+      return try activityRepository.getAll(for: credentialId, limit: limit)
+    }
+    return []
   }
 
   // MARK: Private

@@ -1,3 +1,4 @@
+import BITCore
 import Foundation
 import Spyable
 
@@ -16,5 +17,5 @@ public protocol AnyCredential {
   var validUntil: Date? { get }
   var vcSchemaId: String { get }
 
-  func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any?]
+  func getClaimsJSON(_ claimSet: ClaimKind) -> JSON
 }

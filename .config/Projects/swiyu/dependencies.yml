@@ -35,4 +35,5 @@ targetTemplates:
       - package: BITActivity
       - package: BITActivityDetail
       - package: BITNonCompliance
+      - package: BITClaimsPathPointer
       - package: BITL10n

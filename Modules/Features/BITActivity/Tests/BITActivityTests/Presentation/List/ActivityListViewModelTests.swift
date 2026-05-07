@@ -20,7 +20,7 @@ final class ActivityListViewModelTests: XCTestCase {
     await viewModel.fetchActivities()
 
     if case .result(let activities) = viewModel.state {
-      XCTAssertEqual(activities.map(\.activity), activityMocks)
+      XCTAssertEqual(activities.map(\.id), activityMocks.map(\.id))
     } else {
       XCTFail("Expected result state")
     }
@@ -51,29 +51,16 @@ final class ActivityListViewModelTests: XCTestCase {
   }
 
   func testShowActivityDeleted_toastIsPresented() {
-    XCTAssertNil(viewModel.toastMessage)
-    XCTAssertFalse(viewModel.isToastPresented)
+    XCTAssertNil(viewModel.toast)
 
     viewModel.showActivityDeleted()
 
-    XCTAssertNotNil(viewModel.toastMessage)
-    XCTAssertTrue(viewModel.isToastPresented)
-  }
-
-  func testClearToast_toastIsHidden() {
-    viewModel.showActivityDeleted()
-    XCTAssertNotNil(viewModel.toastMessage)
-    XCTAssertTrue(viewModel.isToastPresented)
-
-    viewModel.clearToast()
-
-    XCTAssertNil(viewModel.toastMessage)
-    XCTAssertFalse(viewModel.isToastPresented)
+    XCTAssertNotNil(viewModel.toast)
   }
 
   // MARK: Private
 
-  private var activityMocks: [Activity] = [.Mock.issueTrusted, .Mock.presentationAcceptedTrusted]
+  private var activityMocks: [ActivityListItem] = [.Mock.issuance, .Mock.acceptedPresentation]
   private var credentialIdMock = UUID()
 
   private var getCredentialActivitiesUseCaseSpy: GetCredentialActivitiesUseCaseProtocolSpy!
@@ -82,7 +69,7 @@ final class ActivityListViewModelTests: XCTestCase {
 
   private func registerMocks() {
     getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
-    Container.shared.getCredentialActivitiesUseCase.register { self.getCredentialActivitiesUseCaseSpy }
+    Container.shared.getCredentialActivitiesUseCase.register { @MainActor in self.getCredentialActivitiesUseCaseSpy }
   }
 
   private func createSuccessState() {

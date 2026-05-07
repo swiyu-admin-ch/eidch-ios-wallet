@@ -57,6 +57,10 @@ extension NetworkContainer {
     self { { _ in .never } }
   }
 
+  public var endpointByTargetClosure: Factory<((TargetType) -> EndpointSampleResponse)?> {
+    self { nil }
+  }
+
   public var endpointClosure: Factory<EndpointSampleResponse?> {
     self { nil }
   }
@@ -102,7 +106,11 @@ extension NetworkContainer {
     let configuration = URLSessionConfiguration.default
     configuration.timeoutIntervalForRequest = timeoutIntervalBetweenDataPackages()
     configuration.timeoutIntervalForResource = timeout ?? timeoutIntervalForTotalRequest()
-    configuration.headers = .default
+    configuration.headers = [
+      .defaultAcceptEncoding,
+      .defaultAcceptLanguage,
+      .userAgent(NetworkHeader.swiyuUserAgent),
+    ]
     configuration.requestCachePolicy = .useProtocolCachePolicy
     configuration.urlCache = sessionConfigurationCache()
     return configuration

@@ -4,12 +4,14 @@ import BITL10n
 import BITTheming
 import Factory
 import Foundation
+import NavigatorUI
 import SwiftUI
 
 // MARK: - ScanDocumentViewModel
 
 @MainActor
-class ScanDocumentViewModel: ObservableObject {
+@Observable
+class ScanDocumentViewModel {
 
   // MARK: Lifecycle
 
@@ -53,25 +55,26 @@ class ScanDocumentViewModel: ObservableObject {
     case camera
   }
 
-  @Published var state = StateView.loading
-  @Published var isNotificationPresented = false
-  @Published var notification: AVBeamNotification? = nil
-  @Published var buttonState = RecordingButton.State.initial
-  @Published var destination: EIDRequestDestinations?
+  var state = StateView.loading
+  var isNotificationPresented = false
+  var notification: AVBeamNotification?
+  var buttonState = RecordingButton.State.initial
+  var destination: EIDRequestDestinations?
 
-  @Injected(\.avBeam) var avBeam: AVBeamProtocol
+  @ObservationIgnored @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
   var scanFrame = CGRect.zero
 
-  @Published var scanningState = ScanningState.recto
+  var scanningState = ScanningState.recto
 
   var overlayImage: (front: Image, back: Image) {
-    let image: (ImageAsset, ImageAsset) = switch context.identityType {
-    case .passport:
-      (Assets.Camera.passportFront, Assets.Camera.passportBack)
-    default:
-      (Assets.Camera.idFront, Assets.Camera.idBack)
-    }
+    let image: (ImageAsset, ImageAsset) =
+      switch context.identityType {
+      case .passport:
+        (Assets.Camera.passportFront, Assets.Camera.passportBack)
+      default:
+        (Assets.Camera.idFront, Assets.Camera.idBack)
+      }
     return (image.0.swiftUIImage, image.1.swiftUIImage)
   }
 
@@ -79,22 +82,38 @@ class ScanDocumentViewModel: ObservableObject {
     scanningState.title
   }
 
-  func initializeSDK() {
-    if avBeam.state == .initialized {
-      return startCamera()
-    }
-
-    do {
-      let config = AVBeamInitConfig(appId: avBeamAppID)
-      try avBeam.initialize(using: config)
-    } catch {
-      handleError(error)
+  var buttonStateAccessibilityLabel: String {
+    switch buttonState {
+    case .initial: L10n.tkEidRequestScanDocumentButtonInitialStateAlt
+    case .record: L10n.tkEidRequestScanDocumentButtonRecordStateAlt
+    case .loading,
+         .success: ""
     }
   }
 
-  func cancelInitialization() {
+  func checkInitializationState() {
+    switch avBeam.state {
+    case .notInitialized:
+      avBeam.shutdown()
+
+      do {
+        let config = AVBeamInitConfig(appId: avBeamAppID)
+        try avBeam.initialize(using: config)
+      } catch {
+        handleError(error)
+      }
+
+    case .initializing:
+      state = .loading
+
+    case .initialized:
+      startCamera()
+    }
+  }
+
+  func cancelInitialization(_ navigator: Navigator) {
     avBeam.shutdown()
-    navigatorRoot.returnToCheckpoint(EIDRequestCheckpoints.scanDocumentInformation)
+    navigator.returnToCheckpointSafely(EIDRequestCheckpoints.scanDocumentInformation)
   }
 
   func stop() {
@@ -104,6 +123,7 @@ class ScanDocumentViewModel: ObservableObject {
 
   func startCamera() {
     let avBeam = avBeam
+
     Task.detached { [weak self] in
       do {
         try avBeam.startCamera()
@@ -119,19 +139,27 @@ class ScanDocumentViewModel: ObservableObject {
   }
 
   func startScan() {
-    let config = AVBeamScanDocumentConfig(scanFrame: scanFrame, timeout: 15)
-    let avBeam = avBeam
-
     buttonState = .record
 
-    Task.detached { [weak self] in
-      do {
-        try avBeam.startScanDocument(config: config)
-      } catch {
-        await MainActor.run {
-          self?.handleError(error)
+    if scanningState == .verso {
+      return avBeam.notifySecondScan()
+    }
+    do {
+      let inputFile = try updateInputFileUseCase()
+      let config = AVBeamScanDocumentConfig(files: [inputFile], scanFrame: scanFrame, timeout: 15, isDocumentSideChangeNotificationExpected: true)
+      let avBeam = avBeam
+
+      Task.detached { [weak self] in
+        do {
+          try avBeam.startScanDocument(config: config)
+        } catch {
+          await MainActor.run {
+            self?.handleError(error)
+          }
         }
       }
+    } catch {
+      handleError(error)
     }
   }
 
@@ -141,27 +169,21 @@ class ScanDocumentViewModel: ObservableObject {
     avBeam.stopScanDocument()
   }
 
+  func startScanSecondPage() {
+    buttonState = .initial
+    scanningState = .verso
+  }
+
   // MARK: Private
 
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.scanDelay) private var scanDelay
-  @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.navigatorRoot) private var navigatorRoot
-  @Injected(\.compareScanDocumentOutputUseCase) private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocol
-  @Injected(\.updateEIDRequestCaseFilesUseCase) private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocol
-
-  private func handleError(_ error: Error) {
-    analytics.log(error)
-    stop()
-    let dataset = ErrorDataset.retry(error) { [weak self] navigator in
-      self?.reset()
-      self?.startCamera()
-      navigator.pop()
-    }
-
-    destination = .error(dataset)
-  }
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.scanDelay) private var scanDelay
+  @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.compareScanDocumentOutputUseCase) private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocol
+  @ObservationIgnored @Injected(\.updateEIDRequestCaseFilesUseCase) private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocol
+  @ObservationIgnored @Injected(\.updateInputFileUseCase) private var updateInputFileUseCase: UpdateInputFileUseCaseProtocol
 
   private func reset() {
     scanningState = .recto
@@ -178,28 +200,26 @@ class ScanDocumentViewModel: ObservableObject {
   private func handleScanDocumentOutput(_ output: ScanDocumentOutput) async throws {
     try? await Task.sleep(nanoseconds: scanDelay)
 
-    guard let caseId = context.caseId, let autoVerificationResponse = context.autoVerificationResponse else {
+    guard
+      let caseId = context.caseId,
+      let autoVerificationResponse = context.autoVerificationResponse
+    else {
       await showSuccessButtonState()
-      return destination = .scanDocumentSubmit(output)
+      destination = .scanDocumentSubmit(output)
+      return
     }
 
     guard await compareScanDocumentOutputUseCase(for: caseId, with: output) else {
-      let errorDataset = ErrorDataset([
-        .title(L10n.tkEidRequestDocumentScanWrongDocumentPrimary),
-        .body(L10n.tkEidRequestDocumentScanWrongDocumentSecondary),
-      ], actions: [
-        .primary(L10n.tkEidRequestDocumentScanWrongDocumentButton, { navigator in
-          navigator.returnToCheckpoint(EIDRequestCheckpoints.scanDocumentInformation)
-        }),
-      ])
-
       await showSuccessButtonState()
-      return destination = .error(errorDataset)
+      destination = .error(.ScanDocument.wrongDocument)
+      return
     }
 
     try await updateEIDRequestCaseFilesUseCase(for: caseId, scanDocumentOutput: output)
     await showSuccessButtonState()
-    destination = autoVerificationResponse.isDocumentVideoRecordingRequired ? .recordDocumentInformation : .avIntroSelfieVideo
+    destination =
+      autoVerificationResponse.isDocumentVideoRecordingRequired
+        ? .recordDocumentInformation : .avIntroSelfieVideo
   }
 }
 
@@ -214,10 +234,17 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
   }
 
   nonisolated func didReceiveNotification(notification: AVBeamNotification) {
-    Task { @MainActor in
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+
       switch notification {
       case .initialized:
-        self.startCamera()
+        do {
+          try avBeam.startCamera()
+          state = .camera
+        } catch {
+          handleError(error)
+        }
 
       case .idDocMatched,
            .idDocNotMatched:
@@ -233,10 +260,10 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
         break
 
       case .idNeedSecondPageForMatching:
-        self.scanningState = .verso
+        destination = .scanDocumentSecondPageInstructions(Callback(handler: { self.startScanSecondPage() }))
 
       default:
-        self.isNotificationPresented = true
+        isNotificationPresented = true
         self.notification = notification
       }
     }
@@ -246,7 +273,6 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
 // MARK: AVBeamScanDocumentDelegate
 
 extension ScanDocumentViewModel: AVBeamScanDocumentDelegate {
-
   nonisolated func didCompleteScanDocument(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       do {
@@ -260,12 +286,44 @@ extension ScanDocumentViewModel: AVBeamScanDocumentDelegate {
         self.isNotificationPresented = false
         self.notification = nil
 
-        let output = try ScanDocumentOutput(packageResult, identityType: self.context.identityType ?? .identityCard)
+        let output = try ScanDocumentOutput(
+          packageResult, identityType: self.context.identityType ?? .identityCard)
         try await handleScanDocumentOutput(output)
       } catch {
         self.handleError(error)
       }
     }
   }
+}
 
+// MARK: - Error Handling
+
+extension ScanDocumentViewModel {
+
+  private func handleError(_ error: Error) {
+    analytics.log(error)
+    stop()
+    destination = .error(errorDataset(for: error))
+  }
+
+  private func errorDataset(for error: Error) -> ErrorDataset {
+    guard let avBeamError = error as? AVBeamError else {
+      return ErrorDataset.retry(error, retryHandler())
+    }
+
+    return .avBeamError(avBeamError, retryAction: retryHandler(), closeAction: closeHandler())
+  }
+
+  private func closeHandler() -> () -> Void {
+    { [weak self] in
+      self?.coordinator.cleanup()
+    }
+  }
+
+  private func retryHandler() -> (Navigator) -> Void {
+    { [weak self] navigator in
+      self?.reset()
+      navigator.returnToCheckpointSafely(EIDRequestCheckpoints.scanDocumentInformation)
+    }
+  }
 }

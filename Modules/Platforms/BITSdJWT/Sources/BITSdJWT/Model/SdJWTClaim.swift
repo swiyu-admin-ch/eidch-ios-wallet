@@ -1,3 +1,4 @@
+import BITClaimsPathPointer
 import BITCore
 import Foundation
 
@@ -13,8 +14,15 @@ public struct SdJWTClaim: Equatable {
 
   // MARK: Lifecycle
 
-  public init(key: String, value: Any, disclosure: String, digest: SdJwtDigest) throws {
+  public init(
+    key: String,
+    path: ClaimsPathPointer,
+    value: Any,
+    disclosure: String,
+    digest: SdJwtDigest) throws
+  {
     self.key = key
+    self.path = path
     self.digest = digest
     self.disclosure = disclosure
     self.value = try CodableValue(anyValue: value)
@@ -24,12 +32,9 @@ public struct SdJWTClaim: Equatable {
 
   public let digest: SdJwtDigest
   public let key: String
+  public let path: ClaimsPathPointer
   public var value: CodableValue?
   public let disclosure: String
-
-  public var jsonPath: String {
-    "$.\(key)"
-  }
 }
 
 extension SdJWTClaim {

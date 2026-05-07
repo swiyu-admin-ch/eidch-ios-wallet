@@ -59,7 +59,11 @@ public struct OpenIdConfiguration: Codable, Equatable {
   }
 
   let issuerEndpoint: String
-  let tokenEndpoint: URL
+
+  // MARK: Public
+
+  public let tokenEndpoint: URL
+
   let jwksURI: URL?
 
   let authorizationEndpoint: String?

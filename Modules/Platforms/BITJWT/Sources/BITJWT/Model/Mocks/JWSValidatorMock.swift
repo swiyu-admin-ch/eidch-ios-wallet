@@ -1,6 +1,5 @@
 #if DEBUG
 import Foundation
-import XCTest
 
 public class JWSValidatorMock<U: JWT>: JWSValidatorProtocol {
 

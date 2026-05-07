@@ -6,6 +6,12 @@ import SwiftUI
 
 struct LegalRepresentantView: View {
 
+  // MARK: Lifecycle
+
+  init() {
+    _viewModel = State(initialValue: Container.shared.legalRepresentantViewModel())
+  }
+
   // MARK: Internal
 
   var body: some View {
@@ -30,7 +36,7 @@ struct LegalRepresentantView: View {
 
   // MARK: Private
 
-  @InjectedObject(\.legalRepresentantViewModel) private var viewModel
+  @State private var viewModel: LegalRepresentantViewModel
 }
 
 #Preview {

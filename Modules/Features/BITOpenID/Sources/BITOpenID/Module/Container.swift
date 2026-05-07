@@ -65,6 +65,10 @@ extension Container {
     self { false }
   }
 
+  public var isBatchIssuanceEnabled: Factory<Bool> {
+    self { false }
+  }
+
   public var deferredCredentialRequestBodyGenerator: Factory<DeferredCredentialRequestBodyGeneratorProtocol> {
     self { DeferredCredentialRequestBodyGenerator() }
   }
@@ -74,6 +78,14 @@ extension Container {
   }
 
   // MARK: Internal
+
+  var oAuthErrorParser: Factory<OAuthErrorParserProtocol> {
+    self { OAuthErrorParser() }
+  }
+
+  var openID4VCIErrorParser: Factory<OpenID4VCIErrorParserProtocol> {
+    self { OpenID4VCIErrorParser() }
+  }
 
   var typeMetadataService: Factory<TypeMetadataServiceProtocol> {
     self { TypeMetadataService() }

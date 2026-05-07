@@ -6,7 +6,7 @@ final class PresentationErrorRequestBodyTests: XCTestCase {
   // MARK: Internal
 
   func test_refusePresentation() {
-    let presentationErrorRequestBody = PresentationErrorRequestBody(error: .clientRejected)
+    let presentationErrorRequestBody = PresentationErrorRequestBody(error: .accessDenied)
     let dictionary = presentationErrorRequestBody.asDictionary()
 
     XCTAssertFalse(dictionary.isEmpty)
@@ -18,7 +18,7 @@ final class PresentationErrorRequestBodyTests: XCTestCase {
   }
 
   func test_refusePresentationWithDescription() {
-    let presentationErrorRequestBody = PresentationErrorRequestBody(error: .clientRejected, errorDescription: "description")
+    let presentationErrorRequestBody = PresentationErrorRequestBody(error: .accessDenied, errorDescription: "description")
     let dictionary = presentationErrorRequestBody.asDictionary()
 
     XCTAssertFalse(dictionary.isEmpty)
@@ -32,5 +32,5 @@ final class PresentationErrorRequestBodyTests: XCTestCase {
 
   // MARK: Private
 
-  private let error = PresentationErrorRequestBody.ErrorType.clientRejected
+  private let error = PresentationErrorRequestBody.Code.accessDenied
 }

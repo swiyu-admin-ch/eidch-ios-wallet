@@ -36,6 +36,14 @@ extension Container {
     self { SubmitNonComplianceReportUseCase() }
   }
 
+  var getActivityActorDisplayUseCase: Factory<GetActivityActorDisplayUseCaseProtocol> {
+    self { GetActivityActorDisplayUseCase() }
+  }
+
+  var nonComplianceActivityFactory: Factory<NonComplianceActivityFactoryProtocol> {
+    self { NonComplianceActivityFactory() }
+  }
+
   var descriptionFormFieldMinimumLength: Factory<Int> {
     self { 20 }
   }

@@ -14,7 +14,7 @@ public enum CredentialStatus: String, Codable, CaseIterable {
 
   // MARK: Lifecycle
 
-  init(_ status: VerifiableCredentialEntity.CredentialStatus) {
+  init(_ status: BundleItemEntity.CredentialStatus) {
     switch status {
     case .valid:
       self = .valid
@@ -34,7 +34,7 @@ public enum CredentialStatus: String, Codable, CaseIterable {
   }
 }
 
-extension VerifiableCredentialEntity.CredentialStatus {
+extension BundleItemEntity.CredentialStatus {
 
   init(_ status: CredentialStatus) {
     switch status {

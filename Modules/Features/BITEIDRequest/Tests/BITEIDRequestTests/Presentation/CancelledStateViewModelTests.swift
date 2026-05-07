@@ -16,7 +16,7 @@ final class CancelledStateViewModelTests: XCTestCase {
     delegate = RequestCaseViewStateDelegateSpy()
     deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
 
-    Container.shared.deleteEIDRequestCaseUseCase.register { self.deleteEIDRequestCaseUseCase }
+    Container.shared.deleteEIDRequestCaseUseCase.register { @MainActor in self.deleteEIDRequestCaseUseCase }
   }
 
   func testInitialState() throws {

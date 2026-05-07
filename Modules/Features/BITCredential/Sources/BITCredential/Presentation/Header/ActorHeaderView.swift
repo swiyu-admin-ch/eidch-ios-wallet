@@ -1,4 +1,5 @@
 import BITCredentialShared
+import BITL10n
 import BITOpenID
 import BITTheming
 import SwiftUI
@@ -9,12 +10,17 @@ public struct ActorHeaderView: View {
 
   // MARK: Lifecycle
 
-  public init(name: String, trustInformation: TrustInformation, imageData: Data? = nil, topInset: CGFloat = 0, type: ActorHeaderViewType = .issuance, onBadgeTapped: ((BadgeType) -> Void)? = nil) {
-    self.name = name
-    self.trustInformation = trustInformation
+  public init(
+    name: String? = nil,
+    badgeTypes: [ActorInformationBadgeType],
+    imageData: Data? = nil,
+    topInset: CGFloat = 0,
+    onBadgeTapped: ((BadgeType) -> Void)? = nil)
+  {
+    self.name = name ?? L10n.tkErrorNotregisteredTitle
+    self.badgeTypes = badgeTypes
     self.imageData = imageData
     self.topInset = topInset
-    self.type = type
     self.onBadgeTapped = onBadgeTapped
   }
 
@@ -48,9 +54,8 @@ public struct ActorHeaderView: View {
 
   private let imageData: Data?
   private let name: String
-  private let trustInformation: TrustInformation
+  private let badgeTypes: [ActorInformationBadgeType]
   private let topInset: CGFloat
-  private let type: ActorHeaderViewType
   private let onBadgeTapped: ((BadgeType) -> Void)?
 
   private var actorInformation: some View {
@@ -59,6 +64,7 @@ public struct ActorHeaderView: View {
         .accessibilityIdentifier(AccessibilityIdentifier.image.rawValue)
 
       Text(name)
+        .lineLimit(0)
         .font(.custom.body)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
         .accessibilityAddTraits(.isHeader)
@@ -67,12 +73,8 @@ public struct ActorHeaderView: View {
 
   private var badges: some View {
     FlowLayout(verticalSpacing: .x3, horizontalSpacing: .x3) {
-      badgeButton(type: trustInformation.identity.actorInformationBadgeType)
-      if let vcSchemaBadgeType = trustInformation.vcSchema.getActorInformationBadgeType(for: type) {
-        badgeButton(type: vcSchemaBadgeType)
-      }
-      if case .notCompliant(let nonComplianceReason) = trustInformation.actorCompliance, let reason = nonComplianceReason.localized() {
-        badgeButton(type: .notCompliant(reason: reason))
+      ForEach(badgeTypes, id: \.hashValue) { badgeType in
+        badgeButton(type: badgeType)
       }
     }
   }
@@ -83,6 +85,28 @@ public struct ActorHeaderView: View {
     } label: {
       ActorInformationBadge(type: type)
     }
+  }
+}
+
+extension ActorHeaderView {
+  public init(
+    name: String,
+    trustInformation: TrustInformation,
+    type: ActorHeaderViewType,
+    imageData: Data? = nil,
+    topInset: CGFloat = 0,
+    onBadgeTapped: ((BadgeType) -> Void)? = nil)
+  {
+    var badgeTypes = [
+      trustInformation.identity.actorInformationBadgeType,
+      trustInformation.vcSchema.getActorInformationBadgeType(for: type),
+    ].compactMap { $0 }
+
+    if case .notCompliant(let nonComplianceReason) = trustInformation.actorCompliance, let reason = nonComplianceReason.localized() {
+      badgeTypes.append(.notCompliant(reason: reason))
+    }
+
+    self.init(name: name, badgeTypes: badgeTypes, imageData: imageData, topInset: topInset, onBadgeTapped: onBadgeTapped)
   }
 }
 

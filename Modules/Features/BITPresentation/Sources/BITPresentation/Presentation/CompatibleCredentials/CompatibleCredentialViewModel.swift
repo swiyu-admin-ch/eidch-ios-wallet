@@ -6,21 +6,19 @@ import Foundation
 
 // MARK: - CompatibleCredentialViewModel
 
-class CompatibleCredentialViewModel: ObservableObject {
+@Observable
+class CompatibleCredentialViewModel {
 
   // MARK: Lifecycle
 
-  init(
-    context: PresentationRequestContext,
-    router: PresentationInternalRoutes)
-  {
+  init(context: PresentationRequestContext) {
     self.context = context
-    self.router = router
   }
 
   // MARK: Internal
 
-  @Published var credentialViewModels = [VerifiableCredentialViewModel]()
+  var destination: PresentationDestinations?
+  var credentialViewModels = [VerifiableCredentialViewModel]()
 
   var verifierDisplay: VerifierDisplay {
     context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
@@ -29,11 +27,7 @@ class CompatibleCredentialViewModel: ObservableObject {
   func didSelect(credential: VerifiableCredential) {
     guard let compatibleCredential = context.compatibleCredentials.first(where: { $0.id == credential.id }) else { return }
     context.selectedCredential = compatibleCredential
-    router.presentationReview(with: context)
-  }
-
-  func cancel() {
-    router.delegate?.cancel()
+    destination = .requestReview(context)
   }
 
   func updateCredentialViewModels(with colorScheme: String) {
@@ -45,8 +39,7 @@ class CompatibleCredentialViewModel: ObservableObject {
   // MARK: Private
 
   private var context: PresentationRequestContext
-  private var router: PresentationInternalRoutes
 
-  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
+  @ObservationIgnored @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 
 }

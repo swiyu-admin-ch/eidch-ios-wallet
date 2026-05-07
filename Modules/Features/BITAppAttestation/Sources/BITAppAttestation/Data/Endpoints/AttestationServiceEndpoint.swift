@@ -11,7 +11,15 @@ enum AttestationServiceEndpoint {
   case keyAttestation(KeyAttestationRequestBody)
 }
 
-// MARK: TargetType
+// MARK: - AttestationChallengeEndpoint
+
+public enum AttestationChallengeEndpoint {
+  public static var url: URL {
+    URL(target: AttestationServiceEndpoint.challenge)
+  }
+}
+
+// MARK: - AttestationServiceEndpoint + TargetType
 
 extension AttestationServiceEndpoint: TargetType {
   var baseURL: URL {

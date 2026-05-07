@@ -1,6 +1,7 @@
 import BITAppAuth
 import Factory
 import Foundation
+import NavigatorUI
 import Spyable
 import XCTest
 @testable import BITAppAttestation
@@ -22,16 +23,16 @@ final class SetupViewModelTests: XCTestCase {
     super.setUp()
 
     userSession = SessionSpy()
-    fetchAttestationsUseCase = FetchAttestationsUseCaseProtocolSpy()
+    validateDeviceSecurityRequirementsUseCase = ValidateDeviceSecurityRequirementsUseCaseProtocolSpy()
     mockContext = LAContextProtocolSpy()
 
     avBeam = AVBeamProtocolSpy()
     avBeam.state = .initialized
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.avBeamAppID.register { self.appId }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.avBeamAppID.register { @MainActor in self.appId }
 
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.fetchAttestationsUseCase.register { self.fetchAttestationsUseCase }
+    Container.shared.userSession.register { @MainActor in self.userSession }
+    Container.shared.validateDeviceSecurityRequirementsUseCase.register { @MainActor in self.validateDeviceSecurityRequirementsUseCase }
 
     success()
   }
@@ -47,7 +48,7 @@ final class SetupViewModelTests: XCTestCase {
 
     await viewModel.fetchAttestations()
 
-    XCTAssertFalse(fetchAttestationsUseCase.executeCalled)
+    XCTAssertFalse(validateDeviceSecurityRequirementsUseCase.callAsFunctionCalled)
 
     if case .setupSDKError = viewModel.destination {
       XCTAssert(true)
@@ -64,7 +65,7 @@ final class SetupViewModelTests: XCTestCase {
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertTrue(fetchAttestationsUseCase.executeCalled)
+    XCTAssertTrue(validateDeviceSecurityRequirementsUseCase.callAsFunctionCalled)
     XCTAssertEqual(viewModel.destination, .legalRepresentant)
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
     XCTAssertEqual(avBeam.initializeUsingCallsCount, 1)
@@ -73,27 +74,27 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testFetchAttestations_clientAttestationFails_continuesFlow() async {
-    fetchAttestationsUseCase.executeThrowableError = EIDRequestRepository.Error.invalidClientAttestation
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = EIDRequestRepository.Error.invalidClientAttestation
     let startTime = Date()
 
     await viewModel.fetchAttestations()
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertEqual(viewModel.destination, .error(.clientAttestation))
+    XCTAssertEqual(viewModel.destination, .error(.Setup.clientAttestation))
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
   @MainActor
   func testFetchAttestations_keyAttestationFails_continuesFlow() async {
-    fetchAttestationsUseCase.executeThrowableError = EIDRequestRepository.Error.invalidKeyAttestation
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = EIDRequestRepository.Error.invalidKeyAttestation
     let startTime = Date()
 
     await viewModel.fetchAttestations()
 
     let elapsedTime = Date().timeIntervalSince(startTime)
 
-    XCTAssertEqual(viewModel.destination, .error(.keyAttestation))
+    XCTAssertEqual(viewModel.destination, .error(.Setup.keyAttestation))
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
@@ -109,7 +110,7 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testFetchAttestations_slowExecution_noAdditionalDelay() async {
-    fetchAttestationsUseCase.executeClosure = { _ in
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionClosure = { _ in
       try await Task.sleep(nanoseconds: 2_000_000_000)
     }
 
@@ -125,7 +126,7 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testFetchAttestations_moderateExecution_minimalAdditionalDelay() async {
-    fetchAttestationsUseCase.executeClosure = { _ in
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionClosure = { _ in
       try await Task.sleep(nanoseconds: 1_000_000_000)
     }
 
@@ -139,18 +140,18 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertLessThan(elapsedTime, 2.5, "Should add minimal delay to reach 3 seconds")
   }
 
+  @MainActor
   func testCancelInitialization_sdkIsStopped() {
-    viewModel.cancelInitialization()
+    viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
 
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)
-    XCTAssertTrue(viewModel.isNavigationCloseTriggered)
   }
 
   // MARK: Private
 
   private var viewModel: SetupViewModel!
   private var userSession: SessionSpy!
-  private var fetchAttestationsUseCase: FetchAttestationsUseCaseProtocolSpy!
+  private var validateDeviceSecurityRequirementsUseCase: ValidateDeviceSecurityRequirementsUseCaseProtocolSpy!
   private var mockContext: LAContextProtocolSpy!
   private var avBeam: AVBeamProtocolSpy!
   private let appId = "test-app-id"

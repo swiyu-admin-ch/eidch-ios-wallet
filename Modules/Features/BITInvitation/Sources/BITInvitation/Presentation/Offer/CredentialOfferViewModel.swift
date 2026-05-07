@@ -1,19 +1,20 @@
 import BITCredential
 import BITCredentialShared
+import BITNavigation
 import Factory
+import NavigatorUI
 import SwiftUI
 
 @MainActor
-final class CredentialOfferViewModel: ObservableObject {
+@Observable
+final class CredentialOfferViewModel {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation? = nil, state: CredentialOfferViewModel.State = .loading, router: CredentialOfferInternalRoutes, delegate: InvitationDelegate?) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation? = nil, state: CredentialOfferViewModel.State = .loading) {
     self.credential = credential
     self.trustInformation = trustInformation
     self.state = state
-    self.router = router
-    self.delegate = delegate
   }
 
   // MARK: Internal
@@ -27,9 +28,14 @@ final class CredentialOfferViewModel: ObservableObject {
 
   let credential: VerifiableCredential
   var trustInformation: TrustInformation?
-  @Published var state: State
-  @Published var credentialViewModel: VerifiableCredentialViewModel?
-  @Published var isUnknownIssuerAlertShown = false
+
+  var state: State
+  var credentialViewModel: VerifiableCredentialViewModel?
+  var isUnknownIssuerAlertShown = false
+  var destination: InvitationDestinations?
+
+  var isOfferAccepted = false
+  var isOfferDeclined = false
 
   func onAppear() async {
     do {
@@ -53,8 +59,7 @@ final class CredentialOfferViewModel: ObservableObject {
 
       try await acceptCredentialUseCase(credential)
       try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
-      delegate?.didSaveCredential()
-      close()
+      isOfferAccepted = true
     } catch {
       state = .error
     }
@@ -63,8 +68,7 @@ final class CredentialOfferViewModel: ObservableObject {
   func confirmDecline() async {
     do {
       try await deleteCredentialUseCase.execute(credential)
-      delegate?.didDeclineCredential()
-      close()
+      isOfferDeclined = true
     } catch {
       state = .error
     }
@@ -87,21 +91,14 @@ final class CredentialOfferViewModel: ObservableObject {
   }
 
   func openWrongData() {
-    router.wrongData()
+    destination = .wrongData
   }
 
   // MARK: Private
 
-  private weak var delegate: InvitationDelegate?
-  private let router: CredentialOfferInternalRoutes
-
-  @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
-  @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
-  @Injected(\.acceptCredentialUseCase) private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocol
-  @Injected(\.fetchIssuanceTrustInformationUseCase) private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocol
-
-  private func close() {
-    router.close()
-  }
+  @ObservationIgnored @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
+  @ObservationIgnored @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
+  @ObservationIgnored @Injected(\.acceptCredentialUseCase) private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocol
+  @ObservationIgnored @Injected(\.fetchIssuanceTrustInformationUseCase) private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocol
 
 }

@@ -1,4 +1,3 @@
-import Combine
 import SwiftUI
 import UIKit
 
@@ -6,7 +5,7 @@ import UIKit
 
 @propertyWrapper
 public struct Orientation: DynamicProperty {
-  @StateObject private var manager = OrientationManager.shared
+  @State private var manager = OrientationManager.shared
 
   public init() {}
 
@@ -17,7 +16,8 @@ public struct Orientation: DynamicProperty {
 
 // MARK: - OrientationManager
 
-fileprivate class OrientationManager: ObservableObject {
+@Observable
+fileprivate class OrientationManager {
 
   // MARK: Lifecycle
 
@@ -30,13 +30,13 @@ fileprivate class OrientationManager: ObservableObject {
 
   static let shared = OrientationManager()
 
-  @Published var type = UIDeviceOrientation.unknown
+  var type = UIDeviceOrientation.unknown
 
   let allowedOrientations: [UIDeviceOrientation] = [.portrait, .portraitUpsideDown, .landscapeLeft, .landscapeRight]
 
   // MARK: Private
 
-  private var cancellables = Set<AnyCancellable>()
+  @ObservationIgnored private var observerTokens = [NSObjectProtocol]()
 
   private func setupInitialOrientation() {
     guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
@@ -47,12 +47,14 @@ fileprivate class OrientationManager: ObservableObject {
   }
 
   private func observeOrientationChanges() {
-    NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
-      .sink { [weak self] _ in
-        guard let self else { return }
-        updateOrientation(with: UIDevice.current.orientation)
-      }
-      .store(in: &cancellables)
+    let token = NotificationCenter.default.addObserver(
+      forName: UIDevice.orientationDidChangeNotification,
+      object: nil,
+      queue: .main)
+    { [weak self] _ in
+      self?.updateOrientation(with: UIDevice.current.orientation)
+    }
+    observerTokens.append(token)
   }
 
   private func updateOrientation(with orientation: UIInterfaceOrientation) {

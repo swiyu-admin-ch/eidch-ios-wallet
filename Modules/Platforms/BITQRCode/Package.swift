@@ -7,7 +7,7 @@ let package = Package(
   name: "BITQRCode",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -15,13 +15,15 @@ let package = Package(
       targets: ["BITQRCode"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(path: "../BITTheming"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
     .target(
       name: "BITQRCode",
       dependencies: [
+        .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
       ]),

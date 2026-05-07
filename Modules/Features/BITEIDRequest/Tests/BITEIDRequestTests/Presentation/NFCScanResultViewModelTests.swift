@@ -23,7 +23,7 @@ final class NFCScanResultViewModelTests: XCTestCase {
   func testPrimaryAction_documentRecordingRequired_routeToDocumentRecording() {
     mockContext = EIDRequestContext.Mock.documentRecordingSample
 
-    Container.shared.eidRequestContext.register { self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
     viewModel = NFCScanResultViewModel(package: mockAVBeamPackageResult)
 
     viewModel.primaryAction()
@@ -79,7 +79,7 @@ final class NFCScanResultViewModelTests: XCTestCase {
   private var viewModel: NFCScanResultViewModel!
   private let mockAVBeamPackageResult = AVBeamPackageResult.Mock.sample
   private let mockNFCScanResult = NFCScanResult.Mock.sample
-  private var mockNFCScanResultEntries: [NFCScanResultViewModel.NFCScanResultEntryType]!
+  private var mockNFCScanResultEntries: [ScanResultEntryType]!
   private var fetchNFCScanResultUseCase: FetchNFCScanResultUseCaseProtocolSpy!
   private var mockContext: EIDRequestContext!
 
@@ -87,15 +87,15 @@ final class NFCScanResultViewModelTests: XCTestCase {
     mockContext = EIDRequestContext(caseId: mockCaseId)
     fetchNFCScanResultUseCase = FetchNFCScanResultUseCaseProtocolSpy()
     mockNFCScanResultEntries = [
-      .image(key: L10n.tkEidRequestNfcScanResultPhotoKey, value: mockNFCScanResult.facePicture),
+      .image(key: L10n.tkEidRequestNfcScanResultPhotoKey, value: mockNFCScanResult.facePicture, accessibilityLabel: L10n.tkEidRequestNfcScanResultPhotoAlt),
       .text(key: L10n.tkEidRequestNfcScanResultSurnameKey, value: mockNFCScanResult.surname),
       .text(key: L10n.tkEidRequestNfcScanResultGivenNamesKey, value: mockNFCScanResult.givenName),
       .text(key: L10n.tkEidRequestNfcScanResultExpirationDateKey, value: mockNFCScanResult.expirationDate),
       .text(key: L10n.tkEidRequestNfcScanResultPassportNumberKey, value: mockNFCScanResult.passportNumber),
     ]
 
-    Container.shared.eidRequestContext.register { self.mockContext }
-    Container.shared.fetchNFCScanResultUseCase.register { self.fetchNFCScanResultUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
+    Container.shared.fetchNFCScanResultUseCase.register { @MainActor in self.fetchNFCScanResultUseCase }
   }
 
   private func createSuccesState() {

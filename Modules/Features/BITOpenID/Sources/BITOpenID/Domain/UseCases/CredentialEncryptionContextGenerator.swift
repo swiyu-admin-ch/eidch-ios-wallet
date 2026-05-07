@@ -8,7 +8,7 @@ import Spyable
 
 @Spyable
 public protocol CredentialEncryptionContextGeneratorProtocol {
-  func callAsFunction(for metadata: CredentialMetadata) throws -> CredentialEncryptionContext?
+  func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext?
 }
 
 // MARK: - CredentialEncryptionContextGenerator
@@ -17,7 +17,7 @@ struct CredentialEncryptionContextGenerator: CredentialEncryptionContextGenerato
 
   // MARK: Internal
 
-  func callAsFunction(for metadata: CredentialMetadata) throws -> CredentialEncryptionContext? {
+  func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext? {
     guard let requestEncryption = metadata.credentialRequestEncryption else { return nil }
     try credentialEncryptionValidator.validate(metadata)
 

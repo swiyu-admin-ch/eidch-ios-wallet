@@ -3,7 +3,7 @@ import NavigatorUI
 import SwiftUI
 
 public enum ActivityDetailDestinations: NavigationDestination {
-  case activityDetail(activity: Activity, credentialId: UUID)
+  case activityDetail(activityId: UUID)
 
   // MARK: Internal
 
@@ -15,8 +15,8 @@ public enum ActivityDetailDestinations: NavigationDestination {
 
   public var body: some View {
     switch self {
-    case .activityDetail(let activity, let credentialId):
-      ActivityDetailView(activity, credentialId: credentialId)
+    case .activityDetail(let activityId):
+      ActivityDetailView(activityId)
     }
   }
 }

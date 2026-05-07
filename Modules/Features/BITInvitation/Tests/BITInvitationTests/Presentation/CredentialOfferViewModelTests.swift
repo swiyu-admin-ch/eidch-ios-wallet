@@ -1,7 +1,7 @@
 // swiftlint: disable all
 import Factory
 import Foundation
-import Spyable
+import NavigatorUI
 import XCTest
 @testable import BITCredential
 @testable import BITCredentialShared
@@ -18,11 +18,11 @@ final class CredentialOfferViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
 
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation)
   }
 
   func testInit_ValuesWithTrustStatement() {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation)
 
     XCTAssertEqual(viewModel.credential, mockCredential)
     XCTAssertEqual(viewModel.state, .loading)
@@ -32,7 +32,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testInit_withoutTrustInformation() {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential)
 
     XCTAssertEqual(viewModel.credential, mockCredential)
     XCTAssertEqual(viewModel.state, .loading)
@@ -49,7 +49,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testOnAppear_withoutTrustInformation_fetchTrust() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential)
 
     await viewModel.onAppear()
 
@@ -62,7 +62,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
   func testOnAppear_fetchTrustInformationFails_stateIsError() async {
     fetchIssuanceTrustInformationUseCase.callAsFunctionForThrowableError = TestingError.error
 
-    viewModel = CredentialOfferViewModel(credential: mockCredential, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential)
 
     await viewModel.onAppear()
 
@@ -81,9 +81,8 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
     XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
     XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
-    XCTAssertTrue(mockDelegate.didSaveCredentialCalled)
-    XCTAssertTrue(router.closeCalled)
     XCTAssertEqual(viewModel.state, .loading)
+    XCTAssertTrue(viewModel.isOfferAccepted)
   }
 
   func testConfirmAccept_acceptCredentialFails_stateIsError() async {
@@ -99,8 +98,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
     XCTAssertEqual(deleteCredentialUseCase.executeReceivedCredential?.id, mockCredential.id)
     XCTAssertEqual(deleteCredentialUseCase.executeCallsCount, 1)
-    XCTAssertTrue(mockDelegate.didDeclineCredentialCalled)
-    XCTAssertTrue(router.closeCalled)
+    XCTAssertTrue(viewModel.isOfferDeclined)
   }
 
   func testConfirmDecline_deleteCredentialFails_stateIsError() async {
@@ -112,18 +110,17 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testAccept() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation)
 
     await viewModel.accept()
 
     XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
     XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
-    XCTAssertTrue(router.closeCalled)
     XCTAssertEqual(viewModel.state, .loading)
   }
 
   func testAccept_unknownTrustIdentity_showsAlert() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: .Mock.unknownIdentity, router: router, delegate: mockDelegate)
+    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: .Mock.unknownIdentity)
 
     await viewModel.accept()
 
@@ -144,7 +141,11 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
   func testOpenWrongData_success() {
     viewModel.openWrongData()
-    XCTAssertTrue(router.wrongDataCalled)
+    if case .wrongData = viewModel.destination {
+      XCTAssertTrue(true)
+    } else {
+      XCTFail("Expected destination: .wrongData")
+    }
   }
 
   // MARK: Private
@@ -154,27 +155,23 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private var mockCredential = VerifiableCredential.Mock.sample
   private var mockTrustInformation = TrustInformation.Mock.trustedIdentity
   private let themeMock = "light"
-  private var router: MockCredentialOfferRouter!
   private var delayAfterAcceptingCredential: UInt64 = 0
 
   private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocolSpy!
   private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocolSpy!
   private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocolSpy!
-  private let mockDelegate = InvitationDelegateSpy()
 
   private func registerMocks() {
-    router = MockCredentialOfferRouter()
-
     deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
     acceptCredentialUseCase = AcceptCredentialUseCaseProtocolSpy()
     acceptCredentialUseCase.callAsFunctionReturnValue = mockCredential
     fetchIssuanceTrustInformationUseCase = FetchIssuanceTrustInformationUseCaseProtocolSpy()
     fetchIssuanceTrustInformationUseCase.callAsFunctionForReturnValue = mockTrustInformation
 
-    Container.shared.delayAfterAcceptingCredential.register { self.delayAfterAcceptingCredential }
-    Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCase }
-    Container.shared.acceptCredentialUseCase.register { self.acceptCredentialUseCase }
-    Container.shared.fetchIssuanceTrustInformationUseCase.register { self.fetchIssuanceTrustInformationUseCase }
+    Container.shared.delayAfterAcceptingCredential.register { @MainActor in self.delayAfterAcceptingCredential }
+    Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCase }
+    Container.shared.acceptCredentialUseCase.register { @MainActor in self.acceptCredentialUseCase }
+    Container.shared.fetchIssuanceTrustInformationUseCase.register { @MainActor in self.fetchIssuanceTrustInformationUseCase }
     Container.shared.preferredUserLanguageCodes.register { ["de"] }
   }
 

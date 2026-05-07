@@ -17,3 +17,4 @@ targetTemplates:
       - package: BITEntities
       - package: BITOpenID
       - package: BITAnyCredentialFormat
+      - package: BITClaimsPathPointer

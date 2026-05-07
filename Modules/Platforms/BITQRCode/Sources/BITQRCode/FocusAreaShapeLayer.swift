@@ -29,12 +29,11 @@ class FocusAreaShapeLayer: CAShapeLayer {
     path = newPath.cgPath
   }
 
-  func resetPositionToCenter(of view: UIView) {
+  func resetPositionToOrigin(of view: UIView, center: CGPoint? = nil) {
     let squareSize = defaultSize
-    let centerX = view.bounds.midX
-    let centerY = view.bounds.midY
+    let centerPoint = center ?? CGPoint(x: view.bounds.midX, y: view.bounds.midY)
 
-    let topLeftCorner = CGPoint(x: centerX - squareSize / 2, y: centerY - squareSize / 2)
+    let topLeftCorner = CGPoint(x: centerPoint.x - squareSize / 2, y: centerPoint.y - squareSize / 2)
 
     let coordinates = createSquareCoordinates(from: topLeftCorner, size: squareSize)
     move(to: coordinates)

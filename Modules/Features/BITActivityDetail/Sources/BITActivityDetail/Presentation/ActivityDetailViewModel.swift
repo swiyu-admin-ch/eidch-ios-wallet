@@ -1,11 +1,8 @@
 import BITActivity
-import BITCredential
-import BITCredentialShared
 import BITL10n
-import BITNonCompliance
+import BITTheming
 import Factory
 import Foundation
-import SwiftUI
 
 // MARK: - ActivityDetailViewModelError
 
@@ -16,85 +13,74 @@ enum ActivityDetailViewModelError: Error {
 // MARK: - ActivityDetailViewModel
 
 @MainActor
-class ActivityDetailViewModel: ObservableObject {
+@Observable
+class ActivityDetailViewModel {
 
   // MARK: Lifecycle
 
-  init(_ activity: Activity, credentialId: UUID) {
-    self.activity = activity
-    self.credentialId = credentialId
-    cellViewModel = ActivityCellViewModel(activity: activity)
-    state = .result(activity: cellViewModel, credential: nil)
+  init(_ activityId: UUID) {
+    self.activityId = activityId
   }
 
   // MARK: Internal
 
-  enum State {
-    case result(activity: ActivityCellViewModel, credential: ActivityCredentialViewModel?)
-    case error(Error)
+  enum Event {
+    case onColorSchemeChange(colorScheme: String)
+    case nonComplianceReportSent
+    case deleteActivity
+    case activityDeletionConfirmed
+    case clearToast
   }
 
-  @Published private(set) var state: State
-  @Published var isDeleteConfirmationPresented = false
-  @Published var isToastPresented = false
-  @Published private(set) var toastMessage: String?
+  private(set) var state = ActivityDetailState.loading
+  var isDeleteConfirmationPresented = false
+  var toast: Toast?
 
-  @Injected(\.isNonComplianceEnabled) var isNonComplianceEnabled
-
-  let activity: Activity
-
-  var actorImage: Data? {
-    activity.actorDisplays.findDisplayWithFallback()?.image
-  }
-
-  var actorName: String? {
-    activity.actorDisplays.findDisplayWithFallback()?.name
-  }
-
-  var actorTitle: String {
-    switch activity.type {
-    case .issuance: L10n.tkActivityActivityDetailIssuerTitle
-    case .presentationAccepted,
-         .presentationDeclined: L10n.tkActivityActivityDetailVerifierTitle
+  func send(_ event: Event) async {
+    switch event {
+    case .onColorSchemeChange(let colorScheme):
+      loadActivityDetail(for: colorScheme)
+    case .nonComplianceReportSent:
+      presentNonComplianceReportSent()
+    case .deleteActivity:
+      presentDeletionConfirmation()
+    case .activityDeletionConfirmed:
+      deleteActivity()
+    case .clearToast:
+      clearToast()
     }
   }
 
-  func fetchCredential() async {
+  // MARK: Private
+
+  private let activityId: UUID
+
+  @ObservationIgnored @Injected(\.getActivityDetailUseCase) private var getActivityDetailUseCase
+  @ObservationIgnored @Injected(\.deleteActivityUseCase) private var deleteActivityUseCase
+
+  private func loadActivityDetail(for colorScheme: String) {
     do {
-      guard let verifiableCredential = try await getCredentialUseCase(id: credentialId) as? VerifiableCredential else {
-        throw ActivityDetailViewModelError.unsupportedCredentialType
-      }
-      let credential = ActivityCredentialViewModel(credential: verifiableCredential, activity: activity)
-      state = .result(activity: cellViewModel, credential: credential)
+      let activityDetail = try getActivityDetailUseCase(activityId)
+      state = .result(ActivityDetailState.Result(activityDetail, colorScheme: colorScheme))
     } catch {
       state = .error(error)
     }
   }
 
-  func showDeleteActivityConfirmation() {
+  private func presentNonComplianceReportSent() {
+    toast = Toast(L10n.tkActivityActivityListNonComplianceReportSentTitle)
+  }
+
+  private func presentDeletionConfirmation() {
     isDeleteConfirmationPresented = true
   }
 
-  func deleteActivity() {
+  private func deleteActivity() {
     isDeleteConfirmationPresented = false
-    try? deleteActivityUseCase(activity.id)
+    try? deleteActivityUseCase(activityId)
   }
 
-  func showNonComplianceReportSent() {
-    toastMessage = L10n.tkActivityActivityListNonComplianceReportSentTitle
-    isToastPresented = true
+  private func clearToast() {
+    toast = nil
   }
-
-  func clearToast() {
-    isToastPresented = false
-    toastMessage = nil
-  }
-
-  // MARK: Private
-
-  private let cellViewModel: ActivityCellViewModel
-  private let credentialId: UUID
-
-  @Injected(\.getCredentialUseCase) private var getCredentialUseCase
-  @Injected(\.deleteActivityUseCase) private var deleteActivityUseCase
 }

@@ -3,7 +3,6 @@ import Foundation
 @testable import BITCore
 @testable import BITJWT
 @testable import BITSdJWT
-@testable import BITTestingCore
 
 // swiftlint:disable force_try force_cast force_unwrapping
 
@@ -12,7 +11,6 @@ extension IdentityTrustStatementJWT: Mockable {
 
     // MARK: Internal
 
-    static let allFieldsRawSdJwt: String = getString(fromFile: "identity-trust-statement-all-fields-sd-jwt", bundle: Bundle.module)
     static let allFields: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-all-fields")
 
     static let validSample: IdentityTrustStatement = encodePayload(fromFile: "identity-trust-statement-valid-sample")
@@ -33,7 +31,7 @@ extension IdentityTrustStatementJWT: Mockable {
 
     private static func createSdJWSMock(from trustStatement: IdentityTrustStatementJWT, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> IdentityTrustStatement {
       let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
-      return IdentityTrustStatement(jws: jws, payload: trustStatement, resolvedPayload: rawPayload, rawSdJWS: "rawSdJWS", disclosableClaims: [])
+      return IdentityTrustStatement(jws: jws, payload: trustStatement, resolvedJSON: rawPayload, rawSdJWS: "rawSdJWS", disclosureMap: [:], disclosableClaims: [])
     }
   }
 }

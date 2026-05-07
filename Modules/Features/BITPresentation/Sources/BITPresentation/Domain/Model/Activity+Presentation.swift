@@ -9,7 +9,9 @@ extension Activity {
       type: type,
       actorTrust: context.trustInformation.actorTrust,
       vcSchemaTrust: context.trustInformation.vcSchemaTrust,
+      actorCompliance: context.trustInformation.actorComplianceStatus,
       nonComplianceData: context.presentationRequest.nonComplianceData,
+      nonComplianceReasonDisplays: context.trustInformation.nonComplianceReasonDisplays,
       claims: credential.uniqueClaimIds.map(ActivityClaim.init),
       actorDisplays: context.verifierDisplays.map(ActivityActorDisplay.init))
   }

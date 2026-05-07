@@ -4,7 +4,7 @@ import Foundation
 @MainActor
 extension Container {
   var splashScreenModule: ParameterFactory<() -> Void, SplashScreenModule> {
-    self { SplashScreenModule(completed: $0) }
+    self { @MainActor in SplashScreenModule(completed: $0) }
   }
 }
 
@@ -18,7 +18,7 @@ extension Container {
     self { RootRouter() }
   }
 
-  var rootRouter: Factory<RootRouter> {
+  var rootRouter: Factory<RootRouterRoutes> {
     self { RootRouter() }
   }
 

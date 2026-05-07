@@ -1,0 +1,9 @@
+{
+  "id": "7e2d346a-9599-4646-a306-636a89d26e38",
+  "type": "issuance",
+  "createdAt": "2025-09-16T14:20:30+01:00",
+  "actorDisplay": {
+    "name": "actor",
+    "locale": "locale"
+  }
+}

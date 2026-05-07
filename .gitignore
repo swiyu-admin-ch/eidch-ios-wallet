@@ -115,4 +115,6 @@ Modules/**/.build/*
 
 # Ignore SwiftPM lockfiles inside modules
 Modules/**/Package.resolved
+# Ignore generated SwiftPM/Xcode metadata inside modules
+Modules/**/.swiftpm/
 buildServer.json

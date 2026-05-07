@@ -22,7 +22,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_parameters_success() async {
-    let result = await validator.validate(mockClientAttestation)
+    let result = await validator(mockClientAttestation)
 
     XCTAssertTrue(result)
 
@@ -31,7 +31,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_count_success() async {
-    _ = await validator.validate(mockClientAttestation)
+    _ = await validator(mockClientAttestation)
 
     XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.getForCallsCount, 1)
@@ -39,49 +39,49 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_unsupportedAlgorithm_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleUnsupportedAlgorithm)
+    let result = await validator(ClientAttestationJWT.Mock.sampleUnsupportedAlgorithm)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_notTrustedDid_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleNotTrusted)
+    let result = await validator(ClientAttestationJWT.Mock.sampleNotTrusted)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_missingExpiredAt_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleMissingExpiredAt)
+    let result = await validator(ClientAttestationJWT.Mock.sampleMissingExpiredAt)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_missingActivatedAt_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleMissingActivatedAt)
+    let result = await validator(ClientAttestationJWT.Mock.sampleMissingActivatedAt)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectWalletName_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectName)
+    let result = await validator(ClientAttestationJWT.Mock.sampleIncorrectName)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectBindingKey_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectBindingKey)
+    let result = await validator(ClientAttestationJWT.Mock.sampleIncorrectBindingKey)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectKid_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectKid)
+    let result = await validator(ClientAttestationJWT.Mock.sampleIncorrectKid)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectSub_returnsFalse() async {
-    let result = await validator.validate(ClientAttestationJWT.Mock.sampleIncorrectSub)
+    let result = await validator(ClientAttestationJWT.Mock.sampleIncorrectSub)
 
     XCTAssertFalse(result)
   }
@@ -89,7 +89,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   func testValidate_jwsValidatorThrows_returnsFalse() async {
     jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
-    let result = await validator.validate(mockClientAttestation)
+    let result = await validator(mockClientAttestation)
 
     XCTAssertFalse(result)
   }
@@ -97,7 +97,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   func testValidate_appIdentifierRepositoryThrows_returnsFalse() async {
     appIdentifierRepository.getThrowableError = TestingError.error
 
-    let result = await validator.validate(mockClientAttestation)
+    let result = await validator(mockClientAttestation)
 
     XCTAssertFalse(result)
   }
@@ -105,7 +105,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   func testValidate_jwsValidatorThrowsError_returnsFalse() async {
     jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
-    let result = await validator.validate(mockClientAttestation)
+    let result = await validator(mockClientAttestation)
 
     XCTAssertFalse(result)
   }

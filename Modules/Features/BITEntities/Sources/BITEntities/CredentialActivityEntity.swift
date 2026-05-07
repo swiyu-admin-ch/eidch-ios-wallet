@@ -9,10 +9,12 @@ public class CredentialActivityEntity: Object {
   @Persisted public var type: String
   @Persisted public var actorTrust: String
   @Persisted public var vcSchemaTrust: String
+  @Persisted public var actorCompliance: String
   @Persisted public var nonComplianceData: String?
 
   @Persisted public var claims = List<ActivityClaimEntity>()
   @Persisted public var actorDisplays = List<ActivityActorDisplayEntity>()
+  @Persisted public var nonComplianceReasonDisplays = List<NonComplianceReasonDisplayEntity>()
 
   @Persisted(originProperty: "activities")
   public var credential: LinkingObjects<CredentialEntity>

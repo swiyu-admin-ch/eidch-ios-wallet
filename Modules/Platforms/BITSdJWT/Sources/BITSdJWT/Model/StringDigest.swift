@@ -7,7 +7,7 @@ struct StringDigest {
 
   let content: String
 
-  func createDigest(algorithm: Algorithm) throws -> String {
+  func createDigest(algorithm: Algorithm) throws -> SdJwtDigest {
     guard let data = content.data(using: .ascii) else {
       throw DecodingError.dataCorrupted(DecodingError.Context(
         codingPath: [],

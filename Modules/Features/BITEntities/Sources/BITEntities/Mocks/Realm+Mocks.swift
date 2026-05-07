@@ -2,7 +2,7 @@
 // swiftlint:disable force_unwrapping
 import Foundation
 import RealmSwift
-@testable import BITTestingCore
+@testable import BITCore
 
 // MARK: - Realm + Mockable
 
@@ -14,6 +14,8 @@ extension Realm {
     public static let version5Snapshot: URL = Bundle.module.url(forResource: "version5Snapshot", withExtension: "realm")!
     public static let version10Snapshot: URL = Bundle.module.url(forResource: "version10Snapshot", withExtension: "realm")!
     public static let version14Snapshot: URL = Bundle.module.url(forResource: "version14Snapshot", withExtension: "realm")!
+    public static let version16Snapshot: URL = Bundle.module.url(forResource: "version16Snapshot", withExtension: "realm")!
+    public static let version23Snapshot: URL = Bundle.module.url(forResource: "version23Snapshot", withExtension: "realm")!
   }
 }
 // swiftlint:enable all

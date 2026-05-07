@@ -12,13 +12,12 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
     repository = EIDRequestCaseRepositoryProtocolSpy()
 
     Container.shared.eIDRequestCaseRepository.register { self.repository }
-
-    useCase = GetEIDRequestCaseListUseCase()
   }
 
   func testExecuteSucces() async throws {
-    Container.shared.requestCasePriorityOrder.register { [.readyForOnlineSession, .inQueue] }
+    Container.shared.requestCasePriorityOrder.register { [.autoVerification, .issuing, .closed, .readyForOnlineSession, .inTargetWalletPairing, .readyForFinalEntitlementCheck, .inQueue, .refused, .unknown, .expired, .cancelled, .agentReview] }
     repository.getAllReturnValue = mockEIDRequestCases
+    useCase = GetEIDRequestCaseListUseCase()
 
     let sortedArray: [EIDRequestCase] = [
       .Mock.sampleAVReady,
@@ -28,7 +27,7 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
       .Mock.sampleCancelled,
     ]
 
-    let requestCases = try await useCase.execute()
+    let requestCases = try await useCase()
 
     XCTAssertEqual(requestCases, sortedArray)
   }
@@ -36,17 +35,19 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
   func testExecuteSucces_withoutPriorities() async throws {
     Container.shared.requestCasePriorityOrder.register { [] }
     repository.getAllReturnValue = mockEIDRequestCases
+    useCase = GetEIDRequestCaseListUseCase()
 
-    let requestCases = try await useCase.execute()
+    let requestCases = try await useCase()
 
     XCTAssertEqual(requestCases.count, mockEIDRequestCases.count)
   }
 
   func testExecuteWithRepositoryError() async throws {
     repository.getAllThrowableError = TestingError.error
+    useCase = GetEIDRequestCaseListUseCase()
 
     do {
-      _ = try await useCase.execute()
+      _ = try await useCase()
       XCTFail("An error was expected")
     } catch {
       XCTAssertTrue(repository.getAllCalled)

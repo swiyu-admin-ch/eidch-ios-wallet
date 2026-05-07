@@ -3,12 +3,11 @@ import Factory
 import Foundation
 import XCTest
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 // MARK: - SdJWSDecoderTests
 
-// swiftlint: disable force_unwrapping
+// swiftlint: disable force_unwrapping force_try implicitly_unwrapped_optional
 
 final class SdJWSTests: XCTestCase {
 
@@ -17,44 +16,45 @@ final class SdJWSTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
+    sdJws = try! decoder.decode(FlatJWT.self, from: FlatJWT.Mock.data)
   }
 
-  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringAllKeys_ReturnsWhole() throws {
-    let sdJwt = TestSdJWT.Mock.flat
+  func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringAllKeys_ReturnsWhole() {
     let keys = [Self.key1, Self.key2, Self.key3]
 
-    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJws.createSelectiveDisclosure(for: keys)
 
-    let expected = try XCTUnwrap(String(data: TestSdJWT.Mock.flatJwtData, encoding: .utf8))
-    XCTAssertEqual(expected, newSdJwt)
+    let splitSdJwt = newSdJwt.split(separator: SdJWSDecoder.sdJWTSeparator).map(String.init)
+    XCTAssertEqual(splitSdJwt.count, 4)
+    XCTAssertEqual(splitSdJwt[0], FlatJWT.Mock.JWS)
+    XCTAssertTrue(splitSdJwt.contains(FlatJWT.Mock.disclosure1))
+    XCTAssertTrue(splitSdJwt.contains(FlatJWT.Mock.disclosure2))
+    XCTAssertTrue(splitSdJwt.contains(FlatJWT.Mock.disclosure3))
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringSomeKeys_ReturnsJwtWithRequiredDisclosures() {
-    let sdJwt = TestSdJWT.Mock.flat
     let keys = [Self.key2]
 
-    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJws.createSelectiveDisclosure(for: keys)
 
-    let expected = [sdJwt.rawJWS, TestSdJWT.Mock.disclosure2, ""].joined(separator: SdJWSDecoder.sdJWTSeparator)
+    let expected = [sdJws.rawJWS, FlatJWT.Mock.disclosure2, ""].joined(separator: SdJWSDecoder.sdJWTSeparator)
     XCTAssertEqual(expected, newSdJwt)
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringNoKeys_ReturnsJwt() {
-    let sdJwt = TestSdJWT.Mock.flat
     let keys = [String]()
 
-    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJws.createSelectiveDisclosure(for: keys)
 
-    XCTAssertEqual(sdJwt.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
+    XCTAssertEqual(sdJws.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
   }
 
   func testCreateSelectiveDisclosure_withFlatDisclosuresRequiringOtherKeys_ReturnsJwt() {
-    let sdJwt = TestSdJWT.Mock.flat
     let keys: [String] = ["otherKey", "otherKey2"]
 
-    let newSdJwt = sdJwt.createSelectiveDisclosure(for: keys)
+    let newSdJwt = sdJws.createSelectiveDisclosure(for: keys)
 
-    XCTAssertEqual(sdJwt.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
+    XCTAssertEqual(sdJws.rawJWS + SdJWSDecoder.sdJWTSeparator, newSdJwt)
   }
 
   // MARK: Private
@@ -62,6 +62,9 @@ final class SdJWSTests: XCTestCase {
   private static let key1 = "test_key_1"
   private static let key2 = "test_key_2"
   private static let key3 = "test_key_3"
+
+  private let decoder = SdJWSDecoder()
+  private var sdJws: SdJWS<FlatJWT>!
 
 }
 

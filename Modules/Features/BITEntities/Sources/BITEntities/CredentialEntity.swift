@@ -10,8 +10,9 @@ public class CredentialEntity: Object {
   @Persisted public var createdAt = Date()
 
   @Persisted public var eIDRequestCase: EIDRequestCaseEntity?
-  @Persisted public var keyBinding: CredentialKeyBindingEntity?
   @Persisted public var rawCredentialData: RawCredentialDataEntity?
+  // 1-1 relationship, but realm requires this to be marked as optional.
+  @Persisted public var authentication: CredentialAuthenticationEntity?
   @Persisted public var deferredCredential: DeferredCredentialEntity?
   @Persisted public var verifiableCredential: VerifiableCredentialEntity?
 

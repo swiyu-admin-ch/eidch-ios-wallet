@@ -9,6 +9,12 @@ import SwiftUI
 
 struct DocumentSelectionView: View {
 
+  // MARK: Lifecycle
+
+  init() {
+    _viewModel = State(initialValue: Container.shared.documentSelectionViewModel())
+  }
+
   // MARK: Internal
 
   var body: some View {
@@ -57,11 +63,11 @@ struct DocumentSelectionView: View {
 
   // MARK: Private
 
-  @InjectedObject(\.documentSelectionViewModel) private var viewModel
+  @State private var viewModel: DocumentSelectionViewModel
 }
 
 #Preview {
-  NavigationView {
+  NavigationStack {
     DocumentSelectionView()
   }
 }

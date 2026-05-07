@@ -49,24 +49,39 @@ struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseC
   @Injected(\.statusValidators) private var validators: [AnyStatusType: any AnyStatusCheckValidatorProtocol]
   @Injected(\.credentialRepository) private var credentialRepository
   @Injected(\.dateBuffer) private var dateBuffer: TimeInterval
+  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
 }
 
 extension CheckAndUpdateCredentialStatusUseCase {
   private func getStatus(of credential: VerifiableCredential) async throws -> CredentialStatus {
-    let anyCredential = try createAnyCredentialUseCase.execute(from: credential.payload, format: credential.format)
+    let bundleItem = try selectCredentialBundleItemUseCase(credential)
+    let anyCredential = try createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
     let dateStatus = checkDateValidity(anyCredential: anyCredential)
-    guard dateStatus == .valid else {
-      return dateStatus
+    if dateStatus == .expired {
+      return .expired
     }
+
+    let validatorStatus = await getValidatorStatus(anyCredential: anyCredential)
+    if validatorStatus == .revoked {
+      return .revoked
+    }
+
+    if dateStatus == .notYetValid {
+      return .notYetValid
+    }
+
+    if validatorStatus != .unknown {
+      return CredentialStatus(validatorStatus)
+    }
+    return .unknown
+  }
+
+  private func getValidatorStatus(anyCredential: AnyCredential) async -> VcStatus {
     guard
       let anyStatus = anyCredential.status,
       let validator = validators[anyStatus.type]
     else { return .unknown }
-    let status = await validator.validate(anyStatus, issuer: anyCredential.issuer)
-    if status != .unknown {
-      return CredentialStatus(status)
-    }
-    return .unknown
+    return await validator.validate(anyStatus, issuer: anyCredential.issuer)
   }
 
   private func checkDateValidity(anyCredential: AnyCredential) -> CredentialStatus {
@@ -82,7 +97,13 @@ extension CheckAndUpdateCredentialStatusUseCase {
 
   private func updateCredentialStatus(_ credential: VerifiableCredential, to status: CredentialStatus) async throws -> VerifiableCredential {
     var credentialCopy = credential
-    credentialCopy.status = status
+    let bundleItem = try selectCredentialBundleItemUseCase(credentialCopy)
+    guard
+      let index = credentialCopy.bundleItems.firstIndex(of: bundleItem) else
+    {
+      return credentialCopy
+    }
+    credentialCopy.bundleItems[index].status = status
 
     return try await credentialRepository.update(verifiableCredential: credentialCopy)
   }

@@ -135,6 +135,7 @@ final class RequestObjectEncryptionValidatorTests: XCTestCase {
       responseType: "vp_token",
       clientId: "did:example:12345",
       clientIdScheme: "did",
-      responseMode: responseMode)
+      responseMode: responseMode,
+      transactionData: nil)
   }
 }

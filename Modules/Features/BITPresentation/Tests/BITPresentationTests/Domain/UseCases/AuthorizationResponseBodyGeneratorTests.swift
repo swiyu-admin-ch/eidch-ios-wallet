@@ -7,6 +7,7 @@ import XCTest
 @testable import BITAnalyticsMocks
 @testable import BITAnyCredentialFormat
 @testable import BITAppAuth
+@testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITCrypto
 @testable import BITJWT
@@ -14,7 +15,6 @@ import XCTest
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 @testable import BITVault
 
@@ -33,7 +33,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     generator = AuthorizationResponseBodyGenerator()
   }
 
-  func testCreateAuthorizationResponseBody_WithKeyBinding_ReturnsBody() throws {
+  func testCallAsFunction_WithKeyBinding_ReturnsBody() throws {
     let body = try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)
 
     guard case .json(let payload, let type) = body else {
@@ -59,7 +59,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertEqual(analyticsProvider.logCounter, 0)
   }
 
-  func testCreateAuthorizationResponseBody_WithoutKeyBinding_ReturnsBody() throws {
+  func testCallAsFunction_WithoutKeyBinding_ReturnsBody() throws {
     let body = try generator(for: CompatibleCredential.Mock.BITWithoutKeyBinding, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)
 
     guard case .json(let payload, let type) = body else {
@@ -85,7 +85,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertEqual(analyticsProvider.logCounter, 0)
   }
 
-  func testCreateAuthorizationResponseBody_WithDcqlRequest_ReturnsBodyWithDcqlType() throws {
+  func testCallAsFunction_WithDcqlRequest_ReturnsBodyWithDcqlType() throws {
     let body = try generator(for: dcqlCompatibleCredentialMock, requestObject: RequestObject.Mock.Dcql.sample, inputDescriptor: nil)
 
     guard case .json(let payload, let type) = body else {
@@ -105,13 +105,31 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertFalse(spyAnyDescriptorMapGenerator.generateUsingVcFormatCalled)
   }
 
-  func testCreateAuthorizationResponseBody_missingQueryId_throws() throws {
+  func testCallAsFunction_WithDcqlRequestAndDcApiJwtResponseMode_ReturnsVpTokenDictionaryInBody() throws {
+    let requestObject = try makeRequestObject(queryType: .dcqlRaw(XCTUnwrap(RequestObject.Mock.Dcql.sample.rawDcqlQuery)), responseMode: .dcApiJWT, clientMetadata: nil)
+
+    let body = try generator(for: dcqlCompatibleCredentialMock, requestObject: requestObject, inputDescriptor: nil)
+
+    guard case .json(_, let type) = body else {
+      XCTFail("Expected json authorization response body")
+      return
+    }
+
+    XCTAssertEqual(type, .dcql)
+    XCTAssertEqual(body.type, .dcql)
+
+    let dictionary = body.asDictionary()
+    XCTAssertEqual(dictionary["vp_token"] as? [String: [String]], [Self.mockDcqlQueryId: [Self.mockVpToken]])
+    XCTAssertFalse(dictionary["vp_token"] is String)
+  }
+
+  func testCallAsFunction_missingQueryId_throws() throws {
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: RequestObject.Mock.Dcql.sample, inputDescriptor: nil)) { error in
       XCTAssertEqual(error as? RequestObjectError, .invalidDcqlQuery)
     }
   }
 
-  func testCreateAuthorizationResponseBody_directPostJwtEncryptionEnabled_returnsJwe() throws {
+  func testCallAsFunction_directPostJwtEncryptionEnabled_returnsJwe() throws {
     let metadata = try makeClientMetadata(jwks: ClientMetadata.JWKs(keys: [payloadEncryptionJwk]))
     let requestObject = makeRequestObject(queryType: .presentationDefinition(presentationDefinition), responseMode: .directPostJWT, clientMetadata: metadata)
     let body = try generator(for: CompatibleCredential.Mock.BIT, requestObject: requestObject, inputDescriptor: mockInputDescriptor)
@@ -130,7 +148,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertNil(jweEncrypterSpy.encryptDataPublicKeyEncryptionAlgorithmCompressionAlgorithmReceivedArguments?.compressionAlgorithm)
   }
 
-  func testCreateAuthorizationResponseBody_directPostJwtEncryptionEnabledDcql_returnsJwe() throws {
+  func testCallAsFunction_directPostJwtEncryptionEnabledDcql_returnsJwe() throws {
     let metadata = try makeClientMetadata(jwks: ClientMetadata.JWKs(keys: [payloadEncryptionJwk]))
     let requestObject = try makeRequestObject(queryType: .dcqlRaw(XCTUnwrap(RequestObject.Mock.Dcql.sample.rawDcqlQuery)), responseMode: .directPostJWT, clientMetadata: metadata)
     let body = try generator(for: dcqlCompatibleCredentialMock, requestObject: requestObject, inputDescriptor: nil)
@@ -144,7 +162,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertEqual(body.type, .dcql)
   }
 
-  func testCreateAuthorizationResponseBody_directPostJwtMissingJwk_throwsPayloadEncryptionFailed() throws {
+  func testCallAsFunction_directPostJwtMissingJwk_throwsPayloadEncryptionFailed() throws {
     let requestObject = makeRequestObject(queryType: .presentationDefinition(presentationDefinition), responseMode: .directPostJWT, clientMetadata: nil)
 
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: requestObject, inputDescriptor: mockInputDescriptor)) { error in
@@ -153,7 +171,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     }
   }
 
-  func testCreateAuthorizationResponseBody_directPostJwtEncrypterThrows_throwsError() throws {
+  func testCallAsFunction_directPostJwtEncrypterThrows_throwsError() throws {
     jweEncrypterSpy.encryptDataPublicKeyEncryptionAlgorithmCompressionAlgorithmThrowableError = TestingError.error
 
     let metadata = try makeClientMetadata(jwks: ClientMetadata.JWKs(keys: [payloadEncryptionJwk]))
@@ -164,7 +182,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     }
   }
 
-  func testCreateAuthorizationResponseBody_CreateAnyCredentialUseCaseThrows_ThrowsError() throws {
+  func testCallAsFunction_CreateAnyCredentialUseCaseThrows_ThrowsError() throws {
     spyCreateAnyCredentialUseCase.executeFromFormatThrowableError = TestingError.error
 
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BITWithoutKeyBinding, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
@@ -174,7 +192,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     }
   }
 
-  func testCreateAuthorizationResponseBody_GetPrivateKeyThrows_ThrowsError() throws {
+  func testCallAsFunction_GetPrivateKeyThrows_ThrowsError() throws {
     spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryThrowableError = TestingError.error
 
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
@@ -184,7 +202,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     }
   }
 
-  func testCreateAuthorizationResponseBody_AnyVpTokenGeneratorThrows_ThrowsError() throws {
+  func testCallAsFunction_AnyVpTokenGeneratorThrows_ThrowsError() throws {
     spyVpTokenGenerator.generateRequestObjectCredentialKeyPairFieldsThrowableError = TestingError.error
 
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
@@ -194,7 +212,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     }
   }
 
-  func testCreateAuthorizationResponseBody_AnyDescriptorMapGeneratorThrows_ThrowsError() throws {
+  func testCallAsFunction_AnyDescriptorMapGeneratorThrows_ThrowsError() throws {
     spyAnyDescriptorMapGenerator.generateUsingVcFormatThrowableError = TestingError.error
 
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
@@ -204,7 +222,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     }
   }
 
-  func testCreateAuthorizationResponseBody_userLoggedOut() throws {
+  func testCallAsFunction_userLoggedOut() throws {
     userSession.isLoggedIn = false
 
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, inputDescriptor: mockInputDescriptor)) { error in
@@ -237,6 +255,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
   private var analyticsProvider: MockProvider!
   private var userSession: SessionSpy!
   private var jweEncrypterSpy: JWEEncrypterProtocolSpy!
+  private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private var dcqlCompatibleCredentialMock: CompatibleCredential {
     CompatibleCredential(
@@ -277,6 +296,10 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
 
     userSession.isLoggedIn = true
     userSession.context = LAContextProtocolSpy()
+
+    selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
+      $0.bundleItems.first!
+    }
   }
 
   private func success() {
@@ -288,12 +311,13 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
   }
 
   private func assertArguments(assertKeyPair: Bool) {
-    XCTAssertEqual(spyCreateAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, mockCredential.payload)
+    let selectedBundleItem = try! selectCredentialBundleItemUseCaseSpy(mockCredential)
+    XCTAssertEqual(spyCreateAnyCredentialUseCase.executeFromFormatReceivedArguments?.payload, selectedBundleItem.payload)
     XCTAssertEqual(spyCreateAnyCredentialUseCase.executeFromFormatReceivedArguments?.format, mockCredential.format)
 
     if assertKeyPair {
-      XCTAssertEqual(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.identifier, mockCredential.keyBinding?.id.uuidString)
-      XCTAssertEqual(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.algorithm.rawValue, mockCredential.keyBinding?.algorithm)
+      XCTAssertEqual(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.identifier, selectedBundleItem.keyBinding?.id.uuidString)
+      XCTAssertEqual(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.algorithm.rawValue, selectedBundleItem.keyBinding?.algorithm)
     } else {
       XCTAssertFalse(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryCalled)
     }
@@ -337,6 +361,7 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
       responseType: "vp_token",
       clientId: "did:example:12345",
       clientIdScheme: "did",
-      responseMode: responseMode)
+      responseMode: responseMode,
+      transactionData: nil)
   }
 }

@@ -21,14 +21,14 @@ final class ActivityCellViewModelTests: XCTestCase {
 
   func testTimeStamp_German() {
     Container.shared.preferredUserLocales.register { ["de-CH"] }
-    viewModel = ActivityCellViewModel(activity: Activity.Mock.issueTrusted)
+    viewModel = ActivityCellViewModel(listItem: .Mock.issuance)
 
     XCTAssertEqual(viewModel.timeStamp, "16.09.2025 | 13:20")
   }
 
   func testTimeStamp_English() {
     Container.shared.preferredUserLocales.register { ["en-US"] }
-    viewModel = ActivityCellViewModel(activity: Activity.Mock.issueTrusted)
+    viewModel = ActivityCellViewModel(listItem: .Mock.issuance)
 
     XCTAssertEqual(viewModel.timeStamp, "09/16/2025 | 01:20 PM")
   }

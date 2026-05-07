@@ -16,7 +16,7 @@ enum CredentialEncryptionError: Error {
 
 @Spyable
 protocol CredentialEncryptionValidatorProtocol {
-  func validate(_ metadata: CredentialMetadata) throws
+  func validate(_ metadata: CredentialIssuerMetadata) throws
 }
 
 // MARK: - CredentialEncryptionValidator
@@ -25,7 +25,7 @@ struct CredentialEncryptionValidator: CredentialEncryptionValidatorProtocol {
 
   // MARK: Internal
 
-  func validate(_ metadata: CredentialMetadata) throws {
+  func validate(_ metadata: CredentialIssuerMetadata) throws {
     if metadata.credentialResponseEncryption != nil && metadata.credentialRequestEncryption == nil {
       throw CredentialEncryptionError.missingRequestEncryption
     }
@@ -39,7 +39,7 @@ struct CredentialEncryptionValidator: CredentialEncryptionValidatorProtocol {
 
   @Injected(\.encryptionSupportedCurves) private var supportedRequestCurves: [String]
 
-  private func validateRequestEncryption(_ requestEncryption: CredentialMetadata.CredentialRequestEncryption) throws {
+  private func validateRequestEncryption(_ requestEncryption: CredentialIssuerMetadata.CredentialRequestEncryption) throws {
 
     guard requestEncryption.jwks.keys.isEmpty == false else {
       throw CredentialEncryptionError.missingIssuerEncryptionKeys

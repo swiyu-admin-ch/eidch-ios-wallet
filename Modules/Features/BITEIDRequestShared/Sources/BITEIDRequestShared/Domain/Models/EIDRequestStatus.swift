@@ -33,10 +33,11 @@ extension EIDRequestStatus {
     case cancelled = "CANCELLED"
     case expired = "TIMEOUT"
     case unknown = "UNKNOWN"
-    case declined = "DECLINED"
+    case refused = "REFUSED"
     case autoVerification = "IN_AUTO_VERIFICATION"
     case closed = "CLOSED"
     case issuing = "IN_ISSUANCE"
+    case readyForFinalEntitlementCheck = "READY_FOR_FINAL_ENTITLEMENT_CHECK"
   }
 
   public struct QueueInformation: Decodable, Equatable {

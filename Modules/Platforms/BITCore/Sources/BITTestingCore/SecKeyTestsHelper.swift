@@ -1,12 +1,11 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
-#if DEBUG
 import Foundation
 
-struct SecKeyTestsHelper {
+public struct SecKeyTestsHelper {
 
-  // MARK: Internal
+  // MARK: Public
 
-  static func createStaticPrivateKey() -> SecKey {
+  public static func createStaticPrivateKey() -> SecKey {
     let keyData = Data(base64Encoded: privateKey)!
 
     let attributes: [String: Any] = [
@@ -22,7 +21,7 @@ struct SecKeyTestsHelper {
     return key
   }
 
-  static func createPrivateKey(type: String = kSecAttrKeyTypeECSECPrimeRandom as String, size: Int = 521) -> SecKey {
+  public static func createPrivateKey(type: String = kSecAttrKeyTypeECSECPrimeRandom as String, size: Int = 521) -> SecKey {
     let attributes: [String: Any] = [
       kSecAttrKeyType as String: type,
       kSecAttrKeySizeInBits as String: size,
@@ -39,14 +38,14 @@ struct SecKeyTestsHelper {
     return privateKey
   }
 
-  static func getPublicKey(for privateKey: SecKey) -> SecKey {
+  public static func getPublicKey(for privateKey: SecKey) -> SecKey {
     guard let publicKey = SecKeyCopyPublicKey(privateKey) else {
       fatalError("Can not get the Public Key")
     }
     return publicKey
   }
 
-  static func createAccessControl(accessControlFlags: SecAccessControlCreateFlags, protection: CFString) -> SecAccessControl {
+  public static func createAccessControl(accessControlFlags: SecAccessControlCreateFlags, protection: CFString) -> SecAccessControl {
     var accessControlError: Unmanaged<CFError>?
     guard let accessControl = SecAccessControlCreateWithFlags(kCFAllocatorDefault, protection, accessControlFlags, &accessControlError) else {
       if let error = accessControlError?.takeRetainedValue() {
@@ -65,4 +64,3 @@ struct SecKeyTestsHelper {
   """
 
 }
-#endif

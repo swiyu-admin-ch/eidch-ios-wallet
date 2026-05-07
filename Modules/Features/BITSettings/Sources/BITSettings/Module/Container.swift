@@ -5,8 +5,8 @@ extension Container {
 
   // MARK: Public
 
-  public var settingsRouter: Factory<SettingsRouter> {
-    self { SettingsRouter() }
+  public var isOTPDebugToggleEnabled: Factory<Bool> {
+    self { false }
   }
 
   // MARK: Internal
@@ -21,12 +21,12 @@ extension Container {
 
   @MainActor
   var activityHistorySettingsViewModel: Factory<ActivityHistorySettingsViewModel> {
-    self { ActivityHistorySettingsViewModel() }
+    self { @MainActor in ActivityHistorySettingsViewModel(getActivityHistoryEnabledSubject: self.getActivityHistoryEnabledSubjectUseCase()) }
   }
 
   @MainActor
   var licencesViewModel: Factory<LicencesListViewModel> {
-    self { LicencesListViewModel() }
+    self { @MainActor in LicencesListViewModel() }
   }
 }
 
@@ -44,6 +44,10 @@ extension Container {
 
   public var updateAnalyticsStatusUseCase: Factory<UpdateAnalyticStatusUseCaseProtocol> {
     self { UpdateAnalyticStatusUseCase() }
+  }
+
+  public var isLottieViewerEnabled: Factory<Bool> {
+    self { false }
   }
 
   // MARK: Internal

@@ -17,7 +17,7 @@ targetTemplates:
           - "/tmp/$(TARGET_NAME)DummyOutputFileSettingsBundle.txt"
     settings:
       base:
-        IPHONEOS_DEPLOYMENT_TARGET: 16.0
+        IPHONEOS_DEPLOYMENT_TARGET: 17.0
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 100.0 # avoids version enforcement for local builds
         PRODUCT_NAME: swiyu

@@ -8,7 +8,8 @@ import SwiftUI
 // MARK: - LoginViewModel
 
 @MainActor
-public class LoginViewModel: ObservableObject {
+@Observable
+public class LoginViewModel {
 
   // MARK: Lifecycle
 
@@ -35,18 +36,28 @@ public class LoginViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published var isBiometricAuthenticationAvailable = false
-  @Published var isBiometricTriggered = false
-  @Published var biometricType = BiometricType.faceID
-  @Published var pinCode: PinCode = ""
-  @Published var pinCodeState = PinCodeState.normal
-  @Published var biometricAttempts = 0
-  @Published var attempts = 0
-  @Published var countdown: TimeInterval?
+  var isBiometricAuthenticationAvailable = false
+  var isBiometricTriggered = false
+  var biometricType = BiometricType.faceID
+  var pinCodeState = PinCodeState.normal
+  var biometricAttempts = 0
+  var attempts = 0
+  var countdown: TimeInterval?
 
-  @Published var state: ViewState
+  var state: ViewState
 
-  @Injected(\.attemptsLimit) var attemptsLimit: Int
+  @ObservationIgnored @Injected(\.attemptsLimit) var attemptsLimit: Int
+
+  var pinCode: PinCode = "" {
+    didSet {
+      guard !pinCode.isEmpty, pinCodeState == .error else { return }
+      Task { @MainActor in
+        try? await Task.sleep(for: .seconds(pinCodeObserverDelay))
+        guard !pinCode.isEmpty else { return }
+        pinCodeState = .normal
+      }
+    }
+  }
 
   var inputFieldMessage: String {
     "\(pinCodeState == .error ? L10n.tkLoginPasswordfailedNotification : "") \(L10n.tkLoginPasswordfailedIosSubtitle(attemptsLeft))"
@@ -88,27 +99,18 @@ public class LoginViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.loginUseCases) private var useCases: LoginUseCasesProtocol
-  @Injected(\.awaitTimeBeforeBiometrics) private var awaitTimeOnAppear: UInt64
-  @Injected(\.pinCodeErrorAnimationDuration) private var pinCodeErrorAnimationDuration: CGFloat
-  @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
-  @Injected(\.lockDelay) private var lockDelay: TimeInterval
-  @Injected(\.loadingDelay) private var loadingDelay: UInt64
-  @Injected(\.pinCodeSize) private var pinCodeSize: Int
+  @ObservationIgnored @Injected(\.loginUseCases) private var useCases: LoginUseCasesProtocol
+  @ObservationIgnored @Injected(\.awaitTimeBeforeBiometrics) private var awaitTimeOnAppear: UInt64
+  @ObservationIgnored @Injected(\.pinCodeErrorAnimationDuration) private var pinCodeErrorAnimationDuration: CGFloat
+  @ObservationIgnored @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
+  @ObservationIgnored @Injected(\.lockDelay) private var lockDelay: TimeInterval
+  @ObservationIgnored @Injected(\.loadingDelay) private var loadingDelay: UInt64
+  @ObservationIgnored @Injected(\.pinCodeSize) private var pinCodeSize: Int
 
-  private var timer: Timer?
+  @ObservationIgnored private var timer: Timer?
   private let router: LoginRouterRoutes
 
-  private var bag = Set<AnyCancellable>()
-
   private func configureObservers() {
-    $pinCode
-      .filter { [weak self] in !$0.isEmpty && self?.pinCodeState == .error }
-      .delay(for: .seconds(pinCodeObserverDelay), scheduler: DispatchQueue.main)
-      .sink { [weak self] _ in
-        self?.pinCodeState = .normal
-      }.store(in: &bag)
-
     NotificationCenter.default.addObserver(forName: .willEnterForeground, object: nil, queue: .main) { [weak self] _ in
       Task { @MainActor in
         self?.startCountdown()

@@ -17,8 +17,8 @@ final class FetchMetadataUseCaseTests: XCTestCase {
   func testExecute_success() async throws {
     let metadataWrapper = try await useCase.execute(for: offerMock)
 
-    XCTAssertEqual(mockMetadata.credentialEndpoint, metadataWrapper.credentialMetadata.credentialEndpoint)
-    XCTAssertEqual(mockMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported, metadataWrapper.credentialMetadata.credentialConfigurationsSupported.first?.value as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
+    XCTAssertEqual(mockMetadata.credentialEndpoint, metadataWrapper.credentialIssuerMetadata.credentialEndpoint)
+    XCTAssertEqual(mockMetadata.credentialConfigurationsSupported.first?.value as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported, metadataWrapper.credentialIssuerMetadata.credentialConfigurationsSupported.first?.value as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported)
     XCTAssertEqual(metadataWrapper.rawData, mockMetadataData)
     XCTAssertEqual(spyRepository.fetchMetadataFromCallsCount, 1)
     XCTAssertEqual(spyRepository.fetchMetadataFromReceivedIssuerUrl, URL(string: offerMock.issuer))
@@ -43,15 +43,15 @@ final class FetchMetadataUseCaseTests: XCTestCase {
   // MARK: Private
 
   private let offerMock = CredentialOffer.Mock.sample
-  private let mockMetadata = CredentialMetadata.Mock.sample
-  private let mockMetadataData = CredentialMetadata.Mock.sampleData
+  private let mockMetadata = CredentialIssuerMetadata.Mock.sample
+  private let mockMetadataData = CredentialIssuerMetadata.Mock.sampleData
 
   private var spyRepository = OpenIDRepositoryProtocolSpy()
   private var useCase = FetchMetadataUseCase()
 
   private func success() {
     guard let mockUrl = URL(string: "http://mock.url") else { fatalError("url generation") }
-    spyRepository.fetchMetadataFromReturnValue = CredentialMetadataResponse(metadata: mockMetadata, raw: mockMetadataData)
+    spyRepository.fetchMetadataFromReturnValue = CredentialIssuerMetadataResponse(metadata: mockMetadata, raw: mockMetadataData)
   }
 
   private func registerMocks() {

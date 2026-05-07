@@ -8,13 +8,18 @@ public typealias InputDescriptorID = String
 
 // MARK: - PresentationRequestContext
 
-public class PresentationRequestContext {
+public class PresentationRequestContext: Equatable {
 
   // MARK: Lifecycle
 
-  public init(presentationRequest: PresentationRequest, compatibleCredentials: [CompatibleCredential]) {
+  public init(
+    presentationRequest: PresentationRequest,
+    compatibleCredentials: [CompatibleCredential],
+    transport: PresentationTransport = .network)
+  {
     self.presentationRequest = presentationRequest
     self.compatibleCredentials = compatibleCredentials
+    self.transport = transport
     if compatibleCredentials.count == 1 {
       selectedCredential = compatibleCredentials.first
     }
@@ -25,9 +30,18 @@ public class PresentationRequestContext {
   public var trustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected)
 
   public let compatibleCredentials: [CompatibleCredential]
+  public var transport: PresentationTransport
 
-  public var responseUri: URL {
+  public var responseUri: URL? {
     requestObject.responseUri
+  }
+
+  public static func == (lhs: PresentationRequestContext, rhs: PresentationRequestContext) -> Bool {
+    lhs.presentationRequest == rhs.presentationRequest &&
+      lhs.compatibleCredentials == rhs.compatibleCredentials &&
+      lhs.transport == rhs.transport &&
+      lhs.selectedCredential == rhs.selectedCredential &&
+      lhs.responseUri == rhs.responseUri
   }
 
   // MARK: Internal
@@ -90,18 +104,43 @@ public class PresentationRequestContext {
   }
 }
 
+// MARK: Hashable
+
+extension PresentationRequestContext: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(trustInformation)
+  }
+}
+
 #if DEBUG
 
 extension PresentationRequestContext {
 
   // MARK: Lifecycle
 
-  public convenience init(requestObject: RequestObject, compatibleCredentials: [CompatibleCredential], trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected)) {
-    self.init(presentationRequest: .plain(requestObject), compatibleCredentials: compatibleCredentials, trustInformation: trustInformation)
+  public convenience init(
+    requestObject: RequestObject,
+    compatibleCredentials: [CompatibleCredential],
+    trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected),
+    transport: PresentationTransport = .network)
+  {
+    self.init(
+      presentationRequest: .plain(requestObject),
+      compatibleCredentials: compatibleCredentials,
+      trustInformation: trustInformation,
+      transport: transport)
   }
 
-  public convenience init(presentationRequest: PresentationRequest, compatibleCredentials: [CompatibleCredential], trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected)) {
-    self.init(presentationRequest: presentationRequest, compatibleCredentials: compatibleCredentials)
+  public convenience init(
+    presentationRequest: PresentationRequest,
+    compatibleCredentials: [CompatibleCredential],
+    trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected),
+    transport: PresentationTransport = .network)
+  {
+    self.init(
+      presentationRequest: presentationRequest,
+      compatibleCredentials: compatibleCredentials,
+      transport: transport)
     self.trustInformation = trustInformation
   }
 

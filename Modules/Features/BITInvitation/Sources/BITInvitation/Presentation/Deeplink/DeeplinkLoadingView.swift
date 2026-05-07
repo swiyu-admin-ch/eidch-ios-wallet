@@ -1,6 +1,7 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import PopupView
 import SwiftUI
 
@@ -10,20 +11,24 @@ struct DeeplinkLoadingView: View {
 
   // MARK: Lifecycle
 
-  init(url: URL, router: InvitationRouterRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.deeplinkViewModel((url, router)))
+  init(url: URL) {
+    _viewModel = State(wrappedValue: Container.shared.deeplinkViewModel(url))
   }
 
   // MARK: Internal
 
-  @StateObject var viewModel: DeeplinkViewModel
+  @State var viewModel: DeeplinkViewModel
 
   var body: some View {
     content
-      .onAppear {
-        Task {
-          await viewModel.onAppear()
-        }
+      .navigate(to: $viewModel.destination)
+      .onChange(of: viewModel.onDismiss) { _, newValue in
+        guard newValue else { return }
+        viewModel.resetProximityEngagementIfNeeded()
+        navigator.dismiss()
+      }
+      .task {
+        await viewModel.onAppear()
       }
   }
 
@@ -34,9 +39,11 @@ struct DeeplinkLoadingView: View {
     static let innerGradientMaxHeight = 462.0
   }
 
+  @Environment(\.navigator) private var navigator: Navigator
+
   @ViewBuilder
   private var content: some View {
-    if let error = viewModel.error {
+    if let error = viewModel.error, !presentsErrorPage(error) {
       errorView(error)
     } else {
       progressView()
@@ -48,7 +55,6 @@ struct DeeplinkLoadingView: View {
 // MARK: - Components
 
 extension DeeplinkLoadingView {
-
   private func progressView() -> some View {
     ZStack {
       Rectangle()
@@ -80,34 +86,47 @@ extension DeeplinkLoadingView {
     VStack(spacing: .x1) {
       Spacer()
 
-      invitationError.icon
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: 56, height: 56)
-        .accessibilityHidden(true)
+      if let icon = invitationError.icon, let primaryText = invitationError.primaryText, let secondaryText = invitationError.secondaryText {
+        icon
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .frame(width: 56, height: 56)
+          .accessibilityHidden(true)
 
-      Text(invitationError.primaryText)
-        .font(.custom.title)
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        .multilineTextAlignment(.center)
-        .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+        Text(primaryText)
+          .font(.custom.title)
+          .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+          .multilineTextAlignment(.center)
+          .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
-      Text(invitationError.secondaryText)
-        .font(.custom.body)
-        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-        .multilineTextAlignment(.center)
-        .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
+        Text(secondaryText)
+          .font(.custom.body)
+          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+          .multilineTextAlignment(.center)
+          .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
+      }
 
       Spacer()
 
-      Button(L10n.tkGlobalClose, action: viewModel.close)
-        .padding(.bottom, .x6)
-        .controlSize(.large)
-        .buttonStyle(.primary)
-        .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
+      Button(L10n.tkGlobalClose) {
+        navigator.dismiss()
+      }
+      .padding(.bottom, .x6)
+      .controlSize(.large)
+      .buttonStyle(.primary)
+      .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     }
     .padding(.horizontal, .x6)
     .frame(maxWidth: .infinity)
     .background(ThemingAssets.Background.secondary.swiftUIColor)
   }
+
+  private func presentsErrorPage(_ error: Error) -> Bool {
+    guard let invitationError = error as? InvitationError else {
+      return false
+    }
+
+    return invitationError.errorDataset != nil
+  }
+
 }

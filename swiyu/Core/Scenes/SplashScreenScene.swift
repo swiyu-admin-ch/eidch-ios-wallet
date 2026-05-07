@@ -14,15 +14,9 @@ final class SplashScreenScene: SceneManagerProtocol {
   weak var delegate: (any SceneManagerDelegate)?
 
   func viewController() -> UIViewController {
-    if #available(iOS 17.0, *) {
-      let splashScreen = AnimatedSplashScreenHostingController()
-      splashScreen.delegate = self
-      return splashScreen
-    } else {
-      let splashScreen = SplashScreenHostingController()
-      splashScreen.delegate = self
-      return splashScreen
-    }
+    let splashScreen = AnimatedSplashScreenHostingController()
+    splashScreen.delegate = self
+    return splashScreen
   }
 
   // MARK: Private

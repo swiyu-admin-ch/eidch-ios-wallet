@@ -3,7 +3,6 @@ import Foundation
 @testable import BITCore
 @testable import BITJWT
 @testable import BITSdJWT
-@testable import BITTestingCore
 
 // swiftlint:disable force_try force_cast force_unwrapping
 
@@ -30,7 +29,7 @@ extension VcSchemaTrustStatementJWT: Mockable {
 
     private static func createSdJWSMock(from trustStatement: VcSchemaTrustStatementJWT, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> VcSchemaTrustStatement {
       let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
-      return VcSchemaTrustStatement(jws: jws, payload: trustStatement, resolvedPayload: rawPayload, rawSdJWS: "rawSdJWS", disclosableClaims: [])
+      return VcSchemaTrustStatement(jws: jws, payload: trustStatement, resolvedJSON: rawPayload, rawSdJWS: "rawSdJWS", disclosureMap: [:], disclosableClaims: [])
     }
   }
 }

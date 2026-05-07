@@ -23,45 +23,45 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
   func testGenerate_jwtRequestObject_returnsBody() throws {
     let nonComplianceData = "jwt_request_object"
     jwsDecoder.expectedInput = nonComplianceData
-    activityMock.nonComplianceData = nonComplianceData
+    let activityMock = createActivity(nonComplianceData: nonComplianceData)
 
-    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock, credential: credentialMock)
+    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock)
 
     let body = try XCTUnwrap(generator.generate(from: report) as? NonComplianceExcessiveDataReportBody)
 
     XCTAssertEqual(body.description, descriptionMock)
     XCTAssertEqual(body.email, emailMock)
     XCTAssertEqual(body.metadata.verifierDid, payloadMock.clientId)
-    XCTAssertEqual(body.metadata.verifierUrl, payloadMock.responseUri.absoluteString)
-    XCTAssertEqual(body.metadata.presentationActionCreatedAt, activityMock.createdAt)
-    XCTAssertEqual(body.metadata.presentedCredentialIssuerDid, credentialMock.issuer)
+    XCTAssertEqual(body.metadata.verifierUrl, payloadMock.responseUri?.absoluteString)
+    XCTAssertEqual(body.metadata.presentationActionCreatedAt, Self.createdAtMock)
+    XCTAssertEqual(body.metadata.presentedCredentialIssuerDid, Self.issuerMock)
     XCTAssertEqual(body.metadata.presentationRequestJwt, nonComplianceData)
     assertRequestFields(body.metadata.presentationRequestFields)
   }
 
   func testGenerate_plainRequestObject_returnsBody() throws {
     let nonComplianceData = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.sampleData, encoding: .utf8))
-    activityMock.nonComplianceData = nonComplianceData
+    let activityMock = createActivity(nonComplianceData: nonComplianceData)
     jwsDecoder.throwingError = TestingError.error
     generator = NonComplianceReportRequestBodyGenerator()
 
-    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock, credential: credentialMock)
+    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock)
 
     let body = try XCTUnwrap(generator.generate(from: report) as? NonComplianceExcessiveDataReportBody)
 
     XCTAssertEqual(body.description, descriptionMock)
     XCTAssertEqual(body.email, emailMock)
     XCTAssertEqual(body.metadata.verifierDid, requestObjectMock.clientId)
-    XCTAssertEqual(body.metadata.verifierUrl, requestObjectMock.responseUri.absoluteString)
-    XCTAssertEqual(body.metadata.presentationActionCreatedAt, activityMock.createdAt)
-    XCTAssertEqual(body.metadata.presentedCredentialIssuerDid, credentialMock.issuer)
+    XCTAssertEqual(body.metadata.verifierUrl, requestObjectMock.responseUri?.absoluteString)
+    XCTAssertEqual(body.metadata.presentationActionCreatedAt, Self.createdAtMock)
+    XCTAssertEqual(body.metadata.presentedCredentialIssuerDid, Self.issuerMock)
     XCTAssertEqual(body.metadata.presentationRequestJwt, nonComplianceData)
     assertPlainRequestFields(body.metadata.presentationRequestFields)
   }
 
   func testGenerate_missingRequestObject_throwsDecodingError() {
-    activityMock.nonComplianceData = nil
-    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock, credential: credentialMock)
+    let activityMock = createActivity(nonComplianceData: nil)
+    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock)
 
     XCTAssertThrowsError(try generator.generate(from: report)) { error in
       XCTAssertEqual(error as? NonComplianceReportRequestBodyGeneratorError, .requestObjectDecodingFailed)
@@ -78,11 +78,12 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
 
   // MARK: Private
 
+  private static let createdAtMock = Date()
+  private static let issuerMock = "issuer"
+
   private let descriptionMock = String(repeating: "x", count: 20)
   private let emailMock = "email@example.org"
-  private let credentialMock = VerifiableCredential.Mock.sample
   private let requestObjectMock = RequestObject.Mock.VcSdJwt.sample
-  private var activityMock = Activity.Mock.presentationAcceptedTrusted
   private var payloadMock = RequestObjectJWS.Mock.sampleJWT
 
   private var generator: NonComplianceReportRequestBodyGenerator!
@@ -91,6 +92,10 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
   private func registerMocks() {
     jwsDecoder = JWSDecoderMock(jwt: payloadMock, rawPayload: "rawPayload")
     Container.shared.jwsDecoder.register { self.jwsDecoder }
+  }
+
+  private func createActivity(nonComplianceData: String? = nil, createdAt: Date = createdAtMock, issuer: String = issuerMock) -> NonComplianceActivity {
+    NonComplianceActivity(nonComplianceData: nonComplianceData, createdAt: createdAt, issuer: issuer)
   }
 
   private func assertRequestFields(_ fields: [NonComplianceExcessiveDataReportBody.Field]) {

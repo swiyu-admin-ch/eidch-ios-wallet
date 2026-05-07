@@ -6,404 +6,6 @@
     "chasseral-vc": {
       "format": "vc+sd-jwt",
       "vct": "chasseral-vc",
-      "claims": {
-        "id": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "en-US",
-              "name": "Holder binding key"
-            }
-          ]
-        },
-        "lastName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Name"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Nom de famille"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Cognome"
-            },
-            {
-              "locale": "en-US",
-              "name": "Last name"
-            }
-          ]
-        },
-        "firstName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Vorname"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Prénom"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Nome"
-            },
-            {
-              "locale": "en-US",
-              "name": "First name"
-            }
-          ]
-        },
-        "dateOfBirth": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Geburtsdatum"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date de naissance"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data di nascita"
-            },
-            {
-              "locale": "en-US",
-              "name": "Date of birth"
-            }
-          ]
-        },
-        "hometown": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Heimatort"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Ville natale"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Città natale"
-            },
-            {
-              "locale": "en-US",
-              "name": "Home town"
-            }
-          ]
-        },
-        "registrationNumber": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "RegNr"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Numéro d'enregistrement"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Numero di registrazione"
-            },
-            {
-              "locale": "en-US",
-              "name": "RegNb"
-            }
-          ]
-        },
-        "dateOfExpiration": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Gültigkeit"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date d'expiration"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data di scadenza"
-            },
-            {
-              "locale": "en-US",
-              "name": "Validity"
-            }
-          ]
-        },
-        "issuerEntity": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Ausstellbehörde"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Entité émettrice"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Ente emittente"
-            },
-            {
-              "locale": "en-US",
-              "name": "Issuing authority"
-            }
-          ]
-        },
-        "issuerEntityDate": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Ausstellbehörde (Datum)"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date de l'entité émettrice"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data ente emittente"
-            },
-            {
-              "locale": "en-US",
-              "name": "Issuing authority (date)"
-            }
-          ]
-        },
-        "signatureImage": {
-          "mandatory": false,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Unterschrift"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Image de la signature"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Immagine della firma"
-            },
-            {
-              "locale": "en-US",
-              "name": "Signature"
-            }
-          ]
-        },
-        "photoImage": {
-          "mandatory": true,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Foto"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Photo"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Foto"
-            },
-            {
-              "locale": "en-US",
-              "name": "Photo"
-            }
-          ]
-        },
-        "categoryCode": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Kategorie"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Code de catégorie"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Codice categoria"
-            },
-            {
-              "locale": "en-US",
-              "name": "Category"
-            }
-          ]
-        },
-        "categoryRestrictions": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung auf der Kat"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions de catégorie"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni di categoria"
-            },
-            {
-              "locale": "en-US",
-              "name": "Category Restrictions"
-            }
-          ]
-        },
-        "restrictionsA": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung A"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions A"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni A"
-            },
-            {
-              "locale": "en-US",
-              "name": "Restrictions A"
-            }
-          ]
-        },
-        "restrictionsB": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung B"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions B"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni B"
-            },
-            {
-              "locale": "en-US",
-              "name": "Restrictions B"
-            }
-          ]
-        },
-        "faberPin": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Faber Pin"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Pin Faber"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Pin Faber"
-            },
-            {
-              "locale": "en-US",
-              "name": "Faber Pin"
-            }
-          ]
-        },
-        "policeQRImage": {
-          "mandatory": false,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Police QR Code"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Code QR de la police"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Codice QR della polizia"
-            },
-            {
-              "locale": "en-US",
-              "name": "Police QR Code"
-            }
-          ]
-        },
-        "credentialNumber": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Credentialnummer"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Numéro de justificatif"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Numero del credenziale"
-            },
-            {
-              "locale": "en-US",
-              "name": "Credential Number"
-            }
-          ]
-        }
-      },
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
@@ -417,428 +19,466 @@
           ]
         }
       },
-      "display": [
-        {
-          "locale": "de-CH",
-          "name": "Chasseral 01 VC",
-          "logo": {
-            "uri": "data:image/png;base64,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"
+      "credential_metadata": {
+        "display": [
+          {
+            "locale": "de-CH",
+            "name": "Chasseral 01 VC",
+            "logo": {
+              "uri": "data:image/png;base64,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"
+            },
+            "description": "Ein trusted Chasseral-VC",
+            "background_color": "#CCFFCC"
           },
-          "description": "Ein trusted Chasseral-VC",
-          "background_color": "#CCFFCC"
-        },
-        {
-          "locale": "en-US",
-          "name": "Chasseral 01 VC",
-          "logo": {
-            "uri": "data:image/png;base64,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"
+          {
+            "locale": "en-US",
+            "name": "Chasseral 01 VC",
+            "logo": {
+              "uri": "data:image/png;base64,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"
+            },
+            "description": "This is a trusted Chasseral vc",
+            "background_color": "#CCFFCC"
+          }
+        ],
+        "claims": [
+          {
+            "path": [
+              "id"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "en-US",
+                "name": "Holder binding key"
+              }
+            ]
           },
-          "description": "This is a trusted Chasseral vc",
-          "background_color": "#CCFFCC"
-        }
-      ]
+          {
+            "path": [
+              "lastName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Name"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Nom de famille"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Cognome"
+              },
+              {
+                "locale": "en-US",
+                "name": "Last name"
+              }
+            ]
+          },
+          {
+            "path": [
+              "firstName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Vorname"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Prénom"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Nome"
+              },
+              {
+                "locale": "en-US",
+                "name": "First name"
+              }
+            ]
+          },
+          {
+            "path": [
+              "dateOfBirth"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Geburtsdatum"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date de naissance"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data di nascita"
+              },
+              {
+                "locale": "en-US",
+                "name": "Date of birth"
+              }
+            ]
+          },
+          {
+            "path": [
+              "hometown"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Heimatort"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Ville natale"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Città natale"
+              },
+              {
+                "locale": "en-US",
+                "name": "Home town"
+              }
+            ]
+          },
+          {
+            "path": [
+              "registrationNumber"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "RegNr"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Numéro d'enregistrement"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Numero di registrazione"
+              },
+              {
+                "locale": "en-US",
+                "name": "RegNb"
+              }
+            ]
+          },
+          {
+            "path": [
+              "dateOfExpiration"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Gültigkeit"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date d'expiration"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data di scadenza"
+              },
+              {
+                "locale": "en-US",
+                "name": "Validity"
+              }
+            ]
+          },
+          {
+            "path": [
+              "issuerEntity"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Ausstellbehörde"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Entité émettrice"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Ente emittente"
+              },
+              {
+                "locale": "en-US",
+                "name": "Issuing authority"
+              }
+            ]
+          },
+          {
+            "path": [
+              "issuerEntityDate"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Ausstellbehörde (Datum)"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date de l'entité émettrice"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data ente emittente"
+              },
+              {
+                "locale": "en-US",
+                "name": "Issuing authority (date)"
+              }
+            ]
+          },
+          {
+            "path": [
+              "signatureImage"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Unterschrift"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Image de la signature"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Immagine della firma"
+              },
+              {
+                "locale": "en-US",
+                "name": "Signature"
+              }
+            ]
+          },
+          {
+            "path": [
+              "photoImage"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Foto"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Photo"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Foto"
+              },
+              {
+                "locale": "en-US",
+                "name": "Photo"
+              }
+            ]
+          },
+          {
+            "path": [
+              "categoryCode"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Kategorie"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Code de catégorie"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Codice categoria"
+              },
+              {
+                "locale": "en-US",
+                "name": "Category"
+              }
+            ]
+          },
+          {
+            "path": [
+              "categoryRestrictions"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung auf der Kat"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions de catégorie"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni di categoria"
+              },
+              {
+                "locale": "en-US",
+                "name": "Category Restrictions"
+              }
+            ]
+          },
+          {
+            "path": [
+              "restrictionsA"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung A"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions A"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni A"
+              },
+              {
+                "locale": "en-US",
+                "name": "Restrictions A"
+              }
+            ]
+          },
+          {
+            "path": [
+              "restrictionsB"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung B"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions B"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni B"
+              },
+              {
+                "locale": "en-US",
+                "name": "Restrictions B"
+              }
+            ]
+          },
+          {
+            "path": [
+              "faberPin"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Faber Pin"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Pin Faber"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Pin Faber"
+              },
+              {
+                "locale": "en-US",
+                "name": "Faber Pin"
+              }
+            ]
+          },
+          {
+            "path": [
+              "policeQRImage"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Police QR Code"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Code QR de la police"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Codice QR della polizia"
+              },
+              {
+                "locale": "en-US",
+                "name": "Police QR Code"
+              }
+            ]
+          },
+          {
+            "path": [
+              "credentialNumber"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Credentialnummer"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Numéro de justificatif"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Numero del credenziale"
+              },
+              {
+                "locale": "en-US",
+                "name": "Credential Number"
+              }
+            ]
+          }
+        ]
+      }
     },
     "chasseral-vc-high": {
       "format": "vc+sd-jwt",
       "vct": "chasseral-vc-high",
-      "claims": {
-        "id": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "en-US",
-              "name": "Holder binding key"
-            }
-          ]
-        },
-        "lastName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Name"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Nom de famille"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Cognome"
-            },
-            {
-              "locale": "en-US",
-              "name": "Last name"
-            }
-          ]
-        },
-        "firstName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Vorname"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Prénom"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Nome"
-            },
-            {
-              "locale": "en-US",
-              "name": "First name"
-            }
-          ]
-        },
-        "dateOfBirth": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Geburtsdatum"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date de naissance"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data di nascita"
-            },
-            {
-              "locale": "en-US",
-              "name": "Date of birth"
-            }
-          ]
-        },
-        "hometown": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Heimatort"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Ville natale"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Città natale"
-            },
-            {
-              "locale": "en-US",
-              "name": "Home town"
-            }
-          ]
-        },
-        "registrationNumber": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "RegNr"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Numéro d'enregistrement"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Numero di registrazione"
-            },
-            {
-              "locale": "en-US",
-              "name": "RegNb"
-            }
-          ]
-        },
-        "dateOfExpiration": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Gültigkeit"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date d'expiration"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data di scadenza"
-            },
-            {
-              "locale": "en-US",
-              "name": "Validity"
-            }
-          ]
-        },
-        "issuerEntity": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Ausstellbehörde"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Entité émettrice"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Ente emittente"
-            },
-            {
-              "locale": "en-US",
-              "name": "Issuing authority"
-            }
-          ]
-        },
-        "issuerEntityDate": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Ausstellbehörde (Datum)"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date de l'entité émettrice"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data ente emittente"
-            },
-            {
-              "locale": "en-US",
-              "name": "Issuing authority (date)"
-            }
-          ]
-        },
-        "signatureImage": {
-          "mandatory": false,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Unterschrift"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Image de la signature"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Immagine della firma"
-            },
-            {
-              "locale": "en-US",
-              "name": "Signature"
-            }
-          ]
-        },
-        "photoImage": {
-          "mandatory": true,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Foto"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Photo"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Foto"
-            },
-            {
-              "locale": "en-US",
-              "name": "Photo"
-            }
-          ]
-        },
-        "categoryCode": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Kategorie"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Code de catégorie"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Codice categoria"
-            },
-            {
-              "locale": "en-US",
-              "name": "Category"
-            }
-          ]
-        },
-        "categoryRestrictions": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung auf der Kat"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions de catégorie"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni di categoria"
-            },
-            {
-              "locale": "en-US",
-              "name": "Category Restrictions"
-            }
-          ]
-        },
-        "restrictionsA": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung A"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions A"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni A"
-            },
-            {
-              "locale": "en-US",
-              "name": "Restrictions A"
-            }
-          ]
-        },
-        "restrictionsB": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung B"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions B"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni B"
-            },
-            {
-              "locale": "en-US",
-              "name": "Restrictions B"
-            }
-          ]
-        },
-        "faberPin": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Faber Pin"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Pin Faber"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Pin Faber"
-            },
-            {
-              "locale": "en-US",
-              "name": "Faber Pin"
-            }
-          ]
-        },
-        "policeQRImage": {
-          "mandatory": false,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Police QR Code"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Code QR de la police"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Codice QR della polizia"
-            },
-            {
-              "locale": "en-US",
-              "name": "Police QR Code"
-            }
-          ]
-        },
-        "credentialNumber": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Credentialnummer"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Numéro de justificatif"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Numero del credenziale"
-            },
-            {
-              "locale": "en-US",
-              "name": "Credential Number"
-            }
-          ]
-        }
-      },
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
@@ -857,428 +497,466 @@
           }
         }
       },
-      "display": [
-        {
-          "locale": "de-CH",
-          "name": "Chasseral 01 VC high",
-          "logo": {
-            "uri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IB2cksfwAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB+kKDgc1G3rrkqcAABDtSURBVHja7Vp3fFRV9v/e+970zGTSk0klmTQIzYQOIh1pUhREsS7S/MmubQWVZQGxov4UV38qFhRRwY4FpCPFkkAIqVMSIGSSkDKZlKnvvfv7I8kQIKDo7upucv6Y93n33XvPOd97zrnn3DtAN3VTN3VTN/1+ZIpLXPl78qe/OwL1DkOXBoCAoGsDoNcldFkAKqxmSrzi+DyFnHZJAIRFd6vAJCjWPtGzS+4A5S+sn171+uvMFBy5sGtawHcHqwRCQMUuGgPE77J9yrRUENpFAWCZPQe1bPsSLC01vUsCQCh/NRcVBdSc7dc18wB73Smi1QJ1DSVdDoAf5t+lg71hmlBcBJKcOKn02uviutw2aE3utcHjcTNrr77ZXTMI8pyx+adsMJcnoXjqzKzfpxb5N9PpwzlKzwvP3UpKTLeiomoYYee+SdERnwspiUvSt26x/VcCYJ45+1pqtbwMW00CN3kc5AMHgg/SQ6ipgWvV063SqJV2SS5fmGwp2PpfA8DpUxVy79QpK2Fvelj79BoEXD0C8rAwEAK0lJjQcuAg3Js2g5Wc9EvF9AGHmEazvi5I/8Xgfbtc/7EAlFw/uzd37MQG+cypA0P/shTy8LC2ANDK/cyCxRC37Wx9v1AyBjClrAGGyHuMPx3e9B8FQPGSpUZ+7977odYsDFyzggSOGgXCcX7F2pkLTY2oXvskhHe2XAxCB5ISol72nSl/sGd1pfMPDYB54pQppMR8J3zCDOXSRQiadxMUYaHnKyOIOLv+Jfj2H0DQ6r9DnZ6O2k2b4Xp4tR8EBoDIZUC8AbCcam2Ty2xSYvyylIN73/3DAWCK6TGEBgS8iabmNPWKh6CbMB6K6GiQCzkwoPajj9Fyz0N+CdRrVyDophvRlJ0Dx7z5IG6v31Jki24H3yMermWr/MBAozRLhD6v6JfxTvxnH7f8rgAUnSgksnm3rkJj0wrdc08icPQ14NTqC3UGWCsz+6HDaLzh1tZ2dk4AOm4EgpY9CE4TgJp7HwA7crS1DwGUSxdCO+M61K9+DNLew+3hAywwoE7qnb4w5bNPPv618nO/RfmTTz2lw6N//0TWr/f88I0boM3KBJXJzleetYlLgLqvv0bzLQv8qHREn5Wehuvd9+HTKKC/az58nAQprwCEAeIPORBCdAh/9GF4OED88WjrWI9XTU/bZt+Tnh40Y+TIfRvzTwj/Ngsozhzcm29u+VQxa1pS2P33gtNp/ZMxBrhKy9D09TdgARqEz7sZde9thnP5apxbvstJRcDNmgzx4y87mBCguG8xQpfeg5affkLD31YDxdZz0wXrsqX01JtTPv/E9C8F4PjgYckaW/X98Am36f7xnFI/cQKojAdrE7KluBiN738I4cBBBD65FsqkRNQ+8yyEd7e2CsouIwk7321IJ324mdcidPlycHodHF9+g+YHHgERpdbvPOeGQrZRHDxgfcqHmwv+qQCYBgwbQurqHiBNzpmKJXcieMF8fzLDWLviH8D3+ibIF98J/Z9uh/NYLpqWrwSpsZ9Ti5CLrYDgvJXuCMB5XdobKIHm2bXQTRwP+ATUv/cePM+s7zCeAPExO5heu8y4e0fubwLAMnfeBJZzfAWtbxjGXTcRgUsWQdsnA5LE4Ckvh6uwCM73P4C487vWYDZyMJSTroXzzbeBkrJLmzq5MEp2rjy5AIWOgRM8heqR+6EaNhRiUwuaNm6E9MVOfwemUzMQ8kT9kKseG7hps+uKADBPmjoZx/MfpR5hMBjA3bcIAUMGQ6ysgqe4BN5PvwCpqutcicusqF+Jy8SBzsIEQedzdfQVMjQLLOcE4PacN5DpdSdEu+OG1LozJT8LQOmgIaGSx/ctOVPdv51bZwz9QjIG0tGs28eQ9tfWXyaJrUpT7rxAwAAQ1glAFwKhUQK6ABeqalUdP5COil6wGB3XgVACeWBAr1hLYWFHffmLEPnhWDwJCevfcaVIJ2baXsYSQgAQMENYPVEpc5m9IQ8aVZGk1JilRnuD9557K7mC3EjF5g843gsgQkddWf2TSWmZChl9eS4vV8samjKgUQ1kFdXppIPg5NymALS4wUSxAkOzDrGGhjLi9vQjTtcIVNWGXBhHyQWWQgjAJAax0an6WQso14VneuWK7MuaNgFYVPhJqtXulxyNO1h83JHkrz47mfOXh1SBuUdHSoIwnEriQDS1pKO6JoZI7JLbHQiAGIMVjFUzldwmyWRplNJIklcSyjpRCgRgBC7oddtobMxmyZh0in3//VAiYTgEYQipa0gAYx0s9JzoMp7Piqsuy7k8AEFRmV6O9wPAEuPr0WAvIV6hkOg0hQgLLXSOHZubsfyvVQBguvvPcaS45HrqcExiFVXDiE9QXhzJLhXhfubpfzD/LfJ57ggAamUDi47YieCgbUyt2e49fYYpZLKhzOvpTxn6wFaVxNTKPqShmch9YlZsQ8XlASgdPDRUiDSMZPl5ZXTNY6XJc2c3XNin7O57In2ff3UTHxtzg2Q9OZhIrM1dWiXv6Iud1QK4ZFv7eAICdi5YXiJRaI8zrcMJQAEWGpzHAtQHGOWOCOkpP/Z86w0LAOR//GUIX1fXkrbgNvdvzgRL592+mARoApnZ2sQIA9FqeYSFKki93ct4jsDlFqHVylhzs48EBclhsToRpOcJzxMWGaFC9VkXFArKGhsFIkoApQAlgCgCajUlWq0MTqfA6u0C83glEh4mh0xG4fWIRB+oYI4mLwK1Mrg9IjiOgKOUqDUyxvGUCD4RNWed0p5DTkg+Isyc+mnqGxtq0E2/gvJuvInmLlvxTymZCxYtJscevniu4/P/RLOX/A/5Qyl+csHCJEv/AUetYXHMEh7vMvXOehwAio29XjIbe/nvcs0LljSa4lPf879PnzXAlJAmmvoO2OnPJCdP0lgGDvvWEh7PLGFxzDp81NsAYLppXrDFmL7fGhbHrNFJzJya8QIAWDIHzTf1SBPN8WmiKSFNNM+9ZQcAlFwzvskUnyqaE9NF64AhZaZrp9983tFbz351puSMlkMjx/q3OlO/AR5zap9XrvheQNh94BVSXpXKlPIHoZTvpJXVy4vGTOhLm5vk1O7wj6E8VdIWlz+XoCbzFK65hXKiOPpY5iAVAEjlZ+8jpeXjEBS4hkQEv4liy23maTPHcZbSZcTRcjWiwx6BIeIjWudYar39jr6cuZxwTU7KlNwG6mhcjfz8NwCASIKaMqmIRISsY6VnRHos9/Xja9eqAcA0c/Y1/Nm6YM7uUIdDGu8PcHX1clpbf1nr4js/JeDHIkj3kdFcsM5s7LWZNDtzqPWkAELOq+YIRynrMD1TaSYgJagOptKQgDjDeACfk8qzEWAMYljwBjE5sVHyCDtksTEWrrZ2rsRRuAxxb3ByzstSUreykPBqddt87r4Zr/XZ8mEO7La2gxECBKgLjEcOPmS9ZqwN+ab/la1YmQggnx49PooZIhhc7ka4PWMBfH7JQuOXWACpdxDU2usBINlSYDPWV6xKPVlSgLaU0jzjhmzzzOuzpaN5tH3TKxo4PASnKwYRGb8eAWoHUakmAgBRyzcwAidfU1cgt55cy5eV7U596vEyxMS8SXjerSoqLJY3OlbyMn53xrNPVbUizKDJyXvYEhr7f2UR8cP9madXCCqTh2aivmEiCOAZM7YVnRD9NLg9+5jHvR/1jususXFe2dXY5eyG7j8MsvcwiNsN0mYCMrViLGEMngDNDgjCfmY9NQkAjKcsub6khEymDfgCNXWL+XLbMfPsORGJWzYf9PXLGMjCI3ai7MxS7svtR4snTQsBCBgIRLenpwRk+UQprP1kiTQ0jpN0qmzmaJrAsvqu6r9ze33xI49G4qStH1SKA0hO2kfsjtiS0eN7XHjkdkUAMMLAggIVAFDcw6jPT+szOy8hLRKsddak+ooso92WhaEDmb/0rKyZDEIgP5L9D6iUQ6kgxpXccVdqqS44XlFTSY3ZR25mCn4WcftiUVs/yxRpSOR27hKSfzgwm8joHALE8QXF09uTG9+IwfNSasuzUmrLP203ZRYWvFOSxBeJ00XERsdmAOCP/DSeEADVtbeRYycWEACkuWXmL81yOneBaMNR1tg8pXTg0NG8IfoxZa39Q+20yckXeRRjEmkLCgRsHOINZWTYIAsxJh5kYMD+Q1Okvn0fkJxCjvXq0dOpIboPwICT5XbKq5cTfWiO+bpZ05hC2YcBgFJmR1vdoBCFmdZbb19YMnvu9FYGFIxSOzdj8uMwhDPe61sOAKiunsBUShcd0P9HOmxQHtMFNNAG++h2t2Eh+hRTeMwcsy58dsGkiYG/yNIt6X2GA2w7qXVoGGNgKYnvJB/ef5spMu41Kkh3GWvPEACwzplbw/Yc3COMGfkkv2v/Ual36vKUvbueBABLUnol0WnzhcbmRZzLfQBen4GAQFIrdjaNGn6dxlxq5Jtb9jDb2VBCADE8eLtm/Ysz3DNm3wKZ/DW0J9Veb46xsTqrZOQYkaup+8hYmDvHMmLU+8TROIeNHtMDe/bkQPBlGwuPTwQAc7+sLaSyZgrWrgphq9Y4qcvrz7Rd9qreGaIv/xe5evEzz+sVzzyfJM64ttn46qslAHD8tTfDhRZXWOa9dxcAQO4T65IEEJdKobR7ve4kxvHWqx78swsAch97OlbSaORX3Xu3teTpZ5WyjW/3Ep2uluQyS3E7j6Nzb1cFHjrUU5LzLcmWomIAOLHuxUCvT4glHAERBXCUOvo8dH953jPrjD5RcmYu+6st/+VXgn2OFgOam60kQJMoSkJN5iPLzwLA0TWPB4PnDVFjxhVU7t5lBOUUEhioKEEdYyhIu/Vmhm76lcWQJSI+nuNkoWAMvKuhSJBp45hMpkFyou1Mj5gqQ3n5FDEk1Ja6ZXNOWURiJjgAInP2qC4rAoBifWSQUq1J9BDWnFpRWmJO7h3PN7lCvcnxlanf7baVZfTWCOGRkxAVmZv83rtmACgbPzkUBSUQRg0T+T0HE0Umwlh5MscUGRuKnj3HIChgl3TgsKTklYmE8kDFmVPxcNX+Up2u6B8iLETfR/R4XvUpZAtcYSF6yeveJAzuP0WIjTIaDn+/iNXWz+ILi/5WNHlqmC9IN0X0+r7whuhH+JkxNk7o32sdp1GvN8cZx8Pne0QckbWA1tbuPbFwQbCk0m7hKs/Gk0M/flag0oUAgIeSWaLHOwMq1TghPHidNChrCgDwhqhvOY8nlpw6sxUjr471Jcat8lGs9AYHxV+JTlcEQHLh8W2oq8kmlbbXUswmGyMEZN/BaGrs4ZK02gKiVPRmQfrN6V9tq0kpzl1FnK7K1MJjr/mZSQDhZSbC8yYaGBjBGAMO/1hLeJmH93p49OwZlVh0fB1q7QfVan0CADCOtkpJKUi5TUf2HRTyR4+lUkW1lHRo37rk7B9Gp330YR4MEdvg8WxLrrfl/MsAaPcaQts8R5LQwsQXvW9tLCA2G1hCzI2EV9xX0rt/aqdX3BRgDY4UFhVVfDY6bisFAEE0grC89Lc2noWtgmavWE0QFhwg6dRSSXSPsZzPB0gA4XhIkvS9A+wDEhvLWJvs1kHDZ6L9QIRdeVF55QBERNhISLALAEhokFXXI/FRRbhhMhcbA3K6ciM4OKXYqHIAYKF663ljoyMaaa/ULcbd37w0ZPunbqZRVZDI8FWQWLB17eN6keGV4OKiQ5JWK0sqKz7GG3vMoJzsDpIYe4yIzMFFRaaFJCat5WQq0ITY76xTpx8ASGprmsDVE63a3h3Wu6mbuqmbuqmbfjH9P3xOe7lm4kVWAAAAAElFTkSuQmCC"
+      "credential_metadata": {
+        "display": [
+          {
+            "locale": "de-CH",
+            "name": "Chasseral 01 VC high",
+            "logo": {
+              "uri": "data:image/png;base64,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"
+            },
+            "description": "Ein trusted Chasseral-VC high",
+            "background_color": "#CCFFCC"
           },
-          "description": "Ein trusted Chasseral-VC high",
-          "background_color": "#CCFFCC"
-        },
-        {
-          "locale": "en-US",
-          "name": "Chasseral 01 VC high",
-          "logo": {
-            "uri": "data:image/png;base64,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"
+          {
+            "locale": "en-US",
+            "name": "Chasseral 01 VC high",
+            "logo": {
+              "uri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IB2cksfwAAAARnQU1BAACxjwv8YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB+kKDgc1G3rrkqcAABDtSURBVHja7Vp3fFRV9v/e+970zGTSk0klmTQIzYQOIh1pUhREsS7S/MmubQWVZQGxov4UV38qFhRRwY4FpCPFkkAIqVMSIGSSkDKZlKnvvfv7I8kQIKDo7upucv6Y93n33XvPOd97zrnn3DtAN3VTN3VTN/1+ZIpLXPl78qe/OwL1DkOXBoCAoGsDoNcldFkAKqxmSrzi+DyFnHZJAIRFd6vAJCjWPtGzS+4A5S+sn171+uvMFBy5sGtawHcHqwRCQMUuGgPE77J9yrRUENpFAWCZPQe1bPsSLC01vUsCQCh/NRcVBdSc7dc18wB73Smi1QJ1DSVdDoAf5t+lg71hmlBcBJKcOKn02uviutw2aE3utcHjcTNrr77ZXTMI8pyx+adsMJcnoXjqzKzfpxb5N9PpwzlKzwvP3UpKTLeiomoYYee+SdERnwspiUvSt26x/VcCYJ45+1pqtbwMW00CN3kc5AMHgg/SQ6ipgWvV063SqJV2SS5fmGwp2PpfA8DpUxVy79QpK2Fvelj79BoEXD0C8rAwEAK0lJjQcuAg3Js2g5Wc9EvF9AGHmEazvi5I/8Xgfbtc/7EAlFw/uzd37MQG+cypA0P/shTy8LC2ANDK/cyCxRC37Wx9v1AyBjClrAGGyHuMPx3e9B8FQPGSpUZ+7977odYsDFyzggSOGgXCcX7F2pkLTY2oXvskhHe2XAxCB5ISol72nSl/sGd1pfMPDYB54pQppMR8J3zCDOXSRQiadxMUYaHnKyOIOLv+Jfj2H0DQ6r9DnZ6O2k2b4Xp4tR8EBoDIZUC8AbCcam2Ty2xSYvyylIN73/3DAWCK6TGEBgS8iabmNPWKh6CbMB6K6GiQCzkwoPajj9Fyz0N+CdRrVyDophvRlJ0Dx7z5IG6v31Jki24H3yMermWr/MBAozRLhD6v6JfxTvxnH7f8rgAUnSgksnm3rkJj0wrdc08icPQ14NTqC3UGWCsz+6HDaLzh1tZ2dk4AOm4EgpY9CE4TgJp7HwA7crS1DwGUSxdCO+M61K9+DNLew+3hAywwoE7qnb4w5bNPPv618nO/RfmTTz2lw6N//0TWr/f88I0boM3KBJXJzleetYlLgLqvv0bzLQv8qHREn5Wehuvd9+HTKKC/az58nAQprwCEAeIPORBCdAh/9GF4OED88WjrWI9XTU/bZt+Tnh40Y+TIfRvzTwj/Ngsozhzcm29u+VQxa1pS2P33gtNp/ZMxBrhKy9D09TdgARqEz7sZde9thnP5apxbvstJRcDNmgzx4y87mBCguG8xQpfeg5affkLD31YDxdZz0wXrsqX01JtTPv/E9C8F4PjgYckaW/X98Am36f7xnFI/cQKojAdrE7KluBiN738I4cBBBD65FsqkRNQ+8yyEd7e2CsouIwk7321IJ324mdcidPlycHodHF9+g+YHHgERpdbvPOeGQrZRHDxgfcqHmwv+qQCYBgwbQurqHiBNzpmKJXcieMF8fzLDWLviH8D3+ibIF98J/Z9uh/NYLpqWrwSpsZ9Ti5CLrYDgvJXuCMB5XdobKIHm2bXQTRwP+ATUv/cePM+s7zCeAPExO5heu8y4e0fubwLAMnfeBJZzfAWtbxjGXTcRgUsWQdsnA5LE4Ckvh6uwCM73P4C487vWYDZyMJSTroXzzbeBkrJLmzq5MEp2rjy5AIWOgRM8heqR+6EaNhRiUwuaNm6E9MVOfwemUzMQ8kT9kKseG7hps+uKADBPmjoZx/MfpR5hMBjA3bcIAUMGQ6ysgqe4BN5PvwCpqutcicusqF+Jy8SBzsIEQedzdfQVMjQLLOcE4PacN5DpdSdEu+OG1LozJT8LQOmgIaGSx/ctOVPdv51bZwz9QjIG0tGs28eQ9tfWXyaJrUpT7rxAwAAQ1glAFwKhUQK6ABeqalUdP5COil6wGB3XgVACeWBAr1hLYWFHffmLEPnhWDwJCevfcaVIJ2baXsYSQgAQMENYPVEpc5m9IQ8aVZGk1JilRnuD9557K7mC3EjF5g843gsgQkddWf2TSWmZChl9eS4vV8samjKgUQ1kFdXppIPg5NymALS4wUSxAkOzDrGGhjLi9vQjTtcIVNWGXBhHyQWWQgjAJAax0an6WQso14VneuWK7MuaNgFYVPhJqtXulxyNO1h83JHkrz47mfOXh1SBuUdHSoIwnEriQDS1pKO6JoZI7JLbHQiAGIMVjFUzldwmyWRplNJIklcSyjpRCgRgBC7oddtobMxmyZh0in3//VAiYTgEYQipa0gAYx0s9JzoMp7Piqsuy7k8AEFRmV6O9wPAEuPr0WAvIV6hkOg0hQgLLXSOHZubsfyvVQBguvvPcaS45HrqcExiFVXDiE9QXhzJLhXhfubpfzD/LfJ57ggAamUDi47YieCgbUyt2e49fYYpZLKhzOvpTxn6wFaVxNTKPqShmch9YlZsQ8XlASgdPDRUiDSMZPl5ZXTNY6XJc2c3XNin7O57In2ff3UTHxtzg2Q9OZhIrM1dWiXv6Iud1QK4ZFv7eAICdi5YXiJRaI8zrcMJQAEWGpzHAtQHGOWOCOkpP/Z86w0LAOR//GUIX1fXkrbgNvdvzgRL592+mARoApnZ2sQIA9FqeYSFKki93ct4jsDlFqHVylhzs48EBclhsToRpOcJzxMWGaFC9VkXFArKGhsFIkoApQAlgCgCajUlWq0MTqfA6u0C83glEh4mh0xG4fWIRB+oYI4mLwK1Mrg9IjiOgKOUqDUyxvGUCD4RNWed0p5DTkg+Isyc+mnqGxtq0E2/gvJuvInmLlvxTymZCxYtJscevniu4/P/RLOX/A/5Qyl+csHCJEv/AUetYXHMEh7vMvXOehwAio29XjIbe/nvcs0LljSa4lPf879PnzXAlJAmmvoO2OnPJCdP0lgGDvvWEh7PLGFxzDp81NsAYLppXrDFmL7fGhbHrNFJzJya8QIAWDIHzTf1SBPN8WmiKSFNNM+9ZQcAlFwzvskUnyqaE9NF64AhZaZrp9983tFbz351puSMlkMjx/q3OlO/AR5zap9XrvheQNh94BVSXpXKlPIHoZTvpJXVy4vGTOhLm5vk1O7wj6E8VdIWlz+XoCbzFK65hXKiOPpY5iAVAEjlZ+8jpeXjEBS4hkQEv4liy23maTPHcZbSZcTRcjWiwx6BIeIjWudYar39jr6cuZxwTU7KlNwG6mhcjfz8NwCASIKaMqmIRISsY6VnRHos9/Xja9eqAcA0c/Y1/Nm6YM7uUIdDGu8PcHX1clpbf1nr4js/JeDHIkj3kdFcsM5s7LWZNDtzqPWkAELOq+YIRynrMD1TaSYgJagOptKQgDjDeACfk8qzEWAMYljwBjE5sVHyCDtksTEWrrZ2rsRRuAxxb3ByzstSUreykPBqddt87r4Zr/XZ8mEO7La2gxECBKgLjEcOPmS9ZqwN+ab/la1YmQggnx49PooZIhhc7ka4PWMBfH7JQuOXWACpdxDU2usBINlSYDPWV6xKPVlSgLaU0jzjhmzzzOuzpaN5tH3TKxo4PASnKwYRGb8eAWoHUakmAgBRyzcwAidfU1cgt55cy5eV7U596vEyxMS8SXjerSoqLJY3OlbyMn53xrNPVbUizKDJyXvYEhr7f2UR8cP9madXCCqTh2aivmEiCOAZM7YVnRD9NLg9+5jHvR/1jususXFe2dXY5eyG7j8MsvcwiNsN0mYCMrViLGEMngDNDgjCfmY9NQkAjKcsub6khEymDfgCNXWL+XLbMfPsORGJWzYf9PXLGMjCI3ai7MxS7svtR4snTQsBCBgIRLenpwRk+UQprP1kiTQ0jpN0qmzmaJrAsvqu6r9ze33xI49G4qStH1SKA0hO2kfsjtiS0eN7XHjkdkUAMMLAggIVAFDcw6jPT+szOy8hLRKsddak+ooso92WhaEDmb/0rKyZDEIgP5L9D6iUQ6kgxpXccVdqqS44XlFTSY3ZR25mCn4WcftiUVs/yxRpSOR27hKSfzgwm8joHALE8QXF09uTG9+IwfNSasuzUmrLP203ZRYWvFOSxBeJ00XERsdmAOCP/DSeEADVtbeRYycWEACkuWXmL81yOneBaMNR1tg8pXTg0NG8IfoxZa39Q+20yckXeRRjEmkLCgRsHOINZWTYIAsxJh5kYMD+Q1Okvn0fkJxCjvXq0dOpIboPwICT5XbKq5cTfWiO+bpZ05hC2YcBgFJmR1vdoBCFmdZbb19YMnvu9FYGFIxSOzdj8uMwhDPe61sOAKiunsBUShcd0P9HOmxQHtMFNNAG++h2t2Eh+hRTeMwcsy58dsGkiYG/yNIt6X2GA2w7qXVoGGNgKYnvJB/ef5spMu41Kkh3GWvPEACwzplbw/Yc3COMGfkkv2v/Ual36vKUvbueBABLUnol0WnzhcbmRZzLfQBen4GAQFIrdjaNGn6dxlxq5Jtb9jDb2VBCADE8eLtm/Ysz3DNm3wKZ/DW0J9Veb46xsTqrZOQYkaup+8hYmDvHMmLU+8TROIeNHtMDe/bkQPBlGwuPTwQAc7+sLaSyZgrWrgphq9Y4qcvrz7Rd9qreGaIv/xe5evEzz+sVzzyfJM64ttn46qslAHD8tTfDhRZXWOa9dxcAQO4T65IEEJdKobR7ve4kxvHWqx78swsAch97OlbSaORX3Xu3teTpZ5WyjW/3Ep2uluQyS3E7j6Nzb1cFHjrUU5LzLcmWomIAOLHuxUCvT4glHAERBXCUOvo8dH953jPrjD5RcmYu+6st/+VXgn2OFgOam60kQJMoSkJN5iPLzwLA0TWPB4PnDVFjxhVU7t5lBOUUEhioKEEdYyhIu/Vmhm76lcWQJSI+nuNkoWAMvKuhSJBp45hMpkFyou1Mj5gqQ3n5FDEk1Ja6ZXNOWURiJjgAInP2qC4rAoBifWSQUq1J9BDWnFpRWmJO7h3PN7lCvcnxlanf7baVZfTWCOGRkxAVmZv83rtmACgbPzkUBSUQRg0T+T0HE0Umwlh5MscUGRuKnj3HIChgl3TgsKTklYmE8kDFmVPxcNX+Up2u6B8iLETfR/R4XvUpZAtcYSF6yeveJAzuP0WIjTIaDn+/iNXWz+ILi/5WNHlqmC9IN0X0+r7whuhH+JkxNk7o32sdp1GvN8cZx8Pne0QckbWA1tbuPbFwQbCk0m7hKs/Gk0M/flag0oUAgIeSWaLHOwMq1TghPHidNChrCgDwhqhvOY8nlpw6sxUjr471Jcat8lGs9AYHxV+JTlcEQHLh8W2oq8kmlbbXUswmGyMEZN/BaGrs4ZK02gKiVPRmQfrN6V9tq0kpzl1FnK7K1MJjr/mZSQDhZSbC8yYaGBjBGAMO/1hLeJmH93p49OwZlVh0fB1q7QfVan0CADCOtkpJKUi5TUf2HRTyR4+lUkW1lHRo37rk7B9Gp330YR4MEdvg8WxLrrfl/MsAaPcaQts8R5LQwsQXvW9tLCA2G1hCzI2EV9xX0rt/aqdX3BRgDY4UFhVVfDY6bisFAEE0grC89Lc2noWtgmavWE0QFhwg6dRSSXSPsZzPB0gA4XhIkvS9A+wDEhvLWJvs1kHDZ6L9QIRdeVF55QBERNhISLALAEhokFXXI/FRRbhhMhcbA3K6ciM4OKXYqHIAYKF663ljoyMaaa/ULcbd37w0ZPunbqZRVZDI8FWQWLB17eN6keGV4OKiQ5JWK0sqKz7GG3vMoJzsDpIYe4yIzMFFRaaFJCat5WQq0ITY76xTpx8ASGprmsDVE63a3h3Wu6mbuqmbuqmbfjH9P3xOe7lm4kVWAAAAAElFTkSuQmCC"
+            },
+            "description": "This is a trusted Chasseral vc high",
+            "background_color": "#CCFFCC"
+          }
+        ],
+        "claims": [
+          {
+            "path": [
+              "id"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "en-US",
+                "name": "Holder binding key"
+              }
+            ]
           },
-          "description": "This is a trusted Chasseral vc high",
-          "background_color": "#CCFFCC"
-        }
-      ]
+          {
+            "path": [
+              "lastName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Name"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Nom de famille"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Cognome"
+              },
+              {
+                "locale": "en-US",
+                "name": "Last name"
+              }
+            ]
+          },
+          {
+            "path": [
+              "firstName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Vorname"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Prénom"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Nome"
+              },
+              {
+                "locale": "en-US",
+                "name": "First name"
+              }
+            ]
+          },
+          {
+            "path": [
+              "dateOfBirth"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Geburtsdatum"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date de naissance"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data di nascita"
+              },
+              {
+                "locale": "en-US",
+                "name": "Date of birth"
+              }
+            ]
+          },
+          {
+            "path": [
+              "hometown"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Heimatort"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Ville natale"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Città natale"
+              },
+              {
+                "locale": "en-US",
+                "name": "Home town"
+              }
+            ]
+          },
+          {
+            "path": [
+              "registrationNumber"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "RegNr"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Numéro d'enregistrement"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Numero di registrazione"
+              },
+              {
+                "locale": "en-US",
+                "name": "RegNb"
+              }
+            ]
+          },
+          {
+            "path": [
+              "dateOfExpiration"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Gültigkeit"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date d'expiration"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data di scadenza"
+              },
+              {
+                "locale": "en-US",
+                "name": "Validity"
+              }
+            ]
+          },
+          {
+            "path": [
+              "issuerEntity"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Ausstellbehörde"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Entité émettrice"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Ente emittente"
+              },
+              {
+                "locale": "en-US",
+                "name": "Issuing authority"
+              }
+            ]
+          },
+          {
+            "path": [
+              "issuerEntityDate"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Ausstellbehörde (Datum)"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date de l'entité émettrice"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data ente emittente"
+              },
+              {
+                "locale": "en-US",
+                "name": "Issuing authority (date)"
+              }
+            ]
+          },
+          {
+            "path": [
+              "signatureImage"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Unterschrift"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Image de la signature"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Immagine della firma"
+              },
+              {
+                "locale": "en-US",
+                "name": "Signature"
+              }
+            ]
+          },
+          {
+            "path": [
+              "photoImage"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Foto"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Photo"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Foto"
+              },
+              {
+                "locale": "en-US",
+                "name": "Photo"
+              }
+            ]
+          },
+          {
+            "path": [
+              "categoryCode"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Kategorie"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Code de catégorie"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Codice categoria"
+              },
+              {
+                "locale": "en-US",
+                "name": "Category"
+              }
+            ]
+          },
+          {
+            "path": [
+              "categoryRestrictions"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung auf der Kat"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions de catégorie"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni di categoria"
+              },
+              {
+                "locale": "en-US",
+                "name": "Category Restrictions"
+              }
+            ]
+          },
+          {
+            "path": [
+              "restrictionsA"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung A"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions A"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni A"
+              },
+              {
+                "locale": "en-US",
+                "name": "Restrictions A"
+              }
+            ]
+          },
+          {
+            "path": [
+              "restrictionsB"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung B"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions B"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni B"
+              },
+              {
+                "locale": "en-US",
+                "name": "Restrictions B"
+              }
+            ]
+          },
+          {
+            "path": [
+              "faberPin"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Faber Pin"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Pin Faber"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Pin Faber"
+              },
+              {
+                "locale": "en-US",
+                "name": "Faber Pin"
+              }
+            ]
+          },
+          {
+            "path": [
+              "policeQRImage"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Police QR Code"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Code QR de la police"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Codice QR della polizia"
+              },
+              {
+                "locale": "en-US",
+                "name": "Police QR Code"
+              }
+            ]
+          },
+          {
+            "path": [
+              "credentialNumber"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Credentialnummer"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Numéro de justificatif"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Numero del credenziale"
+              },
+              {
+                "locale": "en-US",
+                "name": "Credential Number"
+              }
+            ]
+          }
+        ]
+      }
     },
     "chasseral-vc-basic": {
       "format": "vc+sd-jwt",
       "vct": "chasseral-vc-basic",
-      "claims": {
-        "id": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "en-US",
-              "name": "Holder binding key"
-            }
-          ]
-        },
-        "lastName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Name"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Nom de famille"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Cognome"
-            },
-            {
-              "locale": "en-US",
-              "name": "Last name"
-            }
-          ]
-        },
-        "firstName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Vorname"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Prénom"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Nome"
-            },
-            {
-              "locale": "en-US",
-              "name": "First name"
-            }
-          ]
-        },
-        "dateOfBirth": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Geburtsdatum"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date de naissance"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data di nascita"
-            },
-            {
-              "locale": "en-US",
-              "name": "Date of birth"
-            }
-          ]
-        },
-        "hometown": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Heimatort"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Ville natale"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Città natale"
-            },
-            {
-              "locale": "en-US",
-              "name": "Home town"
-            }
-          ]
-        },
-        "registrationNumber": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "RegNr"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Numéro d'enregistrement"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Numero di registrazione"
-            },
-            {
-              "locale": "en-US",
-              "name": "RegNb"
-            }
-          ]
-        },
-        "dateOfExpiration": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Gültigkeit"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date d'expiration"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data di scadenza"
-            },
-            {
-              "locale": "en-US",
-              "name": "Validity"
-            }
-          ]
-        },
-        "issuerEntity": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Ausstellbehörde"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Entité émettrice"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Ente emittente"
-            },
-            {
-              "locale": "en-US",
-              "name": "Issuing authority"
-            }
-          ]
-        },
-        "issuerEntityDate": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Ausstellbehörde (Datum)"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Date de l'entité émettrice"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Data ente emittente"
-            },
-            {
-              "locale": "en-US",
-              "name": "Issuing authority (date)"
-            }
-          ]
-        },
-        "signatureImage": {
-          "mandatory": false,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Unterschrift"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Image de la signature"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Immagine della firma"
-            },
-            {
-              "locale": "en-US",
-              "name": "Signature"
-            }
-          ]
-        },
-        "photoImage": {
-          "mandatory": true,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Foto"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Photo"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Foto"
-            },
-            {
-              "locale": "en-US",
-              "name": "Photo"
-            }
-          ]
-        },
-        "categoryCode": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Kategorie"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Code de catégorie"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Codice categoria"
-            },
-            {
-              "locale": "en-US",
-              "name": "Category"
-            }
-          ]
-        },
-        "categoryRestrictions": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung auf der Kat"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions de catégorie"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni di categoria"
-            },
-            {
-              "locale": "en-US",
-              "name": "Category Restrictions"
-            }
-          ]
-        },
-        "restrictionsA": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung A"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions A"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni A"
-            },
-            {
-              "locale": "en-US",
-              "name": "Restrictions A"
-            }
-          ]
-        },
-        "restrictionsB": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Auflagen/Verfügungen/Beschränkung B"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Restrictions B"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Restrizioni B"
-            },
-            {
-              "locale": "en-US",
-              "name": "Restrictions B"
-            }
-          ]
-        },
-        "faberPin": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Faber Pin"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Pin Faber"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Pin Faber"
-            },
-            {
-              "locale": "en-US",
-              "name": "Faber Pin"
-            }
-          ]
-        },
-        "policeQRImage": {
-          "mandatory": false,
-          "value_type": "image/png",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Police QR Code"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Code QR de la police"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Codice QR della polizia"
-            },
-            {
-              "locale": "en-US",
-              "name": "Police QR Code"
-            }
-          ]
-        },
-        "credentialNumber": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Credentialnummer"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Numéro de justificatif"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Numero del credenziale"
-            },
-            {
-              "locale": "en-US",
-              "name": "Credential Number"
-            }
-          ]
-        }
-      },
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
@@ -1297,26 +975,462 @@
           }
         }
       },
-      "display": [
-        {
-          "locale": "de-CH",
-          "name": "Chasseral 01 VC basic",
-          "logo": {
-            "uri": "data:image/png;base64,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"
+      "credential_metadata": {
+        "display": [
+          {
+            "locale": "de-CH",
+            "name": "Chasseral 01 VC basic",
+            "logo": {
+              "uri": "data:image/png;base64,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"
+            },
+            "description": "Ein trusted Chasseral-VC basic",
+            "background_color": "#CCFFCC"
           },
-          "description": "Ein trusted Chasseral-VC basic",
-          "background_color": "#CCFFCC"
-        },
-        {
-          "locale": "en-US",
-          "name": "Chasseral 01 VC basic",
-          "logo": {
-            "uri": "data:image/png;base64,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"
+          {
+            "locale": "en-US",
+            "name": "Chasseral 01 VC basic",
+            "logo": {
+              "uri": "data:image/png;base64,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"
+            },
+            "description": "This is a trusted Chasseral vc basic",
+            "background_color": "#CCFFCC"
+          }
+        ],
+        "claims": [
+          {
+            "path": [
+              "id"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "en-US",
+                "name": "Holder binding key"
+              }
+            ]
           },
-          "description": "This is a trusted Chasseral vc basic",
-          "background_color": "#CCFFCC"
-        }
-      ]
+          {
+            "path": [
+              "lastName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Name"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Nom de famille"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Cognome"
+              },
+              {
+                "locale": "en-US",
+                "name": "Last name"
+              }
+            ]
+          },
+          {
+            "path": [
+              "firstName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Vorname"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Prénom"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Nome"
+              },
+              {
+                "locale": "en-US",
+                "name": "First name"
+              }
+            ]
+          },
+          {
+            "path": [
+              "dateOfBirth"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Geburtsdatum"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date de naissance"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data di nascita"
+              },
+              {
+                "locale": "en-US",
+                "name": "Date of birth"
+              }
+            ]
+          },
+          {
+            "path": [
+              "hometown"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Heimatort"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Ville natale"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Città natale"
+              },
+              {
+                "locale": "en-US",
+                "name": "Home town"
+              }
+            ]
+          },
+          {
+            "path": [
+              "registrationNumber"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "RegNr"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Numéro d'enregistrement"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Numero di registrazione"
+              },
+              {
+                "locale": "en-US",
+                "name": "RegNb"
+              }
+            ]
+          },
+          {
+            "path": [
+              "dateOfExpiration"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Gültigkeit"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date d'expiration"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data di scadenza"
+              },
+              {
+                "locale": "en-US",
+                "name": "Validity"
+              }
+            ]
+          },
+          {
+            "path": [
+              "issuerEntity"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Ausstellbehörde"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Entité émettrice"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Ente emittente"
+              },
+              {
+                "locale": "en-US",
+                "name": "Issuing authority"
+              }
+            ]
+          },
+          {
+            "path": [
+              "issuerEntityDate"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Ausstellbehörde (Datum)"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Date de l'entité émettrice"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Data ente emittente"
+              },
+              {
+                "locale": "en-US",
+                "name": "Issuing authority (date)"
+              }
+            ]
+          },
+          {
+            "path": [
+              "signatureImage"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Unterschrift"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Image de la signature"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Immagine della firma"
+              },
+              {
+                "locale": "en-US",
+                "name": "Signature"
+              }
+            ]
+          },
+          {
+            "path": [
+              "photoImage"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Foto"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Photo"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Foto"
+              },
+              {
+                "locale": "en-US",
+                "name": "Photo"
+              }
+            ]
+          },
+          {
+            "path": [
+              "categoryCode"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Kategorie"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Code de catégorie"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Codice categoria"
+              },
+              {
+                "locale": "en-US",
+                "name": "Category"
+              }
+            ]
+          },
+          {
+            "path": [
+              "categoryRestrictions"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung auf der Kat"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions de catégorie"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni di categoria"
+              },
+              {
+                "locale": "en-US",
+                "name": "Category Restrictions"
+              }
+            ]
+          },
+          {
+            "path": [
+              "restrictionsA"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung A"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions A"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni A"
+              },
+              {
+                "locale": "en-US",
+                "name": "Restrictions A"
+              }
+            ]
+          },
+          {
+            "path": [
+              "restrictionsB"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Auflagen/Verfügungen/Beschränkung B"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Restrictions B"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Restrizioni B"
+              },
+              {
+                "locale": "en-US",
+                "name": "Restrictions B"
+              }
+            ]
+          },
+          {
+            "path": [
+              "faberPin"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Faber Pin"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Pin Faber"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Pin Faber"
+              },
+              {
+                "locale": "en-US",
+                "name": "Faber Pin"
+              }
+            ]
+          },
+          {
+            "path": [
+              "policeQRImage"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Police QR Code"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Code QR de la police"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Codice QR della polizia"
+              },
+              {
+                "locale": "en-US",
+                "name": "Police QR Code"
+              }
+            ]
+          },
+          {
+            "path": [
+              "credentialNumber"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Credentialnummer"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Numéro de justificatif"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Numero del credenziale"
+              },
+              {
+                "locale": "en-US",
+                "name": "Credential Number"
+              }
+            ]
+          }
+        ]
+      }
     }
   },
   "credential_request_encryption": {

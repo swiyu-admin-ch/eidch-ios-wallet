@@ -46,6 +46,7 @@ targetTemplates:
               - UISceneConfigurationName: Default Configuration
                 UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
         NSCameraUsageDescription: 'swiyu app would like to use your camera to scan QRCodes.'
+        NSBluetoothAlwaysUsageDescription: 'swiyu app would like to use Bluetooth for proximity verification.'
         NSFaceIDUsageDescription: 'swiyu app would like to use your biometric references to access secured resources.'
         NFCReaderUsageDescription: 'swiyu app would like to use NFC to scan passports'
         NSAppTransportSecurity:

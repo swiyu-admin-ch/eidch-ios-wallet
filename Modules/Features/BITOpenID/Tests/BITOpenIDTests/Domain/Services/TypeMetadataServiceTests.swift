@@ -5,7 +5,6 @@ import XCTest
 @testable import BITNetworking
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 // swiftlint:disable force_unwrapping implicitly_unwrapped_optional

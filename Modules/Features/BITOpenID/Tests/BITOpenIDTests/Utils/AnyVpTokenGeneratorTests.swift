@@ -4,7 +4,6 @@ import XCTest
 @testable import BITJWT
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 @testable import BITVault
 
@@ -29,11 +28,11 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
   }
 
   func testVpTokenGeneration() throws {
-    let requestedClaims = [ "firstName" ]
+    let requestedClaims = [ "test_key_1" ]
 
     let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
 
-    asserts(vpToken, nbOfDisclosures: 1, hasKeyBinding: true)
+    asserts(vpToken, disclosureCount: 1, hasKeyBinding: true)
   }
 
   // MARK: Private
@@ -49,15 +48,15 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
   private var mockCredential = VcSdJWS.Mock.sample
   private let mockKeyPair = VaultKeyPair.Mock.ES256
 
-  private func asserts(_ vpToken: VpToken, nbOfDisclosures: Int, hasKeyBinding: Bool) {
+  private func asserts(_ vpToken: VpToken, disclosureCount: Int, hasKeyBinding: Bool) {
     XCTAssertFalse(vpToken.isEmpty)
-    let disclosures = vpToken.split(separator: "~")
+    let jwsParts = vpToken.split(separator: "~")
     if hasKeyBinding {
-      XCTAssertEqual(2 + nbOfDisclosures, disclosures.count)
+      XCTAssertEqual(2 + disclosureCount, jwsParts.count)
       XCTAssertTrue(sha256HasherSpy.hashCalled)
-      XCTAssertEqual(String(disclosures.last ?? ""), Self.mockJwtString)
+      XCTAssertEqual(String(jwsParts.last ?? ""), Self.mockJwtString)
     } else {
-      XCTAssertEqual(1 + nbOfDisclosures, disclosures.count)
+      XCTAssertEqual(1 + disclosureCount, jwsParts.count)
       XCTAssertFalse(sha256HasherSpy.hashCalled)
     }
   }

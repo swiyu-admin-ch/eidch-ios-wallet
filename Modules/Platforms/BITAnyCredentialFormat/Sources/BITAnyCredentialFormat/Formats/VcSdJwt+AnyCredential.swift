@@ -1,3 +1,4 @@
+import BITCore
 import BITSdJWT
 import Foundation
 
@@ -37,20 +38,16 @@ extension VcSdJWS: AnyCredential {
     payload.vct
   }
 
-  public func getClaimsDictionary(_ claimSet: ClaimKind) -> [String: Any?] {
+  public func getClaimsJSON(_ claimSet: ClaimKind) -> JSON {
     switch claimSet {
     case .all:
-      resolvedPayloadDictionary
+      resolvedJSON
     case .nonTechnical:
-      resolvedPayloadDictionary.filter { !SdJWSDecoder.reservedClaimNames.contains($0.key) }
+      resolvedJSON.filter { !VcSdJWSDecoder.nonSelectivelyDisclosableClaims.contains($0.key) }
     }
   }
 }
 
 // MARK: - SdJWTClaim + AnyClaim
 
-extension SdJWTClaim: AnyClaim {
-  public var key: String {
-    jsonPath
-  }
-}
+extension SdJWTClaim: AnyClaim {}

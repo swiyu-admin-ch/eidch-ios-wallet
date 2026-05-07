@@ -4,7 +4,6 @@ import JsonSchemaValidator
 import XCTest
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 final class VcSdJwtSchemaValidatorTests: XCTestCase {
@@ -56,7 +55,7 @@ final class VcSdJwtSchemaValidatorTests: XCTestCase {
   }
 
   private func success() {
-    jsonSchemaValidatorSpy.validateDictionaryWithReturnValue = true
+    jsonSchemaValidatorSpy.validateJsonWithReturnValue = true
     jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = true
   }
 }

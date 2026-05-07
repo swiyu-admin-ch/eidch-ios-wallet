@@ -8,58 +8,66 @@ final class OpenIDEndpointTests: XCTestCase {
 
   // MARK: Internal
 
-  func testMetadata() {
+  func testOidConnectMetadata() {
     let expectedEndpoint = ".well-known/openid-credential-issuer"
 
-    let endpoint = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: urlMock))
+    let endpoint = URL(target: OpenIDEndpoint.oidConnectMetadata(fromIssuerUrl: urlMock))
 
     XCTAssertEqual("\(Self.baseURLMock)/\(expectedEndpoint)", endpoint.absoluteString)
   }
 
-  func testMetadata_multipleUrlFormats() {
-    let expectedEndpoint = ".well-known/openid-credential-issuer"
-    let baseUrl1 = Self.baseURLMock
-    let baseUrl2 = "\(Self.baseURLMock)/"
-    let baseUrl3 = "\(Self.baseURLMock)/?param=1"
+  func testMetadata() throws {
+    let wellKnownPath = ".well-known/openid-credential-issuer"
+    let urls = [
+      (Self.baseURLMock, "\(Self.baseURLMock)/\(wellKnownPath)"),
+      ("\(Self.baseURLMock)/", "\(Self.baseURLMock)/\(wellKnownPath)/"),
+      ("\(Self.baseURLMock)/path", "\(Self.baseURLMock)/\(wellKnownPath)/path"),
+      ("\(Self.baseURLMock):1000/path", "\(Self.baseURLMock):1000/\(wellKnownPath)/path"),
+    ]
 
-    guard let url1 = URL(string: baseUrl1) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
-    guard let url2 = URL(string: baseUrl2) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
-    guard let url3 = URL(string: baseUrl3) else {
-      XCTFail("Error while trying to build URL")
-      return
-    }
+    for (stringUrl, expectedEndpoint) in urls {
+      let url = try XCTUnwrap(URL(string: stringUrl))
 
-    let endpoint1 = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url1))
-    let endpoint2 = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url2))
-    let endpoint3 = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url3))
+      let endpoint = URL(target: OpenIDEndpoint.metadata(fromIssuerUrl: url))
 
-    let expectedAbsoluteUrlString = "\(Self.baseURLMock)/\(expectedEndpoint)"
-    XCTAssertEqual(expectedAbsoluteUrlString, endpoint1.absoluteString)
-    XCTAssertEqual(expectedAbsoluteUrlString, endpoint2.absoluteString)
-    XCTAssertEqual("\(expectedAbsoluteUrlString)?param=1", endpoint3.absoluteString, "parameters are expected at the end anyway")
+      XCTAssertEqual(expectedEndpoint, endpoint.absoluteString, "URL: \(stringUrl)")
+    }
   }
 
-  func testOpenIdConfiguration() {
+  func testOidConnectOpenIdConfiguration() {
     let expectedEndpoint = ".well-known/oauth-authorization-server"
 
-    let endpoint = URL(target: OpenIDEndpoint.openIdConfiguration(issuerURL: urlMock))
+    let endpoint = URL(target: OpenIDEndpoint.oidConnectOpenIdConfiguration(fromIssuerUrl: urlMock))
     XCTAssertEqual("\(Self.baseURLMock)/\(expectedEndpoint)", endpoint.absoluteString)
+  }
+
+  func testOpenIdConfiguration() throws {
+    let wellKnownPath = ".well-known/oauth-authorization-server"
+    let urls = [
+      (Self.baseURLMock, "\(Self.baseURLMock)/\(wellKnownPath)"),
+      ("\(Self.baseURLMock)/", "\(Self.baseURLMock)/\(wellKnownPath)/"),
+      ("\(Self.baseURLMock)/path", "\(Self.baseURLMock)/\(wellKnownPath)/path"),
+      ("\(Self.baseURLMock):1000/path", "\(Self.baseURLMock):1000/\(wellKnownPath)/path"),
+    ]
+
+    for (stringUrl, expectedEndpoint) in urls {
+      let url = try XCTUnwrap(URL(string: stringUrl))
+
+      let endpoint = URL(target: OpenIDEndpoint.openIdConfiguration(fromIssuerUrl: url))
+
+      XCTAssertEqual(expectedEndpoint, endpoint.absoluteString, "URL: \(stringUrl)")
+    }
   }
 
   func testMetadataHeaders() {
     let endpoint = OpenIDEndpoint.metadata(fromIssuerUrl: urlMock)
 
     XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
+    XCTAssertEqual(endpoint.headers?["Accept-Language"], "de-CH, fr-CH, it-CH, en, rm")
   }
 
   func testOpenIdConfigurationHeaders() {
-    let endpoint = OpenIDEndpoint.openIdConfiguration(issuerURL: urlMock)
+    let endpoint = OpenIDEndpoint.openIdConfiguration(fromIssuerUrl: urlMock)
 
     XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
   }

@@ -11,7 +11,7 @@ public struct ActorInformationBadge: View {
   }
 
   public var body: some View {
-    Badge(label: type.label, image: type.image)
+    Badge(label: type.label, accessibilityLabel: type.accessibilityLabel, image: type.image)
       .badgeStyle(ActorInformationBadgeType.badgeStyle(type: type))
   }
 
@@ -38,6 +38,10 @@ extension ActorInformationBadgeType {
     case .notCompliant:
       L10n.tkActorNonCompliant
     }
+  }
+
+  var accessibilityLabel: String {
+    L10n.tkAccessibilityInformationAbout + ", " + label
   }
 
   var image: Image {

@@ -16,9 +16,9 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
     getLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
     getLoginAttemptCounterUseCase.executeKindReturnValue = 0
 
-    Container.shared.getUniquePassphraseUseCase.register { self.getUniquePassphraseUseCase }
-    Container.shared.lockWalletUseCase.register { self.lockWalletUseCase }
-    Container.shared.getLoginAttemptCounterUseCase.register { self.getLoginAttemptCounterUseCase }
+    Container.shared.getUniquePassphraseUseCase.register { @MainActor in self.getUniquePassphraseUseCase }
+    Container.shared.lockWalletUseCase.register { @MainActor in self.lockWalletUseCase }
+    Container.shared.getLoginAttemptCounterUseCase.register { @MainActor in self.getLoginAttemptCounterUseCase }
     Container.shared.pinCodeMinimumSize.register { 6 }
   }
 

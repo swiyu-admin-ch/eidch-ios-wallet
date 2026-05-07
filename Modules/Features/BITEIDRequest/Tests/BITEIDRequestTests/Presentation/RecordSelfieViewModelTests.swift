@@ -1,5 +1,6 @@
 import BITL10n
 import Factory
+import NavigatorUI
 import Spyable
 import SwiftUI
 import UIKit
@@ -23,12 +24,14 @@ class RecordSelfieViewModelTests: XCTestCase {
     avBeam = AVBeamProtocolSpy()
     saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
     context = EIDRequestContext()
+    updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
 
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.saveEIDRequestFilesUseCase.register { self.saveEIDRequestFilesUseCase }
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.saveEIDRequestFilesUseCase.register { @MainActor in self.saveEIDRequestFilesUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
     Container.shared.recordSelfieTimeout.register { 10.0 }
-    Container.shared.avBeamAppID.register { self.appId }
+    Container.shared.avBeamAppID.register { @MainActor in self.appId }
+    Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
 
     success()
   }
@@ -46,36 +49,37 @@ class RecordSelfieViewModelTests: XCTestCase {
     XCTAssertNotNil(avBeam.captureFaceDelegate)
   }
 
+  @MainActor
   func testCancelInitialization_sdkIsStopped() {
-    viewModel.cancelInitialization()
+    viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)
   }
 
   // MARK: - SDK Initialization Tests
 
-  func testInitializeSDK_whenAlreadyInitialized_startsCamera() {
+  func testCheckInitializationState_whenAlreadyInitialized_startsCamera() {
     avBeam.state = .initialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertFalse(avBeam.initializeUsingCalled)
   }
 
-  func testInitializeSDK_whenNotInitialized_initializesSDK() {
+  func testCheckInitializationState_whenNotInitialized_initializesSDK() {
     avBeam.state = .notInitialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertTrue(avBeam.initializeUsingCalled)
     XCTAssertNotNil(avBeam.initializeUsingReceivedConfig)
     XCTAssertEqual(avBeam.initializeUsingReceivedConfig?.appId, appId)
   }
 
-  func testInitializeSDK_failure_setsErrorDestination() {
+  func testCheckInitializationState_failure_setsErrorDestination() {
     avBeam.state = .notInitialized
     avBeam.initializeUsingThrowableError = TestingError.error
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertNotNil(viewModel.destination)
     if case .error(let dataset) = viewModel.destination {
@@ -87,16 +91,17 @@ class RecordSelfieViewModelTests: XCTestCase {
 
   // MARK: - Record Tests
 
-  func testStartRecordSelfie_success_callsAVBeamWithCorrectConfig() async {
+  func testStartRecordSelfie_success_callsAVBeamWithCorrectConfig() async throws {
     viewModel.startRecordSelfie()
 
     // Wait for async task to complete
     try? await Task.sleep(nanoseconds: taskDelay)
 
     XCTAssertTrue(avBeam.startCaptureFaceConfigCalled)
+    XCTAssertEqual(updateInputFileUseCase.callAsFunctionCallsCount, 1)
     let config = avBeam.startCaptureFaceConfigReceivedConfig
     XCTAssertEqual(config?.duration, 10.0)
-    XCTAssertTrue(config?.files.isEmpty == true)
+    XCTAssertTrue(try XCTUnwrap(config?.files.contains(avBeamFile)))
   }
 
   func testStartRecordSelfie_failure_handlesError() async {
@@ -124,13 +129,11 @@ class RecordSelfieViewModelTests: XCTestCase {
     XCTAssertTrue(avBeam.stopCaptureFaceCalled)
   }
 
-  // MARK: - Stop and Close Tests
-
-  func testStop_callsAVBeamStopCaptureFace() {
+  func testStop_callsAVBeamStopCaptureFaceAndStopCamera() {
     viewModel.stop()
 
     XCTAssertTrue(avBeam.stopCaptureFaceCalled)
-    XCTAssertFalse(avBeam.stopCameraCalled) // Stop with a dedicated button must NOT stop the camera
+    XCTAssertTrue(avBeam.stopCameraCalled)
   }
 
   // MARK: - AVBeamMessageDelegate Tests
@@ -242,14 +245,17 @@ class RecordSelfieViewModelTests: XCTestCase {
   private var saveEIDRequestFilesUseCase: SaveEIDRequestFilesUseCaseProtocolSpy!
   private var context: EIDRequestContext!
   private let taskDelay: UInt64 = 100_000_000
+  private var updateInputFileUseCase: UpdateInputFileUseCaseProtocolSpy!
 
   private let appId = "test-app-id"
+  private let avBeamFile = AVBeamFile(type: .xml, description: "input.xml", data: "input.xml".data(using: .utf8)!)
 
   private func success() {
     avBeam.state = .initialized
     context.caseId = "test-case-id"
     viewModel = RecordSelfieViewModel()
     XCTAssertEqual(viewModel.state, .loading)
+    updateInputFileUseCase.callAsFunctionReturnValue = avBeamFile
   }
 
 }

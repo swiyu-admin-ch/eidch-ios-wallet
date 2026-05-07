@@ -1,3 +1,4 @@
+import BITClaimsPathPointer
 import BITCore
 import BITCrypto
 import BITOca
@@ -156,7 +157,7 @@ extension TypeMetadata.Display.Rendering {
 
 extension TypeMetadata {
   struct Claim: Decodable {
-    let path: [PathElement]
+    let path: ClaimsPathPointer
     let display: [ClaimDisplay]?
     var sd: SelectiveDisclosure? = .allowed
     let svgId: String?
@@ -171,30 +172,6 @@ extension TypeMetadata {
 }
 
 extension TypeMetadata.Claim {
-
-  enum PathElement: Decodable {
-    case string(String)
-    case int(Int)
-    case null
-
-    // MARK: Lifecycle
-
-    init(from decoder: Decoder) throws {
-      let container = try decoder.singleValueContainer()
-      if let stringValue = try? container.decode(String.self) {
-        self = .string(stringValue)
-      } else if let intValue = try? container.decode(Int.self), intValue >= 0 {
-        self = .int(intValue)
-      } else if container.decodeNil() {
-        self = .null
-      } else {
-        throw DecodingError.dataCorruptedError(
-          in: container,
-          debugDescription: "Invalid claim path element. Must be string, non-negative integer, or null.")
-      }
-    }
-  }
-
   struct ClaimDisplay: Decodable {
     let lang: String
     let label: String
@@ -209,7 +186,7 @@ extension TypeMetadata.Claim {
 }
 
 #if DEBUG
-@testable import BITTestingCore
+@testable import BITCore
 
 extension TypeMetadata: Mockable {
 

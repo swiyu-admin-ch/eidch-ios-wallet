@@ -1,3 +1,4 @@
+// swiftlint:disable force_unwrapping
 import Factory
 import Spyable
 import XCTest
@@ -38,9 +39,9 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
 
     XCTAssertTrue(credentialRepository.getAllAcceptedVerifiableCredentialsCalled)
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[0].format, mockCredentials[0].format)
-    XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[0].payload, mockCredentials[0].payload)
+    XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[0].payload, (try? selectCredentialBundleItemUseCaseSpy(mockCredentials[0]))?.payload)
     XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[1].format, mockCredentials[2].format)
-    XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[1].payload, mockCredentials[2].payload)
+    XCTAssertEqual(createAnyCredentialUseCaseSpy.executeFromFormatReceivedInvocations[1].payload, (try? selectCredentialBundleItemUseCaseSpy(mockCredentials[2]))?.payload)
     XCTAssertEqual(fieldValidatorSpy.validateWithReceivedArguments?.anyCredential.raw, mockAnyCredential.raw)
     guard let inputDescriptor = requestObject.presentationDefinition?.inputDescriptors.first else {
       XCTFail("Missing input descriptor fixture")
@@ -123,6 +124,7 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
   private var createAnyCredentialUseCaseSpy = CreateAnyCredentialUseCaseProtocolSpy()
   private var fieldValidatorSpy = PresentationFieldsValidatorProtocolSpy()
   private var dcqlCredentialMatcherSpy = DcqlCredentialMatcherProtocolSpy()
+  private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private var useCase = GetCompatibleCredentialsUseCase()
 
@@ -133,6 +135,10 @@ final class GetCompatibleCredentialsUseCaseTests: XCTestCase {
     createAnyCredentialUseCaseSpy = CreateAnyCredentialUseCaseProtocolSpy()
     fieldValidatorSpy = PresentationFieldsValidatorProtocolSpy()
     dcqlCredentialMatcherSpy = DcqlCredentialMatcherProtocolSpy()
+
+    selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
+      $0.bundleItems.first!
+    }
 
     Container.shared.credentialRepository.register { self.credentialRepository }
     Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCaseSpy }

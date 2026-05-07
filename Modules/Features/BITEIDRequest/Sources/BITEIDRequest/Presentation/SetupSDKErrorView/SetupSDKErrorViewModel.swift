@@ -6,7 +6,9 @@ import SwiftUI
 
 // MARK: - SetupSDKErrorViewModel
 
-class SetupSDKErrorViewModel: ObservableObject, NavigationBackable {
+@Observable
+
+class SetupSDKErrorViewModel: NavigationBackable {
 
   // MARK: Lifecycle
 
@@ -17,7 +19,7 @@ class SetupSDKErrorViewModel: ObservableObject, NavigationBackable {
 
   // MARK: Internal
 
-  @Published var isNavigationBackTriggered = false
+  var isNavigationBackTriggered = false
 
   var primaryText: String {
     switch error {
@@ -27,7 +29,7 @@ class SetupSDKErrorViewModel: ObservableObject, NavigationBackable {
       L10n.tkEidRequestClientAttestationDeviceCheckTimeoutTitle
     case is DCError:
       L10n.tkEidRequestClientAttestationDeviceCheckErrorTitle
-    case FetchAttestationsUseCaseError.networkError:
+    case ValidateDeviceSecurityRequirementsUseCaseError.networkError:
       L10n.tkEidRequestClientAttestationServiceErrorTitle
     default:
       L10n.tkEidRequestAttestationUnknownErrorPrimary
@@ -42,7 +44,7 @@ class SetupSDKErrorViewModel: ObservableObject, NavigationBackable {
       L10n.tkEidRequestClientAttestationDeviceCheckTimeoutBody
     case is DCError:
       L10n.tkEidRequestClientAttestationDeviceCheckErrorBody
-    case FetchAttestationsUseCaseError.networkError:
+    case ValidateDeviceSecurityRequirementsUseCaseError.networkError:
       L10n.tkEidRequestClientAttestationServiceErrorBody
     default:
       L10n.tkEidRequestAttestationUnknownErrorSecondary

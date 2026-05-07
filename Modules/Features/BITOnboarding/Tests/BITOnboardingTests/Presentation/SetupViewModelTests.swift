@@ -107,8 +107,8 @@ final class SetupViewModelTests: XCTestCase {
     updateAnalyticsStatusUseCase = UpdateAnalyticStatusUseCaseProtocolSpy()
     setActivityHistoryEnabledUseCase = SetActivityHistoryEnabledUseCaseProtocolSpy()
 
-    Container.shared.registerPinCodeUseCase.register { self.registerPinCodeUseCase }
-    Container.shared.updateAnalyticsStatusUseCase.register { self.updateAnalyticsStatusUseCase }
-    Container.shared.setActivityHistoryEnabledUseCase.register { self.setActivityHistoryEnabledUseCase }
+    Container.shared.registerPinCodeUseCase.register { @MainActor in self.registerPinCodeUseCase }
+    Container.shared.updateAnalyticsStatusUseCase.register { @MainActor in self.updateAnalyticsStatusUseCase }
+    Container.shared.setActivityHistoryEnabledUseCase.register { @MainActor in self.setActivityHistoryEnabledUseCase }
   }
 }

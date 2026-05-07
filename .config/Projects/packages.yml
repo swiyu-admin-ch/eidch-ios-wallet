@@ -27,6 +27,8 @@ packages:
     path: ../../Modules/Platforms/BITL10n
   BITNavigation:
     path: ../../Modules/Platforms/BITNavigation
+  BITClaimsPathPointer:
+    path: ../../Modules/Platforms/BITClaimsPathPointer
   BITCrypto:
     path: ../../Modules/Platforms/BITCrypto
   BITQRCode:

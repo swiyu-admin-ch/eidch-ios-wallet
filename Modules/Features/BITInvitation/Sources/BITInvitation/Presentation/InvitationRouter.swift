@@ -7,16 +7,8 @@ import UIKit
 
 // MARK: - InvitationRouterRoutes
 
-public protocol InvitationRouterRoutes: ClosableRoutes & CredentialOfferRoutes & ExternalRoutes & InvitationRoutes & PresentationRoutes & LoginRoutes {}
+public protocol InvitationRouterRoutes: ClosableRoutes & ExternalRoutes {}
 
 // MARK: - InvitationRouter
 
 final public class InvitationRouter: Router<UIViewController>, InvitationRouterRoutes {}
-
-// MARK: - InvitationDelegate
-
-@Spyable
-public protocol InvitationDelegate: AnyObject {
-  func didSaveCredential()
-  func didDeclineCredential()
-}

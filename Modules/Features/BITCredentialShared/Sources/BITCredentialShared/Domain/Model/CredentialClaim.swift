@@ -1,5 +1,7 @@
 import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITEntities
+import BITOpenID
 import Foundation
 
 // MARK: - CredentialClaim
@@ -10,7 +12,7 @@ public struct CredentialClaim: Codable, ClusterItem {
 
   public init(
     id: UUID = UUID(),
-    key: String,
+    path: ClaimsPathPointer,
     value: String?,
     valueType: String = "string",
     valueDisplayInfo: String? = nil,
@@ -19,20 +21,20 @@ public struct CredentialClaim: Codable, ClusterItem {
     displays: [CredentialClaimDisplay] = [])
   {
     self.id = id
-    self.key = key
+    self.path = path
     self.value = value
     self.valueType = valueType
     self.valueDisplayInfo = valueDisplayInfo
     self.order = order
     self.isSensitive = isSensitive
     self.displays = displays
-    preferredDisplay = displays.findDisplayWithFallback() ?? CredentialClaimDisplay(name: key)
+    preferredDisplay = displays.findDisplayWithFallback() ?? CredentialClaimDisplay(name: path.stringValue)
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let id = try container.decode(UUID.self, forKey: .id)
-    let key = try container.decode(String.self, forKey: .key)
+    let path = try container.decode(ClaimsPathPointer.self, forKey: .path)
     let value = try container.decodeIfPresent(String.self, forKey: .value)
     let valueType = try container.decode(String.self, forKey: .valueType)
     let valueDisplayInfo = try container.decodeIfPresent(String.self, forKey: .valueDisplayInfo)
@@ -42,7 +44,7 @@ public struct CredentialClaim: Codable, ClusterItem {
 
     self.init(
       id: id,
-      key: key,
+      path: path,
       value: value,
       valueType: valueType,
       valueDisplayInfo: valueDisplayInfo,
@@ -55,7 +57,7 @@ public struct CredentialClaim: Codable, ClusterItem {
     let displays = Array(entity.displays.map({ CredentialClaimDisplay($0) }))
     self.init(
       id: entity.id,
-      key: entity.key,
+      path: ClaimsPathPointer(entity.path) ?? [],
       value: entity.value,
       valueType: entity.valueType,
       valueDisplayInfo: entity.valueDisplayInfo,
@@ -67,7 +69,7 @@ public struct CredentialClaim: Codable, ClusterItem {
   // MARK: Public
 
   public var id: UUID
-  public var key: String
+  public var path: ClaimsPathPointer
   public var value: String?
   public var valueType: String
   public var valueDisplayInfo: String?
@@ -80,7 +82,7 @@ public struct CredentialClaim: Codable, ClusterItem {
 
   enum CodingKeys: String, CodingKey {
     case id
-    case key
+    case path
     case value
     case valueType = "value_type"
     case valueDisplayInfo = "value_display_info"
@@ -96,12 +98,11 @@ extension CredentialClaim: Equatable {
 
   public static func == (lhs: CredentialClaim, rhs: CredentialClaim) -> Bool {
     lhs.id == rhs.id &&
-      lhs.key == rhs.key &&
+      lhs.path == rhs.path &&
       lhs.value == rhs.value &&
       lhs.valueType == rhs.valueType &&
       lhs.valueDisplayInfo == rhs.valueDisplayInfo &&
       lhs.order == rhs.order &&
       lhs.displays.allSatisfy(rhs.displays.contains) && rhs.displays.allSatisfy(lhs.displays.contains)
   }
-
 }

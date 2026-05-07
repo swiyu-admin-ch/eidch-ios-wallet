@@ -64,5 +64,5 @@ final class IdentityTrustStatementTests: XCTestCase {
 
   // MARK: Private
 
-  private var decoder = SdJWSDecoder()
+  private var decoder = VcSdJWSDecoder()
 }

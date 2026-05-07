@@ -4,32 +4,40 @@ import SwiftUI
 
 struct AccessibilityPriorityFocusViewModifier: ViewModifier {
 
+  // MARK: Lifecycle
+
+  init(delay: Duration) {
+    self.delay = delay
+  }
+
   // MARK: Internal
 
   func body(content: Content) -> some View {
     content
-      .accessibilityFocused($isPriorityFocus)
-      .onAppear {
-        setFocus()
+      .accessibilityFocused($isFocused)
+      .task {
+        await setFocus()
       }
   }
 
   // MARK: Private
 
-  @AccessibilityFocusState private var isPriorityFocus: Bool
+  @AccessibilityFocusState private var isFocused: Bool
 
-  private func setFocus() {
-    DispatchQueue.main.async {
-      isPriorityFocus = false
-      isPriorityFocus = true
-    }
+  private let delay: Duration
+
+  @MainActor
+  private func setFocus() async {
+    isFocused = false
+    try? await Task.sleep(for: delay)
+    isFocused = true
   }
 }
 
 // MARK: - View Extension
 
 extension View {
-  public func accessibilityPriorityFocus() -> some View {
-    modifier(AccessibilityPriorityFocusViewModifier())
+  public func accessibilityPriorityFocus(delay: Duration = .milliseconds(450)) -> some View {
+    modifier(AccessibilityPriorityFocusViewModifier(delay: delay))
   }
 }

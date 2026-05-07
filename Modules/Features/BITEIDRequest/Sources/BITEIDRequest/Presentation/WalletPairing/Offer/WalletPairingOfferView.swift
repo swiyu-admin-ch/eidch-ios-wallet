@@ -11,7 +11,7 @@ struct WalletPairingOfferView: View {
   // MARK: Lifecycle
 
   init(_ didPairWalletHandler: @escaping (Void) -> Void) {
-    _viewModel = StateObject(wrappedValue: Container.shared.walletPairingOfferViewModel(didPairWalletHandler))
+    _viewModel = State(initialValue: Container.shared.walletPairingOfferViewModel(didPairWalletHandler))
   }
 
   // MARK: Internal
@@ -44,7 +44,7 @@ struct WalletPairingOfferView: View {
 
   @Environment(\.navigator) private var navigator
 
-  @StateObject private var viewModel: WalletPairingOfferViewModel
+  @State private var viewModel: WalletPairingOfferViewModel
 
   private let qrCodeSize = 250.0
 }

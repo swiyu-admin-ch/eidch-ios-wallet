@@ -8,7 +8,7 @@ struct BiometricChangeView: View {
   // MARK: Lifecycle
 
   init(_ router: BiometricChangeRouterRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.biometricChangeViewModel(router))
+    _viewModel = State(initialValue: Container.shared.biometricChangeViewModel(router))
   }
 
   // MARK: Internal
@@ -23,7 +23,7 @@ struct BiometricChangeView: View {
 
   @Environment(\.colorScheme) private var colorScheme
 
-  @StateObject private var viewModel: BiometricChangeViewModel
+  @State private var viewModel: BiometricChangeViewModel
 
   @ViewBuilder
   private func content() -> some View {

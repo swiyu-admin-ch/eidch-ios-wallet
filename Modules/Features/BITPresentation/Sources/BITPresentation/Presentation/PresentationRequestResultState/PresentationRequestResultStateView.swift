@@ -1,8 +1,10 @@
 import BITCredential
 import BITCredentialShared
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - PresentationRequestResultStateView
@@ -11,27 +13,27 @@ struct PresentationRequestResultStateView: View {
 
   // MARK: Lifecycle
 
-  init(state: PresentationRequestResultState, context: PresentationRequestContext, router: PresentationInternalRoutes) {
-    self.router = router
-    _viewModel = StateObject(wrappedValue: Container.shared.presentationRequestResultStateViewModel((state, context, router)))
+  init(state: PresentationRequestResultState, context: PresentationRequestContext) {
+    _viewModel = State(wrappedValue: Container.shared.presentationRequestResultStateViewModel((state, context)))
   }
 
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
     case content = "presentationRequestResultStateContent"
-    case successContent
+    case dataTransmitted
     case finishButton
   }
 
   var body: some View {
     VStack {
       ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { badgeType in
-        router.badgeInformation(badgeType: badgeType)
+        navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
       }.padding(.bottom, .x3)
-      stateView()
+      stateView
     }
     .applyScrollViewIfNeeded()
+    .toolbar(.hidden)
     .ignoresSafeArea(edges: .bottom)
     .ignoresSafeArea(edges: .top)
     .readSize(onChange: { size in
@@ -45,13 +47,29 @@ struct PresentationRequestResultStateView: View {
     .onAppear(perform: {
       isAccessibilityTitleFocused = true
     })
+    .navigationBack(onChangeOf: $viewModel.isNavigationBackTriggered)
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
+  @ViewBuilder
+  var content: some View {
+    switch viewModel.state {
+    case .invalidCredential,
+         .success:
+      dataTransmittedView
+    case .deny:
+      denyView
+    case .error:
+      errorMessages(title: L10n.tkPresentResultErrorPrimary, subtitle: L10n.tkPresentResultErrorSecondary)
+    }
+  }
+
   // MARK: Private
 
+  @Environment(\.navigator) private var navigator
   @Environment(\.sizeCategory) private var sizeCategory
+
   @State private var compression = UICompressionStyle.normal
   @State private var availableWidth: CGFloat = 0
   @State private var topInset: CGFloat = 0
@@ -59,11 +77,9 @@ struct PresentationRequestResultStateView: View {
   @AccessibilityFocusState(for: .voiceOver)
   private var isAccessibilityTitleFocused: Bool
 
-  @StateObject private var viewModel: PresentationRequestResultStateViewModel
+  @State private var viewModel: PresentationRequestResultStateViewModel
 
-  private let router: PresentationInternalRoutes
-
-  private func stateView() -> some View {
+  private var stateView: some View {
     VStack {
       Spacer()
       if sizeCategory < .accessibilityExtraLarge {
@@ -71,13 +87,11 @@ struct PresentationRequestResultStateView: View {
           .resizable()
           .aspectRatio(contentMode: .fit)
           .frame(width: 56, height: 56)
-          .accessibilityLabel(viewModel.state.sheetAccessibilityLabel)
-          .accessibilityRemoveTraits(.isImage)
-          .accessibilityFocused($isAccessibilityTitleFocused)
+          .accessibilityHidden(true)
       }
-      content()
+      content
       Spacer(minLength: compression.isCompressed ? .x4 : .x6)
-      buttons()
+      buttons
     }
     .frame(maxWidth: .infinity)
     .padding(.top, compression.isCompressed ? .x4 : .x6)
@@ -88,91 +102,70 @@ struct PresentationRequestResultStateView: View {
     .accessibilityElement(children: .contain)
   }
 
-  @ViewBuilder
-  private func content() -> some View {
-    switch viewModel.state {
-    case .success(let claims):
-      successView(claims: claims)
-    case .invalidCredential(let claims):
-      invalidCredentialView(claims: claims)
-    case .deny:
-      denyView()
-    case .cancelled:
-      errorMessages(title: L10n.tkPresentResultCanceledVerificationPrimary, subtitle: L10n.tkPresentResultCanceledVerificationSecondary)
-    case .error:
-      errorMessages(title: L10n.tkPresentResultErrorPrimary, subtitle: L10n.tkPresentResultErrorSecondary)
-    }
-  }
-
-  @ViewBuilder
-  private func successView(claims: [CredentialClaim]) -> some View {
-    Text(L10n.tkPresentResultSuccessPrimary)
-      .multilineTextAlignment(.center)
-      .font(.custom.body)
-      .foregroundStyle(ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
-      .padding(.bottom, compression.isCompressed ? .x2 : .x4)
-    claimsList(claims, cell: {
-      claimCell($0, image: Assets.checkmark.swiftUIImage, imageColor: ThemingAssets.Brand.Core.firGreen.swiftUIColor)
-    })
-    .background(ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
-    .foregroundStyle(ThemingAssets.Brand.Core.firGreen.swiftUIColor)
-    .clipShape(.rect(cornerRadius: .x2))
-    .accessibilityIdentifier(AccessibilityIdentifier.successContent.rawValue)
-  }
-
-  @ViewBuilder
-  private func invalidCredentialView(claims: [CredentialClaim]) -> some View {
-    VStack {
-      Text(L10n.tkPresentResultInvalidCredentialPrimary)
-        .multilineTextAlignment(.center)
-        .font(.custom.body)
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-      Text(L10n.tkPresentResultInvalidCredentialSecondary)
-        .multilineTextAlignment(.center)
-        .font(.custom.body)
-        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-    }
-    .padding(.bottom, compression.isCompressed ? .x2 : .x4)
-
-    claimsList(claims, cell: {
-      claimCell($0, image: Assets.checkmark.swiftUIImage)
-    })
-    .background(ThemingAssets.Background.primary.swiftUIColor)
-    .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-    .clipShape(.rect(cornerRadius: .x2))
-  }
-
-  private func claimsList(_ claims: [CredentialClaim], @ViewBuilder cell: @escaping (CredentialClaim) -> some View) -> some View {
-    LazyVStack(alignment: .leading, spacing: .x1) {
-      ForEach(claims, id: \.id) { claim in
-        cell(claim)
-      }
-    }
-    .padding(.x4)
-    .frame(maxWidth: 400)
-  }
-
-  private func claimCell(_ claim: CredentialClaim, image: Image = Assets.checkmark.swiftUIImage, imageColor: Color? = nil) -> some View {
-    HStack(alignment: .top, spacing: .x1) {
-      if sizeCategory < .accessibilityExtraLarge {
-        image
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 17, height: 17)
-          .padding(.top, 2)
-          .accessibilityHidden(true)
-      }
-      Text(claim.preferredDisplay.name ?? claim.key)
-        .font(.custom.body)
-    }
-  }
-
-  private func denyView() -> some View {
+  private var denyView: some View {
     Text(L10n.tkPresentResultDeclinedPrimary)
       .multilineTextAlignment(.center)
       .font(.custom.body)
       .foregroundStyle(ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
       .padding(.bottom, compression.isCompressed ? .x2 : .x4)
+      .accessibilityPriorityFocus()
+  }
+
+  private var dataTransmittedView: some View {
+    VStack(spacing: .x1) {
+      Text(L10n.tkPresentResultDataTransmittedTitle)
+        .accessibilityAddTraits(.isHeader)
+      Text(L10n.tkPresentResultDataTransmittedBody)
+        .opacity(0.7)
+    }
+    .padding(.bottom, compression.isCompressed ? .x2 : .x4)
+    .font(.custom.body)
+    .multilineTextAlignment(.center)
+    .foregroundStyle(ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
+    .accessibilityIdentifier(AccessibilityIdentifier.dataTransmitted.rawValue)
+    .accessibilityPriorityFocus()
+  }
+
+  private var finishButton: some View {
+    Button(action: close) {
+      Text(L10n.tkGlobalFinish)
+        .frame(maxWidth: .infinity)
+    }
+    .controlSize(.large)
+    .accessibilityIdentifier(AccessibilityIdentifier.finishButton.rawValue)
+  }
+
+  private var errorButtons: some View {
+    AdaptiveButtonStack {
+      Button { viewModel.retry() } label: {
+        Text(L10n.tkPresentResultErrorButtonRetry)
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.bezeled)
+      .controlSize(.large)
+    } secondary: {
+      Button(action: close) {
+        Text(L10n.tkGlobalFinish)
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.plain)
+      .controlSize(.large)
+    }
+  }
+
+  @ViewBuilder
+  private var buttons: some View {
+    switch viewModel.state {
+    case .invalidCredential,
+         .success:
+      finishButton
+        .buttonStyle(.firGreen)
+    case .deny:
+      finishButton
+        .buttonStyle(.navyBlue)
+    case .error:
+      errorButtons
+    }
   }
 
   private func errorMessages(title: String, subtitle: String) -> some View {
@@ -187,77 +180,43 @@ struct PresentationRequestResultStateView: View {
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor.opacity(0.7))
     }
     .padding(.top, .x1)
+    .accessibilityPriorityFocus()
   }
 
-  @ViewBuilder
-  private func buttons() -> some View {
-    switch viewModel.state {
-    case .success:
-      finishButton()
-        .buttonStyle(.firGreen)
-    case .deny:
-      finishButton()
-        .buttonStyle(.navyBlue)
-    case .cancelled,
-         .invalidCredential:
-      finishButton()
-        .buttonStyle(.bezeled)
-    case .error:
-      errorButtons()
+  private func close() {
+    if navigator.canReturnToCheckpoint(PresentationCheckpoints.didFinish) {
+      return navigator.returnToCheckpointSafely(PresentationCheckpoints.didFinish, value: viewModel.state)
     }
-  }
 
-  private func finishButton() -> some View {
-    AsyncButton(action: viewModel.finish) {
-      Text(L10n.tkGlobalFinish)
+    if navigator.canReturnToCheckpoint(Checkpoints.home) {
+      return navigator.returnToCheckpointSafely(Checkpoints.home)
     }
-    .controlSize(.large)
-    .accessibilityIdentifier(AccessibilityIdentifier.finishButton.rawValue)
-  }
 
-  private func errorButtons() -> some View {
-    AdaptiveButtonStack {
-      Button { viewModel.retry() } label: {
-        Text(L10n.tkPresentResultErrorButtonRetry)
-          .frame(maxWidth: .infinity)
-      }
-      .buttonStyle(.bezeled)
-      .controlSize(.large)
-    } secondary: {
-      AsyncButton(action: viewModel.finish) {
-        Text(L10n.tkGlobalFinish)
-          .frame(maxWidth: .infinity)
-      }
-      .buttonStyle(.plain)
-      .controlSize(.large)
-    }
+    navigator.dismiss()
   }
 }
 
 extension PresentationRequestResultState {
   fileprivate var backgroundColor: Color {
     switch self {
-    case .success:
+    case .invalidCredential,
+         .success:
       ThemingAssets.Brand.Core.firGreen.swiftUIColor
     case .deny:
       ThemingAssets.Brand.Core.navyBlue.swiftUIColor
-    case .cancelled,
-         .error,
-         .invalidCredential:
+    case .error:
       ThemingAssets.Background.tertiary.swiftUIColor
     }
   }
 
   fileprivate var icon: Image {
     switch self {
-    case .success:
-      Assets.presentationSuccess.swiftUIImage
+    case .invalidCredential,
+         .success:
+      Assets.presentationDataTransmitted.swiftUIImage
     case .deny:
       Assets.presentationDeny.swiftUIImage
-    case .invalidCredential:
-      Assets.invalid.swiftUIImage
-    case .cancelled,
-         .error:
+    case .error:
       Assets.presentationError.swiftUIImage
     }
   }
@@ -268,8 +227,7 @@ extension PresentationRequestResultState {
          .invalidCredential,
          .success:
       L10n.tkPresentResultConfirmAlt
-    case .cancelled,
-         .error:
+    case .error:
       L10n.tkPresentResultWarningAlt
     }
   }
@@ -277,6 +235,6 @@ extension PresentationRequestResultState {
 
 #if DEBUG
 #Preview {
-  PresentationRequestResultStateView(state: .invalidCredential(claims: CredentialClaim.Mock.array), context: .Mock.vcSdJwtSample, router: PresentationRouter())
+  PresentationRequestResultStateView(state: .invalidCredential, context: .Mock.vcSdJwtSample)
 }
 #endif

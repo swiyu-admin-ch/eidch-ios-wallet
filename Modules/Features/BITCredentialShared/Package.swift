@@ -7,7 +7,7 @@ let package = Package(
   name: "BITCredentialShared",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -23,7 +23,7 @@ let package = Package(
     .package(path: "../../Platforms/BITAnyCredentialFormat"),
     .package(path: "../BITEntities"),
     .package(path: "../BITOpenID"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
   ],
   targets: [
     .target(
@@ -31,7 +31,6 @@ let package = Package(
       dependencies: [
         .product(name: "BITOpenID", package: "BITOpenID"),
         .product(name: "BITCore", package: "BITCore"),
-        .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITVault", package: "BITVault"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITTheming", package: "BITTheming"),

@@ -12,8 +12,5 @@ include:
   - .config/Projects/swiyu/app.yml
   - .config/Projects/swiyu/tests.yml
 
-  - .config/Projects/uitests/dependencies.yml
-  - .config/Projects/uitests/app.yml
-
   - .config/Projects/debugger/dependencies.yml
   - .config/Projects/debugger/app.yml

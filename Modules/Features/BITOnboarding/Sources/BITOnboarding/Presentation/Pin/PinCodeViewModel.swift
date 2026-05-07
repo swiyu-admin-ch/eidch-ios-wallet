@@ -10,7 +10,8 @@ import SwiftUI
 // MARK: - PinCodeViewModel
 
 @MainActor
-class PinCodeViewModel: ObservableObject, Vibrating {
+@Observable
+class PinCodeViewModel: Vibrating {
 
   // MARK: Lifecycle
 
@@ -21,15 +22,15 @@ class PinCodeViewModel: ObservableObject, Vibrating {
   // MARK: Internal
 
   var error: Error?
-  @Published var isErrorPresented = false
-  @Published var inputFieldMessage: String = L10n.tkOnboardingPasswordInputSubtitle
+  var isErrorPresented = false
+  var inputFieldMessage: String = L10n.tkOnboardingPasswordInputSubtitle
 
   /// attempts allows us to have the ShakeEffect on the inputField
-  @Published var attempts = 0
+  var attempts = 0
 
-  @Injected(\.pinCodeErrorAuthHideDelay) var autoHideErrorDelay: Double
+  @ObservationIgnored @Injected(\.pinCodeErrorAuthHideDelay) var autoHideErrorDelay: Double
 
-  @Published var pinCode = "" {
+  var pinCode = "" {
     didSet {
       guard userDidRequestValidation else { return }
       do {
@@ -62,9 +63,9 @@ class PinCodeViewModel: ObservableObject, Vibrating {
 
   private var userDidRequestValidation = false
 
-  @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
+  @ObservationIgnored @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
 
-  @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
+  @ObservationIgnored @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
 
   private weak var delegate: PinCodeDelegate?
   private let router: OnboardingInternalRoutes

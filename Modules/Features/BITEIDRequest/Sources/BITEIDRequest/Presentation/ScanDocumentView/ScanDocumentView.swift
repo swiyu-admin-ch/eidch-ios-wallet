@@ -12,6 +12,34 @@ struct ScanDocumentView: View {
   // MARK: Internal
 
   var body: some View {
+    GeometryReader { geo in
+      content()
+        .cameraPermission { state in
+          if state == .authorized {
+            viewModel.checkInitializationState()
+          }
+        }
+        .disablePhoneLock()
+        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .font(.custom.body)
+        .animation(.easeInOut(duration: 0.4), value: viewModel.state)
+        .readSize { size in
+          self.size = size
+          let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+          viewModel.scanFrame = frame
+        }
+        .suspendInactivityTimeout()
+        .onDisappear {
+          viewModel.stop()
+        }
+        .toolbar { toolbarContent() }
+        .navigationBarBackButtonHidden()
+        .navigate(to: $viewModel.destination)
+        .transparentToolbarBackground(isActive: true, topInset: geo.safeAreaInsets.top)
+    }
+  }
+
+  func content() -> some View {
     ZStack {
       Color.clear
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -27,54 +55,35 @@ struct ScanDocumentView: View {
           primary: L10n.tkLoaderInitializationPrimary,
           secondary: L10n.tkLoaderInitializationSecondary,
           action: LoadingView.Action(
-            action: viewModel.cancelInitialization,
+            action: { viewModel.cancelInitialization(navigator) },
             buttonText: L10n.tkGlobalCancel))
           .transition(.opacity)
-          .task {
-            viewModel.initializeSDK()
-          }
       }
     }
-    .cameraPermission()
-    .disablePhoneLock()
-    .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-    .font(.custom.body)
-    .animation(.easeInOut(duration: 0.4), value: viewModel.state)
-    .readSize { size in
-      self.size = size
-      let frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-      viewModel.scanFrame = frame
-    }
-    .onDisappear(perform: {
-      viewModel.stop()
-    })
-    .defaultEidRequestToolbar()
-    .navigationBarBackButtonHidden()
-    .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
   @State private var size = CGSize.zero
-  @State private var rotationAngle: Double = 0
-  @State private var currentDisplayState = ScanDocumentViewModel.ScanningState.recto
-  @State private var scale = 1.0
-  @State private var scaleAnimationTask: Task<Void, Never>?
+
+  @Environment(\.navigator) private var navigator
+
+  @Injected(\.eidRequestFlowCoordinator) private var coordinator: EIDRequestFlowCoordinatorProtocol
+
+  @InjectedObservable(\.scanDocumentViewModel) private var viewModel: ScanDocumentViewModel
 
   @Orientation private var orientation
 
-  @InjectedObject(\.scanDocumentViewModel) private var viewModel: ScanDocumentViewModel
+  private var imageOverlayOrientation: Double {
+    if !orientation.isLandscape {
+      return 90
+    }
 
-  private let defaultScale = 1.0
-  private let axis: (x: CGFloat, y: CGFloat, z: CGFloat) = (x: 0, y: 1, z: 0)
-  private let animationDuration: TimeInterval = 0.4
-  private let animatedScale: CGFloat = 0.95
-  private let oppositeRotationAngle: Double = 180
-  private let defaultRotationAngle: Double = 0
-  private let cameraBlur = 50.0
+    return 0
+  }
 
   private var isBackOverlayVisible: Bool {
-    rotationAngle > 90 && rotationAngle < 270
+    viewModel.scanningState == .verso
   }
 
   private func scannerView() -> some View {
@@ -83,12 +92,21 @@ struct ScanDocumentView: View {
         .background(ThemingAssets.Background.secondary.swiftUIColor)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea()
-        .blur(radius: orientation.isLandscape ? 0 : cameraBlur)
 
       cameraOverlay()
+
+      if orientation.isLandscape {
+        recordingButtonView()
+          .frame(maxWidth: .infinity, alignment: .trailing)
+          .padding(.trailing, .x10)
+      }
     }
-    .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
-    .ignoresSafeArea(edges: [.bottom, .horizontal])
+    .ignoresSafeArea(edges: orientation.isLandscape ? [.horizontal] : [])
+    .safeAreaInset(edge: .bottom) {
+      if !orientation.isLandscape {
+        recordingButtonView()
+      }
+    }
     .popup(isPresented: $viewModel.isNotificationPresented, view: {
       popupView(viewModel.notification)
     }) {
@@ -98,73 +116,31 @@ struct ScanDocumentView: View {
         .closeOnTapOutside(false)
         .type(.floater(verticalPadding: .x8, horizontalPadding: .x4, useSafeAreaInset: true))
     }
-    .navigationTitle(viewModel.title)
   }
 
-  @ViewBuilder
+  private func recordingButtonView() -> some View {
+    RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startScan, onTapRecord: viewModel.stopScan)
+      .accessibilityLabel(viewModel.buttonStateAccessibilityLabel)
+      .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
+  }
+
   private func cameraOverlay() -> some View {
-    if orientation.isLandscape {
-      cameraLandscapeOverlay()
-    } else {
-      VStack(spacing: .x1) {
-        Assets.cameraRotate.swiftUIImage
-          .resizable()
-          .frame(width: 180, height: 180)
-        Text(L10n.tkEidRequestDocumentScanRotateCameraHint)
-          .font(.custom.bodyEmphasized)
-          .foregroundStyle(.white)
-      }
-    }
-  }
-
-  private func cameraLandscapeOverlay() -> some View {
     ZStack {
       viewModel.overlayImage.front
         .resizable()
         .aspectRatio(contentMode: .fit)
         .padding(.x4)
-        .scaleEffect(scale)
-        .rotation3DEffect(
-          .degrees(rotationAngle),
-          axis: axis)
+        .rotationEffect(.degrees(imageOverlayOrientation))
         .opacity(isBackOverlayVisible ? 0 : 1)
+        .accessibilityLabel(L10n.tkEidRequestScanDocumentOverlayFrontAlt)
 
       viewModel.overlayImage.back
         .resizable()
         .aspectRatio(contentMode: .fit)
         .padding(.x4)
-        .scaleEffect(scale)
-        .rotation3DEffect(
-          .degrees(rotationAngle + 180),
-          axis: axis)
+        .rotationEffect(.degrees(imageOverlayOrientation))
         .opacity(isBackOverlayVisible ? 1 : 0)
-
-      RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startScan, onTapRecord: viewModel.stopScan)
-        .accessibilityLabel(L10n.tkEidRequestScanDocumentRecordButtonAlt)
-        .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.horizontal, .x10)
-    }
-    .onReceive(viewModel.$scanningState) { newState in
-      if newState != currentDisplayState {
-        currentDisplayState = newState
-
-        scaleAnimationTask?.cancel()
-        withAnimation(.easeInOut(duration: animationDuration * 2)) {
-          rotationAngle = (newState == .verso) ? oppositeRotationAngle : defaultRotationAngle
-          scale = animatedScale
-        }
-
-        scaleAnimationTask = Task {
-          // Buy some time to let the previous animation to reach its end
-          try? await Task.sleep(nanoseconds: UInt64(animationDuration * 1_000_000_000))
-
-          guard !Task.isCancelled else { return }
-          withAnimation(.easeInOut(duration: animationDuration)) {
-            scale = defaultScale
-          }
-        }
-      }
+        .accessibilityLabel(L10n.tkEidRequestScanDocumentOverlayFrontAlt)
     }
   }
 }
@@ -182,6 +158,34 @@ extension ScanDocumentView {
         .clipShape(.capsule)
     }
   }
+
+  @ToolbarContentBuilder
+  private func toolbarContent() -> some ToolbarContent {
+    if viewModel.state == .camera {
+      ToolbarItem(placement: .principal) {
+        Text(viewModel.title)
+          .font(.custom.body)
+          .fontWeight(.semibold)
+          .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
+          .colorScheme(.light)
+          .lineLimit(1)
+      }
+    }
+
+    ToolbarItem(placement: .topBarTrailing) {
+      Button(action: close, label: {
+        viewModel.state == .camera ? Assets.closeCamera.swiftUIImage : ThemingAssets.close.swiftUIImage
+      })
+      .accessibilityLabel(L10n.tkGlobalClose)
+      .accessibilityIdentifier("closeButton")
+    }
+  }
+
+  private func close() {
+    coordinator.cleanup()
+    navigator.dismiss()
+  }
+
 }
 
 #if DEBUG

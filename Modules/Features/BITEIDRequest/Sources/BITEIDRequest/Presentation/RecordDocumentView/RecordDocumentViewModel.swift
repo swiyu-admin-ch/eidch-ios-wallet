@@ -1,13 +1,16 @@
 import BITAnalytics
 import BITAVWrapper
 import BITL10n
+import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - RecordDocumentViewModel
 
 @MainActor
-class RecordDocumentViewModel: ObservableObject {
+@Observable
+final class RecordDocumentViewModel {
 
   // MARK: Lifecycle
 
@@ -51,43 +54,59 @@ class RecordDocumentViewModel: ObservableObject {
     case camera
   }
 
-  @Published var state = StateView.loading
-  @Published var isNotificationPresented = false
-  @Published var notification: AVBeamNotification? = nil
-  @Published var timer: Timer?
-  @Published var buttonState = RecordingButton.State.initial
+  var state = StateView.loading
+  var isNotificationPresented = false
+  var notification: AVBeamNotification?
+  var timer: Timer?
+  var buttonState = RecordingButton.State.initial
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
-  @Injected(\.avBeam) var avBeam: AVBeamProtocol
+  @ObservationIgnored @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
-  @Published var scanningState = ScanningState.recto
+  var scanningState = ScanningState.recto
 
   var overlayImage: (front: Image, back: Image) {
-    let image: (ImageAsset, ImageAsset) = switch context.identityType {
-    case .passport:
-      (Assets.Camera.passportFront, Assets.Camera.passportBack)
-    default:
-      (Assets.Camera.idFront, Assets.Camera.idBack)
-    }
+    let image: (ImageAsset, ImageAsset) =
+      switch context.identityType {
+      case .passport:
+        (Assets.Camera.passportFront, Assets.Camera.passportBack)
+      default:
+        (Assets.Camera.idFront, Assets.Camera.idBack)
+      }
     return (image.0.swiftUIImage, image.1.swiftUIImage)
+  }
+
+  var buttonStateAccessibilityLabel: String {
+    switch buttonState {
+    case .initial: L10n.tkEidRequestRecordDocumentButtonInitialStateAlt
+    case .record: L10n.tkEidRequestRecordDocumentButtonRecordStateAlt
+    case .loading,
+         .success: ""
+    }
   }
 
   var title: String {
     scanningState.title
   }
 
-  func initializeSDK() {
-    if avBeam.state == .initialized {
-      startCamera()
-      return
-    }
+  func checkInitializationState() {
+    switch avBeam.state {
+    case .notInitialized:
+      avBeam.shutdown()
 
-    do {
-      let config = AVBeamInitConfig(appId: avBeamAppID)
-      try avBeam.initialize(using: config)
-    } catch {
-      handleError(error)
+      do {
+        let config = AVBeamInitConfig(appId: avBeamAppID)
+        try avBeam.initialize(using: config)
+      } catch {
+        handleError(error)
+      }
+
+    case .initializing:
+      state = .loading
+
+    case .initialized:
+      startCamera()
     }
   }
 
@@ -96,9 +115,9 @@ class RecordDocumentViewModel: ObservableObject {
     try? avBeam.stopCamera()
   }
 
-  func cancelInitialization() {
+  func cancelInitialization(_ navigator: Navigator) {
     avBeam.shutdown()
-    navigatorRoot.returnToCheckpoint(EIDRequestCheckpoints.recordDocumentInformation)
+    navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordDocumentInformation)
   }
 
   func startCamera() {
@@ -118,63 +137,59 @@ class RecordDocumentViewModel: ObservableObject {
   }
 
   func startRecordDocument() {
-    let config = AVBeamRecordDocumentConfig(timeout: recordDocumentTimeout)
-    let avBeam = avBeam
+    do {
+      let inputFile = try updateInputFileUseCase()
+      let config = AVBeamRecordDocumentConfig(files: [inputFile], timeout: recordDocumentTimeout)
+      let avBeam = avBeam
 
-    buttonState = .record
+      buttonState = .record
 
-    Task.detached { [weak self] in
-      do {
-        try avBeam.startRecordDocument(config: config)
-        await MainActor.run {
-          self?.state = .camera
-        }
-      } catch {
-        await MainActor.run {
-          self?.handleError(error)
+      Task.detached { [weak self] in
+        do {
+          try avBeam.startRecordDocument(config: config)
+          await MainActor.run {
+            self?.state = .camera
+          }
+        } catch {
+          await MainActor.run {
+            self?.handleError(error)
+          }
         }
       }
+    } catch {
+      handleError(error)
     }
   }
 
   func stopRecordDocument() {
-    buttonState = .initial
     reset()
     avBeam.stopRecordDocument()
   }
 
   // MARK: Private
 
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.scanDelay) private var scanDelay
-  @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
-  @Injected(\.recordDocumentTimeout) private var recordDocumentTimeout
-  @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.navigatorRoot) private var navigatorRoot
-
-  private func handleError(_ error: Error) {
-    analytics.log(error)
-    stop()
-    destination = .error(.retry(error, { [weak self] navigator in
-      self?.reset()
-      self?.startCamera()
-      navigator.pop()
-    }))
-  }
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.scanDelay) private var scanDelay
+  @ObservationIgnored @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
+  @ObservationIgnored @Injected(\.recordDocumentTimeout) private var recordDocumentTimeout
+  @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.updateInputFileUseCase) private var updateInputFileUseCase: UpdateInputFileUseCaseProtocol
 
   private func reset() {
     scanningState = .recto
     isNotificationPresented = false
     notification = nil
     buttonState = .initial
+    timer?.invalidate()
+    timer = nil
   }
 }
 
 // MARK: AVBeamMessageDelegate
 
 extension RecordDocumentViewModel: AVBeamMessageDelegate {
-
   nonisolated func didReceiveError(error: AVBeamError) {
     Task { @MainActor in
       analytics.log(error)
@@ -186,11 +201,18 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
       switch notification {
       case .initialized:
         self.startCamera()
+        state = .camera
 
       case .streamingStarted:
         buttonState = .initial
 
       case .docRecordingStarted:
+        // The SDK does not have an event to notify the record of one side, so we use a Timer to flip the overlay and indicate the user to turn its document
+        if buttonState != .record {
+          return
+        }
+
+        self.timer?.invalidate()
         self.timer = .scheduledTimer(withTimeInterval: self.recordDocumentTimeout / 2, repeats: false, block: { @MainActor _ in
           self.scanningState = .verso
         })
@@ -205,7 +227,6 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
 // MARK: AVBeamRecordDocumentDelegate
 
 extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
-
   nonisolated func didCompleteRecordDocument(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       do {
@@ -230,5 +251,38 @@ extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
       }
     }
   }
+}
 
+// MARK: - Error Handling
+
+extension RecordDocumentViewModel {
+
+  private func handleError(_ error: Error) {
+    analytics.log(error)
+    reset()
+    stop()
+    destination = .error(errorDataset(for: error))
+  }
+
+  private func errorDataset(for error: Error) -> ErrorDataset {
+    guard let avBeamError = error as? AVBeamError else {
+      return ErrorDataset.retry(error, retryHandler())
+    }
+
+    return .avBeamError(avBeamError, retryAction: retryHandler(), closeAction: closeHandler())
+  }
+
+  private func closeHandler() -> () -> Void {
+    { [weak self] in
+      self?.coordinator.cleanup()
+    }
+  }
+
+  private func retryHandler() -> (Navigator) -> Void {
+    { [weak self] navigator in
+      guard let self else { return }
+      reset()
+      navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordDocumentInformation)
+    }
+  }
 }

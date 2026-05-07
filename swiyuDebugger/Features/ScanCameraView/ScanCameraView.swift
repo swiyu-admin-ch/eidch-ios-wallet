@@ -1,88 +1,75 @@
+import BITCredential
+import BITCredentialShared
 import BITInvitation
 import BITL10n
 import BITPresentation
 import BITQRCode
 import BITTheming
+import NavigatorUI
 import SwiftUI
+
+// MARK: - ScanCameraView
 
 struct ScanCameraView: View {
 
   // MARK: Lifecycle
 
-  init() {
-    let router = ScanCameraRouter()
-    _router = StateObject(wrappedValue: router)
-    _viewModel = StateObject(wrappedValue: CameraViewModel(router: router))
+  init(url: URL? = nil) {
+    if let url {
+      _viewModel = State(initialValue: CameraViewModel(url: url))
+    } else {
+      _viewModel = State(initialValue: CameraViewModel())
+    }
   }
 
   // MARK: Internal
 
   var body: some View {
-    NavigationStack(path: $path) {
+    ManagedNavigationStack {
       VStack {
         scannerView()
       }
-      .cameraPermission()
+      .cameraPermission { state in
+        Task {
+          if state == .authorized {
+            await viewModel.onAppear()
+          }
+        }
+      }
       .toolbar { toolbar }
-      .task {
-        await viewModel.onAppear()
+      .navigate(to: $destination)
+      .navigationBarBackButtonHidden()
+      .onChange(of: viewModel.destination) { _, destinationValue in
+        guard let destinationValue else { return }
+        destination = ScanCameraDestination(
+          invitationDestination: destinationValue,
+          invitationURL: viewModel.currentInvitationURL)
       }
-      .onAppear {
-        router.onClose = { dismiss() }
-      }
-      .onChange(of: router.route?.id) { _ in
-        guard let route = router.route else { return }
-        path.append(route)
-        router.route = nil
-      }
-      .onChange(of: currentErrorMessage) { message in
+      .onChange(of: currentErrorMessage) { _, message in
         guard let message, message != lastErrorMessage else { return }
         lastErrorMessage = message
         if let error = viewModel.currentError {
-          path.append(ScanCameraErrorRoute(error: error))
+          destination = .error(error, viewModel.currentInvitationURL)
         }
-      }
-      .navigationDestination(for: ScanCameraRoute.self) { route in
-        switch route.destination {
-        case .credential(let credential, let trustInformation):
-          ScanResultView(
-            mode: .credential(credential, trustInformation),
-            invitationURL: viewModel.currentInvitationURL,
-            onClose: { dismiss() })
-        case .presentation(let context):
-          ScanResultView(
-            mode: .presentation(context),
-            invitationURL: viewModel.currentInvitationURL,
-            onClose: { dismiss() })
-        }
-      }
-      .navigationDestination(for: ScanCameraErrorRoute.self) { route in
-        ScanResultView(
-          mode: .error(route.error),
-          invitationURL: viewModel.currentInvitationURL,
-          onClose: { dismiss() })
       }
     }
   }
 
   // MARK: Private
 
-  private struct ScanCameraError: Error {
-    let message: String
-  }
-
   @Environment(\.dismiss) private var dismiss
-  @StateObject private var router: ScanCameraRouter
-  @StateObject private var viewModel: CameraViewModel
-  @State private var path = NavigationPath()
+  @Environment(\.navigator) private var navigator
+  @State private var viewModel = CameraViewModel()
+  @State private var destination: ScanCameraDestination?
   @State private var lastErrorMessage: String?
 
   @ToolbarContentBuilder
   private var toolbar: some ToolbarContent {
     ToolbarItem(placement: .navigationBarTrailing) {
-      Button(role: .close) {
-        dismiss()
-      }
+      Button(action: { dismiss() }, label: {
+        Image(systemName: "xmark")
+      })
+      .accessibilityLabel(L10n.tkGlobalClose)
     }
   }
 
@@ -93,7 +80,7 @@ struct ScanCameraView: View {
 
   private func scannerView() -> some View {
     ZStack {
-      CameraPreview(session: viewModel.session, object: viewModel.cameraManager.capturedObject, viewModel.didMoveFocusArea(to:))
+      CameraPreview(session: viewModel.cameraManager.session, object: viewModel.cameraManager.capturedObject, viewModel.didMoveFocusArea(to:))
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .padding(.top, .x2)
         .ignoresSafeArea(edges: [.bottom])
@@ -113,5 +100,4 @@ struct ScanCameraView: View {
       }
     }
   }
-
 }

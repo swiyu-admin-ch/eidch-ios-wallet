@@ -11,7 +11,7 @@ public struct LoginView: View {
   // MARK: Lifecycle
 
   public init(viewModel: LoginViewModel) {
-    _viewModel = StateObject(wrappedValue: viewModel)
+    _viewModel = State(initialValue: viewModel)
   }
 
   // MARK: Public
@@ -26,9 +26,6 @@ public struct LoginView: View {
           .accessibilityHidden(true))
       .task {
         UIAccessibility.post(notification: .screenChanged, argument: L10n.tkLoginPasswordAlt)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          focus = .input
-        }
       }
       .accessibilityElement(children: .contain)
       .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
@@ -44,14 +41,9 @@ public struct LoginView: View {
 
   // MARK: Private
 
-  private enum Focus: Hashable {
-    case title, subtitle, input, inputText, loginButton, biometricButton, helpButton
-  }
-
   @Environment(\.sizeCategory) private var sizeCategory
   @FocusState private var inputFocused: Bool
-  @AccessibilityFocusState private var focus: Focus?
-  @StateObject private var viewModel: LoginViewModel
+  @State private var viewModel: LoginViewModel
 
   @Orientation private var orientation
 
@@ -77,7 +69,6 @@ public struct LoginView: View {
 // MARK: - Loading
 
 extension LoginView {
-
   private func loadingView() -> some View {
     VStack {
       Spacer()
@@ -88,13 +79,11 @@ extension LoginView {
     }
     .frame(maxWidth: .infinity)
   }
-
 }
 
 // MARK: - Locked
 
 extension LoginView {
-
   private func lockedView() -> some View {
     VStack {
       Spacer()
@@ -105,13 +94,11 @@ extension LoginView {
         Text(L10n.tkLoginLockedTitle)
           .font(.custom.title)
           .accessibilitySortPriority(1000)
-          .accessibilityFocused($focus, equals: .title)
           .multilineTextAlignment(.center)
         if let timeLeft = viewModel.timeLeft {
           Text(timeLeft)
             .multilineTextAlignment(.center)
             .accessibilitySortPriority(900)
-            .accessibilityFocused($focus, equals: .subtitle)
         }
         Spacer()
       }
@@ -157,15 +144,12 @@ extension LoginView {
     .environment(\.colorScheme, .light)
     .controlSize(.large)
     .accessibilitySortPriority(700)
-    .accessibilityFocused($focus, equals: .helpButton)
   }
-
 }
 
 // MARK: - Login Biometrics
 
 extension LoginView {
-
   private func loginBiometricsView() -> some View {
     VStack {
       Spacer()
@@ -174,9 +158,7 @@ extension LoginView {
           .accessibilityHidden(true)
         Text(L10n.tkGlobalWelcomeback)
           .font(.custom.title)
-          .accessibilityFocused($focus, equals: .title)
         Text(L10n.tkLoginVariantBody)
-          .accessibilityFocused($focus, equals: .subtitle)
       }
       .accessibilityElement(children: .combine)
       Spacer()
@@ -185,13 +167,11 @@ extension LoginView {
     .frame(maxWidth: .infinity)
     .padding(.x6)
   }
-
 }
 
 // MARK: - Login Password
 
 extension LoginView {
-
   private func loginPasswordView() -> some View {
     ScrollView {
       VStack {
@@ -240,9 +220,7 @@ extension LoginView {
       }
       Text(L10n.tkGlobalWelcomeback)
         .font(.custom.title)
-        .accessibilityFocused($focus, equals: .title)
       Text(L10n.tkLoginFacenotrecognised2Body)
-        .accessibilityFocused($focus, equals: .subtitle)
     }
     .accessibilityElement(children: .combine)
 
@@ -251,7 +229,6 @@ extension LoginView {
       attemptsMessageView()
         .padding(.horizontal, .x3)
     }
-    .accessibilityElement(children: .combine)
 
     Spacer()
   }
@@ -261,13 +238,11 @@ extension LoginView {
       if viewModel.isBiometricAuthenticationAvailable {
         biometricButton()
           .buttonStyle(.secondary)
-          .accessibilitySortPriority(500)
       }
 
       Spacer()
 
       loginButton()
-        .accessibilitySortPriority(600)
     }
     .padding(.horizontal, .x6)
     .padding(.vertical, .x2)
@@ -295,11 +270,10 @@ extension LoginView {
         inputFocused = true
       }
     }
-    .onChange(of: viewModel.attemptsLeft) { _ in
+    .onChange(of: viewModel.attemptsLeft) {
       UIAccessibility.post(notification: .announcement, argument: viewModel.inputFieldMessage)
     }
-    .accessibilitySortPriority(800)
-    .accessibilityFocused($focus, equals: .input)
+    .accessibilityPriorityFocus()
     .secureTextFieldAccessibilityIdentifier(AccessibilityIdentifier.pinField.rawValue)
   }
 
@@ -310,16 +284,13 @@ extension LoginView {
         .font(.custom.footnote)
         .multilineTextAlignment(.leading)
         .accessibilitySortPriority(700)
-        .accessibilityFocused($focus, equals: .inputText)
     }
   }
-
 }
 
 // MARK: - General
 
 extension LoginView {
-
   private func biometricButton() -> some View {
     Button {
       Task {
@@ -334,7 +305,6 @@ extension LoginView {
       }
     }
     .controlSize(.large)
-    .accessibilityFocused($focus, equals: .biometricButton)
     .environment(\.colorScheme, .light)
   }
 
@@ -347,10 +317,8 @@ extension LoginView {
     .environment(\.colorScheme, .light)
     .buttonStyle(.primary)
     .controlSize(.large)
-    .accessibilityFocused($focus, equals: .loginButton)
     .accessibilityIdentifier(AccessibilityIdentifier.loginButton.rawValue)
   }
-
 }
 
 #if DEBUG

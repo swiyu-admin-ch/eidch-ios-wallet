@@ -26,6 +26,7 @@ struct TypeDecodedOverlay: Decodable {
     case .branding1_1: try BrandingOverlay1x1(from: decoder)
     case .characterEncoding1_0: try CharacterEncodingOverlay1x0(from: decoder)
     case .dataSource1_0: try DataSourceOverlay1x0(from: decoder)
+    case .dataSource2_0: try DataSourceOverlay2x0(from: decoder)
     case .entry1_0: try EntryOverlay1x0(from: decoder)
     case .entryCode1_0: try EntryCodeOverlay1x0(from: decoder)
     case .format1_0: try FormatOverlay1x0(from: decoder)

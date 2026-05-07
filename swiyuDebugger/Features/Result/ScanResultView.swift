@@ -6,6 +6,7 @@ import BITNonCompliance
 import BITPresentation
 import BITTheming
 import Foundation
+import NavigatorUI
 import SwiftUI
 import UIKit
 
@@ -15,7 +16,6 @@ struct ScanResultView: View {
 
   let mode: ScanResult
   let invitationURL: URL?
-  let onClose: () -> Void
 
   var body: some View {
     List {
@@ -41,7 +41,7 @@ struct ScanResultView: View {
 
       ToolbarItem(placement: .navigationBarTrailing) {
         Button {
-          onClose()
+          navigator.dismiss()
         } label: {
           Image(systemName: "xmark")
         }
@@ -56,6 +56,7 @@ struct ScanResultView: View {
   // MARK: Private
 
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.navigator) private var navigator
 
   @State private var logURL: URL?
   @State private var selectedClaimLanguage: String?
@@ -96,9 +97,11 @@ struct ScanResultView: View {
       invitationUrlSection(invitationURL)
 
       Section("Raw credential") {
-        if let rawCredential = String(data: verifiableCredential.payload, encoding: .utf8) {
-          Text(truncated(rawCredential))
-            .copyShareMenu(text: rawCredential, shareItem: rawCredential)
+        ForEach(verifiableCredential.bundleItems) { bundleItem in
+          if let rawCredential = String(data: bundleItem.payload, encoding: .utf8) {
+            Text(truncated(rawCredential))
+              .copyShareMenu(text: rawCredential, shareItem: rawCredential)
+          }
         }
       }
     } else if let deferredCredential = credential as? DeferredCredential {
@@ -188,8 +191,8 @@ struct ScanResultView: View {
 
   @ViewBuilder
   private func networkError(_ error: NetworkError) -> some View {
-    Text("Network error status: \(networkError.status)")
-    if let response = networkError.response {
+    Text("Network error status: \(error.status)")
+    if let response = error.response {
       Text("HTTP status code: \(response.statusCode)")
       if let httpResponse = response.response {
         let headerText = httpResponse.allHeaderFields

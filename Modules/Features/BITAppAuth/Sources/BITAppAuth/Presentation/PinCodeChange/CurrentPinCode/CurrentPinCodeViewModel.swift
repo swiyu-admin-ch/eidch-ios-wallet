@@ -1,11 +1,11 @@
 import BITCore
 import BITL10n
-import Combine
 import Factory
 import SwiftUI
 
 @MainActor
-public class CurrentPinCodeViewModel: ObservableObject, Vibrating {
+@Observable
+public class CurrentPinCodeViewModel: Vibrating {
 
   // MARK: Lifecycle
 
@@ -19,11 +19,11 @@ public class CurrentPinCodeViewModel: ObservableObject, Vibrating {
 
   var router: ChangePinCodeInternalRoutes
 
-  @Published var inputFieldMessage: String?
-  @Published var attempts = 0
-  @Published var inputFieldState = InputFieldState.normal
+  var inputFieldMessage: String?
+  var attempts = 0
+  var inputFieldState = InputFieldState.normal
 
-  @Published var pinCode = "" {
+  var pinCode = "" {
     didSet {
       guard userDidRequestValidation else { return }
       inputFieldState = .normal
@@ -52,15 +52,13 @@ public class CurrentPinCodeViewModel: ObservableObject, Vibrating {
   // MARK: Private
 
   private var userDidRequestValidation = false
-  private var bag = Set<AnyCancellable>()
-
-  @Injected(\.getUniquePassphraseUseCase) private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocol
-  @Injected(\.lockWalletUseCase) private var lockWalletUseCase: LockWalletUseCaseProtocol
-  @Injected(\.registerLoginAttemptCounterUseCase) private var registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocol
-  @Injected(\.getLoginAttemptCounterUseCase) private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocol
-  @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
-  @Injected(\.attemptsLimit) private var attemptsLimit: Int
-  @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
+  @ObservationIgnored @Injected(\.getUniquePassphraseUseCase) private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocol
+  @ObservationIgnored @Injected(\.lockWalletUseCase) private var lockWalletUseCase: LockWalletUseCaseProtocol
+  @ObservationIgnored @Injected(\.registerLoginAttemptCounterUseCase) private var registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocol
+  @ObservationIgnored @Injected(\.getLoginAttemptCounterUseCase) private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocol
+  @ObservationIgnored @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
+  @ObservationIgnored @Injected(\.attemptsLimit) private var attemptsLimit: Int
+  @ObservationIgnored @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
 
   private var attemptLeft: Int {
     attemptsLimit - attempts

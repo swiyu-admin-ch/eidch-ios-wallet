@@ -16,12 +16,7 @@ public struct RequestCasesListView: View {
   public var body: some View {
     Section {
       ForEach(requestCases) { requestCase in
-        VStack {
-          requestCase.view()
-        }
-        .padding(.x6)
-        .background(ThemingAssets.Background.secondary.swiftUIColor)
-        .cornerRadius(.x5)
+        requestCase.view()
       }
     }
   }

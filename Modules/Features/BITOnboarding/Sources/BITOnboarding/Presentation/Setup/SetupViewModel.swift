@@ -8,7 +8,8 @@ import SwiftUI
 // MARK: - SetupViewModel
 
 @MainActor
-class SetupViewModel: ObservableObject {
+@Observable
+class SetupViewModel {
 
   // MARK: Lifecycle
 
@@ -18,9 +19,9 @@ class SetupViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @AppStorage("rootOnboardingIsEnabled") var isOnboardingEnabled = true
+  @ObservationIgnored @AppStorage("rootOnboardingIsEnabled") var isOnboardingEnabled = true
 
-  @Published var isAnimating = true
+  var isAnimating = true
 
   func run() async {
     do {
@@ -48,14 +49,15 @@ class SetupViewModel: ObservableObject {
   }
 
   private let router: OnboardingInternalRoutes
-  @Injected(\.registerPinCodeUseCase) private var registerPinCodeUseCase
-  @Injected(\.updateAnalyticsStatusUseCase) private var updateAnalyticsStatusUseCase
-  @Injected(\.setActivityHistoryEnabledUseCase) private var setActivityHistoryEnabledUseCase
+  @ObservationIgnored @Injected(\.registerPinCodeUseCase) private var registerPinCodeUseCase
+  @ObservationIgnored @Injected(\.updateAnalyticsStatusUseCase) private var updateAnalyticsStatusUseCase
+  @ObservationIgnored @Injected(\.setActivityHistoryEnabledUseCase) private var setActivityHistoryEnabledUseCase
 
 }
 
 // MARK: SetupDelegate
 
+@MainActor
 extension SetupViewModel: SetupDelegate {
 
   func restartSetup() {
@@ -66,6 +68,7 @@ extension SetupViewModel: SetupDelegate {
 
 // MARK: - SetupDelegate
 
+@MainActor
 protocol SetupDelegate: AnyObject {
   func restartSetup()
 }

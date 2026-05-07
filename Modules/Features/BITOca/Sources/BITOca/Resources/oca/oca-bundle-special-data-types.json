@@ -13,14 +13,14 @@
   ],
   "overlays": [
     {
-      "type": "extend/overlays/data_source/1.0",
+      "type": "extend/overlays/data_source/2.0",
       "capture_base": "IA3xagEuuWXIcezq4t5DQY7NXWj4xTV8NAgn4OcxYtoB",
       "format": "vc+sd-jwt",
       "attribute_sources": {
-        "icon": "$.icon",
-        "regexAttribute": "$.regexAttribute",
-        "date": "$.date",
-        "binaryIcon": "$.binaryIcon"
+        "icon": ["icon"],
+        "regexAttribute": ["regexAttribute"],
+        "date": ["date"],
+        "binaryIcon": ["binaryIcon"]
       }
     },
     {

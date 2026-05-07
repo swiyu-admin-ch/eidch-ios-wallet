@@ -17,7 +17,7 @@ class WalletPairingListViewModelTests: XCTestCase {
   override func setUp() {
     super.setUp()
     registerMocks()
-    viewModel = WalletPairingListViewModel()
+    viewModel = WalletPairingListViewModel(caseId: mockCaseId)
   }
 
   override func tearDown() {
@@ -29,9 +29,9 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   func testInitialState() {
     XCTAssertEqual(viewModel.currentDevicePairingState, .initial)
+    XCTAssertTrue(viewModel.isInitialLoading)
     XCTAssertTrue(viewModel.isPrimaryButtonDisabled)
-    XCTAssertFalse(viewModel.isToastPresented)
-    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertNil(viewModel.toast)
     XCTAssertEqual(viewModel.pairedDevicesCounter, 0)
     XCTAssertFalse(viewModel.isLimitReached)
     XCTAssertTrue(walletPairingPollingManager.delegate === viewModel)
@@ -52,13 +52,11 @@ class WalletPairingListViewModelTests: XCTestCase {
   }
 
   func testPairDevice_otherDevice_clearsToast() async {
-    viewModel.toastMessage = "Test message"
-    viewModel.isToastPresented = true
+    viewModel.toast = Toast("Test message")
 
     await viewModel.pairDevice(.other)
 
-    XCTAssertFalse(viewModel.isToastPresented)
-    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertNil(viewModel.toast)
   }
 
   @MainActor
@@ -68,9 +66,9 @@ class WalletPairingListViewModelTests: XCTestCase {
     await viewModel.pairDevice(.current)
 
     XCTAssertEqual(pairWalletUseCase.executeForCallsCount, 1)
-    XCTAssertEqual(pairWalletUseCase.executeForReceivedCaseId, caseId)
+    XCTAssertEqual(pairWalletUseCase.executeForReceivedCaseId, mockCaseId)
 
-    XCTAssertEqual(walletPairingPollingManager.startPollingForPairingIdReceivedArguments?.caseId, caseId)
+    XCTAssertEqual(walletPairingPollingManager.startPollingForPairingIdReceivedArguments?.caseId, mockCaseId)
     XCTAssertEqual(walletPairingPollingManager.startPollingForPairingIdReceivedArguments?.pairingId, mockPairingId)
   }
 
@@ -118,7 +116,9 @@ class WalletPairingListViewModelTests: XCTestCase {
   func testPrimaryAction_success() {
     viewModel.primaryAction()
 
-    XCTAssertEqual(viewModel.destination, .avIdentityCheck)
+    if case .avIdentityCheck(let caseId) = viewModel.destination {
+      XCTAssertEqual(caseId, mockCaseId)
+    }
   }
 
   // MARK: - Close Tests
@@ -132,13 +132,11 @@ class WalletPairingListViewModelTests: XCTestCase {
   // MARK: - Toast Tests
 
   func testClearToast() {
-    viewModel.toastMessage = "Test message"
-    viewModel.isToastPresented = true
+    viewModel.toast = Toast("Test message")
 
     viewModel.clearToast()
 
-    XCTAssertFalse(viewModel.isToastPresented)
-    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertNil(viewModel.toast)
   }
 
   func testToastAndClearToast_sequence() async {
@@ -146,20 +144,17 @@ class WalletPairingListViewModelTests: XCTestCase {
     setupStatusResponse(state: .inTargetWalletPairing, pairedWalletCount: 1, limitReached: false)
 
     viewModel.didPairWallet()
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertNotNil(viewModel.toastMessage)
+    XCTAssertNotNil(viewModel.toast)
 
     await waitForAsyncTask()
 
     viewModel.clearToast()
-    XCTAssertFalse(viewModel.isToastPresented)
-    XCTAssertNil(viewModel.toastMessage)
+    XCTAssertNil(viewModel.toast)
 
     viewModel.didPairWallet()
 
     await waitForAsyncTask()
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertNotNil(viewModel.toastMessage)
+    XCTAssertNotNil(viewModel.toast)
   }
 
   // MARK: - FetchStatus Tests
@@ -169,10 +164,11 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await viewModel.fetchStatus()
 
+    XCTAssertFalse(viewModel.isInitialLoading)
     XCTAssertTrue(fetchEIDRequestCaseUseCase.executeCaseIdCalled)
-    XCTAssertEqual(fetchEIDRequestCaseUseCase.executeCaseIdReceivedCaseId, caseId)
+    XCTAssertEqual(fetchEIDRequestCaseUseCase.executeCaseIdReceivedCaseId, mockCaseId)
     XCTAssertTrue(fetchEIDRequestStatusUseCase.executeForCalled)
-    XCTAssertEqual(fetchEIDRequestStatusUseCase.executeForReceivedCaseId, caseId)
+    XCTAssertEqual(fetchEIDRequestStatusUseCase.executeForReceivedCaseId, mockCaseId)
   }
 
   func testFetchStatus_withNoCaseId_returnsEarly() async {
@@ -180,6 +176,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await viewModel.fetchStatus()
 
+    XCTAssertFalse(viewModel.isInitialLoading)
     XCTAssertFalse(fetchEIDRequestCaseUseCase.executeCaseIdCalled)
     XCTAssertFalse(fetchEIDRequestStatusUseCase.executeForCalled)
   }
@@ -189,6 +186,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await viewModel.fetchStatus()
 
+    XCTAssertFalse(viewModel.isInitialLoading)
     if case .error(let dataset) = viewModel.destination {
       XCTAssertEqual(dataset, ErrorDataset(TestingError.error, [.primary(L10n.tkGlobalClose) { _ in }]))
     } else {
@@ -201,6 +199,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     await viewModel.fetchStatus()
 
+    XCTAssertFalse(viewModel.isInitialLoading)
     if case .error(let dataset) = viewModel.destination {
       XCTAssertEqual(dataset, ErrorDataset(TestingError.error, [.primary(L10n.tkGlobalClose) { _ in }]))
     } else {
@@ -215,8 +214,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
     viewModel.didPairWallet()
 
-    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
-    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertEqual(viewModel.toast?.message, L10n.tkEidRequestWalletPairingNotificationSuccess)
 
     await waitForAsyncTask()
 
@@ -234,8 +232,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     viewModel.didPairWallet()
 
     // Toast should still be shown even without case ID
-    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
-    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertEqual(viewModel.toast?.message, L10n.tkEidRequestWalletPairingNotificationSuccess)
 
     XCTAssertFalse(fetchEIDRequestStatusUseCase.executeForCalled)
   }
@@ -246,8 +243,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     viewModel.didPairWallet()
 
     // Toast should still be shown
-    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
-    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertEqual(viewModel.toast?.message, L10n.tkEidRequestWalletPairingNotificationSuccess)
 
     await waitForAsyncTask()
 
@@ -390,6 +386,21 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isCurrentDevicePaired)
   }
 
+  func testCurrentDevicePairingDate_withDeferredCredential_returnsFormattedDate() async {
+    setupSuccessfulStatusResponse()
+    await viewModel.fetchStatus()
+
+    XCTAssertNotNil(viewModel.currentDevicePairingDate)
+  }
+
+  func testCurrentDevicePairingDate_withoutDeferredCredential_returnsNil() async {
+    fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase.Mock.sampleAgentReview
+    setupSuccessfulStatusResponse()
+    await viewModel.fetchStatus()
+
+    XCTAssertNil(viewModel.currentDevicePairingDate)
+  }
+
   func testIsLimitReached_withNoTargetWallets() {
     viewModel.targetWallets = nil
     XCTAssertFalse(viewModel.isLimitReached)
@@ -405,6 +416,36 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isLimitReached)
   }
 
+  func testShouldShowCurrentDeviceSection_whenLimitReachedAndCurrentDeviceNotPaired_isFalse() {
+    fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase.Mock.sampleAgentReview
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(limitReached: true, pairedWallets: [])
+
+    XCTAssertFalse(viewModel.shouldShowCurrentDeviceSection)
+  }
+
+  func testShouldShowCurrentDeviceSection_whenCurrentDeviceCanStillBePaired_isTrue() {
+    fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase.Mock.sampleAgentReview
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(limitReached: false, pairedWallets: [])
+
+    XCTAssertTrue(viewModel.shouldShowCurrentDeviceSection)
+  }
+
+  func testShouldShowCurrentDeviceSection_whenCurrentDeviceIsPaired_isTrue() async {
+    setupSuccessfulStatusResponse()
+
+    await viewModel.fetchStatus()
+
+    XCTAssertTrue(viewModel.shouldShowCurrentDeviceSection)
+  }
+
+  func testShouldShowCurrentDeviceSection_whenCurrentDevicePairingFinishedInSession_isTrue() {
+    let pairingDate = "18.03.2026 14:15"
+    viewModel.currentDevicePairingState = .paired(pairingDate)
+    viewModel.targetWallets = EIDRequestStatus.TargetWallet(limitReached: true, pairedWallets: [])
+
+    XCTAssertTrue(viewModel.shouldShowCurrentDeviceSection)
+  }
+
   // MARK: - Polling Delegate Tests
 
   func testPollingManagerDidUpdateState_acceptedState_updateCurrentDevice() {
@@ -415,8 +456,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     viewModel.pollingManager(walletPairingPollingManager, didUpdateState: pollingState)
 
     XCTAssertEqual(walletPairingPollingManager.stopPollingCallsCount, 1)
-    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
-    XCTAssertTrue(viewModel.isToastPresented)
+    XCTAssertEqual(viewModel.toast?.message, L10n.tkEidRequestWalletPairingNotificationSuccess)
 
     // Verify paired state with formatted date
     if case .paired(let dateString) = viewModel.currentDevicePairingState {
@@ -487,8 +527,7 @@ class WalletPairingListViewModelTests: XCTestCase {
       didUpdateState: .state(.accepted))
 
     // Verify toast shown
-    XCTAssertTrue(viewModel.isToastPresented)
-    XCTAssertEqual(viewModel.toastMessage, L10n.tkEidRequestWalletPairingNotificationSuccess)
+    XCTAssertEqual(viewModel.toast?.message, L10n.tkEidRequestWalletPairingNotificationSuccess)
 
     // Verify paired state
     if case .paired = viewModel.currentDevicePairingState {
@@ -526,7 +565,7 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private let caseId = "testCaseId"
+  private let mockCaseId = "testCaseId"
   private let mockPairingId = "testPairingId"
 
   private var context: EIDRequestContext!
@@ -549,11 +588,11 @@ class WalletPairingListViewModelTests: XCTestCase {
       firstName: "firstname",
       deferredCredential: DeferredCredential.Mock.sample)
 
-    Container.shared.fetchEIDRequestCaseUseCase.register { self.fetchEIDRequestCaseUseCase }
-    Container.shared.fetchEIDRequestStatusUseCase.register { self.fetchEIDRequestStatusUseCase }
+    Container.shared.fetchEIDRequestCaseUseCase.register { @MainActor in self.fetchEIDRequestCaseUseCase }
+    Container.shared.fetchEIDRequestStatusUseCase.register { @MainActor in self.fetchEIDRequestStatusUseCase }
 
     context = EIDRequestContext()
-    context.caseId = caseId
+    context.caseId = mockCaseId
 
     pairWalletUseCase = PairWalletUseCaseProtocolSpy()
     pairWalletUseCase.executeForReturnValue = mockPairingId
@@ -561,10 +600,10 @@ class WalletPairingListViewModelTests: XCTestCase {
     walletPairingDateFormatter = DateFormatter(format: "dd.MM.yyyy HH:mm")
     walletPairingPollingManager = WalletPairingPollingProtocolSpy()
 
-    Container.shared.pairWalletUseCase.register { self.pairWalletUseCase }
-    Container.shared.walletPairingDateFormatter.register { self.walletPairingDateFormatter }
-    Container.shared.walletPairingPollingManager.register { self.walletPairingPollingManager }
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.pairWalletUseCase.register { @MainActor in self.pairWalletUseCase }
+    Container.shared.walletPairingDateFormatter.register { @MainActor in self.walletPairingDateFormatter }
+    Container.shared.walletPairingPollingManager.register { @MainActor in self.walletPairingPollingManager }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
   }
 
   private func setupSuccessfulStatusResponse() {

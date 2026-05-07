@@ -12,7 +12,8 @@ import SwiftUI
 // MARK: - RecordSelfieViewModel
 
 @MainActor
-class RecordSelfieViewModel: ObservableObject {
+@Observable
+final class RecordSelfieViewModel {
 
   // MARK: Lifecycle
 
@@ -28,31 +29,42 @@ class RecordSelfieViewModel: ObservableObject {
     case camera
   }
 
-  @Published var state = StateView.loading
-  @Published var buttonState = RecordingButton.State.initial
-  @Published var isNotificationPresented = false
-  @Published var notification: AVBeamNotification? = nil
+  var state = StateView.loading
+  var buttonState = RecordingButton.State.initial
+  var isNotificationPresented = false
+  var notification: AVBeamNotification?
 
-  @Injected(\.avBeam) var avBeam: AVBeamProtocol
+  @ObservationIgnored @Injected(\.avBeam) var avBeam: AVBeamProtocol
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
-  func initializeSDK() {
-    if avBeam.state == .initialized {
-      startCamera()
-      return
-    }
-
-    do {
-      let config = AVBeamInitConfig(appId: avBeamAppID)
-      try avBeam.initialize(using: config)
-    } catch {
-      handleError(error)
+  var buttonStateAccessibilityLabel: String {
+    switch buttonState {
+    case .initial: L10n.tkEidRequestRecordSelfieButtonInitialStateAlt
+    case .record: L10n.tkEidRequestRecordSelfieButtonRecordStateAlt
+    case .loading,
+         .success: ""
     }
   }
 
-  func stop() {
-    avBeam.stopCaptureFace()
+  func checkInitializationState() {
+    switch avBeam.state {
+    case .notInitialized:
+      avBeam.shutdown()
+
+      do {
+        let config = AVBeamInitConfig(appId: avBeamAppID)
+        try avBeam.initialize(using: config)
+      } catch {
+        handleError(error)
+      }
+
+    case .initializing:
+      state = .loading
+
+    case .initialized:
+      startCamera()
+    }
   }
 
   func startCamera() {
@@ -72,55 +84,56 @@ class RecordSelfieViewModel: ObservableObject {
   }
 
   func startRecordSelfie() {
-    let config = AVBeamCaptureFaceConfig(files: [], duration: recordSelfieTimeout)
-    let avBeam = avBeam
+    do {
+      let inputFile = try updateInputFileUseCase()
+      let config = AVBeamCaptureFaceConfig(files: [inputFile], duration: recordSelfieTimeout)
+      let avBeam = avBeam
 
-    buttonState = .record
+      buttonState = .record
 
-    Task.detached { [weak self] in
-      do {
-        try avBeam.startCaptureFace(config: config)
-        await MainActor.run {
-          self?.state = .camera
-        }
-      } catch {
-        await MainActor.run {
-          self?.handleError(error)
+      Task.detached { [weak self] in
+        do {
+          try avBeam.startCaptureFace(config: config)
+          await MainActor.run {
+            self?.state = .camera
+          }
+        } catch {
+          await MainActor.run {
+            self?.handleError(error)
+          }
         }
       }
+    } catch {
+      handleError(error)
     }
+  }
+
+  func stop() {
+    avBeam.stopCaptureFace()
+    try? avBeam.stopCamera()
   }
 
   func stopRecordSelfie() {
     reset()
-    stop()
+    avBeam.stopCaptureFace()
   }
 
-  func cancelInitialization() {
+  func cancelInitialization(_ navigator: Navigator) {
     avBeam.shutdown()
-    navigatorRoot.returnToCheckpoint(EIDRequestCheckpoints.recordSelfieInformation)
+    navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordSelfieInformation)
   }
 
   // MARK: Private
 
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
 
-  @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
-  @Injected(\.recordSelfieTimeout) private var recordSelfieTimeout
-  @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.navigatorRoot) private var navigatorRoot
-  @Injected(\.scanDelay) private var scanDelay
-
-  private func handleError(_ error: Error) {
-    analytics.log(error)
-    stop()
-    destination = .error(.retry(error, { [weak self] navigator in
-      self?.reset()
-      self?.startCamera()
-      navigator.pop()
-    }))
-  }
+  @ObservationIgnored @Injected(\.saveEIDRequestFilesUseCase) private var saveEIDRequestFilesUseCase
+  @ObservationIgnored @Injected(\.recordSelfieTimeout) private var recordSelfieTimeout
+  @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
+  @ObservationIgnored @Injected(\.scanDelay) private var scanDelay
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.updateInputFileUseCase) private var updateInputFileUseCase: UpdateInputFileUseCaseProtocol
 
   private func reset() {
     isNotificationPresented = false
@@ -128,6 +141,10 @@ class RecordSelfieViewModel: ObservableObject {
     buttonState = .initial
   }
 
+  private func stopCamera() throws {
+    avBeam.stopCaptureFace()
+    try avBeam.stopCamera()
+  }
 }
 
 // MARK: AVBeamMessageDelegate
@@ -145,6 +162,7 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
       switch notification {
       case .initialized:
         self.startCamera()
+        state = .camera
       case .faceCapturingStopped:
         self.isNotificationPresented = false
         self.notification = nil
@@ -161,7 +179,6 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
 // MARK: AVBeamCaptureFaceDelegate
 
 extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
-
   nonisolated func didCompleteCaptureFace(packageResult: AVBeamPackageResult) {
     Task { @MainActor in
       guard packageResult.data.errorCode == .none else {
@@ -179,13 +196,49 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
         self.buttonState = .success
         try? await Task.sleep(nanoseconds: scanDelay)
 
-        self.stop()
-        try? avBeam.stopCamera()
+        try stopCamera()
         self.destination = .submitEidRequest
       } catch {
         self.handleError(error)
       }
     }
   }
+}
 
+// MARK: - Error Handling
+
+extension RecordSelfieViewModel {
+
+  private func handleError(_ error: Error) {
+    analytics.log(error)
+    stop()
+    destination = .error(errorDataset(for: error))
+  }
+
+  private func retryAction(_ navigator: Navigator) {
+    reset()
+    startCamera()
+    navigator.pop()
+  }
+
+  private func errorDataset(for error: Error) -> ErrorDataset {
+    guard let avBeamError = error as? AVBeamError else {
+      return ErrorDataset.retry(error, retryHandler())
+    }
+
+    return .avBeamError(avBeamError, retryAction: retryHandler(), closeAction: closeHandler())
+  }
+
+  private func closeHandler() -> () -> Void {
+    { [weak self] in
+      self?.coordinator.cleanup()
+    }
+  }
+
+  private func retryHandler() -> (Navigator) -> Void {
+    { [weak self] navigator in
+      self?.reset()
+      navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordSelfieInformation)
+    }
+  }
 }

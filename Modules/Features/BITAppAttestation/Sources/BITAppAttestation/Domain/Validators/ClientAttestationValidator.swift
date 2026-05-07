@@ -10,7 +10,7 @@ import Spyable
 
 @Spyable
 protocol ClientAttestationValidatorProtocol {
-  func validate(_ clientAttestation: ClientAttestation) async -> Bool
+  func callAsFunction(_ clientAttestation: ClientAttestation) async -> Bool
 }
 
 // MARK: - ClientAttestationValidator
@@ -19,7 +19,7 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
 
   // MARK: Internal
 
-  func validate(_ clientAttestation: ClientAttestation) async -> Bool {
+  func callAsFunction(_ clientAttestation: ClientAttestation) async -> Bool {
     do {
       guard
         clientAttestationSupportedAlgorithms.contains(clientAttestation.header.algorithm),

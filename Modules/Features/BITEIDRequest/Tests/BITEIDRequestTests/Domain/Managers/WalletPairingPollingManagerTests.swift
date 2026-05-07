@@ -13,10 +13,7 @@ final class WalletPairingPollingManagerTests: XCTestCase {
 
     delegate = WalletPairingPollingDelegateSpy()
     fetchWalletPairingStateUseCase = FetchWalletPairingStateUseCaseProtocolSpy()
-
-    Container.shared.fetchWalletPairingStateUseCase.register {
-      self.fetchWalletPairingStateUseCase
-    }
+    Container.shared.fetchWalletPairingStateUseCase.register { @MainActor in self.fetchWalletPairingStateUseCase }
 
     sut = WalletPairingPollingManager(pollingInterval: 0.1)
     sut.delegate = delegate

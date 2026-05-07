@@ -1,3 +1,4 @@
+import BITClaimsPathPointer
 import BITCore
 import Foundation
 import Spyable
@@ -7,6 +8,7 @@ import Spyable
 @Spyable
 public protocol AnyClaim {
   var key: String { get }
+  var path: ClaimsPathPointer { get }
   var value: CodableValue? { get }
 }
 

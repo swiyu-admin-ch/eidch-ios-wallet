@@ -68,7 +68,7 @@ final class RequestObjectTests: XCTestCase {
 
     let decoder = JSONDecoder()
     XCTAssertThrowsError(try decoder.decode(RequestObject.self, from: data)) { error in
-      XCTAssertEqual(error as? RequestObjectError, .invalidPayload)
+      XCTAssertEqual(error as? RequestObjectError, .invalidPayload())
     }
   }
 
@@ -77,7 +77,7 @@ final class RequestObjectTests: XCTestCase {
 
     let decoder = JSONDecoder()
     XCTAssertThrowsError(try decoder.decode(RequestObject.self, from: data)) { error in
-      XCTAssertEqual(error as? RequestObjectError, .invalidPayload)
+      XCTAssertEqual(error as? RequestObjectError, .invalidPayload())
     }
   }
 

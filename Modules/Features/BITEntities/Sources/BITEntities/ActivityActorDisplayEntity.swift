@@ -1,10 +1,11 @@
+import BITCore
 import Foundation
 import RealmSwift
 
-public class ActivityActorDisplayEntity: EmbeddedObject {
+public class ActivityActorDisplayEntity: EmbeddedObject, DisplayLocalizable {
 
   @Persisted public var name: String?
-  @Persisted public var locale: String?
+  @Persisted public var locale: UserLocale?
   @Persisted public var imageHash: String?
 
   public var image: Data? {

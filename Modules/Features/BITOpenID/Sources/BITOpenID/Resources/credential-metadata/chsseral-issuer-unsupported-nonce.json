@@ -6,52 +6,6 @@
     "chasseral-vc": {
       "format": "vc+sd-jwt",
       "vct": "chasseral-vc",
-      "claims": {
-        "id": {
-          "mandatory": true,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Holder binding key"
-            },
-            {
-              "locale": "en-US",
-              "name": "Holder binding key"
-            }
-          ]
-        },
-        "lastName": {
-          "mandatory": false,
-          "value_type": "string",
-          "display": [
-            {
-              "locale": "de-CH",
-              "name": "Name"
-            },
-            {
-              "locale": "fr-CH",
-              "name": "Nom de famille"
-            },
-            {
-              "locale": "it-CH",
-              "name": "Cognome"
-            },
-            {
-              "locale": "en-US",
-              "name": "Last name"
-            }
-          ]
-        },
-      },
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
@@ -65,7 +19,59 @@
           ]
         }
       },
-      "display": []
+      "credential_metadata": {
+        "display": [],
+        "claims": [
+          {
+            "path": [
+              "id"
+            ],
+            "mandatory": true,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Holder binding key"
+              },
+              {
+                "locale": "en-US",
+                "name": "Holder binding key"
+              }
+            ]
+          },
+          {
+            "path": [
+              "lastName"
+            ],
+            "mandatory": false,
+            "display": [
+              {
+                "locale": "de-CH",
+                "name": "Name"
+              },
+              {
+                "locale": "fr-CH",
+                "name": "Nom de famille"
+              },
+              {
+                "locale": "it-CH",
+                "name": "Cognome"
+              },
+              {
+                "locale": "en-US",
+                "name": "Last name"
+              }
+            ]
+          }
+        ]
+      }
     }
   },
   "credential_request_encryption": {

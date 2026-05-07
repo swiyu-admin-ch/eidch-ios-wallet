@@ -4,7 +4,7 @@ import Factory
 import Foundation
 import Moya
 
-// MARK: - PresentationRepository
+// MARK: - PresentationRequestRepository
 
 struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
 
@@ -30,11 +30,11 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
     do {
       try await networkService.request(PresentationEndpoint.submission(url: url, authorizationResponse: authorizationResponse))
     } catch {
-      try handleError(error)
+      throw parseAuthorizationResponseError(error)
     }
   }
 
-  func decline(url: URL, with error: PresentationErrorRequestBody.ErrorType) async throws {
+  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws {
     let presentationErrorRequestBody = PresentationErrorRequestBody(error: error)
     try await networkService.request(PresentationEndpoint.errorSubmission(url: url, presentationErrorBody: presentationErrorRequestBody))
   }
@@ -45,34 +45,27 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
   @Injected(\NetworkContainer.decoder) private var decoder: JSONDecoder
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
 
-  private func handleError(_ error: Error) throws {
-    guard let err = error as? NetworkError else { throw error }
-    switch err.status {
-    case .internalServerError,
-         .unprocessableEntity:
-      throw SubmitPresentationError.presentationFailed
+  private func parseAuthorizationResponseError(_ error: Error) -> Error {
+    guard let networkError = error as? NetworkError else { return error }
+    switch networkError.status {
     case .badRequest:
-      try handleBadRequest(err)
+      guard
+        let data = networkError.response?.data,
+        let responseError = try? decoder.decode(PresentationResponseError.self, from: data)
+      else {
+        return error
+      }
+      return PresentationRequestRepositoryError.presentationResponseError(responseError.error, responseError.errorDescription)
     case .invalidGrant:
-      throw SubmitPresentationError.invalidCredential
-    default: throw error
+      return PresentationRequestRepositoryError.invalidGrant
+    default: return networkError
     }
   }
+}
 
-  private func handleBadRequest(_ error: NetworkError) throws {
-    guard
-      let errorData = error.response?.data,
-      let errorBody = try? decoder.decode(PresentationErrorRequestBody.self, from: errorData)
-    else { throw SubmitPresentationError.presentationFailed }
+// MARK: - PresentationRequestRepositoryError
 
-    switch errorBody.error {
-    case .presentationProcessClosed:
-      throw SubmitPresentationError.processClosed
-    case .invalidRequest:
-      throw SubmitPresentationError.presentationFailed
-    case .invalidCredential:
-      throw SubmitPresentationError.invalidCredential
-    default: throw SubmitPresentationError.presentationFailed
-    }
-  }
+public enum PresentationRequestRepositoryError: Error, Equatable {
+  case presentationResponseError(String?, String?)
+  case invalidGrant
 }

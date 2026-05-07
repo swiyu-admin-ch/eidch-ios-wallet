@@ -10,6 +10,10 @@ extension RequestCaseViewState {
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
         content: viewModel.notificationContent)
+    case .readyForFinalEntitlementCheck(let viewModel):
+      RequestCaseNotificationView(
+        title: viewModel.notificationTitle,
+        content: viewModel.notificationContent)
     case .issuing(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
@@ -35,7 +39,7 @@ extension RequestCaseViewState {
             await viewModel.primaryAction()
           }
         })
-    case .declined(let viewModel):
+    case .refused(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
         content: viewModel.notificationTitle,
@@ -67,9 +71,7 @@ extension RequestCaseViewState {
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
         content: viewModel.notificationContent,
-        notificationType: .primary(
-          label: viewModel.primaryActionLabel,
-          action: viewModel.primaryAction))
+        notificationType: viewModel.filesSubmitted ? .default : .primary(label: viewModel.primaryActionLabel, action: viewModel.primaryAction))
     case .closed(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,

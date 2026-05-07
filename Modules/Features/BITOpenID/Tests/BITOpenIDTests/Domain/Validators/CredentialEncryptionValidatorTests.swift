@@ -42,8 +42,8 @@ final class CredentialEncryptionValidatorTests: XCTestCase {
   }
 
   func testValidate_requestEncryptionMissingIssuerKeys_throwsMissingIssuerEncryptionKeys() throws {
-    let requestEncryption = CredentialMetadata.CredentialRequestEncryption(
-      jwks: CredentialMetadata.CredentialRequestEncryption.JWKs(keys: []),
+    let requestEncryption = CredentialIssuerMetadata.CredentialRequestEncryption(
+      jwks: CredentialIssuerMetadata.CredentialRequestEncryption.JWKs(keys: []),
       supportedEncryptionAlgorithms: [.A128GCM],
       supportedZipValues: [.deflate],
       encryptionRequired: false)
@@ -105,9 +105,9 @@ final class CredentialEncryptionValidatorTests: XCTestCase {
 
   // MARK: Private
 
-  private let metadataMock = CredentialMetadata.Mock.chasseralIssuer01
-  private let requestEncryptionMock = CredentialMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!
-  private let responseEncryptionMock = CredentialMetadata.Mock.chasseralIssuer01.credentialResponseEncryption!
+  private let metadataMock = CredentialIssuerMetadata.Mock.chasseralIssuer01
+  private let requestEncryptionMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!
+  private let responseEncryptionMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialResponseEncryption!
 
   private var validator = CredentialEncryptionValidator()
 
@@ -115,20 +115,20 @@ final class CredentialEncryptionValidatorTests: XCTestCase {
     Container.shared.encryptionSupportedCurves.register { ["P-256"] }
   }
 
-  private func makeCredentialRequestEncryption(keys: [JWK]) -> CredentialMetadata.CredentialRequestEncryption {
-    CredentialMetadata.CredentialRequestEncryption(
-      jwks: CredentialMetadata.CredentialRequestEncryption.JWKs(keys: keys),
+  private func makeCredentialRequestEncryption(keys: [JWK]) -> CredentialIssuerMetadata.CredentialRequestEncryption {
+    CredentialIssuerMetadata.CredentialRequestEncryption(
+      jwks: CredentialIssuerMetadata.CredentialRequestEncryption.JWKs(keys: keys),
       supportedEncryptionAlgorithms: [.A128GCM],
       supportedZipValues: nil,
       encryptionRequired: false)
   }
 
   private func makeMetadata(
-    requestEncryption: CredentialMetadata.CredentialRequestEncryption?,
-    responseEncryption: CredentialMetadata.CredentialResponseEncryption?)
-    -> CredentialMetadata
+    requestEncryption: CredentialIssuerMetadata.CredentialRequestEncryption?,
+    responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption?)
+    -> CredentialIssuerMetadata
   {
-    CredentialMetadata(
+    CredentialIssuerMetadata(
       credentialIssuer: metadataMock.credentialIssuer,
       credentialEndpoint: metadataMock.credentialEndpoint,
       credentialConfigurationsSupported: metadataMock.credentialConfigurationsSupported,

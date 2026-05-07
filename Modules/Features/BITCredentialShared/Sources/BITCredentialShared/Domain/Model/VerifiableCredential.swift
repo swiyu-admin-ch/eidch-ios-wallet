@@ -1,7 +1,6 @@
 import BITAnyCredentialFormat
 import BITEntities
 import BITOpenID
-import Factory
 import Foundation
 
 // MARK: - VerifiableCredential
@@ -14,14 +13,15 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     id: UUID = UUID(),
     createdAt: Date = Date(),
     progressionState: ProgressState = .unaccepted,
-    payload: CredentialPayload,
-    status: CredentialStatus = .unknown,
+    bundleItems: [BundleItem] = [],
+    nextPresentableBundleItemId: UUID,
     clusters: [CredentialClaimCluster] = [],
     format: String,
     issuerUrl: String,
     selectedConfigurationId: String? = nil,
     issuer: String,
-    keyBinding: CredentialKeyBinding? = nil,
+    batchData: BatchData? = nil,
+    authentication: CredentialAuthentication,
     rawCredentialData: RawCredentialData? = nil,
     issuerDisplays: [CredentialIssuerDisplay] = [],
     displays: [CredentialDisplay] = [],
@@ -31,16 +31,17 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     self.id = id
     self.createdAt = createdAt
     self.progressionState = progressionState
-    self.payload = payload
+    self.bundleItems = bundleItems
+    self.nextPresentableBundleItemId = nextPresentableBundleItemId
     self.issuer = issuer
-    self.status = status
     self.clusters = clusters
     self.validFrom = validFrom
     self.validUntil = validUntil
     self.format = format
     self.issuerUrl = issuerUrl
     self.selectedConfigurationId = selectedConfigurationId
-    self.keyBinding = keyBinding
+    self.batchData = batchData
+    self.authentication = authentication
     self.rawCredentialData = rawCredentialData
     self.issuerDisplays = issuerDisplays
     self.displays = displays
@@ -57,14 +58,15 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
       id: entity.id,
       createdAt: entity.createdAt,
       progressionState: ProgressState(verifiableCredential.progressionState),
-      payload: verifiableCredential.payload,
-      status: CredentialStatus(verifiableCredential.status),
+      bundleItems: Array(verifiableCredential.bundleItems.map(BundleItem.init)),
+      nextPresentableBundleItemId: verifiableCredential.nextPresentableBundleItemId,
       clusters: Array(verifiableCredential.clusters.map(CredentialClaimCluster.init)),
       format: entity.format,
       issuerUrl: entity.issuerUrl,
       selectedConfigurationId: entity.selectedConfigurationId,
       issuer: verifiableCredential.issuer,
-      keyBinding: entity.keyBinding.flatMap(CredentialKeyBinding.init),
+      batchData: verifiableCredential.batchData.flatMap(BatchData.init),
+      authentication: CredentialAuthentication(entity.authentication),
       rawCredentialData: entity.rawCredentialData.flatMap(RawCredentialData.init),
       issuerDisplays: Array(entity.issuerDisplays.map(CredentialIssuerDisplay.init)),
       displays: Array(entity.displays.map(CredentialDisplay.init)),
@@ -75,8 +77,8 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   // MARK: Public
 
   public let clusters: [CredentialClaimCluster]
-  public let payload: CredentialPayload
-  public var status: CredentialStatus
+  public var bundleItems: [BundleItem]
+  public var nextPresentableBundleItemId: UUID
 
   public var validFrom: Date?
   public let validUntil: Date?
@@ -84,8 +86,9 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public var format: String
   public var issuerUrl: String
   public var selectedConfigurationId: String?
+  public var batchData: BatchData?
+  public var authentication: CredentialAuthentication
 
-  public var keyBinding: CredentialKeyBinding? = nil
   public var issuerDisplays: [CredentialIssuerDisplay]
   public var displays: [CredentialDisplay]
   public var environment = TrustEnvironment.external
@@ -98,22 +101,27 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
 
   public let issuer: String
 
+  public var keyBindings: [KeyBinding] {
+    bundleItems.compactMap(\.keyBinding)
+  }
+
   // MARK: Private
 
   private enum CodingKeys: String, CodingKey {
     case id
     case createdAt
     case progressionState
-    case payload
+    case bundleItems
+    case nextPresentableBundleItemId
     case issuer
-    case status
     case clusters
     case validFrom
     case validUntil
     case format
     case issuerUrl
     case selectedConfigurationId
-    case keyBinding
+    case batchData
+    case authentication
     case rawCredentialData
     case issuerDisplays
     case displays
@@ -129,12 +137,13 @@ extension VerifiableCredential: Equatable {
     lhs.id == rhs.id &&
       lhs.createdAt == rhs.createdAt &&
       lhs.progressionState == rhs.progressionState &&
-      lhs.payload == rhs.payload &&
+      lhs.bundleItems == rhs.bundleItems &&
+      lhs.nextPresentableBundleItemId == rhs.nextPresentableBundleItemId &&
       lhs.issuer == rhs.issuer &&
-      lhs.status == rhs.status &&
       lhs.validFrom == rhs.validFrom &&
       lhs.validUntil == rhs.validUntil &&
-      lhs.keyBinding == rhs.keyBinding &&
+      lhs.batchData == rhs.batchData &&
+      lhs.authentication == rhs.authentication &&
       lhs.rawCredentialData == rhs.rawCredentialData &&
       lhs.format == rhs.format &&
       lhs.issuerUrl == rhs.issuerUrl &&
@@ -173,10 +182,12 @@ extension VerifiableCredential: Hashable {
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(createdAt)
-    hasher.combine(payload)
+    hasher.combine(bundleItems)
+    hasher.combine(nextPresentableBundleItemId)
     hasher.combine(issuer)
-    hasher.combine(status)
     hasher.combine(validFrom)
     hasher.combine(validUntil)
+    hasher.combine(batchData)
+    hasher.combine(authentication)
   }
 }

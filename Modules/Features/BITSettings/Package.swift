@@ -7,7 +7,7 @@ let package = Package(
   name: "BITSettings",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -18,13 +18,16 @@ let package = Package(
     .package(path: "../BITActivity"),
     .package(path: "../BITAppAuth"),
     .package(path: "../BITAppInfo"),
+    .package(path: "../BITEIDRequest"),
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITAnalytics"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
+    .package(url: "https://github.com/hmlongco/Navigator", exact: "2.0.2"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
+    .package(url: "https://github.com/airbnb/lottie-ios", exact: "4.5.1"),
   ],
   targets: [
     .target(
@@ -36,9 +39,12 @@ let package = Package(
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "BITAppInfo", package: "BITAppInfo"),
+        .product(name: "BITOTP", package: "BITEIDRequest"),
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "Factory", package: "Factory"),
+        .product(name: "NavigatorUI", package: "Navigator"),
         .product(name: "PopupView", package: "PopupView"),
+        .product(name: "Lottie", package: "lottie-ios"),
       ],
       resources: [.process("Resources")]),
     .testTarget(
@@ -49,6 +55,7 @@ let package = Package(
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITAppInfo", package: "BITAppInfo"),
+        .product(name: "BITOTP", package: "BITEIDRequest"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),

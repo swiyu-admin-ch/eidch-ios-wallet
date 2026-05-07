@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension EIDRequestCase: Mockable {
   public struct Mock {
@@ -28,7 +28,7 @@ extension EIDRequestCase: Mockable {
     static let sampleInQueueNoOnlineSessionStart: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-queue-without-online-session-start", bundle: Bundle.module)
     static let sampleAVReady: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready", bundle: Bundle.module)
     static let sampleAgentReview: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-agent-review", bundle: Bundle.module)
-    static let sampleDeclined: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-declined", bundle: Bundle.module)
+    static let sampleDeclined: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-refused", bundle: Bundle.module)
     static let sampleAVReadyNotVerified: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-not-verified", bundle: Bundle.module)
     static let sampleAVReadyNoOnlineSessionTimeout: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-without-online-session-timeout", bundle: Bundle.module)
     static let sampleWithoutState: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-without-state", bundle: Bundle.module)

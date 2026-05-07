@@ -23,7 +23,7 @@ struct WalletPairingOfferRejected: View {
       actions: [
         .primary(L10n.tkEidRequestWalletPairingOfferRejectedButtonPrimary, identifier: "primaryButton", { navigator in
           onRetry(Void())
-          navigator.returnToCheckpoint(EIDRequestCheckpoints.walletPairingOffer)
+          navigator.returnToCheckpointSafely(EIDRequestCheckpoints.walletPairingOffer)
         }),
       ])
   }

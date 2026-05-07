@@ -91,7 +91,6 @@ public struct SecureTextField: UIViewRepresentable {
       }
       return true
     }
-
   }
 
   public func makeUIView(context: Context) -> UITextField {
@@ -100,6 +99,7 @@ public struct SecureTextField: UIViewRepresentable {
 
     textField.rightView = toggleButton
     textField.rightViewMode = .always
+    textField.shouldGroupAccessibilityChildren = false
 
     textField.accessibilityIdentifier = accessibilityIdentifier
 
@@ -160,6 +160,7 @@ public struct SecureTextField: UIViewRepresentable {
     let toggleButton = UIButton(type: .custom)
     toggleButton.setImage(UIImage(systemName: "eye.slash")?.withTintColor(tintColor, renderingMode: .alwaysOriginal), for: .normal)
     toggleButton.addTarget(context.coordinator, action: #selector(Coordinator.togglePasswordVisibility), for: .touchUpInside)
+    toggleButton.isAccessibilityElement = true
 
     return toggleButton
   }

@@ -1,15 +1,17 @@
 import BITCore
+import BITNavigation
 import Factory
 import Foundation
+import NavigatorUI
 
 @MainActor
-final class DeclinePresentationViewModel: ObservableObject {
+@Observable
+final class DeclinePresentationViewModel {
 
   // MARK: Lifecycle
 
-  init(context: PresentationRequestContext, router: PresentationInternalRoutes) {
+  init(context: PresentationRequestContext) {
     self.context = context
-    self.router = router
   }
 
   // MARK: Internal
@@ -18,22 +20,21 @@ final class DeclinePresentationViewModel: ObservableObject {
     context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
   }
 
-  func declineRequest() async {
+  func declineRequest(_ navigator: Navigator) async {
     do {
-      try await declinePresentationUseCase(url: context.responseUri)
+      try await declinePresentationUseCase(context: context)
       try? await Task.sleep(nanoseconds: declinePresentationRequestDelay)
-      router.close()
+      navigator.returnToCheckpointSafely(Checkpoints.home)
     } catch {
-      router.delegate?.retry()
+      navigator.pop()
     }
   }
 
   // MARK: Private
 
-  private let router: PresentationInternalRoutes
   private let context: PresentationRequestContext
 
-  @Injected(\.declinePresentationRequestDelay) private var declinePresentationRequestDelay
-  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
-  @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
+  @ObservationIgnored @Injected(\.declinePresentationRequestDelay) private var declinePresentationRequestDelay
+  @ObservationIgnored @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
+  @ObservationIgnored @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
 }

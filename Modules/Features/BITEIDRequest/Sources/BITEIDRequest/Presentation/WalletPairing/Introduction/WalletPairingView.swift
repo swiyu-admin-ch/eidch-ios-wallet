@@ -20,12 +20,13 @@ struct WalletPairingView: View {
       ],
       actions: [
         .primaryAsync(
-          L10n.tkEidRequestWalletPairing1PrimaryButton, actionOptions: [.showProgressView], { _ in
-            await viewModel.primaryAction()
-          }),
-        .secondaryAsync(L10n.tkEidRequestWalletPairing1SecondaryButton, actionOptions: [.showProgressView], { _ in
+          L10n.tkEidRequestWalletPairing1PrimaryButton, actionOptions: [.showProgressView])
+        { _ in
+          await viewModel.primaryAction()
+        },
+        .secondaryAsync(L10n.tkEidRequestWalletPairing1SecondaryButton, actionOptions: [.showProgressView]) { _ in
           await viewModel.secondaryAction()
-        }),
+        },
       ])
       .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
@@ -34,7 +35,7 @@ struct WalletPairingView: View {
 
   // MARK: Private
 
-  @InjectedObject(\.walletPairingViewModel) private var viewModel
+  @InjectedObservable(\.walletPairingViewModel) private var viewModel: WalletPairingViewModel
 }
 
 #Preview {

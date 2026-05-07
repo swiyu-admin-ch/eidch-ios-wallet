@@ -1,7 +1,6 @@
 #if DEBUG
-import BITCore
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension CredentialClaimCluster {
   public enum Mock {
@@ -35,16 +34,16 @@ extension CredentialClaimCluster {
     // MARK: Private
 
     private static var level3Claims = [
-      CredentialClaim(key: "nested_level3_key1", value: "nested_level3_value1", order: 1),
+      CredentialClaim(path: [.string("nested_level3_key1")], value: "nested_level3_value1", order: 1),
     ]
 
     private static var level2Claims = [
-      CredentialClaim(key: "nested_level2_key1", value: "nested_level2_value1", order: 1),
-      CredentialClaim(key: "nested_level2_key2", value: "nested_level2_value2", order: 2),
+      CredentialClaim(path: [.string("nested_level2_key1")], value: "nested_level2_value1", order: 1),
+      CredentialClaim(path: [.string("nested_level2_key2")], value: "nested_level2_value2", order: 2),
     ]
 
     private static var level1Claims = [
-      CredentialClaim(key: "nested_level1_key1", value: "nested_level1_value1", order: 3),
+      CredentialClaim(path: [.string("nested_level1_key1")], value: "nested_level1_value1", order: 3),
     ]
 
   }

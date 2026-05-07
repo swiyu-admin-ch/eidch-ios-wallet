@@ -1,24 +1,22 @@
 import BITActivity
 import BITAnalytics
-import BITAppAuth
 import BITCore
 import BITCredential
 import BITCredentialShared
 import BITOpenID
-import Combine
 import Factory
 import Foundation
 
 // MARK: - PresentationRequestReviewViewModel
 
 @MainActor
-public class PresentationRequestReviewViewModel: ObservableObject {
+@Observable
+public class PresentationRequestReviewViewModel {
 
   // MARK: Lifecycle
 
-  init(context: PresentationRequestContext, router: PresentationInternalRoutes) {
+  init(context: PresentationRequestContext) {
     self.context = context
-    self.router = router
 
     guard let credential = context.selectedCredential else {
       fatalError("No selected credential")
@@ -31,12 +29,11 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   enum Event {
     case submit(PresentationRequestReviewState.Result, Bool)
     case deny
-    case login
   }
 
-  @Published private(set) var state = PresentationRequestReviewState.loading
-  @Published var isUnknownVerifierAlertShown = false
-  @Published var isSessionTimeoutPresented = false
+  private(set) var state = PresentationRequestReviewState.loading
+  var isUnknownVerifierAlertShown = false
+  var destination: PresentationDestinations?
 
   private(set) var denyTask: Task<Void, Error>?
 
@@ -46,8 +43,6 @@ public class PresentationRequestReviewViewModel: ObservableObject {
       await deny()
     case .submit(let result, let force):
       await submit(result, force: force)
-    case .login:
-      router.login(animated: true)
     }
   }
 
@@ -68,15 +63,13 @@ public class PresentationRequestReviewViewModel: ObservableObject {
   // MARK: Private
 
   private let credential: CompatibleCredential
-
   private var context: PresentationRequestContext
 
-  private let router: PresentationInternalRoutes
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.submitPresentationUseCase) private var submitPresentationUseCase: SubmitPresentationUseCaseProtocol
-  @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
-  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
-  @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.submitPresentationUseCase) private var submitPresentationUseCase: SubmitPresentationUseCaseProtocol
+  @ObservationIgnored @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
+  @ObservationIgnored @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
+  @ObservationIgnored @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
 
   private var verifierDisplay: VerifierDisplay {
     context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
@@ -88,8 +81,16 @@ public class PresentationRequestReviewViewModel: ObservableObject {
       state = .processing(viewState)
       startDelayedLoadingMessageTask()
       do {
-        try await submitPresentationUseCase.execute(context: context)
-        router.presentationResultState(with: .success(claims: credential.requestedClaimClusters.flatMap(\.claims)), context: context)
+        for try await event in submitPresentationUseCase.execute(context: context) {
+          switch event {
+          case .progress(let progress):
+            guard case .processing(let currentState) = state else { continue }
+            state = .processing(currentState.changing(\.progress, to: progress))
+          case .success:
+            destination = .resultState(.success, context)
+            return
+          }
+        }
       } catch {
         handleSubmitError(error, processing: viewState)
       }
@@ -112,12 +113,7 @@ public class PresentationRequestReviewViewModel: ObservableObject {
 
   private func handleSubmitError(_ error: Error, processing: PresentationRequestReviewState.Processing) {
     analytics.log(error)
-    if error as? UserSessionError == .notLoggedIn {
-      isSessionTimeoutPresented = true
-    } else {
-      let resultState = PresentationRequestResultState(error: error, claims: credential.requestedClaimClusters.flatMap(\.claims))
-      router.presentationResultState(with: resultState, context: context)
-    }
+    destination = destination(for: error)
     let viewModel = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: processing.credential.colorScheme)
     state = .result(viewModel)
   }
@@ -127,19 +123,24 @@ public class PresentationRequestReviewViewModel: ObservableObject {
       guard let self else { return }
       try? await declinePresentationUseCase(context: context)
     }
-    router.presentationResultState(with: .deny, context: context)
-  }
-}
 
-extension PresentationRequestResultState {
-  init(error: Error, claims: [CredentialClaim]) {
-    self = switch error as? SubmitPresentationError {
-    case .invalidCredential:
-      .invalidCredential(claims: claims)
-    case .processClosed:
-      .cancelled
-    default:
-      .error
+    destination = .resultState(.deny, context)
+  }
+
+  private func destination(for error: Error) -> PresentationDestinations {
+    if let error = error as? PresentationError {
+      switch error {
+      case .invalidCredential:
+        return .resultState(.invalidCredential, context)
+      case .submitPresentationError:
+        if let dataset = error.errorDataset {
+          return .error(dataset)
+        }
+      case .authorizationRequestError:
+        break
+      }
     }
+
+    return .resultState(.error, context)
   }
 }

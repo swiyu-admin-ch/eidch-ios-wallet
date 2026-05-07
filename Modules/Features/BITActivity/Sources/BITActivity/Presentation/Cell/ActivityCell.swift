@@ -100,9 +100,9 @@ public struct ActivityCell: View {
 #if DEBUG
 #Preview {
   VStack {
-    ActivityCell(ActivityCellViewModel(activity: .Mock.issueTrusted))
-    ActivityCell(ActivityCellViewModel(activity: .Mock.presentationAcceptedTrusted))
-    ActivityCell(ActivityCellViewModel(activity: .Mock.presentationDeclinedUntrusted))
+    ActivityCell(ActivityCellViewModel(listItem: .Mock.issuance))
+    ActivityCell(ActivityCellViewModel(listItem: .Mock.acceptedPresentation))
+    ActivityCell(ActivityCellViewModel(listItem: .Mock.declinedPresentation))
   }
 }
 #endif

@@ -1,13 +1,13 @@
-import BITNavigation
 import Factory
 import Foundation
 
 @MainActor
-class WalletPairingViewModel: ObservableObject {
+@Observable
+class WalletPairingViewModel {
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
   @MainActor
   func primaryAction() async {
@@ -19,9 +19,7 @@ class WalletPairingViewModel: ObservableObject {
       try await startOnlineSessionUseCase.execute(for: caseId)
       try await pairWalletUseCase.execute(for: caseId)
 
-      destination = .avIdentityCheck
-    } catch EIDRequestRepository.Error.invalidState {
-      return destination = .avIdentityCheck
+      destination = .avIdentityCheck(caseId: caseId)
     } catch {
       #warning("TODO: Redirect to error screen")
     }
@@ -33,12 +31,9 @@ class WalletPairingViewModel: ObservableObject {
       guard let caseId = context.caseId else {
         throw EIDRequestError.missingCaseId
       }
-
       try await startOnlineSessionUseCase.execute(for: caseId)
 
-      destination = .walletPairingList
-    } catch EIDRequestRepository.Error.invalidState {
-      destination = .walletPairingList
+      destination = .walletPairingList(caseId: caseId)
     } catch {
       #warning("TODO: Redirect to error screen")
     }
@@ -46,8 +41,7 @@ class WalletPairingViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.pairWalletUseCase) private var pairWalletUseCase
-  @Injected(\.startOnlineSessionUseCase) private var startOnlineSessionUseCase
-
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.pairWalletUseCase) private var pairWalletUseCase
+  @ObservationIgnored @Injected(\.startOnlineSessionUseCase) private var startOnlineSessionUseCase
 }

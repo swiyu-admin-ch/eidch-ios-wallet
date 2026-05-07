@@ -11,20 +11,11 @@ class SplashScreenModule {
   init(router: RootRouter = Container.shared.splashScreenRouter(), completed: @escaping () -> Void = {}) {
     let router = router
 
-    var viewController: UIViewController
-    if #available(iOS 17.0, *) {
-      let view = AnimatedSplashScreen(completed: {
-        router.close()
-        completed()
-      })
-      viewController = UIHostingController(rootView: view)
-    } else {
-      let view = SplashScreen(completed: {
-        router.close()
-        completed()
-      })
-      viewController = UIHostingController(rootView: view)
-    }
+    let view = AnimatedSplashScreen(completed: {
+      router.close()
+      completed()
+    })
+    let viewController = UIHostingController(rootView: view)
 
     router.viewController = viewController
 

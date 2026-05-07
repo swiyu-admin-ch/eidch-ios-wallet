@@ -46,6 +46,7 @@ struct RecordingButton: View {
           }
       }
       .buttonStyle(.plain)
+      .contentShape(.accessibility, .circle)
       .frame(width: buttonSize, height: buttonSize)
       .shadow(radius: 15)
       .animation(.spring(response: 0.5, dampingFraction: 0.6), value: state)

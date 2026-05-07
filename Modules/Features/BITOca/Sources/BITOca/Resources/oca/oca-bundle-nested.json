@@ -38,41 +38,41 @@
   ],
   "overlays":[
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IK4ceQ-qvbporNvdFExEAMQrPud9OutHQbB2pc2iXrvW",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "array_capture_base":"$.array_capture_base",
-        "text_array_claim":"$.text_array_claim"
+        "array_capture_base":["array_capture_base", null],
+        "text_array_claim":["text_array_claim"]
       }
     },
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IACad8m8doJZoyOwmkcSOGD0OKL6JoNtC22I1K4DlFMh",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "capture_base_1_claim_1":"$.capture_base_1_claim_1",
-        "capture_base_1_claim_2":"$.capture_base_1_claim_2",
-        "capture_base_2":"$.capture_base_2"
+        "capture_base_1_claim_1":["capture_base_1_claim_1"],
+        "capture_base_1_claim_2":["capture_base_1_claim_2"],
+        "capture_base_2":["capture_base_2"]
       }
     },
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"IMg6sVkwVROTddb1csCbOI83tufFvbMkwpbwImZ89joJ",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "capture_base_2_claim_1":"$.capture_base_2.claim_1",
-        "capture_base_2_claim_2":"$.capture_base_2.claim_2",
-        "capture_base_2_claim_3":"$.capture_base_2.claim_3"
+        "capture_base_2_claim_1":["capture_base_2", "claim_1"],
+        "capture_base_2_claim_2":["capture_base_2", "claim_2"],
+        "capture_base_2_claim_3":["capture_base_2", "claim_3"]
       }
     },
     {
-      "type":"extend/overlays/data_source/1.0",
+      "type":"extend/overlays/data_source/2.0",
       "capture_base":"ICFYTvQNUDNlVfS7_35nv1YpjDHx1EhlNqncFqd7zmyt",
       "format":"vc+sd-jwt",
       "attribute_sources":{
-        "array_capture_base_claim_1":"$.array_capture_base[*].claim_1",
-        "array_capture_base_claim_2":"$.array_capture_base[*].claim_2"
+        "array_capture_base_claim_1":["array_capture_base", null, "claim_1"],
+        "array_capture_base_claim_2":["array_capture_base", null, "claim_2"]
       }
     },
     {

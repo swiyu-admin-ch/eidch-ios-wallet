@@ -1,6 +1,7 @@
 import BITCredentialShared
 import BITDataStore
 import BITEntities
+import BITVault
 import Factory
 import Foundation
 import Spyable
@@ -55,6 +56,7 @@ struct CredentialRepository: CredentialRepositoryProcotol {
 
   func delete(_ id: UUID) async throws {
     let entity = try await getEntity(id)
+    deleteAssociatedKeyPairs(for: entity)
     try database.delete(entity)
   }
 
@@ -69,6 +71,7 @@ struct CredentialRepository: CredentialRepositoryProcotol {
   // MARK: Private
 
   @Injected(\.dataStore) private var database
+  @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
 
   private func getEntity(_ id: UUID) async throws -> CredentialEntity {
     let results = try database.get(CredentialEntity.self, forPrimaryKey: id)
@@ -87,6 +90,18 @@ struct CredentialRepository: CredentialRepositoryProcotol {
 
     throw CredentialRepositoryError.unsupportedCredential
   }
+
+  private func deleteAssociatedKeyPairs(for entity: CredentialEntity) {
+    let verifiableKeyBindings = entity.verifiableCredential?.bundleItems.compactMap(\.keyBinding) ?? []
+    let deferredKeyBindings = entity.deferredCredential.map { Array($0.keyBindings) } ?? []
+
+    for keyBinding in verifiableKeyBindings + deferredKeyBindings {
+      guard let algorithm = VaultAlgorithm(rawValue: keyBinding.algorithm) else {
+        continue
+      }
+      try? keyManager.deleteKeyPair(withIdentifier: keyBinding.id.uuidString, algorithm: algorithm)
+    }
+  }
 }
 
 // MARK: - Verifiable Credentials
@@ -102,10 +117,9 @@ extension CredentialRepository {
   @discardableResult
   func update(verifiableCredential: VerifiableCredential) async throws -> VerifiableCredential {
     let entity = try await getEntity(verifiableCredential.id)
-    try database.write({
+    try database.write {
       entity.setValues(from: verifiableCredential)
-    })
-
+    }
     return try VerifiableCredential(entity)
   }
 
@@ -144,10 +158,9 @@ extension CredentialRepository {
 
   func update(deferredCredential: DeferredCredential) async throws -> DeferredCredential {
     let entity = try await getEntity(deferredCredential.id)
-    try database.write({
+    try database.write {
       entity.setValues(from: deferredCredential)
-    })
-
+    }
     return try DeferredCredential(entity)
   }
 

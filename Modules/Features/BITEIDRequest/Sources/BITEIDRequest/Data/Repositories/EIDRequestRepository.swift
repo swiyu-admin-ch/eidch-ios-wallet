@@ -1,5 +1,7 @@
 import BITAppAttestation
+import BITAppAuth
 import BITEIDRequestShared
+import BITLocalAuthentication
 import BITNetworking
 import Factory
 import Foundation
@@ -33,13 +35,13 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
   }
 
   func fetchRequestStatus(for caseId: String) async throws -> EIDRequestStatus {
-    let clientAttestation = try await clientAttestationRepository.get()
+    let clientAttestation = try await clientAttestationRepository.get(using: userContext())
 
     return try await networkService.request(EIDRequestEndpoint.getStatus(caseId: caseId), plugins: [ClientAttestationPlugin(clientAttestation: clientAttestation.rawJWS)])
   }
 
   func fetchLegalRepresentantVerification(for requestCaseId: String) async throws -> LegalRepresentantVerificationResponse {
-    let clientAttestation = try await clientAttestationRepository.get()
+    let clientAttestation = try await clientAttestationRepository.get(using: userContext())
 
     do {
       return try await networkService.request(
@@ -104,11 +106,12 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
 
   // MARK: Private
 
-  @Injected(\.sidBaseUrl) private var sidBaseUrl: URL
-  @Injected(\NetworkContainer.service) private var networkService: NetworkService
-  @Injected(\.eIDRequestResponseDecoder) private var eIDRequestResponseDecoder: JSONDecoder
-  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
-  @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
+  @Injected(\.sidBaseUrl) private var sidBaseUrl
+  @Injected(\NetworkContainer.service) private var networkService
+  @Injected(\.eIDRequestResponseDecoder) private var eIDRequestResponseDecoder
+  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator
+  @Injected(\.clientAttestationRepository) private var clientAttestationRepository
+  @Injected(\.userSession) private var userSession
 
   private func parseError(_ error: NetworkError) throws -> Swift.Error {
     let errorResponse = try JSONDecoder().decode(EIDRequestErrorResponse.self, from: error.response?.data ?? Data())
@@ -128,12 +131,22 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
   }
 
   private func generateClientAttestationPlugin(for body: Encodable) async throws -> ClientAttestationPlugin {
-    let (clientAttestation, proofOfPossession) = try await proofOfPossessionGenerator.generate(
+    let clientAttestation = try await clientAttestationRepository.get(using: userContext())
+    let proofOfPossession = try await proofOfPossessionGenerator(
       for: body,
       audience: sidBaseUrl.absoluteString,
-      challengeEndpoint: URL(target: EIDRequestEndpoint.challenge))
+      challengeEndpoint: URL(target: EIDRequestEndpoint.challenge),
+      clientAttestation: clientAttestation)
 
     return ClientAttestationPlugin(clientAttestation: clientAttestation.rawJWS, proofOfPossession: proofOfPossession.rawJWS)
+  }
+
+  private func userContext() throws -> LAContextProtocol {
+    guard userSession.isLoggedIn, let context = userSession.context else {
+      throw UserSessionError.notLoggedIn
+    }
+
+    return context
   }
 }
 

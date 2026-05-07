@@ -1,3 +1,4 @@
+import BITEIDRequestShared
 import BITL10n
 import BITNavigation
 import BITTheming
@@ -6,19 +7,32 @@ import Foundation
 import NavigatorUI
 import SwiftUI
 
+// MARK: - ScanDocumentSubmitViewModel
+
 @MainActor
-class ScanDocumentSubmitViewModel: ObservableObject {
+@Observable
+class ScanDocumentSubmitViewModel {
 
   // MARK: Lifecycle
 
   init(scanDocumentOutput: ScanDocumentOutput) {
     self.scanDocumentOutput = scanDocumentOutput
+    scanImages = []
+
+    if let firstScanImage = scanDocumentOutput.files.first(where: { $0.fileName == Self.firstScanImageName }), let identityType = context.identityType {
+      scanImages.append(.image(key: Self.firstScanKey, value: firstScanImage.data, accessibilityLabel: L10n.tkEidRequestScanDocumentSubmitFirstScanImageAlt(identityType.document)))
+    }
+
+    if let secondScanImage = scanDocumentOutput.files.first(where: { $0.fileName == Self.secondScanImageName }), let identityType = context.identityType {
+      scanImages.append(.image(key: Self.secondScanKey, value: secondScanImage.data, accessibilityLabel: L10n.tkEidRequestScanDocumentSubmitSecondScanImageAlt(identityType.document)))
+    }
   }
 
   // MARK: Internal
 
-  @Published var isNavigationCloseTriggered = false
-  @Published var destination: EIDRequestDestinations?
+  var scanImages: [ScanResultEntryType]
+  var isNavigationCloseTriggered = false
+  var destination: EIDRequestDestinations?
 
   func submit() async {
     do {
@@ -64,12 +78,18 @@ class ScanDocumentSubmitViewModel: ObservableObject {
 
   // MARK: Private
 
+  private static let firstScanImageName = "firstImage.png"
+  private static let secondScanImageName = "secondImage.png"
+
+  private static let firstScanKey = L10n.tkEidRequestScanDocumentSubmitFirstScanImageTitle
+  private static let secondScanKey = L10n.tkEidRequestScanDocumentSubmitSecondScanImageTitle
+
   private let scanDocumentOutput: ScanDocumentOutput
   private let minimumDelayInSeconds: TimeInterval = 2.0
 
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.applyEIDRequestUseCase) private var applyEIDRequestUseCase
-  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.applyEIDRequestUseCase) private var applyEIDRequestUseCase
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func openHelp() {
     guard let url = URL(string: L10n.tkEidRequestSubmitErrorTertiaryLink) else { return }
@@ -104,5 +124,14 @@ class ScanDocumentSubmitViewModel: ObservableObject {
     isNavigationCloseTriggered = true
     coordinator.cleanup()
   }
+}
 
+extension IdentityType {
+  var document: String {
+    switch self {
+    case .passport: L10n.tkEidRequestDocumentSelectionPassport
+    case .foreignerPermit: L10n.tkEidRequestDocumentSelectionResidentPermit
+    case .identityCard: L10n.tkEidRequestDocumentSelectionIdCard
+    }
+  }
 }

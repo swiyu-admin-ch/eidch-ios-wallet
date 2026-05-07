@@ -9,10 +9,6 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-
-  }
-
   func testInit_inQueueState_legalRepresentantVerified() throws {
     let requestCase = EIDRequestCase.Mock.sampleInQueue
     let requestCaseViewState = try RequestCaseViewState(requestCase)
@@ -73,7 +69,9 @@ class LegalRepresentantConsentStateViewModelTests: XCTestCase {
     viewModel = LegalRepresentantConsentStateViewModel(state: requestCaseViewState)
     viewModel.primaryAction()
 
-    XCTAssertEqual(viewModel.destination, .avIdentityCheck)
+    if case .avIdentityCheck(let caseId) = viewModel.destination {
+      XCTAssertEqual(caseId, requestCase.id)
+    }
   }
 
   // MARK: Private

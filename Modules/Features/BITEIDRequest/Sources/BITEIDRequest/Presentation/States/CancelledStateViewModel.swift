@@ -1,1 +1,1 @@
-public class CancelledStateViewModel: DeclinedStateViewModel { }
+public class CancelledStateViewModel: RefusedStateViewModel { }

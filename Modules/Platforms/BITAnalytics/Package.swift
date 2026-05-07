@@ -7,7 +7,7 @@ let package = Package(
   name: "BITAnalytics",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -18,7 +18,7 @@ let package = Package(
       targets: ["BITAnalyticsMocks"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/Dynatrace/swift-mobile-sdk.git", exact: "8.309.1"),
     .package(path: "../../Platforms/BITCore"),

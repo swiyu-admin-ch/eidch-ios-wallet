@@ -1,13 +1,13 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 // MARK: AccessToken.Mock
 
 extension CredentialResponseError: Mockable {
   struct Mock {
-    static let sample: CredentialResponseError = Mocker.decode(fromFile: "credential-response-error", bundle: Bundle.module)
-    static let sampleData: Data = Mocker.getData(fromFile: "credential-response-error", bundle: Bundle.module) ?? Data()
+    static let sampleRequestDeniedData: Data = Mocker.getData(fromFile: "credential-response-error-request-denied", bundle: Bundle.module) ?? Data()
+    static let sampleInvalidAccessTokenData: Data = Mocker.getData(fromFile: "credential-response-error-invalid-access-token", bundle: Bundle.module) ?? Data()
   }
 }
 #endif

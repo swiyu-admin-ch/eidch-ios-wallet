@@ -40,7 +40,8 @@ public enum RequestCaseViewState: Identifiable, Hashable {
   case expired(ExpiredStateViewModel)
   case unknown(UnknownStateViewModel)
   case agentReview(AgentReviewStateViewModel)
-  case declined(DeclinedStateViewModel)
+  case readyForFinalEntitlementCheck(ReadyForFinalEntitlementCheckStateViewModel)
+  case refused(RefusedStateViewModel)
   case walletPairing(WalletPairingStateViewModel)
   case autoVerification(AutoVerificationStateViewModel)
   case closed(ClosedStateViewModel)
@@ -61,8 +62,10 @@ public enum RequestCaseViewState: Identifiable, Hashable {
       self = try .unknown(UnknownStateViewModel(requestCase: requestCase, delegate: delegate))
     case .agentReview:
       self = try .agentReview(AgentReviewStateViewModel(requestCase: requestCase))
-    case .declined:
-      self = try .declined(DeclinedStateViewModel(requestCase: requestCase, delegate: delegate))
+    case .readyForFinalEntitlementCheck:
+      self = try .readyForFinalEntitlementCheck(ReadyForFinalEntitlementCheckStateViewModel(requestCase: requestCase))
+    case .refused:
+      self = try .refused(RefusedStateViewModel(requestCase: requestCase, delegate: delegate))
     case .inTargetWalletPairing:
       self = try .walletPairing(WalletPairingStateViewModel(requestCase: requestCase, delegate: delegate))
     case .autoVerification:
@@ -86,11 +89,12 @@ public enum RequestCaseViewState: Identifiable, Hashable {
          .autoVerification(let viewModel as RequestCaseStateBaseViewModel),
          .cancelled(let viewModel as RequestCaseStateBaseViewModel),
          .closed(let viewModel as RequestCaseStateBaseViewModel),
-         .declined(let viewModel as RequestCaseStateBaseViewModel),
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
          .issuing(let viewModel as RequestCaseStateBaseViewModel),
+         .readyForFinalEntitlementCheck(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
+         .refused(let viewModel as RequestCaseStateBaseViewModel),
          .unknown(let viewModel as RequestCaseStateBaseViewModel),
          .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
       viewModel.id
@@ -103,11 +107,12 @@ public enum RequestCaseViewState: Identifiable, Hashable {
          .autoVerification(let viewModel as RequestCaseStateBaseViewModel),
          .cancelled(let viewModel as RequestCaseStateBaseViewModel),
          .closed(let viewModel as RequestCaseStateBaseViewModel),
-         .declined(let viewModel as RequestCaseStateBaseViewModel),
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
          .issuing(let viewModel as RequestCaseStateBaseViewModel),
+         .readyForFinalEntitlementCheck(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
+         .refused(let viewModel as RequestCaseStateBaseViewModel),
          .unknown(let viewModel as RequestCaseStateBaseViewModel),
          .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
       viewModel.id
@@ -120,11 +125,12 @@ public enum RequestCaseViewState: Identifiable, Hashable {
          .autoVerification(let viewModel as RequestCaseStateBaseViewModel),
          .cancelled(let viewModel as RequestCaseStateBaseViewModel),
          .closed(let viewModel as RequestCaseStateBaseViewModel),
-         .declined(let viewModel as RequestCaseStateBaseViewModel),
          .expired(let viewModel as RequestCaseStateBaseViewModel),
          .inQueue(let viewModel as RequestCaseStateBaseViewModel),
          .issuing(let viewModel as RequestCaseStateBaseViewModel),
+         .readyForFinalEntitlementCheck(let viewModel as RequestCaseStateBaseViewModel),
          .readyForOnlineSession(let viewModel as RequestCaseStateBaseViewModel),
+         .refused(let viewModel as RequestCaseStateBaseViewModel),
          .unknown(let viewModel as RequestCaseStateBaseViewModel),
          .walletPairing(let viewModel as RequestCaseStateBaseViewModel):
       viewModel.isLegalRepresentantConsentVerified

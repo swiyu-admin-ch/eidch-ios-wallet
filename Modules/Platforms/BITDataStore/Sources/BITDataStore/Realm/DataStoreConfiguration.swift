@@ -16,7 +16,7 @@ public protocol DataStoreConfigurationManagerProtocol {
 
 // MARK: - DataStoreConfiguration
 
-public class DataStoreConfiguration: DataStoreConfigurationManagerProtocol {
+class DataStoreConfiguration: DataStoreConfigurationManagerProtocol {
 
   // MARK: Lifecycle
 
@@ -28,18 +28,16 @@ public class DataStoreConfiguration: DataStoreConfigurationManagerProtocol {
     }
   }
 
-  // MARK: Public
+  // MARK: Internal
 
-  public private(set) var configuration: Realm.Configuration
+  private(set) var configuration: Realm.Configuration
 
-  public func setEncryption(key: Data) {
+  func setEncryption(key: Data) {
     var configuration = Container.shared.realmDataStoreConfiguration()
     configuration.encryptionKey = key
     self.configuration = configuration
-    Container.shared.realmDataStoreConfiguration.register { configuration }
+    Container.shared.realmDataStoreConfiguration.register { self.configuration }
   }
-
-  // MARK: Internal
 
   func excludeFileFromBackup(at url: URL) {
     var url = url

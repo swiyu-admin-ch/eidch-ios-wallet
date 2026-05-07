@@ -44,6 +44,14 @@ extension URL {
       dataString.data(using: .utf8)
     }
   }
+
+  public var deletingPathAndQuery: URL? {
+    var components = URLComponents()
+    components.scheme = scheme
+    components.host = host
+    components.port = port
+    return components.url
+  }
 }
 
 private let mediaTypeReference = Reference(String?.self)

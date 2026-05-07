@@ -1,6 +1,6 @@
 import Foundation
 
-extension CredentialMetadata.VcSdJwtCredentialConfigurationSupported {
+extension CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported {
 
   var typeMetadataUri: TypeMetadataUri? {
     if let vctMetadataUri {

@@ -41,7 +41,7 @@ public struct MockAnyCredential: AnyCredential {
     "vcSchemaId"
   }
 
-  public func getClaimsDictionary(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> [String: Any?] {
+  public func getClaimsJSON(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> JSON {
     [:]
   }
 

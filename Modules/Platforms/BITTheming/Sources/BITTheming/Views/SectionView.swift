@@ -6,8 +6,15 @@ public struct SectionView<Content: View>: View {
 
   // MARK: Lifecycle
 
-  public init(title: String? = nil, minHeight: CGFloat? = 94, hasContentPadding: Bool = true, @ViewBuilder content: () -> Content) {
+  public init(
+    title: String? = nil,
+    footer: String? = nil,
+    minHeight: CGFloat? = 94,
+    hasContentPadding: Bool = true,
+    @ViewBuilder content: () -> Content)
+  {
     self.title = title
+    self.footer = footer
     self.minHeight = minHeight
     self.hasContentPadding = hasContentPadding
     self.content = content()
@@ -19,7 +26,8 @@ public struct SectionView<Content: View>: View {
     VStack(alignment: .leading, spacing: .x2) {
       if let title {
         Text(title)
-          .font(.custom.title2Emphasized)
+          .foregroundStyle(ThemingAssets.Label.sectionHeader.swiftUIColor)
+          .font(.custom.headline)
           .padding(.top, .x4)
           .padding(.horizontal, .x4)
           .accessibilityAddTraits(.isHeader)
@@ -33,6 +41,12 @@ public struct SectionView<Content: View>: View {
       .background(ThemingAssets.Background.groupedRow.swiftUIColor)
       .clipShape(.rect(cornerRadius: .x5))
       .accessibilityElement(children: .contain)
+      if let footer {
+        Text(footer)
+          .font(.custom.footnote)
+          .padding(.horizontal, .x4)
+          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+      }
     }
     .padding(.horizontal, .x4)
     .accessibilityElement(children: .contain)
@@ -41,6 +55,7 @@ public struct SectionView<Content: View>: View {
   // MARK: Private
 
   private let title: String?
+  private let footer: String?
   private let minHeight: CGFloat?
   private let hasContentPadding: Bool
   private let content: Content

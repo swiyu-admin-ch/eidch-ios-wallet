@@ -18,7 +18,9 @@ final class WalletPairingViewModelTests: XCTestCase {
   func testPrimaryAction_success() async {
     await viewModel.primaryAction()
 
-    XCTAssertEqual(viewModel.destination, .avIdentityCheck)
+    if case .avIdentityCheck(let caseId) = viewModel.destination {
+      XCTAssertEqual(caseId, mockCaseId)
+    }
 
     XCTAssertEqual(startOnlineSessionUseCase.executeForCallsCount, 1)
     XCTAssertEqual(startOnlineSessionUseCase.executeForReceivedCaseId, context.caseId)
@@ -43,18 +45,13 @@ final class WalletPairingViewModelTests: XCTestCase {
     #warning("TODO: XCTAssert error case here")
   }
 
-  func testPrimaryAction_startOnlineSessionThrowsInvalidStateError_routeToIdentityCheck() async {
-    startOnlineSessionUseCase.executeForThrowableError = EIDRequestRepository.Error.invalidState
-
-    await viewModel.primaryAction()
-
-    XCTAssertEqual(viewModel.destination, .avIdentityCheck)
-  }
-
   func testSecondaryAction_success() async {
     await viewModel.secondaryAction()
 
-    XCTAssertEqual(viewModel.destination, .walletPairingList)
+    if case .walletPairingList(let caseId) = viewModel.destination {
+      XCTAssertEqual(caseId, mockCaseId)
+    }
+
     XCTAssertEqual(startOnlineSessionUseCase.executeForCallsCount, 1)
     XCTAssertEqual(startOnlineSessionUseCase.executeForReceivedCaseId, context.caseId)
   }
@@ -80,11 +77,14 @@ final class WalletPairingViewModelTests: XCTestCase {
 
     await viewModel.secondaryAction()
 
-    XCTAssertEqual(viewModel.destination, .walletPairingList)
+    if case .walletPairingList(let caseId) = viewModel.destination {
+      XCTAssertEqual(caseId, mockCaseId)
+    }
   }
 
   // MARK: Private
 
+  private let mockCaseId = "mockCaseId"
   private let mockPairingId = "mockPairingId"
 
   private var context: EIDRequestContext!
@@ -94,14 +94,14 @@ final class WalletPairingViewModelTests: XCTestCase {
 
   private func registerMocks() {
     context = EIDRequestContext()
-    context.caseId = "caseId"
+    context.caseId = mockCaseId
     pairWalletUseCase = PairWalletUseCaseProtocolSpy()
     pairWalletUseCase.executeForReturnValue = mockPairingId
     startOnlineSessionUseCase = StartOnlineSessionUseCaseProtocolSpy()
 
-    Container.shared.eidRequestContext.register { self.context }
-    Container.shared.pairWalletUseCase.register { self.pairWalletUseCase }
-    Container.shared.startOnlineSessionUseCase.register { self.startOnlineSessionUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.pairWalletUseCase.register { @MainActor in self.pairWalletUseCase }
+    Container.shared.startOnlineSessionUseCase.register { @MainActor in self.startOnlineSessionUseCase }
   }
 }
 

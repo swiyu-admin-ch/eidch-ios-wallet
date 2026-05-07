@@ -7,98 +7,103 @@ import XCTest
 
 // MARK: - RealmMigrationTests
 
-// swiftlint:disable force_unwrapping
+// swiftlint:disable force_unwrapping force_try
 
 final class RealmMigrationTests: XCTestCase {
 
   // MARK: Internal
 
-  func testMigrate() throws {
-    let cases: [MigrationTestCase] = [
-      MigrationTestCase(from: 1, fileURL: Realm.Mock.version1Snapshot) { realm in
-        self.testMigrate_fromVersion1_createVerifiableCredentialWithValidUntilProperty(realm)
-      },
-      MigrationTestCase(from: 4, fileURL: Realm.Mock.version4Snapshot) { realm in
-        self.testMigrate_fromVersion4_5_createsClusterAndAppendsClaims_createsCredentialKeyBindingForExistingKeyBinding(realm)
-      },
-      MigrationTestCase(from: 5, fileURL: Realm.Mock.version5Snapshot) { realm in
-        self.testMigrate_fromVersion4_5_createsClusterAndAppendsClaims_createsCredentialKeyBindingForExistingKeyBinding(realm)
-      },
-      MigrationTestCase(from: 10, fileURL: Realm.Mock.version10Snapshot) { realm in
-        self.testMigrate_fromVersion10_createVerifiableCredential(realm)
-      },
-      MigrationTestCase(from: 14, fileURL: Realm.Mock.version14Snapshot) { realm in
-        self.testMigrate_credentialProgressionState(realm)
-      },
-    ]
+  func testMigrate_fromVersion1() throws {
+    let realm = try createRealm(from: Realm.Mock.version1Snapshot, schemaVersion: 1)
 
-    for testCase in cases {
-      try XCTContext.runActivity(named: "migration from \(testCase.from) to \(Self.currentSchemaVersion)") { _ in
-        let copiedFile = try copyToSimulator(testCase.fileURL)
-        let realm = try migrateRealm(fileURL: copiedFile, fromSchemaVersion: testCase.from, toSchemaVersion: Self.currentSchemaVersion)
-        try testCase.validate(realm)
-      }
-    }
+    // first live version but no manual migrations up to next version
+    assertCredentials(realm)
+
+    assertClusters(realm)
+    assertKeyBindings(realm)
+    assertBundleItemsAndDeferredKeyBindingsMigration(realm)
+    assertVerifiableCredentials(realm, hasValidUntil: false)
+    assertProgressionState(realm)
+    assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .rawCredentialData)
+    assertClaimsPathPointerReplacedKey(realm)
   }
 
-  func testMigrate_fromVersion1_createVerifiableCredentialWithValidUntilProperty(_ realm: Realm) {
-    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
-    XCTAssertEqual(credentials.count, 2)
+  func testMigrate_fromVersion4() throws {
+    let realm = try createRealm(from: Realm.Mock.version4Snapshot, schemaVersion: 4)
 
-    // Beta ID
-    assertCredentialClusters(credentials["03e1b073-113d-4eda-9b37-d0277e7774ec"]!, numberOfLanguages: 5, numberOfClaims: 23, withRawCredentialData: false)
-    assertKeyBinding(credentials["03e1b073-113d-4eda-9b37-d0277e7774ec"])
-    assertDefaultValues(credentials["03e1b073-113d-4eda-9b37-d0277e7774ec"]!)
+    assertCredentials(realm)
 
-    XCTAssertNil(credentials["03e1b073-113d-4eda-9b37-d0277e7774ec"]!.verifiableCredential!.validUntil)
+    assertClusters(realm)
+    assertKeyBindings(realm)
+    assertBundleItemsAndDeferredKeyBindingsMigration(realm)
+    assertVerifiableCredentials(realm)
+    assertProgressionState(realm)
+    assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .cluster)
+    assertClaimsPathPointerReplacedKey(realm)
   }
 
-  func testMigrate_fromVersion4_5_createsClusterAndAppendsClaims_createsCredentialKeyBindingForExistingKeyBinding(_ realm: Realm) {
-    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
-    XCTAssertEqual(credentials.count, 3)
+  func testMigrate_fromVersion5() throws {
+    let realm = try createRealm(from: Realm.Mock.version5Snapshot, schemaVersion: 5)
 
-    // Beta ID
-    assertCredentialClusters(credentials["1924abdf-c72a-475c-8f43-02e5d9012f71"]!, numberOfLanguages: 5, numberOfClaims: 23)
-    assertKeyBinding(credentials["1924abdf-c72a-475c-8f43-02e5d9012f71"])
-    assertDefaultValues(credentials["1924abdf-c72a-475c-8f43-02e5d9012f71"]!)
+    assertCredentials(realm)
 
-    // eLFA
-    assertCredentialClusters(credentials["bbca1163-dc86-4c6c-9de0-0c4bd670090f"]!, numberOfLanguages: 5, numberOfClaims: 17, numberOfIssuerDisplays: 2)
-    assertKeyBinding(credentials["bbca1163-dc86-4c6c-9de0-0c4bd670090f"])
-    assertDefaultValues(credentials["bbca1163-dc86-4c6c-9de0-0c4bd670090f"]!)
-
-    // uetlibergELFA
-    assertCredentialClusters(credentials["fea5fc07-d64b-4539-89e9-18e03b71e5dd"]!, numberOfLanguages: 4, numberOfClaims: 16, numberOfIssuerDisplays: 2, numberOfCredentialDisplays: 2)
-    XCTAssertNil(credentials["fea5fc07-d64b-4539-89e9-18e03b71e5dd"]?.keyBinding)
-    assertDefaultValues(credentials["fea5fc07-d64b-4539-89e9-18e03b71e5dd"]!)
+    assertKeyBindings(realm)
+    assertBundleItemsAndDeferredKeyBindingsMigration(realm)
+    assertVerifiableCredentials(realm)
+    assertProgressionState(realm)
+    assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .deferredCredential)
+    assertClaimsPathPointerReplacedKey(realm)
   }
 
-  func testMigrate_fromVersion10_createVerifiableCredential(_ realm: Realm) {
-    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
-    XCTAssertEqual(credentials.count, 3)
+  func testMigrate_fromVersion10() throws {
+    let realm = try createRealm(from: Realm.Mock.version10Snapshot, schemaVersion: 10)
 
-    assertCredentialClusters(credentials["1fe0c9e6-4d67-4531-9af5-2f336d4fe113"]!, numberOfLanguages: 5, numberOfClaims: 23)
-    assertDefaultValues(credentials["1fe0c9e6-4d67-4531-9af5-2f336d4fe113"]!)
+    assertCredentials(realm)
 
-    // Verifiable credential
-    XCTAssertEqual(credentials["1fe0c9e6-4d67-4531-9af5-2f336d4fe113"]!.verifiableCredential?.issuer, "did:tdw:QmPEZPhDFR4nEYSFK5bMnvECqdpf1tPTPJuWs9QrMjCumw:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:9a5559f0-b81c-4368-a170-e7b4ae424527")
-    XCTAssertEqual(credentials["1fe0c9e6-4d67-4531-9af5-2f336d4fe113"]!.verifiableCredential?.payload.count, 183070)
-    XCTAssertNil(credentials["1fe0c9e6-4d67-4531-9af5-2f336d4fe113"]!.verifiableCredential?.validFrom)
-    XCTAssertNil(credentials["1fe0c9e6-4d67-4531-9af5-2f336d4fe113"]!.verifiableCredential?.validUntil)
+    assertBundleItemsAndDeferredKeyBindingsMigration(realm)
+    assertVerifiableCredentials(realm)
+    assertProgressionState(realm)
+    assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .deferredCredential)
+    assertClaimsPathPointerReplacedKey(realm)
   }
 
-  func testMigrate_credentialProgressionState(_ realm: Realm) {
-    let credentials: [VerifiableCredentialEntity] = realm.objects(VerifiableCredentialEntity.self).compactMap({ $0 })
-    XCTAssertEqual(credentials.count, 3)
+  func testMigrate_fromVersion14() throws {
+    let realm = try createRealm(from: Realm.Mock.version14Snapshot, schemaVersion: 14)
 
-    XCTAssertEqual(credentials["25796e2c-8bb8-412e-a1a4-ab5c9697dfc0"]!.progressionState, .accepted)
-    XCTAssertEqual(credentials["77386f8a-12b5-4801-af38-a8fa5780edeb"]!.progressionState, .accepted)
-    XCTAssertEqual(credentials["24aacf56-67e3-4573-9cbb-2774a1f7374e"]!.progressionState, .accepted)
+    assertCredentials(realm, hasDeferredCredential: true)
+
+    assertBundleItemsAndDeferredKeyBindingsMigration(realm, hasDeferredCredential: true)
+    assertProgressionState(realm)
+    assertDeletionOfOrphanedObjects(realm)
+    assertClaimsPathPointerReplacedKey(realm)
+  }
+
+  func testMigrate_fromVersion16() throws {
+    let realm = try createRealm(from: Realm.Mock.version16Snapshot, schemaVersion: 16)
+
+    assertCredentials(realm, hasDeferredCredential: true)
+
+    assertBundleItemsAndDeferredKeyBindingsMigration(realm, hasDeferredCredential: true)
+    assertDeletionOfOrphanedObjects(realm)
+    assertClaimsPathPointerReplacedKey(realm)
+  }
+
+  func testMigrate_fromVersion23() throws {
+    let realm = try createRealm(from: Realm.Mock.version23Snapshot, schemaVersion: 23)
+
+    assertCredentials(realm, hasDeferredCredential: true)
+
+    assertClaimsPathPointerReplacedKey(realm)
   }
 
   // MARK: Private
 
-  private static let currentSchemaVersion: UInt64 = 15
+  private static let currentSchemaVersion: UInt64 = 25
+
+  private func createRealm(from fileURL: URL, schemaVersion: UInt64) throws -> Realm {
+    let copiedFile = try copyToSimulator(fileURL)
+    return try migrateRealm(fileURL: copiedFile, fromSchemaVersion: schemaVersion)
+  }
 
   private func copyToSimulator(_ fileURL: URL) throws -> URL {
     let manager = FileManager.default
@@ -112,7 +117,7 @@ final class RealmMigrationTests: XCTestCase {
     return destination
   }
 
-  private func migrateRealm(fileURL: URL, fromSchemaVersion: UInt64, toSchemaVersion: UInt64) throws -> Realm {
+  private func migrateRealm(fileURL: URL, fromSchemaVersion: UInt64, toSchemaVersion: UInt64 = currentSchemaVersion) throws -> Realm {
 
     XCTAssertEqual(try schemaVersionAtURL(fileURL), fromSchemaVersion)
 
@@ -130,49 +135,239 @@ final class RealmMigrationTests: XCTestCase {
     return realm
   }
 
-  private func assertCredentialClusters(_ credential: CredentialEntity, numberOfLanguages: Int, numberOfClaims: Int, numberOfIssuerDisplays: Int? = nil, numberOfCredentialDisplays: Int? = nil, withRawCredentialData: Bool = true) {
-    if withRawCredentialData {
-      XCTAssertNotNil(credential.rawCredentialData)
-    }
+  private func assertCredentials(_ realm: Realm, hasDeferredCredential: Bool = false) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
+    XCTAssertEqual(credentials.count, hasDeferredCredential ? 4 : 3)
 
+    assertCredentialClaimsAndDisplays(credentials["82407f9a-5f47-40d7-a67b-2e59e311cada"]!, numberOfLanguages: 5, numberOfClaims: 23)
+    assertCredentialClaimsAndDisplays(credentials["e5d7121f-683c-4775-8cf7-d415de4e339c"]!, numberOfLanguages: 5, numberOfClaims: 17, numberOfIssuerDisplays: 5)
+    assertCredentialClaimsAndDisplays(credentials["84912164-8775-4d14-bf7e-ff08a21b979f"]!, numberOfLanguages: 2, numberOfClaims: 17, numberOfIssuerDisplays: 2, numberOfCredentialDisplays: 2, numberOfCredentialClaimDisplays: 4)
+    if hasDeferredCredential {
+      XCTAssertNotNil(credentials["630c76ed-e712-4f1a-ae7e-6842ee5fa60a"]?.deferredCredential)
+    }
+  }
+
+  private func assertCredentialClaimsAndDisplays(_ credential: CredentialEntity, numberOfLanguages: Int, numberOfClaims: Int, numberOfIssuerDisplays: Int? = nil, numberOfCredentialDisplays: Int? = nil, numberOfCredentialClaimDisplays: Int? = nil) {
     XCTAssertEqual(credential.issuerDisplays.count, numberOfIssuerDisplays ?? numberOfLanguages)
     XCTAssertEqual(credential.displays.count, numberOfCredentialDisplays ?? numberOfLanguages)
 
     XCTAssertEqual(credential.verifiableCredential?.clusters.count, 1)
     let cluster = credential.verifiableCredential!.clusters.first!
-    XCTAssertEqual(cluster.childClusters.count, 0)
     XCTAssertEqual(cluster.claims.count, numberOfClaims)
     for claim in cluster.claims {
-      XCTAssertEqual(claim.displays.count, numberOfLanguages)
+      XCTAssertEqual(claim.displays.count, numberOfCredentialClaimDisplays ?? numberOfLanguages)
+      guard
+        let data = claim.path.data(using: .utf8),
+        let pointer = try? JSONSerialization.jsonObject(with: data) as? [String]
+      else {
+        XCTFail("not a valid claims path pointer string: \(claim.path)")
+        continue
+      }
+
+      XCTAssertEqual(pointer.count, 1)
     }
   }
 
-  private func assertKeyBinding(_ credential: CredentialEntity?) {
-    guard let credential else { return }
-    XCTAssertNotNil(credential.keyBinding)
-    XCTAssertEqual(credential.keyBinding?.bindingType, "hardware")
-    XCTAssertNil(credential.keyBinding?.publicKey)
-    XCTAssertNil(credential.keyBinding?.privateKey)
+  private func assertClaimsPathPointerReplacedKey(_ realm: Realm) {
+    let claims = realm.objects(CredentialClaimEntity.self)
+
+    assertClaim(claims, path: "[\"lastName\"]", value: "Muster")
+    assertClaim(claims, path: "[\"hometown\"]", value: "Entenhausen")
+    assertClaim(claims, path: "[\"issuerEntity\"]", value: "Chasseral-Test")
+    assertClaim(claims, path: "[\"categoryCode\"]", value: "B")
   }
 
-  private func assertDefaultValues(_ credential: CredentialEntity) {
+  private func assertClaim(_ claims: Results<CredentialClaimEntity>, path: String, value: String) {
+    XCTAssertTrue(
+      claims.contains(where: { $0.path == path && $0.value == value }),
+      "Missing claim with path \(path) and value \(value)")
+  }
+
+  private func assertClusters(_ realm: Realm) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
+    XCTAssertEqual(credentials.count, 3)
+
+    for credential in credentials {
+      XCTAssertEqual(credential.verifiableCredential?.clusters.count, 1)
+      let cluster = credential.verifiableCredential!.clusters.first!
+      XCTAssertEqual(cluster.childClusters.count, 0)
+      XCTAssertTrue(!cluster.claims.isEmpty)
+    }
+  }
+
+  private func assertKeyBindings(_ realm: Realm) {
+    let bindings: [CredentialKeyBindingEntity] = realm.objects(CredentialKeyBindingEntity.self).compactMap({ $0 })
+    XCTAssertEqual(bindings.count, 3)
+    for binding in bindings {
+      assertKeyBinding(binding, algorithm: "ES256", bindingType: "hardware")
+    }
+  }
+
+  private func assertVerifiableCredentials(_ realm: Realm, hasValidUntil: Bool = true) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
+    XCTAssertEqual(credentials.count, 3)
+
+    for credential in credentials {
+      guard let verifiableCredential = credential.verifiableCredential else {
+        XCTFail("Missing verifiable credential for \(credential.id)")
+        continue
+      }
+
+      XCTAssertTrue(
+        verifiableCredential.bundleItems.contains(where: { $0.id == verifiableCredential.nextPresentableBundleItemId }),
+        "Missing bundle item for nextPresentableBundleItemId on \(credential.id)")
+    }
+
+    assertVerifiableCredential(
+      credentials["84912164-8775-4d14-bf7e-ff08a21b979f"]!,
+      issuer: "did:tdw:QmXteH1UtiERDjYSYd4xqG8QEBnwkqw7P9GHv6JQ9xqfNK:identifier-reg-r.trust-infra.swiyu.admin.ch:api:v1:did:b6aca1a5-8d71-4cfc-ad50-7f73314399b7",
+      payloadCount: 584950,
+      keyBindingId: "AFEED6F6-B3EC-41F6-B4EB-440BEB7BAD97",
+      validFrom: Date(timeIntervalSinceReferenceDate: 732960000),
+      validUntil: hasValidUntil ? Date(timeIntervalSinceReferenceDate: 851990400) : nil) // chasseral
+
+    assertVerifiableCredential(
+      credentials["82407f9a-5f47-40d7-a67b-2e59e311cada"]!,
+      issuer: "did:tdw:QmRhsT9rVEQWc2xqk19Lvgqo5qE5ufPqsujkbPSvZDNPUg:identifier-reg-a.trust-infra.swiyu-int.admin.ch:api:v1:did:3761f0a3-f7c1-44a0-bab9-aa7a4a4bc596",
+      payloadCount: 170047,
+      keyBindingId: "1C870514-85D5-4EF6-83CE-B2D4D2580833",
+      validFrom: nil,
+      validUntil: nil) // BCS
+
+    assertVerifiableCredential(
+      credentials["e5d7121f-683c-4775-8cf7-d415de4e339c"]!,
+      issuer: "did:tdw:QmXuXpFHTpTVc8JkSpAvo5gKrxXmiw5sBPgVBPPko9kFNd:identifier-reg-r.trust-infra.swiyu.admin.ch:api:v1:did:170f8027-bc5b-4a38-96a3-5037257d3701",
+      payloadCount: 67045,
+      keyBindingId: "A0822BB1-B99F-45DF-BB56-DE1C8A96C00A",
+      validFrom: Date(timeIntervalSinceReferenceDate: 746575200),
+      validUntil: hasValidUntil ? Date(timeIntervalSinceReferenceDate: 851990400) : nil) // eLFA
+  }
+
+  private func assertVerifiableCredential(
+    _ credential: CredentialEntity,
+    status: BundleItemEntity.CredentialStatus = .valid,
+    progressionState: VerifiableCredentialEntity.ProgressionState = .accepted,
+    issuer: String,
+    payloadCount: Int,
+    keyBindingId: String,
+    validFrom: Date? = nil,
+    validUntil: Date? = nil)
+  {
     XCTAssertNil(credential.eIDRequestCase)
     XCTAssertNil(credential.deferredCredential)
+    let authentication = try! XCTUnwrap(credential.authentication)
+    guard let vc = credential.verifiableCredential else {
+      XCTFail("No verifiable credential found for \(credential.id)")
+      return
+    }
 
-    XCTAssertEqual(credential.verifiableCredential?.status, .valid)
-    XCTAssertEqual(credential.verifiableCredential?.progressionState, .accepted)
+    XCTAssertEqual(authentication.tokenType, "bearer")
+    XCTAssertEqual(vc.progressionState, progressionState)
+    XCTAssertEqual(vc.issuer, issuer)
+    XCTAssertEqual(vc.bundleItems.count, 1)
+    XCTAssertEqual(vc.bundleItems.first?.payload.count, payloadCount)
+    XCTAssertEqual(vc.bundleItems.first?.status, status)
+    XCTAssertEqual(vc.bundleItems.first?.presented, false)
+    XCTAssertEqual(vc.bundleItems.first?.keyBinding?.id.uuidString, keyBindingId)
+    XCTAssertEqual(vc.nextPresentableBundleItemId, vc.bundleItems.first?.id)
+    XCTAssertEqual(vc.validFrom, validFrom)
+    XCTAssertEqual(vc.validUntil, validUntil)
+    XCTAssertEqual(vc.clusters.count, 1)
+  }
+
+  private func assertProgressionState(_ realm: Realm) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
+    for credential in credentials {
+      if let vc = credential.verifiableCredential {
+        XCTAssertEqual(vc.progressionState, .accepted)
+      }
+    }
+  }
+
+  private func assertBundleItemsAndDeferredKeyBindingsMigration(_ realm: Realm, hasDeferredCredential: Bool = false) {
+    let credentials: [CredentialEntity] = realm.objects(CredentialEntity.self).compactMap({ $0 })
+
+    let keyBindingIdsByCredentialId = [
+      "82407f9a-5f47-40d7-a67b-2e59e311cada": "1C870514-85D5-4EF6-83CE-B2D4D2580833",
+      "84912164-8775-4d14-bf7e-ff08a21b979f": "AFEED6F6-B3EC-41F6-B4EB-440BEB7BAD97",
+      "e5d7121f-683c-4775-8cf7-d415de4e339c": "A0822BB1-B99F-45DF-BB56-DE1C8A96C00A",
+    ]
+
+    for (credentialId, keyBindingId) in keyBindingIdsByCredentialId {
+      guard let credential = credentials[credentialId], let verifiableCredential = credential.verifiableCredential else {
+        XCTFail("Missing verifiable credential with id \(credentialId)")
+        continue
+      }
+      XCTAssertEqual(verifiableCredential.bundleItems.count, 1)
+      XCTAssertEqual(verifiableCredential.bundleItems.first?.presented, false)
+      XCTAssertEqual(verifiableCredential.nextPresentableBundleItemId, verifiableCredential.bundleItems.first?.id)
+      assertKeyBinding(verifiableCredential.bundleItems.first?.keyBinding, id: keyBindingId, algorithm: "ES256", bindingType: "hardware")
+    }
+
+    guard hasDeferredCredential else {
+      return
+    }
+
+    guard let deferredCredentialOwnerId = UUID(uuidString: "630c76ed-e712-4f1a-ae7e-6842ee5fa60a") else {
+      XCTFail("Invalid deferred credential id")
+      return
+    }
+
+    let credential = realm.object(ofType: CredentialEntity.self, forPrimaryKey: deferredCredentialOwnerId)
+    guard let credential, let deferredCredential = credential.deferredCredential else {
+      XCTFail("Missing deferred credential")
+      return
+    }
+
+    XCTAssertEqual(deferredCredential.keyBindings.count, 1)
+    assertKeyBinding(deferredCredential.keyBindings.first, algorithm: "ES256", bindingType: "software")
+
+    let authentication = try! XCTUnwrap(credential.authentication)
+    XCTAssertEqual(authentication.accessToken, "dc7c4681-2fc4-454a-9d3f-0997926cf8d5")
+    XCTAssertEqual(authentication.tokenType, "bearer")
+    XCTAssertNil(authentication.refreshToken)
+    XCTAssertNil(authentication.dpopBinding)
+  }
+
+  private func assertKeyBinding(_ keyBinding: CredentialKeyBindingEntity?, id: String? = nil, algorithm: String, bindingType: String) {
+    guard let keyBinding else {
+      XCTFail("Missing key binding")
+      return
+    }
+
+    if let id {
+      XCTAssertEqual(keyBinding.id.uuidString, id)
+    }
+    XCTAssertEqual(keyBinding.algorithm, algorithm)
+    XCTAssertEqual(keyBinding.bindingType, bindingType)
+    if bindingType == "hardware" {
+      XCTAssertNil(keyBinding.publicKey)
+      XCTAssertNil(keyBinding.privateKey)
+    } else if bindingType == "software" {
+      XCTAssertNotNil(keyBinding.publicKey)
+      XCTAssertNotNil(keyBinding.privateKey)
+      XCTAssertEqual(keyBinding.publicKey?.count, 65)
+      XCTAssertEqual(keyBinding.privateKey?.count, 97)
+    }
+  }
+
+  private func assertDeletionOfOrphanedObjects(_ realm: Realm, firstMissingDatabaseFeature: DatabaseFeature = .none) {
+    XCTAssertEqual(realm.objects(CredentialKeyBindingEntity.self).count, firstMissingDatabaseFeature.getKeyBindingCount())
+    XCTAssertEqual(realm.objects(BundleItemEntity.self).count, 3)
+    XCTAssertEqual(realm.objects(RawCredentialDataEntity.self).count, firstMissingDatabaseFeature.getRawCredentialDataCount())
+    XCTAssertEqual(realm.objects(DPoPBindingEntity.self).count, 0)
+    XCTAssertEqual(realm.objects(DeferredCredentialEntity.self).count, firstMissingDatabaseFeature.getDeferredCredentialCount())
+    XCTAssertEqual(realm.objects(BatchDataEntity.self).count, 0)
+    XCTAssertEqual(realm.objects(VerifiableCredentialEntity.self).count, 3)
+    XCTAssertEqual(realm.objects(CredentialIssuerDisplayEntity.self).count, firstMissingDatabaseFeature.getCredentialIssuerDisplayCount())
+    XCTAssertEqual(realm.objects(CredentialDisplayEntity.self).count, firstMissingDatabaseFeature.getCredentialDisplayCount())
+    XCTAssertEqual(realm.objects(CredentialClaimClusterEntity.self).count, 3)
+    XCTAssertEqual(realm.objects(CredentialClaimClusterDisplayEntity.self).count, firstMissingDatabaseFeature.getCredentialClaimClusterDisplayCount())
+    XCTAssertEqual(realm.objects(CredentialClaimEntity.self).count, 57)
+    XCTAssertEqual(realm.objects(CredentialClaimDisplayEntity.self).count, 268)
+    XCTAssertEqual(realm.objects(EIDRequestStateEntity.self).count, 0)
   }
 }
-
-// MARK: - MigrationTestCase
-
-fileprivate struct MigrationTestCase {
-  let from: UInt64
-  let fileURL: URL
-  let validate: (Realm) throws -> Void
-}
-
-// swiftlint:enable all
 
 extension [CredentialEntity] {
   fileprivate subscript (id: String) -> Element? {

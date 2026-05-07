@@ -1,14 +1,15 @@
+// swiftlint:disable force_unwrapping
 import XCTest
 @testable import BITAnyCredentialFormat
+@testable import BITClaimsPathPointer
 @testable import BITCore
 @testable import BITCredentialShared
+@testable import BITOpenID
 
 // MARK: - ExpectedClaim
 
-// swiftlint:disable force_unwrapping
-
 struct ExpectedClaim {
-  let key: String
+  let path: ClaimsPathPointer
   let value: String?
   let valueType: ValueType
   let valueDisplayInfo: String?
@@ -19,14 +20,18 @@ struct ExpectedClaim {
 func assertClaimsEqual(_ claims: [CredentialClaim], expectedClaims: [ExpectedClaim]) {
   XCTAssertEqual(claims.count, expectedClaims.count)
   for expectedClaim in expectedClaims {
-    let claim = claims.first { "$." + $0.key == expectedClaim.key }!
+    let claim = claims.first { $0.path == expectedClaim.path }!
     XCTAssertEqual(claim.valueType, expectedClaim.valueType.rawValue)
     XCTAssertEqual(claim.value, expectedClaim.value)
     XCTAssertEqual(claim.order, Int(expectedClaim.order))
 
     XCTAssertEqual(claim.displays.count, expectedClaim.locales.count)
     for locale in expectedClaim.locales {
-      assertContainsClaimDisplay(claim, locale: locale, name: "\(expectedClaim.key.replacing("$.", with: "")) \(locale)")
+      var name = ""
+      if case .string(let key) = expectedClaim.path.first {
+        name = key
+      }
+      assertContainsClaimDisplay(claim, locale: locale, name: "\(name) \(locale)")
     }
   }
 }
@@ -60,5 +65,3 @@ func assertCredentialDisplays(_ displays: [CredentialDisplay], credentialId: UUI
     XCTAssertEqual(displays[1].logoAltText, "logo.altText en-US")
   }
 }
-
-// swiftlint:enable all

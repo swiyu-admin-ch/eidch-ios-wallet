@@ -11,7 +11,7 @@ final class NoDevicePinCodeViewModelTests: XCTestCase {
 
     hasDevicePinUseCase = HasDevicePinUseCaseProtocolSpy()
 
-    Container.shared.hasDevicePinUseCase.register { self.hasDevicePinUseCase }
+    Container.shared.hasDevicePinUseCase.register { @MainActor in self.hasDevicePinUseCase }
 
     router = NoDevicePinCodeRouterMock()
     viewModel = NoDevicePinCodeViewModel(router: router)

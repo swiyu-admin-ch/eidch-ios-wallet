@@ -8,6 +8,7 @@ final class MockOnboardingInternalRoutes: OnboardingInternalRoutes {
   var closeCalled = false
   var infoScreenWelcomeCalled = false
   var infoScreenCredentialCalled = false
+  var infoScreenActivitiesCalled = false
   var infoScreenSecurityCalled = false
   var privacyPermissionCalled = false
   var pinCodeCalled = false
@@ -34,6 +35,10 @@ final class MockOnboardingInternalRoutes: OnboardingInternalRoutes {
 
   func infoScreenCredential() {
     infoScreenCredentialCalled = true
+  }
+
+  func infoScreenActivities() {
+    infoScreenActivitiesCalled = true
   }
 
   func infoScreenSecurity() {

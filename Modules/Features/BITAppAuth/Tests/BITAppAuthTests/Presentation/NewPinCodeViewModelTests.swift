@@ -23,7 +23,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
     validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
 
     Container.shared.pinCodeMinimumSize.register { 6 }
-    Container.shared.validatePinCodeRuleUseCase.register { self.validatePinCodeRuleUseCase }
+    Container.shared.validatePinCodeRuleUseCase.register { @MainActor in self.validatePinCodeRuleUseCase }
   }
 
   override func tearDown() {
@@ -35,7 +35,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
   func testInitialState() {
     let viewModel = NewPinCodeViewModel(router: router)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
-    XCTAssertFalse(viewModel.isToastPresented)
+    XCTAssertNil(viewModel.toast)
     XCTAssertEqual(viewModel.inputFieldMessage, L10n.tkOnboardingCharactersSubtitle)
     XCTAssertEqual(viewModel.inputFieldState, .normal)
     XCTAssertNotNil(viewModel.router.context.uniquePassphrase)

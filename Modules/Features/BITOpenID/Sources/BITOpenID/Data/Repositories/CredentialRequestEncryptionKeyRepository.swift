@@ -8,7 +8,7 @@ import Spyable
 @Spyable
 protocol CredentialResponseEncryptionKeyRepositoryProtocol {
   func create(
-    using responseEncryption: CredentialMetadata.CredentialResponseEncryption) throws
+    using responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption) throws
     -> VaultKeyPair
 }
 
@@ -18,7 +18,7 @@ struct CredentialResponseEncryptionKeyRepository: CredentialResponseEncryptionKe
 
   // MARK: Internal
 
-  func create(using responseEncryption: CredentialMetadata.CredentialResponseEncryption) throws -> VaultKeyPair {
+  func create(using responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption) throws -> VaultKeyPair {
     let algorithm = try VaultAlgorithm(responseEncryption)
 
     return try keyManager.generateKeyPair(

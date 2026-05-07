@@ -1,6 +1,5 @@
 import BITAppAuth
 import BITAVWrapper
-import BITL10n
 import BITLocalAuthentication
 import BITNavigation
 import BITTheming
@@ -11,12 +10,13 @@ import SwiftUI
 
 // MARK: - SetupViewModel
 
-class SetupViewModel: ObservableObject {
+@Observable
+
+class SetupViewModel {
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
-  @Published var isNavigationCloseTriggered = false
+  var destination: EIDRequestDestinations?
 
   @MainActor
   func fetchAttestations() async {
@@ -27,8 +27,6 @@ class SetupViewModel: ObservableObject {
     let startTime = Date()
 
     do {
-      try await fetchAttestationsUseCase.execute(context)
-
       Task.detached { [weak self] in
         guard let self else {
           return
@@ -36,6 +34,8 @@ class SetupViewModel: ObservableObject {
 
         try? avBeam.initialize(using: AVBeamInitConfig(appId: avBeamAppID))
       }
+
+      try await validateDeviceSecurityRequirementsUseCase(context)
 
       await applyMinimumDelay(startTime: startTime)
 
@@ -45,19 +45,20 @@ class SetupViewModel: ObservableObject {
     }
   }
 
-  func cancelInitialization() {
+  @MainActor
+  func cancelInitialization(_ navigator: Navigator) {
     avBeam.shutdown()
-    isNavigationCloseTriggered = true
+    navigator.dismiss()
   }
 
   // MARK: Private
 
   private let minimumDelayInSeconds: TimeInterval = 2.0
 
-  @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.avBeam) private var avBeam: AVBeamProtocol
-  @Injected(\.userSession) private var userSession: Session
-  @Injected(\.fetchAttestationsUseCase) private var fetchAttestationsUseCase
+  @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
+  @ObservationIgnored @Injected(\.avBeam) private var avBeam: AVBeamProtocol
+  @ObservationIgnored @Injected(\.userSession) private var userSession: Session
+  @ObservationIgnored @Injected(\.validateDeviceSecurityRequirementsUseCase) private var validateDeviceSecurityRequirementsUseCase
 
   // MARK: - Delay Management
 
@@ -89,11 +90,15 @@ class SetupViewModel: ObservableObject {
 
     switch error {
     case EIDRequestRepository.Error.invalidClientAttestation:
-      return destination = .error(.clientAttestation)
+      return destination = .error(.Setup.clientAttestation)
     case EIDRequestRepository.Error.invalidKeyAttestation:
-      return destination = .error(.keyAttestation)
+      return destination = .error(.Setup.keyAttestation)
     default:
-      return destination = .error(.retry(error) { _ in self.handleCallback() })
+      return destination = .error(.retry(error) { [weak self] navigator in
+        guard let self else { return }
+        navigator.pop()
+        handleCallback()
+      })
     }
   }
 
@@ -101,48 +106,5 @@ class SetupViewModel: ObservableObject {
     Task {
       await fetchAttestations()
     }
-  }
-}
-
-extension ErrorDataset {
-
-  // MARK: Internal
-
-  @MainActor
-  static var keyAttestation: Self {
-    ErrorDataset([
-      .title(L10n.tkEidRequestKeyAttestationErrorPrimary),
-      .body(L10n.tkEidRequestKeyAttestationErrorSecondary),
-      .caption(L10n.tkEidRequestKeyAttestationErrorTertiary),
-    ], actions: [
-      .primary(L10n.tkEidRequestKeyAttestationErrorPrimaryButton) { navigator in
-        navigator.dismiss()
-      },
-    ])
-  }
-
-  @MainActor
-  static var clientAttestation: Self {
-    ErrorDataset([
-      .title(L10n.tkEidRequestClientAttestationErrorPrimary),
-      .body(L10n.tkEidRequestClientAttestationErrorSecondary),
-      .captionButton(L10n.tkEidRequestClientAttestationErrorTertiary) { _ in
-        self.openLink(L10n.tkEidRequestClientAttestationErrorHelpLink)
-      },
-    ], actions: [
-      .primary(L10n.tkEidRequestClientAttestationErrorPrimaryButton) { _ in
-        self.openLink(L10n.tkGlobalStoreLink)
-      },
-      .secondary(L10n.tkEidRequestClientAttestationErrorSecondaryButton) { navigator in
-        navigator.dismiss()
-      },
-    ])
-  }
-
-  // MARK: Private
-
-  private static func openLink(_ link: String) {
-    guard let url = URL(string: link) else { return }
-    UIApplication.shared.open(url)
   }
 }

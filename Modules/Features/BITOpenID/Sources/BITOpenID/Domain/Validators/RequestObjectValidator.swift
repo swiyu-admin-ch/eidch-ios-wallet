@@ -40,7 +40,8 @@ extension RequestObject {
       isClientInformationValid() &&
       isClientIdValid() &&
       areInputDescriptorsValid() &&
-      isConstraintsPathValid()
+      isConstraintsPathValid() &&
+      isTransactionDataNil()
   }
 
   // MARK: Private
@@ -84,5 +85,9 @@ extension RequestObject {
         }
       }
     }
+  }
+
+  private func isTransactionDataNil() -> Bool {
+    transactionData == nil
   }
 }

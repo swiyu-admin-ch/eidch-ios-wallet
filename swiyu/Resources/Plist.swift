@@ -47,6 +47,7 @@ enum PlistFiles {
   static let lsHasLocalizedDisplayName: Bool = _document["LSHasLocalizedDisplayName"]
   static let nfcReaderUsageDescription: String = _document["NFCReaderUsageDescription"]
   static let nsAppTransportSecurity: [String: Any] = _document["NSAppTransportSecurity"]
+  static let nsBluetoothAlwaysUsageDescription: String = _document["NSBluetoothAlwaysUsageDescription"]
   static let nsCameraUsageDescription: String = _document["NSCameraUsageDescription"]
   static let nsFaceIDUsageDescription: String = _document["NSFaceIDUsageDescription"]
   static let uiApplicationSceneManifest: [String: Any] = _document["UIApplicationSceneManifest"]

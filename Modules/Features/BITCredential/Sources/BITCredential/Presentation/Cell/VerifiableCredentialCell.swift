@@ -49,7 +49,7 @@ public struct VerifiableCredentialCell: View {
     if viewModel.environment == .swiyuInt {
       parts.append(L10n.tkCredentialStatusDemoAlt)
     }
-    parts.append(viewModel.statusText)
+    parts.append(viewModel.statusBadgeAccessibilityText)
     return parts.joined(separator: ", ")
   }
 

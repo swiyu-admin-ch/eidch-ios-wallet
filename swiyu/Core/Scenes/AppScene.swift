@@ -1,7 +1,13 @@
 import BITAppAuth
 import BITCore
+import BITCredential
+import BITDeeplink
+import BITHome
+import BITNavigation
 import Factory
 import Foundation
+import NavigatorUI
+import SwiftUI
 import UIKit
 
 // MARK: - AppScene
@@ -12,16 +18,6 @@ final class AppScene: SceneManagerProtocol {
   // MARK: Lifecycle
 
   init() {
-    hasDevicePinUseCase = Container.shared.hasDevicePinUseCase()
-    router = Container.shared.rootRouter()
-
-    registerNotifications()
-  }
-
-  init(hasDevicePinUseCase: HasDevicePinUseCaseProtocol = Container.shared.hasDevicePinUseCase(), router: RootRouterRoutes = Container.shared.rootRouter()) {
-    self.hasDevicePinUseCase = hasDevicePinUseCase
-    self.router = router
-
     registerNotifications()
   }
 
@@ -30,7 +26,12 @@ final class AppScene: SceneManagerProtocol {
   weak var delegate: (any SceneManagerDelegate)?
 
   func viewController() -> UIViewController {
-    Container.shared.homeModule().viewController
+    ManagedHostingController {
+      HomeDestinations.home
+        .navigationAutoReceive(HomeDestinations.self)
+        .navigationRoot(self.navigator)
+        .environment(\.font, .custom.body)
+    }
   }
 
   func willPresentScene(from scene: any SceneManagerProtocol) {
@@ -56,18 +57,24 @@ final class AppScene: SceneManagerProtocol {
   }
 
   func didReceiveDeeplink(url: URL) {
-    guard userSession.isLoggedIn, router.deeplink(url: url, animated: true) else {
+    guard userSession.isLoggedIn, canOpenUrl(url) else {
       return
     }
 
+    let deeplinkManager = DeeplinkManager(allowedRoutes: RootDeeplinkRoute.allCases)
+    guard (try? deeplinkManager.dispatchFirst(url)) != nil else { return }
+
+    navigator.send(HomeDestinations.external(.deeplink(url)))
     delegate?.didConsumeDeeplink()
   }
 
   // MARK: Private
 
-  private var hasDevicePinUseCase: HasDevicePinUseCaseProtocol
-  private var router: RootRouterRoutes
+  @Injected(\.hasDevicePinUseCase) private var hasDevicePinUseCase
+  @Injected(\.rootRouter) private var router
   @Injected(\.userSession) private var userSession: Session
+
+  private let navigator = Navigator(configuration: NavigationConfiguration(verbosity: .info))
 
   private func registerNotifications() {
     NotificationCenter.default.addObserver(forName: .userInactivityTimeout, object: nil, queue: .main) { _ in
@@ -100,4 +107,14 @@ final class AppScene: SceneManagerProtocol {
     didReceiveDeeplink(url: url)
   }
 
+  private func canOpenUrl(_ url: URL) -> Bool {
+    guard
+      let topViewController = UIApplication.topViewController,
+      !topViewController.className.contains("LoginHostingController")
+    else {
+      return false
+    }
+
+    return true
+  }
 }

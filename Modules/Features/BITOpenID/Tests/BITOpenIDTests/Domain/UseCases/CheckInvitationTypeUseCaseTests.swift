@@ -37,6 +37,27 @@ final class CheckInvitationTypeUseCaseTests: XCTestCase {
     }
   }
 
+  func testExecute_proximityEngagement_returnsProximityEngagementTypeWhenEnabled() throws {
+    Container.shared.isProximityEnabled.register { true }
+    useCase = CheckInvitationTypeUseCase()
+
+    let invitationURL = try XCTUnwrap(URL(string: "mdoc://bit.com"))
+
+    let invitationType = try useCase.execute(url: invitationURL)
+
+    XCTAssertEqual(invitationType, InvitationType.proximityEngagement)
+  }
+
+  func testExecute_proximityEngagement_doesntReturnsProximityEngagementTypeWhenDisabled() throws {
+    Container.shared.isProximityEnabled.register { false }
+    useCase = CheckInvitationTypeUseCase()
+    let invitationURL = try XCTUnwrap(URL(string: "mdoc://bit.com"))
+
+    XCTAssertThrowsError(try useCase.execute(url: invitationURL)) { error in
+      XCTAssertEqual(error as? CheckInvitationTypeError, .wrongScheme)
+    }
+  }
+
   func testExecute_wrongScheme_throwsWrongSchemeError() throws {
     let invitationURL = try XCTUnwrap(URL(string: "test://bit.com"))
 

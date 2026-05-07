@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
+@testable import BITCore
 @testable import BITJWT
-@testable import BITTestingCore
 
 extension ProofJWT: Mockable {
   struct Mock {

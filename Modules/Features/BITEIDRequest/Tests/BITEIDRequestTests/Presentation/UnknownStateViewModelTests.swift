@@ -14,7 +14,7 @@ class UnknownStateViewModelTests: XCTestCase {
     delegate = RequestCaseViewStateDelegateSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
 
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { self.updateEIDRequestCaseStatusUseCase }
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
   }
 
   func testInit_validRequestCase_success() throws {

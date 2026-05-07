@@ -51,11 +51,11 @@ extension BITServerTrustManager {
 
     var certificate: [Certificate] {
       switch self {
-      case .dynatrace: [.dynatraceRoot]
+      case .dynatrace: [.dynatraceRoot, .swissGovernmentRoot]
       case .attestationService,
            .trustInfra,
            .trustInfraInt,
-           .versionEnforcement: [.adminChRoot]
+           .versionEnforcement: [.adminChRoot, .swissGovernmentRoot]
       }
     }
   }
@@ -108,5 +108,6 @@ extension BITServerTrustManager {
   fileprivate enum Certificate: String, CaseIterable {
     case dynatraceRoot = "qvrca2g3"
     case adminChRoot = "dcgrg2"
+    case swissGovernmentRoot = "sgrcavi"
   }
 }

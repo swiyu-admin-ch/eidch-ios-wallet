@@ -7,7 +7,7 @@ let package = Package(
   name: "BITAppAuth",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -15,7 +15,7 @@ let package = Package(
       targets: ["BITAppAuth"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/exyte/PopupView", exact: "3.1.4"), // 4.1.11 available
     .package(path: "../../Platforms/BITL10n"),
@@ -54,7 +54,7 @@ let package = Package(
       dependencies: [
         "BITAppAuth",
         .product(name: "BITTestingCore", package: "BITCore"),
-        .product(name: "BITNavigationTestCore", package: "BITNavigation"),
+        .product(name: "BITNavigation", package: "BITNavigation"),
         .product(name: "BITAppInfo", package: "BITAppInfo"),
         .product(name: "BITNavigation", package: "BITNavigation"),
       ],

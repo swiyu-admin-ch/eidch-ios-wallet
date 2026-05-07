@@ -55,11 +55,15 @@ public struct NetworkService {
     let timeout = target.defaultTimeoutInterval
     let session = NetworkContainer.shared.session(timeout: timeout)
 
-    if NetworkContainer.shared.endpointClosure() != nil {
+    if NetworkContainer.shared.endpointByTargetClosure() != nil || NetworkContainer.shared.endpointClosure() != nil {
       let endpointClosure = { (target: T) -> Endpoint in
         Endpoint(
           url: URL(target: target).absoluteString,
-          sampleResponseClosure: ({ () -> EndpointSampleResponse in NetworkContainer.shared.endpointClosure() ?? .response(HTTPURLResponse(), target.sampleData) }),
+          sampleResponseClosure: ({ () -> EndpointSampleResponse in
+            NetworkContainer.shared.endpointByTargetClosure()?(target) ??
+              NetworkContainer.shared.endpointClosure() ??
+              .response(HTTPURLResponse(), target.sampleData)
+          }),
           method: target.method,
           task: target.task,
           httpHeaderFields: target.headers)

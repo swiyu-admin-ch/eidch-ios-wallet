@@ -5,7 +5,8 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class PrivacyPermissionViewModel: ObservableObject {
+@Observable
+class PrivacyPermissionViewModel {
 
   // MARK: Lifecycle
 

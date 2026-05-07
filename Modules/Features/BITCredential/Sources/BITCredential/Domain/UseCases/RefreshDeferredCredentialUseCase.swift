@@ -30,8 +30,10 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
       switch anyCredentialResult {
       case .credential(let anyCredential):
         try await generateCredential(from: anyCredential, deferredCredential: deferredCredential, metadataResponse: metadataResponse)
+      case .batch(let credentials):
+        try await generateBatchCredential(from: credentials, deferredCredential: deferredCredential, metadataResponse: metadataResponse)
       case .deferred(let deferredCredentialContext):
-        try await updateDeferredCredential(deferredCredential, metadataResponse: metadataResponse, interval: deferredCredentialContext.interval)
+        try await updateDeferredCredential(deferredCredential, metadataResponse: metadataResponse, context: deferredCredentialContext)
       }
     } catch OpenIdRepositoryError.invalidCredential {
       return try await invalidateDeferredCredential(deferredCredential)
@@ -61,6 +63,7 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
   @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
   @Injected(\.trustInformationService) private var trustInformationService: TrustInformationServiceProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
+  @Injected(\.mapCredentialsToKeyBindingsUseCase) private var mapCredentialsToKeyBindingsUseCase: MapCredentialsToKeyBindingsUseCaseProtocol
 
   private func canRefreshCredential(_ credential: DeferredCredential) -> Bool {
     guard let polledAt = credential.polledAt else {
@@ -74,8 +77,27 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
   private func generateCredential(
     from anyCredential: AnyCredential,
     deferredCredential: DeferredCredential,
-    metadataResponse: CredentialMetadataResponse) async throws
+    metadataResponse: CredentialIssuerMetadataResponse) async throws
   {
+    let credentialWithKeyBinding = CredentialWithKeyBinding(
+      credential: anyCredential,
+      keyBinding: deferredCredential.keyBindings.first)
+    try await generateCredential(
+      from: [credentialWithKeyBinding],
+      deferredCredential: deferredCredential,
+      metadataResponse: metadataResponse)
+  }
+
+  private func generateCredential(
+    from credentialsWithKeyBindings: [CredentialWithKeyBinding],
+    deferredCredential: DeferredCredential,
+    metadataResponse: CredentialIssuerMetadataResponse) async throws
+  {
+    guard let firstCredentialWithKeyBinding = credentialsWithKeyBindings.first else {
+      throw RefreshDeferredCredentialUseCaseError.invalidBatchCredentials
+    }
+
+    let anyCredential = firstCredentialWithKeyBinding.credential
     let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataResponse: metadataResponse)
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(anyCredential: anyCredential)
     let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
@@ -85,11 +107,11 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     }
 
     var credential = try credentialGenerator.generate(
-      for: anyCredential,
-      keyBinding: deferredCredential.keyBinding,
+      for: credentialsWithKeyBindings,
       rawOcaBundle: rawOcaBundle,
       metadataWrapper: metadataWrapper,
-      trustStatement: trustStatement)
+      trustStatement: trustStatement,
+      authentication: deferredCredential.authentication)
 
     credential.progressionState = .unaccepted
 
@@ -99,45 +121,71 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     _ = try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)
   }
 
+  private func generateBatchCredential(
+    from credentials: [AnyCredential],
+    deferredCredential: DeferredCredential,
+    metadataResponse: CredentialIssuerMetadataResponse) async throws
+  {
+    let credentialsWithKeyBindings = try mapBatchCredentialsToKeyBindings(
+      credentials,
+      deferredKeyBindings: deferredCredential.keyBindings)
+
+    try await generateCredential(
+      from: credentialsWithKeyBindings,
+      deferredCredential: deferredCredential,
+      metadataResponse: metadataResponse)
+  }
+
+  private func mapBatchCredentialsToKeyBindings(_ credentials: [AnyCredential], deferredKeyBindings: [KeyBinding]) throws -> [CredentialWithKeyBinding] {
+    guard !deferredKeyBindings.isEmpty else {
+      throw RefreshDeferredCredentialUseCaseError.invalidBatchCredentials
+    }
+
+    return try mapCredentialsToKeyBindingsUseCase.execute(
+      credentials: credentials,
+      keyBindings: deferredKeyBindings)
+  }
+
   private func updateDeferredCredential(
     _ deferredCredential: DeferredCredential,
-    metadataResponse: CredentialMetadataResponse,
-    interval: Int) async throws
+    metadataResponse: CredentialIssuerMetadataResponse,
+    context: DeferredCredentialContext) async throws
   {
-    let context = DeferredCredentialContext(
-      transactionId: deferredCredential.transactionId,
-      accessToken: deferredCredential.accessToken,
-      endpoint: deferredCredential.endpoint,
-      format: deferredCredential.format,
-      interval: interval)
+    guard deferredCredential.transactionId == context.transactionId else {
+      var invalidCredential = deferredCredential
+      invalidCredential.progressionState = .invalid
+
+      try await credentialRepository.update(deferredCredential: invalidCredential)
+      return
+    }
 
     let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataResponse: metadataResponse)
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(metadata: metadataWrapper.selectedCredential)
 
     var credential = try credentialGenerator.generateDeferred(
       context,
-      keyBinding: deferredCredential.keyBinding,
+      keyBindings: deferredCredential.keyBindings,
       rawOcaBundle: rawOcaBundle,
       metadataWrapper: metadataWrapper)
     credential.polledAt = Date()
-    credential.pollingInterval = interval
+    credential.pollingInterval = context.interval
     credential.id = deferredCredential.id
 
     try await credentialRepository.update(deferredCredential: credential)
   }
 
-  private func createMetadataWrapper(for deferredCredential: DeferredCredential, metadataResponse: CredentialMetadataResponse) throws -> CredentialMetadataWrapper {
+  private func createMetadataWrapper(for deferredCredential: DeferredCredential, metadataResponse: CredentialIssuerMetadataResponse) throws -> CredentialIssuerMetadataWrapper {
     guard let selectedConfigurationId = deferredCredential.selectedConfigurationId else {
       throw RefreshDeferredCredentialUseCaseError.invalidConfigurationId
     }
 
     do {
-      return try CredentialMetadataWrapper(
+      return try CredentialIssuerMetadataWrapper(
         credentialConfigurationId: selectedConfigurationId,
-        credentialMetadata: metadataResponse.metadata,
+        credentialIssuerMetadata: metadataResponse.metadata,
         rawData: metadataResponse.raw)
     } catch {
-      throw RefreshDeferredCredentialUseCaseError.invalidCredentialMetadata
+      throw RefreshDeferredCredentialUseCaseError.invalidCredentialIssuerMetadata
     }
   }
 
@@ -157,6 +205,7 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 // MARK: - RefreshDeferredCredentialUseCaseError
 
 enum RefreshDeferredCredentialUseCaseError: Error {
+  case invalidBatchCredentials
   case invalidConfigurationId
-  case invalidCredentialMetadata
+  case invalidCredentialIssuerMetadata
 }

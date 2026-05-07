@@ -1,7 +1,7 @@
 import BITAppAuth
 import BITAppInfo
 import Foundation
-@testable import BITNavigationTestCore
+@testable import BITNavigation
 
 class LoginRouterMock: ClosableRoutesMock, LoginRouterRoutes {
 

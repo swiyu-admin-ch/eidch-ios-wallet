@@ -7,7 +7,7 @@ let package = Package(
   name: "BITHome",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -24,7 +24,7 @@ let package = Package(
     .package(path: "../../Features/BITSettings"),
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITDataStore"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(path: "../../Platforms/BITAnalytics"),
     .package(path: "../BITCredentialShared"),
     .package(path: "../BITEIDRequest"),
@@ -48,6 +48,7 @@ let package = Package(
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITEIDRequest", package: "BITEIDRequest"),
+        .product(name: "BITOTP", package: "BITEIDRequest"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "Refresher", package: "SwiftUI-Refresher"),
@@ -61,6 +62,7 @@ let package = Package(
         .product(name: "BITCredential", package: "BITCredential"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITEIDRequest", package: "BITEIDRequest"),
+        .product(name: "BITOTP", package: "BITEIDRequest"),
         .product(name: "BITEIDRequestShared", package: "BITEIDRequestShared"),
         .product(name: "BITInvitation", package: "BITInvitation"),
         .product(name: "BITNavigation", package: "BITNavigation"),

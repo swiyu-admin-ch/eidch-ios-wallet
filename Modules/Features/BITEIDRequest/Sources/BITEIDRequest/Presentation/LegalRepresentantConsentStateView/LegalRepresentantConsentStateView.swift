@@ -12,7 +12,7 @@ struct LegalRepresentantConsentStateView: View {
   // MARK: Lifecycle
 
   init(state: RequestCaseViewState) {
-    _viewModel = StateObject(wrappedValue: Container.shared.legalRepresentantConsentStateViewModel(state))
+    _viewModel = State(initialValue: Container.shared.legalRepresentantConsentStateViewModel(state))
   }
 
   // MARK: Internal
@@ -22,13 +22,14 @@ struct LegalRepresentantConsentStateView: View {
       image: viewModel.image,
       contents: contents,
       actions: [
-        .primary(viewModel.primaryButtonText, identifier: "primaryButton", { _ in
+        .primary(viewModel.primaryButtonText, identifier: "primaryButton") { _ in
           viewModel.primaryAction()
-        }),
+        },
       ])
       .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
       .navigate(to: $viewModel.destination)
-      .toolbar(.visible)
+      .defaultEidRequestToolbar()
+      .navigationBarBackButtonHidden()
   }
 
   // MARK: Private
@@ -40,7 +41,7 @@ struct LegalRepresentantConsentStateView: View {
     case startDateText
   }
 
-  @StateObject private var viewModel: LegalRepresentantConsentStateViewModel
+  @State private var viewModel: LegalRepresentantConsentStateViewModel
 }
 
 extension LegalRepresentantConsentStateView {

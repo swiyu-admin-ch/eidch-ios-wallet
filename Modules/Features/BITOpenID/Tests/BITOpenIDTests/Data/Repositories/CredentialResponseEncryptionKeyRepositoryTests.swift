@@ -2,6 +2,7 @@
 import Factory
 import Foundation
 import XCTest
+@testable import BITCore
 @testable import BITOpenID
 @testable import BITTestingCore
 @testable import BITVault
@@ -43,7 +44,7 @@ final class CredentialResponseEncryptionKeyRepositoryTests: XCTestCase {
   }
 
   func testCreate_unsupportedAlgorithm_throws() throws {
-    let responseEncryptionMock = CredentialMetadata.CredentialResponseEncryption(
+    let responseEncryptionMock = CredentialIssuerMetadata.CredentialResponseEncryption(
       supportedAlgorithmValues: [],
       supportedEncryptionAlgorithms: [.A128GCM],
       supportedZipValues: nil,
@@ -58,7 +59,7 @@ final class CredentialResponseEncryptionKeyRepositoryTests: XCTestCase {
   // MARK: Private
 
   private let keyPairMock = VaultKeyPair.Mock.ES256
-  private let responseEncryptionMock = CredentialMetadata.CredentialResponseEncryption(
+  private let responseEncryptionMock = CredentialIssuerMetadata.CredentialResponseEncryption(
     supportedAlgorithmValues: [.ECDH_ES],
     supportedEncryptionAlgorithms: [.A128GCM],
     supportedZipValues: [.deflate],

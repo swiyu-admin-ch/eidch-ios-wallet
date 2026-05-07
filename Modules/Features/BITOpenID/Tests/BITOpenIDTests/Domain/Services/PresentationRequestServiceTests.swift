@@ -79,7 +79,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     }
   }
 
-  func testFetch_plainRequestObjectWithOpenID4VPUrlAndInvalidClientId_throwsInvalidError() async throws {
+  func testFetch_plainRequestObjectWithOpenID4VPUrlAndInvalidClientId_throwsInvalidRequestError() async throws {
     let request = PresentationRequest.plain(requestObjectMock)
     repositorySpy.fetchFromReturnValue = request
     urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: "invalid")
@@ -88,8 +88,9 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid(let presentationRequest) = error as? FetchPresentationRequestError {
+      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
         XCTAssertEqual(presentationRequest, request)
+        XCTAssertEqual(presentationError, .invalidRequest)
       }
     }
   }
@@ -107,7 +108,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     }
   }
 
-  func testFetch_jwtRequestObjectWithOpenID4VPUrlAndInvalidClientId_throwsInvalidError() async throws {
+  func testFetch_jwtRequestObjectWithOpenID4VPUrlAndInvalidClientId_throwsInvalidRequestError() async throws {
     let request = PresentationRequest.jwt(requestObjectJWSMock)
     urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: "invalid")
     repositorySpy.fetchFromReturnValue = request
@@ -116,8 +117,9 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid(let presentationRequest) = error as? FetchPresentationRequestError {
+      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
         XCTAssertEqual(presentationRequest, request)
+        XCTAssertEqual(presentationError, .invalidRequest)
       }
     }
   }
@@ -130,8 +132,9 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid(let presentationRequest) = error as? FetchPresentationRequestError {
+      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
         XCTAssertEqual(presentationRequest, request)
+        XCTAssertEqual(presentationError, .invalidRequest)
       }
     }
   }
@@ -144,8 +147,9 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid(let presentationRequest) = error as? FetchPresentationRequestError {
+      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
         XCTAssertEqual(presentationRequest, request)
+        XCTAssertEqual(presentationError, .invalidRequest)
       } else {
         XCTFail("Wrong error: \(error)")
       }
@@ -160,7 +164,8 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid = error as? FetchPresentationRequestError {
+      if case .invalid(_, let presentationError) = error as? FetchPresentationRequestError {
+        XCTAssertEqual(presentationError, .invalidRequest)
         XCTAssertTrue(true, "Wrong error")
       }
     }
@@ -173,7 +178,8 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid = error as? FetchPresentationRequestError {
+      if case .invalid(_, let presentationError) = error as? FetchPresentationRequestError {
+        XCTAssertEqual(presentationError, .invalidRequest)
         XCTAssertTrue(true, "Wrong error")
       }
     }
@@ -187,16 +193,19 @@ final class PresentationRequestServiceTests: XCTestCase {
       _ = try await service.fetch(from: urlMock)
       XCTFail("Should have thrown an error")
     } catch {
-      if case .invalid = error as? FetchPresentationRequestError {
+      if case .invalid(_, let presentationError) = error as? FetchPresentationRequestError {
+        XCTAssertEqual(presentationError, .invalidRequest)
         XCTAssertTrue(true, "Wrong error")
       }
     }
   }
 
   func testDecline_passesArguments() async throws {
-    let error = PresentationErrorRequestBody.ErrorType.clientRejected
+    let error = PresentationErrorRequestBody.Code.accessDenied
 
-    try await service.decline(url: requestObjectMock.responseUri, with: error)
+    let responseUri = try XCTUnwrap(requestObjectMock.responseUri)
+
+    try await service.decline(url: responseUri, with: error)
 
     XCTAssertEqual(repositorySpy.declineUrlWithCallsCount, 1)
     XCTAssertEqual(repositorySpy.declineUrlWithReceivedArguments?.url.absoluteString, "response_uri")
@@ -207,7 +216,9 @@ final class PresentationRequestServiceTests: XCTestCase {
     repositorySpy.declineUrlWithThrowableError = TestingError.error
 
     do {
-      _ = try await service.decline(url: requestObjectMock.responseUri, with: .clientRejected)
+      let responseUri = try XCTUnwrap(requestObjectMock.responseUri)
+
+      _ = try await service.decline(url: responseUri, with: .accessDenied)
       XCTFail("Should have thrown an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)

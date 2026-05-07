@@ -9,6 +9,7 @@ class RootRouterMock: RootRouterRoutes {
   var didCallSplashScreen = false
   var didCallDeeplink = false
   var didCallInvitation = false
+  var didCallBluetooth = false
   var didCallCamera = false
   var didCallBetaId = false
 
@@ -20,17 +21,13 @@ class RootRouterMock: RootRouterRoutes {
     didCallSplashScreen = true
   }
 
-  func deeplink(url: URL, animated: Bool) -> Bool {
+  func deeplink(url: URL) -> Bool {
     didCallDeeplink = true
     return true
   }
 
-  func invitation(delegate: InvitationDelegate?) {
+  func invitation(tab: InvitationTab) {
     didCallInvitation = true
-  }
-
-  func camera(openingStyle: any OpeningStyle, delegate: InvitationDelegate?) {
-    didCallCamera = true
   }
 
   func betaId() {

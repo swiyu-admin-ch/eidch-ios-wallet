@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension String.Mock {
   static let draft202012 = Mocker.getString(fromFile: "json-meta-schema-202012", ofType: "json", bundle: Bundle.module)

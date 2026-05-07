@@ -3,7 +3,6 @@ import Foundation
 @testable import BITActivity
 @testable import BITCore
 @testable import BITCredentialShared
-@testable import BITTestingCore
 
 extension NonComplianceExcessiveDataReportBody: Mockable {
   public struct Mock {

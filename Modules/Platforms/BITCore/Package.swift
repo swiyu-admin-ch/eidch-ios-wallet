@@ -5,7 +5,7 @@ let package = Package(
   name: "BITCore",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -16,7 +16,7 @@ let package = Package(
       targets: ["BITTestingCore"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/Flight-School/AnyCodable", exact: "0.6.7"),
   ],

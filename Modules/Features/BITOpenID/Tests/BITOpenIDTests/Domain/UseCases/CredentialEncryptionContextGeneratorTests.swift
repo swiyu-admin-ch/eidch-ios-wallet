@@ -79,11 +79,11 @@ final class CredentialEncryptionContextGeneratorTests: XCTestCase {
 
   // MARK: Private
 
-  private let metadataMock = CredentialMetadata.Mock.chasseralIssuer01
-  private let issuerPublicKeyMock = CredentialMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!.jwks.keys.first!
+  private let metadataMock = CredentialIssuerMetadata.Mock.chasseralIssuer01
+  private let issuerPublicKeyMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!.jwks.keys.first!
   private let keyPairMock = VaultKeyPair.Mock.ES256
-  private lazy var requestEncryptionMock = CredentialMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!
-  private let responseEncryptionMock = CredentialMetadata.Mock.chasseralIssuer01.credentialResponseEncryption!
+  private lazy var requestEncryptionMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!
+  private let responseEncryptionMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialResponseEncryption!
 
   private var generator = CredentialEncryptionContextGenerator()
   private var keyRepositorySpy = CredentialResponseEncryptionKeyRepositoryProtocolSpy()
@@ -102,11 +102,11 @@ final class CredentialEncryptionContextGeneratorTests: XCTestCase {
   }
 
   private func makeMetadata(
-    requestEncryption: CredentialMetadata.CredentialRequestEncryption?,
-    responseEncryption: CredentialMetadata.CredentialResponseEncryption?)
-    -> CredentialMetadata
+    requestEncryption: CredentialIssuerMetadata.CredentialRequestEncryption?,
+    responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption?)
+    -> CredentialIssuerMetadata
   {
-    CredentialMetadata(
+    CredentialIssuerMetadata(
       credentialIssuer: metadataMock.credentialIssuer,
       credentialEndpoint: metadataMock.credentialEndpoint,
       credentialConfigurationsSupported: metadataMock.credentialConfigurationsSupported,

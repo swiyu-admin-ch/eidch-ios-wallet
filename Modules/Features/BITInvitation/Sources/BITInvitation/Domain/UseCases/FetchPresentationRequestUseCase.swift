@@ -41,8 +41,10 @@ public struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCasePr
         throw FetchPresentationRequestUseCaseError.invalidUrl
       case .expired:
         throw FetchPresentationRequestUseCaseError.expiredRequest
-      case .invalid(let request):
-        try? await presentationRequestService.decline(url: request.requestObject.responseUri, with: .invalidRequest) // ignore errors as it's fire-and-forget
+      case .invalid(let request, let rejectionError):
+        if let responseUri = request.requestObject.responseUri {
+          try? await presentationRequestService.decline(url: responseUri, with: rejectionError) // ignore errors as it's fire-and-forget
+        }
         throw FetchPresentationRequestUseCaseError.invalidRequest
       case .notFound:
         throw FetchPresentationRequestUseCaseError.invalidRequest

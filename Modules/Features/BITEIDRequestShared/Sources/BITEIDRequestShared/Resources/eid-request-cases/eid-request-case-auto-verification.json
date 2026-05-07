@@ -6,6 +6,7 @@
   "firstName": "John",
   "lastName": "Do",
   "createdAt": "1997-07-06T19:20:30+01:00",
+  "filesSubmitted": false,
   "state": {
     "id": "3e3da175-443c-41ba-8b42-f209b7517c17",
     "state": "IN_AUTO_VERIFICATION",

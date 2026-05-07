@@ -12,7 +12,7 @@ final class SaveEIDRequestFilesUseCaseTests: XCTestCase {
     super.setUp()
 
     repository = EIDRequestCaseRepositoryProtocolSpy()
-    Container.shared.eIDRequestCaseRepository.register { self.repository }
+    Container.shared.eIDRequestCaseRepository.register { @MainActor in self.repository }
     useCase = SaveEIDRequestFilesUseCase()
   }
 

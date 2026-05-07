@@ -11,7 +11,7 @@ struct BiometricsView: View {
   // MARK: Lifecycle
 
   init(router: OnboardingInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.biometricsViewModel(router))
+    _viewModel = State(initialValue: Container.shared.biometricsViewModel(router))
   }
 
   // MARK: Internal
@@ -67,7 +67,7 @@ struct BiometricsView: View {
 
   @AccessibilityFocusState private var errorFocusedState: Bool
 
-  @StateObject private var viewModel: BiometricsViewModel
+  @State private var viewModel: BiometricsViewModel
 }
 
 // MARK: - Components

@@ -48,7 +48,7 @@ class SetupSDKErrorViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_unknownError() {
-    let error = ErrorWrapper(FetchAttestationsUseCaseError.networkError)
+    let error = ErrorWrapper(ValidateDeviceSecurityRequirementsUseCaseError.networkError)
     viewModel = SetupSDKErrorViewModel(error: error, callback: { _ in })
 
     XCTAssertTrue(viewModel.isRetryEnabled)

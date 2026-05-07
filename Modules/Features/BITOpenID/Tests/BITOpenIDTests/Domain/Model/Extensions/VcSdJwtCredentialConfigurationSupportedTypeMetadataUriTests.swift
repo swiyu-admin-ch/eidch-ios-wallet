@@ -52,8 +52,8 @@ final class VcSdJwtCredentialConfigurationSupportedTypeMetadataUriTests: XCTestC
   private let vctMetadataUriMock = "https://vct-metadata.example.com"
   private let vctMetadataUriIntegrityMock = "vctMetadataUriIntegrity"
 
-  private func createMetadata(vct: String, vctIntegrity: String? = nil, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil) -> CredentialMetadata.VcSdJwtCredentialConfigurationSupported {
-    CredentialMetadata.VcSdJwtCredentialConfigurationSupported(
+  private func createMetadata(vct: String, vctIntegrity: String? = nil, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil) -> CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported {
+    CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported(
       format: "format",
       vct: vct,
       vctIntegrity: vctIntegrity,

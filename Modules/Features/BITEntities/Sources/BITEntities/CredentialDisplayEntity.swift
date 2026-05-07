@@ -1,13 +1,14 @@
+import BITCore
 import Foundation
 import RealmSwift
 
 // MARK: - CredentialDisplayEntity
 
-public class CredentialDisplayEntity: Object {
+public class CredentialDisplayEntity: Object, DisplayLocalizable {
 
   @Persisted(primaryKey: true) public var id: UUID
   @Persisted public var name: String?
-  @Persisted public var locale: String?
+  @Persisted public var locale: UserLocale?
   @Persisted public var logoAltText: String?
   @Persisted public var logoData: Data?
   @Persisted public var summary: String?

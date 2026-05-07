@@ -23,7 +23,7 @@ For more information about the project please visit the [introduction into Publi
 
 ## Installation and building
 
-The app requires at least iOS 16.<br/>
+The app requires at least iOS 17.<br/>
 The app has been build with Xcode 16.0.
 
 In your terminal, after having cloned the current repository, run the following command:

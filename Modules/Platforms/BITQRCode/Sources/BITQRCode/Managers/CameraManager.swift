@@ -3,14 +3,15 @@ import Foundation
 
 // MARK: - CameraManager
 
-public class CameraManager: NSObject, ObservableObject {
+@Observable
+public class CameraManager: NSObject {
 
   // MARK: Public
 
   public let session = AVCaptureSession()
 
-  @Published public var flashlight = TorchManager()
-  @Published public var capturedObject: AVMetadataMachineReadableCodeObject?
+  public var flashlight = TorchManager()
+  public var capturedObject: AVMetadataMachineReadableCodeObject?
 
   public func start() {
     guard

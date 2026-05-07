@@ -5,7 +5,6 @@ import XCTest
 @testable import BITJWT
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 // MARK: - TokenStatusListValidatorTests

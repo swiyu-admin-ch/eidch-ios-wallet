@@ -9,9 +9,8 @@ public struct BadgeInformationView: View {
 
   // MARK: Lifecycle
 
-  public init(badgeType: BadgeType, onClose: @escaping () -> Void = {}) {
+  public init(badgeType: BadgeType) {
     self.badgeType = badgeType
-    self.onClose = onClose
   }
 
   // MARK: Public
@@ -29,8 +28,9 @@ public struct BadgeInformationView: View {
 
   // MARK: Private
 
+  @Environment(\.dismiss) private var dismiss
+
   private let badgeType: BadgeType
-  private let onClose: () -> Void
 
   private var content: some View {
     VStack(alignment: .leading, spacing: .x2) {
@@ -83,7 +83,7 @@ public struct BadgeInformationView: View {
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
-      Button(action: onClose, label: {
+      Button(action: { dismiss() }, label: {
         Assets.closeAlt.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClose)

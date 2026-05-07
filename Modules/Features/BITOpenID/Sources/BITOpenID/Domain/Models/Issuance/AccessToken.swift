@@ -30,9 +30,12 @@ public struct AccessToken: Codable, Equatable {
 
   // MARK: Public
 
-  public enum TokenType: String, Codable {
+  public enum TokenType: String, Codable, Hashable {
     case bearer
+    case dpop
   }
+
+  public let accessToken: String
 
   // MARK: Internal
 
@@ -43,7 +46,6 @@ public struct AccessToken: Codable, Equatable {
     case refreshToken = "refresh_token"
   }
 
-  let accessToken: String
   let tokenType: TokenType
   let expiresIn: Int?
   let refreshToken: String?

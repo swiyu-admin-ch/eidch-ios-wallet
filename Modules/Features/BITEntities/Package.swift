@@ -7,7 +7,7 @@ let package = Package(
   name: "BITEntities",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -17,14 +17,14 @@ let package = Package(
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITDataStore"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/realm/realm-swift", exact: "10.54.3"),
   ],
   targets: [
     .target(
       name: "BITEntities",
       dependencies: [
-        .product(name: "BITTestingCore", package: "BITCore"),
+        .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITDataStore", package: "BITDataStore"),
         .product(name: "RealmSwift", package: "realm-swift"),
       ],

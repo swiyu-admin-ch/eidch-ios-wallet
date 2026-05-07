@@ -9,7 +9,7 @@ let package = Package(
   name: "BITSwiyuSharedKMP",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -22,6 +22,6 @@ let package = Package(
       name: "BITSwiyuSharedKMP",
       // Hosted on S3 for now until BIT infrastructure can build and host the XCFramework.
       // Binary built from https://github.com/admin-ch-ssi/PERA_swiyu_shared_kmp
-      url: "https://ubique-ios-spm.s3.eu-central-2.amazonaws.com/BITSwiyuSharedKMP/0.1.6/BITSwiyuSharedKMP.xcframework.zip",
-      checksum: "172506ff8ead144c70b15280e01fe450e1f520f8a03f02348e6d65b8b327a2cf"),
+      url: "https://ubique-ios-spm.s3.eu-central-2.amazonaws.com/BITSwiyuSharedKMP/0.1.12/BITSwiyuSharedKMP.xcframework.zip",
+      checksum: "263b70f23fb936b9296f836bd73bcae7c717420cfe40fb819e094f0f605cf834"),
   ])

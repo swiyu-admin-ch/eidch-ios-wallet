@@ -7,7 +7,7 @@ import Spyable
 
 @Spyable
 public protocol GetEIDRequestCaseListUseCaseProtocol {
-  func execute() async throws -> [EIDRequestCase]
+  func callAsFunction() async throws -> [EIDRequestCase]
 }
 
 
@@ -15,9 +15,9 @@ struct GetEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute() async throws -> [EIDRequestCase] {
+  func callAsFunction() async throws -> [EIDRequestCase] {
     try await eIDRequestCaseRepository.getAll()
-      .reorder(by: requestCasePriorityOrder, using: { $0.state?.state ?? .unknown })
+      .reorder(by: requestCasePriorityOrder, using: { $0.state?.state ?? .unknown }, thenCompare: { $0.createdAt < $1.createdAt })
   }
 
   // MARK: Private

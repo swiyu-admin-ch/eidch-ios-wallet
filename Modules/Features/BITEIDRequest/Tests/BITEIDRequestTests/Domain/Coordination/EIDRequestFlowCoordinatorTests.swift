@@ -14,8 +14,8 @@ final class EIDRequestFlowCoordinatorTests: XCTestCase {
     avBeam = AVBeamProtocolSpy()
     context = EIDRequestContext()
 
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
 
     sut = EIDRequestFlowCoordinator()
   }

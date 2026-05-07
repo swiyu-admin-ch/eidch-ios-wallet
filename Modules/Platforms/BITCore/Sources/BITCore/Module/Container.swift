@@ -23,4 +23,20 @@ extension Container {
   public var userTimeZone: Factory<TimeZone> {
     self { TimeZone.current }
   }
+
+  public var isProximityEnabled: Factory<Bool> {
+    self { false }
+  }
+
+  public var imageValidatorEnabled: Factory<Bool> {
+    self { false }
+  }
+
+  public var imageValidator: Factory<ImageValidatorProtocol> {
+    self { ImageValidator() }
+  }
+
+  public var supportedImageType: Factory<[ValueType]> {
+    self { [.imageJpg, .imagePng] }
+  }
 }

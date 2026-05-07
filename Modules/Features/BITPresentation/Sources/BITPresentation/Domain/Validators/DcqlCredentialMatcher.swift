@@ -1,7 +1,10 @@
+import BITClaimsPathPointer
 import BITCore
+import BITCredential
 import BITCredentialShared
 import BITOpenID
 import BITSwiyuSharedKMP
+import Factory
 import Foundation
 
 // MARK: - DcqlCredentialMatcher
@@ -16,13 +19,16 @@ import Foundation
 ///    `PresentationField` values for the resolved claim values.
 struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
 
+  // MARK: Internal
+
   /// Returns compatible credentials for the given DCQL query.
   ///
   func match(credentials: [VerifiableCredential], with dcqlQuery: DcqlQuery) async throws -> [CompatibleCredential] {
     // 1. Extract raw payloads
-    let rawCredentials = credentials.compactMap { credential -> (VerifiableCredential, String)? in
+    let rawCredentials = try credentials.compactMap { credential -> (VerifiableCredential, String)? in
+      let selectedBundleItem = try selectCredentialBundleItemUseCase(credential)
       guard
-        let rawPayload = String(data: credential.payload, encoding: .utf8) else
+        let rawPayload = String(data: selectedBundleItem.payload, encoding: .utf8) else
       {
         return nil
       }
@@ -62,13 +68,30 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
     return compatibleCredentials
   }
 
-  /// Internal for testing (used by DcqlCredentialMatcherTests).
   func resolveRequestedFields(claimValues: [DcqlClaimValue]) -> [PresentationField] {
     claimValues.compactMap { claimValue in
       guard let value = DcqlCodableValueMapper.codableValue(from: claimValue.value) else {
         return nil
       }
-      return PresentationField(jsonPath: claimValue.key, value: value)
+      return PresentationField(pathPointer: claimValue.paths.map(\.toClaimsPathPointerElement), value: value)
+    }
+  }
+
+  // MARK: Private
+
+  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
+
+}
+
+extension BITSwiyuSharedKMP.Heidi_credentialsPointerPart {
+  fileprivate var toClaimsPathPointerElement: ClaimsPathPointerElement {
+    switch onEnum(of: self) {
+    case .string(let value):
+      .string(value.v1)
+    case .index(let value):
+      .index(Int(value.v1))
+    case .null:
+      .null
     }
   }
 }

@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - CredentialCard
 
-public struct CredentialCard<Header: View>: View {
+public struct CredentialCard: View {
 
   // MARK: Lifecycle
 
@@ -20,8 +20,7 @@ public struct CredentialCard<Header: View>: View {
     statusBadgeImage: Image? = nil,
     statusBadgeStyle: (any BadgeStyle)? = nil,
     colorSchemeOverride: ColorScheme? = nil,
-    style: CredentialCardStyle = .verifiable,
-    @ViewBuilder header: () -> Header? = { EmptyView() })
+    style: CredentialCardStyle = .verifiable)
   {
     self.name = name
     self.summary = summary
@@ -33,7 +32,6 @@ public struct CredentialCard<Header: View>: View {
     self.statusBadgeStyle = statusBadgeStyle
     self.colorSchemeOverride = colorSchemeOverride
     self.style = style
-    self.header = header()
   }
 
   // MARK: Public
@@ -88,6 +86,7 @@ public struct CredentialCard<Header: View>: View {
     })
     .background(backgroundColor ?? ThemingAssets.Background.fallback.swiftUIColor)
     .clipShape(.rect(cornerRadius: cornerRadius))
+    .contentShape(.accessibility, .rect(cornerRadius: cornerRadius))
   }
 
   // MARK: Private
@@ -106,8 +105,6 @@ public struct CredentialCard<Header: View>: View {
   private var statusBadgeStyle: (any BadgeStyle)?
   private var style: CredentialCardStyle
   private var colorSchemeOverride: ColorScheme?
-
-  private let header: Header?
 
   private let secondaryTextOpacity = 0.7
   private let deferredCredentialOverlayOpacity = 0.6
@@ -192,10 +189,6 @@ public struct CredentialCard<Header: View>: View {
 
   private func contentLarge() -> some View {
     VStack(alignment: .leading, spacing: .x6) {
-      header
-        .padding(.bottom, .x6)
-        .colorScheme(cardColorScheme == .dark ? .light : .dark)
-
       HStack(alignment: .top) {
         VStack(alignment: .leading) {
           Text(name ?? defaultText)
@@ -204,6 +197,7 @@ public struct CredentialCard<Header: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
             .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
+            .accessibilityAddTraits(.isHeader)
 
           if let summary {
             Text(summary)
@@ -298,7 +292,8 @@ extension CredentialCard {
     case .mini: 66
     case .small: 96
     case .regular: 150
-    default: 250
+    case .large: 200
+    @unknown default: 250
     }
   }
 
@@ -314,6 +309,7 @@ extension CredentialCard {
   private var ratio: CGFloat? {
     switch controlSize {
     case .regular: sizeCategory.isAccessibilityCategory ? nil : 0.681
+    case .large: 1.586
     default: nil
     }
   }

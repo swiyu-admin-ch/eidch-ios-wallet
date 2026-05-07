@@ -1,57 +1,46 @@
 import AVFoundation
 import BITAnalytics
-import BITAppAuth
 import BITCore
 import BITCredential
 import BITCredentialShared
 import BITOpenID
 import BITPresentation
 import BITQRCode
+import BITTheming
 import Combine
+import CoreBluetooth
 import Factory
+import NavigatorUI
 
 // MARK: - CameraViewModel
 
 @MainActor
-public class CameraViewModel: ObservableObject, Vibrating {
+@Observable
+public class CameraViewModel: Vibrating {
 
   // MARK: Lifecycle
 
-  public init(router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
-    self.router = router
-    self.delegate = delegate
+  public init() {
+    errorDestinationStyle = .managedSheet
     configureBindings()
-    session = cameraManager.session
-    try? cameraManager.configure()
   }
 
-  public init(url: URL, router: InvitationRouterRoutes, delegate: InvitationDelegate? = nil) {
-    self.router = router
-    self.delegate = delegate
+  public init(url: URL) {
+    errorDestinationStyle = .push
     scannerDelay = 0
     invitationURL = url
   }
 
   deinit {
     cameraManager.stop()
+    proximityTask?.cancel()
   }
 
   // MARK: Public
 
-  @Published public var isTipPresented = false
-  @Published public var isLoading = false
-  @Published public var isErrorPopupPresented = false
-  @Published public var isScanEnabled = true
-  public var cameraManager = CameraManager()
-  public var session = AVCaptureSession()
-
-  @Published public var isSessionTimeoutPresented = false
-
-  @Published public var isTorchEnabled = false {
-    didSet {
-      isTorchEnabled ? cameraManager.flashlight.turnOn() : cameraManager.flashlight.turnOff()
-    }
-  }
+  public var isLoading = false
+  @ObservationIgnored nonisolated(unsafe) public var cameraManager = CameraManager()
+  public var destination: InvitationDestinations?
 
   public var currentError: Error? {
     error
@@ -62,16 +51,32 @@ public class CameraViewModel: ObservableObject, Vibrating {
   }
 
   public func onAppear() async {
+    if let url = invitationURL, !hasProcessedInitialURL { // Deeplink case
+      hasProcessedInitialURL = true
+      return await setMetadataUrl(url)
+    }
+
+    try? cameraManager.configure()
     cameraManager.start()
     isTipPresented = (try? await getCredentialsCountUseCase.execute() == 0) ?? true
+  }
 
-    if let url = invitationURL, !hasProcessedInitialURL {
-      hasProcessedInitialURL = true
-      await setMetadataUrl(url)
+  // MARK: Internal
+
+  var error: Error?
+  var isTipPresented = false
+  var isErrorPopupPresented = false
+  var isScanEnabled = true
+  var onDismiss = false
+  var isBluetoothPermissionRequired = false
+
+  var isTorchEnabled = false {
+    didSet {
+      isTorchEnabled ? cameraManager.flashlight.turnOn() : cameraManager.flashlight.turnOff()
     }
   }
 
-  public func setMetadataUrl(_ url: URL) async {
+  func setMetadataUrl(_ url: URL) async {
     do {
       isLoading = true
       isScanEnabled = false
@@ -85,54 +90,66 @@ public class CameraViewModel: ObservableObject, Vibrating {
         try await processCredentialOffer(url: url)
       case .presentation:
         try await processPresentation(url: url)
+      case .proximityEngagement:
+        try await processProximityEngagement(url: url)
       }
     } catch {
       handleError(error)
     }
   }
 
-  public func login() {
-    router.login(animated: true)
+  func resetProximityEngagementIfNeeded() {
+    proximityTask?.cancel()
+    proximityTask = nil
   }
-
-  // MARK: Internal
-
-  @Published var error: Error?
 
   // MARK: Private
 
-  private weak var delegate: InvitationDelegate?
-
-  @Published private var credential: VerifiableCredential?
-  @Published private var qrCodeObject: AVMetadataMachineReadableCodeObject?
-
   private var invitationURL: URL?
-  private var router: InvitationRouterRoutes
   private var bag = Set<AnyCancellable>()
+  private let errorDestinationStyle: ErrorDestinationStyle
+
+  private var credential: VerifiableCredential?
+  private var qrCodeObject: AVMetadataMachineReadableCodeObject?
+
+  @ObservationIgnored nonisolated(unsafe) private var proximityTask: Task<Void, Never>?
   private var previousUrl: String?
   private var hasProcessedInitialURL = false
 
-  @Injected(\.scannerDelay) private var scannerDelay: UInt64
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.invitationErrorMapper) private var invitationErrorMapper: InvitationErrorMapping
-  @Injected(\.fetchCredentialUseCase) private var fetchCredentialUseCase: FetchCredentialUseCaseProtocol
-  @Injected(\.fetchPresentationRequestUseCase) private var fetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol
-  @Injected(\.getCredentialsCountUseCase) private var getCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol
-  @Injected(\.checkInvitationTypeUseCase) private var checkInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol
-  @Injected(\.validateCredentialOfferInvitationUrlUseCase) private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocol
-  @Injected(\.saveDeferredCredentialUseCase) private var saveDeferredCredentialUseCase: SaveDeferredCredentialUseCaseProtocol
+  @ObservationIgnored @Injected(\.scannerDelay) private var scannerDelay: UInt64
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.fetchCredentialUseCase) private var fetchCredentialUseCase: FetchCredentialUseCaseProtocol
+  @ObservationIgnored @Injected(\.fetchPresentationRequestUseCase) private var fetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol
+  @ObservationIgnored @Injected(\.getCredentialsCountUseCase) private var getCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol
+  @ObservationIgnored @Injected(\.checkInvitationTypeUseCase) private var checkInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol
+  @ObservationIgnored @Injected(\.validateCredentialOfferInvitationUrlUseCase) private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocol
+  @ObservationIgnored @Injected(\.saveDeferredCredentialUseCase) private var saveDeferredCredentialUseCase: SaveDeferredCredentialUseCaseProtocol
+  @ObservationIgnored @Injected(\.invitationErrorMapper) private var invitationErrorMapper: InvitationErrorMapping
+  @ObservationIgnored @Injected(\.startProximityEngagementUseCase) private var startProximityEngagementUseCase: StartProximityEngagementUseCaseProtocol
+  @ObservationIgnored @Injected(\.isProximityEnabled) private var isProximityEnabled: Bool
 
   private func configureBindings() {
-    cameraManager.$capturedObject.sink { [weak self] qrcode in
-      guard
-        let self,
-        !isLoading && isScanEnabled,
-        let qrcode,
-        qrcode != qrCodeObject
-      else { return }
+    observeCapturedObject()
+  }
 
-      qrCodeObject = qrcode
-    }.store(in: &bag)
+  private func observeCapturedObject() {
+    withObservationTracking {
+      _ = cameraManager.capturedObject
+    } onChange: { [weak self] in
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+
+        defer { observeCapturedObject() }
+
+        guard
+          !isLoading && isScanEnabled,
+          let qrcode = cameraManager.capturedObject,
+          qrcode != qrCodeObject
+        else { return }
+
+        qrCodeObject = qrcode
+      }
+    }
   }
 
   private func processPresentation(url: URL) async throws {
@@ -141,7 +158,7 @@ public class CameraViewModel: ObservableObject, Vibrating {
     isTorchEnabled = false
     cameraManager.stop()
 
-    try router.startPresentation(context: context, delegate: self)
+    destination = .external(.presentation(context))
   }
 
   private func processCredentialOffer(url: URL) async throws {
@@ -161,41 +178,107 @@ public class CameraViewModel: ObservableObject, Vibrating {
     hasProcessedInitialURL = false
   }
 
+  private func processProximityEngagement(url: URL) async throws {
+    isTorchEnabled = false
+    cameraManager.stop()
+
+    if CBManager.authorization != .allowedAlways {
+      isScanEnabled = false
+      isBluetoothPermissionRequired = true
+
+      await MainActor.run {
+        isLoading = false
+      }
+      return
+    }
+
+    startObservingProximityState()
+  }
+
+  private func startObservingProximityState() {
+    proximityTask?.cancel()
+    proximityTask = Task { [weak self] in
+      guard
+        let url = self?.invitationURL?.absoluteString,
+        let stream = self?.startProximityEngagementUseCase(qrCode: url) else { return }
+
+      do {
+        for try await event in stream {
+          try self?.handleProximityEvent(event)
+        }
+      } catch is CancellationError {
+        // ignore
+      } catch {
+        self?.handleError(error)
+      }
+    }
+  }
+
+  private func handleProximityEvent(_ event: ProximityEngagementEvent) throws {
+    switch event {
+    case .qrCode:
+      break
+    case .request(let context):
+      isLoading = false
+      destination = .external(.presentation(context))
+    }
+  }
+
   private func handleError(_ error: Error) {
     vibrate(.error)
     if error as? CheckInvitationTypeError != .wrongScheme {
       analytics.log(error)
     }
-    let mappedError = invitationErrorMapper(error)
-    if error as? UserSessionError == .notLoggedIn {
-      isSessionTimeoutPresented = true
+    let mappedError = invitationErrorMapper(error) as? InvitationError ?? .invalidQRCode
+    self.error = mappedError
+
+    isLoading = false
+    isScanEnabled = true
+
+    // full screen error or toast
+    if let errorDataset = mappedError.errorDataset {
+      destination = errorDestination(errorDataset)
     } else {
-      self.error = mappedError
       isErrorPopupPresented = true
     }
 
-    isScanEnabled = true
-    isLoading = false
-
-    if case .invalidQRCode = mappedError as? InvitationError {
+    if mappedError == .invalidQRCode {
       invitationURL = nil // Keep the torch enabled
     } else {
       resetTorchAndInvitation()
     }
   }
 
+  private func errorDestination(_ errorDataset: ErrorDataset) -> InvitationDestinations {
+    let onClose = Callback<Void> { [weak self] in
+      Task { @MainActor [weak self] in
+        self?.closeErrorView()
+      }
+    }
+
+    switch errorDestinationStyle {
+    case .managedSheet:
+      return .error(errorDataset, onClose)
+    case .push:
+      return .deeplinkError(errorDataset, onClose)
+    }
+  }
+
   private func openCredentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
     isTorchEnabled = false
     cameraManager.stop()
-    router.credentialOffer(credential: credential, trustInformation: trustInformation, delegate: delegate)
+    destination = .offer(credential, trustInformation)
+  }
+
+  private func resumeScanningAfterPermissionDismiss() {
+    isLoading = false
+    isScanEnabled = true
+    cameraManager.start()
   }
 
   private func saveDeferredCredential(_ deferredCredential: DeferredCredential) async throws {
     try await saveDeferredCredentialUseCase.execute(for: deferredCredential)
-
-    router.close { [weak self] in
-      self?.delegate?.didSaveCredential()
-    }
+    onDismiss = true
   }
 }
 
@@ -225,44 +308,33 @@ extension CameraViewModel {
       await self.setMetadataUrl(url)
     }
   }
-
 }
 
 // MARK: - Navigation || User actions
 
 extension CameraViewModel {
-
-  public func close() {
-    router.close()
-  }
-
-  public func closeErrorView() {
+  func closeErrorView() {
     error = nil
     isErrorPopupPresented = false
+    destination = nil
     isScanEnabled = true
+    cameraManager.start()
   }
 
-  public func closeTipView() {
+  func closeTipView() {
     isTipPresented = false
   }
 
-  public func toggleTorch() {
+  func toggleTorch() {
     isTorchEnabled.toggle()
   }
 }
 
-// MARK: PresentationFinishDelegate
+// MARK: CameraViewModel.ErrorDestinationStyle
 
-extension CameraViewModel: PresentationFinishDelegate {
-  public func retry() {
-    router.pop()
-  }
-
-  public func cancel() {
-    router.close()
-  }
-
-  public func finish(with state: PresentationRequestResultState) async {
-    router.close()
+extension CameraViewModel {
+  fileprivate enum ErrorDestinationStyle {
+    case managedSheet
+    case push
   }
 }

@@ -20,55 +20,55 @@ final class KeyAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_parameters_success() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
+    let result = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
     XCTAssertTrue(result)
   }
 
   func testValidate_count_success() async {
-    _ = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
+    _ = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
     XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferCallsCount, 1)
   }
 
   func testValidate_unsupportedAlgorithm_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleUnsupportedAlgorithm)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleUnsupportedAlgorithm)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_incorrectKid_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleInvalidKid)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleInvalidKid)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_notTrustedDid_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleNotTrusted)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleNotTrusted)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_missingExpiredAt_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleMissingExpiredAt)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleMissingExpiredAt)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_unsupportedKeyStorage_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleUnsupportedKeyStorage)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleUnsupportedKeyStorage)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_invalidAttestedKey_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleInvalidAttestedKeys)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleInvalidAttestedKeys)
 
     XCTAssertFalse(result)
   }
 
   func testValidate_emptyAttestedKey_returnsFalse() async {
-    let result = await validator.validate(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleEmptyAttestedKeys)
+    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleEmptyAttestedKeys)
 
     XCTAssertFalse(result)
   }
@@ -76,7 +76,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
   func testValidate_jwsValidatorThrows_returnsFalse() async {
     jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
-    let result = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
+    let result = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
     XCTAssertFalse(result)
   }
@@ -84,7 +84,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
   func testValidate_jwsValidatorThrowsError_returnsFalse() async {
     jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
 
-    let result = await validator.validate(keyPair: mockKeyPair, with: mockKeyAttestation)
+    let result = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
     XCTAssertFalse(result)
   }

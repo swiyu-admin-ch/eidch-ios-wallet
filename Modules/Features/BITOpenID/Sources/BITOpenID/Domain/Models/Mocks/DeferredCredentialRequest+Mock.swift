@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 // MARK: DeferredCredentialContext.Mock
 
@@ -11,7 +11,8 @@ extension DeferredCredentialContext: Mockable {
       accessToken: "015bc32f-aa17-4399-b4f9-a9bdcc4058e4",
       endpoint: "https://mock_endpoint",
       format: "sd-jwt",
-      interval: 100)
+      interval: 100,
+      refreshToken: "654bc32f-1111-4399-b4f9-a9XXX4058e4")
   }
 }
 #endif

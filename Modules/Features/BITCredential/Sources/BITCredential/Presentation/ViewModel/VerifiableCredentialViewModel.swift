@@ -34,7 +34,7 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   public let colorScheme: String
 
   public var statusText: String {
-    switch credential.status {
+    switch selectedCredentialStatus {
     case .valid: L10n.tkCredentialStatusValid
     case .expired: L10n.tkCredentialStatusInvalid
     case .notYetValid: getNotYetValidText()
@@ -46,7 +46,7 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   }
 
   public var statusTextAlt: String {
-    switch credential.status {
+    switch selectedCredentialStatus {
     case .valid: L10n.tkCredentialStatusValidAlt
     case .expired: L10n.tkCredentialStatusInvalidAlt
     case .notYetValid: getNotYetValidAltText()
@@ -58,7 +58,7 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   }
 
   public var statusImage: Image {
-    switch credential.status {
+    switch selectedCredentialStatus {
     case .valid: Assets.statusValid.swiftUIImage
     case .expired: Assets.statusInvalid.swiftUIImage
     case .notYetValid: Assets.statusNotYetValid.swiftUIImage
@@ -69,8 +69,17 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
     }
   }
 
+  public var statusBadgeAccessibilityText: String {
+    switch credential.progressionState {
+    case .accepted:
+      statusText
+    case .unaccepted:
+      L10n.tkCredentialProgressionStateUnaccepted
+    }
+  }
+
   public var statusColor: Color {
-    switch credential.status {
+    switch selectedCredentialStatus {
     case .unknown,
          .unsupported,
          .valid: ThemingAssets.Label.secondary.swiftUIColor
@@ -86,7 +95,7 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   }
 
   public var statusBadgeStyle: any BadgeStyle {
-    switch credential.status {
+    switch selectedCredentialStatus {
     case .unknown,
          .unsupported,
          .valid: .outline
@@ -108,6 +117,11 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   // MARK: Private
 
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
+  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
+
+  private var selectedCredentialStatus: CredentialStatus {
+    (try? selectCredentialBundleItemUseCase(credential).status) ?? CredentialStatus.unknown
+  }
 
   private func getNotYetValidText() -> String {
     guard let date = credential.validFrom else { return L10n.tkCredentialStatusUnknown }
@@ -144,30 +158,4 @@ extension VerifiableCredentialViewModel: Equatable {
       lhs.id == rhs.id &&
       lhs.colorScheme == rhs.colorScheme
   }
-}
-
-extension CredentialDisplay {
-
-  // MARK: Public
-
-  public func resolveClaimTemplate(with claims: [CredentialClaim]) -> Self {
-    var copy = self
-
-    copy.summary = summary?.replacing(Self.regex) { match in
-      guard let claim = claims.first(where: { match.1 == "$.\($0.key)" }) else { return "" }
-      return claim.value ?? "–"
-    }
-    return copy
-  }
-
-  // MARK: Private
-
-  private static let regex = Regex {
-    "{{"
-    Capture {
-      ZeroOrMore(.any, .reluctant)
-    }
-    "}}"
-  }
-
 }

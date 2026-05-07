@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - JWSValidatorError
 
-enum JWSValidatorError: Error, Equatable {
+public enum JWSValidatorError: Error, Equatable {
   case notYetActivated
   case issuedAtInFuture
   case expired

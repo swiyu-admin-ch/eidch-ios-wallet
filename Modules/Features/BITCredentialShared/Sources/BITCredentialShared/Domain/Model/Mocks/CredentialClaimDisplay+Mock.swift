@@ -1,7 +1,6 @@
 #if DEBUG
-import BITCore
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 
 extension CredentialClaimDisplay {
   public struct Mock {

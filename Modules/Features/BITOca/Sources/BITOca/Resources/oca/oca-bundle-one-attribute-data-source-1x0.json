@@ -1,0 +1,21 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IL00eAbH9tHLBN0s6qIZyVVmm6vYA3wsakyqnFMU1nL4",
+      "attributes": {
+        "key": "Text"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "type": "extend/overlays/data_source/1.0",
+      "capture_base": "IL00eAbH9tHLBN0s6qIZyVVmm6vYA3wsakyqnFMU1nL4",
+      "format": "vc+sd-jwt",
+      "attribute_sources": {
+        "key": "$.firstnames[1]"
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
+@testable import BITCore
 @testable import BITJWT
-@testable import BITTestingCore
 
 // swiftlint: disable force_try
 

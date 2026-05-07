@@ -1,4 +1,6 @@
+import Combine
 import Factory
+import NavigatorUI
 import XCTest
 @testable import BITActivity
 @testable import BITAnalytics
@@ -18,10 +20,9 @@ final class CredentialDetailViewModelTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
     registerMocks()
-
-    viewModel = CredentialDetailViewModel(mockVerifiableCredential, delegate: delegateMock)
-
     createSuccessState()
+
+    viewModel = CredentialDetailViewModel(mockVerifiableCredential, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
   }
 
   func testInitialState() {
@@ -29,6 +30,7 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isDeleteCredentialAlertPresented)
     XCTAssertTrue(viewModel.activities.isEmpty)
     XCTAssertEqual(viewModel.credential as? VerifiableCredential, mockVerifiableCredential)
+    XCTAssertEqual(getActivityHistoryEnabledSubjectUseCaseSpy.callAsFunctionCallsCount, 1)
   }
 
   func testOnAppear_withVerifiableCredential_updatesCredentialAndViewModel() async {
@@ -37,17 +39,18 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.credential as? VerifiableCredential, updatemockVerifiableCredential)
     XCTAssertEqual(viewModel.credentialViewModel?.credential.id, updatemockVerifiableCredential.id)
     XCTAssertEqual(viewModel.credentialViewModel?.credentialDisplay, credentialDisplayMock)
-    XCTAssertEqual(viewModel.activities.map(\.activity), activitiesMock)
+    XCTAssertEqual(viewModel.activities.map(\.id), activitiesMock.map(\.id))
   }
 
   func testOnAppear_withDeferredCredential_doNothing() async {
-    viewModel = CredentialDetailViewModel(mockDeferredCredential, delegate: delegateMock)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
+    viewModel = CredentialDetailViewModel(mockDeferredCredential, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
 
     await viewModel.onAppear()
 
     XCTAssertTrue(viewModel.activities.isEmpty)
     XCTAssertFalse(checkAndUpdateCredentialStatusUseCaseSpy.executeForCalled)
-    XCTAssertFalse(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCalled)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
   }
 
   func testOnAppear_withVerifiableCredential_argumentsPassed() async {
@@ -69,11 +72,12 @@ final class CredentialDetailViewModelTests: XCTestCase {
   }
 
   func testOnRefresh_withDeferredCredential_doNothing() async {
-    viewModel = CredentialDetailViewModel(mockDeferredCredential, delegate: delegateMock)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
+    viewModel = CredentialDetailViewModel(mockDeferredCredential, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
 
     await viewModel.refresh()
 
-    XCTAssertFalse(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCalled)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
   }
 
   func testOnRefresh_withVerifiableCredential_argumentsPassed() async {
@@ -90,7 +94,6 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isCredentialDeleted)
     XCTAssertEqual(deleteCredentialUseCaseSpy.executeCallsCount, 1)
     XCTAssertEqual(deleteCredentialUseCaseSpy.executeReceivedCredential?.id, mockVerifiableCredential.id)
-    XCTAssertTrue(delegateMock.didCallOnCredentialDeleted)
   }
 
   func test_delete_failure() async {
@@ -99,7 +102,6 @@ final class CredentialDetailViewModelTests: XCTestCase {
     await viewModel.deleteCredential()
 
     XCTAssertEqual(analyticsProvider.logCounter, 1)
-    XCTAssertFalse(delegateMock.didCallOnCredentialDeleted)
   }
 
   func testUpdateCredentialViewModel_argumentsPassed() {
@@ -107,6 +109,17 @@ final class CredentialDetailViewModelTests: XCTestCase {
 
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, themeMock)
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, mockVerifiableCredential.displays)
+  }
+
+  func testGetActivityHistoryEnabledSubjectReceive_newValue_setsValueAndFetchesActivities() async {
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
+
+    subjectMock.send(false)
+
+    try? await Task.sleep(nanoseconds: 1_000_000)
+
+    XCTAssertFalse(viewModel.isActivityHistoryEnabled)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 2)
   }
 
   @MainActor
@@ -126,10 +139,10 @@ final class CredentialDetailViewModelTests: XCTestCase {
   private let mockDeferredCredential = DeferredCredential.Mock.sample
   private let updatemockVerifiableCredential = VerifiableCredential.Mock.diploma
   private let credentialDisplayMock = CredentialDisplay.Mock.lightEnglish
-  private let activitiesMock: [Activity] = [.Mock.issueTrusted, .Mock.presentationAcceptedTrusted]
+  private let activitiesMock: [ActivityListItem] = [.Mock.issuance, .Mock.acceptedPresentation]
   private let themeMock = "light"
+  private var subjectMock: CurrentValueSubject<Bool, Never>!
   private var viewModel: CredentialDetailViewModel!
-  private let delegateMock = CredentialDetailDelegateMock()
 
   private var analytics: AnalyticsProtocol!
   private var analyticsProvider: MockProvider!
@@ -137,6 +150,7 @@ final class CredentialDetailViewModelTests: XCTestCase {
   private var checkAndUpdateCredentialStatusUseCaseSpy = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
   private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
   private var getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
+  private var getActivityHistoryEnabledSubjectUseCaseSpy = GetActivityHistoryEnabledSubjectUseCaseProtocolSpy()
 
   // swiftlint:enable all
 
@@ -145,29 +159,24 @@ final class CredentialDetailViewModelTests: XCTestCase {
     deleteCredentialUseCaseSpy.executeClosure = { _ in }
     getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = credentialDisplayMock
     getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReturnValue = activitiesMock
+    getActivityHistoryEnabledSubjectUseCaseSpy.callAsFunctionReturnValue = subjectMock
   }
 
   private func registerMocks() {
+    subjectMock = CurrentValueSubject(false)
     analyticsProvider = MockProvider()
     analytics = Analytics()
     analytics.register(analyticsProvider)
+    guard let analytics else {
+      fatalError("analytics should be initialized in registerMocks")
+    }
 
-    Container.shared.analytics.register { self.analytics }
-    Container.shared.deleteCredentialUseCase.register { self.deleteCredentialUseCaseSpy }
-    Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCaseSpy }
-    Container.shared.getCredentialDisplayUseCase.register { self.getCredentialDisplayUseCaseSpy }
-    Container.shared.getCredentialActivitiesUseCase.register { self.getCredentialActivitiesUseCaseSpy }
+    Container.shared.analytics.register { @MainActor in analytics }
+    Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCaseSpy }
+    Container.shared.checkAndUpdateCredentialStatusUseCase.register { @MainActor in self.checkAndUpdateCredentialStatusUseCaseSpy }
+    Container.shared.getCredentialDisplayUseCase.register { @MainActor in self.getCredentialDisplayUseCaseSpy }
+    Container.shared.getCredentialActivitiesUseCase.register { @MainActor in self.getCredentialActivitiesUseCaseSpy }
+    Container.shared.getActivityHistoryEnabledSubjectUseCase.register { @MainActor in self.getActivityHistoryEnabledSubjectUseCaseSpy }
   }
 
-}
-
-// MARK: - CredentialDetailDelegateMock
-
-fileprivate class CredentialDetailDelegateMock: CredentialDetailDelegate {
-
-  var didCallOnCredentialDeleted = false
-
-  func onCredentialDeleted() {
-    didCallOnCredentialDeleted = true
-  }
 }

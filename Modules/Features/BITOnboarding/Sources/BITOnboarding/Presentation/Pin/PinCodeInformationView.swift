@@ -10,7 +10,7 @@ struct PinCodeInformationView: View {
   // MARK: Lifecycle
 
   init(router: OnboardingInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.pinCodeInformationViewModel(router))
+    _viewModel = State(initialValue: Container.shared.pinCodeInformationViewModel(router))
   }
 
   // MARK: Internal
@@ -19,7 +19,7 @@ struct PinCodeInformationView: View {
     case content = "pinCodeInformationContent"
   }
 
-  @StateObject var viewModel: PinCodeInformationViewModel
+  @State var viewModel: PinCodeInformationViewModel
 
   var body: some View {
     InformationView(

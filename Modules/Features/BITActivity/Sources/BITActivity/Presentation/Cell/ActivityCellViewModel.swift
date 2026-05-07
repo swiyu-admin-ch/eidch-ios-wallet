@@ -3,26 +3,33 @@ import BITL10n
 import Factory
 import SwiftUI
 
-public struct ActivityCellViewModel: Identifiable {
+public struct ActivityCellViewModel: Identifiable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(activity: Activity) {
-    self.activity = activity
+  public init(detail: ActivityDetail) {
+    id = detail.id
+    type = detail.type
+    createdAt = detail.createdAt
+    actorDisplay = detail.actorDisplay
+  }
+
+  public init(listItem: ActivityListItem) {
+    id = listItem.id
+    type = listItem.type
+    createdAt = listItem.createdAt
+    actorDisplay = listItem.actorDisplay
   }
 
   // MARK: Public
 
-  public var id: UUID {
-    activity.id
-  }
+  public let id: UUID
+  public let type: ActivityType
 
   // MARK: Internal
 
-  let activity: Activity
-
   var icon: Image {
-    switch activity.type {
+    switch type {
     case .presentationAccepted: Assets.listIndicatorPresentationAccepted.swiftUIImage
     case .presentationDeclined: Assets.listIndicatorPresentationDeclined.swiftUIImage
     case .issuance: Assets.listIndicatorIssuance.swiftUIImage
@@ -30,7 +37,7 @@ public struct ActivityCellViewModel: Identifiable {
   }
 
   var title: String {
-    switch activity.type {
+    switch type {
     case .presentationAccepted: L10n.tkActivityPresentationAcceptedTitle
     case .presentationDeclined: L10n.tkActivityPresentationDeclinedTitle
     case .issuance: L10n.tkActivityCredentialAcceptedTitle
@@ -38,17 +45,17 @@ public struct ActivityCellViewModel: Identifiable {
   }
 
   var subtitle: String {
-    activity.actorDisplays.findDisplayWithFallback()?.name ?? ""
+    actorDisplay?.name ?? ""
   }
 
   var timeStamp: String {
-    let date = activity.createdAt.formatted(
+    let date = createdAt.formatted(
       .dateTime
         .locale(currentLocale)
         .year(.defaultDigits)
         .month(.twoDigits)
         .day(.twoDigits))
-    let time = activity.createdAt.formatted(
+    let time = createdAt.formatted(
       .dateTime
         .locale(currentLocale)
         .hour(.twoDigits(amPM: .abbreviated))
@@ -57,10 +64,13 @@ public struct ActivityCellViewModel: Identifiable {
   }
 
   var accessibleTimeStamp: String {
-    activity.createdAt.formatted(date: .long, time: .shortened)
+    createdAt.formatted(date: .long, time: .shortened)
   }
 
   // MARK: Private
+
+  private let createdAt: Date
+  private let actorDisplay: ActivityActorDisplay?
 
   private var currentLocale: Locale {
     Locale(identifier: Container.shared.preferredUserLocales().first ?? UserLocale.defaultLocaleIdentifier)

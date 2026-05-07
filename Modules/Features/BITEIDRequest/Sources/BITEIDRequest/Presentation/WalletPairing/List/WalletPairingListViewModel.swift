@@ -11,11 +11,13 @@ import SwiftUI
 // MARK: - WalletPairingListViewModel
 
 @MainActor
-class WalletPairingListViewModel: ObservableObject {
+@Observable
+class WalletPairingListViewModel {
 
   // MARK: Lifecycle
 
-  init() {
+  init(caseId: String) {
+    context.caseId = caseId
     walletPairingPollingManager.delegate = self
   }
 
@@ -31,13 +33,13 @@ class WalletPairingListViewModel: ObservableObject {
     case paired(String)
   }
 
-  @Published var isToastPresented = false
-  @Published var toastMessage: String?
-  @Published var currentDevicePairingState = CurrentDevicePairingState.initial
-  @Published var targetWallets: EIDRequestStatus.TargetWallet?
+  var toast: Toast?
+  var isInitialLoading = true
+  var currentDevicePairingState = CurrentDevicePairingState.initial
+  var targetWallets: EIDRequestStatus.TargetWallet?
 
-  @Published var destination: EIDRequestDestinations?
-  @Published var isNavigationCloseTriggered = false
+  var destination: EIDRequestDestinations?
+  var isNavigationCloseTriggered = false
 
   var isPrimaryButtonDisabled: Bool {
     targetWallets?.pairedWallets.isEmpty ?? true
@@ -59,8 +61,26 @@ class WalletPairingListViewModel: ObservableObject {
     requestCase?.deferredCredential != nil
   }
 
+  var currentDevicePairingDate: String? {
+    guard let createdAt = requestCase?.deferredCredential?.createdAt else {
+      return nil
+    }
+
+    return walletPairingDateFormatter.string(from: createdAt)
+  }
+
   var isLimitReached: Bool {
     targetWallets?.limitReached ?? false
+  }
+
+  var shouldShowCurrentDeviceSection: Bool {
+    switch currentDevicePairingState {
+    case .initial:
+      isCurrentDevicePaired || !isLimitReached
+    case .loading,
+         .paired:
+      true
+    }
   }
 
   func pairDevice(_ type: DeviceType) async {
@@ -74,7 +94,11 @@ class WalletPairingListViewModel: ObservableObject {
   }
 
   func primaryAction() {
-    destination = .avIdentityCheck
+    guard let caseId = context.caseId else {
+      return
+    }
+
+    destination = .avIdentityCheck(caseId: caseId)
   }
 
   func close() {
@@ -84,14 +108,21 @@ class WalletPairingListViewModel: ObservableObject {
   }
 
   func didPairWallet() {
-    toastMessage = L10n.tkEidRequestWalletPairingNotificationSuccess
-    isToastPresented = true
+    toast = Toast(L10n.tkEidRequestWalletPairingNotificationSuccess)
 
     Task { await fetchStatus() }
   }
 
   func fetchStatus() async {
-    guard let caseId = context.caseId else { return }
+    guard let caseId = context.caseId else {
+      isInitialLoading = false
+      return
+    }
+
+    defer {
+      isInitialLoading = false
+    }
+
     do {
       requestCase = try await fetchEIDRequestCaseUseCase.execute(caseId: caseId)
       let status = try await fetchEIDRequestStatusUseCase.execute(for: caseId)
@@ -107,21 +138,21 @@ class WalletPairingListViewModel: ObservableObject {
 
   func clearToast() {
     withAnimation {
-      isToastPresented = false
-      toastMessage = nil
+      toast = nil
     }
   }
 
   // MARK: Private
 
   private var requestCase: EIDRequestCase?
-  @Injected(\.pairWalletUseCase) private var pairWalletUseCase
-  @Injected(\.walletPairingDateFormatter) private var walletPairingDateFormatter
-  @Injected(\.walletPairingPollingManager) private var walletPairingPollingManager
-  @Injected(\.fetchEIDRequestStatusUseCase) private var fetchEIDRequestStatusUseCase
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
-  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+
+  @ObservationIgnored @Injected(\.pairWalletUseCase) private var pairWalletUseCase
+  @ObservationIgnored @Injected(\.walletPairingDateFormatter) private var walletPairingDateFormatter
+  @ObservationIgnored @Injected(\.walletPairingPollingManager) private var walletPairingPollingManager
+  @ObservationIgnored @Injected(\.fetchEIDRequestStatusUseCase) private var fetchEIDRequestStatusUseCase
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func handleStatus(_ status: EIDRequestStatus) {
     switch status.state {

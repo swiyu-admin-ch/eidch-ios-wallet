@@ -1,8 +1,8 @@
 #if DEBUG
 import Foundation
+@testable import BITCore
 @testable import BITCredentialShared
 @testable import BITOca
-@testable import BITTestingCore
 
 extension CredentialGeneratorContext {
   struct Mock {
@@ -10,21 +10,8 @@ extension CredentialGeneratorContext {
       credentialId: UUID(),
       issuerUrl: "https://issuer",
       credentialConfigurationId: "elfa-sdjwt",
-      keyBinding: CredentialKeyBinding(
-        id: UUID(),
-        algorithm: "ES512",
-        bindingType: .hardware),
-      issuerDisplays: [CredentialIssuerDisplay(
-        id: UUID(),
-        credentialId: nil,
-        image: nil)],
-      rawCredentialData: RawCredentialData())
-
-    static let sampleWithoutKeyBinding = CredentialGeneratorContext(
-      credentialId: UUID(),
-      issuerUrl: "https://issuer",
-      credentialConfigurationId: "elfa-sdjwt",
-      keyBinding: nil,
+      batchData: nil,
+      authentication: CredentialAuthentication(accessToken: "accessToken"),
       issuerDisplays: [CredentialIssuerDisplay(
         id: UUID(),
         credentialId: nil,

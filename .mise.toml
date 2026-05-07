@@ -4,7 +4,7 @@ _.file = '.env'
 [tools]
 xcodegen = '2.44.1'
 swiftlint = '0.63.2'
-swiftformat = '0.59.1'
+"asdf:mise-plugins/mise-swiftformat" = "0.59.1"
 swiftgen = '6.6.3'
 danger-swift = '3.22.0'
 ruby = '3.4.7'
@@ -40,11 +40,11 @@ run = ['bundle exec fastlane scan --scheme "swiyu Ref"']
 
 [tasks.swiftlint]
 description = 'Linting'
-run = 'swiftlint'
+run = 'swiftlint --strict'
 
 [tasks.swiftformat]
 description = 'Format the project to expected code standards'
-run = 'swiftformat .'
+run = 'mise exec -- swiftformat .'
 
 [tasks.swiftgen]
 description = 'Generate assets files'
@@ -58,6 +58,7 @@ run = [
     'swiftgen --config Modules/Features/BITAppAuth/swiftgen.yml',
     'swiftgen --config Modules/Features/BITCredential/swiftgen.yml',
     'swiftgen --config Modules/Features/BITEIDRequest/swiftgen.yml',
+    'swiftgen --config Modules/Features/BITEIDRequest/swiftgen-otp.yml',
     'swiftgen --config Modules/Features/BITHome/swiftgen.yml',
     'swiftgen --config Modules/Features/BITInvitation/swiftgen.yml',
     'swiftgen --config Modules/Features/BITOnboarding/swiftgen.yml',
@@ -91,6 +92,16 @@ description = 'Deploy ABN (updraft)'
 depends = ['bundler']
 run = 'mise run deploy --environment abn'
 
+[tasks.deploy-abnstore]
+description = 'Deploy ABN Store (testflight)'
+depends = ['bundler']
+run = 'mise run deploy --environment abnstore'
+
+[tasks.deploy-debugger]
+description = 'Deploy Debugger (updraft)'
+depends = ['bundler']
+run = 'mise run deploy --environment debugger'
+
 [tasks.deploy-prod]
 description = 'Deploy PROD (testflight, appstoreconnect)'
 depends = ['bundler']
@@ -108,14 +119,16 @@ run = [
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn',
     'bundle exec fastlane ios refresh_provisioning_profile_appstore env:prod',
+    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:debugger',
 ]
 
 [tasks.refresh-profiles-enterprise]
 description = 'Refresh Enterprise provisonning profiles (all envs)'
 depends = ['bundler']
 run = [
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn',
+    'bundle exec fastlane ios refresh_provisioning_profile_enterprise env:ref',
+    'bundle exec fastlane ios refresh_provisioning_profile_enterprise env:abn',
+    'bundle exec fastlane ios refresh_provisioning_profile_enterprise env:debugger',
 ]
 
 [tasks.sonar]
@@ -132,6 +145,11 @@ run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:dev']
 description = 'Run build lane (ref)'
 depends = ['xcode-configuration-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:ref']
+
+[tasks.ci-build-debugger]
+description = 'Run build lane (debugger)'
+depends = ['xcode-configuration-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:debugger']
 
 [tasks.ci-build-abn]
 description = 'Run appstore build (abn)'
@@ -163,11 +181,6 @@ description = 'Run simulator build (abn)'
 depends = ['xcode-configuration-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build_simulator env:abn']
 
-[tasks.application-tests]
-description = 'Run application (ui) tests'
-depends = ['xcode-configuration-ci']
-run = ['bundle install', 'bundle exec fastlane ios pipeline_uitests env:apptest']
-
 [tasks.xcode-configuration-ci]
 description = 'Xcode configuration for CI'
 run = [
@@ -185,10 +198,28 @@ run = [
     'defaults write com.apple.dt.Xcode DVTTextPageGuideLocation -int 100',
 ]
 
+[tasks.install-git-hooks]
+description = 'Configure local git hooks for this repository'
+run = [
+    'chmod +x .githooks/post-checkout',
+    'chmod +x .githooks/pre-commit',
+    'chmod +x .resources/scripts/clean_swiftpm_dirs.sh',
+    'chmod +x .resources/scripts/run_swift_quality_gate.sh',
+    'git config --local core.hooksPath .githooks',
+]
+
 [tasks.pre-commit]
 description = 'pre-commit hook'
-depends = ['swiftformat', 'swiftlint', 'sort-text-keys']
+depends = ['swiftformat', 'swiftlint', 'sort-text-keys-strict', 'remove-duplicate-text-keys']
 
 [tasks.sort-text-keys]
-description = 'Sorts text keys and fails on duplicates'
+description = 'Sorts text keys in place'
 run = ['.resources/scripts/sort_text_keys.rb']
+
+[tasks.sort-text-keys-strict]
+description = 'Sorts text keys and fails if files were unsorted'
+run = ['.resources/scripts/sort_text_keys.rb --strict']
+
+[tasks.remove-duplicate-text-keys]
+description = 'Removes duplicate text keys from localization files'
+run = ['.resources/scripts/remove_duplicate_textkeys.rb']

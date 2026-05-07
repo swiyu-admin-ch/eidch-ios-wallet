@@ -24,6 +24,7 @@ struct IntroductionView: View {
           navigator.dismiss()
         }),
       ])
+      .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
   }
 

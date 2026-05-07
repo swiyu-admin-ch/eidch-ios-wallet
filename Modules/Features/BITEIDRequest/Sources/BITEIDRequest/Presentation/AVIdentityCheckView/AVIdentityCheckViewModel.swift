@@ -3,11 +3,18 @@ import BITNavigation
 import Factory
 import SwiftUI
 
-class AVIdentityCheckViewModel: ObservableObject {
+@Observable
+class AVIdentityCheckViewModel {
+
+  // MARK: Lifecycle
+
+  init(caseId: String) {
+    context.caseId = caseId
+  }
 
   // MARK: Internal
 
-  @Published var destination: EIDRequestDestinations?
+  var destination: EIDRequestDestinations?
 
   @MainActor
   func primaryAction() async {
@@ -36,10 +43,10 @@ class AVIdentityCheckViewModel: ObservableObject {
 
   // MARK: Private
 
-  @Injected(\.avBeamAppID) private var avBeamAppID
-  @Injected(\.avBeam) private var avBeam: AVBeamProtocol
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.startAutoVerificationUseCase) private var startAutoVerificationUseCase
+  @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
+  @ObservationIgnored @Injected(\.avBeam) private var avBeam: AVBeamProtocol
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.startAutoVerificationUseCase) private var startAutoVerificationUseCase
 
   private func getNextDestination(from response: AutoVerificationResponse) -> EIDRequestDestinations {
     if response.isNFCRequired {

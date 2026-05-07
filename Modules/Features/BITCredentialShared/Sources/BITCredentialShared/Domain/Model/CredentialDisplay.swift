@@ -1,6 +1,8 @@
+import BITClaimsPathPointer
 import BITCore
 import BITEntities
 import Foundation
+import RegexBuilder
 
 // MARK: - CredentialDisplay
 
@@ -43,7 +45,7 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
     credentialId = try container.decodeIfPresent(UUID.self, forKey: .credentialId)
   }
 
-  init(_ entity: CredentialDisplayEntity) {
+  public init(_ entity: CredentialDisplayEntity) {
     self.init(
       id: entity.id,
       name: entity.name,
@@ -79,4 +81,30 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
   public var logoBase64: Data?
   public var summary: String?
   public var credentialId: UUID?
+
+  #warning("TODO: should be moved to a CredentialDisplayFactory")
+
+  public func resolveClaimTemplate(with claims: [CredentialClaim]) -> Self {
+    var copy = self
+
+    copy.summary = summary?.replacing(Self.regex) { match in
+      let templateContent = String(match.1)
+      guard
+        let path = ClaimsPathPointer(templateContent),
+        let claim = claims.first(where: { path.isPointing(at: $0.path) })
+      else { return "" }
+      return claim.value ?? "–"
+    }
+    return copy
+  }
+
+  // MARK: Private
+
+  private static let regex = Regex {
+    "{{"
+    Capture {
+      ZeroOrMore(.any, .reluctant)
+    }
+    "}}"
+  }
 }

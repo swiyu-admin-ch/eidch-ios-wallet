@@ -1,6 +1,7 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping init_with_name
 import BITL10n
 import Factory
+import NavigatorUI
 import Spyable
 import SwiftUI
 import UIKit
@@ -20,16 +21,18 @@ class RecordDocumentViewModelTests: XCTestCase {
 
   override func setUp() {
     avBeam = AVBeamProtocolSpy()
+    updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
     saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
     fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
     context = EIDRequestContext()
 
-    Container.shared.avBeam.register { self.avBeam }
-    Container.shared.saveEIDRequestFilesUseCase.register { self.saveEIDRequestFilesUseCase }
-    Container.shared.fetchEIDRequestCaseUseCase.register { self.fetchEIDRequestCaseUseCase }
-    Container.shared.eidRequestContext.register { self.context }
+    Container.shared.avBeam.register { @MainActor in self.avBeam }
+    Container.shared.saveEIDRequestFilesUseCase.register { @MainActor in self.saveEIDRequestFilesUseCase }
+    Container.shared.fetchEIDRequestCaseUseCase.register { @MainActor in self.fetchEIDRequestCaseUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in self.context }
     Container.shared.recordDocumentTimeout.register { 10.0 }
-    Container.shared.avBeamAppID.register { self.appId }
+    Container.shared.avBeamAppID.register { @MainActor in self.appId }
+    Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
 
     success()
   }
@@ -48,8 +51,9 @@ class RecordDocumentViewModelTests: XCTestCase {
     XCTAssertNotNil(avBeam.recordDocumentDelegate)
   }
 
+  @MainActor
   func testCancelInitialization_sdkIsStopped() {
-    viewModel.cancelInitialization()
+    viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)
   }
 
@@ -81,29 +85,29 @@ class RecordDocumentViewModelTests: XCTestCase {
 
   // MARK: - SDK Initialization Tests
 
-  func testInitializeSDK_whenAlreadyInitialized_startsCamera() {
+  func testCheckInitializationState_whenAlreadyInitialized_startsCamera() {
     avBeam.state = .initialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertFalse(avBeam.initializeUsingCalled)
   }
 
-  func testInitializeSDK_whenNotInitialized_initializesSDK() {
+  func testCheckInitializationState_whenNotInitialized_initializesSDK() {
     avBeam.state = .notInitialized
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertTrue(avBeam.initializeUsingCalled)
     XCTAssertNotNil(avBeam.initializeUsingReceivedConfig)
     XCTAssertEqual(avBeam.initializeUsingReceivedConfig?.appId, appId)
   }
 
-  func testInitializeSDK_failure_handlesError() {
+  func testCheckInitializationState_failure_handlesError() {
     avBeam.state = .notInitialized
     avBeam.initializeUsingThrowableError = TestingError.error
 
-    viewModel.initializeSDK()
+    viewModel.checkInitializationState()
 
     XCTAssertNotNil(viewModel.destination)
     if case .error(let dataset) = viewModel.destination {
@@ -130,16 +134,18 @@ class RecordDocumentViewModelTests: XCTestCase {
 
   // MARK: - Record Tests
 
-  func testStartRecordDocument_success_callsAVBeamWithCorrectConfig() async {
+  func testStartRecordDocument_success_callsAVBeamWithCorrectConfig() async throws {
     viewModel.startRecordDocument()
 
     // Wait for async task to complete
     try? await Task.sleep(nanoseconds: 1_000_000_000)
 
     XCTAssertTrue(avBeam.startRecordDocumentConfigCalled)
+    XCTAssertEqual(updateInputFileUseCase.callAsFunctionCallsCount, 1)
     let config = avBeam.startRecordDocumentConfigReceivedConfig
     XCTAssertNotNil(config)
     XCTAssertEqual(config?.timeout, 10.0)
+    XCTAssertTrue(try XCTUnwrap(config?.files.contains(avBeamFile)))
   }
 
   func testStopRecordDocument_stopScan() {
@@ -171,7 +177,7 @@ class RecordDocumentViewModelTests: XCTestCase {
 
   // MARK: - Stop and Close Tests
 
-  func testStop_callsAVBeamStopRecordDocument() {
+  func testStop_callsAVBeamStopRecordDocumentAndStopCamera() {
     viewModel.stop()
 
     XCTAssertTrue(avBeam.stopRecordDocumentCalled)
@@ -188,6 +194,7 @@ class RecordDocumentViewModelTests: XCTestCase {
   }
 
   func testDidReceiveNotification_docRecordingStarted_setsTimer() async {
+    viewModel.startRecordDocument()
     viewModel.didReceiveNotification(notification: .docRecordingStarted)
 
     await Task.yield()
@@ -225,8 +232,10 @@ class RecordDocumentViewModelTests: XCTestCase {
   private var saveEIDRequestFilesUseCase: SaveEIDRequestFilesUseCaseProtocolSpy!
   private var fetchEIDRequestCaseUseCase: FetchEIDRequestCaseUseCaseProtocolSpy!
   private var context: EIDRequestContext!
+  private var updateInputFileUseCase: UpdateInputFileUseCaseProtocolSpy!
 
   private let appId = "test-app-id"
+  private let avBeamFile = AVBeamFile(type: .xml, description: "input.xml", data: "input.xml".data(using: .utf8)!)
 
   private func success() {
     avBeam.state = .initialized
@@ -235,6 +244,7 @@ class RecordDocumentViewModelTests: XCTestCase {
     fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = requestCase
     viewModel = RecordDocumentViewModel()
     XCTAssertEqual(viewModel.state, .loading)
+    updateInputFileUseCase.callAsFunctionReturnValue = avBeamFile
   }
 
 }

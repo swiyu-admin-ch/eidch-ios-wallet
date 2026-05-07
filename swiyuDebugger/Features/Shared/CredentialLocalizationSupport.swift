@@ -92,7 +92,7 @@ enum CredentialLocalizationSupport {
   private static func localizedClaim(_ claim: CredentialClaim, preferredLanguageCode: String) -> CredentialClaim {
     var claim = claim
     claim.preferredDisplay = claim.displays.findDisplayWithFallback(preferredLanguageCodes: [preferredLanguageCode])
-      ?? CredentialClaimDisplay(name: claim.key)
+      ?? CredentialClaimDisplay(name: claim.path.stringValue)
     return claim
   }
 

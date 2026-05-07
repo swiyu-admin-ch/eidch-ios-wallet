@@ -11,7 +11,7 @@ public struct LicencesListView: View {
 
   public init(path: Binding<NavigationPath>) {
     _path = path
-    _viewModel = StateObject(wrappedValue: Container.shared.licencesViewModel())
+    _viewModel = State(initialValue: Container.shared.licencesViewModel())
   }
 
   // MARK: Public
@@ -39,7 +39,7 @@ public struct LicencesListView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: LicencesListViewModel
+  @State private var viewModel: LicencesListViewModel
   @Binding private var path: NavigationPath
 
   @ViewBuilder

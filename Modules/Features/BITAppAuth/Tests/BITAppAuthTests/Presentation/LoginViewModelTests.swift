@@ -59,7 +59,7 @@ final class LoginViewModelTests: XCTestCase {
     isLoginRequiredNotificationTriggered = false
     mockRouter = LoginRouterMock()
 
-    Container.shared.loginUseCases.register { self.mockUseCases }
+    Container.shared.loginUseCases.register { @MainActor in self.mockUseCases }
   }
 
   func testLoginProductionValues() {
@@ -168,7 +168,7 @@ final class LoginViewModelTests: XCTestCase {
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
     mockGetLockedWalletTimeLeftUseCase.executeReturnValue = -10
 
-    Container.shared.attemptsLimit.register { attemptLimit }
+    Container.shared.attemptsLimit.register { @MainActor in attemptLimit }
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertEqual(viewModel.pinCodeState, PinCodeState.normal)
@@ -201,7 +201,7 @@ final class LoginViewModelTests: XCTestCase {
       // 100000 simulates a reboot value. So the first call on getLockedWallet (in configure will return 100000 aka a reboot)
     }
 
-    Container.shared.attemptsLimit.register { attemptLimit }
+    Container.shared.attemptsLimit.register { @MainActor in attemptLimit }
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertEqual(viewModel.pinCodeState, PinCodeState.normal)
@@ -233,8 +233,8 @@ final class LoginViewModelTests: XCTestCase {
       // 100000 simulates a reboot value. So the first call on getLockedWallet (in configure will return 100000 aka a reboot)
     }
 
-    Container.shared.attemptsLimit.register { attemptLimit }
-    Container.shared.lockDelay.register { lockDelay }
+    Container.shared.attemptsLimit.register { @MainActor in attemptLimit }
+    Container.shared.lockDelay.register { @MainActor in lockDelay }
 
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
@@ -560,7 +560,7 @@ final class LoginViewModelTests: XCTestCase {
   @MainActor
   private func lockedState(maxAttempts: Int, delay: TimeInterval) async {
     mockGetLockedWalletTimeLeftUseCase.executeReturnValue = nil
-    Container.shared.attemptsLimit.register { maxAttempts }
+    Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertFalse(mockLockWalletUseCase.executeCalled)
     XCTAssertFalse(mockUnlockWalletUseCase.executeCalled)
@@ -584,7 +584,7 @@ final class LoginViewModelTests: XCTestCase {
   @MainActor
   private func biometricLockedState(maxAttempts: Int, delay: TimeInterval) async {
     mockGetLockedWalletTimeLeftUseCase.executeReturnValue = nil
-    Container.shared.attemptsLimit.register { maxAttempts }
+    Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertFalse(mockLockWalletUseCase.executeCalled)
     XCTAssertFalse(mockUnlockWalletUseCase.executeCalled)

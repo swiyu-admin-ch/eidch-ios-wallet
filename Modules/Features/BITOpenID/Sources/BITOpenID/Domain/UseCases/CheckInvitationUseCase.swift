@@ -1,3 +1,4 @@
+import Factory
 import Foundation
 import Spyable
 
@@ -24,8 +25,14 @@ struct CheckInvitationTypeUseCase: CheckInvitationTypeUseCaseProtocol {
       .credentialOffer
     } else if InvitationType.presentation.schemes.contains(scheme) {
       .presentation
+    } else if isProximityEnabled, InvitationType.proximityEngagement.schemes.contains(scheme) {
+      .proximityEngagement
     } else {
       throw CheckInvitationTypeError.wrongScheme
     }
   }
+
+  // MARK: Private
+
+  @Injected(\.isProximityEnabled) private var isProximityEnabled: Bool
 }

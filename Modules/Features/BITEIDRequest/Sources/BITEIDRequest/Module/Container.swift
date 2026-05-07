@@ -2,25 +2,34 @@ import BITAVWrapper
 import BITEIDRequestShared
 import Factory
 import Foundation
+import NavigatorUI
 import Spyable
 
 @MainActor
 extension Container {
 
+  // MARK: Public
+
+  public var eIDRequestExternalViewProvider: Factory<(any NavigationViewProviding<EIDRequestExternalDestination>)?> {
+    self { nil }
+  }
+
+  // MARK: Internal
+
   var scanDocumentViewModel: Factory<ScanDocumentViewModel> {
-    self { ScanDocumentViewModel() }
+    self { @MainActor in ScanDocumentViewModel() }
   }
 
   var scanDocumentSubmitViewModel: ParameterFactory<ScanDocumentOutput, ScanDocumentSubmitViewModel> {
-    self { ScanDocumentSubmitViewModel(scanDocumentOutput: $0) }
+    self { @MainActor in ScanDocumentSubmitViewModel(scanDocumentOutput: $0) }
   }
 
   var recordDocumentViewModel: Factory<RecordDocumentViewModel> {
-    self { RecordDocumentViewModel() }
+    self { @MainActor in RecordDocumentViewModel() }
   }
 
   var recordSelfieViewModel: Factory<RecordSelfieViewModel> {
-    self { RecordSelfieViewModel() }
+    self { @MainActor in RecordSelfieViewModel() }
   }
 
   var queueInformationViewModel: ParameterFactory<Date, QueueInformationViewModel> {
@@ -28,43 +37,39 @@ extension Container {
   }
 
   var walletPairingViewModel: Factory<WalletPairingViewModel> {
-    self { WalletPairingViewModel() }
+    self { @MainActor in WalletPairingViewModel() }
   }
 
-  var walletPairingListViewModel: Factory<WalletPairingListViewModel> {
-    self { WalletPairingListViewModel() }
+  var walletPairingListViewModel: ParameterFactory<String, WalletPairingListViewModel> {
+    self { @MainActor in WalletPairingListViewModel(caseId: $0) }
   }
 
-  var avWelcomeViewModel: Factory<AVWelcomeViewModel> {
-    self { AVWelcomeViewModel() }
-  }
-
-  var avIdentityCheckViewModel: Factory<AVIdentityCheckViewModel> {
-    self { AVIdentityCheckViewModel() }
+  var avIdentityCheckViewModel: ParameterFactory<String, AVIdentityCheckViewModel> {
+    self { AVIdentityCheckViewModel(caseId: $0) }
   }
 
   var legalRepresentantViewModel: Factory<LegalRepresentantViewModel> {
-    self { LegalRepresentantViewModel() }
+    self { @MainActor in LegalRepresentantViewModel() }
   }
 
   var legalRepresentantConsentViewModel: ParameterFactory<String, LegalRepresentantConsentViewModel> {
-    self { LegalRepresentantConsentViewModel(caseId: $0) }
+    self { @MainActor in LegalRepresentantConsentViewModel(caseId: $0) }
   }
 
   var legalRepresentantVerificationViewModel: ParameterFactory<String, LegalRepresentantVerificationViewModel> {
-    self { LegalRepresentantVerificationViewModel(caseId: $0) }
+    self { @MainActor in LegalRepresentantVerificationViewModel(caseId: $0) }
   }
 
   var legalRepresentantQRCodeViewModel: ParameterFactory<String, LegalRepresentantQRCodeViewModel> {
-    self { LegalRepresentantQRCodeViewModel(caseId: $0) }
+    self { @MainActor in LegalRepresentantQRCodeViewModel(caseId: $0) }
   }
 
   var walletPairingOfferViewModel: ParameterFactory<(Void) -> Void, WalletPairingOfferViewModel> {
-    self { WalletPairingOfferViewModel($0) }
+    self { @MainActor in WalletPairingOfferViewModel($0) }
   }
 
   var legalRepresentantConsentStateViewModel: ParameterFactory<RequestCaseViewState, LegalRepresentantConsentStateViewModel> {
-    self { LegalRepresentantConsentStateViewModel(state: $0) }
+    self { @MainActor in LegalRepresentantConsentStateViewModel(state: $0) }
   }
 
   var documentSelectionViewModel: Factory<DocumentSelectionViewModel> {
@@ -82,15 +87,15 @@ extension Container {
   }
 
   var setupSDKErrorViewModel: ParameterFactory<(ErrorWrapper, (Void) -> Void), SetupSDKErrorViewModel> {
-    self { SetupSDKErrorViewModel(error: $0, callback: $1) }
+    self { @MainActor in SetupSDKErrorViewModel(error: $0, callback: $1) }
   }
 
   var nfcScanViewModel: Factory<NFCScanViewModel> {
-    self { NFCScanViewModel() }
+    self { @MainActor in NFCScanViewModel() }
   }
 
   var submitEIDRequestFilesViewModel: Factory<SubmitEIDRequestFilesViewModel> {
-    self { SubmitEIDRequestFilesViewModel() }
+    self { @MainActor in SubmitEIDRequestFilesViewModel() }
   }
 
   var nfcScanResultViewModel: ParameterFactory<AVBeamPackageResult, NFCScanResultViewModel> {
@@ -98,9 +103,8 @@ extension Container {
   }
 
   var eidRequestFlowCoordinator: Factory<EIDRequestFlowCoordinatorProtocol> {
-    self { EIDRequestFlowCoordinator() }.singleton
+    self { @MainActor in EIDRequestFlowCoordinator() }.singleton
   }
-
 }
 
 extension Container {
@@ -183,7 +187,7 @@ extension Container {
   }
 
   var applyEIDRequestUseCase: Factory<ApplyEIDRequestUseCaseProtocol> {
-    #if targetEnvironment (simulator)
+    #if targetEnvironment(simulator)
     self { MockApplyEIDRequestUseCase() }
     #else
     self { ApplyEIDRequestUseCase() }
@@ -243,8 +247,8 @@ extension Container {
     self { EIDRequestContext() }.shared
   }
 
-  var fetchAttestationsUseCase: Factory<FetchAttestationsUseCaseProtocol> {
-    self { FetchAttestationsUseCase() }
+  var validateDeviceSecurityRequirementsUseCase: Factory<ValidateDeviceSecurityRequirementsUseCaseProtocol> {
+    self { ValidateDeviceSecurityRequirementsUseCase() }
   }
 
   var fetchEIDRequestCaseUseCase: Factory<FetchEIDRequestCaseUseCaseProtocol> {
@@ -261,10 +265,6 @@ extension Container {
     }
   }
 
-  var eIDRequestRouter: Factory<EIDRequestRouter> {
-    self { EIDRequestRouter() }.cached
-  }
-
   var eIDRequestAfterOnboardingEnabledRepository: Factory<EIDRequestAfterOnboardingEnabledRepositoryProcotol> {
     self { EIDRequestAfterOnboardingEnabledRepository() }
   }
@@ -278,7 +278,20 @@ extension Container {
   }
 
   var requestCasePriorityOrder: Factory<[EIDRequestStatus.State]> {
-    self { [.readyForOnlineSession, .inQueue] }
+    self { [
+      .autoVerification,
+      .issuing,
+      .closed,
+      .readyForOnlineSession,
+      .inTargetWalletPairing,
+      .readyForFinalEntitlementCheck,
+      .inQueue,
+      .refused,
+      .unknown,
+      .expired,
+      .cancelled,
+      .agentReview,
+    ] }
   }
 
   var getLegalRepresentantVerificationQRCodeUseCase: Factory<GetLegalRepresentantVerificationQRCodeUseCaseProtocol> {
@@ -348,13 +361,25 @@ extension Container {
   var compareScanDocumentOutputUseCase: Factory<CompareScanDocumentOutputUseCaseProtocol> {
     self { CompareScanDocumentOutputUseCase() }
   }
+
+  var updateInputFileUseCase: Factory<UpdateInputFileUseCaseProtocol> {
+    self { UpdateInputFileUseCase() }
+  }
 }
 
 @MainActor
 extension Container {
 
+  // MARK: Public
+
+  public var requestCasePollingManager: Factory<RequestCasePollingProtocol> {
+    self { @MainActor in RequestCasePollingManager() }
+  }
+
+  // MARK: Internal
+
   var walletPairingPollingManager: Factory<WalletPairingPollingProtocol> {
-    self { WalletPairingPollingManager() }
+    self { @MainActor in WalletPairingPollingManager() }
   }
 
 }

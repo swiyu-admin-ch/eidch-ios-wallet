@@ -28,13 +28,13 @@ struct CreateAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol {
     switch credentialFormat {
     case .vcSdJwt:
       let data = rawCredential.data(using: .utf8) ?? Data()
-      return try sdJwsDecoder.decode(VcSdJwt.self, from: data)
+      return try vcSdJwsDecoder.decode(VcSdJwt.self, from: data)
     }
   }
 
   // MARK: Private
 
-  @Injected(\.sdJwsDecoder) private var sdJwsDecoder: SdJWSDecoderProtocol
+  @Injected(\.vcSdJwsDecoder) private var vcSdJwsDecoder: VcSdJWSDecoderProtocol
 
 }
 

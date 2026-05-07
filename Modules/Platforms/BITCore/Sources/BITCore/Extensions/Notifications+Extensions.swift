@@ -11,6 +11,8 @@ extension Notification.Name {
   public static let willEnterForeground = Notification.Name("willEnterForeground")
   public static let didEnterBackground = Notification.Name("didEnterBackground")
   public static let userInactivityTimeout = Notification.Name("userInactivityTimeout")
+  public static let pauseUserInactivityTimeout = Notification.Name("pauseUserInactivityTimeout")
+  public static let resumeUserInactivityTimeout = Notification.Name("resumeUserInactivityTimeout")
 
   public static let permissionAlertPresented = Notification.Name("permissionAlertPresented")
   public static let permissionAlertFinished = Notification.Name("permissionAlertFinished")

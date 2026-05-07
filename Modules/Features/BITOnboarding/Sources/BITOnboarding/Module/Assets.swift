@@ -28,6 +28,7 @@ enum Assets {
   static let start = ImageAsset(name: "Start")
   static let checkmarkCircle = ImageAsset(name: "checkmark-circle")
   static let eId = ImageAsset(name: "e-id")
+  static let history = ImageAsset(name: "history")
   static let lock = ImageAsset(name: "lock")
   static let shieldCross = ImageAsset(name: "shield cross")
   static let shieldPerson = ImageAsset(name: "shield person")

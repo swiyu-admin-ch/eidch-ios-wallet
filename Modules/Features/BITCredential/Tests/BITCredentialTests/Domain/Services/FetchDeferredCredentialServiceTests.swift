@@ -39,12 +39,12 @@ final class FetchDeferredCredentialServiceTests: XCTestCase {
     XCTAssertEqual(deferredCredentialRequestBodyGeneratorSpy.generateTransactionIdCredentialEncryptionContextReceivedArguments?.transactionId, deferredCredentialMock.transactionId)
     XCTAssertEqual(deferredCredentialRequestBodyGeneratorSpy.generateTransactionIdCredentialEncryptionContextReceivedArguments?.credentialEncryptionContext, credentialEncryptionContextMock)
 
-    XCTAssertEqual(openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyReceivedArguments?.accessToken, deferredCredentialMock.accessToken)
-    XCTAssertEqual(openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyReceivedArguments?.format, deferredCredentialMock.format)
-    XCTAssertEqual(openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyReceivedArguments?.url, Self.deferredCredentialEndpoint)
-    XCTAssertNotNil(openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyReceivedArguments?.privateKey)
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.context.accessToken, deferredCredentialMock.authentication.accessToken)
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.context.format, deferredCredentialMock.format)
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.context.deferredCredentialEndpoint, Self.deferredCredentialEndpoint)
+    XCTAssertNotNil(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.context.privateKey)
 
-    if let requestBody = openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyReceivedArguments?.requestBody {
+    if let requestBody = openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.requestBody {
       guard case .json(let request) = requestBody, case .json(let requestMock) = deferredCredentialRequestBodyMock else {
         XCTFail("Expected requestBody to be passed to the repository")
         return
@@ -89,19 +89,68 @@ final class FetchDeferredCredentialServiceTests: XCTestCase {
   }
 
   func testCallAsFunction_missingDeferredCredentialEndpoint_throws() async {
-    let metadataWithoutDeferredEndpoint = CredentialMetadata(
+    let metadataWithoutDeferredEndpoint = CredentialIssuerMetadata(
       credentialIssuer: "https://issuer",
       credentialEndpoint: "https:/credential",
-      credentialConfigurationsSupported: CredentialMetadata.Mock.sample.credentialConfigurationsSupported,
-      display: CredentialMetadata.Mock.sample.display)
-    openIDRepositorySpy.fetchMetadataFromReturnValue = CredentialMetadataResponse(metadata: metadataWithoutDeferredEndpoint, raw: Data())
+      credentialConfigurationsSupported: CredentialIssuerMetadata.Mock.sample.credentialConfigurationsSupported,
+      display: CredentialIssuerMetadata.Mock.sample.display)
+    openIDRepositorySpy.fetchMetadataFromReturnValue = CredentialIssuerMetadataResponse(metadata: metadataWithoutDeferredEndpoint, raw: Data())
 
     do {
       _ = try await service(for: deferredCredentialMock)
       XCTFail("Expected error")
     } catch {
       XCTAssertEqual(error as? FetchDeferredCredentialServiceError, .missingDeferredCredentialURL)
-      XCTAssertFalse(openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyCalled)
+      XCTAssertFalse(openIDRepositorySpy.fetchCredentialWithRequestBodyCalled)
+    }
+  }
+
+  func testCallAsFunction_accessTokenIsExpired_renewTokenAndRetry() async throws {
+    openIDRepositorySpy.fetchCredentialWithRequestBodyClosure = { _, _ in
+      if self.openIDRepositorySpy.fetchCredentialWithRequestBodyCallsCount == 1 {
+        throw OpenIdRepositoryError.expiredAccessToken
+      }
+
+      return .credential(self.anyCredential)
+    }
+
+    let (_, _) = try await service(for: deferredCredentialMock)
+
+    XCTAssertEqual(openIDRepositorySpy.fetchOpenIdConfigurationFromCallsCount, 1)
+    XCTAssertEqual(openIDRepositorySpy.fetchOpenIdConfigurationFromReceivedIssuerURL?.absoluteString, deferredCredentialMock.issuerUrl)
+
+    XCTAssertEqual(openIDRepositorySpy.refreshAccessTokenFromRefreshTokenCallsCount, 1)
+    XCTAssertEqual(openIDRepositorySpy.refreshAccessTokenFromRefreshTokenReceivedArguments?.refreshToken, deferredCredentialMock.authentication.refreshToken)
+    XCTAssertEqual(openIDRepositorySpy.refreshAccessTokenFromRefreshTokenReceivedArguments?.url, OpenIdConfiguration.Mock.sample.tokenEndpoint)
+
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyCallsCount, 2)
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.context.accessToken, AccessToken.Mock.sample.accessToken)
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.context.refreshToken, AccessToken.Mock.sample.refreshToken)
+    XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyReceivedArguments?.requestBody, deferredCredentialRequestBodyMock)
+  }
+
+  func testCallAsFunction_accessTokenIsExpiredWithoutRefreshToken_throwsMissingRefreshToken() async {
+    openIDRepositorySpy.fetchCredentialWithRequestBodyThrowableError = OpenIdRepositoryError.expiredAccessToken
+
+    do {
+      _ = try await service(for: .Mock.sampleWithoutRefreshToken)
+    } catch {
+      XCTAssertEqual(error as? FetchDeferredCredentialServiceError, .missingRefreshToken)
+      XCTAssertFalse(openIDRepositorySpy.fetchOpenIdConfigurationFromCalled)
+      XCTAssertFalse(openIDRepositorySpy.refreshAccessTokenFromRefreshTokenCalled)
+      XCTAssertEqual(openIDRepositorySpy.fetchCredentialWithRequestBodyCallsCount, 1)
+    }
+  }
+
+  func testCallAsFunction_accessTokenIsExpiredWithoutIssuerUrl_throwsInvalidIssuerUrl() async {
+    openIDRepositorySpy.fetchCredentialWithRequestBodyThrowableError = OpenIdRepositoryError.expiredAccessToken
+
+    do {
+      _ = try await service(for: .Mock.sampleWithoutIssuerUrl)
+    } catch {
+      XCTAssertEqual(error as? FetchDeferredCredentialServiceError, .invalidIssuerUrl)
+      XCTAssertFalse(openIDRepositorySpy.fetchOpenIdConfigurationFromCalled)
+      XCTAssertFalse(openIDRepositorySpy.refreshAccessTokenFromRefreshTokenCalled)
     }
   }
 
@@ -117,12 +166,12 @@ final class FetchDeferredCredentialServiceTests: XCTestCase {
   private let deferredCredentialMock = DeferredCredential.Mock.sample
   private let anyCredential: AnyCredential = MockAnyCredential()
 
-  private let metadataResponseMock = CredentialMetadataResponse(
-    metadata: CredentialMetadata(
+  private let metadataResponseMock = CredentialIssuerMetadataResponse(
+    metadata: CredentialIssuerMetadata(
       credentialIssuer: "https://issuer",
       credentialEndpoint: "https://issuer/credential",
-      credentialConfigurationsSupported: CredentialMetadata.Mock.sample.credentialConfigurationsSupported,
-      display: CredentialMetadata.Mock.sample.display,
+      credentialConfigurationsSupported: CredentialIssuerMetadata.Mock.sample.credentialConfigurationsSupported,
+      display: CredentialIssuerMetadata.Mock.sample.display,
       deferredCredentialEndpoint: deferredCredentialEndpoint),
     raw: "raw".data(using: .utf8)!)
   private let credentialEncryptionContextMock = CredentialEncryptionContext(
@@ -145,11 +194,14 @@ final class FetchDeferredCredentialServiceTests: XCTestCase {
     Container.shared.openIDRepository.register { self.openIDRepositorySpy }
     Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGeneratorSpy }
     Container.shared.deferredCredentialRequestBodyGenerator.register { self.deferredCredentialRequestBodyGeneratorSpy }
+    Container.shared.isPayloadEncryptionEnabled.register { true }
   }
 
   private func success() {
     openIDRepositorySpy.fetchMetadataFromReturnValue = metadataResponseMock
-    openIDRepositorySpy.fetchCredentialFromRequestBodyAccessTokenFormatPrivateKeyReturnValue = .credential(anyCredential)
+    openIDRepositorySpy.fetchCredentialWithRequestBodyReturnValue = .credential(anyCredential)
+    openIDRepositorySpy.fetchOpenIdConfigurationFromReturnValue = .Mock.sample
+    openIDRepositorySpy.refreshAccessTokenFromRefreshTokenReturnValue = .Mock.sample
     credentialEncryptionContextGeneratorSpy.callAsFunctionForReturnValue = credentialEncryptionContextMock
     deferredCredentialRequestBodyGeneratorSpy.generateTransactionIdCredentialEncryptionContextReturnValue = deferredCredentialRequestBodyMock
   }

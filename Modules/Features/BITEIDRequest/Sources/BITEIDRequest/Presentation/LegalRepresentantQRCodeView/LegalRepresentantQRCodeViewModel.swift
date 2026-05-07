@@ -3,7 +3,8 @@ import Factory
 import Foundation
 
 @MainActor
-class LegalRepresentantQRCodeViewModel: ObservableObject {
+@Observable
+class LegalRepresentantQRCodeViewModel {
 
   // MARK: Lifecycle
 
@@ -19,9 +20,9 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
     case result(Data, URL)
   }
 
-  @Published var state = QRCodeViewState.loading
-  @Published var destination: EIDRequestDestinations?
-  @Published var isNavigationCloseTriggered = false
+  var state = QRCodeViewState.loading
+  var destination: EIDRequestDestinations?
+  var isNavigationCloseTriggered = false
 
   var isShareQRCodeDisabled: Bool {
     state == .loading || state == .error
@@ -58,9 +59,9 @@ class LegalRepresentantQRCodeViewModel: ObservableObject {
 
   private let caseId: String
 
-  @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase
-  @Injected(\.getLegalRepresentantVerificationQRCodeUseCase) private var getLegalRepresentantVerificationQRCodeUseCase
-  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase
+  @ObservationIgnored @Injected(\.getLegalRepresentantVerificationQRCodeUseCase) private var getLegalRepresentantVerificationQRCodeUseCase
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func close() {
     isNavigationCloseTriggered = true

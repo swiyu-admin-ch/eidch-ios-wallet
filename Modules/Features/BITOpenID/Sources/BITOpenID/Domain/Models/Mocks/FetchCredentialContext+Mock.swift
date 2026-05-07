@@ -1,20 +1,23 @@
 #if DEBUG
 import BITCrypto
 import Foundation
-@testable import BITTestingCore
+@testable import BITCore
 @testable import BITVault
 
 extension FetchCredentialContext {
-
-  struct Mock {
+  enum Mock {
 
     // MARK: Internal
 
     static let sample = make(format: "some-format")
     static let sampleVcSdJwt = make(format: "vc+sd-jwt")
+    static let sampleVcSdJwtBatch = make(format: "vc+sd-jwt", holderBindings: [
+      HolderBinding(keyPair: VaultKeyPair.Mock.ES256, keyAttestationJWS: "attestationJWS-1"),
+      HolderBinding(keyPair: VaultKeyPair.Mock.ES256SavePermanently(id: UUID()), keyAttestationJWS: nil),
+    ])
     static let vcSdJwtUnsupportedMetadataType = make(format: "vc+sd-jwt", selectedCredential: MockAnyCredentialConfigurationSupported())
-    static let sampleVcSdJwtWithoutHolderBinding = make(format: "vc+sd-jwt", holderBindingContext: nil)
-    static let sampleVcSdJwtWithoutKeyAttestation = make(format: "vc+sd-jwt", holderBindingContext: HolderBindingContext.Mock.softwareKey)
+    static let sampleVcSdJwtWithoutHolderBinding = make(format: "vc+sd-jwt", holderBindings: nil)
+    static let sampleVcSdJwtWithoutKeyAttestation = make(format: "vc+sd-jwt", holderBindings: HolderBinding.Mock.softwareKey)
     static let sampleCredentialEncryption = make(format: "vc+sd-jwt", credentialEncryptionContext: makeCredentialEncryptionContext())
     static let sampleCredentialEncryptionNoResponseEncryption = make(format: "vc+sd-jwt", credentialEncryptionContext: makeCredentialEncryptionContext(responseKeyPair: nil))
 
@@ -29,17 +32,17 @@ extension FetchCredentialContext {
     private static func make(
       format: String,
       invalid: Bool = false,
-      selectedCredential: (any CredentialMetadata.AnyCredentialConfigurationSupported)? = nil,
-      holderBindingContext: HolderBindingContext? = .Mock.attestedHardwareKey,
+      selectedCredential: (any CredentialIssuerMetadata.AnyCredentialConfigurationSupported)? = nil,
+      holderBindings: [HolderBinding]? = HolderBinding.Mock.attestedHardwareKey,
       credentialEncryptionContext: CredentialEncryptionContext? = nil)
       -> FetchCredentialContext
     {
-      let credentialConfig: any CredentialMetadata.AnyCredentialConfigurationSupported
+      let credentialConfig: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported
       if let selectedCredential {
         credentialConfig = selectedCredential
       } else {
-        guard let mockCredentialsSupported: any CredentialMetadata.AnyCredentialConfigurationSupported = CredentialMetadata.Mock.sample.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
-          fatalError("Mock of CredentialMetadata doesn't contain valid credentialConfigurationSupported")
+        guard let mockCredentialsSupported: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported = CredentialIssuerMetadata.Mock.sample.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value else {
+          fatalError("Mock of CredentialIssuerMetadata doesn't contain valid credentialConfigurationSupported")
         }
         credentialConfig = mockCredentialsSupported
       }
@@ -49,7 +52,7 @@ extension FetchCredentialContext {
         format: format,
         selectedCredential: credentialConfig,
         credentialIssuer: "credential-issuer",
-        holderBindingContext: holderBindingContext,
+        holderBindings: holderBindings,
         accessToken: AccessToken.Mock.sample,
         nonce: Nonce.Mock.default,
         credentialEndpoint: mockEndpointsUrl,

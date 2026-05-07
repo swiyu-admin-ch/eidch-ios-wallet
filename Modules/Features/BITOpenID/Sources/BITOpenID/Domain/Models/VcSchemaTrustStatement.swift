@@ -25,7 +25,7 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
 
   // MARK: Public
 
-  public let type: String? = "vc+sd-jwt"
+  public let type: String? = VcSdJwt.legacyType
 
   public let vct: String
   public let issuer: String?
@@ -37,6 +37,10 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
   public let expiredAt: Date?
 
   public let vcSchemaId: URL?
+
+  public var acceptedTypes: [String]? {
+    [VcSdJwt.legacyType, VcSdJwt.currentType]
+  }
 
   public func encode(to encoder: any Encoder) throws {
     abort() // will be implemented if we actually need it

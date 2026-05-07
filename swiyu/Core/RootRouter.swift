@@ -8,7 +8,7 @@ import UIKit
 
 // MARK: - RootRouterRoutes
 
-protocol RootRouterRoutes: AppRoutes, InvitationRoutes, LoginRoutes {}
+protocol RootRouterRoutes: AppRoutes, LoginRoutes {}
 
 // MARK: - RootRouter
 

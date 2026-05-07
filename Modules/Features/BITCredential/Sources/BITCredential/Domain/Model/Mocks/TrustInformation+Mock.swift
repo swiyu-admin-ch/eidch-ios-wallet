@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
+@testable import BITCore
 @testable import BITOpenID
-@testable import BITTestingCore
 
 extension TrustInformation {
   public enum Mock {

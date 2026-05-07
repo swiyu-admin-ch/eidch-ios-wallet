@@ -3,7 +3,6 @@ import JsonSchemaValidator
 import XCTest
 @testable import BITOpenID
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
 @testable import BITTestingCore
 
 final class VcSdJwtSchemaValidatorIntegrationTests: XCTestCase {

@@ -8,9 +8,15 @@ public struct CameraPreview: UIViewRepresentable {
 
   // MARK: Lifecycle
 
-  public init(session: AVCaptureSession, object: AVMetadataMachineReadableCodeObject?, _ didMoveFocusArea: @escaping (AVMetadataMachineReadableCodeObject) -> Void) {
+  public init(
+    session: AVCaptureSession,
+    object: AVMetadataMachineReadableCodeObject?,
+    centerFocusAreaOnLeftHalfInLandscape: Bool = false,
+    _ didMoveFocusArea: @escaping (AVMetadataMachineReadableCodeObject) -> Void)
+  {
     self.session = session
     self.object = object
+    self.centerFocusAreaOnLeftHalfInLandscape = centerFocusAreaOnLeftHalfInLandscape
     self.didMoveFocusArea = didMoveFocusArea
   }
 
@@ -24,6 +30,7 @@ public struct CameraPreview: UIViewRepresentable {
   public func makeUIView(context: Context) -> CameraPreviewView {
     let view = CameraPreviewView()
     view.setupPreviewLayer(session)
+    view.centerFocusAreaOnLeftHalfInLandscape = centerFocusAreaOnLeftHalfInLandscape
     view.didMoveFocusArea = didMoveFocusArea
     return view
   }
@@ -31,6 +38,7 @@ public struct CameraPreview: UIViewRepresentable {
   // MARK: Internal
 
   let session: AVCaptureSession
+  let centerFocusAreaOnLeftHalfInLandscape: Bool
   var didMoveFocusArea: (AVMetadataMachineReadableCodeObject) -> Void
   var object: AVMetadataMachineReadableCodeObject?
 
@@ -66,13 +74,14 @@ public class CameraPreviewView: UIView {
     super.layoutSubviews()
     adjustVideoOrientation()
     if focusAreaShape.path == nil || boundsHaveChanged() {
-      focusAreaShape.resetPositionToCenter(of: self)
+      focusAreaShape.resetPositionToOrigin(of: self, center: preferredFocusAreaCenter)
     }
   }
 
   // MARK: Internal
 
   var didMoveFocusArea: ((AVMetadataMachineReadableCodeObject) -> Void)?
+  var centerFocusAreaOnLeftHalfInLandscape = false
 
   var videoPreviewLayer: AVCaptureVideoPreviewLayer {
     // swiftlint: disable all
@@ -112,6 +121,18 @@ public class CameraPreviewView: UIView {
   }()
 
   private var lastBounds = CGRect.zero
+
+  private var preferredFocusAreaCenter: CGPoint? {
+    guard centerFocusAreaOnLeftHalfInLandscape, isLandscape else { return nil }
+    return CGPoint(x: bounds.width * 0.25, y: bounds.midY)
+  }
+
+  private var isLandscape: Bool {
+    guard let orientation = window?.windowScene?.interfaceOrientation else {
+      return bounds.width > bounds.height
+    }
+    return orientation.isLandscape
+  }
 
   private func adjustVideoOrientation() {
     guard
@@ -158,7 +179,7 @@ public class CameraPreviewView: UIView {
   private func resetFocusAreaIfNeeeded() {
     guard let lastScannedItemDate, Date().timeIntervalSince(lastScannedItemDate) > Self.scannerTimeoutInterval else { return }
     self.lastScannedItemDate = nil
-    focusAreaShape.resetPositionToCenter(of: self)
+    focusAreaShape.resetPositionToOrigin(of: self, center: preferredFocusAreaCenter)
   }
 
   private func sortCorners(_ corners: [CGPoint]) -> [CGPoint] {

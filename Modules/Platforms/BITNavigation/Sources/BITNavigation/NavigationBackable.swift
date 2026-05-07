@@ -23,7 +23,7 @@ public struct NavigationBackableModifier: ViewModifier {
 
   public func body(content: Content) -> some View {
     content
-      .onChange(of: bindingValue) { newValue in
+      .onChange(of: bindingValue) { _, newValue in
         if newValue {
           navigator.pop()
         }

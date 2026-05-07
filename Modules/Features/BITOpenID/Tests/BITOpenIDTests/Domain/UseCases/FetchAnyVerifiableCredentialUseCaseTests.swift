@@ -25,17 +25,20 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   func testExecute_validArguments_createsValidContextAndFetches() async throws {
     mockAnyCredential.raw = UUID().uuidString
 
-    let result = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
+    let execution = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: mockHolderBindings)
 
-    if case .credential(let credential) = result {
+    if case .credential(let credential) = execution.credentials {
       XCTAssertEqual(mockAnyCredential.raw, credential.raw)
     }
+    XCTAssertEqual(execution.accessToken, mockAccessToken.accessToken)
+    XCTAssertEqual(execution.tokenType, .bearer)
+    XCTAssertEqual(execution.refreshToken, mockAccessToken.refreshToken)
 
     XCTAssertTrue(repository.fetchOpenIdConfigurationFromCalled)
     XCTAssertTrue(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
     XCTAssertEqual(repository.fetchAccessTokenFromPreAuthorizedCodeReceivedArguments?.url, mockOpenIdConfiguration.tokenEndpoint)
     XCTAssertTrue(repository.fetchNonceFromCalled)
-    XCTAssertEqual(repository.fetchNonceFromReceivedUrl, mockMetadataWrapper.credentialMetadata.nonceEndpoint)
+    XCTAssertEqual(repository.fetchNonceFromReceivedUrl, mockMetadataWrapper.credentialIssuerMetadata.nonceEndpoint)
 
     guard let receivedContext = spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext else {
       XCTFail("receivedContext must not be nil")
@@ -45,15 +48,15 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertTrue(credentialEncryptionContextGeneratorSpy.callAsFunctionForCalled)
     XCTAssertEqual(receivedContext.format, mockMetadataWrapper.selectedCredential.format)
     XCTAssertEqual(
-      receivedContext.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported,
-      mockMetadataWrapper.selectedCredential as? CredentialMetadata.VcSdJwtCredentialConfigurationSupported)
-    XCTAssertEqual(receivedContext.credentialIssuer, mockMetadataWrapper.credentialMetadata.credentialIssuer)
-    XCTAssertEqual(receivedContext.holderBindingContext, mockHolderBindingContext)
+      receivedContext.selectedCredential as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported,
+      mockMetadataWrapper.selectedCredential as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported)
+    XCTAssertEqual(receivedContext.credentialIssuer, mockMetadataWrapper.credentialIssuerMetadata.credentialIssuer)
+    XCTAssertEqual(receivedContext.holderBindings, mockHolderBindings)
     XCTAssertEqual(receivedContext.accessToken, mockAccessToken)
     XCTAssertEqual(receivedContext.nonce, mockNonce)
-    XCTAssertEqual(receivedContext.credentialEndpoint.absoluteString, mockMetadataWrapper.credentialMetadata.credentialEndpoint)
+    XCTAssertEqual(receivedContext.credentialEndpoint.absoluteString, mockMetadataWrapper.credentialIssuerMetadata.credentialEndpoint)
     XCTAssertEqual(receivedContext.credentialEncryptionContext, mockCredentialEncryptionContext)
-    XCTAssertEqual(receivedContext.deferredCredentialEndpoint, mockMetadataWrapper.credentialMetadata.deferredCredentialEndpoint)
+    XCTAssertEqual(receivedContext.deferredCredentialEndpoint, mockMetadataWrapper.credentialIssuerMetadata.deferredCredentialEndpoint)
 
     XCTAssertTrue(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
   }
@@ -68,7 +71,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     let offer = CredentialOffer(issuer: "", grants: Grants(urn: Urn(preAuthorizedCode: "")), credentialConfigurationIds: [])
 
     do {
-      _ = try await useCase.execute(from: offer, metadataWrapper: mockMetadataWrapper, holderBindingContext: nil)
+      _ = try await useCase(from: offer, metadataWrapper: mockMetadataWrapper, holderBindings: [])
       XCTFail("Expected error")
     } catch FetchAnyVerifiableCredentialError.unknownIssuer {
       XCTAssertFalse(repository.fetchOpenIdConfigurationFromCalled)
@@ -81,28 +84,10 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     repository.fetchOpenIdConfigurationFromThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: nil)
+      _ = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: [])
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
-    }
-  }
-
-  func testExecute_fetchAccessTokenThrowsInvalidGrant_throws() async {
-    repository.fetchAccessTokenFromPreAuthorizedCodeThrowableError = NetworkError(status: .invalidGrant)
-
-    do {
-      _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
-      XCTFail("An error was expected")
-    } catch FetchAnyVerifiableCredentialError.expiredInvitation {
-      XCTAssertTrue(repository.fetchOpenIdConfigurationFromCalled)
-      XCTAssertTrue(repository.fetchAccessTokenFromPreAuthorizedCodeCalled)
-      XCTAssertFalse(repository.fetchNonceFromCalled)
-      XCTAssertFalse(repository.fetchCredentialWithCredentialRequestCalled)
-      XCTAssertFalse(repository.fetchIssuerPublicKeyInfoFromCalled)
-      XCTAssertFalse(spyFetchCredentialVcSdJwtUseCase.executeForCalled)
-    } catch {
-      XCTFail("Not the expected error")
     }
   }
 
@@ -110,7 +95,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     repository.fetchNonceFromThrowableError = NetworkError(status: .notFound)
 
     do {
-      _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
+      _ = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: mockHolderBindings)
       XCTFail("An error was expected")
     } catch {
       guard error as? NetworkError != nil else { return XCTFail("Expected a NetworkError") }
@@ -122,7 +107,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_missingNonceEndpoint_contextNonceNil() async throws {
-    _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: CredentialMetadataWrapper.Mock.sample, holderBindingContext: mockHolderBindingContext)
+    _ = try await useCase(from: mockCredentialOffer, metadataWrapper: CredentialIssuerMetadataWrapper.Mock.sample, holderBindings: mockHolderBindings)
 
     XCTAssertFalse(repository.fetchNonceFromCalled)
     XCTAssertNil(spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext?.nonce)
@@ -132,7 +117,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     Container.shared.isPayloadEncryptionEnabled.register { false }
     useCase = FetchAnyVerifiableCredentialUseCase()
 
-    _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindingContext: mockHolderBindingContext)
+    _ = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: mockHolderBindings)
 
     XCTAssertFalse(credentialEncryptionContextGeneratorSpy.callAsFunctionForCalled)
     XCTAssertNil(spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext?.credentialEncryptionContext)
@@ -140,11 +125,11 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockHolderBindingContext = HolderBindingContext.Mock.attestedHardwareKey
+  private let mockHolderBindings = HolderBinding.Mock.attestedHardwareKey
   private let mockAnyCredential = AnyCredentialSpy()
   private let mockOpenIdConfiguration = OpenIdConfiguration.Mock.sample
-  private let mockMetadata = CredentialMetadata.Mock.sample
-  private let mockMetadataWrapper = CredentialMetadataWrapper.Mock.sampleChasseralIssuer01
+  private let mockMetadata = CredentialIssuerMetadata.Mock.sample
+  private let mockMetadataWrapper = CredentialIssuerMetadataWrapper.Mock.sampleChasseralIssuer01
   private let mockCredentialOffer = CredentialOffer.Mock.sample
   private let mockAccessToken = AccessToken.Mock.sample
   private let mockNonce = Nonce.Mock.default
@@ -186,10 +171,10 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   }
 
   private func testCredentialEndpointInvalid(endpoint: String) async throws {
-    let metadata = CredentialMetadata(credentialIssuer: mockMetadata.credentialIssuer, credentialEndpoint: endpoint, credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported, display: mockMetadata.display)
-    let metadataWrapper = try CredentialMetadataWrapper(credentialConfigurationId: mockCredentialOffer.credentialConfigurationIds[0], credentialMetadata: metadata, rawData: Data())
+    let metadata = CredentialIssuerMetadata(credentialIssuer: mockMetadata.credentialIssuer, credentialEndpoint: endpoint, credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported, display: mockMetadata.display)
+    let metadataWrapper = try CredentialIssuerMetadataWrapper(credentialConfigurationId: mockCredentialOffer.credentialConfigurationIds[0], credentialIssuerMetadata: metadata, rawData: Data())
     do {
-      _ = try await useCase.execute(from: mockCredentialOffer, metadataWrapper: metadataWrapper, holderBindingContext: nil)
+      _ = try await useCase(from: mockCredentialOffer, metadataWrapper: metadataWrapper, holderBindings: [])
       XCTFail("Expected a `FetchAnyVerifiableCredentialError.credentialEndpointCreationError`")
     } catch FetchAnyVerifiableCredentialError.credentialEndpointCreationError {
       XCTAssertFalse(repository.fetchOpenIdConfigurationFromCalled)

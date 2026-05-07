@@ -5,32 +5,38 @@ import SwiftUI
 
 // MARK: - ActivityHistorySettingsView
 
-struct ActivityHistorySettingsView: View {
+public struct ActivityHistorySettingsView: View {
 
   // MARK: Lifecycle
 
-  init() {
-    _viewModel = StateObject(wrappedValue: Container.shared.activityHistorySettingsViewModel())
+  public init(showNavigationBar: Bool = false) {
+    _viewModel = State(initialValue: Container.shared.activityHistorySettingsViewModel())
+    self.showNavigationBar = showNavigationBar
   }
 
-  // MARK: Internal
+  // MARK: Public
 
-  var body: some View {
+  public var body: some View {
     Content(
       isActivityHistoryEnabled: $viewModel.isActivityHistoryEnabled,
       isConfirmHistoryDisablingAlertPresented: $viewModel.isConfirmHistoryDisablingAlertPresented,
       isConfirmDeletionAlertPresented: $viewModel.isConfirmDeletionAlertPresented,
-      isToastPresented: $viewModel.isToastPresented,
-      toastType: viewModel.toastType,
+      toast: $viewModel.toast,
       eventAction: { event in Task { await viewModel.send(event) } })
-      .task {
-        await viewModel.send(.onAppear)
+      .if(showNavigationBar) {
+        $0.navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
+          .toolbar {
+            CloseButtonToolbar { dismiss() }
+          }
       }
   }
 
   // MARK: Private
 
-  @StateObject private var viewModel: ActivityHistorySettingsViewModel
+  @State private var viewModel: ActivityHistorySettingsViewModel
+  @Environment(\.dismiss) private var dismiss
+
+  private let showNavigationBar: Bool
 }
 
 // MARK: ActivityHistorySettingsView.Content
@@ -44,15 +50,13 @@ extension ActivityHistorySettingsView {
       isActivityHistoryEnabled: Binding<Bool>,
       isConfirmHistoryDisablingAlertPresented: Binding<Bool>,
       isConfirmDeletionAlertPresented: Binding<Bool>,
-      isToastPresented: Binding<Bool>,
-      toastType: ToastType,
+      toast: Binding<Toast?>,
       eventAction: @escaping (ActivityHistorySettingsViewModel.Event) -> Void = { _ in })
     {
       self.isActivityHistoryEnabled = isActivityHistoryEnabled
       self.isConfirmHistoryDisablingAlertPresented = isConfirmHistoryDisablingAlertPresented
       self.isConfirmDeletionAlertPresented = isConfirmDeletionAlertPresented
-      self.isToastPresented = isToastPresented
-      self.toastType = toastType
+      self.toast = toast
       self.eventAction = eventAction
     }
 
@@ -78,11 +82,7 @@ extension ActivityHistorySettingsView {
               secondaryButton: .cancel(Text(L10n.tkGlobalCancel)))
           }
       }
-      .toastMessage(
-        isPresented: isToastPresented,
-        message: toastType.message,
-        type: toastType,
-        clearAction: { eventAction(.clearToast) })
+      .toast(toast)
     }
 
     // MARK: Private
@@ -90,8 +90,7 @@ extension ActivityHistorySettingsView {
     private let isActivityHistoryEnabled: Binding<Bool>
     private let isConfirmHistoryDisablingAlertPresented: Binding<Bool>
     private let isConfirmDeletionAlertPresented: Binding<Bool>
-    private let isToastPresented: Binding<Bool>
-    private let toastType: ToastType
+    private let toast: Binding<Toast?>
     private let eventAction: (ActivityHistorySettingsViewModel.Event) -> Void
 
     private var toggleHistorySection: some View {
@@ -123,6 +122,5 @@ extension ActivityHistorySettingsView {
     isActivityHistoryEnabled: .constant(true),
     isConfirmHistoryDisablingAlertPresented: .constant(false),
     isConfirmDeletionAlertPresented: .constant(false),
-    isToastPresented: .constant(false),
-    toastType: .success)
+    toast: .constant(nil))
 }

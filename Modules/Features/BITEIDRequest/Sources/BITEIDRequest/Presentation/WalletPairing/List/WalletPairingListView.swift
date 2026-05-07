@@ -9,6 +9,12 @@ import SwiftUI
 
 struct WalletPairingListView: View {
 
+  // MARK: Lifecycle
+
+  init(caseId: String) {
+    _viewModel = State(initialValue: Container.shared.walletPairingListViewModel(caseId))
+  }
+
   // MARK: Internal
 
   enum AccessibilityIdentifier: String {
@@ -18,20 +24,38 @@ struct WalletPairingListView: View {
   var body: some View {
     List {
       header()
-      sectionCurrentDevice()
-      sectionAdditionalDevices()
+      if viewModel.isInitialLoading {
+        initialLoadingSections()
+          .transition(.opacity)
+      } else {
+        Group {
+          if viewModel.shouldShowCurrentDeviceSection {
+            sectionCurrentDevice()
+          }
+          sectionAdditionalDevices()
+        }
+        .transition(.opacity)
+      }
     }
     .listStyle(.plain)
     .safeAreaInset(edge: .bottom) {
-      footer()
+      if viewModel.isInitialLoading {
+        loadingFooter()
+          .transition(.opacity)
+      } else {
+        footer()
+          .transition(.opacity)
+      }
     }
     .navigationBarBackButtonHidden(viewModel.isBackButtonHidden)
     .toolbar(content: toolbarContent)
     .frame(maxWidth: 568)
-    .toastMessage(
-      isPresented: $viewModel.isToastPresented,
-      message: viewModel.toastMessage,
-      clearAction: viewModel.clearToast)
+    .toast($viewModel.toast)
+    .animation(.easeInOut(duration: animationDuration), value: viewModel.currentDevicePairingState)
+    .animation(.easeInOut(duration: animationDuration), value: viewModel.shouldShowCurrentDeviceSection)
+    .animation(.easeInOut(duration: animationDuration), value: viewModel.isLimitReached)
+    .animation(.easeInOut(duration: animationDuration), value: viewModel.pairedDevicesCounter)
+    .animation(.easeInOut(duration: animationDuration), value: viewModel.isInitialLoading)
     .onFirstAppear {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
         isHeaderFocused = true
@@ -48,7 +72,9 @@ struct WalletPairingListView: View {
 
   @AccessibilityFocusState private var isHeaderFocused: Bool
 
-  @InjectedObject(\.walletPairingListViewModel) private var viewModel
+  @State private var viewModel: WalletPairingListViewModel
+
+  private let animationDuration = 0.25
 
   private func header() -> some View {
     Section {
@@ -79,6 +105,7 @@ struct WalletPairingListView: View {
           checkmark()
             .accessibilityHidden(true)
         }
+        .transition(.opacity)
         .accessibilityElement(children: .combine)
         .padding(.vertical, .x2)
       }
@@ -93,6 +120,7 @@ struct WalletPairingListView: View {
             Text(L10n.tkEidRequestWalletPairingAdditionalDeviceButtonPrimary)
               .foregroundStyle(ThemingAssets.Brand.Accent.link.swiftUIColor)
           }
+          .transition(.opacity)
           .padding(.vertical, .x2)
           .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
         }
@@ -106,6 +134,7 @@ struct WalletPairingListView: View {
           .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           .padding(.top, .x1)
           .listRowSeparator(.hidden, edges: .bottom)
+          .transition(.opacity)
       }
     }
   }
@@ -121,6 +150,20 @@ struct WalletPairingListView: View {
       .controlSize(.large)
       .disabled(viewModel.isPrimaryButtonDisabled)
     }
+  }
+
+  private func loadingFooter() -> some View {
+    ButtonSheet {
+      HStack(spacing: .x3) {
+        ProgressView()
+          .controlSize(.small)
+        Text(L10n.tkEidRequestWalletPairingCurrentDeviceLoadingTitle)
+          .font(.custom.body)
+      }
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, .x3)
+    }
+    .accessibilityElement(children: .combine)
   }
 
   private func sectionHeader(_ text: String) -> some View {
@@ -154,18 +197,54 @@ struct WalletPairingListView: View {
 
 extension WalletPairingListView {
 
+  @ViewBuilder
+  private func initialLoadingSections() -> some View {
+    Section {
+      placeholderRow(L10n.tkEidRequestWalletPairingCurrentDeviceButtonPrimary)
+    } header: {
+      sectionHeader(L10n.tkEidRequestWalletPairingCurrentDeviceSectionTitle)
+    }
+
+    Section {
+      placeholderRow(L10n.tkEidRequestWalletPairingAdditionalDeviceButtonPrimary)
+    } header: {
+      sectionHeader(L10n.tkEidRequestWalletPairingAdditionalDeviceSectionTitle)
+    }
+  }
+
+  private func placeholderRow(_ text: String) -> some View {
+    Text(text)
+      .font(.custom.body)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .redacted(reason: .placeholder)
+      .padding(.vertical, .x2)
+      .allowsHitTesting(false)
+  }
+
   private func sectionCurrentDevice() -> some View {
     Section {
       VStack {
         switch viewModel.currentDevicePairingState {
-        case .initial: pairingCurrentDeviceButton()
-        case .loading: pairingCurrentDeviceProgressView()
-        case .paired(let currentDevicePairingDate): pairingCurrentDeviceResultView(date: currentDevicePairingDate)
+        case .initial:
+          if viewModel.isCurrentDevicePaired {
+            pairingCurrentDeviceResultView(date: viewModel.currentDevicePairingDate)
+              .transition(.opacity)
+          } else {
+            pairingCurrentDeviceButton()
+              .transition(.opacity)
+          }
+        case .loading:
+          pairingCurrentDeviceProgressView()
+            .transition(.opacity)
+        case .paired(let currentDevicePairingDate):
+          pairingCurrentDeviceResultView(date: currentDevicePairingDate)
+            .transition(.opacity)
         }
       }
       .padding(.vertical, .x2)
+    } header: {
+      sectionHeader(L10n.tkEidRequestWalletPairingCurrentDeviceSectionTitle)
     }
-    header: { sectionHeader(L10n.tkEidRequestWalletPairingCurrentDeviceSectionTitle) }
   }
 
   private func pairingCurrentDeviceButton() -> some View {
@@ -191,7 +270,7 @@ extension WalletPairingListView {
     }
   }
 
-  private func pairingCurrentDeviceResultView(date: String) -> some View {
+  private func pairingCurrentDeviceResultView(date: String?) -> some View {
     HStack {
       #warning("Update the name of the device")
       Text("Device 1")
@@ -200,9 +279,11 @@ extension WalletPairingListView {
       Spacer()
 
       HStack {
-        Text(date)
-          .font(.custom.body)
-          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        if let date {
+          Text(date)
+            .font(.custom.body)
+            .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        }
 
         checkmark()
       }
@@ -211,5 +292,5 @@ extension WalletPairingListView {
 }
 
 #Preview {
-  WalletPairingListView()
+  WalletPairingListView(caseId: "caseId")
 }

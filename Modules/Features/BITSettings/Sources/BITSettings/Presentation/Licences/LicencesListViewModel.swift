@@ -1,10 +1,11 @@
 import BITAnalytics
 import BITCore
-import Combine
 import Factory
 import Foundation
 
-public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, LicencesListViewModel.Event> {
+@MainActor
+@Observable
+public class LicencesListViewModel {
 
   // MARK: Lifecycle
 
@@ -13,9 +14,9 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
     fetchPackagesUseCase: FetchPackagesUseCaseProtocol = Container.shared.fetchPackagesUseCase(),
     analytics: AnalyticsProtocol = Container.shared.analytics())
   {
+    state = initialState
     self.fetchPackagesUseCase = fetchPackagesUseCase
     self.analytics = analytics
-    super.init(initialState)
   }
 
   // MARK: Public
@@ -33,15 +34,14 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
     case setError(_ errror: Error)
   }
 
-  public override func reducer(_ state: inout State, _ event: Event) -> AnyPublisher<Event, Never>? {
+  public func send(event: Event) async {
     switch (state, event) {
     case (_, .fetch):
-      return AnyPublisher.run {
-        try self.fetchPackagesUseCase.execute()
-      } onSuccess: { packages in
-        .setPackages(packages)
-      } onError: { error in
-        .setError(error)
+      do {
+        let packages = try fetchPackagesUseCase.execute()
+        await send(event: .setPackages(packages))
+      } catch {
+        await send(event: .setError(error))
       }
 
     case (.loading, .setPackages(let packages)):
@@ -57,15 +57,15 @@ public class LicencesListViewModel: StateMachine<LicencesListViewModel.State, Li
       packages = []
 
     default:
-      return super.reducer(&state, event)
+      return
     }
-
-    return nil
   }
 
   // MARK: Internal
 
-  @Published var packages = [PackageDependency]()
+  var packages = [PackageDependency]()
+  var stateError: Error?
+  private(set) var state: State
 
   // MARK: Private
 

@@ -3,7 +3,7 @@ import NavigatorUI
 import SwiftUI
 
 public enum NonComplianceDestinations: NavigationDestination {
-  case categories(activity: Activity)
+  case categories(activityType: ActivityType, activityId: UUID)
 
   // MARK: Public
 
@@ -13,8 +13,8 @@ public enum NonComplianceDestinations: NavigationDestination {
 
   public var body: some View {
     switch self {
-    case .categories(let activity):
-      NonComplianceCategorySelectionView(activity: activity)
+    case .categories(let activityType, let activityId):
+      NonComplianceCategorySelectionView(activityType: activityType, activityId: activityId)
     }
   }
 }

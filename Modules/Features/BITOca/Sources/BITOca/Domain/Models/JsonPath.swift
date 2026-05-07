@@ -1,3 +1,4 @@
+import BITClaimsPathPointer
 import RegexBuilder
 
 // MARK: - JsonPath
@@ -109,9 +110,33 @@ public struct JsonPath: Equatable, Decodable {
 
 }
 
+extension JsonPath {
+  var claimsPathPointer: ClaimsPathPointer {
+    childSegments.map { segment in
+      if segment.isWildcardArray() {
+        return .null
+      }
+      if let index = segment.jsonPathArrayIndex {
+        return .index(index)
+      }
+      return .string(segment)
+    }
+  }
+}
+
 extension String {
+  fileprivate var jsonPathArrayIndex: Int? {
+    guard isIndexArray() else { return nil }
+    let value = dropFirst().dropLast()
+    return Int(value)
+  }
+
   fileprivate func isIndexArray() -> Bool {
     (try? indexArrayRegex.wholeMatch(in: self)) != nil
+  }
+
+  fileprivate func isWildcardArray() -> Bool {
+    self == "[*]"
   }
 }
 

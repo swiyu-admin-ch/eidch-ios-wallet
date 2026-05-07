@@ -15,7 +15,7 @@ extension CredentialClaimEntity {
   // MARK: Internal
 
   func setValues(from claim: CredentialClaim) {
-    key = claim.key
+    path = claim.path.stringValue
     value = claim.value
     valueType = claim.valueType
     valueDisplayInfo = claim.valueDisplayInfo

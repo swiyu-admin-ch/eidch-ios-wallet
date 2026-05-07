@@ -1,4 +1,4 @@
 {
-    "error": "client_rejected",
+    "error": "access_denied",
     "error_description": "description"
 }

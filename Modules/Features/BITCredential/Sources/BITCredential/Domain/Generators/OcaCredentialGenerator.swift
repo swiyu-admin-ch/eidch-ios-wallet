@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITCredentialShared
 import BITOca
 import BITOpenID
@@ -10,8 +11,13 @@ import Spyable
 
 @Spyable
 protocol OcaCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential
-  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential
+  func generate(for credentialsWithKeyBinding: [CredentialWithKeyBinding], ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential
+  func generateDeferred(
+    _ deferredCredentialContext: DeferredCredentialContext,
+    keyBindings: [KeyBinding],
+    ocaBundle: OcaBundle,
+    context: CredentialGeneratorContext) throws
+    -> DeferredCredential
 }
 
 // MARK: - OcaCredentialGenerator
@@ -20,47 +26,64 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential {
-    guard let payload = anyCredential.raw.data(using: .utf8) else {
+  func generate(for credentialsWithKeyBinding: [CredentialWithKeyBinding], ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential {
+    guard let primaryCredentialWithKeyBinding = credentialsWithKeyBinding.first else {
       throw CredentialError.invalidPayload
     }
-    let clusters = createClusters(from: anyCredential.claims, ocaBundle: ocaBundle)
+
+    // For now we assume all credentials in the batch are equivalent and use the first.
+    // Claim equality across credentials will be validated in a future iteration.
+    let primaryCredential = primaryCredentialWithKeyBinding.credential
+    let clusters = try createClusters(from: primaryCredential.claims, credentialFormat: primaryCredential.format, ocaBundle: ocaBundle)
     let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
     let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
 
+    let bundleItems = try createBundleItems(from: credentialsWithKeyBinding)
+
+    guard let firstBundleItem = bundleItems.first else {
+      throw CredentialError.invalidPayload
+    }
+
     return VerifiableCredential(
       id: context.credentialId,
       progressionState: .unaccepted,
-      payload: payload,
-      status: .unknown,
+      bundleItems: bundleItems,
+      nextPresentableBundleItemId: firstBundleItem.id,
       clusters: clusters,
-      format: anyCredential.format,
+      format: primaryCredential.format,
       issuerUrl: context.issuerUrl,
-      issuer: anyCredential.issuer,
-      keyBinding: context.keyBinding,
+      issuer: primaryCredential.issuer,
+      batchData: context.batchData,
+      authentication: context.authentication,
       rawCredentialData: context.rawCredentialData,
       issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
-      validFrom: anyCredential.validFrom,
-      validUntil: anyCredential.validUntil)
+      validFrom: primaryCredential.validFrom,
+      validUntil: primaryCredential.validUntil)
   }
 
-  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> DeferredCredential {
+  func generateDeferred(
+    _ deferredCredentialContext: DeferredCredentialContext,
+    keyBindings: [KeyBinding],
+    ocaBundle: OcaBundle,
+    context: CredentialGeneratorContext) throws
+    -> DeferredCredential
+  {
     let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
     let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
 
     return DeferredCredential(
       transactionId: deferredCredentialContext.transactionId,
-      accessToken: deferredCredentialContext.accessToken,
       endpoint: deferredCredentialContext.endpoint,
       format: deferredCredentialContext.format,
       issuerUrl: context.issuerUrl,
       issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
-      keyBinding: context.keyBinding,
-      rawCredentialData: context.rawCredentialData)
+      keyBindings: keyBindings,
+      rawCredentialData: context.rawCredentialData,
+      authentication: CredentialAuthentication(accessToken: deferredCredentialContext.accessToken, refreshToken: deferredCredentialContext.refreshToken))
   }
 
   // MARK: Private
@@ -68,13 +91,22 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
   @Injected(\.captureBaseDisplayGenerator) private var captureBaseDisplayGenerator: CaptureBaseDisplayGeneratorProtocol
   @Injected(\.ocaClaimGenerator) private var ocaClaimGenerator: OcaClaimGeneratorProtocol
 
-  private func createClusters(from claims: [any AnyClaim], ocaBundle: OcaBundle) -> [CredentialClaimCluster] {
-    let rootCluster = createCluster(for: ocaBundle.rootCaptureBaseDigest, claims: claims, ocaBundle: ocaBundle)
+  private func createBundleItems(from credentialsWithKeyBinding: [CredentialWithKeyBinding]) throws -> [BundleItem] {
+    try credentialsWithKeyBinding.map { credentialWithKeyBinding in
+      guard let payload = credentialWithKeyBinding.credential.raw.data(using: .utf8) else {
+        throw CredentialError.invalidPayload
+      }
+      return BundleItem(payload: payload, status: .unknown, keyBinding: credentialWithKeyBinding.keyBinding)
+    }
+  }
+
+  private func createClusters(from claims: [any AnyClaim], credentialFormat: String, ocaBundle: OcaBundle) throws -> [CredentialClaimCluster] {
+    let rootCluster = try createCluster(for: ocaBundle.rootCaptureBaseDigest, claims: claims, credentialFormat: credentialFormat, ocaBundle: ocaBundle)
     let clusters = rootCluster.claims.isEmpty && !rootCluster.childClusters.isEmpty ? rootCluster.childClusters : [rootCluster] // drop root cluster if there are only child clusters as there are no additional info on it (order & displays are not set)
 
-    let claimsWithoutOca = claims.filter {
-      guard let jsonPath = (try? JsonPath(rawString: $0.key)) else { return true }
-      return ocaBundle.getAttributeForJsonPath(jsonPath: jsonPath) == nil
+    let attributes = ocaBundle.getAttributes()
+    let claimsWithoutOca = claims.filter { claim in
+      !attributes.contains(where: { $0.dataSources[credentialFormat]?.isPointing(at: claim.path) == true })
     }.compactMap(CredentialClaim.init)
 
     if claimsWithoutOca.isEmpty {
@@ -84,10 +116,10 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
     return clusters + [additionalCluster]
   }
 
-  private func createCluster(for captureBaseDigest: String, claims: [any AnyClaim], ocaBundle: OcaBundle, labels: [String: String] = [:], order: Int? = nil) -> CredentialClaimCluster {
+  private func createCluster(for captureBaseDigest: String, claims: [any AnyClaim], credentialFormat: String, ocaBundle: OcaBundle, labels: [String: String] = [:], order: Int? = nil) throws -> CredentialClaimCluster {
     let attributes = ocaBundle.getAttributes(digest: captureBaseDigest)
-    let childClusters = createChildClusters(for: attributes, claims: claims, ocaBundle: ocaBundle)
-    let claims = createClaims(for: attributes, claims: claims)
+    let childClusters = try createChildClusters(for: attributes, claims: claims, credentialFormat: credentialFormat, ocaBundle: ocaBundle)
+    let claims = try createClaims(for: attributes, claims: claims, credentialFormat: credentialFormat)
     return CredentialClaimCluster(
       order: order ?? Int(Int16.max),
       claims: claims,
@@ -95,24 +127,24 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
       displays: labels.map { locale, label in ClusterDisplay(locale: locale, name: label) })
   }
 
-  private func createChildClusters(for attributes: [OverlayBundleAttribute], claims: [AnyClaim], ocaBundle: OcaBundle) -> [CredentialClaimCluster] {
-    attributes.compactMap { attribute in
+  private func createChildClusters(for attributes: [OverlayBundleAttribute], claims: [any AnyClaim], credentialFormat: String, ocaBundle: OcaBundle) throws -> [CredentialClaimCluster] {
+    try attributes.compactMap { attribute in
       if case .reference(let digest) = attribute.attributeType {
-        return createCluster(for: digest, claims: claims, ocaBundle: ocaBundle, labels: attribute.labels, order: attribute.order)
+        return try createCluster(for: digest, claims: claims, credentialFormat: credentialFormat, ocaBundle: ocaBundle, labels: attribute.labels, order: attribute.order)
       }
       return nil // only reference create child clusters
     }
   }
 
-  private func createClaims(for ocaAttributes: [OverlayBundleAttribute], claims: [any AnyClaim]) -> [CredentialClaim] {
-    ocaAttributes.compactMap { attribute in
+  private func createClaims(for ocaAttributes: [OverlayBundleAttribute], claims: [any AnyClaim], credentialFormat: String) throws -> [CredentialClaim] {
+    try ocaAttributes.compactMap { attribute in
       guard !attribute.attributeType.isReferenceType else { return nil }
-      let anyClaim = claims.first {
-        guard let jsonPath = (try? JsonPath(rawString: $0.key)) else { return false }
-        return attribute.dataSources.values.contains(jsonPath)
-      }
-      guard let anyClaim else { return nil }
-      return ocaClaimGenerator.generate(for: anyClaim, ocaAttribute: attribute)
+      guard
+        let attributePath = attribute.dataSources[credentialFormat],
+        let anyClaim = claims.first(where: { attributePath.isPointing(at: $0.path) })
+      else { return nil }
+
+      return try ocaClaimGenerator.generate(for: anyClaim, ocaAttribute: attribute)
     }
   }
 
@@ -142,9 +174,10 @@ extension AttributeType {
 
 extension CredentialClaim {
 
+  #warning("AnyClaim only supports primitive value type for now")
   fileprivate init(_ anyClaim: AnyClaim) {
     self.init(
-      key: anyClaim.key.replacing("$.", with: ""),
+      path: anyClaim.path,
       value: anyClaim.value?.rawValue,
       order: Int(Int16.max))
   }

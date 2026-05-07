@@ -1,6 +1,7 @@
 import BITCore
 import BITCredentialShared
 import BITEntities
+import BITL10n
 import Factory
 import Foundation
 
@@ -20,7 +21,7 @@ struct CredentialClaimViewModel {
   }
 
   var nameLabel: String {
-    claim.preferredDisplay.name ?? claim.key
+    claim.preferredDisplay.name ?? claim.path.stringValue
   }
 
   var valueLabel: String {
@@ -37,6 +38,13 @@ struct CredentialClaimViewModel {
     }
     // truncating after reasonable length, size of A4 document
     return label.count > 1800 ? String(label.prefix(1800) + "…") : label
+  }
+
+  var accessibilityValueLabel: String {
+    if claim.preferredDisplay.value == nil, claim.value == nil {
+      return "\(nameLabel), \(L10n.tkGlobalEmpty)"
+    }
+    return "\(nameLabel), \(valueLabel)"
   }
 
   var isSensitive: Bool {

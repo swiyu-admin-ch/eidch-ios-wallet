@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "questionmark.square.svg",
+      "filename" : "questionMark.svg",
       "idiom" : "universal"
     },
     {
@@ -11,12 +11,15 @@
           "value" : "dark"
         }
       ],
-      "filename" : "questionmark.square.dark.svg",
+      "filename" : "questionMark_dark.svg",
       "idiom" : "universal"
     }
   ],
   "info" : {
     "author" : "xcode",
     "version" : 1
+  },
+  "properties" : {
+    "preserves-vector-representation" : true
   }
 }

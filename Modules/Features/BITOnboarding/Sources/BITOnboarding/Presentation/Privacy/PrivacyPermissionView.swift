@@ -11,7 +11,7 @@ struct PrivacyPermissionView: View {
   // MARK: Lifecycle
 
   init(router: OnboardingInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.privacyPermissionViewModel(router))
+    _viewModel = State(initialValue: Container.shared.privacyPermissionViewModel(router))
   }
 
   // MARK: Internal
@@ -35,7 +35,7 @@ struct PrivacyPermissionView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: PrivacyPermissionViewModel
+  @State private var viewModel: PrivacyPermissionViewModel
 
 }
 

@@ -12,6 +12,7 @@ public protocol CredentialCardViewModelProtocol {
   var environment: TrustEnvironment? { get }
   var statusText: String { get }
   var statusImage: Image { get }
+  var statusBadgeAccessibilityText: String { get }
   var statusTextAlt: String { get }
   var statusBadgeStyle: any BadgeStyle { get }
   var statusColor: Color { get }

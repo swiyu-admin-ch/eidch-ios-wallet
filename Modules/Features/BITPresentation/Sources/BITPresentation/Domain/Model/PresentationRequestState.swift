@@ -1,11 +1,6 @@
-import BITCredentialShared
-
-// MARK: - PresentationRequestResultState
-
-public enum PresentationRequestResultState: Equatable {
-  case success(claims: [CredentialClaim])
-  case invalidCredential(claims: [CredentialClaim])
+public enum PresentationRequestResultState: Equatable, Hashable {
+  case success
+  case invalidCredential
   case deny
   case error
-  case cancelled
 }

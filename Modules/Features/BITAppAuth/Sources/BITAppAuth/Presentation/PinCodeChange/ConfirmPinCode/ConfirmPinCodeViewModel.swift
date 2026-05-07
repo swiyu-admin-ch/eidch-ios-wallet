@@ -7,7 +7,8 @@ import SwiftUI
 // MARK: - ConfirmPinCodeViewModel
 
 @MainActor
-public class ConfirmPinCodeViewModel: ObservableObject, Vibrating {
+@Observable
+public class ConfirmPinCodeViewModel: Vibrating {
 
   // MARK: Lifecycle
 
@@ -18,11 +19,11 @@ public class ConfirmPinCodeViewModel: ObservableObject, Vibrating {
 
   // MARK: Internal
 
-  @Published var inputFieldMessage: String?
-  @Published var attempts = 0
-  @Published var inputFieldState = InputFieldState.normal
+  var inputFieldMessage: String?
+  var attempts = 0
+  var inputFieldState = InputFieldState.normal
 
-  @Published var pinCode = "" {
+  var pinCode = "" {
     didSet {
       guard userDidRequestValidation else { return }
       do {
@@ -58,11 +59,11 @@ public class ConfirmPinCodeViewModel: ObservableObject, Vibrating {
   private var userDidRequestValidation = false
   private let router: ChangePinCodeInternalRoutes
 
-  @Injected(\.attemptsLimitChangePinCode) private var attemptsLimit: Int
-  @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
+  @ObservationIgnored @Injected(\.attemptsLimitChangePinCode) private var attemptsLimit: Int
+  @ObservationIgnored @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
 
-  @Injected(\.updatePinCodeUseCase) private var updatePinCode: UpdatePinCodeUseCaseProtocol
-  @Injected(\.validatePinCodeRuleUseCase) private var validatePinCode: ValidatePinCodeRuleUseCaseProtocol
+  @ObservationIgnored @Injected(\.updatePinCodeUseCase) private var updatePinCode: UpdatePinCodeUseCaseProtocol
+  @ObservationIgnored @Injected(\.validatePinCodeRuleUseCase) private var validatePinCode: ValidatePinCodeRuleUseCaseProtocol
 
   private var attemptLeft: Int {
     attemptsLimit - attempts

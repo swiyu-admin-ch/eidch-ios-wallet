@@ -1,7 +1,7 @@
+import BITCore
 import JsonSchemaValidator
 import XCTest
 @testable import BITOpenID
-@testable import BITTestingCore
 
 final class JsonSchemaValidatorIntegrationTests: XCTestCase {
 
@@ -13,14 +13,14 @@ final class JsonSchemaValidatorIntegrationTests: XCTestCase {
     XCTAssertTrue(try JsonSchemaValidator().validate(jsonObject: credential, with: schemaCredential))
   }
 
-  func testValidateDictionary_validArguments_success() throws {
+  func testValidateJson_validArguments_success() throws {
     let jsonDict = try? JSONSerialization.jsonObject(with: credential) as? [String: Any]
-    XCTAssertTrue(try JsonSchemaValidator().validate(dictionary: XCTUnwrap(jsonDict), with: schemaCredential))
+    XCTAssertTrue(try JsonSchemaValidator().validate(json: XCTUnwrap(jsonDict), with: schemaCredential))
   }
 
-  func testValidateDictionary_requiredArgumentsOnlySet_success() throws {
+  func testValidateJson_requiredArgumentsOnlySet_success() throws {
     let jsonDict = try? JSONSerialization.jsonObject(with: credentialRequiredSetOnly) as? [String: Any]
-    XCTAssertTrue(try JsonSchemaValidator().validate(dictionary: XCTUnwrap(jsonDict), with: schemaCredential))
+    XCTAssertTrue(try JsonSchemaValidator().validate(json: XCTUnwrap(jsonDict), with: schemaCredential))
   }
 
   func testValidate_schemaMalformed_throwsError() throws {
@@ -35,9 +35,9 @@ final class JsonSchemaValidatorIntegrationTests: XCTestCase {
     XCTAssertFalse(try JsonSchemaValidator().validate(jsonObject: credentialMissingClaim, with: schemaCredential))
   }
 
-  func testValidateDictionary_credentialMissingClaim_failure() throws {
+  func testValidateJson_credentialMissingClaim_failure() throws {
     let jsonDict = try? JSONSerialization.jsonObject(with: credentialMissingClaim) as? [String: Any]
-    XCTAssertFalse(try JsonSchemaValidator().validate(dictionary: XCTUnwrap(jsonDict), with: schemaCredential))
+    XCTAssertFalse(try JsonSchemaValidator().validate(json: XCTUnwrap(jsonDict), with: schemaCredential))
   }
 
   // MARK: Private

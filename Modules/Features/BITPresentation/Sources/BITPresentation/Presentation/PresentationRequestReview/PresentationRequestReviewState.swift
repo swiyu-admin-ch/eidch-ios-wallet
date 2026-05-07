@@ -20,6 +20,7 @@ enum PresentationRequestReviewState: Equatable {
     var credential: VerifiableCredentialViewModel
     let verifierDisplay: VerifierDisplay
     var isMessagePresented: Bool
+    var progress: Double?
   }
 }
 
@@ -39,7 +40,7 @@ extension PresentationRequestReviewState {
       let info = TrustInformation(identity: .untrusted, vcSchema: .untrusted)
       let display = VerifierDisplay(name: "Test", logo: nil, trustInformation: info)
       let credential = VerifiableCredentialViewModel(credential: .Mock.sample)
-      let viewState = PresentationRequestReviewState.Processing(credential: credential, verifierDisplay: display, isMessagePresented: true)
+      let viewState = PresentationRequestReviewState.Processing(credential: credential, verifierDisplay: display, isMessagePresented: true, progress: nil)
       return .processing(viewState)
     }
   }

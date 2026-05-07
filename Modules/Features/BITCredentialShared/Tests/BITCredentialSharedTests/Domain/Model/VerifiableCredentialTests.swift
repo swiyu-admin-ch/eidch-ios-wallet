@@ -22,7 +22,14 @@ final class VerifiableCredentialTests: XCTestCase {
     for didMethod in ["tdw", "webvh"] {
       let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:123"
 
-      let credential = try VerifiableCredential(progressionState: .accepted, payload: XCTUnwrap("payload".data(using: .utf8)), format: "format", issuerUrl: "issuerUrl", issuer: issuer)
+      let credential = try VerifiableCredential(
+        progressionState: .accepted,
+        bundleItems: [BundleItem(payload: XCTUnwrap("payload".data(using: .utf8)))],
+        nextPresentableBundleItemId: UUID(),
+        format: "format",
+        issuerUrl: "issuerUrl",
+        issuer: issuer,
+        authentication: CredentialAuthentication(accessToken: "accessToken"))
 
       XCTAssertEqual(credential.environment, .swiyu, "didMethod: \(didMethod)")
     }
@@ -32,7 +39,14 @@ final class VerifiableCredentialTests: XCTestCase {
     for didMethod in ["tdw", "webvh"] {
       let issuer = "did:\(didMethod):mock=:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:123"
 
-      let credential = try VerifiableCredential(progressionState: .accepted, payload: XCTUnwrap("payload".data(using: .utf8)), format: "format", issuerUrl: "issuerUrl", issuer: issuer)
+      let credential = try VerifiableCredential(
+        progressionState: .accepted,
+        bundleItems: [BundleItem(payload: XCTUnwrap("payload".data(using: .utf8)))],
+        nextPresentableBundleItemId: UUID(),
+        format: "format",
+        issuerUrl: "issuerUrl",
+        issuer: issuer,
+        authentication: CredentialAuthentication(accessToken: "accessToken"))
 
       XCTAssertEqual(credential.environment, .swiyuInt, "didMethod: \(didMethod)")
     }
@@ -41,7 +55,14 @@ final class VerifiableCredentialTests: XCTestCase {
   func testInit_externalDid_returnsExternalCredential() throws {
     let issuer = "did:tdw:mock=:identifier-reg.trust-infra.example.ch:api:v1:did:123"
 
-    let credential = try VerifiableCredential(progressionState: .accepted, payload: XCTUnwrap("payload".data(using: .utf8)), format: "format", issuerUrl: "issuerUrl", issuer: issuer)
+    let credential = try VerifiableCredential(
+      progressionState: .accepted,
+      bundleItems: [BundleItem(payload: XCTUnwrap("payload".data(using: .utf8)))],
+      nextPresentableBundleItemId: UUID(),
+      format: "format",
+      issuerUrl: "issuerUrl",
+      issuer: issuer,
+      authentication: CredentialAuthentication(accessToken: "accessToken"))
 
     XCTAssertEqual(credential.environment, .external)
   }
@@ -89,7 +110,7 @@ final class VerifiableCredentialTests: XCTestCase {
     let claims = credential.clusters.first?.claims ?? []
     for claim in claims {
       let claimDisplay = claim.preferredDisplay
-      XCTAssertEqual(claimDisplay.name, claim.key)
+      XCTAssertEqual(claimDisplay.name, claim.path.stringValue)
     }
   }
 

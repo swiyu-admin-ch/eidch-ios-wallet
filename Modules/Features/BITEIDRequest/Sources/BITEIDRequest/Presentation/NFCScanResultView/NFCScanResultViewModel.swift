@@ -4,7 +4,8 @@ import BITNavigation
 import Factory
 import Foundation
 
-class NFCScanResultViewModel: ObservableObject {
+@Observable
+class NFCScanResultViewModel {
 
   // MARK: Lifecycle
 
@@ -16,17 +17,12 @@ class NFCScanResultViewModel: ObservableObject {
 
   enum State {
     case loading
-    case results([NFCScanResultEntryType])
+    case results([ScanResultEntryType])
     case error(Error)
   }
 
-  enum NFCScanResultEntryType: Hashable {
-    case text(key: String, value: String)
-    case image(key: String, value: Data)
-  }
-
-  @Published var state = State.loading
-  @Published var destination: EIDRequestDestinations?
+  var state = State.loading
+  var destination: EIDRequestDestinations?
 
   func primaryAction() {
     destination = getNextDestination()
@@ -41,8 +37,8 @@ class NFCScanResultViewModel: ObservableObject {
 
       let result = try fetchNFCScanResultUseCase.execute(for: caseId, packageResult: package)
 
-      let entries: [NFCScanResultEntryType] = [
-        .image(key: L10n.tkEidRequestNfcScanResultPhotoKey, value: result.facePicture),
+      let entries: [ScanResultEntryType] = [
+        .image(key: L10n.tkEidRequestNfcScanResultPhotoKey, value: result.facePicture, accessibilityLabel: L10n.tkEidRequestNfcScanResultPhotoAlt),
         .text(key: L10n.tkEidRequestNfcScanResultSurnameKey, value: result.surname),
         .text(key: L10n.tkEidRequestNfcScanResultGivenNamesKey, value: result.givenName),
         .text(key: L10n.tkEidRequestNfcScanResultExpirationDateKey, value: result.expirationDate),
@@ -59,8 +55,8 @@ class NFCScanResultViewModel: ObservableObject {
 
   private let package: AVBeamPackageResult
 
-  @Injected(\.eidRequestContext) private var context
-  @Injected(\.fetchNFCScanResultUseCase) private var fetchNFCScanResultUseCase: FetchNFCScanResultUseCaseProtocol
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.fetchNFCScanResultUseCase) private var fetchNFCScanResultUseCase: FetchNFCScanResultUseCaseProtocol
 
   private func getNextDestination() -> EIDRequestDestinations {
     if context.autoVerificationResponse?.isDocumentVideoRecordingRequired == true {

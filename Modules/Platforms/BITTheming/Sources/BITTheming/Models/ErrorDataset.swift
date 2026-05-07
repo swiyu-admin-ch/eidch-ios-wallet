@@ -48,6 +48,9 @@ public struct ErrorDataset {
 
   public init(_ contents: [InformationView2.ContentType], actions: [InformationView2.ActionType] = []) {
     self.contents = contents
+    if self.contents.containsHero() == false {
+      self.contents = [.hero(image: ThemingAssets.closeCircle.swiftUIImage)] + self.contents
+    }
     self.actions = actions
   }
 
@@ -80,7 +83,7 @@ public struct ErrorDataset {
 
   // MARK: Internal
 
-  let contents: [InformationView2.ContentType]
+  var contents: [InformationView2.ContentType]
   let actions: [InformationView2.ActionType]
 
 }
@@ -143,4 +146,5 @@ extension ErrorDataset: Hashable {
       }
     }
   }
+
 }

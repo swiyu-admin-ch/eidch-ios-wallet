@@ -66,7 +66,7 @@ class SecurityIntroductionViewModel {
   }
 
   func primaryAction() {
-    router.infoScreenCredential()
+    router.infoScreenActivities()
   }
 
 }

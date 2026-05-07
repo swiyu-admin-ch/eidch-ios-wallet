@@ -7,7 +7,7 @@ let package = Package(
   name: "BITAppInfo",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -21,7 +21,7 @@ let package = Package(
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITNavigation"),
     .package(path: "../../Platforms/BITNetworking"),
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
@@ -29,7 +29,6 @@ let package = Package(
       name: "BITAppInfo",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
-        .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITNavigation", package: "BITNavigation"),

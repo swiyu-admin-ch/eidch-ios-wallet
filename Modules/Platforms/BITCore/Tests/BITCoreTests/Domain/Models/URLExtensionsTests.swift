@@ -77,6 +77,40 @@ final class URLExtensionsTests: XCTestCase {
     }
   }
 
+  func testDeletingPathAndQuery_withoutPathAndQuery_returnsURL() throws {
+    let urls = [
+      ("https://test", "https://test"),
+      ("https://test.example", "https://test.example"),
+      ("https://test.example:1000", "https://test.example:1000"),
+      ("https://:1000", "https://:1000"),
+      ("https://1.1.1.1", "https://1.1.1.1"),
+      ("https://1.1.1.1:1000", "https://1.1.1.1:1000"),
+    ]
+    for (stringUrl, expectedUrl) in urls {
+      let url = try XCTUnwrap(URL(string: stringUrl))
+
+      XCTAssertEqual(url.deletingPathAndQuery?.absoluteString, expectedUrl)
+    }
+  }
+
+  func testDeletingPathAndQuery_withPathOrQuery_returnsURL() throws {
+    let urls = [
+      ("https://test.example/", "https://test.example"),
+      ("https://test.example/path", "https://test.example"),
+      ("https://test.example/path?query=1", "https://test.example"),
+      ("https://test.example/path?query=1&other=2", "https://test.example"),
+      ("https://test.example:1000/", "https://test.example:1000"),
+      ("https://test.example:1000/path", "https://test.example:1000"),
+      ("https://test.example:1000/path?query=1", "https://test.example:1000"),
+      ("https://test.example:1000/path?query=1&other=2", "https://test.example:1000"),
+    ]
+    for (stringUrl, expectedUrl) in urls {
+      let url = try XCTUnwrap(URL(string: stringUrl))
+
+      XCTAssertEqual(url.deletingPathAndQuery?.absoluteString, expectedUrl)
+    }
+  }
+
   // MARK: Private
 
   private static let pngType = "image/png"
@@ -89,5 +123,3 @@ final class URLExtensionsTests: XCTestCase {
     "data:\(pngType);base64\(dataMock)",
   ]
 }
-
-// swiftlint:enable all

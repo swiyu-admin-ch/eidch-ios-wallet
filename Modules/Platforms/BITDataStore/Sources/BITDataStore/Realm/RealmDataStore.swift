@@ -7,12 +7,6 @@ import RealmSwift
 
 public class RealmDataStore: RealmDataStoreProtocol {
 
-  // MARK: Lifecycle
-
-  public init(configuration: Realm.Configuration = Container.shared.realmDataStoreConfiguration()) {
-    self.configuration = configuration
-  }
-
   // MARK: Public
 
   public func get<T: RealmFetchable>(_ type: T.Type, configuration: Realm.Configuration) throws -> Results<T> {
@@ -25,38 +19,42 @@ public class RealmDataStore: RealmDataStoreProtocol {
     return realm.object(ofType: type.self, forPrimaryKey: key)
   }
 
-  public func save(_ data: some Object, policy: Realm.UpdatePolicy, configuration: Realm.Configuration) throws {
+  public func save(_ object: some Object, policy: Realm.UpdatePolicy, configuration: Realm.Configuration) throws {
     let realm = try Realm(configuration: configuration)
     try realm.write {
-      realm.add(data, update: policy)
+      realm.add(object, update: policy)
     }
   }
 
-  public func save(_ data: [some Object], policy: Realm.UpdatePolicy, configuration: Realm.Configuration) throws {
+  public func save(_ objects: [some Object], policy: Realm.UpdatePolicy, configuration: Realm.Configuration) throws {
     let realm = try Realm(configuration: configuration)
     try realm.write {
-      realm.add(data, update: policy)
+      realm.add(objects, update: policy)
     }
   }
 
-  public func delete(_ data: some Object, configuration: Realm.Configuration) throws {
+  public func delete(_ object: some Object, configuration: Realm.Configuration) throws {
     let realm = try Realm(configuration: configuration)
     try realm.write {
-      realm.delete(data)
+      delete(object, from: realm, configuration: configuration)
     }
   }
 
-  public func delete(_ data: [some Object], configuration: Realm.Configuration) throws {
+  public func delete(_ objects: [some Object], configuration: Realm.Configuration) throws {
     let realm = try Realm(configuration: configuration)
     try realm.write {
-      realm.delete(data)
+      for object in objects {
+        delete(object, from: realm, configuration: configuration)
+      }
     }
   }
 
-  public func delete(_ data: Results<some Object>, configuration: Realm.Configuration) throws {
+  public func delete(_ objects: Results<some Object>, configuration: Realm.Configuration) throws {
     let realm = try Realm(configuration: configuration)
     try realm.write {
-      realm.delete(data)
+      for object in objects {
+        delete(object, from: realm, configuration: configuration)
+      }
     }
   }
 
@@ -68,6 +66,19 @@ public class RealmDataStore: RealmDataStoreProtocol {
 
   // MARK: Private
 
-  private let configuration: Realm.Configuration
-
+  private func delete(_ object: some Object, from realm: Realm, configuration: Realm.Configuration) {
+    for property in object.objectSchema.properties {
+      if property.objectClassName != nil {
+        if let childObject = object[property.name] as? Object {
+          delete(childObject, from: realm, configuration: configuration)
+        } else if property.isArray {
+          let childList = object.dynamicList(property.name)
+          for child in childList {
+            delete(child, from: realm, configuration: configuration)
+          }
+        }
+      }
+    }
+    realm.delete(object)
+  }
 }

@@ -18,7 +18,7 @@ struct NFCScanView: View {
         .ignoresSafeArea(edges: .bottom)
 
       switch viewModel.state {
-      case .sdkInitializing:
+      case .loading:
         LoadingView(
           primary: L10n.tkLoaderInitializationPrimary,
           secondary: L10n.tkLoaderInitializationSecondary,
@@ -26,12 +26,12 @@ struct NFCScanView: View {
             action: close,
             buttonText: L10n.tkGlobalCancel))
           .transition(.opacity)
-          .task {
-            viewModel.initializeSDK()
-          }
       case .ready:
         nfcScanView()
       }
+    }
+    .onAppear {
+      viewModel.checkInitializationState()
     }
     .navigate(to: $viewModel.destination)
     .navigationBarBackButtonHidden()
@@ -42,7 +42,8 @@ struct NFCScanView: View {
 
   @Environment(\.navigator) private var navigator
 
-  @InjectedObject(\.nfcScanViewModel) private var viewModel: NFCScanViewModel
+  @InjectedObservable(\.nfcScanViewModel) private var viewModel: NFCScanViewModel
+
   @Injected(\.eidRequestFlowCoordinator) private var coordinator: EIDRequestFlowCoordinatorProtocol
 
   private let imageMinWidth: CGFloat = 80

@@ -1,51 +1,57 @@
-import BITInvitation
 import BITNavigation
 import BITPresentation
 import BITTheming
 import Factory
 import Foundation
-import NavigatorUI
-
-// MARK: - LegalRepresentantVerificationViewModel
 
 @MainActor
-class LegalRepresentantVerificationViewModel: ObservableObject, NavigationBackable {
+@Observable
+class LegalRepresentantVerificationViewModel: NavigationBackable {
 
   // MARK: Lifecycle
 
-  init(router: EIDRequestRouterRoutes & EIDRequestInternalRoutes = Container.shared.eIDRequestRouter(), caseId: String) {
-    self.router = router
+  init(caseId: String) {
     self.caseId = caseId
   }
 
   // MARK: Internal
 
-  @Published private(set) var destination: EIDRequestDestinations?
-  @Published private(set) var isNavigationCloseTriggered = false
-  @Published var isNavigationBackTriggered = false
+  var destination: EIDRequestDestinations?
+  var isNavigationCloseTriggered = false
+  var isNavigationBackTriggered = false
 
   func startVerification() async {
     do {
       let context = try await getLegalRepresentantPresentationRequestContextUseCase.execute(for: caseId)
-      #warning("Might create an issue as the router is not linked to anything")
-      try router.startPresentation(context: context, delegate: self)
+      destination = .external(.presentation(context))
     } catch EIDRequestRepository.Error.legalRepresentantNotRequired {
       await openConsentState()
     } catch {
-      destination = .error(.retry(error, { [weak self] _ in
+      destination = .error(.retry(error) { [weak self] _ in
         self?.errorCallback(error)
-      }))
+      })
+    }
+  }
+
+  func close() {
+    isNavigationCloseTriggered = true
+    coordinator.cleanup()
+  }
+
+  func finish(with state: PresentationRequestResultState) async {
+    switch state {
+    case .success: await openConsentState()
+    default: close()
     }
   }
 
   // MARK: Private
 
   private let caseId: String
-  private let router: EIDRequestRouterRoutes & EIDRequestInternalRoutes
 
-  @Injected(\.getLegalRepresentantPresentationRequestContextUseCase) private var getLegalRepresentantPresentationRequestContextUseCase
-  @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase
-  @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.getLegalRepresentantPresentationRequestContextUseCase) private var getLegalRepresentantPresentationRequestContextUseCase
+  @ObservationIgnored @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
 
   private func openConsentState() async {
     do {
@@ -58,9 +64,9 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationBackab
 
       destination = .legalRepresentantConsentState(state: state)
     } catch {
-      destination = .error(.retry(error, { [weak self] _ in
+      destination = .error(.retry(error) { [weak self] _ in
         self?.errorCallback(error)
-      }))
+      })
     }
   }
 
@@ -73,32 +79,7 @@ class LegalRepresentantVerificationViewModel: ObservableObject, NavigationBackab
     }
   }
 
-  private func close() {
-    isNavigationCloseTriggered = true
-    coordinator.cleanup()
-  }
-
   private func back() {
     isNavigationBackTriggered = true
-  }
-
-}
-
-// MARK: @preconcurrency PresentationFinishDelegate
-
-extension LegalRepresentantVerificationViewModel: @preconcurrency PresentationFinishDelegate {
-  func retry() {
-    back()
-  }
-
-  func cancel() {
-    close()
-  }
-
-  func finish(with state: PresentationRequestResultState) async {
-    switch state {
-    case .success: await openConsentState()
-    default: close()
-    }
   }
 }

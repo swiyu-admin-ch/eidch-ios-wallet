@@ -128,13 +128,14 @@ extension AnimationSequence {
 // MARK: - AnimationStateManager
 
 @MainActor
-class AnimationStateManager: ObservableObject {
+@Observable
+class AnimationStateManager {
 
   // MARK: Internal
 
-  @Published var size = CGSize.zero
-  @Published var offsetX = CGFloat.zero
-  @Published var isAnimating = false
+  var size = CGSize.zero
+  var offsetX = CGFloat.zero
+  var isAnimating = false
 
   func startAnimation(sequence: AnimationSequence) {
     guard !isAnimating else { return }
@@ -163,7 +164,7 @@ class AnimationStateManager: ObservableObject {
 
   // MARK: Private
 
-  private var animationTask: Task<Void, Never>?
+  @ObservationIgnored private var animationTask: Task<Void, Never>?
 
   private func runAnimationSequence(_ sequence: AnimationSequence) async {
     isAnimating = true

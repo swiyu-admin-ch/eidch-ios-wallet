@@ -1,44 +1,36 @@
 import BITCore
+import BITNavigation
 import Factory
 import Foundation
 
-// MARK: - PresentationRequestResultStateViewModel
-
 @MainActor
-public class PresentationRequestResultStateViewModel: ObservableObject {
+@Observable
+class PresentationRequestResultStateViewModel: NavigationBackable {
 
   // MARK: Lifecycle
 
-  init(
-    state: PresentationRequestResultState,
-    context: PresentationRequestContext,
-    router: PresentationInternalRoutes)
-  {
+  init(state: PresentationRequestResultState, context: PresentationRequestContext) {
     self.state = state
     self.context = context
-    self.router = router
   }
 
   // MARK: Internal
 
   let state: PresentationRequestResultState
 
+  var isNavigationBackTriggered = false
+
   var verifierDisplay: VerifierDisplay {
     context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
   }
 
-  func finish() async {
-    await router.delegate?.finish(with: state)
-  }
-
   func retry() {
-    router.delegate?.retry()
+    isNavigationBackTriggered = true
   }
 
   // MARK: Private
 
-  private let router: PresentationInternalRoutes
   private let context: PresentationRequestContext
-  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 
+  @ObservationIgnored @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 }

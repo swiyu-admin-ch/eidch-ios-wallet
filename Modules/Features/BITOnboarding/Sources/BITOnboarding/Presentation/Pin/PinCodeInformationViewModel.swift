@@ -5,7 +5,8 @@ import SwiftUI
 
 // MARK: - PinCodeInformationViewModel
 
-class PinCodeInformationViewModel: ObservableObject {
+@Observable
+class PinCodeInformationViewModel {
 
   // MARK: Lifecycle
 
@@ -15,8 +16,8 @@ class PinCodeInformationViewModel: ObservableObject {
 
   // MARK: Internal
 
-  @Published var primaryText: String = L10n.tkOnboardingPasswordIntroductionPrimary
-  @Published var secondaryText: String = L10n.tkOnboardingPasswordIntroductionSecondary
+  var primaryText: String = L10n.tkOnboardingPasswordIntroductionPrimary
+  var secondaryText: String = L10n.tkOnboardingPasswordIntroductionSecondary
   let image: Image = Assets.lock.swiftUIImage
   let backgroundImage: Image = ThemingAssets.Gradient.gradient8.swiftUIImage
   let buttonLabelText: String = L10n.tkOnboardingPasswordIntroductionButtonPrimary

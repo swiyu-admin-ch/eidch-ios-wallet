@@ -1,18 +1,29 @@
 import BITActivity
 import BITL10n
 import BITTheming
+import Combine
 import Factory
 import Foundation
 
 // MARK: - ActivityHistorySettingsViewModel
 
 @MainActor
-class ActivityHistorySettingsViewModel: ObservableObject {
+@Observable
+class ActivityHistorySettingsViewModel {
+
+  // MARK: Lifecycle
+
+  init(getActivityHistoryEnabledSubject: GetActivityHistoryEnabledSubjectUseCaseProtocol) {
+    getActivityHistoryEnabledSubject()
+      .receive(on: DispatchQueue.main)
+      .sink(receiveValue: { [weak self] in
+        self?.isActivityHistoryEnabled = $0
+      }).store(in: &cancellables)
+  }
 
   // MARK: Internal
 
   enum Event {
-    case onAppear
     case toggleActivityHistory
     case deleteActivityHistory
     case confirmHistoryDisabling
@@ -20,17 +31,14 @@ class ActivityHistorySettingsViewModel: ObservableObject {
     case clearToast
   }
 
-  @Published var isActivityHistoryEnabled = false
-  @Published var isConfirmHistoryDisablingAlertPresented = false
-  @Published var isConfirmDeletionAlertPresented = false
-  @Published var isToastPresented = false
-  @Published var toastType = ToastType.success
+  var isActivityHistoryEnabled = false
+  var isConfirmHistoryDisablingAlertPresented = false
+  var isConfirmDeletionAlertPresented = false
+  var toast: Toast?
 
   func send(_ event: Event) async {
     do {
       switch event {
-      case .onAppear:
-        try onAppear()
       case .toggleActivityHistory:
         try toggleActivityHistory()
       case .deleteActivityHistory:
@@ -43,27 +51,21 @@ class ActivityHistorySettingsViewModel: ObservableObject {
         clearToast()
       }
     } catch {
-      toastType = .error
-      isToastPresented = true
+      toast = Toast(L10n.tkErrorGenericPrimary, type: .error)
     }
   }
 
   // MARK: Private
 
-  @Injected(\.isActivityHistoryEnabledUseCase) private var isActivityHistoryEnabledUseCase
-  @Injected(\.setActivityHistoryEnabledUseCase) private var setActivityHistoryEnabledUseCase
-  @Injected(\.deleteAllActivitiesUseCase) private var deleteAllActivitiesUseCase
-
-  private func onAppear() throws {
-    isActivityHistoryEnabled = try isActivityHistoryEnabledUseCase()
-  }
+  @ObservationIgnored @Injected(\.setActivityHistoryEnabledUseCase) private var setActivityHistoryEnabledUseCase
+  @ObservationIgnored @Injected(\.deleteAllActivitiesUseCase) private var deleteAllActivitiesUseCase
+  @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
   private func toggleActivityHistory() throws {
     if isActivityHistoryEnabled {
       isConfirmHistoryDisablingAlertPresented = true
     } else {
       try setActivityHistoryEnabledUseCase(true)
-      isActivityHistoryEnabled = true
     }
   }
 
@@ -74,18 +76,15 @@ class ActivityHistorySettingsViewModel: ObservableObject {
   private func confirmHistoryDisabling() throws {
     isConfirmHistoryDisablingAlertPresented = false
     try setActivityHistoryEnabledUseCase(false)
-    isActivityHistoryEnabled = false
   }
 
   private func confirmDeletion() throws {
     isConfirmDeletionAlertPresented = false
     try deleteAllActivitiesUseCase()
-    isToastPresented = true
-    toastType = .success
+    toast = Toast(L10n.tkSettingsActivityHistoryDeletionSuccessMessage)
   }
 
   private func clearToast() {
-    isToastPresented = false
-    toastType = .success
+    toast = nil
   }
 }

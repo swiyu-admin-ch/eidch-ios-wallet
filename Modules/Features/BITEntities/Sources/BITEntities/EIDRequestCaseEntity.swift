@@ -14,5 +14,6 @@ public class EIDRequestCaseEntity: Object {
 
   @Persisted public var createdAt: Date
   @Persisted public var credential: CredentialEntity?
+  @Persisted public var filesSubmitted: Bool
 
 }

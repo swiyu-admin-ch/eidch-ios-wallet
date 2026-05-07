@@ -1,8 +1,7 @@
 import Foundation
 @testable import BITAnyCredentialFormat
+@testable import BITCore
 @testable import BITSdJWT
-@testable import BITSdJWTMocks
-@testable import BITTestingCore
 
 extension CredentialPayload: Mockable {
   struct Mock {

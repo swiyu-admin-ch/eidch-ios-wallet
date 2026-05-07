@@ -2,7 +2,7 @@
 #if DEBUG
 import Foundation
 import JOSESwift
-@testable import BITTestingCore
+@testable import BITCore
 
 extension JWE: @retroactive Mockable {
   public struct Mock {

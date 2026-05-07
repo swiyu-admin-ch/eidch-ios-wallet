@@ -1,11 +1,13 @@
 import BITCore
 import BITL10n
+import BITTheming
 import Factory
 import SwiftUI
 
 // MARK: - NewPinCodeViewModel
 
-class NewPinCodeViewModel: ObservableObject, Vibrating {
+@Observable
+class NewPinCodeViewModel: Vibrating {
 
   // MARK: Lifecycle
 
@@ -18,11 +20,11 @@ class NewPinCodeViewModel: ObservableObject, Vibrating {
 
   var router: ChangePinCodeInternalRoutes
 
-  @Published var inputFieldMessage: String = L10n.tkOnboardingCharactersSubtitle
-  @Published var inputFieldState = InputFieldState.normal
-  @Published var isToastPresented = false
+  var inputFieldMessage: String = L10n.tkOnboardingCharactersSubtitle
+  var inputFieldState = InputFieldState.normal
+  var toast: Toast?
 
-  @Published var pinCode = "" {
+  var pinCode = "" {
     didSet {
       guard userDidRequestValidation else { return }
       do {
@@ -56,8 +58,8 @@ class NewPinCodeViewModel: ObservableObject, Vibrating {
 
   private var userDidRequestValidation = false
 
-  @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
-  @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
+  @ObservationIgnored @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
+  @ObservationIgnored @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
 
   private func handleError(_ error: Error) {
     withAnimation {
@@ -72,8 +74,6 @@ class NewPinCodeViewModel: ObservableObject, Vibrating {
 
 extension NewPinCodeViewModel: NewPinCodeDelegate {
   func didFail() {
-    withAnimation {
-      isToastPresented = true
-    }
+    toast = Toast(L10n.tkChangepasswordError4Notification, type: .error)
   }
 }

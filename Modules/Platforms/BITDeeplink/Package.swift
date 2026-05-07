@@ -7,7 +7,7 @@ let package = Package(
   name: "BITDeeplink",
   defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
   ],
   products: [
     .library(
@@ -15,7 +15,7 @@ let package = Package(
       targets: ["BITDeeplink"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/hmlongco/Factory", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
   ],
   targets: [
     .target(

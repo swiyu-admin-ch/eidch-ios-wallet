@@ -1,7 +1,9 @@
 import BITCredential
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - DeclinePresentationView
@@ -10,9 +12,8 @@ struct DeclinePresentationView: View {
 
   // MARK: Lifecycle
 
-  init(context: PresentationRequestContext, router: PresentationInternalRoutes) {
-    self.router = router
-    _viewModel = StateObject(wrappedValue: Container.shared.declinePresentationViewModel((context, router)))
+  init(context: PresentationRequestContext) {
+    _viewModel = State(wrappedValue: Container.shared.declinePresentationViewModel(context))
   }
 
   // MARK: Internal
@@ -25,7 +26,7 @@ struct DeclinePresentationView: View {
   var body: some View {
     VStack {
       ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { badgeType in
-        router.badgeInformation(badgeType: badgeType)
+        navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
       }
       .padding(.bottom, .x3)
 
@@ -52,16 +53,15 @@ struct DeclinePresentationView: View {
 
   // MARK: Private
 
+  @Environment(\.navigator) private var navigator
   @Environment(\.sizeCategory) private var sizeCategory
 
   @State private var topInset: CGFloat = 0
   @State private var availableWidth: CGFloat = 0
   @State private var compression = UICompressionStyle.normal
 
-  @StateObject private var viewModel: DeclinePresentationViewModel
+  @State private var viewModel: DeclinePresentationViewModel
   @AccessibilityFocusState(for: .voiceOver) private var isAccessibilityTitleFocused: Bool
-
-  private let router: PresentationInternalRoutes
 
   private var content: some View {
     VStack {
@@ -88,7 +88,9 @@ struct DeclinePresentationView: View {
 
       Spacer(minLength: compression.isCompressed ? .x4 : .x6)
 
-      AsyncButton(action: viewModel.declineRequest) {
+      AsyncButton(action: {
+        await viewModel.declineRequest(navigator)
+      }) {
         Text(L10n.tkGlobalClose)
       }
       .buttonStyle(.primary)
@@ -107,6 +109,6 @@ struct DeclinePresentationView: View {
 
 #if DEBUG
 #Preview {
-  DeclinePresentationView(context: .Mock.vcSdJwtSample, router: PresentationRouter())
+  DeclinePresentationView(context: .Mock.vcSdJwtSample)
 }
 #endif

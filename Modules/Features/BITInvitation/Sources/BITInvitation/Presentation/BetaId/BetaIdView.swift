@@ -1,19 +1,10 @@
 import BITL10n
 import BITTheming
-import Factory
 import SwiftUI
 
 struct BetaIdView: View {
 
-  // MARK: Lifecycle
-
-  init(router: InvitationRouterRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.betaIdViewModel(router))
-  }
-
   // MARK: Internal
-
-  @StateObject var viewModel: BetaIdViewModel
 
   var body: some View {
     InformationView(
@@ -27,11 +18,33 @@ struct BetaIdView: View {
       footer: {
         DefaultInformationFooterView(
           primaryButtonLabel: L10n.tkGlobalGetbetaidPrimarybutton,
-          primaryButtonAction: viewModel.openBetaIdLink)
+          primaryButtonAction: openBetaIdLink)
       })
+      .toolbar { toolbar }
   }
+
+  // MARK: Private
+
+  @Environment(\.dismiss) private var dismiss
+
+  @ToolbarContentBuilder
+  private var toolbar: some ToolbarContent {
+    ToolbarItem(placement: .topBarTrailing) {
+      Button(action: { dismiss() }, label: {
+        ThemingAssets.close.swiftUIImage
+      })
+      .accessibilityLabel(L10n.tkGlobalClose)
+    }
+  }
+
+  private func openBetaIdLink() {
+    if let url = URL(string: L10n.tkGlobalBetaidUrl) {
+      UIApplication.shared.open(url)
+    }
+  }
+
 }
 
 #Preview {
-  BetaIdView(router: InvitationRouter())
+  BetaIdView()
 }

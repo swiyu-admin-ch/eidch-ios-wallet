@@ -1,0 +1,9 @@
+{
+  "id": "1b320e01-0c0f-48d4-bd00-1600297bc36e",
+  "type": "presentationDeclined",
+  "createdAt": "2025-09-16T16:20:30+01:00",
+  "actorDisplay": {
+    "name": "actor",
+    "locale": "locale"
+  }
+}

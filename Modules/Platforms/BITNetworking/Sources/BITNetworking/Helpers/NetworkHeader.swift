@@ -9,11 +9,14 @@ public enum NetworkHeader {
   case swiyuAPIVersion(String)
   case contentType(String)
   case accept(String)
+  case acceptLanguage([String])
+  case formUrlEncoded
 
   // MARK: Private
 
   // Keys
   private static let keyAccept = "accept"
+  private static let keyAcceptLanguage = "Accept-Language"
   private static let keyAuthorization = "authorization"
   private static let keyContentType = "Content-Type"
   private static let swiyuAPIVersion = "SWIYU-API-Version"
@@ -24,6 +27,8 @@ public enum NetworkHeader {
 }
 
 extension NetworkHeader {
+  public static let swiyuUserAgent = "swiyu"
+
   public var raw: [String: String] {
     switch self {
     case .standard: [
@@ -45,6 +50,12 @@ extension NetworkHeader {
       ]
     case .accept(let value): [
         Self.keyAccept: value,
+      ]
+    case .acceptLanguage(let value): [
+        Self.keyAcceptLanguage: value.joined(separator: ", "),
+      ]
+    case .formUrlEncoded: [
+        Self.keyContentType: Self.valueApplicationFormUrlEncoded,
       ]
     }
   }

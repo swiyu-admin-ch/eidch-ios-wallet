@@ -1,13 +1,18 @@
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
-import Foundation
-import NavigatorUI
 import SwiftUI
 
 // MARK: - SuccessView
 
 struct SuccessView: View {
+
+  // MARK: Lifecycle
+
+  init(caseId: String) {
+    self.caseId = caseId
+  }
 
   // MARK: Internal
 
@@ -19,12 +24,10 @@ struct SuccessView: View {
         .body(L10n.tkEidRequestAgentReviewSecondary),
       ],
       actions: [
-        .primary(
-          L10n.tkGlobalClose,
-          { _ in
-            coordinator.cleanup()
-            navigator.dismiss()
-          }),
+        .primary(L10n.tkGlobalClose) { navigator in
+          coordinator.cleanup()
+          navigator.returnToCheckpointSafely(Checkpoints.home, value: .startRequestCasePolling(caseId: caseId))
+        },
       ])
       .navigationBarBackButtonHidden()
       .defaultEidRequestToolbar()
@@ -32,13 +35,13 @@ struct SuccessView: View {
 
   // MARK: Private
 
-  @Environment(\.navigator) private var navigator
+  private let caseId: String
 
   @Injected(\.eidRequestFlowCoordinator) private var coordinator
 }
 
 #if DEBUG
 #Preview {
-  SuccessView()
+  SuccessView(caseId: "caseId")
 }
 #endif

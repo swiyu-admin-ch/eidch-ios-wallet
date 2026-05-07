@@ -92,6 +92,9 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var stopNfcScanCalled = false
   public var stopNfcScanCallsCount = 0
 
+  public var notifySecondScanCalled = false
+  public var notifySecondScanCallsCount = 0
+
   // MARK: - Method Implementations
 
   public func initialize(using config: AVBeamInitConfig) throws {
@@ -228,6 +231,11 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
     stopNfcScanCallsCount += 1
   }
 
+  public func notifySecondScan() {
+    notifySecondScanCalled = true
+    notifySecondScanCallsCount += 1
+  }
+
   // MARK: - Test Helper Methods
 
   /**
@@ -310,5 +318,8 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
     recordDocumentDelegate = nil
     captureFaceDelegate = nil
     nfcDelegate = nil
+
+    notifySecondScanCalled = false
+    notifySecondScanCallsCount = 0
   }
 }

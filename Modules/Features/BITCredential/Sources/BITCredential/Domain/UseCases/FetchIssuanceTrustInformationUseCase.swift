@@ -18,7 +18,8 @@ struct FetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCas
   // MARK: Internal
 
   func callAsFunction(for credential: VerifiableCredential) async throws -> TrustInformation {
-    let anyCredential = try createAnyCredentialUseCase.execute(from: credential.payload, format: credential.format)
+    let bundleItem = try selectCredentialBundleItemUseCase(credential)
+    let anyCredential = try createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
     return await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
   }
 
@@ -26,4 +27,5 @@ struct FetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCas
 
   @Injected(\.trustInformationService) private var trustInformationService: TrustInformationServiceProtocol
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
+  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
 }

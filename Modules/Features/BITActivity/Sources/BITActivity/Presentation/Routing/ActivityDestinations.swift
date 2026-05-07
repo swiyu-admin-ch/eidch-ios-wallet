@@ -6,7 +6,8 @@ import SwiftUI
 
 enum ActivityDestinations: NavigationDestination {
   case activities(credentialId: UUID)
-  case activityDetail(activity: Activity, credentialId: UUID)
+  case activityDetail(activityId: UUID)
+  case settings
 
   // MARK: Internal
 
@@ -14,6 +15,8 @@ enum ActivityDestinations: NavigationDestination {
     switch self {
     case .activities,
          .activityDetail: .push
+    case .settings:
+      .managedSheet
     }
   }
 
@@ -26,13 +29,15 @@ enum ActivityDestinations: NavigationDestination {
 
 private struct ActivityDestinationsView: View {
   let destination: ActivityDestinations
-  @Injected(\.activityDetailViewProvider) var viewProvider
+  @Injected(\.activityExternalViewProvider) var viewProvider
   var body: some View {
     switch destination {
     case .activities(let credentialId):
       ActivityListView(credentialId: credentialId)
-    case .activityDetail(let activity, let credentialId):
-      viewProvider?.view(for: .activityDetail(activity: activity, credentialId: credentialId))
+    case .activityDetail(let activityId):
+      viewProvider?.view(for: .activityDetail(activityId: activityId))
+    case .settings:
+      viewProvider?.view(for: .settings)
     }
   }
 }

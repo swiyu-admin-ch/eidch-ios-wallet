@@ -10,7 +10,8 @@ import SwiftUI
 // MARK: - BiometricsViewModel
 
 @MainActor
-class BiometricsViewModel: ObservableObject {
+@Observable
+class BiometricsViewModel {
 
   // MARK: Lifecycle
 
@@ -29,13 +30,13 @@ class BiometricsViewModel: ObservableObject {
     case biometricRegistrationFailed
   }
 
-  @Published var hasBiometricAuth = false
+  var hasBiometricAuth = false
   var biometricType = BiometricType.none
 
-  @Published var error: Error?
-  @Published var isErrorPresented = false
+  var error: Error?
+  var isErrorPresented = false
 
-  @Injected(\.autoHideErrorDelay) var autoHideErrorDelay: Double
+  @ObservationIgnored @Injected(\.autoHideErrorDelay) var autoHideErrorDelay: Double
 
   var primaryText: String {
     hasBiometricAuth ? L10n.tkOnboardingBiometricsPermissionPrimary(biometricType.text) : L10n.tkOnboardingBiometricsPermissionDisabledPrimary(biometricType.text)
@@ -80,12 +81,12 @@ class BiometricsViewModel: ObservableObject {
   // MARK: Private
 
   private let router: OnboardingInternalRoutes
-  @Injected(\.internalLAContext) private var internalLAContext: LAContextProtocol
-  @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.hasBiometricAuthUseCase) private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocol
-  @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
-  @Injected(\.requestBiometricAuthUseCase) private var requestBiometricAuthUseCase: RequestBiometricAuthUseCaseProtocol
-  @Injected(\.allowBiometricUsageUseCase) private var allowBiometricUsageUseCase: AllowBiometricUsageUseCaseProtocol
+  @ObservationIgnored @Injected(\.internalLAContext) private var internalLAContext: LAContextProtocol
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.hasBiometricAuthUseCase) private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocol
+  @ObservationIgnored @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
+  @ObservationIgnored @Injected(\.requestBiometricAuthUseCase) private var requestBiometricAuthUseCase: RequestBiometricAuthUseCaseProtocol
+  @ObservationIgnored @Injected(\.allowBiometricUsageUseCase) private var allowBiometricUsageUseCase: AllowBiometricUsageUseCaseProtocol
 
   private func configureObservers() {
     NotificationCenter.default.addObserver(forName: .willEnterForeground, object: nil, queue: .main) { [weak self] _ in

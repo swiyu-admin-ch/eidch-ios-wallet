@@ -10,7 +10,7 @@ struct SetupView: View {
   // MARK: Lifecycle
 
   init(router: OnboardingInternalRoutes) {
-    _viewModel = StateObject(wrappedValue: Container.shared.setupViewModel(router))
+    _viewModel = State(initialValue: Container.shared.setupViewModel(router))
   }
 
   // MARK: Internal
@@ -28,7 +28,7 @@ struct SetupView: View {
 
   // MARK: Private
 
-  @StateObject private var viewModel: SetupViewModel
+  @State private var viewModel: SetupViewModel
 }
 
 #Preview {

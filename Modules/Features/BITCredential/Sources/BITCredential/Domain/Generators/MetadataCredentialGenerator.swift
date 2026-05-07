@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITCore
 import BITCredentialShared
 import BITOpenID
@@ -10,8 +11,13 @@ import Spyable
 
 @Spyable
 protocol MetadataCredentialGeneratorProtocol {
-  func generate(for anyCredential: AnyCredential, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential
-  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential
+  func generate(for credentialsWithKeyBinding: [CredentialWithKeyBinding], selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential
+  func generateDeferred(
+    _ deferredCredentialContext: DeferredCredentialContext,
+    keyBindings: [KeyBinding],
+    selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported,
+    context: CredentialGeneratorContext) throws
+    -> DeferredCredential
 }
 
 // MARK: - MetadataCredentialGenerator
@@ -20,73 +26,138 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyCredential: AnyCredential, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential {
-    guard let payload = anyCredential.raw.data(using: .utf8) else {
+  func generate(for credentialsWithKeyBinding: [CredentialWithKeyBinding], selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential {
+    guard let primaryCredentialWithKeyBinding = credentialsWithKeyBinding.first else {
       throw CredentialError.invalidPayload
     }
-    let cluster = createCluster(from: anyCredential.claims, selectedCredential: selectedCredential)
-    let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: context.credentialId)
+
+    // For now we assume all credentials in the batch are equivalent and use the first.
+    // Claim equality across credentials will be validated in a future iteration.
+    let primaryCredential = primaryCredentialWithKeyBinding.credential
+    let cluster = try createCluster(from: primaryCredential.claims, metadataClaims: selectedCredential.credentialMetadata?.claims)
+    let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display, credentialId: context.credentialId)
+
+    let bundleItems = try createBundleItems(from: credentialsWithKeyBinding)
+
+    guard let firstBundleItem = bundleItems.first else {
+      throw CredentialError.invalidPayload
+    }
 
     return VerifiableCredential(
       id: context.credentialId,
       progressionState: .unaccepted,
-      payload: payload,
-      status: .unknown,
+      bundleItems: bundleItems,
+      nextPresentableBundleItemId: firstBundleItem.id,
       clusters: [cluster],
-      format: anyCredential.format,
+      format: primaryCredential.format,
       issuerUrl: context.issuerUrl,
       selectedConfigurationId: context.credentialConfigurationId,
-      issuer: anyCredential.issuer,
-      keyBinding: context.keyBinding,
+      issuer: primaryCredential.issuer,
+      batchData: context.batchData,
+      authentication: context.authentication,
       rawCredentialData: context.rawCredentialData,
       issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
-      validFrom: anyCredential.validFrom,
-      validUntil: anyCredential.validUntil)
+      validFrom: primaryCredential.validFrom,
+      validUntil: primaryCredential.validUntil)
   }
 
-  func generateDeferred(_ deferredCredentialContext: DeferredCredentialContext, selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> DeferredCredential {
-    let credentialDisplays = createCredentialDisplays(from: selectedCredential.display, credentialId: context.credentialId)
+  func generateDeferred(
+    _ deferredCredentialContext: DeferredCredentialContext,
+    keyBindings: [KeyBinding],
+    selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported,
+    context: CredentialGeneratorContext) throws
+    -> DeferredCredential
+  {
+    let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display, credentialId: context.credentialId)
 
     return DeferredCredential(
       transactionId: deferredCredentialContext.transactionId,
-      accessToken: deferredCredentialContext.accessToken,
       endpoint: deferredCredentialContext.endpoint,
       format: deferredCredentialContext.format,
       issuerUrl: context.issuerUrl,
       selectedConfigurationId: context.credentialConfigurationId,
       issuerDisplays: context.issuerDisplays,
       displays: credentialDisplays,
-      keyBinding: context.keyBinding,
-      rawCredentialData: context.rawCredentialData)
+      keyBindings: keyBindings,
+      rawCredentialData: context.rawCredentialData,
+      authentication: CredentialAuthentication(accessToken: deferredCredentialContext.accessToken, refreshToken: deferredCredentialContext.refreshToken))
   }
 
   // MARK: Private
 
-  private func createCluster(from anyClaims: [AnyClaim], selectedCredential: any CredentialMetadata.AnyCredentialConfigurationSupported) -> CredentialClaimCluster {
-    let claims = anyClaims.map { anyClaim in
-      let metadataClaim = selectedCredential.claims.first(where: { "$." + $0.key == anyClaim.key })
-      return createClaim(from: anyClaim, metadataClaim: metadataClaim)
+  @Injected(\.imageValidator) private var imageValidator: ImageValidatorProtocol
+  @Injected(\.valueTypeResolver) private var valueTypeResolver: ValueTypeResolverProtocol
+
+  private func createBundleItems(from credentialsWithKeyBinding: [CredentialWithKeyBinding]) throws -> [BundleItem] {
+    try credentialsWithKeyBinding.map { credentialWithKeyBinding in
+      guard let payload = credentialWithKeyBinding.credential.raw.data(using: .utf8) else {
+        throw CredentialError.invalidPayload
+      }
+      return BundleItem(payload: payload, status: .unknown, keyBinding: credentialWithKeyBinding.keyBinding)
     }
-    return CredentialClaimCluster(claims: claims)
   }
 
-  private func createClaim(from anyClaim: AnyClaim, metadataClaim: CredentialMetadata.Claim?) -> CredentialClaim {
-    CredentialClaim(
-      key: anyClaim.key.replacing("$.", with: ""),
-      value: anyClaim.value?.rawValue,
-      valueType: metadataClaim?.valueType?.rawValue ?? ValueType.string.rawValue,
-      order: metadataClaim?.order ?? Int(Int16.max),
-      displays: createClaimDisplays(from: metadataClaim))
+  private func createCluster(from anyClaims: [AnyClaim], metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim]?) throws -> CredentialClaimCluster {
+    #warning("object and array claims will be implemented in a future story")
+    let credentialClaim = try anyClaims.map { anyClaim in
+      let metadataClaim = getMetadataClaim(from: anyClaim, metadataClaims ?? [])
+      var index = Int(Int16.max)
+      if let metadataClaim {
+        index = metadataClaims?.firstIndex(of: metadataClaim) ?? Int(Int16.max)
+      }
+
+      return try createClaim(anyClaim: anyClaim, metadataClaim: metadataClaim, index: index)
+    }
+
+    return CredentialClaimCluster(claims: credentialClaim)
   }
 
-  private func createClaimDisplays(from metadataClaim: CredentialMetadata.Claim?) -> [CredentialClaimDisplay] {
-    metadataClaim?.display?.map { display in
+  private func getMetadataClaim(
+    from anyClaim: AnyClaim,
+    _ metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim])
+    -> CredentialIssuerMetadata.CredentialMetadata.Claim?
+  {
+    metadataClaims.first(where: { metadataClaim in
+      guard
+        let keyElement = metadataClaim.path.last,
+        case .string(let key) = keyElement
+      else {
+        return false
+      }
+
+      return key == anyClaim.key
+    })
+  }
+
+  private func createClaim(
+    anyClaim: AnyClaim,
+    metadataClaim: CredentialIssuerMetadata.CredentialMetadata.Claim?,
+    index: Int)
+    throws -> CredentialClaim
+  {
+    let valueType = valueTypeResolver(anyClaim) ?? .string
+    let value = getClaimValue(from: anyClaim, valueType: valueType)
+
+    if valueType.isImage, let value {
+      try imageValidator.validate(base64Image: value, against: valueType)
+    }
+
+    return CredentialClaim(
+      path: metadataClaim?.path ?? [ClaimsPathPointerElement.string(anyClaim.key)],
+      value: value,
+      valueType: valueType.rawValue,
+      order: index,
+      displays: createClaimDisplays(from: metadataClaim?.display))
+  }
+
+  private func createClaimDisplays(from displays: [CredentialIssuerMetadata.CredentialMetadata.Claim.Display]?) -> [CredentialClaimDisplay] {
+    displays?.map { display in
       CredentialClaimDisplay(locale: display.locale, name: display.name)
     } ?? []
   }
 
-  private func createCredentialDisplays(from displays: [CredentialMetadata.CredentialSupportedDisplay]?, credentialId: UUID) -> [CredentialDisplay] {
+  private func createCredentialDisplays(from displays: [CredentialIssuerMetadata.CredentialMetadata.Display]?, credentialId: UUID) -> [CredentialDisplay] {
     displays?.map { display in
       CredentialDisplay(
         name: display.name,
@@ -94,8 +165,22 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
         locale: display.locale ?? UserLocale.defaultLocaleIdentifier,
         logoAltText: display.logo?.altText,
         logoBase64: display.logo?.url?.dataURLData,
-        summary: display.summary,
+        summary: display.description,
         credentialId: credentialId)
     } ?? []
+  }
+
+  private func getClaimValue(from anyClaim: AnyClaim, valueType: ValueType) -> String? {
+    guard let value = anyClaim.value else { return nil }
+
+    if
+      valueType.isImage,
+      case .string(let stringValue) = value,
+      let imageValue = URL(string: stringValue)?.dataURLDataString
+    {
+      return imageValue
+    }
+
+    return value.rawValue
   }
 }

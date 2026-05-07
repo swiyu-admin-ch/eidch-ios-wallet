@@ -11,57 +11,57 @@ extension Container {
   // MARK: Public
 
   public var loginModule: Factory<LoginModule> {
-    self { LoginModule() }
+    self { @MainActor in LoginModule() }
   }
 
   public var noDevicePinCodeModule: Factory<NoDevicePinCodeModule> {
-    self { NoDevicePinCodeModule() }
+    self { @MainActor in NoDevicePinCodeModule() }
   }
 
   // MARK: Internal
 
   var loginViewModel: ParameterFactory<LoginRouterRoutes, LoginViewModel> {
-    self { LoginViewModel(router: $0) }
+    self { @MainActor in LoginViewModel(router: $0) }
   }
 
   var changePinCodeModule: Factory<ChangePinCodeModule> {
-    self { ChangePinCodeModule() }
+    self { @MainActor in ChangePinCodeModule() }
   }
 
   var changePinCodeContext: Factory<ChangePinCodeContext> {
-    self { ChangePinCodeContext() }
+    self { @MainActor in ChangePinCodeContext() }
   }
 
   var changePinCodeRouter: Factory<ChangePinCodeRouter> {
-    self { ChangePinCodeRouter() }
+    self { @MainActor in ChangePinCodeRouter() }
   }
 
   var currentPinCodeViewModel: ParameterFactory<ChangePinCodeInternalRoutes, CurrentPinCodeViewModel> {
-    self { CurrentPinCodeViewModel(router: $0) }
+    self { @MainActor in CurrentPinCodeViewModel(router: $0) }
   }
 
   var newPinCodeViewModel: ParameterFactory<ChangePinCodeInternalRoutes, NewPinCodeViewModel> {
-    self { NewPinCodeViewModel(router: $0) }
+    self { @MainActor in NewPinCodeViewModel(router: $0) }
   }
 
   var confirmPinCodeViewModel: ParameterFactory<ChangePinCodeInternalRoutes, ConfirmPinCodeViewModel> {
-    self { ConfirmPinCodeViewModel(router: $0) }
+    self { @MainActor in ConfirmPinCodeViewModel(router: $0) }
   }
 
   var biometricChangeModule: Factory<BiometricChangeModule> {
-    self { BiometricChangeModule() }
+    self { @MainActor in BiometricChangeModule() }
   }
 
   var biometricChangeViewModel: ParameterFactory<BiometricChangeRouterRoutes, BiometricChangeViewModel> {
-    self { BiometricChangeViewModel(router: $0) }
+    self { @MainActor in BiometricChangeViewModel(router: $0) }
   }
 
   var biometricChangeRouter: Factory<BiometricChangeRouter> {
-    self { BiometricChangeRouter() }
+    self { @MainActor in BiometricChangeRouter() }
   }
 
   var noDevicePinCodeViewModel: ParameterFactory<NoDevicePinCodeRouterRoutes, NoDevicePinCodeViewModel> {
-    self { NoDevicePinCodeViewModel(router: $0) }
+    self { @MainActor in NoDevicePinCodeViewModel(router: $0) }
   }
 
 }
