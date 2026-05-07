@@ -75,7 +75,29 @@ public struct VcSdJwt: JWT, Codable, Equatable {
 extension VcSdJwt {
 
   public struct KeyBinding: Codable, Equatable {
+
+    // MARK: Lifecycle
+
+    public init(from decoder: any Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+
+      if let jwk = try container.decodeIfPresent(JWK.self, forKey: .jwk) {
+        self.jwk = jwk
+        return
+      }
+
+      jwk = try JWK(from: decoder)
+    }
+
+    // MARK: Public
+
     public let jwk: JWK
+
+    // MARK: Private
+
+    private enum CodingKeys: String, CodingKey {
+      case jwk
+    }
   }
 }
 

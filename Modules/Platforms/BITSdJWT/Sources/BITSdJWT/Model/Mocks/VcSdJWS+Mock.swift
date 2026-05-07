@@ -17,6 +17,7 @@ extension VcSdJWS: Mockable {
     static let noKeyBinding: VcSdJWS = decode(fromFile: "vc-sd-jwt-no-key-binding")
     static let noKeyBindingData = getData(fromFile: "vc-sd-jwt-no-key-binding", ofType: "txt", bundle: Bundle.module) ?? Data()
     static let vctMetadataUriData = getData(fromFile: "vc-sd-jwt-vct-metadata-uri", ofType: "txt", bundle: Bundle.module) ?? Data()
+    static let legacyCnfJwkStructure = getData(fromFile: "vc-sd-jwt-legacy-cnf-jwk-structure", ofType: "txt", bundle: Bundle.module) ?? Data()
   }
 
   static func decode(fromFile filename: String, bundle: Bundle = Bundle.module) -> VcSdJWS {

@@ -24,6 +24,7 @@ final class VcSdJWSDecoderTests: XCTestCase {
     let vcSdJWS = try decoder.decode(VcSdJwt.self, from: data)
 
     try assertVcSdJwt(vcSdJWS, vctMetadataUri: Self.vctUrlMock, vctMetadataUriIntegrity: Self.vctIntegrityMock)
+    try assertKeyBinding(XCTUnwrap(vcSdJWS.payload.keyBinding))
   }
 
   func testDecode_withoutKeyBinding_success() throws {
@@ -32,6 +33,14 @@ final class VcSdJWSDecoderTests: XCTestCase {
     let vcSdJWS = try decoder.decode(VcSdJwt.self, from: data)
 
     try assertVcSdJwt(vcSdJWS)
+  }
+
+  func testDecodeKeyBinding_legacyCnfJwkStrucure_success() throws {
+    let data = VcSdJWS.Mock.legacyCnfJwkStructure
+
+    let vcSdJWS = try decoder.decode(VcSdJwt.self, from: data)
+
+    try assertKeyBinding(XCTUnwrap(vcSdJWS.payload.keyBinding))
   }
 
   func testDecode_vctMetadataUri_success() throws {
@@ -105,5 +114,12 @@ final class VcSdJWSDecoderTests: XCTestCase {
     XCTAssertEqual(jwt.vctMetadataUriIntegrity, vctMetadataUriIntegrity)
     XCTAssertEqual(jwt.statusList, expectedStatusList)
     XCTAssertEqual(jwt.issuedAt, Date(timeIntervalSince1970: 1739282713))
+  }
+
+  private func assertKeyBinding(_ keyBinding: VcSdJwt.KeyBinding) {
+    XCTAssertEqual(keyBinding.jwk.kty, "key_type")
+    XCTAssertEqual(keyBinding.jwk.crv, "curve")
+    XCTAssertEqual(keyBinding.jwk.x, "test_x")
+    XCTAssertEqual(keyBinding.jwk.y, "test_y")
   }
 }
