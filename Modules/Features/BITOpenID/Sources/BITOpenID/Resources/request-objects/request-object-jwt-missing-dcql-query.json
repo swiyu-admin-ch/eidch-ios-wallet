@@ -1,0 +1,15 @@
+{
+  "iss": "did:example:12345",
+  "sub": "subject",
+  "aud": "https://self-issued.me/v2",
+  "exp": 1767168000,
+  "nbf": 1722499200,
+  "iat": 1729168416,
+  "jti": "jwtIdentifier",
+  "client_id": "did:example:12345",
+  "response_uri": "https://eid.admin.ch/response",
+  "response_mode": "direct_post",
+  "response_type": "vp_token",
+  "nonce": "1234",
+  "state": "1234"
+}

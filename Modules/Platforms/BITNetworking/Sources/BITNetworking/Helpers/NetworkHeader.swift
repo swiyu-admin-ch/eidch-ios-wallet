@@ -5,6 +5,7 @@ import Foundation
 public enum NetworkHeader {
   case standard
   case authorization(value: String)
+  case dpop(String)
   case form
   case swiyuAPIVersion(String)
   case contentType(String)
@@ -19,6 +20,7 @@ public enum NetworkHeader {
   private static let keyAcceptLanguage = "Accept-Language"
   private static let keyAuthorization = "authorization"
   private static let keyContentType = "Content-Type"
+  private static let keyDPoP = "DPoP"
   private static let swiyuAPIVersion = "SWIYU-API-Version"
 
   // Values
@@ -37,6 +39,9 @@ extension NetworkHeader {
     case .authorization(let value): [
         Self.keyAuthorization: value,
         Self.keyContentType: Self.valueApplicationJson,
+      ]
+    case .dpop(let value): [
+        Self.keyDPoP: value,
       ]
     case .form: [
         Self.keyAccept: Self.valueApplicationJson,

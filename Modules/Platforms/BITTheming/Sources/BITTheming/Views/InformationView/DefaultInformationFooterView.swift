@@ -6,17 +6,23 @@ public struct DefaultInformationFooterView: View {
 
   public init(
     primaryButtonLabel: String,
+    primaryButtonLabelAlt: String? = nil,
+    primaryButtonLabelHint: String? = nil,
     primaryButtonStyle: CustomButtonStyle = .primary,
     primaryButtonAction: @escaping (() -> Void),
     secondaryButtonLabel: String? = nil,
+    secondaryButtonLabelAlt: String? = nil,
     secondaryButtonStyle: CustomButtonStyle = .secondary,
     secondaryButtonAction: (() -> Void)? = nil,
     secondaryButtonDisabled: Bool = false)
   {
     self.primaryButtonLabel = primaryButtonLabel
+    self.primaryButtonLabelAlt = primaryButtonLabelAlt
+    self.primaryButtonLabelHint = primaryButtonLabelHint
     self.primaryButtonStyle = primaryButtonStyle
     self.primaryButtonAction = primaryButtonAction
     self.secondaryButtonLabel = secondaryButtonLabel
+    self.secondaryButtonLabelAlt = secondaryButtonLabelAlt
     self.secondaryButtonAction = secondaryButtonAction
     self.secondaryButtonStyle = secondaryButtonStyle
     self.secondaryButtonDisabled = secondaryButtonDisabled
@@ -35,7 +41,10 @@ public struct DefaultInformationFooterView: View {
         .buttonStyle(primaryButtonStyle)
         .controlSize(.large)
         .accessibilityIdentifier(AccessibilityIdentifier.primaryButton.rawValue)
-        .accessibilityLabel(primaryButtonLabel)
+        .accessibilityLabel(primaryButtonLabelAlt ?? primaryButtonLabel)
+        .if(let: primaryButtonLabelHint) { value, view in
+          view.accessibilityHint(value)
+        }
 
         if let secondaryButtonLabel {
           Button(action: { secondaryButtonAction?() }) {
@@ -47,7 +56,7 @@ public struct DefaultInformationFooterView: View {
           .buttonStyle(secondaryButtonStyle)
           .controlSize(.large)
           .accessibilityIdentifier(AccessibilityIdentifier.secondaryButton.rawValue)
-          .accessibilityLabel(secondaryButtonLabel)
+          .accessibilityLabel(secondaryButtonLabelAlt ?? secondaryButtonLabel)
         }
       }
     }
@@ -65,9 +74,12 @@ public struct DefaultInformationFooterView: View {
   @Environment(\.sizeCategory) private var sizeCategory
 
   private let primaryButtonLabel: String
+  private let primaryButtonLabelAlt: String?
+  private let primaryButtonLabelHint: String?
   private let primaryButtonStyle: CustomButtonStyle
   private let primaryButtonAction: () -> Void
   private let secondaryButtonLabel: String?
+  private let secondaryButtonLabelAlt: String?
   private let secondaryButtonStyle: CustomButtonStyle
   private let secondaryButtonAction: (() -> Void)?
   private let secondaryButtonDisabled: Bool

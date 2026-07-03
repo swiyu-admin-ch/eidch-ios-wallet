@@ -40,6 +40,7 @@ extension EnvironmentAutoRegistering {
 
   private func registerTrustConfiguration(_ config: EnvironmentTrustConfiguration) {
     Container.shared.trustRegistryMapping.register { config.registryMapping }
+    Container.shared.trustRegistryTrustedDidsV1.register { config.trustedDidsV1 }
     Container.shared.trustRegistryTrustedDids.register { config.trustedDids }
     Container.shared.trustEnvironmentDidRegex.register { config.trustEnvironmentDidRegex }
     Container.shared.demoTrustEnvironmentDidRegex.register { config.demoTrustEnvironmentDidRegex }
@@ -47,10 +48,9 @@ extension EnvironmentAutoRegistering {
 
   private func registerFeatureFlags(_ flags: EnvironmentFeatureFlags) {
     Container.shared.isEIDRequestFeatureEnabled.register { flags.isEIDRequestFeatureEnabled }
-    Container.shared.imageValidatorEnabled.register { flags.imageValidatorEnabled }
     Container.shared.isNonComplianceEnabled.register { flags.isNonComplianceEnabled }
+    Container.shared.isDPoPEnabled.register { flags.isDPoPEnabled }
     Container.shared.isProximityEnabled.register { flags.isProximityEnabled }
-    Container.shared.isPayloadEncryptionEnabled.register { flags.isPayloadEncryptionEnabled }
     Container.shared.isBatchIssuanceEnabled.register { flags.isBatchIssuanceEnabled }
     Container.shared.isOTPSkipEnabled.register { flags.isOTPSkipEnabled }
     Container.shared.isOTPDebugToggleEnabled.register { flags.isOTPDebugToggleEnabled }
@@ -75,6 +75,9 @@ extension EnvironmentAutoRegistering {
     }
     registerURL(urls.otpServiceBase) { url in
       Container.shared.otpServiceBaseUrl.register { url }
+    }
+    registerURL(urls.pushNotification) { url in
+      Container.shared.pushNotificationUrl.register { url }
     }
   }
 

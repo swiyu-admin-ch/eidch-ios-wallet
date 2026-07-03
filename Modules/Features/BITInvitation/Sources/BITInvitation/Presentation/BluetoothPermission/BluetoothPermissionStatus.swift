@@ -18,4 +18,14 @@ extension BluetoothPermissionStatus {
       L10n.tkGlobalContinue
     }
   }
+
+  var labelHint: String? {
+    switch self {
+    case .goToSettings:
+      L10n.tkGlobalExternalLinkHint
+    case .authorized,
+         .requestPermission:
+      nil
+    }
+  }
 }

@@ -4,8 +4,6 @@ import BITOpenID
 import Foundation
 import Spyable
 
-public typealias InputDescriptorID = String
-
 // MARK: - PresentationRequestContext
 
 public class PresentationRequestContext: Equatable {
@@ -13,11 +11,11 @@ public class PresentationRequestContext: Equatable {
   // MARK: Lifecycle
 
   public init(
-    presentationRequest: PresentationRequest,
+    requestObjectJWS: RequestObjectJWS,
     compatibleCredentials: [CompatibleCredential],
     transport: PresentationTransport = .network)
   {
-    self.presentationRequest = presentationRequest
+    self.requestObjectJWS = requestObjectJWS
     self.compatibleCredentials = compatibleCredentials
     self.transport = transport
     if compatibleCredentials.count == 1 {
@@ -37,7 +35,7 @@ public class PresentationRequestContext: Equatable {
   }
 
   public static func == (lhs: PresentationRequestContext, rhs: PresentationRequestContext) -> Bool {
-    lhs.presentationRequest == rhs.presentationRequest &&
+    lhs.requestObject == rhs.requestObject &&
       lhs.compatibleCredentials == rhs.compatibleCredentials &&
       lhs.transport == rhs.transport &&
       lhs.selectedCredential == rhs.selectedCredential &&
@@ -46,12 +44,12 @@ public class PresentationRequestContext: Equatable {
 
   // MARK: Internal
 
-  let presentationRequest: PresentationRequest
+  let requestObjectJWS: RequestObjectJWS
 
   var selectedCredential: CompatibleCredential?
 
   var requestObject: RequestObject {
-    presentationRequest.requestObject
+    requestObjectJWS.payload
   }
 
   var verifierDisplays: [VerifierDisplay] {
@@ -119,26 +117,13 @@ extension PresentationRequestContext {
   // MARK: Lifecycle
 
   public convenience init(
-    requestObject: RequestObject,
+    requestObjectJWS: RequestObjectJWS,
     compatibleCredentials: [CompatibleCredential],
     trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected),
     transport: PresentationTransport = .network)
   {
     self.init(
-      presentationRequest: .plain(requestObject),
-      compatibleCredentials: compatibleCredentials,
-      trustInformation: trustInformation,
-      transport: transport)
-  }
-
-  public convenience init(
-    presentationRequest: PresentationRequest,
-    compatibleCredentials: [CompatibleCredential],
-    trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected),
-    transport: PresentationTransport = .network)
-  {
-    self.init(
-      presentationRequest: presentationRequest,
+      requestObjectJWS: requestObjectJWS,
       compatibleCredentials: compatibleCredentials,
       transport: transport)
     self.trustInformation = trustInformation
@@ -147,11 +132,9 @@ extension PresentationRequestContext {
   // MARK: Internal
 
   enum Mock {
-    static let vcSdJwtSample = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: CompatibleCredential.Mock.array)
-    static let vcSdJwtWithIdentityTrust = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
-    static let vcSdJwtWithUnknownIdentityTrust = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.unknownIdentity)
-    static let vcSdJwtSampleWithoutInputDescriptors = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sampleWithoutInputDescriptors, compatibleCredentials: CompatibleCredential.Mock.array)
-    static let unsupportedResponseTypeVcSdJwtSample = PresentationRequestContext(requestObject: .Mock.VcSdJwt.unsupportedResponseTypeSample, compatibleCredentials: CompatibleCredential.Mock.array)
+    static let vcSdJwtSample = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: CompatibleCredential.Mock.array)
+    static let vcSdJwtWithIdentityTrust = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.identityTrust, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
+    static let vcSdJwtWithUnknownIdentityTrust = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.unknownIdentity)
   }
 }
 #endif

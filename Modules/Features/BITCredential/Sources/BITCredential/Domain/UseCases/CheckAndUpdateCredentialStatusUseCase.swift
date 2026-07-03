@@ -1,6 +1,7 @@
 import BITAnyCredentialFormat
 import BITCredentialShared
 import BITOpenID
+import BITSdJWT
 import Factory
 import Foundation
 import Spyable
@@ -66,6 +67,10 @@ extension CheckAndUpdateCredentialStatusUseCase {
       return .revoked
     }
 
+    if dateStatus == .businessExpired {
+      return .businessExpired
+    }
+
     if dateStatus == .notYetValid {
       return .notYetValid
     }
@@ -89,9 +94,15 @@ extension CheckAndUpdateCredentialStatusUseCase {
     if let validFrom = anyCredential.validFrom, validFrom > now.addingTimeInterval(dateBuffer) {
       return .notYetValid
     }
+
     if let validUntil = anyCredential.validUntil, validUntil < now {
       return .expired
     }
+
+    if let businessExpiry = (anyCredential as? VcSdJWS)?.businessExpiryDate, businessExpiry < now {
+      return .businessExpired
+    }
+
     return .valid
   }
 

@@ -1,6 +1,7 @@
 // swiftlint: disable force_cast
 import Foundation
 import XCTest
+@testable import BITClaimsPathPointer
 @testable import BITCore
 @testable import BITSdJWT
 
@@ -40,5 +41,104 @@ extension ComplexJWT {
     XCTAssertEqual(arrayJson1_2_3[1][ComplexJWT.PartlyDisclosedObject123.CodingKeys.key.rawValue] as? [String], partlyDisclosedObject.key2?.key3.elements[1].key.elements)
 
     XCTAssertEqual(partlyDisclosedObjectJson[ComplexJWT.PartlyDisclosedObject.CodingKeys.key3.rawValue] as? [String], partlyDisclosedObject.key3)
+  }
+}
+
+extension SdJWS<ComplexJWT> {
+  func assertDisclosures() {
+    XCTAssertEqual(disclosures.count, 15)
+
+    disclosures.assertContains(ComplexJWT.flatPath, rawDisclosure: ComplexJWT.Mock.flatDisclosure)
+    disclosures.assertContains([ComplexJWT.flatArrayPath, ComplexJWT.flatArrayElement1Path, ComplexJWT.flatArrayElement2Path], rawDisclosure: ComplexJWT.Mock.flatArrayDisclosure)
+    disclosures.assertContains([ComplexJWT.flatObjectPath, ComplexJWT.flatObjectElement1Path, ComplexJWT.flatObjectElement2Path], rawDisclosure: ComplexJWT.Mock.flatObjectDisclosure)
+
+    disclosures.assertContains(ComplexJWT.partlyDisclosedArrayPath + [.index(0)], rawDisclosure: ComplexJWT.Mock.arrayPartlyDisclosedDisclosure1)
+    disclosures.assertContains(ComplexJWT.partlyDisclosedArrayPath + [.index(2)], rawDisclosure: ComplexJWT.Mock.arrayPartlyDisclosedDisclosure3)
+
+    disclosures.assertContains([ComplexJWT.PartlyDisclosedObject.key2Path, ComplexJWT.PartlyDisclosedObject12.key2Path], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2)
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject12.key1Path, rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2_1)
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject12.key3Path + [.null], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2_3)
+
+    disclosures.assertContains([ComplexJWT.PartlyDisclosedObject12.key3Path + [.index(0)], ComplexJWT.PartlyDisclosedObject123.getKeyPath(index: 0) + [.null], ComplexJWT.PartlyDisclosedObject123.getKeyPath(index: 0) + [.index(0)]], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2_3_1)
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject12.key3Path + [.index(1)], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2_3_2)
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject123.getKeyPath(index: 1) + [ .null], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2_3_2_1)
+
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject123.getKeyPath(index: 1) + [.index(0)], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_2_3_2_1_1)
+
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject.key3Path + [.null], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_3)
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject.key3Path + [.index(0)], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_3_1)
+    disclosures.assertContains(ComplexJWT.PartlyDisclosedObject.key3Path + [.index(1)], rawDisclosure: ComplexJWT.Mock.objectPartlyDisclosedDisclosure1_3_2)
+  }
+}
+
+extension ComplexJWT {
+  static var flatPath: ClaimsPathPointer {
+    [.string(CodingKeys.flat.rawValue)]
+  }
+
+  static var flatArrayPath: ClaimsPathPointer {
+    [.string(CodingKeys.flatArray.rawValue), .null]
+  }
+
+  static var flatArrayElement1Path: ClaimsPathPointer {
+    [.string(CodingKeys.flatArray.rawValue), .index(0)]
+  }
+
+  static var flatArrayElement2Path: ClaimsPathPointer {
+    [.string(CodingKeys.flatArray.rawValue), .index(1)]
+  }
+
+  static var flatObjectPath: ClaimsPathPointer {
+    [.string(CodingKeys.flatObject.rawValue)]
+  }
+
+  static var flatObjectElement1Path: ClaimsPathPointer {
+    [.string(CodingKeys.flatObject.rawValue), .string(NestedObject.CodingKeys.key1.rawValue)]
+  }
+
+  static var flatObjectElement2Path: ClaimsPathPointer {
+    [.string(CodingKeys.flatObject.rawValue), .string(NestedObject.CodingKeys.key2.rawValue)]
+  }
+
+  static var partlyDisclosedArrayPath: ClaimsPathPointer {
+    [.string(CodingKeys.partlyDisclosedArray.rawValue)]
+  }
+
+  static var partlyDisclosedObjectPath: ClaimsPathPointer {
+    [.string(CodingKeys.partlyDisclosedObject.rawValue)]
+  }
+}
+
+extension ComplexJWT.PartlyDisclosedObject {
+  static var key1Path: ClaimsPathPointer {
+    ComplexJWT.partlyDisclosedObjectPath + [.string(CodingKeys.key1.rawValue)]
+  }
+
+  static var key2Path: ClaimsPathPointer {
+    ComplexJWT.partlyDisclosedObjectPath + [.string(CodingKeys.key2.rawValue)]
+  }
+
+  static var key3Path: ClaimsPathPointer {
+    ComplexJWT.partlyDisclosedObjectPath + [.string(CodingKeys.key3.rawValue)]
+  }
+}
+
+extension ComplexJWT.PartlyDisclosedObject12 {
+  static var key1Path: ClaimsPathPointer {
+    ComplexJWT.PartlyDisclosedObject.key2Path + [.string(CodingKeys.key1.rawValue)]
+  }
+
+  static var key2Path: ClaimsPathPointer {
+    ComplexJWT.PartlyDisclosedObject.key2Path + [.string(CodingKeys.key2.rawValue)]
+  }
+
+  static var key3Path: ClaimsPathPointer {
+    ComplexJWT.PartlyDisclosedObject.key2Path + [.string(CodingKeys.key3.rawValue)]
+  }
+}
+
+extension ComplexJWT.PartlyDisclosedObject123 {
+  static func getKeyPath(index: Int) -> ClaimsPathPointer {
+    ComplexJWT.PartlyDisclosedObject12.key3Path + [.index(index), .string(CodingKeys.key.rawValue)]
   }
 }

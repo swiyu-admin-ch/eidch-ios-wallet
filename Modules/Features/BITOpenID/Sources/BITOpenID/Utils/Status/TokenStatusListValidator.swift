@@ -36,11 +36,13 @@ struct TokenStatusListValidator: AnyStatusCheckValidatorProtocol {
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.tokenStatusListDecoder) private var tokenStatusListDecoder: TokenStatusListDecoderProtocol
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
+  @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
 
   private func isValidStatusJws(_ jws: JWS<TokenStatusList>, issuer: String, statusListUri: String) async throws -> Bool {
+    let did = try didResolverHelper.getDid(from: jws.header.keyIdentifier)
     guard
       jws.payload.subject == statusListUri,
-      jws.payload.issuer == issuer
+      did == issuer
     else {
       return false
     }

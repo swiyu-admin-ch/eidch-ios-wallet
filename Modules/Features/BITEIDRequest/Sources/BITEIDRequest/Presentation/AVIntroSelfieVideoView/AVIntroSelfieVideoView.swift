@@ -6,7 +6,7 @@ struct AVIntroSelfieVideoView: View {
 
   var body: some View {
     InformationView2(
-      image: Assets.selfie.swiftUIImage,
+      lottie: Lotties.confirmIdentity,
       contents: [
         .title(L10n.tkEidRequestAutoVerificationIntroSelfieVideoPrimary),
         .body(L10n.tkEidRequestAutoVerificationIntroSelfieVideoSecondary),

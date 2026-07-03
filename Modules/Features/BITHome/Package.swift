@@ -31,7 +31,7 @@ let package = Package(
     .package(path: "../BITEIDRequestShared"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/gh123man/SwiftUI-Refresher", exact: "1.1.9"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "10.54.3"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.4"),
   ],
   targets: [
     .target(

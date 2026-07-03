@@ -18,244 +18,138 @@ final class PresentationRequestServiceTests: XCTestCase {
     createSuccessState()
   }
 
-  func testFetch_plainRequestObject_returnsPlainRequestObject() async throws {
+  func testFetch_success() async throws {
+    repositorySpy.fetchFromReturnValue = requestObjectJWSMock
+
     let result = try await service.fetch(from: urlMock)
-
-    if case .plain(let requestObject) = result {
-      XCTAssertEqual(requestObject, requestObjectMock)
-    } else {
-      XCTFail("Wrong request object response type")
-    }
-  }
-
-  func testFetch_plainRequestObject_passesArguments() async throws {
-    _ = try await service.fetch(from: urlMock)
 
     XCTAssertEqual(urlParserSpy.parseCallsCount, 1)
     XCTAssertEqual(urlParserSpy.parseReceivedUrl, urlMock)
     XCTAssertEqual(repositorySpy.fetchFromCallsCount, 1)
     XCTAssertEqual(repositorySpy.fetchFromReceivedUrl, urlMock)
-    XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferCallsCount, 0)
     XCTAssertEqual(requestObjectValidatorSpy.validateCallsCount, 1)
-    XCTAssertEqual(requestObjectValidatorSpy.validateReceivedRequestObject, requestObjectMock)
+    XCTAssertEqual(requestObjectValidatorSpy.validateReceivedJws, requestObjectJWSMock)
+    XCTAssertEqual(result, requestObjectJWSMock)
   }
 
-  func testFetch_jwtRequestObject_returnsJwtRequestObject() async throws {
-    repositorySpy.fetchFromReturnValue = .jwt(requestObjectJWSMock)
-
-    let result = try await service.fetch(from: urlMock)
-
-    if case .jwt(let jws) = result {
-      XCTAssertEqual(jws, requestObjectJWSMock)
-    } else {
-      XCTFail("Wrong request object response type")
-    }
-  }
-
-  func testFetch_jwtRequestObject_passesArguments() async throws {
-    repositorySpy.fetchFromReturnValue = .jwt(requestObjectJWSMock)
-
-    _ = try await service.fetch(from: urlMock)
-
-    XCTAssertEqual(urlParserSpy.parseCallsCount, 1)
-    XCTAssertEqual(urlParserSpy.parseReceivedUrl, urlMock)
-    XCTAssertEqual(repositorySpy.fetchFromCallsCount, 1)
-    XCTAssertEqual(repositorySpy.fetchFromReceivedUrl, urlMock)
-    XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferCallsCount, 1)
-    XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedJws, requestObjectJWSMock)
-    XCTAssertEqual(requestObjectValidatorSpy.validateCallsCount, 1)
-    XCTAssertEqual(requestObjectValidatorSpy.validateReceivedRequestObject, requestObjectJWSMock.payload)
-  }
-
-  func testFetch_plainRequestObjectWithOpenID4VPUrlAndValidClientId_returnsPlainRequestObject() async throws {
+  func testFetch_objectWithOpenID4VPUrlAndValidClientId_returnsRequestObject() async throws {
     urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: clientIdMock)
 
     let result = try await service.fetch(from: urlMock)
 
-    if case .plain(let requestObject) = result {
-      XCTAssertEqual(requestObject, requestObjectMock)
-    } else {
-      XCTFail("Wrong request object response type")
-    }
+    XCTAssertEqual(result, requestObjectJWSMock)
   }
 
-  func testFetch_plainRequestObjectWithOpenID4VPUrlAndInvalidClientId_throwsInvalidRequestError() async throws {
-    let request = PresentationRequest.plain(requestObjectMock)
-    repositorySpy.fetchFromReturnValue = request
+  func testFetch_openID4VPWithMismatchedClientId_throwsInvalidError() async throws {
     urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: "invalid")
+    repositorySpy.fetchFromReturnValue = requestObjectJWSMock
 
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationRequest, request)
-        XCTAssertEqual(presentationError, .invalidRequest)
-      }
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(
+        error as? PresentationRequestServiceError,
+        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
     }
   }
 
-  func testFetch_jwtRequestObjectWithOpenID4VPUrlAndValidClientId_returnsJwtRequestObject() async throws {
-    urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: clientIdMock)
-    repositorySpy.fetchFromReturnValue = .jwt(requestObjectJWSMock)
+  func testFetch_validatorThrows_throwsInvalidError() async throws {
+    requestObjectValidatorSpy.validateThrowableError = TestingError.error
 
-    let result = try await service.fetch(from: urlMock)
-
-    if case .jwt(let jws) = result {
-      XCTAssertEqual(jws, requestObjectJWSMock)
-    } else {
-      XCTFail("Wrong request object response type")
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(
+        error as? PresentationRequestServiceError,
+        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
     }
   }
 
-  func testFetch_jwtRequestObjectWithOpenID4VPUrlAndInvalidClientId_throwsInvalidRequestError() async throws {
-    let request = PresentationRequest.jwt(requestObjectJWSMock)
-    urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: "invalid")
-    repositorySpy.fetchFromReturnValue = request
+  func testFetch_validatorThrowsTransactionDataNotSupported_throwsTransactionDataNotSupportedError() async throws {
+    requestObjectValidatorSpy.validateThrowableError = RequestObjectValidationError.transactionDataNotSupported
 
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationRequest, request)
-        XCTAssertEqual(presentationError, .invalidRequest)
-      }
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(
+        error as? PresentationRequestServiceError,
+        .transactionDataNotSupported(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
     }
   }
 
-  func testFetch_jwtRequestObjectWithInvalidAlgorithm_throwsInvalidError() async throws {
-    let request = PresentationRequest.jwt(RequestObjectJWS.Mock.unsupportedAlgorithm)
-    repositorySpy.fetchFromReturnValue = request
+  func testFetch_urlParserThrowsInvalidRequestUrl_throwsInvalidRequestUrl() async throws {
+    urlParserSpy.parseThrowableError = PresentationRequestUrlParserError.invalidRequestUrl
 
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationRequest, request)
-        XCTAssertEqual(presentationError, .invalidRequest)
-      }
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(error as? PresentationRequestServiceError, .invalidRequestUrl)
     }
   }
 
-  func testFetch_jwtRequestObjectWithClientIdMismatch_throwsInvalidError() async throws {
-    let request = PresentationRequest.jwt(RequestObjectJWS.Mock.clientIdMismatch)
-    repositorySpy.fetchFromReturnValue = request
+  func testFetch_repositoryThrowsPresentationRequestExpired_throwsExpired() async throws {
+    repositorySpy.fetchFromThrowableError = PresentationRequestRepositoryError.presentationRequestExpired
 
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(let presentationRequest, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationRequest, request)
-        XCTAssertEqual(presentationError, .invalidRequest)
-      } else {
-        XCTFail("Wrong error: \(error)")
-      }
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(error as? PresentationRequestServiceError, .expired)
     }
   }
 
-  func testFetch_jwsValidatorThrowsError_throwsInvalidError() async throws {
-    repositorySpy.fetchFromReturnValue = .jwt(requestObjectJWSMock)
-    jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
+  func testFetch_repositoryThrowsPresentationRequestNotFound_throwsPresentationRequestNotFound() async throws {
+    repositorySpy.fetchFromThrowableError = PresentationRequestRepositoryError.presentationRequestNotFound
 
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(_, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationError, .invalidRequest)
-        XCTAssertTrue(true, "Wrong error")
-      }
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(error as? PresentationRequestServiceError, .presentationRequestNotFound)
     }
   }
 
-  func testFetch_plainRequestObjectRequestObjectValidatorReturnsFalse_throwsInvalidError() async throws {
-    requestObjectValidatorSpy.validateReturnValue = false
+  func testFetch_repositoryThrowsDecodingError_throwsInvalidError() async throws {
+    repositorySpy.fetchFromThrowableError = DecodingError.dataCorrupted(
+      DecodingError.Context(codingPath: [], debugDescription: "test error"))
 
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(_, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationError, .invalidRequest)
-        XCTAssertTrue(true, "Wrong error")
-      }
-    }
-  }
-
-  func testFetch_jwtRequestObjectRequestObjectValidatorReturnsFalse_throwsInvalidError() async throws {
-    repositorySpy.fetchFromReturnValue = .jwt(requestObjectJWSMock)
-    requestObjectValidatorSpy.validateReturnValue = false
-
-    do {
-      _ = try await service.fetch(from: urlMock)
-      XCTFail("Should have thrown an error")
-    } catch {
-      if case .invalid(_, let presentationError) = error as? FetchPresentationRequestError {
-        XCTAssertEqual(presentationError, .invalidRequest)
-        XCTAssertTrue(true, "Wrong error")
-      }
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(
+        error as? PresentationRequestServiceError,
+        .invalid(responseURL: nil, responseError: .invalidRequest))
     }
   }
 
   func testDecline_passesArguments() async throws {
     let error = PresentationErrorRequestBody.Code.accessDenied
 
-    let responseUri = try XCTUnwrap(requestObjectMock.responseUri)
+    let responseUri = try XCTUnwrap(requestObjectJWSMock.payload.responseUri)
 
     try await service.decline(url: responseUri, with: error)
 
     XCTAssertEqual(repositorySpy.declineUrlWithCallsCount, 1)
-    XCTAssertEqual(repositorySpy.declineUrlWithReceivedArguments?.url.absoluteString, "response_uri")
+    XCTAssertEqual(repositorySpy.declineUrlWithReceivedArguments?.url, urlMock)
     XCTAssertEqual(repositorySpy.declineUrlWithReceivedArguments?.error, error)
   }
 
-  func testDecline_repositoryThrowsError_throwsError() async throws {
+  func testDecline_repositoryThrowsError_rethrowsError() async throws {
     repositorySpy.declineUrlWithThrowableError = TestingError.error
+    let responseUri = try XCTUnwrap(requestObjectJWSMock.payload.responseUri)
 
-    do {
-      let responseUri = try XCTUnwrap(requestObjectMock.responseUri)
-
-      _ = try await service.decline(url: responseUri, with: .accessDenied)
-      XCTFail("Should have thrown an error")
-    } catch {
+    await XCTAssertThrowsErrorAsync(try await service.decline(url: responseUri, with: .accessDenied)) { error in
       XCTAssertEqual(error as? TestingError, .error)
     }
   }
 
   // MARK: Private
 
-  private let urlMock = URL(string: "https://example.com")!
+  private let urlMock = URL(string: "https://eid.admin.ch/response")!
   private let clientIdMock = "did:example:12345"
-  private let requestObjectMock: RequestObject = .Mock.VcSdJwt.sample
   private let requestObjectJWSMock = RequestObjectJWS.Mock.sample
 
   private var urlParserSpy: PresentationRequestUrlParserProtocolSpy!
   private var repositorySpy: PresentationRequestRepositoryProtocolSpy!
-  private var jwsValidatorMock: JWSValidatorMock<RequestObjectJWT>!
   private var requestObjectValidatorSpy: RequestObjectValidatorProtocolSpy!
-
   private var service: PresentationRequestService!
 
   private func registerMocks() {
     urlParserSpy = PresentationRequestUrlParserProtocolSpy()
     repositorySpy = PresentationRequestRepositoryProtocolSpy()
-    jwsValidatorMock = JWSValidatorMock()
     requestObjectValidatorSpy = RequestObjectValidatorProtocolSpy()
 
     Container.shared.presentationRequestUrlParser.register { self.urlParserSpy }
     Container.shared.presentationRequestRepository.register { self.repositorySpy }
-    Container.shared.jwsValidator.register { self.jwsValidatorMock }
     Container.shared.requestObjectValidator.register { self.requestObjectValidatorSpy }
   }
 
   private func createSuccessState() {
     urlParserSpy.parseReturnValue = .https(urlMock)
-    repositorySpy.fetchFromReturnValue = .plain(requestObjectMock)
-    requestObjectValidatorSpy.validateReturnValue = true
+    repositorySpy.fetchFromReturnValue = requestObjectJWSMock
   }
 }
-
-// swiftlint:enable force_unwrapping implicitly_unwrapped_optional

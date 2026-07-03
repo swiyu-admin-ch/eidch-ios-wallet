@@ -45,6 +45,8 @@ struct EIDRequestDestinationView: View {
       ScanDocumentView()
     case .scanDocumentSubmit(let output):
       ScanDocumentSubmitView(output)
+    case .scanDocumentImageOverview(let image):
+      ScanDocumentImageOverviewView(image: image)
     case .avIdentityCheck(let caseId):
       AVIdentityCheckView(caseId: caseId)
     case .walletPairing:
@@ -82,6 +84,8 @@ struct EIDRequestDestinationView: View {
       eIDRequestExternalViewProvider?.view(for: externalDestination)
     case .avWelcome(let caseId):
       AVWelcomeView(caseId: caseId)
+    case .pushPermission(let requestCase):
+      PushPermissionView(requestCase)
     }
   }
 

@@ -3,6 +3,7 @@ import BITJWT
 import BITOpenID
 import BITVault
 import Factory
+import Foundation
 import NavigatorUI
 
 extension Container {
@@ -39,12 +40,20 @@ extension Container {
     self { CredentialGenerator() }
   }
 
+  var keyBindingGenerator: Factory<KeyBindingGeneratorProtocol> {
+    self { KeyBindingGenerator() }
+  }
+
   var metadataCredentialGenerator: Factory<MetadataCredentialGeneratorProtocol> {
     self { MetadataCredentialGenerator() }
   }
 
   var ocaCredentialGenerator: Factory<OcaCredentialGeneratorProtocol> {
     self { OcaCredentialGenerator() }
+  }
+
+  var ocaClusterGenerator: Factory<OcaClusterGeneratorProtocol> {
+    self { OcaClusterGenerator() }
   }
 
   var ocaClaimGenerator: Factory<OcaClaimGeneratorProtocol> {
@@ -61,8 +70,18 @@ extension Container {
 extension Container {
 
   @MainActor
-  var credentialDetailViewModel: ParameterFactory<CredentialProtocol, CredentialDetailViewModel> {
+  var credentialDetailViewModel: ParameterFactory<UUID, CredentialDetailViewModel> {
     self { @MainActor in CredentialDetailViewModel($0, getActivityHistoryEnabledSubject: self.getActivityHistoryEnabledSubjectUseCase()) }
+  }
+
+  @MainActor
+  var credentialDetailUpdateViewModel: ParameterFactory<CredentialProtocol, CredentialDetailUpdateViewModel> {
+    self { @MainActor in CredentialDetailUpdateViewModel(credential: $0) }
+  }
+
+  @MainActor
+  var credentialDetailUpdateInfoViewModel: ParameterFactory<CredentialIssuerDisplay?, CredentialDetailUpdateViewModel> {
+    self { @MainActor in CredentialDetailUpdateViewModel(issuerDisplay: $0) }
   }
 }
 
@@ -100,6 +119,10 @@ extension Container {
     self { RefreshCredentialsUseCase() }
   }
 
+  public var refreshCredentialUseCase: Factory<RefreshVerifiableCredentialUseCaseProtocol> {
+    self { RefreshVerifiableCredentialUseCase() }
+  }
+
   public var fetchIssuanceTrustInformationUseCase: Factory<FetchIssuanceTrustInformationUseCaseProtocol> {
     self { FetchIssuanceTrustInformationUseCase() }
   }
@@ -109,6 +132,10 @@ extension Container {
   }
 
   // MARK: Internal
+
+  var getCredentialIssuanceSummaryUseCase: Factory<GetCredentialIssuanceSummaryUseCaseProtocol> {
+    self { GetCredentialIssuanceSummaryUseCase() }
+  }
 
   var valueTypeResolver: Factory<ValueTypeResolverProtocol> {
     self { ValueTypeResolver() }
@@ -120,6 +147,18 @@ extension Container {
 
   var refreshDeferredCredentialUseCase: Factory<RefreshDeferredCredentialUseCaseProtocol> {
     self { RefreshDeferredCredentialUseCase() }
+  }
+
+  var refreshVerifiableCredentialsUseCase: Factory<RefreshVerifiableCredentialsUseCaseProtocol> {
+    self { RefreshVerifiableCredentialsUseCase() }
+  }
+
+  var maxConcurrentVerifiableCredentialRefreshes: Factory<Int> {
+    self { 3 }
+  }
+
+  var getCredentialRefreshThresholdUseCase: Factory<GetCredentialRefreshThresholdUseCaseProtocol> {
+    self { GetCredentialRefreshThresholdUseCase() }
   }
 
   var mapCredentialsToKeyBindingsUseCase: Factory<MapCredentialsToKeyBindingsUseCaseProtocol> {

@@ -1,3 +1,4 @@
+import BITClaimsPathPointer
 import BITCore
 import BITCredentialShared
 import BITOpenID
@@ -9,11 +10,11 @@ public struct CompatibleCredential: Identifiable, Equatable {
 
   // MARK: Lifecycle
 
-  public init(credential: VerifiableCredential, requestedFields: [PresentationField], dcqlQueryId: String? = nil) {
+  public init(credential: VerifiableCredential, presentingPaths: [ClaimsPathPointer], dcqlQueryId: String? = nil) {
     self.credential = credential
     id = credential.id
 
-    self.requestedFields = requestedFields
+    self.presentingPaths = presentingPaths
     self.dcqlQueryId = dcqlQueryId
   }
 
@@ -28,38 +29,39 @@ public struct CompatibleCredential: Identifiable, Equatable {
   }
 
   public var requestedClaimClusters: [CredentialClaimCluster] {
-    credential.clusters.compactMap {
-      filterClusterClaims($0, requestedFields: requestedFields)
+    credential.resolvedClusters.compactMap {
+      filterClusterClaims($0, presentingPaths: presentingPaths)
     }
   }
 
   // MARK: Internal
 
-  let requestedFields: [PresentationField]
+  let presentingPaths: [ClaimsPathPointer]
 
   // MARK: Private
 
-  private func filterClusterClaims(_ cluster: CredentialClaimCluster, requestedFields: [PresentationField]) -> CredentialClaimCluster? {
-    #warning("TODO: Array / Object claim support")
+  private func filterClusterClaims(_ cluster: CredentialClaimCluster, presentingPaths: [ClaimsPathPointer]) -> CredentialClaimCluster? {
+    if presentingPaths.contains(where: { $0.pointsAtSetOf(cluster.path) }) { return cluster }
     let requestedClaims = cluster.claims.filter { claim in
-      matchRequestedClaim(claim, requestedFields: requestedFields)
+      matchRequestedClaim(claim, presentingPaths: presentingPaths)
     }
     let requestedChildClusters = cluster.childClusters.compactMap { childCluster in
-      filterClusterClaims(childCluster, requestedFields: requestedFields)
+      filterClusterClaims(childCluster, presentingPaths: presentingPaths)
     }
     guard !requestedClaims.isEmpty || !requestedChildClusters.isEmpty else { return nil }
-    return CredentialClaimCluster(id: cluster.id, order: cluster.order, claims: requestedClaims, childClusters: requestedChildClusters, displays: cluster.displays)
+    return CredentialClaimCluster(
+      id: cluster.id,
+      path: cluster.path,
+      order: cluster.order,
+      isSensitive: cluster.isSensitive,
+      claims: requestedClaims,
+      childClusters: requestedChildClusters,
+      displays: cluster.displays)
   }
 
-  private func matchRequestedClaim(_ claim: CredentialClaim, requestedFields: [PresentationField]) -> Bool {
-    requestedFields.contains { field in
-      if let pathPointer = field.pathPointer {
-        return pathPointer == claim.path
-      }
-      guard let lastPathElement = claim.path.last, case .string(let key) = lastPathElement else {
-        return false
-      }
-      return key == field.key
+  private func matchRequestedClaim(_ claim: CredentialClaim, presentingPaths: [ClaimsPathPointer]) -> Bool {
+    presentingPaths.contains { path in
+      path.pointsAtSetOf(claim.path)
     }
   }
 }

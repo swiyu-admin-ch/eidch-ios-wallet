@@ -13,6 +13,8 @@ protocol OpenID4VCIErrorParserProtocol {
 
 struct OpenID4VCIErrorParser: OpenID4VCIErrorParserProtocol {
 
+  // MARK: Internal
+
   func parse(_ error: Error) -> Error {
     guard let networkError = error as? NetworkError else {
       return error
@@ -20,6 +22,12 @@ struct OpenID4VCIErrorParser: OpenID4VCIErrorParserProtocol {
 
     switch networkError.status {
     case .unauthorized:
+      let dpopNonce = networkError.response?.response?.value(forHTTPHeaderField: Self.dpopNonceHeaderField)
+      let wwwAuthenticate = networkError.response?.response?.value(forHTTPHeaderField: Self.wwwAuthenticateHeaderField)?
+        .lowercased()
+      if let wwwAuthenticate, wwwAuthenticate.contains(Self.useDPoPNonceError) {
+        return OpenIdRepositoryError.useDPoPNonce(Self.useDPoPNonceError, dpopNonce)
+      }
       return OpenIdRepositoryError.expiredAccessToken
 
     case .badRequest:
@@ -50,7 +58,7 @@ struct OpenID4VCIErrorParser: OpenID4VCIErrorParserProtocol {
       case .invalidRequest:
         return OpenIdRepositoryError.invalidRequest(response.error.rawValue)
       case .invalidToken:
-        return OpenIdRepositoryError.invalidToken(response.error.rawValue)
+        return OpenIdRepositoryError.expiredAccessToken
       case .insufficientScope:
         return OpenIdRepositoryError.insufficientScope(response.error.rawValue)
       }
@@ -59,4 +67,11 @@ struct OpenID4VCIErrorParser: OpenID4VCIErrorParserProtocol {
       return error
     }
   }
+
+  // MARK: Private
+
+  private static let dpopNonceHeaderField = "DPoP-Nonce"
+  private static let useDPoPNonceError = "use_dpop_nonce"
+  private static let wwwAuthenticateHeaderField = "WWW-Authenticate"
+
 }

@@ -4,3 +4,4 @@ targetTemplates:
       path: ../../../swiyu/swiyu.entitlements
       properties:
         com.apple.developer.nfc.readersession.formats: ["TAG"]
+        aps-environment: $(APS_ENVIRONMENT)

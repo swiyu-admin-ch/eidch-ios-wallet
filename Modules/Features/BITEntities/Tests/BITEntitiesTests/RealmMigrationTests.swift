@@ -26,6 +26,7 @@ final class RealmMigrationTests: XCTestCase {
     assertProgressionState(realm)
     assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .rawCredentialData)
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   func testMigrate_fromVersion4() throws {
@@ -40,6 +41,7 @@ final class RealmMigrationTests: XCTestCase {
     assertProgressionState(realm)
     assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .cluster)
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   func testMigrate_fromVersion5() throws {
@@ -53,6 +55,7 @@ final class RealmMigrationTests: XCTestCase {
     assertProgressionState(realm)
     assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .deferredCredential)
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   func testMigrate_fromVersion10() throws {
@@ -65,6 +68,7 @@ final class RealmMigrationTests: XCTestCase {
     assertProgressionState(realm)
     assertDeletionOfOrphanedObjects(realm, firstMissingDatabaseFeature: .deferredCredential)
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   func testMigrate_fromVersion14() throws {
@@ -76,6 +80,7 @@ final class RealmMigrationTests: XCTestCase {
     assertProgressionState(realm)
     assertDeletionOfOrphanedObjects(realm)
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   func testMigrate_fromVersion16() throws {
@@ -86,6 +91,7 @@ final class RealmMigrationTests: XCTestCase {
     assertBundleItemsAndDeferredKeyBindingsMigration(realm, hasDeferredCredential: true)
     assertDeletionOfOrphanedObjects(realm)
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   func testMigrate_fromVersion23() throws {
@@ -94,11 +100,20 @@ final class RealmMigrationTests: XCTestCase {
     assertCredentials(realm, hasDeferredCredential: true)
 
     assertClaimsPathPointerReplacedKey(realm)
+    assertJsonPathMigratedToClaimsPathPointer(realm)
+  }
+
+  func testMigrate_fromVersion26() throws {
+    let realm = try createRealm(from: Realm.Mock.version26Snapshot, schemaVersion: 26)
+
+    assertCredentials(realm, hasDeferredCredential: true)
+
+    assertJsonPathMigratedToClaimsPathPointer(realm)
   }
 
   // MARK: Private
 
-  private static let currentSchemaVersion: UInt64 = 25
+  private static let currentSchemaVersion: UInt64 = 29
 
   private func createRealm(from fileURL: URL, schemaVersion: UInt64) throws -> Realm {
     let copiedFile = try copyToSimulator(fileURL)
@@ -175,6 +190,15 @@ final class RealmMigrationTests: XCTestCase {
     assertClaim(claims, path: "[\"hometown\"]", value: "Entenhausen")
     assertClaim(claims, path: "[\"issuerEntity\"]", value: "Chasseral-Test")
     assertClaim(claims, path: "[\"categoryCode\"]", value: "B")
+  }
+
+  private func assertJsonPathMigratedToClaimsPathPointer(_ realm: Realm) {
+    let summaries = realm.objects(CredentialDisplayEntity.self).compactMap(\.summary)
+
+    XCTAssertTrue(summaries.contains("Categoria {{[\"categoryCode\"]}}"))
+    XCTAssertTrue(summaries.contains("Catégorie {{[\"categoryCode\"]}}"))
+    XCTAssertTrue(summaries.contains("Category {{[\"categoryCode\"]}}"))
+    XCTAssertTrue(summaries.contains("Kategorie {{[\"categoryCode\"]}}"))
   }
 
   private func assertClaim(_ claims: Results<CredentialClaimEntity>, path: String, value: String) {

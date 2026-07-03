@@ -1,6 +1,7 @@
 import BITActivity
 import BITAnalytics
 import BITCredentialShared
+import BITL10n
 import BITTheming
 import Combine
 import Factory
@@ -17,9 +18,10 @@ class CredentialDetailViewModel {
 
   // MARK: Lifecycle
 
-  init(_ credential: CredentialProtocol, getActivityHistoryEnabledSubject: GetActivityHistoryEnabledSubjectUseCaseProtocol) {
-    self.credential = credential
+  init(_ credentialId: UUID, getActivityHistoryEnabledSubject: GetActivityHistoryEnabledSubjectUseCaseProtocol) {
+    self.credentialId = credentialId
     configureObservers(getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubject)
+    updateCredentialViewModel(with: colorScheme)
   }
 
   // MARK: Internal
@@ -27,21 +29,34 @@ class CredentialDetailViewModel {
   enum AnalyticsEvent: AnalyticsEventProtocol {
     case checkStatusFailed
     case deleteCredentialError(_ error: Error)
+    case fetchCredentialError(_ error: Error)
+    case refreshCredentialError(_ error: Error)
   }
 
   var credentialViewModel: (any CredentialViewModelProtocol & CredentialCardViewModelProtocol)?
   var isDeleteCredentialAlertPresented = false
   var isCredentialDeleted = false
+  var isLoading = true
+  var error: Error?
+  var isRefreshLoading = false
+  var isRefreshErrorPresented = false
+  var toast: Toast?
   var activities = [ActivityCellViewModel]()
   var isActivityHistoryEnabled = true
 
-  var credential: CredentialProtocol {
+  var credential: CredentialProtocol? {
     didSet {
       updateCredentialViewModel(with: colorScheme)
     }
   }
 
+  var isBatchPrivacyWarningVisible: Bool {
+    credentialViewModel?.isBatchPrivacyWarningVisible ?? false
+  }
+
   func deleteCredential() async {
+    guard let credential else { return }
+
     do {
       try await deleteCredentialUseCase.execute(credential)
       isCredentialDeleted = true
@@ -51,8 +66,12 @@ class CredentialDetailViewModel {
   }
 
   func onAppear() async {
+    isLoading = credential == nil
+    guard await fetchCredential() else { return }
+
     fetchActivities()
     await updateCredentialStatus()
+    isLoading = false
   }
 
   func refresh() async {
@@ -61,6 +80,11 @@ class CredentialDetailViewModel {
 
   func updateCredentialViewModel(with colorScheme: String) {
     self.colorScheme = colorScheme
+
+    guard let credential else {
+      credentialViewModel = nil
+      return
+    }
 
     credentialViewModel = switch credential {
     case let verifiableCredential as VerifiableCredential:
@@ -71,19 +95,71 @@ class CredentialDetailViewModel {
     }
   }
 
+  func handleCredentialRefreshed(_ refreshedCredential: VerifiableCredential) {
+    credential = refreshedCredential
+    toast = Toast(L10n.tkDisplayrefreshNotificationSuccess)
+  }
+
+  func refreshBatchCredential() async {
+    guard
+      !isRefreshLoading,
+      isBatchPrivacyWarningVisible,
+      let credential = actionableBatchCredential
+    else {
+      return
+    }
+
+    isRefreshErrorPresented = false
+    isRefreshLoading = true
+    defer { isRefreshLoading = false }
+
+    do {
+      let refreshedCredential = try await refreshCredentialUseCase(credential)
+      handleCredentialRefreshed(refreshedCredential)
+    } catch {
+      analytics.log(AnalyticsEvent.refreshCredentialError(error))
+      isRefreshErrorPresented = true
+    }
+  }
+
+  func hideRefreshError() {
+    isRefreshErrorPresented = false
+  }
+
   // MARK: Private
 
+  private let credentialId: UUID
   private var colorScheme = String()
 
   @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @ObservationIgnored @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @ObservationIgnored @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
+  @ObservationIgnored @Injected(\.getCredentialUseCase) private var getCredentialUseCase
+  @ObservationIgnored @Injected(\.refreshCredentialUseCase) private var refreshCredentialUseCase: RefreshVerifiableCredentialUseCaseProtocol
   @ObservationIgnored @Injected(\.getCredentialActivitiesUseCase) private var getCredentialActivitiesUseCase
 
   @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
+  private var actionableBatchCredential: VerifiableCredential? {
+    guard isBatchPrivacyWarningVisible else { return nil }
+    return credential as? VerifiableCredential
+  }
+
+  private func fetchCredential() async -> Bool {
+    do {
+      error = nil
+      credential = try await getCredentialUseCase(id: credentialId)
+      return true
+    } catch {
+      isLoading = false
+      self.error = error
+      analytics.log(AnalyticsEvent.fetchCredentialError(error))
+      return false
+    }
+  }
+
   private func fetchActivities() {
-    guard let verifiableCredential = credential as? VerifiableCredential else {
+    guard let credential, let verifiableCredential = credential as? VerifiableCredential else {
       return
     }
 
@@ -94,7 +170,7 @@ class CredentialDetailViewModel {
   }
 
   private func updateCredentialStatus() async {
-    guard let verifiableCredential = credential as? VerifiableCredential else {
+    guard let credential, let verifiableCredential = credential as? VerifiableCredential else {
       return
     }
 

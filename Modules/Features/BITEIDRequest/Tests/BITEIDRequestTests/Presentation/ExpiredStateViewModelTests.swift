@@ -1,55 +1,100 @@
-// swiftlint:disable all
+import BITL10n
 import Factory
-import XCTest
+import Testing
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
+@testable import BITPushNotification
 @testable import BITTestingCore
 
+// MARK: - ExpiredStateViewModelTests
+
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try weak_delegate
+
 @MainActor
-class ExpiredStateViewModelTests: XCTestCase {
+struct ExpiredStateViewModelTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.reset()
+
+    let delegate = RequestCaseViewStateDelegateSpy()
+    let deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
+    let deletePushIdUseCase = DeletePushIdUseCaseProtocolSpy()
+
+    self.delegate = delegate
+    self.deleteEIDRequestCaseUseCase = deleteEIDRequestCaseUseCase
+    self.deletePushIdUseCase = deletePushIdUseCase
+
+    Container.shared.deleteEIDRequestCaseUseCase.register { @MainActor in deleteEIDRequestCaseUseCase }
+    Container.shared.deletePushIdUseCase.register { deletePushIdUseCase }
+
+    viewModel = try! ExpiredStateViewModel(requestCase: mockRequestCase, delegate: delegate)
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    delegate = RequestCaseViewStateDelegateSpy()
-    deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
-
-    Container.shared.deleteEIDRequestCaseUseCase.register { @MainActor in self.deleteEIDRequestCaseUseCase }
+  @Test
+  func initialState() {
+    #expect(viewModel.notificationTitle == L10n.tkEidRequestNotificationEidExpiredPrimary(viewModel.fullName))
+    #expect(viewModel.notificationContent == L10n.tkEidRequestNotificationEidExpiredSecondary)
+    #expect(viewModel.id == mockRequestCase.id)
+    #expect(viewModel.delegate != nil)
   }
 
-  func testInit_validRequestCase_success() throws {
-    viewModel = try ExpiredStateViewModel(requestCase: mockEidRequestCase, delegate: delegate)
+  @Test
+  func primaryAction_success() async {
+    await viewModel.primaryAction()
 
-    XCTAssertEqual(viewModel.fullName, "\(mockEidRequestCase.firstName) \(mockEidRequestCase.lastName)")
-    XCTAssertEqual(viewModel.id, mockEidRequestCase.id)
-    XCTAssertNotNil(viewModel.delegate)
+    #expect(deletePushIdUseCase.callAsFunctionCallsCount == 1)
+    #expect(deletePushIdUseCase.callAsFunctionReceivedPushId == mockRequestCase.pushId)
+    #expect(deleteEIDRequestCaseUseCase.executeReceivedId == mockRequestCase.id)
+    #expect(delegate.didDeleteRequestCaseCalled)
   }
 
-  func testDeleteRequestCase_success() async throws {
-    viewModel = try ExpiredStateViewModel(requestCase: mockEidRequestCase, delegate: delegate)
+  @Test
+  func primaryAction_withoutPushId_deletesRequestCase() async throws {
+    var requestCase = mockRequestCase
+    requestCase.pushId = nil
+    let viewModel = try makeViewModel(requestCase: requestCase)
 
     await viewModel.primaryAction()
 
-    XCTAssertEqual(deleteEIDRequestCaseUseCase.executeReceivedId, mockEidRequestCase.id)
-    XCTAssertTrue(delegate.didDeleteRequestCaseCalled)
+    #expect(!deletePushIdUseCase.callAsFunctionCalled)
+    #expect(deleteEIDRequestCaseUseCase.executeReceivedId == requestCase.id)
+    #expect(delegate.didDeleteRequestCaseCalled)
   }
 
-  func testDeleteRequestCase_failure() async throws {
+  @Test
+  func primaryAction_deleteEIDRequestThrows_silentlyFails() async {
     deleteEIDRequestCaseUseCase.executeThrowableError = TestingError.error
 
-    viewModel = try ExpiredStateViewModel(requestCase: mockEidRequestCase, delegate: delegate)
+    await viewModel.primaryAction()
+
+    #expect(deletePushIdUseCase.callAsFunctionReceivedPushId == mockRequestCase.pushId)
+    #expect(!delegate.didDeleteRequestCaseCalled)
+  }
+
+  @Test
+  func primaryAction_deletePushIdThrows_silentlyFails() async {
+    deletePushIdUseCase.callAsFunctionThrowableError = TestingError.error
 
     await viewModel.primaryAction()
 
-    XCTAssertFalse(delegate.didDeleteRequestCaseCalled)
+    #expect(deletePushIdUseCase.callAsFunctionReceivedPushId == mockRequestCase.pushId)
+    #expect(!deleteEIDRequestCaseUseCase.executeCalled)
+    #expect(!delegate.didDeleteRequestCaseCalled)
   }
 
   // MARK: Private
 
-  private let mockEidRequestCase: EIDRequestCase = .Mock.sampleExpired
-  private var delegate: RequestCaseViewStateDelegateSpy!
-  private var viewModel: ExpiredStateViewModel!
-  private var deleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocolSpy!
-}
+  private let mockRequestCase: EIDRequestCase = .Mock.sampleExpired
+  private let delegate: RequestCaseViewStateDelegateSpy
+  private let deleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocolSpy
+  private let deletePushIdUseCase: DeletePushIdUseCaseProtocolSpy
+  private let viewModel: ExpiredStateViewModel
 
-// swiftlint:enable all
+  private func makeViewModel(requestCase: EIDRequestCase? = nil) throws -> ExpiredStateViewModel {
+    try ExpiredStateViewModel(requestCase: requestCase ?? mockRequestCase, delegate: delegate)
+  }
+}

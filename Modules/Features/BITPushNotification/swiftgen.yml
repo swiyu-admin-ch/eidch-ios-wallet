@@ -1,0 +1,8 @@
+xcassets:
+  inputs:
+    - Sources/BITPushNotification/Resources/Assets.xcassets
+  outputs:
+    - templateName: swift5
+      output: Sources/BITPushNotification/Module/Assets.swift
+      params:
+        enumName: Assets

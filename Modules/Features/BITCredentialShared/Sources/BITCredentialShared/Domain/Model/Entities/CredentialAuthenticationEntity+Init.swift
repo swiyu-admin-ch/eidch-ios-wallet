@@ -15,8 +15,10 @@ extension CredentialAuthenticationEntity {
     accessToken = authentication.accessToken
     tokenType = authentication.tokenType.rawValue
     refreshToken = authentication.refreshToken
-    dpopBinding = authentication.dpopBinding
-      .map(DPoPBindingEntity.init)
-      .map { $0.upserted(in: realm) }
+    if let dpopBinding {
+      authentication.dpopBinding.map(dpopBinding.setValues(from:))
+    } else {
+      dpopBinding = authentication.dpopBinding.map(DPoPBindingEntity.init)
+    }
   }
 }

@@ -11,9 +11,14 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+
+    Container.shared.reset()
+
     context = EIDRequestContext()
     context.caseId = mockCaseId
     Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     getLegalRepresentantVerificationQRCodeUseCase = GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy()
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
@@ -51,9 +56,8 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isShareQRCodeDisabled)
   }
 
-  func testFinish_success_routeToConsentState() async throws {
+  func testFinish_success_routeToConsentState() async {
     let mockRequestCase = EIDRequestCase.Mock.sampleInQueue
-    let mockRequestCaseStateView = try RequestCaseViewState(mockRequestCase)
     updateEIDRequestCaseStatusUseCase.executeForReturnValue = mockRequestCase
 
     await viewModel.finish()

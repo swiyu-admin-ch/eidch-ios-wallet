@@ -23,7 +23,6 @@ final class IdentityTrustStatementTests: XCTestCase {
     let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 111, uri: "status_list_uri"))
 
     XCTAssertEqual(payload.vct, "TrustStatementIdentityV1")
-    XCTAssertEqual(payload.issuer, "issuer")
     XCTAssertEqual(payload.subject, "subject")
     XCTAssertEqual(payload.issuedAt, Date(timeIntervalSince1970: 1742453211))
     XCTAssertEqual(payload.statusList, expectedStatusList)

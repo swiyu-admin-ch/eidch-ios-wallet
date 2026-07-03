@@ -3,6 +3,7 @@ import Factory
 import XCTest
 @testable import BITAnyCredentialFormat
 @testable import BITAnyCredentialFormatMocks
+@testable import BITJWT
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -104,7 +105,7 @@ final class TrustStatementServiceTests: XCTestCase {
   }
 
   func testFetchIdentity_didIsNotTrusted_throwsValidationError() async throws {
-    Container.shared.trustRegistryTrustedDids.register { ["example.com": ["other"]] }
+    Container.shared.trustRegistryTrustedDidsV1.register { ["example.com": ["other"]] }
     service = TrustStatementService()
 
     do {
@@ -116,7 +117,7 @@ final class TrustStatementServiceTests: XCTestCase {
   }
 
   func testFetchIdentity_noTrustedDidForURL_throwsValidationError() async throws {
-    Container.shared.trustRegistryTrustedDids.register { ["other": ["issuer"]] }
+    Container.shared.trustRegistryTrustedDidsV1.register { ["other": ["issuer"]] }
     service = TrustStatementService()
 
     do {
@@ -249,7 +250,7 @@ final class TrustStatementServiceTests: XCTestCase {
 
   func testFetchVcSchema_didIsNotTrusted_returnsNil() async throws {
     setupVcSchemaTrustStatement()
-    Container.shared.trustRegistryTrustedDids.register { ["example.com": ["other"]] }
+    Container.shared.trustRegistryTrustedDidsV1.register { ["example.com": ["other"]] }
     service = TrustStatementService()
 
     let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
@@ -259,7 +260,7 @@ final class TrustStatementServiceTests: XCTestCase {
 
   func testFetchVcSchema_noTrustedDidForURL_returnsNil() async throws {
     setupVcSchemaTrustStatement()
-    Container.shared.trustRegistryTrustedDids.register { ["other": ["issuer"]] }
+    Container.shared.trustRegistryTrustedDidsV1.register { ["other": ["issuer"]] }
     service = TrustStatementService()
 
     let trustStatement = try await service.fetchVcSchema(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
@@ -304,7 +305,7 @@ final class TrustStatementServiceTests: XCTestCase {
   // MARK: Private
 
   private let trustRegistryURLMock = URL(string: "https://example.com")
-  private let trustedDids = ["example.com": ["did:tdw:another-example", "issuer"]]
+  private let trustedDidsV1 = ["example.com": ["did:tdw:another-example", "issuer"]]
   private var subjectDidMock = "subjectDid"
   private var vcSchemaTypeMock = VcSchemaTrustStatementType.issuance
   private var vcSchemaIdMock = "vcSchemaId"
@@ -315,6 +316,7 @@ final class TrustStatementServiceTests: XCTestCase {
   private var repositorySpy: TrustStatementRepositoryProtocolSpy!
   private var identityValidatorSpy: TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>!
   private var vcSchemaValidatorSpy: TrustStatementValidatorProtocolSpy<VcSchemaTrustStatementJWT>!
+  private var didResolverSpy: DidResolverHelperProtocolSpy!
 
   private var service: TrustStatementService!
 
@@ -322,17 +324,20 @@ final class TrustStatementServiceTests: XCTestCase {
     mapperSpy = TrustRegistryUrlMapperProtocolSpy()
     repositorySpy = TrustStatementRepositoryProtocolSpy()
     identityValidatorSpy = TrustStatementValidatorProtocolSpy()
+    didResolverSpy = DidResolverHelperProtocolSpy()
 
     Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
     Container.shared.trustStatementRepository.register { self.repositorySpy }
     Container.shared.trustStatementValidator.register { self.identityValidatorSpy }
-    Container.shared.trustRegistryTrustedDids.register { self.trustedDids }
+    Container.shared.trustRegistryTrustedDidsV1.register { self.trustedDidsV1 }
+    Container.shared.didResolverHelper.register { self.didResolverSpy }
   }
 
   private func success() {
     mapperSpy.mapDidReturnValue = trustRegistryURLMock
     repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [identityTrustStatementMock]
     identityValidatorSpy.validateForReturnValue = true
+    didResolverSpy.getDidFromReturnValue = "issuer"
   }
 
   private func setupVcSchemaTrustStatement() {

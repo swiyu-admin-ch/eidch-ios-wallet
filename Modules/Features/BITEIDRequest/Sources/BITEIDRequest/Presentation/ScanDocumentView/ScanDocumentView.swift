@@ -1,5 +1,6 @@
 import BITAVWrapper
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -36,6 +37,9 @@ struct ScanDocumentView: View {
         .navigationBarBackButtonHidden()
         .navigate(to: $viewModel.destination)
         .transparentToolbarBackground(isActive: true, topInset: geo.safeAreaInsets.top)
+        .onChange(of: orientation, initial: true) {
+          viewModel.uiOrientationDidChange(to: $1)
+        }
     }
   }
 
@@ -183,7 +187,7 @@ extension ScanDocumentView {
 
   private func close() {
     coordinator.cleanup()
-    navigator.dismiss()
+    navigator.returnToHomeSafely()
   }
 
 }

@@ -1,6 +1,8 @@
+import BITClaimsPathPointer
 import BITCore
 import BITCrypto
 import BITJWT
+import Factory
 import Foundation
 
 // MARK: - SdJWS
@@ -16,14 +18,18 @@ open class SdJWS<T: JWT>: JWS<T> {
     payload: T,
     resolvedJSON: JSON,
     rawSdJWS: String,
-    disclosureMap: [String: Disclosure],
-    disclosableClaims: [SdJWTClaim])
+    digestAlgorithm: SdJwtDigestAlgorithm = .sha256,
+    disclosures: [SdJWTDisclosure],
+    rawKeyBinding: String?,
+    keyIdentifierDid: String)
   {
     resolvedPayload = payload
     self.resolvedJSON = resolvedJSON
     self.rawSdJWS = rawSdJWS
-    self.disclosureMap = disclosureMap
-    self.disclosableClaims = disclosableClaims
+    self.digestAlgorithm = digestAlgorithm
+    self.disclosures = disclosures
+    self.rawKeyBinding = rawKeyBinding
+    self.keyIdentifierDid = keyIdentifierDid
     super.init(payload: jws.payload, rawPayload: jws.rawPayload, rawJWS: jws.rawJWS, header: jws.header)
   }
 
@@ -38,27 +44,71 @@ open class SdJWS<T: JWT>: JWS<T> {
   /// The raw string of the SdJWS
   public let rawSdJWS: String
 
-  /// The disclosures of the SD-JWT by digest
-  public let disclosureMap: [String: Disclosure]
+  /// The digest algorithm declared by `_sd_alg`, or sha-256 not explicitly declared
+  public let digestAlgorithm: SdJwtDigestAlgorithm
 
-  /// The decoded claims of the disclosures of the SD-JWT
-  public let disclosableClaims: [SdJWTClaim]
+  /// The decoded disclosures of the SD-JWT
+  public let disclosures: [SdJWTDisclosure]
+  public let rawKeyBinding: String?
 
-  public func createSelectiveDisclosure(for keys: [String]) -> String {
-    let disclosures: [String] = disclosureMap.compactMap { _, disclosure in
-      guard
-        case .keyedElement(let key, _, let disclosure) = disclosure,
-        keys.contains(key)
-      else {
-        #warning("TODO: handle array elements (EIDNUCLEUS-759)")
-        return nil
-      }
-      return disclosure
+  /// The resolved DID from the `kid` claim of the JWS
+  public let keyIdentifierDid: String
+
+  public func createSelectiveDisclosure(for paths: [ClaimsPathPointer]) -> String {
+    let disclosures = findDisclosures(for: paths)
+    let rawDisclosures = disclosures.map(\.disclosure).joined(separator: SdJWSDecoder.sdJWTSeparator)
+    let sdJws = rawJWS + SdJWSDecoder.sdJWTSeparator + rawDisclosures + (rawDisclosures.isEmpty ? "" : SdJWSDecoder.sdJWTSeparator)
+    if let rawKeyBinding {
+      return sdJws + rawKeyBinding
     }
-    let rawDisclosures = disclosures.isEmpty ? "" : disclosures.joined(separator: SdJWSDecoder.sdJWTSeparator) + SdJWSDecoder.sdJWTSeparator
-    return rawJWS + SdJWSDecoder.sdJWTSeparator + rawDisclosures
+    return sdJws
   }
 
+  public func getPresentingPaths(for paths: [ClaimsPathPointer]) -> [ClaimsPathPointer] {
+    let disclosures = findDisclosures(for: paths)
+    return Array(Set(disclosures.flatMap(\.paths)))
+  }
+
+  // MARK: Private
+
+  private func findDisclosures(for paths: [ClaimsPathPointer]) -> Set<SdJWTDisclosure> {
+    var result = Set<SdJWTDisclosure>()
+    for disclosure in disclosures {
+      let isRequested = paths.contains(where: { path in
+        disclosure.paths.contains(where: { path.pointsAtSetOf($0) })
+      })
+      if isRequested {
+        result.insert(disclosure)
+        let parentDisclosures = findParentDisclosures(for: disclosure.paths.first ?? [])
+        result = result.union(parentDisclosures)
+      }
+    }
+    return result
+  }
+
+  private func findParentDisclosures(for path: ClaimsPathPointer) -> Set<SdJWTDisclosure> {
+    var result = Set<SdJWTDisclosure>()
+    var currentPath = path
+    while currentPath.last != nil {
+      let parentPath = currentPath.parentPath
+      let parentDisclosure = disclosures.first { $0.paths.contains(parentPath) }
+      if let parentDisclosure {
+        result.insert(parentDisclosure)
+      }
+      currentPath = currentPath.dropLast()
+    }
+    return result
+  }
+}
+
+extension ClaimsPathPointer {
+  var parentPath: ClaimsPathPointer {
+    if case .index = last {
+      dropLast() + [.null]
+    } else {
+      dropLast()
+    }
+  }
 }
 
 // MARK: Equatable
@@ -70,7 +120,8 @@ extension SdJWS {
       lhs.resolvedPayload == rhs.resolvedPayload &&
       lhs.resolvedJSON.keys == rhs.resolvedJSON.keys &&
       lhs.rawSdJWS == rhs.rawSdJWS &&
-      lhs.disclosureMap.keys == rhs.disclosureMap.keys &&
-      lhs.disclosableClaims == rhs.disclosableClaims
+      lhs.digestAlgorithm == rhs.digestAlgorithm &&
+      lhs.disclosures == rhs.disclosures &&
+      lhs.rawKeyBinding == rhs.rawKeyBinding
   }
 }

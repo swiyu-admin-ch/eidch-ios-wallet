@@ -10,6 +10,7 @@ public class RequestCaseStateBaseViewModel: Identifiable {
   public init(requestCase: EIDRequestCase, delegate: RequestCaseViewStateDelegate? = nil) throws {
     fullName = "\(requestCase.firstName) \(requestCase.lastName)"
     id = requestCase.id
+    pushId = requestCase.pushId
     self.delegate = delegate
 
     guard let consent = requestCase.state?.legalRepresentantConsent else {
@@ -28,6 +29,7 @@ public class RequestCaseStateBaseViewModel: Identifiable {
 
   // MARK: Internal
 
+  let pushId: String?
   let fullName: String
 
   var isLegalRepresentantConsentVerified: Bool {
@@ -52,12 +54,14 @@ extension RequestCaseStateBaseViewModel: Hashable {
   public static func == (lhs: RequestCaseStateBaseViewModel, rhs: RequestCaseStateBaseViewModel) -> Bool {
     lhs.id == rhs.id &&
       lhs.fullName == rhs.fullName &&
+      lhs.pushId == rhs.pushId &&
       lhs.legalRepresentantConsent == rhs.legalRepresentantConsent
   }
 
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(fullName)
+    hasher.combine(pushId)
     hasher.combine(legalRepresentantConsent)
   }
 

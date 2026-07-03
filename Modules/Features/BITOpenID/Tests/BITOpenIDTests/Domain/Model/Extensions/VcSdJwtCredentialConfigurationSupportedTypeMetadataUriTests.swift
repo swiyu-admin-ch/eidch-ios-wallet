@@ -6,41 +6,50 @@ final class VcSdJwtCredentialConfigurationSupportedTypeMetadataUriTests: XCTestC
 
   // MARK: Internal
 
-  func testTypeMetadataUri_vctMetadataUri_returnsVctMetadataUriAndIntegrity() {
+  func testTypeMetadataUri_vctMetadataUri_returnsVctMetadataUriAndIntegrity() throws {
     let metadataMock = createMetadata(
       vct: vctMock,
+      vctIntegrity: vctIntegrityMock,
       vctMetadataUri: vctMetadataUriMock,
       vctMetadataUriIntegrity: vctMetadataUriIntegrityMock)
 
-    let uri = metadataMock.typeMetadataUri
+    let uri = try metadataMock.typeMetadataUri
 
     XCTAssertEqual(uri?.url.absoluteString, vctMetadataUriMock)
     XCTAssertEqual(uri?.integrity, vctMetadataUriIntegrityMock)
   }
 
-  func testTypeMetadataUri_vctUrl_returnsVctUrlAndIntegrity() {
+  func testTypeMetadataUri_vctUrl_returnsVctUrlAndIntegrity() throws {
     let metadataMock = createMetadata(vct: vctUrlMock, vctIntegrity: vctIntegrityMock)
 
-    let uri = metadataMock.typeMetadataUri
+    let uri = try metadataMock.typeMetadataUri
 
     XCTAssertEqual(uri?.url.absoluteString, vctUrlMock)
     XCTAssertEqual(uri?.integrity, vctIntegrityMock)
   }
 
-  func testTypeMetadataUri_vctMetadataUriNotUrl_returnsNil() {
+  func testTypeMetadataUri_vctMetadataUriNotUrl_returnsNil() throws {
     let metadataMock = createMetadata(vct: vctUrlMock, vctMetadataUri: "invalid", vctMetadataUriIntegrity: "vctMetadataUriIntegrity")
 
-    let uri = metadataMock.typeMetadataUri
+    let uri = try metadataMock.typeMetadataUri
 
     XCTAssertNil(uri)
   }
 
-  func testTypeMetadataUri_vctUrlNotUrl_returnsNil() {
-    let metadataMock = createMetadata(vct: "invalid", vctIntegrity: vctIntegrityMock)
+  func testTypeMetadataUri_vctNotUrlWithoutVctIntegrity_returnsNil() throws {
+    let metadataMock = createMetadata(vct: "invalid")
 
-    let uri = metadataMock.typeMetadataUri
+    let uri = try metadataMock.typeMetadataUri
 
     XCTAssertNil(uri)
+  }
+
+  func testTypeMetadataUri_vctNotUrlWithVctIntegrity_throwsError() throws {
+    let metadataMock = createMetadata(vct: "invalid", vctIntegrity: vctIntegrityMock)
+
+    XCTAssertThrowsError(_ = try metadataMock.typeMetadataUri) { error in
+      XCTAssertEqual(error as? VcMetadataForVcSdJwtError, .superfluousVctIntegrity)
+    }
   }
 
   // MARK: Private

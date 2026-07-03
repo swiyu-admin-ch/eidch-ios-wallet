@@ -1,12 +1,13 @@
 {
+  "vct": "https://vct.example.com",
   "display": [
     {
       "lang": "language",
       "name": "name",
       "rendering": {
         "oca": {
-          "uri":"ocaUri",
-          "uri#integrity":"ocaUriIntegrity"
+          "uri": "ocaUri",
+          "uri#integrity": "ocaUriIntegrity"
         }
       }
     },
@@ -15,8 +16,8 @@
       "name": "otherName",
       "rendering": {
         "oca": {
-          "uri":"otherOcaUri",
-          "uri#integrity":"otherOcaUriIntegrity"
+          "uri": "otherOcaUri",
+          "uri#integrity": "otherOcaUriIntegrity"
         }
       }
     }

@@ -40,7 +40,7 @@ class LegalRepresentantVerificationViewModel: NavigationBackable {
 
   func finish(with state: PresentationRequestResultState) async {
     switch state {
-    case .success: await openConsentState()
+    case .dataTransmitted: await openConsentState()
     default: close()
     }
   }

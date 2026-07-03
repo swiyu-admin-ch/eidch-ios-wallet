@@ -23,17 +23,15 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
     do {
       guard
         clientAttestationSupportedAlgorithms.contains(clientAttestation.header.algorithm),
-        let kid = clientAttestation.header.keyIdentifier,
-        hasValidKid(kid)
+        let did = try? didResolverHelper.getDid(from: clientAttestation.header.keyIdentifier),
+        attestationServiceTrustedDids.contains(did)
       else {
         throw ClientAttestationValidatorError.invalidHeader
       }
 
       guard
-        let issuer = clientAttestation.payload.issuer,
         clientAttestation.payload.expiredAt != nil,
         clientAttestation.payload.activatedAt != nil,
-        attestationServiceTrustedDids.contains(issuer),
         hasValidSubject(clientAttestation),
         hasValidWalletName(clientAttestation),
         hasValidBindingKey(clientAttestation.payload.bindingKey.jwk)
@@ -51,13 +49,13 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
   // MARK: Private
 
   private static let didJwk = "did:jwk:"
-  private static let kidSeparator: Character = "#"
 
   private let clientAttestationSupportedAlgorithms: [JWTAlgorithm] = [.ES256]
 
   @Injected(\.jsonCanonicalizer) private var jsonCanonicalizer: JsonCanonicalizerProtocol
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
+  @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
   @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
   @Injected(\.appIdentifierRepository) private var appIdentifierRepository: AppIdentifierRepositoryProtocol
 
@@ -80,16 +78,6 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
     } catch {
       return false
     }
-  }
-
-  private func hasValidKid(_ kid: String) -> Bool {
-    let components = kid.split(separator: Self.kidSeparator)
-
-    guard let did = components.first, !did.isEmpty else {
-      return false
-    }
-
-    return attestationServiceTrustedDids.contains(String(did))
   }
 
   private func hasValidSubject(_ clientAttestation: ClientAttestation) -> Bool {

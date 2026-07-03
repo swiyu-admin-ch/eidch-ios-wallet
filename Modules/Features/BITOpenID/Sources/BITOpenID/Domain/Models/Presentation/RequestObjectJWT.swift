@@ -32,8 +32,7 @@ public class RequestObjectJWT: RequestObject, JWT {
 
   // MARK: Public
 
-  public let type: String? = nil
-
+  public let type: String? = "oauth-authz-req+jwt"
   public let issuer: String?
   public let subject: String?
   public let audience: String?
@@ -45,7 +44,7 @@ public class RequestObjectJWT: RequestObject, JWT {
   public override func isEqual(to other: RequestObject) -> Bool {
     guard super.isEqual(to: other) else { return false }
     let other = other as? RequestObjectJWT
-    return issuer == other?.issuer &&
+    return
       subject == other?.subject &&
       audience == other?.audience &&
       expiredAt == other?.expiredAt &&

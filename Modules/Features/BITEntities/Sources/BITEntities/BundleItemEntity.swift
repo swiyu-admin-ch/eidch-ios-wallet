@@ -8,6 +8,7 @@ public class BundleItemEntity: Object {
     case revoked
     case suspended
     case expired
+    case businessExpired
     case notYetValid
     case unsupported
     case unknown

@@ -93,6 +93,9 @@ class SetupViewModel {
       return destination = .error(.Setup.clientAttestation)
     case EIDRequestRepository.Error.invalidKeyAttestation:
       return destination = .error(.Setup.keyAttestation)
+    case ValidateDeviceSecurityRequirementsUseCaseError.attestationServiceDeactivated,
+         ValidateDeviceSecurityRequirementsUseCaseError.attestationTimeout:
+      return destination = .error(.Setup.attestationServiceError)
     default:
       return destination = .error(.retry(error) { [weak self] navigator in
         guard let self else { return }

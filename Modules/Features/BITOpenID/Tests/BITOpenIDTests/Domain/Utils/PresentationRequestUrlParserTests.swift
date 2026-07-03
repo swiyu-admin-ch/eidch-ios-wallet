@@ -40,7 +40,7 @@ final class PresentationRequestUrlParserTests: XCTestCase {
     let url = try XCTUnwrap(URL(string: "openid4vp://?request_uri=https%3A%2F%2Fexample.com"))
 
     XCTAssertThrowsError(try parser.parse(url)) { error in
-      XCTAssertEqual(error as? FetchPresentationRequestError, .invalidRequestUrl)
+      XCTAssertEqual(error as? PresentationRequestUrlParserError, .invalidRequestUrl)
     }
   }
 
@@ -48,7 +48,7 @@ final class PresentationRequestUrlParserTests: XCTestCase {
     let url = try XCTUnwrap(URL(string: "openid4vp://?client_id=did%3Aexample%3A12345"))
 
     XCTAssertThrowsError(try parser.parse(url)) { error in
-      XCTAssertEqual(error as? FetchPresentationRequestError, .invalidRequestUrl)
+      XCTAssertEqual(error as? PresentationRequestUrlParserError, .invalidRequestUrl)
     }
   }
 
@@ -56,7 +56,7 @@ final class PresentationRequestUrlParserTests: XCTestCase {
     let url = try XCTUnwrap(URL(string: "openid4vp://"))
 
     XCTAssertThrowsError(try parser.parse(url)) { error in
-      XCTAssertEqual(error as? FetchPresentationRequestError, .invalidRequestUrl)
+      XCTAssertEqual(error as? PresentationRequestUrlParserError, .invalidRequestUrl)
     }
   }
 

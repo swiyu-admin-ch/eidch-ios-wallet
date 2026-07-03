@@ -7,15 +7,19 @@ import Spyable
 // MARK: - DidResolverHelperProtocol
 
 @Spyable
-protocol DidResolverHelperProtocol {
-  func getJWKS(from did: String, keyIdentifier: String?) async throws -> [JWK]
+public protocol DidResolverHelperProtocol {
+  func getDid(from kid: String?) throws -> String
+  func getJWK(from kid: String?) async throws -> JWK
+  func getURL(from did: String) throws -> URL
 }
 
 // MARK: - DidResolverHelperError
 
 enum DidResolverHelperError: String, Error {
+  case invalidKeyIdentifier
   case invalidDidUrl
   case didDocumentDeactivated
+  case jwkError
 }
 
 // MARK: - DidResolverHelper
@@ -24,28 +28,46 @@ struct DidResolverHelper: DidResolverHelperProtocol {
 
   // MARK: Internal
 
-  func getJWKS(from did: String, keyIdentifier: String?) async throws -> [JWK] {
-    let didDocument = try await resolve(didRaw: did)
+  func getDid(from kid: String?) throws -> String {
+    guard let kid else { throw DidResolverHelperError.invalidKeyIdentifier }
+    return try getDidFromAbsoluteKid(absoluteKid: kid).asString()
+  }
+
+  func getJWK(from kid: String?) async throws -> JWK {
+    guard let kid else { throw DidResolverHelperError.invalidKeyIdentifier }
+
+    let did = try getDidFromAbsoluteKid(absoluteKid: kid)
+    let didDocument = try await resolve(did: did)
 
     if didDocument.getDeactivated() {
       throw DidResolverHelperError.didDocumentDeactivated
     }
 
-    return didDocument.getVerificationMethod()
-      .filter({ $0.id == keyIdentifier })
-      .compactMap(\.publicKeyJwk)
-      .compactMap({ JWK(from: $0) })
+    guard
+      let didJwk = try? didDocument.getKeyByMethodId(keyId: kid),
+      let jwk = JWK(from: didJwk) else
+    {
+      throw DidResolverHelperError.jwkError
+    }
+    return jwk
+  }
+
+  func getURL(from did: String) throws -> URL {
+    let did = try Did(did: did)
+    guard let url = URL(string: did.getHttpsUrl()) else {
+      throw DidResolverHelperError.invalidDidUrl
+    }
+    return url
   }
 
   // MARK: Private
 
   @Injected(\.didResolverRepository) private var didResolverRepository: DidResolverRepositoryProtocol
 
-  private func resolve(didRaw: String) async throws -> DidDoc {
-    let did = try Did(did: didRaw)
-    guard let url = try URL(string: did.getUrl()) else { throw DidResolverHelperError.invalidDidUrl }
+  private func resolve(did: Did) async throws -> DidDoc {
+    guard let url = URL(string: did.getHttpsUrl()) else { throw DidResolverHelperError.invalidDidUrl }
     let didLog = try await didResolverRepository.fetchDidLog(from: url)
-    return try did.resolve(didLog: didLog)
+    return try did.resolveAll(didLog: didLog).getDidDoc()
   }
 
 }

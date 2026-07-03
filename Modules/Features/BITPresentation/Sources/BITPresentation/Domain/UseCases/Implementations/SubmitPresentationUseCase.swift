@@ -10,6 +10,14 @@ import BITVault
 import Factory
 import Foundation
 
+// MARK: - SubmitPresentationUseCaseError
+
+enum SubmitPresentationUseCaseError: Error {
+  case missingSelectedCredential
+  case missingResponseUri
+  case invalidAuthorizationRequest
+}
+
 // MARK: - SubmitPresentationUseCase
 
 public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
@@ -26,22 +34,15 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
           #warning("The submit should take in consideration multiple input descriptors in the future. For now it only takes the first one given by the context.")
 
           guard let selectedCredential = context.selectedCredential else {
-            throw PresentationError.authorizationRequestError
+            throw SubmitPresentationUseCaseError.missingSelectedCredential
           }
-
-          // Record activity
-          let activity = Activity(context: context, credential: selectedCredential, type: .presentationAccepted)
-          _ = try? activityService.create(activity, credentialId: selectedCredential.id)
 
           let authorizationResponseBody: AuthorizationResponseBody
 
           do {
-            authorizationResponseBody = try authorizationResponseBodyGenerator(
-              for: selectedCredential,
-              requestObject: context.requestObject,
-              inputDescriptor: context.requestObject.firstInputDescriptor)
-          } catch RequestObjectError.invalidPayload {
-            throw PresentationError.authorizationRequestError
+            authorizationResponseBody = try authorizationResponseBodyGenerator(for: selectedCredential, requestObject: context.requestObject)
+          } catch RequestObjectError.invalidPayload, RequestObjectError.invalidQuery {
+            throw SubmitPresentationUseCaseError.invalidAuthorizationRequest
           }
 
           try await rotateNextPresentableBundleItemUseCase(selectedCredential.credential)
@@ -74,9 +75,14 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
   {
     switch context.transport {
     case .proximity:
-      try await submitOverProximity(authorizationResponseBody: authorizationResponseBody, continuation: continuation)
+      try await submitOverProximity(
+        authorizationResponseBody: authorizationResponseBody,
+        context: context,
+        continuation: continuation)
     case .network:
-      try await submitOverNetwork(context: context, authorizationResponseBody: authorizationResponseBody)
+      try await submitOverNetwork(
+        context: context,
+        authorizationResponseBody: authorizationResponseBody)
       continuation.yield(.success)
       continuation.finish()
     }
@@ -84,6 +90,7 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
 
   private func submitOverProximity(
     authorizationResponseBody: AuthorizationResponseBody,
+    context: PresentationRequestContext,
     continuation: AsyncThrowingStream<SubmitPresentationEvent, Error>.Continuation) async throws
   {
     for try await proximityEvent in proximityRepository.submit(presentationRequestBody: authorizationResponseBody) {
@@ -91,6 +98,7 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
       case .progress(let progress):
         continuation.yield(.progress(progress))
       case .success:
+        recordActivity(context: context)
         continuation.yield(.success)
         continuation.finish()
         return
@@ -103,13 +111,17 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
     authorizationResponseBody: AuthorizationResponseBody) async throws
   {
     guard let responseUri = context.requestObject.responseUri else {
-      throw PresentationError.authorizationRequestError
+      throw SubmitPresentationUseCaseError.missingResponseUri
     }
 
-    do {
-      try await repository.submit(authorizationResponse: authorizationResponseBody, to: responseUri)
-    } catch {
-      throw PresentationError(error) ?? error
-    }
+    try await repository.submit(authorizationResponse: authorizationResponseBody, to: responseUri)
+    recordActivity(context: context)
+  }
+
+  private func recordActivity(context: PresentationRequestContext) {
+    guard let selectedCredential = context.selectedCredential else { return }
+
+    let activity = Activity(context: context, credential: selectedCredential, type: .presentationAccepted)
+    _ = try? activityService.create(activity, credentialId: selectedCredential.id)
   }
 }

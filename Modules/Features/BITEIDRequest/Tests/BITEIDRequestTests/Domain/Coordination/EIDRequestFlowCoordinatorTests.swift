@@ -2,6 +2,8 @@
 import Factory
 import XCTest
 @testable import BITEIDRequest
+@testable import BITEIDRequestShared
+@testable import BITPushNotification
 
 @MainActor
 final class EIDRequestFlowCoordinatorTests: XCTestCase {
@@ -13,9 +15,11 @@ final class EIDRequestFlowCoordinatorTests: XCTestCase {
 
     avBeam = AVBeamProtocolSpy()
     context = EIDRequestContext()
+    getPushPermissionStatusUseCase = GetPushPermissionStatusUseCaseProtocolSpy()
 
     Container.shared.avBeam.register { @MainActor in self.avBeam }
     Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.getPushPermissionStatusUseCase.register { @MainActor in self.getPushPermissionStatusUseCase }
 
     sut = EIDRequestFlowCoordinator()
   }
@@ -79,9 +83,35 @@ final class EIDRequestFlowCoordinatorTests: XCTestCase {
     XCTAssertTrue(avBeam.shutdownCalled)
   }
 
+  // MARK: - Routing Tests
+
+  func testDestinationAfterEIDRequestSubmission_WithAuthorizedPushPermission_ShouldRouteToRequestCaseDestination() async throws {
+    let requestCase = EIDRequestCase.Mock.sampleInQueue
+    let viewState = try RequestCaseViewState(requestCase)
+    getPushPermissionStatusUseCase.callAsFunctionReturnValue = .authorized
+
+    let destination = try await sut.getNextDestination(for: requestCase)
+
+    if case .inQueue(let inQueueStateViewModel) = viewState {
+      XCTAssertEqual(destination, .queueInformation(inQueueStateViewModel.onlineSessionStartOpenAt))
+      XCTAssertEqual(context.caseId, requestCase.id)
+    }
+  }
+
+  func testDestinationAfterEIDRequestSubmission_WithDeniedPushPermission_ShouldRouteToPushPermission() async throws {
+    let requestCase = EIDRequestCase.Mock.sampleInQueue
+    getPushPermissionStatusUseCase.callAsFunctionReturnValue = .denied
+
+    let destination = try await sut.getNextDestination(for: requestCase)
+
+    XCTAssertEqual(destination, .pushPermission(requestCase))
+    XCTAssertNil(context.caseId)
+  }
+
   // MARK: Private
 
   private var sut: EIDRequestFlowCoordinator!
   private var avBeam: AVBeamProtocolSpy!
   private var context: EIDRequestContext!
+  private var getPushPermissionStatusUseCase: GetPushPermissionStatusUseCaseProtocolSpy!
 }

@@ -14,8 +14,8 @@ class ImprintViewModel {
     self.getAppVersionUseCase = getAppVersionUseCase
     self.getBuildNumberUseCase = getBuildNumberUseCase
 
-    do { appVersion = try getAppVersionUseCase.execute().rawValue } catch { appVersion = "0.0.0" }
-    do { buildNumber = try String(getBuildNumberUseCase.execute()) } catch { buildNumber = "0" }
+    do { appVersion = try getAppVersionUseCase().rawValue } catch { appVersion = "0.0.0" }
+    do { buildNumber = try String(getBuildNumberUseCase()) } catch { buildNumber = "0" }
   }
 
   // MARK: Internal

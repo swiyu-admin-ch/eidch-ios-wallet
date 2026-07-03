@@ -16,7 +16,7 @@ struct ScanDocumentSecondPageView: View {
 
   var body: some View {
     InformationView2(
-      image: context.identityType == .passport ? Assets.scanPassport.swiftUIImage : Assets.scanDocument.swiftUIImage,
+      lottie: lottie,
       contents: [
         .title(context.identityType == .passport ? L10n.tkEidRequestScanDocumentSecondPagePassportPrimary : L10n.tkEidRequestScanDocumentSecondPageIdCardPrimary),
         .body(context.identityType == .passport ? L10n.tkEidRequestScanDocumentSecondPagePassportSecondary : L10n.tkEidRequestScanDocumentSecondPageIdCardSecondary),
@@ -35,4 +35,11 @@ struct ScanDocumentSecondPageView: View {
   private var action: (Void) -> Void
 
   @ObservationIgnored @Injected(\.eidRequestContext) private var context
+
+  private var lottie: LottieView {
+    guard case .passport = context.identityType else {
+      return Lotties.scanDocBack
+    }
+    return Lotties.scanDocPass2
+  }
 }

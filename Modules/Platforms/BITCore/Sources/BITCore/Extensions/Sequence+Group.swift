@@ -31,4 +31,12 @@ extension Sequence {
     }
     return Dictionary(uniqueKeysWithValues: pairs)
   }
+
+  public func compactGroupBy<K>(keySelector: (Iterator.Element) throws -> K?) throws -> [K: Iterator.Element] {
+    let pairs: [(K, Iterator.Element)] = try compactMap { element in
+      guard let key = try keySelector(element) else { return nil }
+      return (key, element)
+    }
+    return Dictionary(uniqueKeysWithValues: pairs)
+  }
 }

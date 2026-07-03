@@ -19,7 +19,10 @@ public enum InvitationError: Error, Equatable {
   case credentialRequest(OpenIdRepositoryError)
 
   /// presentation
-  case invalidPresentationRequest
+  case invalidPresentationRequest(String)
+  case transactionDataNotSupported(String)
+  case notFoundPresentationRequest
+  case expiredPresentationRequest
 }
 
 // MARK: - InvitationErrorMapping
@@ -45,19 +48,20 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
 
     if let openIdError = error as? OpenIdRepositoryError {
       switch openIdError {
-      case .expiredAccessToken:
-        return InvitationError.expiredInvitation
       case .invalidCredential:
         return InvitationError.validationFailed
       case
+        .expiredAccessToken,
         .insufficientScope,
         .invalidClient,
+        .invalidDPoPProof,
         .invalidGrant,
         .invalidRequest,
         .invalidScope,
         .invalidToken,
         .unauthorizedClient,
-        .unsupportedGrantType:
+        .unsupportedGrantType,
+        .useDPoPNonce:
         return InvitationError.oAuth(openIdError)
       case
         .credentialRequestDenied,
@@ -93,6 +97,8 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
 
     if let fetchError = error as? FetchAnyVerifiableCredentialError {
       switch fetchError {
+      case .expiredInvitation:
+        return InvitationError.expiredInvitation
       case .unknownIssuer:
         return InvitationError.unknownIssuer
       case .validationFailed:
@@ -102,7 +108,6 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
            .missingTypeMetadata,
            .missingVctIntegrity,
            .selectedCredentialNotFound,
-           .typeMetadataInvalidIntegrity,
            .unsupportedAlgorithm,
            .unsupportedKeyStorage,
            .vctMismatch:
@@ -110,13 +115,22 @@ public struct InvitationErrorMapper: InvitationErrorMapping {
       }
     }
 
+    if let typeMetadataError = error as? VcMetadataForVcSdJwtError {
+      return InvitationError.invalidQRCode
+    }
+
     if let fetchError = error as? FetchPresentationRequestUseCaseError {
       switch fetchError {
-      case .expiredRequest,
-           .invalidRequest:
-        return InvitationError.invalidPresentationRequest
       case .invalidUrl:
         return InvitationError.invalidQRCode
+      case .invalidRequest(let errorCode):
+        return InvitationError.invalidPresentationRequest(errorCode)
+      case .transactionDataNotSupported(let errorCode):
+        return InvitationError.transactionDataNotSupported(errorCode)
+      case .expired:
+        return InvitationError.expiredPresentationRequest
+      case .notFound:
+        return InvitationError.notFoundPresentationRequest
       }
     }
 

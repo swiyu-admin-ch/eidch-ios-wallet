@@ -3,13 +3,9 @@ packages:
     url: https://github.com/hmlongco/Factory
     from: "2.2.0"
 
-  RealmSwift:
-    url: https://github.com/realm/realm-swift
-    from: "10.54.3"
-
   realm-swift:
     url: https://github.com/realm/realm-swift
-    from: "10.54.3"
+    from: "20.0.4"
 
   swift-spyable:
     url: https://github.com/Matejkob/swift-spyable
@@ -17,7 +13,7 @@ packages:
 
   jsonschema-swift:
     url: https://github.com/swiyu-admin-ch/jsonschema-swift.git
-    exactVersion: "0.37.1"
+    exactVersion: "0.46.4"
 
   BITCore:
     path: ../../Modules/Platforms/BITCore
@@ -49,6 +45,8 @@ packages:
     path: ../../Modules/Platforms/BITSdJWT
   BITLocalAuthentication:
     path: ../../Modules/Platforms/BITLocalAuthentication
+  BITPushNotification:
+    path: ../../Modules/Features/BITPushNotification
   BITAnalytics:
     path: ../../Modules/Platforms/BITAnalytics
   BITAnyCredentialFormat:

@@ -21,6 +21,8 @@ class ScanDocumentViewModelTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
+    Container.shared.reset()
+
     context = EIDRequestContext()
     avBeam = AVBeamProtocolSpy()
     updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
@@ -33,6 +35,7 @@ class ScanDocumentViewModelTests: XCTestCase {
     Container.shared.updateEIDRequestCaseFilesUseCase.register { @MainActor in self.updateEIDRequestCaseFilesUseCase }
     Container.shared.compareScanDocumentOutputUseCase.register { @MainActor in self.compareScanDocumentOutputUseCase }
     Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     success()
   }
@@ -171,7 +174,7 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertEqual(config?.scanFrame, viewModel.scanFrame)
     XCTAssertTrue(try XCTUnwrap(config?.isDocumentSideChangeNotificationExpected))
     XCTAssertTrue(try XCTUnwrap(config?.files.contains(avBeamFile)))
-    XCTAssertEqual(viewModel.buttonState, .record)
+    XCTAssertEqual(viewModel.buttonState, .recording())
   }
 
   func testStartScan_scanningStateIsVersion_notifySecondScan() {
@@ -179,7 +182,7 @@ class ScanDocumentViewModelTests: XCTestCase {
 
     viewModel.startScan()
 
-    XCTAssertEqual(viewModel.buttonState, .record)
+    XCTAssertEqual(viewModel.buttonState, .recording())
     XCTAssertEqual(avBeam.notifySecondScanCallsCount, 1)
   }
 
@@ -287,9 +290,11 @@ class ScanDocumentViewModelTests: XCTestCase {
   }
 
   func testDidCompleteScanDocument_noAuthenticationReponse_routeToSubmitDocument() async {
+    await simulateScanProcessWithUIRotations()
+
     viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
 
-    await Task.yield()
+    try? await Task.sleep(nanoseconds: 100_000_000)
 
     XCTAssertTrue(avBeam.stopCameraCalled)
     XCTAssertFalse(viewModel.isNotificationPresented)
@@ -298,12 +303,15 @@ class ScanDocumentViewModelTests: XCTestCase {
     if case .scanDocumentSubmit(let scanOutput) = viewModel.destination {
       XCTAssertEqual(scanOutput.identityType, context.identityType)
       XCTAssertEqual(scanOutput.files.count, AVBeamPackageResult.Mock.sample.files.count + 1)
+      XCTAssertEqual(scanOutput.scanningOrientiations[.recto], .portrait)
+      XCTAssertEqual(scanOutput.scanningOrientiations[.verso], .landscapeLeft)
       XCTAssertEqual(viewModel.buttonState, .success)
     }
   }
 
   func testDidCompleteScanDocument_videoRecordingRequired_routeToVideoRecording() async {
     context = EIDRequestContext.Mock.documentRecordingSample
+    context.identityType = .identityCard
 
     Container.shared.eidRequestContext.register { @MainActor in self.context }
     viewModel = ScanDocumentViewModel()
@@ -313,13 +321,17 @@ class ScanDocumentViewModelTests: XCTestCase {
     try? await Task.sleep(nanoseconds: 100_000_000)
 
     XCTAssertEqual(viewModel.buttonState, .success)
-    XCTAssertEqual(viewModel.destination, .recordDocumentInformation)
-    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithCallsCount, 1)
-    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithReceivedArguments?.caseId, "caseId")
+    if case .scanDocumentSubmit(let scanOutput) = viewModel.destination {
+      XCTAssertEqual(scanOutput.identityType, context.identityType)
+    } else {
+      XCTFail("Expected scan document submit destination")
+    }
+    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithCallsCount, 0)
   }
 
   func testDidCompleteScanDocument_videoRecordingNotRequired_routeToSelfieVideo() async {
     context = EIDRequestContext.Mock.sample
+    context.identityType = .identityCard
 
     Container.shared.eidRequestContext.register { @MainActor in self.context }
     viewModel = ScanDocumentViewModel()
@@ -329,13 +341,17 @@ class ScanDocumentViewModelTests: XCTestCase {
     try? await Task.sleep(nanoseconds: 100_000_000)
 
     XCTAssertEqual(viewModel.buttonState, .success)
-    XCTAssertEqual(viewModel.destination, .avIntroSelfieVideo)
-    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithCallsCount, 1)
-    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithReceivedArguments?.caseId, "caseId")
+    if case .scanDocumentSubmit(let scanOutput) = viewModel.destination {
+      XCTAssertEqual(scanOutput.identityType, context.identityType)
+    } else {
+      XCTFail("Expected scan document submit destination")
+    }
+    XCTAssertEqual(compareScanDocumentOutputUseCase.callAsFunctionForWithCallsCount, 0)
   }
 
   func testDidCompleteScanDocument_videoRecordingNotRequiredComparisonDocumentsFails_routeToError() async {
     context = EIDRequestContext.Mock.sample
+    context.identityType = .identityCard
 
     Container.shared.eidRequestContext.register { @MainActor in self.context }
     viewModel = ScanDocumentViewModel()
@@ -345,11 +361,11 @@ class ScanDocumentViewModelTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    if case .error(let dataSet) = viewModel.destination {
-      XCTAssertEqual(viewModel.buttonState, .success)
-      XCTAssertEqual(dataSet.contents.count, 3)
-      XCTAssertEqual(dataSet.actions.count, 1)
+    XCTAssertEqual(viewModel.buttonState, .success)
+    if case .scanDocumentSubmit = viewModel.destination {
       XCTAssertFalse(updateEIDRequestCaseFilesUseCase.callAsFunctionForScanDocumentOutputCalled)
+    } else {
+      XCTFail("Expected scan document submit destination")
     }
   }
 
@@ -372,5 +388,20 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.state, .loading)
     compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = true
     updateInputFileUseCase.callAsFunctionReturnValue = avBeamFile
+  }
+
+  private func simulateScanProcessWithUIRotations(
+    rectoOrientation: UIDeviceOrientation = .portrait,
+    versoOrientation: UIDeviceOrientation = .landscapeLeft)
+    async
+  {
+    viewModel.uiOrientationDidChange(to: rectoOrientation)
+    viewModel.didReceiveNotification(notification: .idDocMatched)
+    await Task.yield()
+
+    viewModel.startScanSecondPage()
+    viewModel.uiOrientationDidChange(to: versoOrientation)
+    viewModel.didReceiveNotification(notification: .idDocMatched)
+    await Task.yield()
   }
 }

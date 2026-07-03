@@ -6,15 +6,15 @@ import Spyable
 
 @Spyable
 public protocol GetAppVersionUseCaseProtocol {
-  func execute() throws -> AppVersion
+  func callAsFunction() throws -> Version
 }
 
 // MARK: - GetAppVersionUseCase
 
 struct GetAppVersionUseCase: GetAppVersionUseCaseProtocol {
 
-  func execute() throws -> AppVersion {
-    try AppVersion(repository.getVersion())
+  func callAsFunction() throws -> Version {
+    try Version(repository.getVersion())
   }
 
   @Injected(\.appVersionRepository) private var repository: AppVersionRepositoryProtocol

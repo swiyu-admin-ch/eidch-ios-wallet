@@ -39,7 +39,7 @@ final class LoginViewModelTests: XCTestCase {
     mockGetBiometricTypeUseCase.executeReturnValue = .faceID
 
     mockGetLoginAttemptCounterUseCase.executeKindReturnValue = 0
-    mockFetchVersionEnforcementUseCase.executeReturnValue = nil
+    mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
     mockUseCases = LoginUseCasesProtocolSpy()
     mockUseCases.hasBiometricAuth = mockHasBiometricAuthUseCase
@@ -159,7 +159,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
     XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeKindCalled)
     XCTAssertFalse(mockLockWalletUseCase.executeCalled)
-    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -188,7 +188,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
     XCTAssertTrue(mockResetLoginAttemptCounterUseCase.executeCalled)
     XCTAssertFalse(mockLockWalletUseCase.executeCalled)
-    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -282,7 +282,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
     XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
     XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -351,7 +351,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
     XCTAssertTrue(mockLoginBiometricUseCase.executeCalled)
     XCTAssertEqual(1, mockLoginBiometricUseCase.executeCallsCount) // because of the configure in init
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -478,60 +478,69 @@ final class LoginViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testBiometricLoginWithVersionEnforcementBlock() async throws {
-    mockFetchVersionEnforcementUseCase.executeReturnValue = mockVersionEnforcement
+  func testBiometricLoginWithVersionEnforcementBlock() async {
+    mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = mockVersionEnforcement
 
-    try await testBiometricAuthHappyPath()
+    await testBiometricAuthHappyPath()
 
     XCTAssertFalse(mockRouter.closeWithCompletionCalled)
     XCTAssertTrue(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
     XCTAssertEqual(mockRouter.versionEnforcement, mockVersionEnforcement)
   }
 
   @MainActor
-  func testBiometricLoginWithoutVersionEnforcementBlock() async throws {
-    mockFetchVersionEnforcementUseCase.executeReturnValue = nil
+  func testBiometricLoginWithoutVersionEnforcementBlock() async {
+    mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
-    try await testBiometricAuthHappyPath()
+    await testBiometricAuthHappyPath()
 
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testPinLoginWithoutVersionEnforcementBlock() async {
-    mockFetchVersionEnforcementUseCase.executeReturnValue = nil
+    mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
     await testPinCodeHappyPath()
 
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testPinLoginWithVersionEnforcementBlock() async {
-    mockFetchVersionEnforcementUseCase.executeReturnValue = mockVersionEnforcement
+    mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = mockVersionEnforcement
 
     await testPinCodeHappyPath()
 
     XCTAssertFalse(mockRouter.closeWithCompletionCalled)
     XCTAssertTrue(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
     XCTAssertEqual(mockRouter.versionEnforcement, mockVersionEnforcement)
   }
 
   @MainActor
   func testVersionEnforcementGenericErrorSilentFail() async {
-    mockFetchVersionEnforcementUseCase.executeThrowableError = TestingError.error
+    mockFetchVersionEnforcementUseCase.callAsFunctionThrowableError = TestingError.error
 
     await testPinCodeHappyPath()
 
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(mockRouter.didCallversionEnforcement)
-    XCTAssertTrue(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
+  }
+
+  @MainActor
+  func testDidDismissVersionEnforcement() {
+    viewModel = LoginViewModel(router: mockRouter)
+
+    viewModel.didDismissVersionEnforcement()
+
+    XCTAssertTrue(mockRouter.closeWithCompletionCalled == true)
   }
 
   // MARK: Private
@@ -551,7 +560,7 @@ final class LoginViewModelTests: XCTestCase {
   private var mockFetchVersionEnforcementUseCase = FetchVersionEnforcementUseCaseProtocolSpy()
   private var mockUseCases = LoginUseCasesProtocolSpy()
   private var mockRouter = LoginRouterMock()
-  private var mockVersionEnforcement = VersionEnforcement.Mock.sample
+  private var mockVersionEnforcement = VersionEnforcement.Mock.forced
   // swiftlint:disable all
   private var viewModel: LoginViewModel!
   // swiftlint:enable all
@@ -640,6 +649,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
     XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
     XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockFetchVersionEnforcementUseCase.executeCalled)
+    XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 }

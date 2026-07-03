@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITVault
 import Factory
 
@@ -15,12 +16,12 @@ struct AnyVpTokenGenerator: AnyVpTokenGeneratorProtocol {
     dispatcher = anyVpTokenGeneratorDispatcher
   }
 
-  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, fields: [String]) throws -> VpToken {
+  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer]) throws -> VpToken {
     guard let credentialFormat = CredentialFormat(rawValue: credential.format), let dispatcherFormat = dispatcher[credentialFormat] else {
       throw CredentialFormatError.formatNotSupported
     }
 
-    return try dispatcherFormat.generate(requestObject: requestObject, credential: credential, keyPair: keyPair, fields: fields)
+    return try dispatcherFormat.generate(requestObject: requestObject, credential: credential, keyPair: keyPair, paths: paths)
   }
 
   private let dispatcher: [CredentialFormat: AnyVpTokenGeneratorProtocol]

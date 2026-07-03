@@ -19,7 +19,7 @@ struct PresentationRequestUrlParser: PresentationRequestUrlParserProtocol {
     if url.scheme == URLScheme.https.rawValue {
       return .https(url)
     }
-    guard let parameters = url.queryParameters else { throw FetchPresentationRequestError.invalidRequestUrl }
+    guard let parameters = url.queryParameters else { throw PresentationRequestUrlParserError.invalidRequestUrl }
     let requestURL = try parseRequestURL(from: parameters)
     let clientId = try parseClientId(from: parameters)
     return .openID4VP(url: requestURL, clientId: clientId)
@@ -31,14 +31,20 @@ struct PresentationRequestUrlParser: PresentationRequestUrlParserProtocol {
     guard
       let requestUriString = parameters["request_uri"]?.removingPercentEncoding,
       let requestUri = URL(string: requestUriString)
-    else { throw FetchPresentationRequestError.invalidRequestUrl }
+    else { throw PresentationRequestUrlParserError.invalidRequestUrl }
     return requestUri
   }
 
   private func parseClientId(from parameters: [String: String]) throws -> String {
     guard let clientId = parameters["client_id"]?.removingPercentEncoding else {
-      throw FetchPresentationRequestError.invalidRequestUrl
+      throw PresentationRequestUrlParserError.invalidRequestUrl
     }
     return clientId
   }
+}
+
+// MARK: - PresentationRequestUrlParserError
+
+enum PresentationRequestUrlParserError: Error, Equatable {
+  case invalidRequestUrl
 }

@@ -77,7 +77,7 @@ struct CompatibleCredentialView: View {
   private var footer: some View {
     ButtonSheet(colorConfig: .secondary) {
       Button(action: {
-        navigator.returnToCheckpointSafely(Checkpoints.home)
+        navigator.returnToHomeSafely()
       }) {
         Label(L10n.tkGlobalCancel, systemImage: "xmark")
           .frame(maxWidth: .infinity)

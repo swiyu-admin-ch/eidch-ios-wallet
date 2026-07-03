@@ -1,7 +1,9 @@
 import BITAnyCredentialFormat
 import BITClaimsPathPointer
+import BITCore
 import BITEntities
 import BITOpenID
+import Factory
 import Foundation
 
 // MARK: - CredentialClaim
@@ -78,6 +80,22 @@ public struct CredentialClaim: Codable, ClusterItem {
   public var displays: [CredentialClaimDisplay]
   public var preferredDisplay: CredentialClaimDisplay
 
+  public var localizedValue: String {
+    let label: String
+    if let localizedValue = preferredDisplay.value {
+      label = localizedValue
+    } else {
+      let claimValue = switch ValueType(rawValue: valueType) {
+      case .dateTime: dateTimeFormatted()
+      case .numeric: numericFormatted()
+      default: value
+      }
+      label = claimValue ?? "–"
+    }
+    // truncating after reasonable length, size of A4 document
+    return label.count > 1800 ? String(label.prefix(1800) + "…") : label
+  }
+
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
@@ -90,6 +108,77 @@ public struct CredentialClaim: Codable, ClusterItem {
     case isSensitive = "is_sensitive"
     case displays
   }
+
+  // MARK: Private
+
+  private var currentLocale: Locale {
+    Locale(identifier: Container.shared.preferredUserLocales().first ?? UserLocale.defaultLocaleIdentifier)
+  }
+
+  private func dateTimeFormatted() -> String? {
+    guard
+      let rawFormat = valueDisplayInfo,
+      let format = DateFormat(rawValue: rawFormat),
+      let value,
+      let date = ISO8601DateFormatter().date(from: value) else
+    {
+      return value
+    }
+
+    let formatter = DateFormatter()
+    formatter.locale = currentLocale
+    formatter.timeZone = format.hasTimeZone ? Container.shared.userTimeZone() : .gmt
+    formatter.dateStyle = format.hasDate ? .short : .none
+
+    if format.hasSeconds {
+      formatter.timeStyle = .medium
+    } else if format.hasTime {
+      formatter.timeStyle = .short
+    } else {
+      formatter.timeStyle = .none
+    }
+
+    if format == .yearMonth {
+      formatter.dateFormat = "MMMM yyyy"
+    } else if format == .year {
+      formatter.dateFormat = "yyyy"
+    }
+
+    return formatter.string(from: date)
+  }
+
+  private func numericFormatted() -> String? {
+    guard let value else { return nil }
+    let inputFormatter = NumberFormatter()
+    let outputFormatter = NumberFormatter()
+    outputFormatter.locale = currentLocale
+    outputFormatter.maximumFractionDigits = 14 // maximum Double precision
+
+    if value.range(of: "e", options: [.regularExpression, .caseInsensitive]) != nil {
+      outputFormatter.numberStyle = .scientific
+      outputFormatter.minimumIntegerDigits = getIntegerDigitsFromScientificNotation(value)
+      outputFormatter.exponentSymbol = value.contains("E") ? "E" : "e"
+    } else {
+      outputFormatter.numberStyle = .decimal
+    }
+
+    if
+      let number = inputFormatter.number(from: value),
+      let output = outputFormatter.string(from: number)
+    {
+      return output
+    }
+    return value
+  }
+
+  private func getIntegerDigitsFromScientificNotation(_ value: String) -> Int {
+    let regex = #/^[+-]?([0-9]+)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/#
+    guard let match = value.wholeMatch(of: regex) else {
+      return 0
+    }
+    return match.1.count
+  }
+
 }
 
 // MARK: Equatable

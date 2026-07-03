@@ -14,7 +14,7 @@ enum NonComplianceFormViewModelError: Error, Equatable {
 
 @MainActor
 @Observable
-class NonComplianceFormViewModel {
+final class NonComplianceFormViewModel {
 
   // MARK: Lifecycle
 
@@ -102,7 +102,9 @@ class NonComplianceFormViewModel {
   }
 
   private func onError(_ error: Error) {
-    destination = .error(dataset: .retry(error, { _ in } ))
+    destination = .error(dataset: .retry(error, { navigator in
+      navigator.pop()
+    }))
   }
 
   private func validate(_ field: NonComplianceFormField, value: String) {

@@ -40,8 +40,12 @@ extension Container {
     self { OcaBundleValidator() }
   }
 
-  var brandingOverlayResolver: Factory<BrandingOverlayResolverProtocol> {
-    self { BrandingOverlayResolver() }
+  var overlayTemplateResolver: Factory<OverlayTemplateResolverProtocol> {
+    self { OverlayTemplateResolver() }
+  }
+
+  var attributeTemplateResolver: Factory<AttributeTemplateResolverProtocol> {
+    self { AttributeTemplateResolver() }
   }
 
   var rootCaptureBaseResolver: Factory<RootCaptureBaseResolverProtocol> {

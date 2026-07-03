@@ -20,6 +20,7 @@ final class RecordSelfieViewModel {
   init() {
     avBeam.messageDelegate = self
     avBeam.captureFaceDelegate = self
+    recordingStateManager.delegate = self
   }
 
   // MARK: Internal
@@ -30,7 +31,7 @@ final class RecordSelfieViewModel {
   }
 
   var state = StateView.loading
-  var buttonState = RecordingButton.State.initial
+  var recordingState = RecordingState.initial
   var isNotificationPresented = false
   var notification: AVBeamNotification?
 
@@ -39,11 +40,14 @@ final class RecordSelfieViewModel {
   var destination: EIDRequestDestinations?
 
   var buttonStateAccessibilityLabel: String {
-    switch buttonState {
-    case .initial: L10n.tkEidRequestRecordSelfieButtonInitialStateAlt
-    case .record: L10n.tkEidRequestRecordSelfieButtonRecordStateAlt
+    switch recordingState {
+    case .initial:
+      L10n.tkEidRequestRecordSelfieButtonInitialStateAlt(Int(recordingStateManager.recordingTimeout))
+    case .recording:
+      L10n.tkEidRequestRecordSelfieButtonRecordingStateAlt
     case .loading,
-         .success: ""
+         .success:
+      ""
     }
   }
 
@@ -89,7 +93,7 @@ final class RecordSelfieViewModel {
       let config = AVBeamCaptureFaceConfig(files: [inputFile], duration: recordSelfieTimeout)
       let avBeam = avBeam
 
-      buttonState = .record
+      recordingStateManager.startRecording()
 
       Task.detached { [weak self] in
         do {
@@ -111,6 +115,7 @@ final class RecordSelfieViewModel {
   func stop() {
     avBeam.stopCaptureFace()
     try? avBeam.stopCamera()
+    recordingStateManager.stopRecording()
   }
 
   func stopRecordSelfie() {
@@ -134,11 +139,12 @@ final class RecordSelfieViewModel {
   @ObservationIgnored @Injected(\.scanDelay) private var scanDelay
   @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
   @ObservationIgnored @Injected(\.updateInputFileUseCase) private var updateInputFileUseCase: UpdateInputFileUseCaseProtocol
+  @ObservationIgnored @Injected(\.recordingStateManager) private var recordingStateManager
 
   private func reset() {
     isNotificationPresented = false
     notification = nil
-    buttonState = .initial
+    recordingStateManager.stopRecording()
   }
 
   private func stopCamera() throws {
@@ -167,7 +173,7 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
         self.isNotificationPresented = false
         self.notification = nil
       case .faceCapturingStarted:
-        buttonState = .record
+        recordingStateManager.startRecording()
       default:
         self.isNotificationPresented = true
         self.notification = notification
@@ -185,7 +191,7 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
         return self.handleError(packageResult.data.errorCode)
       }
 
-      self.buttonState = .loading
+      recordingStateManager.startProcessing()
 
       do {
         guard let caseId = self.context.caseId else { throw EIDRequestError.missingCaseId }
@@ -193,7 +199,7 @@ extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
         try await self.saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
 
         try? await Task.sleep(nanoseconds: scanDelay)
-        self.buttonState = .success
+        recordingStateManager.finishProcessingSuccessfully()
         try? await Task.sleep(nanoseconds: scanDelay)
 
         try stopCamera()
@@ -240,5 +246,22 @@ extension RecordSelfieViewModel {
       self?.reset()
       navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordSelfieInformation)
     }
+  }
+}
+
+// MARK: RecordingStateDelegate
+
+extension RecordSelfieViewModel: RecordingStateDelegate {
+  func read(announcement: RecordingAnnouncement) {
+    let string = switch announcement {
+    case .processingStarted:
+      L10n.tkEidRequestRecordSelfieProcessingStartAlt
+    case .processingSucceeded:
+      L10n.tkEidRequestRecordSelfieProcessingFinishedAlt
+    }
+
+    var announcement = AttributedString(string)
+    announcement.accessibilitySpeechAnnouncementPriority = .high
+    AccessibilityNotification.Announcement(announcement).post()
   }
 }

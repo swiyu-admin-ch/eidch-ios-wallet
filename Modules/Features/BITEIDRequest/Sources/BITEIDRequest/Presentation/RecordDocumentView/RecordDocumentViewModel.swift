@@ -17,37 +17,10 @@ final class RecordDocumentViewModel {
   init() {
     avBeam.messageDelegate = self
     avBeam.recordDocumentDelegate = self
+    recordingStateManager.delegate = self
   }
 
   // MARK: Internal
-
-  enum ScanningState: Equatable {
-    case recto
-    case verso
-
-    // MARK: Internal
-
-    var title: String {
-      switch self {
-      case .recto: L10n.tkEidRequestRecordDocumentRecto
-      case .verso: L10n.tkEidRequestRecordDocumentVerso
-      }
-    }
-
-    var popupTitle: String {
-      switch self {
-      case .recto: L10n.tkEidRequestRecordDocumentNotificationRectoPrimary
-      case .verso: L10n.tkEidRequestRecordDocumentNotificationVersoPrimary
-      }
-    }
-
-    var popupContent: String {
-      switch self {
-      case .recto: L10n.tkEidRequestRecordDocumentNotificationRectoSecondary
-      case .verso: L10n.tkEidRequestRecordDocumentNotificationVersoSecondary
-      }
-    }
-  }
 
   enum StateView: Equatable {
     case loading
@@ -58,7 +31,7 @@ final class RecordDocumentViewModel {
   var isNotificationPresented = false
   var notification: AVBeamNotification?
   var timer: Timer?
-  var buttonState = RecordingButton.State.initial
+  var recordingState = RecordingState.initial
 
   var destination: EIDRequestDestinations?
 
@@ -78,16 +51,22 @@ final class RecordDocumentViewModel {
   }
 
   var buttonStateAccessibilityLabel: String {
-    switch buttonState {
-    case .initial: L10n.tkEidRequestRecordDocumentButtonInitialStateAlt
-    case .record: L10n.tkEidRequestRecordDocumentButtonRecordStateAlt
+    switch recordingState {
+    case .initial:
+      L10n.tkEidRequestRecordDocumentButtonInitialStateAlt(Int(recordingStateManager.recordingTimeout))
+    case .recording:
+      L10n.tkEidRequestRecordDocumentButtonRecordingStateAlt
     case .loading,
-         .success: ""
+         .success:
+      ""
     }
   }
 
   var title: String {
-    scanningState.title
+    switch scanningState {
+    case .recto: L10n.tkEidRequestRecordDocumentRecto
+    case .verso: L10n.tkEidRequestRecordDocumentVerso
+    }
   }
 
   func checkInitializationState() {
@@ -142,7 +121,7 @@ final class RecordDocumentViewModel {
       let config = AVBeamRecordDocumentConfig(files: [inputFile], timeout: recordDocumentTimeout)
       let avBeam = avBeam
 
-      buttonState = .record
+      recordingStateManager.startRecording()
 
       Task.detached { [weak self] in
         do {
@@ -176,12 +155,13 @@ final class RecordDocumentViewModel {
   @ObservationIgnored @Injected(\.eidRequestContext) private var context
   @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
   @ObservationIgnored @Injected(\.updateInputFileUseCase) private var updateInputFileUseCase: UpdateInputFileUseCaseProtocol
+  @ObservationIgnored @Injected(\.recordingStateManager) private var recordingStateManager
 
   private func reset() {
     scanningState = .recto
     isNotificationPresented = false
     notification = nil
-    buttonState = .initial
+    recordingStateManager.stopRecording()
     timer?.invalidate()
     timer = nil
   }
@@ -204,11 +184,11 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
         state = .camera
 
       case .streamingStarted:
-        buttonState = .initial
+        recordingStateManager.stopRecording()
 
       case .docRecordingStarted:
         // The SDK does not have an event to notify the record of one side, so we use a Timer to flip the overlay and indicate the user to turn its document
-        if buttonState != .record {
+        if !recordingState.isRecording {
           return
         }
 
@@ -234,7 +214,7 @@ extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
           return self.handleError(packageResult.data.errorCode)
         }
 
-        self.buttonState = .loading
+        recordingStateManager.startProcessing()
 
         try? avBeam.stopCamera()
         guard let caseId = self.context.caseId else { throw EIDRequestError.missingCaseId }
@@ -242,7 +222,7 @@ extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
         try await self.saveEIDRequestFilesUseCase.execute(output.files, forRequestCaseId: caseId)
 
         try? await Task.sleep(nanoseconds: scanDelay)
-        self.buttonState = .success
+        recordingStateManager.finishProcessingSuccessfully()
         try? await Task.sleep(nanoseconds: scanDelay)
 
         self.destination = .avIntroSelfieVideo
@@ -284,5 +264,22 @@ extension RecordDocumentViewModel {
       reset()
       navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordDocumentInformation)
     }
+  }
+}
+
+// MARK: RecordingStateDelegate
+
+extension RecordDocumentViewModel: RecordingStateDelegate {
+  func read(announcement: RecordingAnnouncement) {
+    let string = switch announcement {
+    case .processingStarted:
+      L10n.tkEidRequestRecordDocumentProcessingStartAlt
+    case .processingSucceeded:
+      L10n.tkEidRequestRecordDocumentProcessingFinishedAlt
+    }
+
+    var announcement = AttributedString(string)
+    announcement.accessibilitySpeechAnnouncementPriority = .high
+    AccessibilityNotification.Announcement(announcement).post()
   }
 }

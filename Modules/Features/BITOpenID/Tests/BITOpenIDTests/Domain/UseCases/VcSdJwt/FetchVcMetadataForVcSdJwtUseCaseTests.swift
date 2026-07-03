@@ -37,7 +37,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.url.absoluteString, vcSdJWSMock.payload.vct)
     XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.integrity, vcSdJWSMock.payload.vctIntegrity)
     XCTAssertEqual(vcSchemaServiceSpy.fetchForReceivedTypeMetadata, typeMetadataMock)
-    XCTAssertEqual(ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, ocaRenderingMock)
+    XCTAssertEqual(ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, typeMetadataMock.displays?.first?.rendering?.oca)
   }
 
   func testExecute_vcSdJwtMetadata_returnsVcSchemaAndOcaBundle() async throws {
@@ -54,7 +54,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.url.absoluteString, Self.vctMock)
     XCTAssertEqual(typeMetadataServiceSpy.fetchFromVctReceivedArguments?.uri.integrity, Self.vctIntegrityMock)
     XCTAssertEqual(vcSchemaServiceSpy.fetchForReceivedTypeMetadata, typeMetadataMock)
-    XCTAssertEqual(ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, ocaRenderingMock)
+    XCTAssertEqual(ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReceivedOcaRendering, typeMetadataMock.displays?.first?.rendering?.oca)
   }
 
   func testExecute_notVcSdJwt_throwsError() async throws {
@@ -104,6 +104,26 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     XCTAssertNil(ocaBundle)
   }
 
+  func testExecute_nonURLVctWithoutVctIntegrity_returnsNilVcSchemaAndNilOcaBundle() async throws {
+    let vcSdJWSMock = createVcSdJWS(vct: Self.nonURLVctMock)
+
+    let (vcSchema, ocaBundle) = try await useCase.execute(anyCredential: vcSdJWSMock)
+
+    XCTAssertNil(vcSchema)
+    XCTAssertNil(ocaBundle)
+    XCTAssertFalse(typeMetadataServiceSpy.fetchFromVctCalled)
+  }
+
+  func testExecute_invalidVctWithVctIntegrity_throwsError() async throws {
+    let vcSdJWSMock = createVcSdJWS(vct: Self.nonURLVctMock, vctIntegrity: Self.vctIntegrityMock)
+
+    await XCTAssertThrowsErrorAsync(try await useCase.execute(anyCredential: vcSdJWSMock)) { error in
+      XCTAssertEqual(error as? VcMetadataForVcSdJwtError, .superfluousVctIntegrity)
+    }
+
+    XCTAssertFalse(typeMetadataServiceSpy.fetchFromVctCalled)
+  }
+
   func testExecute_vcSchemaFetchFailure_throwsError() async throws {
     vcSchemaServiceSpy.fetchForThrowableError = TestingError.error
 
@@ -151,14 +171,14 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   // MARK: Private
 
   private static let vctMock = "https://vct.example.com"
+  private static let nonURLVctMock = "vct"
   private static let vctIntegrityMock = "vctIntegrity"
 
   private let vcSdJWSMock = VcSdJWS.Mock.sample
   private let vcSdJwtMetadataMock = CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported(format: "format", vct: vctMock, vctIntegrity: vctIntegrityMock)
   private let ocaBundleMock = "rawOcaBundle".data(using: .utf8)!
   private let vcSchemaMock = "vcSchema".data(using: .utf8)!
-  private let typeMetadataMock = TypeMetadata.Mock.sampleMultipleDisplays
-  private let ocaRenderingMock = VcSdJwtOcaRendering(uri: "ocaUri", uriIntegrity: "ocaUriIntegrity")
+  private let typeMetadataMock = TypeMetadata.Mock.sample
 
   private var vcSchemaServiceSpy = VcSchemaServiceProtocolSpy()
   private var vcSdJwtSchemaValidatorSpy = VcSdJwtSchemaValidatorProtocolSpy()
@@ -184,5 +204,18 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
     vcSdJwtSchemaValidatorSpy.validateSchemaReturnValue = true
     typeMetadataServiceSpy.fetchFromVctReturnValue = typeMetadataMock
     ocaBundleServiceSpy.fetchVcSdJwtOcaBundleFromReturnValue = ocaBundleMock
+  }
+
+  private func createVcSdJWS(vct: String, vctIntegrity: String? = nil) -> VcSdJWS {
+    let jwt = VcSdJwt(vct: vct, vctIntegrity: vctIntegrity)
+    let jws = JWS(payload: jwt, rawPayload: String(), rawJWS: String(), header: JWSHeader(algorithm: .ES256))
+    return VcSdJWS(
+      jws: jws,
+      payload: jwt,
+      resolvedJSON: [:],
+      rawSdJWS: String(),
+      disclosures: [],
+      rawKeyBinding: nil,
+      keyIdentifierDid: "did:tdw:example")
   }
 }

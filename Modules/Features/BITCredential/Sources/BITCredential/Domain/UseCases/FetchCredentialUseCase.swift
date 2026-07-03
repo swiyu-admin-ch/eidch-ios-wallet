@@ -25,32 +25,46 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
     let holderBindings = try await holderBindingsGenerator(from: metadataWrapper)
     let anyCredential: AnyCredential
     let authentication: CredentialAuthentication
+    var issuanceDPoPKeyPair: VaultKeyPair?
 
     do {
       let result = try await fetchAnyVerifiableCredentialUseCase(
         from: offer,
         metadataWrapper: metadataWrapper,
         holderBindings: holderBindings)
-      let credentials = result.credentials
-      authentication = createAuthentication(from: result)
+      let authorization = result.authorization
+      issuanceDPoPKeyPair = authorization.dpopKeyPair
 
-      switch credentials {
+      switch result.credentials {
       case .credential(let credential):
+        authentication = try createAuthentication(from: authorization)
         anyCredential = credential
+
       case .batch(let credentials):
         guard metadataWrapper.credentialIssuerMetadata.batchCredentialIssuance?.batchSize != nil else {
           throw FetchCredentialUseCaseError.invalidCredential
         }
+
+        let authentication = try createAuthentication(from: authorization)
         return try await generateBatchCredential(
           from: credentials,
           metadata: metadataWrapper,
           authentication: authentication,
           holderBindings: holderBindings)
+
       case .deferred(let deferredCredentialContext):
-        let deferredCredential = try await generateDeferredCredential(from: deferredCredentialContext, metadata: metadataWrapper, holderBindings: holderBindings)
+        let authentication = try createAuthentication(from: deferredCredentialContext.authorization)
+        let deferredCredential = try await generateDeferredCredential(
+          from: deferredCredentialContext,
+          authentication: authentication,
+          metadata: metadataWrapper,
+          holderBindings: holderBindings)
         return (deferredCredential, nil)
       }
     } catch {
+      if let issuanceDPoPKeyPair {
+        try? issuanceDPoPKeyRepository.delete(issuanceDPoPKeyPair)
+      }
       try holderBindings.map(\.keyPair).forEach { keyPair in
         try credentialKeyRepository.delete(keyPair)
       }
@@ -66,11 +80,11 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
 
   // MARK: Private
 
-  @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
   @Injected(\.fetchMetadataUseCase) private var fetchMetadataUseCase: FetchMetadataUseCaseProtocol
   @Injected(\.holderBindingsGenerator) private var holderBindingsGenerator: HolderBindingsGeneratorProtocol
   @Injected(\.fetchAnyVerifiableCredentialUseCase) private var fetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseProtocol
   @Injected(\.credentialKeyRepository) private var credentialKeyRepository: CredentialKeyRepositoryProtocol
+  @Injected(\.issuanceDPoPKeyRepository) private var issuanceDPoPKeyRepository: IssuanceDPoPKeyRepositoryProtocol
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol
   @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
   @Injected(\.trustInformationService) private var trustInformationService
@@ -78,15 +92,22 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.activityService) private var activityService
   @Injected(\.mapCredentialsToKeyBindingsUseCase) private var mapCredentialsToKeyBindingsUseCase
+  @Injected(\.keyBindingGenerator) private var keyBindingGenerator: KeyBindingGeneratorProtocol
 
-  private func generateCredential(from anyCredential: AnyCredential, metadata: CredentialIssuerMetadataWrapper, authentication: CredentialAuthentication, holderBindings: [HolderBinding]) async throws -> (VerifiableCredential, TrustInformation?) {
+  private func generateCredential(
+    from anyCredential: AnyCredential,
+    metadata: CredentialIssuerMetadataWrapper,
+    authentication: CredentialAuthentication,
+    holderBindings: [HolderBinding]) async throws
+    -> (VerifiableCredential, TrustInformation?)
+  {
     let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
     var trustStatement: IdentityTrustStatementJWT?
     if case .trusted(let statement) = trustInformation.identity {
       trustStatement = statement
     }
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(anyCredential: anyCredential)
-    let keyBinding = try createKeyBinding(from: holderBindings.first?.keyPair)
+    let keyBinding = try keyBindingGenerator.generate(from: holderBindings.first?.keyPair)
     let credentialWithKeyBinding = CredentialWithKeyBinding(credential: anyCredential, keyBinding: keyBinding)
 
     let credential = try credentialGenerator.generate(
@@ -103,14 +124,21 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
     return (updatedCredential, trustInformation)
   }
 
-  private func generateDeferredCredential(from deferredCredentialContext: DeferredCredentialContext, metadata: CredentialIssuerMetadataWrapper, holderBindings: [HolderBinding]) async throws -> DeferredCredential {
+  private func generateDeferredCredential(
+    from deferredCredentialContext: DeferredCredentialContext,
+    authentication: CredentialAuthentication,
+    metadata: CredentialIssuerMetadataWrapper,
+    holderBindings: [HolderBinding]) async throws
+    -> DeferredCredential
+  {
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(metadata: metadata.selectedCredential)
-    let keyBindings = try holderBindings.compactMap { try createKeyBinding(from: $0.keyPair) }
+    let keyBindings = try holderBindings.compactMap { try keyBindingGenerator.generate(from: $0.keyPair) }
     return try credentialGenerator.generateDeferred(
       deferredCredentialContext,
       keyBindings: keyBindings,
       rawOcaBundle: rawOcaBundle,
-      metadataWrapper: metadata)
+      metadataWrapper: metadata,
+      authentication: authentication)
   }
 
   private func generateBatchCredential(
@@ -153,27 +181,16 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
     return (updatedCredential, trustInformation)
   }
 
-  private func createKeyBinding(from keyPair: VaultKeyPair?) throws -> KeyBinding? {
-    try keyPair.flatMap { keyPair in
-      let isHardwareKey = keyPair.options?.contains(.secureEnclave) ?? false
-      let (publicKey, privateKey): (Data?, Data?) = isHardwareKey
-        ? (nil, nil)
-        : try keyManager.getExternalRepresentation(of: keyPair.privateKey)
+  private func createAuthentication(from authorization: IssuanceAuthorization) throws
+    -> CredentialAuthentication
+  {
+    let dpopBinding = try keyBindingGenerator.generate(from: authorization.dpopKeyPair)
 
-      return KeyBinding(
-        id: UUID(uuidString: keyPair.identifier) ?? UUID(),
-        algorithm: keyPair.algorithm.rawValue,
-        bindingType: isHardwareKey ? .hardware : .software,
-        publicKey: publicKey,
-        privateKey: privateKey)
-    }
-  }
-
-  private func createAuthentication(from result: FetchAnyCredentialResult) -> CredentialAuthentication {
-    CredentialAuthentication(
-      accessToken: result.accessToken,
-      tokenType: result.tokenType,
-      refreshToken: result.refreshToken)
+    return CredentialAuthentication(
+      accessToken: authorization.accessToken.accessToken,
+      tokenType: authorization.accessToken.tokenType,
+      refreshToken: authorization.accessToken.refreshToken,
+      dpopBinding: dpopBinding)
   }
 }
 

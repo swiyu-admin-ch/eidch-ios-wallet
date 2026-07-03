@@ -1,45 +1,37 @@
 import BITL10n
 import Factory
 import Foundation
+import UIKit
 
 @Observable
 class VersionEnforcementViewModel {
 
   // MARK: Lifecycle
 
-  init(router: VersionEnforcementRouterRoutes = Container.shared.versionEnforcementRouter(), versionEnforcement: VersionEnforcement) {
+  init(router: VersionEnforcementRouterRoutes = Container.shared.versionEnforcementRouter(), versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate) {
     self.router = router
     self.versionEnforcement = versionEnforcement
+    self.delegate = delegate
   }
 
   // MARK: Internal
 
-  var title: String {
-    guard let display = versionEnforcement.displays.findDisplayWithFallback() else {
-      return "n/a"
-    }
-
-    return display.title
+  var enforcementType: VersionEnforcementType {
+    versionEnforcement.type
   }
 
-  var content: String {
-    guard let display = versionEnforcement.displays.findDisplayWithFallback() else {
-      return "n/a"
-    }
-
-    return display.body
+  var message: VersionEnforcement.Message? {
+    versionEnforcement.messages.findDisplayWithFallback()
   }
 
-  func openAppStore() {
-    guard let appStoreUrl = URL(string: L10n.tkGlobalStoreLink) else {
-      return
-    }
-
-    router.openExternalLink(url: appStoreUrl)
+  func dismissToHomeScreen() {
+    router.close(onComplete: delegate?.didDismissVersionEnforcement)
   }
 
   // MARK: Private
 
   private let router: VersionEnforcementRouterRoutes
   private let versionEnforcement: VersionEnforcement
+
+  private weak var delegate: VersionEnforcementDelegate?
 }

@@ -155,7 +155,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private var mockCredential = VerifiableCredential.Mock.sample
   private var mockTrustInformation = TrustInformation.Mock.trustedIdentity
   private let themeMock = "light"
-  private var delayAfterAcceptingCredential: UInt64 = 0
 
   private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocolSpy!
   private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocolSpy!
@@ -168,7 +167,6 @@ final class CredentialOfferViewModelTests: XCTestCase {
     fetchIssuanceTrustInformationUseCase = FetchIssuanceTrustInformationUseCaseProtocolSpy()
     fetchIssuanceTrustInformationUseCase.callAsFunctionForReturnValue = mockTrustInformation
 
-    Container.shared.delayAfterAcceptingCredential.register { @MainActor in self.delayAfterAcceptingCredential }
     Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCase }
     Container.shared.acceptCredentialUseCase.register { @MainActor in self.acceptCredentialUseCase }
     Container.shared.fetchIssuanceTrustInformationUseCase.register { @MainActor in self.fetchIssuanceTrustInformationUseCase }

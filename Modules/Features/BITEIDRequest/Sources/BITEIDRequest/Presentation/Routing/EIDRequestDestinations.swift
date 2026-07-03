@@ -32,6 +32,7 @@ public enum EIDRequestDestinations: NavigationDestination {
   case scanDocument
   case scanDocumentSubmit(_ output: ScanDocumentOutput)
   case scanDocumentSecondPageInstructions(_ callback: Callback<Void>)
+  case scanDocumentImageOverview(image: ScanResultEntryImage)
 
   // Wallet pairing
   case walletPairing
@@ -61,11 +62,15 @@ public enum EIDRequestDestinations: NavigationDestination {
 
   case external(EIDRequestExternalDestination)
 
+  /// Push
+  case pushPermission(EIDRequestCase)
+
   // MARK: Public
 
   public var method: NavigationMethod {
     switch self {
-    case .walletPairingOffer:
+    case .scanDocumentImageOverview,
+         .walletPairingOffer:
       .managedSheet
     case .scanDocumentSecondPageInstructions:
       .managedCover

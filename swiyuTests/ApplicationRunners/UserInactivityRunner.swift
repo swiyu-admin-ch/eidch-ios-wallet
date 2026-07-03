@@ -194,6 +194,50 @@ final class UserInactivityRunnerTests: XCTestCase {
     wait(for: [timeoutExpectation], timeout: 1.6)
   }
 
+  func testWindowFocusChangeResetsTimer() {
+    runner = nil
+    runner = UserInactivityRunner(timeoutInterval: 2)
+    let timeoutExpectation = expectation(description: "NotificationExpectation")
+    timeoutExpectation.expectedFulfillmentCount = 1
+
+    let noEarlyTimeout = expectation(description: "NoEarlyTimeout")
+    noEarlyTimeout.isInverted = true
+
+    notificationObserver = NotificationCenter.default.addObserver(forName: .userInactivityTimeout, object: nil, queue: nil) { _ in
+      timeoutExpectation.fulfill()
+      noEarlyTimeout.fulfill()
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+      NotificationCenter.default.post(name: .windowDidUpdateFocus, object: self)
+    }
+
+    wait(for: [noEarlyTimeout], timeout: 2.4)
+    wait(for: [timeoutExpectation], timeout: 1.6)
+  }
+
+  func testWindowPressesBeganResetsTimer() {
+    runner = nil
+    runner = UserInactivityRunner(timeoutInterval: 2)
+    let timeoutExpectation = expectation(description: "NotificationExpectation")
+    timeoutExpectation.expectedFulfillmentCount = 1
+
+    let noEarlyTimeout = expectation(description: "NoEarlyTimeout")
+    noEarlyTimeout.isInverted = true
+
+    notificationObserver = NotificationCenter.default.addObserver(forName: .userInactivityTimeout, object: nil, queue: nil) { _ in
+      timeoutExpectation.fulfill()
+      noEarlyTimeout.fulfill()
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+      NotificationCenter.default.post(name: .windowPressesBegan, object: self)
+    }
+
+    wait(for: [noEarlyTimeout], timeout: 2.4)
+    wait(for: [timeoutExpectation], timeout: 1.6)
+  }
+
   // MARK: Private
 
   // swiftlint:disable all

@@ -23,9 +23,7 @@ struct CameraView: View {
       content()
         .cameraPermission { state in
           Task {
-            if state == .authorized {
-              await viewModel.onAppear()
-            }
+            await viewModel.onCameraPermissionChange(state)
           }
         }
         .bluetoothPermission(trigger: viewModel.isBluetoothPermissionRequired) { state in
@@ -35,16 +33,7 @@ struct CameraView: View {
             }
           }
         }
-        .onAppear {
-          guard voiceOverEnabled else { return }
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            focus = .camera
-
-            var announcement = AttributedString(L10n.tkQrscannerCameraFeedAlt)
-            announcement.accessibilitySpeechAnnouncementPriority = .high
-            AccessibilityNotification.Announcement(announcement).post()
-          }
-        }
+        .onChange(of: viewModel.isCameraReady, announceCameraRunningStateIfNeeded)
         .suspendInactivityTimeout()
         .disablePhoneLock()
         .popup(isPresented: $viewModel.isTorchEnabled) {
@@ -112,7 +101,7 @@ struct CameraView: View {
         .onChange(of: viewModel.onDismiss) { _, newValue in
           if newValue {
             viewModel.resetProximityEngagementIfNeeded()
-            navigator.returnToCheckpointSafely(Checkpoints.home, value: .acceptCredential)
+            navigator.returnToHomeSafely(with: .acceptCredential)
           }
         }
         .navigate(to: $viewModel.destination)
@@ -144,6 +133,17 @@ struct CameraView: View {
     scannerView()
       .ignoresSafeArea(edges: orientation.isLandscape ? [.horizontal] : [])
   }
+
+  private func announceCameraRunningStateIfNeeded() {
+    guard voiceOverEnabled, viewModel.isCameraReady else { return }
+    Task {
+      try? await Task.sleep(for: .seconds(0.6))
+
+      var announcement = AttributedString(L10n.tkQrscannerCameraFeedAlt)
+      announcement.accessibilitySpeechAnnouncementPriority = .high
+      AccessibilityNotification.Announcement(announcement).post()
+    }
+  }
 }
 
 // MARK: - Components
@@ -163,7 +163,7 @@ extension CameraView {
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(L10n.tkQrscannerScanningTitle)
       .accessibilitySortPriority(AccessibilityPriority.x7.rawValue)
-      .accessibilityFocused($focus, equals: .camera)
+      .accessibilityPriorityFocus()
   }
 
   private func progressView() -> some View {

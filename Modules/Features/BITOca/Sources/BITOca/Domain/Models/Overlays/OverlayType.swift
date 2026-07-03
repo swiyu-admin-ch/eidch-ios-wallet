@@ -28,7 +28,7 @@ public enum OverlayType {
     case .format:
       [.format1_0]
     case .label:
-      [.label1_0]
+      [.label1_0, .label1_1]
     case .meta:
       [.meta1_0]
     case .order:

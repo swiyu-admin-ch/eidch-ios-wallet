@@ -20,7 +20,10 @@ struct RefreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol {
     try await refreshDeferredCredentialUseCase.execute(deferredCredentials)
 
     let verifiableCredentials = try await credentialRepository.getAllVerifiableCredentials()
-    try await checkAndUpdateCredentialStatusUseCase.execute(verifiableCredentials)
+    await refreshVerifiableCredentialsUseCase(verifiableCredentials)
+
+    let refreshedVerifiableCredentials = try await credentialRepository.getAllVerifiableCredentials()
+    try await checkAndUpdateCredentialStatusUseCase.execute(refreshedVerifiableCredentials)
 
     return try await credentialRepository.getAll()
   }
@@ -29,5 +32,6 @@ struct RefreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol {
 
   @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
   @Injected(\.refreshDeferredCredentialUseCase) private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocol
+  @Injected(\.refreshVerifiableCredentialsUseCase) private var refreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
 }

@@ -6,7 +6,7 @@ import JOSESwift
 // MARK: - JWSSignatureValidatorProtocol
 
 public protocol JWSSignatureValidatorProtocol {
-  func validate(_ jws: JWS<some JWT>, issuerDid: String) async throws
+  func validate(_ jws: JWS<some JWT>) async throws
 }
 
 // MARK: - JWSSignatureValidatorError
@@ -23,9 +23,9 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   // MARK: Public
 
-  public func validate(_ jws: JWS<some JWT>, issuerDid: String) async throws {
-    let jwks = try await getJwks(from: issuerDid, keyIdentifier: jws.header.keyIdentifier)
-    guard jwks.contains(where: { validateJwtSignature(for: jws, jwk: $0) }) else {
+  public func validate(_ jws: JWS<some JWT>) async throws {
+    let jwk = try await getJWK(from: jws.header.keyIdentifier)
+    guard validateJwtSignature(for: jws, jwk: jwk) else {
       throw JWSSignatureValidatorError.invalidSignature
     }
   }
@@ -34,11 +34,9 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
 
-  private func getJwks(from did: String, keyIdentifier: String?) async throws -> [BITCrypto.JWK] {
+  private func getJWK(from kid: String?) async throws -> BITCrypto.JWK {
     do {
-      return try await didResolverHelper.getJWKS(from: did, keyIdentifier: keyIdentifier)
-    } catch DidResolverHelperError.didDocumentDeactivated {
-      return []
+      return try await didResolverHelper.getJWK(from: kid)
     } catch {
       throw JWSSignatureValidatorError.cannotResolveDid(error)
     }

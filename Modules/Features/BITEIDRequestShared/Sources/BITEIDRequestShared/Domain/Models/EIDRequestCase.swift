@@ -18,7 +18,8 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
     state: EIDRequestState? = nil,
     files: [EIDRequestCaseFile] = [],
     deferredCredential: DeferredCredential? = nil,
-    filesSubmitted: Bool = false)
+    filesSubmitted: Bool = false,
+    pushId: String? = nil)
   {
     self.id = id
     self.createdAt = createdAt
@@ -30,6 +31,7 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
     self.state = state
     self.deferredCredential = deferredCredential
     self.filesSubmitted = filesSubmitted
+    self.pushId = pushId
   }
 
   public init(_ entity: EIDRequestCaseEntity) throws {
@@ -47,7 +49,8 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
       firstName: entity.firstName,
       state: entity.state.map(EIDRequestState.init),
       deferredCredential: entity.credential.flatMap(DeferredCredential.init),
-      filesSubmitted: entity.filesSubmitted)
+      filesSubmitted: entity.filesSubmitted,
+      pushId: entity.pushId)
   }
 
   // MARK: Public
@@ -60,6 +63,7 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
   public let selectedDocumentType: IdentityType
   public var deferredCredential: DeferredCredential?
   public var filesSubmitted: Bool
+  public var pushId: String?
 
   // MARK: Internal
 
@@ -74,6 +78,7 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
     case state
     case deferredCredential
     case filesSubmitted
+    case pushId
   }
 
   let rawMRZ: String
@@ -98,5 +103,6 @@ extension EIDRequestCase: Hashable {
     hasher.combine(selectedDocumentType)
     hasher.combine(state)
     hasher.combine(filesSubmitted)
+    hasher.combine(pushId)
   }
 }

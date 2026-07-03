@@ -14,7 +14,6 @@ public struct IdentityTrustStatementJWT: TrustStatement, Codable, Equatable {
   public let type: String? = VcSdJwt.legacyType
 
   public let vct: String
-  public let issuer: String?
   public let subject: String?
   public let issuedAt: Date?
   public let statusList: VcSdJwtTokenStatusList
@@ -56,7 +55,6 @@ public struct IdentityTrustStatementJWT: TrustStatement, Codable, Equatable {
 
   enum CodingKeys: String, CodingKey {
     case vct
-    case issuer = "iss"
     case subject = "sub"
     case issuedAt = "iat"
     case statusList = "status"
@@ -78,6 +76,10 @@ extension IdentityTrustStatementJWT {
 }
 
 extension IdentityTrustStatementJWT {
+  public var issuer: String? {
+    nil
+  }
+
   public var audience: String? {
     nil
   }
@@ -89,7 +91,6 @@ extension IdentityTrustStatementJWT: Swift.Hashable {
   public func hash(into hasher: inout Hasher) {
     hasher.combine(type)
     hasher.combine(vct)
-    hasher.combine(issuer)
     hasher.combine(subject)
     hasher.combine(issuedAt)
     hasher.combine(activatedAt)

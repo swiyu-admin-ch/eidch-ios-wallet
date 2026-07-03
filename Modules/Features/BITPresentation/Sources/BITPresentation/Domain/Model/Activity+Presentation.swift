@@ -10,7 +10,7 @@ extension Activity {
       actorTrust: context.trustInformation.actorTrust,
       vcSchemaTrust: context.trustInformation.vcSchemaTrust,
       actorCompliance: context.trustInformation.actorComplianceStatus,
-      nonComplianceData: context.presentationRequest.nonComplianceData,
+      nonComplianceData: context.requestObjectJWS.rawJWS,
       nonComplianceReasonDisplays: context.trustInformation.nonComplianceReasonDisplays,
       claims: credential.uniqueClaimIds.map(ActivityClaim.init),
       actorDisplays: context.verifierDisplays.map(ActivityActorDisplay.init))
@@ -36,19 +36,5 @@ extension ActivityActorDisplay {
       name: display.name,
       locale: display.locale,
       image: display.logo)
-  }
-}
-
-extension PresentationRequest {
-  fileprivate var nonComplianceData: String? {
-    switch self {
-    case .plain(let requestObject):
-      if let rawData = requestObject.raw {
-        return String(data: rawData, encoding: .utf8)
-      }
-    case .jwt(let jwtRequestObject):
-      return jwtRequestObject.rawJWS
-    }
-    return nil
   }
 }

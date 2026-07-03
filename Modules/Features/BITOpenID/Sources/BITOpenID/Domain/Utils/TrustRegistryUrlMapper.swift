@@ -1,3 +1,4 @@
+import BITJWT
 import Factory
 import Foundation
 import RegexBuilder
@@ -35,34 +36,11 @@ struct TrustRegistryUrlMapper: TrustRegistryUrlMapperProtocol {
 
   // MARK: Private
 
-  private static var didPartCharacters = OneOrMore(CharacterClass.anyOf(":").inverted)
-  private static let baseRegistryDomainReference = Reference(String.self)
-  private static var baseRegistryDomain = Capture(as: baseRegistryDomainReference) {
-    didPartCharacters
-    ".swiyu"
-    Optionally("-int")
-    ".admin.ch"
-  } transform: {
-    String($0)
-  }
-
-  private static var baseRegistryDidPattern = Regex {
-    Anchor.startOfLine
-    "did:tdw:"
-    didPartCharacters
-    ":"
-    baseRegistryDomain
-    OneOrMore {
-      ":"
-      didPartCharacters
-    }
-    Anchor.endOfLine
-  }
-
   @Injected(\.trustRegistryMapping) private var trustRegistryMapping: [String: String]
+  @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
 
   private func getBaseRegistryDomain(from did: String) throws -> String? {
-    guard let match = try Self.baseRegistryDidPattern.wholeMatch(in: did) else { return nil }
-    return match[Self.baseRegistryDomainReference]
+    let url = try didResolverHelper.getURL(from: did)
+    return url.host()
   }
 }

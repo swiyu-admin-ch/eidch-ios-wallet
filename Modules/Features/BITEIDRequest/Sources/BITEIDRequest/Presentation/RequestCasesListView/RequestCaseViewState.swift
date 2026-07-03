@@ -75,7 +75,7 @@ public enum RequestCaseViewState: Identifiable, Hashable {
     case .issuing:
       self = try .issuing(IssuingStateViewModel(requestCase: requestCase))
     case .cancelled:
-      self = try .cancelled(CancelledStateViewModel(requestCase: requestCase))
+      self = try .cancelled(CancelledStateViewModel(requestCase: requestCase, delegate: delegate))
     case .unknown:
       throw RequestCaseViewStateError.unsupportedState
     }

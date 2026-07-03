@@ -28,7 +28,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
   func testValidate_count_success() async {
     _ = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
-    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferCallsCount, 1)
+    XCTAssertEqual(jwsValidator.validateActivationBufferCallsCount, 1)
   }
 
   func testValidate_unsupportedAlgorithm_returnsFalse() async {
@@ -37,13 +37,8 @@ final class KeyAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_incorrectKid_returnsFalse() async {
-    let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleInvalidKid)
-
-    XCTAssertFalse(result)
-  }
-
   func testValidate_notTrustedDid_returnsFalse() async {
+    didResolverSpy.getDidFromReturnValue = "did:tdw:not-trusted"
     let result = await validator(keyPair: mockKeyPair, with: KeyAttestationJWT.Mock.sampleNotTrusted)
 
     XCTAssertFalse(result)
@@ -74,7 +69,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsValidatorThrows_returnsFalse() async {
-    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
+    jwsValidator.validateThrowableError = TestingError.error
 
     let result = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
@@ -82,7 +77,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsValidatorThrowsError_returnsFalse() async {
-    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
+    jwsValidator.validateThrowableError = TestingError.error
 
     let result = await validator(keyPair: mockKeyPair, with: mockKeyAttestation)
 
@@ -98,12 +93,14 @@ final class KeyAttestationValidatorTests: XCTestCase {
   private var mockKeyPair: VaultKeyPair!
   private var validator: KeyAttestationValidator!
   private var jwsValidator: JWSValidatorMock<KeyAttestationJWT>!
+  private var didResolverSpy: DidResolverHelperProtocolSpy!
   private let mockSupportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel] = [.iso18045High]
 
   private func createSuccessState() throws {
     let key = try ECPublicKey.getSecKey(curve: mockJWK.crv, x: mockJWK.x, y: mockJWK.y)!
     let keyPair = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
     mockKeyPair = keyPair
+    didResolverSpy.getDidFromReturnValue = "did:tdw:example.com"
   }
 
   private func registerMocks() {
@@ -111,12 +108,12 @@ final class KeyAttestationValidatorTests: XCTestCase {
     trustedDids = [ "did:tdw:example.com" ]
     supportedAlgorithms = [ .ES256 ]
     jwsValidator = JWSValidatorMock()
+    didResolverSpy = DidResolverHelperProtocolSpy()
 
     Container.shared.jwsValidator.register { self.jwsValidator }
+    Container.shared.didResolverHelper.register { self.didResolverSpy }
     Container.shared.attestationServiceTrustedDids.register { self.trustedDids }
     Container.shared.supportedKeyStorageSecurityLevel.register { self.mockSupportedKeyStorageSecurityLevel }
   }
 
 }
-
-// swiftlint: enable implicitly_unwrapped_optional force_unwrapping

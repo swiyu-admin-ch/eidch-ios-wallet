@@ -84,25 +84,6 @@ schemes:
       customArchiveName: swiyu-Abn
       revealArchiveInOrganizer: true
 
-  swiyu Abn Store:
-    build:
-      <<: *targets
-    run:
-      config: Abn Store (debug)
-      commandLineArguments: 
-        <<: *launch_arguments
-    test:
-      config: Abn Store (debug)
-      <<: *unit_test_plans
-    profile:
-      config: Abn Store (release)
-    analyze:
-      config: Abn Store (debug)
-    archive:
-      config: Abn Store (release)
-      customArchiveName: swiyu-Abn-Store
-      revealArchiveInOrganizer: true
-
   swiyu Prod:
     build:
       <<: *targets
@@ -120,6 +101,25 @@ schemes:
     archive:
       config: Prod (release)
       customArchiveName: swiyu-Prod
+      revealArchiveInOrganizer: true
+
+  swiyu Sandbox:
+    build:
+      <<: *targets
+    run:
+      config: Sandbox (debug)
+      commandLineArguments: 
+        <<: *launch_arguments
+    test:
+      config: Sandbox (debug)
+      <<: *unit_test_plans
+    profile:
+      config: Sandbox (release)
+    analyze:
+      config: Sandbox (debug)
+    archive:
+      config: Sandbox (release)
+      customArchiveName: swiyu-Sandbox
       revealArchiveInOrganizer: true
 
   swiyu-debugger:

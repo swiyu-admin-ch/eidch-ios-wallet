@@ -1,6 +1,7 @@
+import BITAnalytics
 import BITEIDRequestShared
 import BITL10n
-import BITNavigation
+import BITPushNotification
 import BITTheming
 import Factory
 import Foundation
@@ -11,7 +12,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-class ScanDocumentSubmitViewModel {
+final class ScanDocumentSubmitViewModel {
 
   // MARK: Lifecycle
 
@@ -19,12 +20,24 @@ class ScanDocumentSubmitViewModel {
     self.scanDocumentOutput = scanDocumentOutput
     scanImages = []
 
-    if let firstScanImage = scanDocumentOutput.files.first(where: { $0.fileName == Self.firstScanImageName }), let identityType = context.identityType {
-      scanImages.append(.image(key: Self.firstScanKey, value: firstScanImage.data, accessibilityLabel: L10n.tkEidRequestScanDocumentSubmitFirstScanImageAlt(identityType.document)))
+    if let firstScanImage = scanDocumentOutput.files.first(where: { $0.fileName == Self.firstScanImageName }) {
+      scanImages.append(.image(
+        ScanResultEntryImage(
+          key: Self.firstScanKey,
+          value: firstScanImage.data,
+          side: .recto,
+          uiOrientation: scanDocumentOutput.scanningOrientiations[.recto],
+          accessibilityLabel: L10n.tkEidRequestScanDocumentSubmitFirstScanImageAlt)))
     }
 
-    if let secondScanImage = scanDocumentOutput.files.first(where: { $0.fileName == Self.secondScanImageName }), let identityType = context.identityType {
-      scanImages.append(.image(key: Self.secondScanKey, value: secondScanImage.data, accessibilityLabel: L10n.tkEidRequestScanDocumentSubmitSecondScanImageAlt(identityType.document)))
+    if let secondScanImage = scanDocumentOutput.files.first(where: { $0.fileName == Self.secondScanImageName }) {
+      scanImages.append(.image(
+        ScanResultEntryImage(
+          key: Self.secondScanKey,
+          value: secondScanImage.data,
+          side: .verso,
+          uiOrientation: scanDocumentOutput.scanningOrientiations[.verso],
+          accessibilityLabel: L10n.tkEidRequestScanDocumentSubmitSecondScanImageAlt)))
     }
   }
 
@@ -35,6 +48,51 @@ class ScanDocumentSubmitViewModel {
   var destination: EIDRequestDestinations?
 
   func submit() async {
+    if context.caseId != nil, context.autoVerificationResponse != nil {
+      return await continueAutoVerification()
+    }
+
+    await continueEIDRequest()
+  }
+
+  func displayScanImageOverview(_ image: ScanResultEntryImage) {
+    let fileName: String = switch image.side {
+    case .recto: Self.firstFullFrameScanImageName
+    case .verso: Self.secondFullFrameScanImageName
+    }
+
+    guard let fullFrameScanImage = scanDocumentOutput.files.first(where: { $0.fileName == fileName }) else { return }
+
+    destination = .scanDocumentImageOverview(image: ScanResultEntryImage(
+      key: image.key,
+      value: fullFrameScanImage.data,
+      side: image.side,
+      uiOrientation: image.uiOrientation,
+      accessibilityLabel: image.accessibilityLabel))
+  }
+
+  // MARK: Private
+
+  private static let firstScanImageName = "firstImage.png"
+  private static let secondScanImageName = "secondImage.png"
+  private static let firstFullFrameScanImageName = "fullFrameFirstPage.png"
+  private static let secondFullFrameScanImageName = "fullFrameSecondPage.png"
+
+  private static let firstScanKey = L10n.tkEidRequestScanDocumentSubmitFirstScanImageTitle
+  private static let secondScanKey = L10n.tkEidRequestScanDocumentSubmitSecondScanImageTitle
+
+  private let scanDocumentOutput: ScanDocumentOutput
+  private let minimumDelayInSeconds: TimeInterval = 2.0
+
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context: EIDRequestContext
+  @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @ObservationIgnored @Injected(\.applyEIDRequestUseCase) private var applyEIDRequestUseCase: ApplyEIDRequestUseCaseProtocol
+  @ObservationIgnored @Injected(\.enablePushNotificationsUseCase) private var enablePushNotificationsUseCase: EnablePushNotificationsUseCaseProtocol
+  @ObservationIgnored @Injected(\.compareScanDocumentOutputUseCase) private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocol
+  @ObservationIgnored @Injected(\.updateEIDRequestCaseFilesUseCase) private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocol
+  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator: EIDRequestFlowCoordinatorProtocol
+
+  private func continueEIDRequest() async {
     do {
       let startTime = Date()
       let requestCase = try await applyEIDRequestUseCase(
@@ -43,24 +101,23 @@ class ScanDocumentSubmitViewModel {
 
       await applyMinimumDelay(startTime: startTime)
 
-      guard requestCase.state != nil else {
+      guard
+        requestCase.state != nil,
+        let destination = try await coordinator.getNextDestination(for: requestCase)
+      else {
         return close()
       }
 
-      let viewState = try RequestCaseViewState(requestCase)
-      context.caseId = requestCase.id
-
-      if !viewState.isLegalRepresentantConsentVerified {
-        return destination = .legalRepresentantConsent(caseId: requestCase.id)
+      // Register push token here as permission is already granted so we do not go to the PushPermissionView
+      switch destination {
+      case .legalRepresentantConsent,
+           .queueInformation,
+           .walletPairing:
+        try await enablePushNotificationsUseCase(for: requestCase.id)
+      default: break
       }
 
-      switch viewState {
-      case .inQueue(let state):
-        destination = .queueInformation(state.onlineSessionStartOpenAt)
-      case .readyForOnlineSession:
-        destination = .walletPairing
-      default: close()
-      }
+      self.destination = destination
     } catch {
       destination = .error(ErrorDataset(
         primary: L10n.tkEidRequestSubmitErrorPrimary,
@@ -76,20 +133,34 @@ class ScanDocumentSubmitViewModel {
     }
   }
 
-  // MARK: Private
+  private func continueAutoVerification() async {
+    guard
+      let caseId = context.caseId,
+      let autoVerificationResponse = context.autoVerificationResponse
+    else {
+      return
+    }
 
-  private static let firstScanImageName = "firstImage.png"
-  private static let secondScanImageName = "secondImage.png"
+    guard await compareScanDocumentOutputUseCase(for: caseId, with: scanDocumentOutput) else {
+      return destination = .error(.ScanDocument.wrongDocument)
+    }
 
-  private static let firstScanKey = L10n.tkEidRequestScanDocumentSubmitFirstScanImageTitle
-  private static let secondScanKey = L10n.tkEidRequestScanDocumentSubmitSecondScanImageTitle
+    do {
+      try await updateEIDRequestCaseFilesUseCase(for: caseId, scanDocumentOutput: scanDocumentOutput)
+      destination = autoVerificationResponse.isDocumentVideoRecordingRequired ? .recordDocumentInformation : .avIntroSelfieVideo
+    } catch {
+      handleAutoVerificationError(error)
+    }
+  }
 
-  private let scanDocumentOutput: ScanDocumentOutput
-  private let minimumDelayInSeconds: TimeInterval = 2.0
+  private func handleAutoVerificationError(_ error: Error) {
+    analytics.log(error)
+    destination = .error(ErrorDataset.retry(error, retryAutoVerification))
+  }
 
-  @ObservationIgnored @Injected(\.eidRequestContext) private var context
-  @ObservationIgnored @Injected(\.applyEIDRequestUseCase) private var applyEIDRequestUseCase
-  @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  private func retryAutoVerification(_ navigator: Navigator) {
+    navigator.returnToCheckpoint(EIDRequestCheckpoints.scanDocumentInformation)
+  }
 
   private func openHelp() {
     guard let url = URL(string: L10n.tkEidRequestSubmitErrorTertiaryLink) else { return }
@@ -103,7 +174,7 @@ class ScanDocumentSubmitViewModel {
     let remainingDelay = calculateRemainingDelay(elapsedTime: elapsedTime)
 
     if remainingDelay > 0 {
-      await sleepForDuration(remainingDelay)
+      try? await Task.sleep(seconds: remainingDelay)
     }
   }
 
@@ -113,11 +184,6 @@ class ScanDocumentSubmitViewModel {
 
   private func calculateRemainingDelay(elapsedTime: TimeInterval) -> TimeInterval {
     max(0, minimumDelayInSeconds - elapsedTime)
-  }
-
-  private func sleepForDuration(_ duration: TimeInterval) async {
-    let nanoseconds = UInt64(duration * 1_000_000_000)
-    try? await Task.sleep(nanoseconds: nanoseconds)
   }
 
   private func close() {

@@ -104,8 +104,16 @@ extension BiometricsView {
   }
 
   private func footer() -> some View {
-    DefaultInformationFooterView(
-      primaryButtonLabel: viewModel.hasBiometricAuth ? L10n.tkOnboardingBiometricsPermissionButtonPrimary : L10n.tkOnboardingBiometricsPermissionDisabledButtonPrimary,
+    let primaryLabel = viewModel.hasBiometricAuth ?
+      L10n.tkOnboardingBiometricsPermissionButtonPrimary :
+      L10n.tkOnboardingBiometricsPermissionDisabledButtonPrimary
+    let primaryAlt = viewModel.hasBiometricAuth ? nil : primaryLabel
+    let primaryHint = viewModel.hasBiometricAuth ? nil : L10n.tkGlobalExternalLinkHint
+
+    return DefaultInformationFooterView(
+      primaryButtonLabel: primaryLabel,
+      primaryButtonLabelAlt: primaryAlt,
+      primaryButtonLabelHint: primaryHint,
       primaryButtonAction: { Task { viewModel.hasBiometricAuth ? await viewModel.registerBiometrics() : viewModel.openSettings() } },
       secondaryButtonLabel: L10n.tkGlobalNo,
       secondaryButtonAction: viewModel.skip)

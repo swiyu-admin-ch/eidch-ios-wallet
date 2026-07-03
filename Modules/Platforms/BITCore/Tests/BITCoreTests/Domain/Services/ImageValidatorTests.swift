@@ -11,7 +11,6 @@ final class ImageValidatorTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    Container.shared.imageValidatorEnabled.register { true }
     Container.shared.supportedImageType.register { self.supportedImageTypes }
     validator = ImageValidator()
   }
@@ -46,13 +45,6 @@ final class ImageValidatorTests: XCTestCase {
     XCTAssertThrowsError(try validator.validate(base64Image: mockPngBase64, against: .imageJpg)) { error in
       XCTAssertEqual(error as? ImageValidatorError, .mismatchingImageFormat)
     }
-  }
-
-  func testValidate_imageMagicNumberCheckDisabled_doesNotThrowForMismatchedFormat() throws {
-    Container.shared.imageValidatorEnabled.register { false }
-    validator = ImageValidator()
-
-    XCTAssertNoThrow(try validator.validate(base64Image: mockPngBase64, against: .imageJpg))
   }
 
   // MARK: Private

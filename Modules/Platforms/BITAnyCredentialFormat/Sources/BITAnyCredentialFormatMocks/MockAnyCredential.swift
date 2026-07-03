@@ -1,5 +1,6 @@
 import Foundation
 @testable import BITAnyCredentialFormat
+@testable import BITClaimsPathPointer
 @testable import BITCore
 
 /// VcSdJwt mocks represented as an AnyCredential type created from the CredentialPayload.Mock.default value
@@ -21,10 +22,6 @@ public struct MockAnyCredential: AnyCredential {
     String(data: payload, encoding: .utf8) ?? UUID().uuidString
   }
 
-  public var claims: [any AnyClaim] {
-    [] // will be decoded by the VcSdJwtDecoder in the VcSdJwt init
-  }
-
   public var status: (any BITAnyCredentialFormat.AnyStatus)? {
     nil
   }
@@ -43,6 +40,10 @@ public struct MockAnyCredential: AnyCredential {
 
   public func getClaimsJSON(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> JSON {
     [:]
+  }
+
+  public func getPresentingPaths(for paths: [ClaimsPathPointer]) -> [ClaimsPathPointer] {
+    []
   }
 
   // MARK: Internal

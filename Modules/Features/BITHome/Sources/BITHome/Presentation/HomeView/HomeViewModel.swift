@@ -16,7 +16,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-class HomeViewModel {
+final class HomeViewModel {
 
   // MARK: Lifecycle
 
@@ -66,6 +66,7 @@ class HomeViewModel {
   @ObservationIgnored @Injected(\.refreshCredentialsUseCase) private var refreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol
   @ObservationIgnored @Injected(\.isOTPEnabledUseCase) private var isOTPEnabledUseCase: IsOTPEnabledUseCaseProtocol
   @ObservationIgnored @Injected(\.requestCasePollingManager) private var requestCasePollingManager: RequestCasePollingProtocol
+  @ObservationIgnored @Injected(\.updatePushTokenUseCase) private var updatePushTokenUseCase: UpdatePushTokenUseCaseProtocol
 
   private func fetchData() async {
     await withTaskGroup(of: Void.self) { group in
@@ -213,6 +214,7 @@ extension HomeViewModel {
       updateView(with: temporaryRequestCases)
 
       await refreshRequestCases()
+      await checkPushTokenValidity()
     } catch {}
   }
 
@@ -233,6 +235,10 @@ extension HomeViewModel {
         .compactMap { try? RequestCaseViewState($0, delegate: self) }
     }
   }
+
+  private func checkPushTokenValidity() async {
+    try? await updatePushTokenUseCase()
+  }
 }
 
 // MARK: RequestCaseViewStateDelegate
@@ -241,6 +247,7 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
   func didDeleteRequestCase() {
     Task {
       await getEIDRequestCases()
+      await refreshCredentials()
     }
   }
 
@@ -274,9 +281,6 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
 extension HomeViewModel {
   func didSaveCredential() {
     toast = Toast(L10n.tkHomeNotificationCredentialAccepted)
-    Task {
-      await fetchCredentials()
-    }
   }
 
   func didDeclineCredential() {
@@ -289,6 +293,10 @@ extension HomeViewModel {
 extension HomeViewModel {
   func didDeleteCredential() {
     toast = Toast(L10n.tkHomeNotificationCredentialDeleted)
+
+    Task {
+      await refreshCredentials()
+    }
   }
 }
 

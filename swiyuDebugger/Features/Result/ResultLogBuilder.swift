@@ -111,7 +111,7 @@ struct ResultLogBuilder {
       }
       lines.append("")
       lines.append("Claims:")
-      lines.append(contentsOf: claimClusterLogLines(verifiableCredential.clusters, indent: ""))
+      lines.append(contentsOf: claimClusterLogLines(verifiableCredential.resolvedClusters, indent: ""))
     } else if let deferredCredential = credential as? DeferredCredential {
       lines.append("")
       lines.append("Deferred credential:")

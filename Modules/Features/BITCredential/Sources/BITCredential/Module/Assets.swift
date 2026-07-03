@@ -22,10 +22,13 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 enum Assets {
+  static let batchCredential = ImageAsset(name: "BatchCredential")
   static let closeAlt = ImageAsset(name: "CloseAlt")
   static let credentialDemoPattern = ImageAsset(name: "CredentialDemoPattern")
   static let credentialDemoPatternSmall = ImageAsset(name: "CredentialDemoPatternSmall")
   static let credentialFallbackBackground = ImageAsset(name: "CredentialFallbackBackground")
+  static let credentialUpdate = ImageAsset(name: "CredentialUpdate")
+  static let defaultCredential = ImageAsset(name: "DefaultCredential")
   static let deleteCredential = ImageAsset(name: "DeleteCredential")
   static let legitimateBadge = ImageAsset(name: "LegitimateBadge")
   static let menu = ImageAsset(name: "Menu")

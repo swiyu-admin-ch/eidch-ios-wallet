@@ -18,7 +18,9 @@ extension CredentialClaimClusterEntity {
   // MARK: Internal
 
   func setValues(from cluster: CredentialClaimCluster) {
+    path = cluster.path.stringValue
     order = Int16(cluster.order)
+    isSensitive = cluster.isSensitive
   }
 
 }

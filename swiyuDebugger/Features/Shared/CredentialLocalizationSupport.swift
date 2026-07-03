@@ -102,12 +102,11 @@ enum CredentialLocalizationSupport {
     colorScheme: String)
     -> CredentialDisplay?
   {
-    let claims = credential.clusters.flatMap(\.claims)
     let displays = credential.displays
     let preferredDisplays = selectedLanguage
       .map { displays.findDisplaysWithFallback(preferredLanguageCodes: [$0]) }
       ?? displays.findDisplaysWithFallback()
     let display = preferredDisplays.first(where: { $0.theme == colorScheme }) ?? preferredDisplays.first
-    return display?.resolveClaimTemplate(with: claims)
+    return display?.resolvePathTemplate(with: credential.resolvedClusters)
   }
 }

@@ -50,7 +50,7 @@ extension VersionEnforcementEndpoint: TargetType {
   var sampleData: Data {
     switch self {
     case .configuration:
-      VersionEnforcement.Mock.sampleData
+      VersionEnforcement.Response.Mock.sampleData
     }
   }
   #endif

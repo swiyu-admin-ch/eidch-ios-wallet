@@ -1,21 +1,16 @@
-import Alamofire
-import BITActivity
 import BITActivityDetail
 import BITAnalytics
 import BITAppAuth
 import BITCredential
-import BITDataStore
 import BITEIDRequest
-import BITHome
 import BITInvitation
-import BITLocalAuthentication
 import BITNetworking
 import BITOTP
 import BITPresentation
+import BITPushNotification
 import BITSettings
 import BITTheming
 import Factory
-import LocalAuthentication
 import NavigatorUI
 import UIKit
 
@@ -50,16 +45,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
   }
 
+  func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    let pushDeviceToken = deviceToken.hexString
+
+    Task {
+      await pushDataSource.setPushToken(pushDeviceToken)
+    }
+  }
+
+  func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
+    #warning("TODO: Implement in a follow-up ticket")
+  }
+
   // MARK: Private
 
-  private let analytics = Container.shared.analytics()
+  @Injected(\.analytics) private var analytics: AnalyticsProtocol
+  @Injected(\.pushDataSource) private var pushDataSource: PushDataSourceProtocol
+  @Injected(\.unlockWalletUseCase) private var unlockWalletUseCase: UnlockWalletUseCaseProtocol
+  @Injected(\.registerPinCodeUseCase) private var registerPinCodeUseCase: RegisterPinCodeUseCaseProtocol
+  @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
 }
 
 extension AppDelegate {
   func setupAdditionalConfigurationsIfNeeded() {
     #if DEBUG
     if ProcessInfo().arguments.contains("-disable-onboarding") {
-      try? Container.shared.registerPinCodeUseCase().execute(pinCode: "000000")
+      try? registerPinCodeUseCase.execute(pinCode: "000000")
       UserDefaults.standard.set(false, forKey: "rootOnboardingIsEnabled")
     }
     #else
@@ -80,8 +91,8 @@ extension AppDelegate {
 
   private func configureKeychain() {
     guard UserDefaults.standard.bool(forKey: "rootOnboardingIsEnabled") else { return }
-    try? Container.shared.resetLoginAttemptCounterUseCase().execute()
-    try? Container.shared.unlockWalletUseCase().execute()
+    try? resetLoginAttemptCounterUseCase.execute()
+    try? unlockWalletUseCase.execute()
   }
 
   private func configureUserDefaults() {
@@ -105,7 +116,6 @@ extension AppDelegate {
       DynatraceProvider(),
     ]
 
-    let analytics = Container.shared.analytics()
     for provider in providers {
       analytics.register(provider)
     }

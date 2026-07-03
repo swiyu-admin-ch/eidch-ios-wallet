@@ -45,7 +45,7 @@ setup-ci: .install-mise-github-action .install-mise-tools
 # Configure mise settings
 .configure-mise:
 	@printf "$(GREEN)=> Configuring mise$(RESET)\n"
-	mise settings experimental=true & mise generate git-pre-commit --write --task=pre-commit
+	mise settings experimental=true & mise generate git-pre-commit --write --task=quality:pre-commit
 
 # Install tools defined in mise configuration
 .install-mise-tools:
@@ -56,7 +56,7 @@ setup-ci: .install-mise-github-action .install-mise-tools
 
 .install-git-hooks:
 	@printf "$(GREEN)=> Configuring git hooks$(RESET)\n"
-	mise install-git-hooks
+	mise setup:git-hooks
 
 # List installed tools
 .list-tools:
@@ -78,15 +78,15 @@ regenerate: .regenerate-project
 regen: regenerate
 
 .build: 
-	mise build-project
+	mise project:build
 
 .warm: 
 	@printf "$(GREEN)=> Warming project$(RESET)\n"
-	mise xcodegen
+	mise project:xcodegen
 .generate-project:
-	mise generate-project
+	mise project:generate
 .regenerate-project:
-	mise regenerate-project
+	mise project:regenerate
 
 # Help target - only public target besides setup
 help:

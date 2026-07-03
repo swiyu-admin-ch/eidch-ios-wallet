@@ -5,8 +5,13 @@ extension Image {
 
   // MARK: Lifecycle
 
-  public init?(data: Data) {
-    guard let image = UIImage(data: data) else { return nil }
+  public init?(data: Data, rotation: Angle? = nil) {
+    guard var image = UIImage(data: data) else { return nil }
+
+    if let rotation, let rotatedImage = image.rotated(by: rotation) {
+      image = rotatedImage
+    }
+
     self = Image(uiImage: image)
   }
 

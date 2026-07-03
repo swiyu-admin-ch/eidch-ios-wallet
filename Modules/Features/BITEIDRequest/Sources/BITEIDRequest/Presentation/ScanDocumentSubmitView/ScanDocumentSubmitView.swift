@@ -20,7 +20,7 @@ struct ScanDocumentSubmitView: View {
         .ignoresSafeArea()
       List {
         Section {
-          ScanResultListView(entries: viewModel.scanImages)
+          ScanResultListView(entries: viewModel.scanImages, buttonAction: viewModel.displayScanImageOverview)
         }
         .listRowInsets(EdgeInsets())
         .textCase(nil)

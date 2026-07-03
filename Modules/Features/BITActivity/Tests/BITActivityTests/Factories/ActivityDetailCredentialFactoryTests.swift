@@ -3,6 +3,7 @@ import Factory
 import RealmSwift
 import XCTest
 @testable import BITActivity
+@testable import BITClaimsPathPointer
 @testable import BITEntities
 
 final class ActivityDetailCredentialFactoryTests: XCTestCase {
@@ -78,48 +79,44 @@ final class ActivityDetailCredentialFactoryTests: XCTestCase {
     XCTAssertEqual(result.clusters[1].claims.first?.id, claimId3)
   }
 
-  func testCallAsFunction_resolveDisplayWithMissingClaim_keepsPlaceholderEmpty() throws {
-    let credential = try createCredential(claims: [], summary: "Value: {{[\"key\"]}}")
+  func testCallAsFunction_credentialDisplayWithClaimTemplate_returnsResolvedSummary() throws {
+    let credential = try createCredential(claims: [claim], summary: "Value: {{\(Self.claimPath.stringValue)}}")
 
     let result = factory(credential, claimIds: [])
 
-    XCTAssertEqual(result.displays.first?.summary, "Value: ")
+    XCTAssertEqual(result.displays.first?.summary, "Value: \(Self.value)")
   }
 
-  func testCallAsFunction_resolveDisplayWithSingleClaim_returnsResolvedSummary() throws {
-    let claim = try createClaim(path: "[\"key\"]", value: "value")
-    let credential = try createCredential(claims: [claim], summary: "Value: {{[\"key\"]}}")
+  func testCallAsFunction_clusterDisplayWithClaimTemplate_returnsResolvedName() throws {
+    let cluster = try createCluster(claims: [claim], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{\(Self.claimPath.stringValue)}}", createParent: false)])
+    let credential = try createCredential(clusters: [cluster])
 
-    let result = factory(credential, claimIds: [])
+    let result = factory(credential, claimIds: [Self.claimId])
 
-    XCTAssertEqual(result.displays.first?.summary, "Value: value")
+    XCTAssertEqual(result.clusters.first?.displays.first?.name, "Value: \(Self.value)")
   }
 
-  func testCallAsFunction_resolveDisplayWithMultipleClaims_returnsResolvedSummary() throws {
-    let claim1 = try createClaim(path: "[\"key1\"]", value: "value1")
-    let claim2 = try createClaim(path: "[\"key2\"]", value: "value2")
-    let credential = try createCredential(claims: [claim1, claim2], summary: "Value: {{[\"key1\"]}} {{[\"key2\"]}}")
+  func testCallAsFunction_nestedClusterDisplayWithClaimTemplate_returnsResolvedName() throws {
+    let nestedCluster = try createCluster(claims: [claim], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{\(Self.claimPath.stringValue)}}", createParent: false)])
+    let cluster = try createCluster(childClusters: [nestedCluster])
+    let credential = try createCredential(clusters: [cluster])
 
-    let result = factory(credential, claimIds: [])
+    let result = factory(credential, claimIds: [Self.claimId])
 
-    XCTAssertEqual(result.displays.first?.summary, "Value: value1 value2")
+    XCTAssertEqual(result.clusters.first?.childClusters.first?.displays.first?.name, "Value: \(Self.value)")
   }
 
-  func testCallAsFunction_resolveDisplayWithNullClaim_returnsSummaryWithFallback() throws {
-    let claim = try createClaim(path: "[\"key\"]", value: nil)
-    let credential = try createCredential(claims: [claim], summary: "Value: {{[\"key\"]}}")
+  func testCallAsFunction_indexedClusterDisplayWithClaimTemplate_returnsResolvedName() throws {
+    let claimId = UUID()
+    let claim1 = try createClaim(id: claimId, path: "[0, \"key\"]", value: "value1")
+    let claim2 = try createClaim(path: "[1, \"key\"]", value: "value2")
+    let cluster1 = try createCluster(path: [.index(0)], claims: [claim1], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{[null, \"key\"]}}", createParent: false)])
+    let cluster2 = try createCluster(path: [.index(1)], claims: [claim2], displays: [])
+    let credential = try createCredential(clusters: [cluster1, cluster2])
 
-    let result = factory(credential, claimIds: [])
+    let result = factory(credential, claimIds: [claimId])
 
-    XCTAssertEqual(result.displays.first?.summary, "Value: –")
-  }
-
-  func testResolveTemplate_withNoTemplate_returnsSummaryAsIs() throws {
-    let credential = try createCredential(claims: [], summary: "summary")
-
-    let result = factory(credential, claimIds: [])
-
-    XCTAssertEqual(result.displays.first?.summary, "summary")
+    XCTAssertEqual(result.clusters.first?.displays.first?.name, "Value: value1")
   }
 
   func testCallAsFunction_noVerifiableCredential_returnsCredentialWithDisplays() throws {
@@ -135,13 +132,21 @@ final class ActivityDetailCredentialFactoryTests: XCTestCase {
 
   // MARK: Private
 
+  private static let claimId = UUID()
+  private static let key = "key"
+  private static let claimPath: ClaimsPathPointer = [.string(key)]
+  private static let value = "value"
+
   private let nameMock = "issuer"
   private let localeMock = "locale"
   private let didMock = "did:tdw:mock:identifier-reg.trust-infra.swiyu.admin.ch:example"
   private var displayMock: CredentialDisplayEntity!
   private var otherDisplayMock: CredentialDisplayEntity!
-
   private var factory: ActivityDetailCredentialFactory!
+
+  private var claim: CredentialClaimEntity {
+    try! createClaim(id: Self.claimId, path: Self.claimPath.stringValue, value: Self.value)
+  }
 
   private func registerMocks() {
     Container.shared.configureInMemoryDataStore()
@@ -151,18 +156,22 @@ final class ActivityDetailCredentialFactoryTests: XCTestCase {
     otherDisplayMock = try! CredentialDisplayEntity.Mock.create(locale: "other", createParent: false)
   }
 
-  private func createClaim(id: UUID = UUID(), path: String = "[\"key\"]", value: String? = nil) throws -> CredentialClaimEntity {
+  private func createClaim(id: UUID = claimId, path: String = claimPath.stringValue, value: String? = nil) throws -> CredentialClaimEntity {
     try CredentialClaimEntity.Mock.create(id: id, path: path, value: value, createParent: false)
   }
 
-  private func createCluster(claims: [CredentialClaimEntity] = [], childClusters: [CredentialClaimClusterEntity] = []) throws -> CredentialClaimClusterEntity {
-    try CredentialClaimClusterEntity.Mock.create(claims: claims, childClusters: childClusters, createParent: false)
+  private func createCluster(path: ClaimsPathPointer = [], claims: [CredentialClaimEntity] = [], childClusters: [CredentialClaimClusterEntity] = [], displays: [CredentialClaimClusterDisplayEntity] = []) throws -> CredentialClaimClusterEntity {
+    try CredentialClaimClusterEntity.Mock.create(path: path.stringValue, claims: claims, childClusters: childClusters, displays: displays, createParent: false)
   }
 
-  private func createCredential(claims: [CredentialClaimEntity], summary: String) throws -> CredentialEntity {
-    let cluster = try createCluster(claims: claims)
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(clusters: [cluster], createParent: false)
+  private func createCredential(clusters: [CredentialClaimClusterEntity], summary: String = "summary") throws -> CredentialEntity {
+    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(clusters: clusters, createParent: false)
     let display = try CredentialDisplayEntity.Mock.create(locale: localeMock, summary: summary, createParent: false)
     return try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential, displays: [display])
+  }
+
+  private func createCredential(claims: [CredentialClaimEntity], summary: String = "summary") throws -> CredentialEntity {
+    let cluster = try createCluster(claims: claims)
+    return try createCredential(clusters: [cluster], summary: summary)
   }
 }

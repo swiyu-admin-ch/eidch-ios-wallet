@@ -16,8 +16,8 @@ final class ImprintViewModelTests: XCTestCase {
   func test_init() {
     let version = "0.0.0"
     let buildNumber = 1234
-    getAppVersionUseCase.executeReturnValue = AppVersion(version)
-    getBuildNumberUseCase.executeReturnValue = buildNumber
+    getAppVersionUseCase.callAsFunctionReturnValue = Version(version)
+    getBuildNumberUseCase.callAsFunctionReturnValue = buildNumber
 
     viewModel = ImprintViewModel(getAppVersionUseCase: getAppVersionUseCase, getBuildNumberUseCase: getBuildNumberUseCase)
 
@@ -27,8 +27,8 @@ final class ImprintViewModelTests: XCTestCase {
 
   func test_appVersionFailure() {
     let buildNumber = 1234
-    getAppVersionUseCase.executeThrowableError = TestingError.error
-    getBuildNumberUseCase.executeReturnValue = buildNumber
+    getAppVersionUseCase.callAsFunctionThrowableError = TestingError.error
+    getBuildNumberUseCase.callAsFunctionReturnValue = buildNumber
 
     viewModel = ImprintViewModel(getAppVersionUseCase: getAppVersionUseCase, getBuildNumberUseCase: getBuildNumberUseCase)
 
@@ -38,8 +38,8 @@ final class ImprintViewModelTests: XCTestCase {
 
   func test_buildNumberFailure() {
     let version = "1234"
-    getAppVersionUseCase.executeReturnValue = AppVersion(version)
-    getBuildNumberUseCase.executeThrowableError = TestingError.error
+    getAppVersionUseCase.callAsFunctionReturnValue = Version(version)
+    getBuildNumberUseCase.callAsFunctionThrowableError = TestingError.error
 
     viewModel = ImprintViewModel(getAppVersionUseCase: getAppVersionUseCase, getBuildNumberUseCase: getBuildNumberUseCase)
 

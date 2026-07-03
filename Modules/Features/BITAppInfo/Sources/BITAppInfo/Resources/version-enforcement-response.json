@@ -1,27 +1,35 @@
-[{
-    "id":"FA2115DD-FBD4-4967-9E56-DE1C9B7F198A",
-    "platform":"ios",
-    "priority":"high",
-    "created":"2024-06-28T08:00+00:00",
-    "criteria":{
-       "minAppVersionIncluded":"0.2.1",
-       "maxAppVersionExcluded":"0.3.0"
-    },
-    "displays":[
-       {
-          "title":"Updated forced",
-          "body":"For security reason, you are forced to update to the latest version available in the AppStore.",
-          "locale":"en-US"
-       },
-       {
-          "title":"Mise à jour forcée",
-          "body":"Pour des raisons de sécurité, vous êtes obligé de mettre à jour la dernière version disponible dans l'AppStore.",
-          "locale":"fr-CH"
-       },
-       {
-          "title":"Aktualisiert gezwungen",
-          "body":"Aus Sicherheitsgründen sind Sie gezwungen, auf die neueste im AppStore verfügbare Version zu aktualisieren.",
-          "locale":"de-CH"
-       }
-    ]
-}]
+{
+  "app_id": "ch.admin.foitt.swiyu",
+  "default_message": [
+    {
+      "body": "Please update the application to continue using the service.",
+      "locale": "en-US",
+      "title": "Update Required"
+    }
+  ],
+  "default_support_lifetime_days": 90,
+  "device_blacklist": [],
+  "minimum_os_version": "16.0",
+  "platform": "ios",
+  "store_url": "https://apps.apple.com/ch/app/swiyu/id6737259614",
+  "versions": [
+    {
+      "message": [
+        {
+          "body": "This version is no longer supported. Please update to continue.",
+          "locale": "en-US",
+          "title": "Update Required"
+        },
+        {
+          "body": "Diese Version wird nicht mehr unterstützt. Bitte aktualisieren Sie die App.",
+          "locale": "de-CH",
+          "title": "Aktualisierung erforderlich"
+        }
+      ],
+      "release_date": "2025-12-05",
+      "support_guaranteed_until": "2026-08-31",
+      "update_type": "forced",
+      "version": "1.13.1"
+    }
+  ]
+}

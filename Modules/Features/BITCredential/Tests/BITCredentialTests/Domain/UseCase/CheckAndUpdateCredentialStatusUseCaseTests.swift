@@ -177,6 +177,17 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
     XCTAssertFalse(credentialRepository.updateVerifiableCredentialCalled)
   }
 
+  func testCheckCredentialStatus_businessExpired() async throws {
+    setupVcSdJWSCredential()
+    setStatus(.valid, on: &mockCredential)
+
+    let credential = try await useCase.execute(for: mockCredential)
+
+    XCTAssertEqual(status(of: credential), .businessExpired)
+    XCTAssertTrue(credentialRepository.updateVerifiableCredentialCalled)
+    XCTAssertTrue(validatorSpy.validateIssuerCalled)
+  }
+
   func testCheckCredentialStatusBatch() async throws {
     setStatus(.unknown, on: &mockCredential)
     success(status: .valid)
@@ -260,6 +271,22 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
   private func setStatus(_ status: CredentialStatus, on credential: inout VerifiableCredential) {
     let index = try! XCTUnwrap(credential.bundleItems.firstIndex(where: { $0.id == credential.nextPresentableBundleItemId }))
     credential.bundleItems[index].status = status
+  }
+
+  private func setupVcSdJWSCredential() {
+    let bundleItem = BundleItem(payload: CredentialPayload.Mock.default)
+    mockCredential = VerifiableCredential(
+      progressionState: .accepted,
+      bundleItems: [bundleItem],
+      nextPresentableBundleItemId: bundleItem.id,
+      format: "vc+sd-jwt",
+      issuerUrl: issuerUrlMock,
+      issuer: Self.issuer,
+      authentication: CredentialAuthentication(accessToken: "accessToken"))
+
+    createAnyCredentialSpy.executeFromFormatClosure = { _, _ in VcSdJWS.Mock.sampleBusinessExpired }
+    validatorSpy.validateIssuerClosure = { _, _ in .valid }
+    credentialRepository.updateVerifiableCredentialClosure = { credential in credential }
   }
 
 }

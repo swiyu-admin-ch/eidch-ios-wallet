@@ -1,5 +1,6 @@
 import BITAVWrapper
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -66,7 +67,7 @@ struct RecordDocumentView: View {
 
   @State private var size = CGSize.zero
   @State private var rotationAngle: Double = 0
-  @State private var currentDisplayState = RecordDocumentViewModel.ScanningState.recto
+  @State private var currentDisplayState = ScanningState.recto
   @State private var scale = 1.0
 
   @Injected(\.eidRequestFlowCoordinator) private var coordinator: EIDRequestFlowCoordinatorProtocol
@@ -157,7 +158,7 @@ extension RecordDocumentView {
   }
 
   private func recordButtonView() -> some View {
-    RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startRecordDocument, onTapRecord: viewModel.stopRecordDocument)
+    RecordingButton(state: $viewModel.recordingState, onTapInitial: viewModel.startRecordDocument, onTapRecord: viewModel.stopRecordDocument)
       .accessibilityLabel(viewModel.buttonStateAccessibilityLabel)
       .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
@@ -186,7 +187,7 @@ extension RecordDocumentView {
 
   private func close() {
     coordinator.cleanup()
-    navigator.dismiss()
+    navigator.returnToHomeSafely()
   }
 
 }

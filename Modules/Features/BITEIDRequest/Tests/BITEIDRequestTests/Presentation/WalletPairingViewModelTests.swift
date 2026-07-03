@@ -1,3 +1,4 @@
+import BITTheming
 import Factory
 import XCTest
 @testable import BITEIDRequest
@@ -34,7 +35,7 @@ final class WalletPairingViewModelTests: XCTestCase {
 
     await viewModel.primaryAction()
 
-    #warning("TODO: XCTAssert error case here when implemented")
+    assertError(EIDRequestError.missingCaseId)
   }
 
   func testPrimaryAction_startOnlineSessionThrowsError_routeToError() async {
@@ -42,7 +43,15 @@ final class WalletPairingViewModelTests: XCTestCase {
 
     await viewModel.primaryAction()
 
-    #warning("TODO: XCTAssert error case here")
+    assertError(TestingError.error)
+  }
+
+  func testPrimaryAction_pairWalletThrowsError_routeToError() async {
+    pairWalletUseCase.executeForThrowableError = TestingError.error
+
+    await viewModel.primaryAction()
+
+    assertError(TestingError.error)
   }
 
   func testSecondaryAction_success() async {
@@ -91,6 +100,14 @@ final class WalletPairingViewModelTests: XCTestCase {
   private var viewModel: WalletPairingViewModel!
   private var pairWalletUseCase: PairWalletUseCaseProtocolSpy!
   private var startOnlineSessionUseCase: StartOnlineSessionUseCaseProtocolSpy!
+
+  private func assertError(_ error: Error) {
+    if case .error(let dataset) = viewModel.destination {
+      XCTAssertEqual(dataset, ErrorDataset.retry(error) { _ in })
+    } else {
+      XCTFail("Expected .error destination")
+    }
+  }
 
   private func registerMocks() {
     context = EIDRequestContext()

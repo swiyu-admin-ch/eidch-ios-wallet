@@ -12,9 +12,10 @@ import Spyable
 public protocol CredentialRepositoryProcotol {
 
   func count() throws -> Int
-  func delete(_ id: UUID) async throws
+  func delete(_ id: UUID, deleteKeyPairs: Bool) async throws
   func get(id: UUID) async throws -> CredentialProtocol
   func getAll() async throws -> [any CredentialProtocol]
+  func getIssuanceSummary(id: UUID) async throws -> CredentialIssuanceSummary
 
   // MARK: Verifiable Credential
 
@@ -36,6 +37,12 @@ public protocol CredentialRepositoryProcotol {
   func getAllDeferredCredentials() async throws -> [DeferredCredential]
 }
 
+extension CredentialRepositoryProcotol {
+  public func delete(_ id: UUID) async throws {
+    try await delete(id, deleteKeyPairs: true)
+  }
+}
+
 // MARK: - CredentialRepositoryError
 
 enum CredentialRepositoryError: Error {
@@ -54,9 +61,19 @@ struct CredentialRepository: CredentialRepositoryProcotol {
     return try compute(entity)
   }
 
-  func delete(_ id: UUID) async throws {
+  func getIssuanceSummary(id: UUID) async throws -> CredentialIssuanceSummary {
     let entity = try await getEntity(id)
-    deleteAssociatedKeyPairs(for: entity)
+    guard let summary = CredentialIssuanceSummary(entity) else {
+      throw CredentialRepositoryError.unsupportedCredential
+    }
+    return summary
+  }
+
+  func delete(_ id: UUID, deleteKeyPairs: Bool = true) async throws {
+    let entity = try await getEntity(id)
+    if deleteKeyPairs {
+      deleteAssociatedKeyPairs(for: entity)
+    }
     try database.delete(entity)
   }
 
@@ -94,12 +111,20 @@ struct CredentialRepository: CredentialRepositoryProcotol {
   private func deleteAssociatedKeyPairs(for entity: CredentialEntity) {
     let verifiableKeyBindings = entity.verifiableCredential?.bundleItems.compactMap(\.keyBinding) ?? []
     let deferredKeyBindings = entity.deferredCredential.map { Array($0.keyBindings) } ?? []
+    let dpopBindings = entity.authentication?.dpopBinding.flatMap { [$0] } ?? []
 
     for keyBinding in verifiableKeyBindings + deferredKeyBindings {
       guard let algorithm = VaultAlgorithm(rawValue: keyBinding.algorithm) else {
         continue
       }
       try? keyManager.deleteKeyPair(withIdentifier: keyBinding.id.uuidString, algorithm: algorithm)
+    }
+
+    for dpopBinding in dpopBindings {
+      guard let algorithm = VaultAlgorithm(rawValue: dpopBinding.algorithm) else {
+        continue
+      }
+      try? keyManager.deleteKeyPair(withIdentifier: dpopBinding.id.uuidString, algorithm: algorithm)
     }
   }
 }

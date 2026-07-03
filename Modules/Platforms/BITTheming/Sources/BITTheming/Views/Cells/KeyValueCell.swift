@@ -12,18 +12,20 @@ public struct KeyValueCell<Content: View>: View {
     key: String,
     value: String,
     lineLimit: Int? = nil,
+    showClaimKey: Bool = true,
     @ViewBuilder trailingContent: @escaping () -> Content = { EmptyView() })
   {
     self.key = key
     self.value = value
     self.trailingContent = trailingContent
     self.lineLimit = lineLimit
+    self.showClaimKey = showClaimKey
   }
 
   // MARK: Public
 
   public var body: some View {
-    KeyValueCustomCell(key: key, trailingContent: trailingContent) {
+    KeyValueCustomCell(key: key, showClaimKey: showClaimKey, trailingContent: trailingContent) {
       Text(value)
         .font(.custom.body)
         .lineLimit(lineLimit)
@@ -38,6 +40,7 @@ public struct KeyValueCell<Content: View>: View {
   var value: String
   var trailingContent: () -> Content
   var lineLimit: Int? = 4
+  var showClaimKey: Bool
 }
 
 // MARK: - KeyValueCustomCell
@@ -48,10 +51,12 @@ public struct KeyValueCustomCell<Content: View, TrailingContent: View>: View {
 
   public init(
     key: String,
+    showClaimKey: Bool = true,
     @ViewBuilder trailingContent: () -> TrailingContent = { EmptyView() },
     @ViewBuilder _ content: () -> Content)
   {
     self.key = key
+    self.showClaimKey = showClaimKey
     self.content = content()
     self.trailingContent = trailingContent()
   }
@@ -61,9 +66,12 @@ public struct KeyValueCustomCell<Content: View, TrailingContent: View>: View {
   public var body: some View {
     HStack(alignment: .center, spacing: 0) {
       VStack(alignment: .leading, spacing: .x1) {
-        Text(key)
-          .font(.custom.caption1)
-          .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
+        if showClaimKey {
+          Text(key)
+            .font(.custom.caption1)
+            .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
+        }
+
         content
       }
       Spacer()
@@ -78,6 +86,7 @@ public struct KeyValueCustomCell<Content: View, TrailingContent: View>: View {
   // MARK: Private
 
   private var key: String
+  private let showClaimKey: Bool
   private let content: Content
   private let trailingContent: TrailingContent
 }

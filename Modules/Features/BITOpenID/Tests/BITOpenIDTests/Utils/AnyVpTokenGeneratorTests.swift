@@ -1,5 +1,6 @@
 import Factory
 import XCTest
+@testable import BITClaimsPathPointer
 @testable import BITCrypto
 @testable import BITJWT
 @testable import BITOpenID
@@ -28,9 +29,9 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
   }
 
   func testVpTokenGeneration() throws {
-    let requestedClaims = [ "test_key_1" ]
+    let requestedClaims: [ClaimsPathPointer] = [[.string("test_key_1")]]
 
-    let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
 
     asserts(vpToken, disclosureCount: 1, hasKeyBinding: true)
   }

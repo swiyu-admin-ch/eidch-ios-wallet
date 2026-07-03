@@ -99,6 +99,13 @@ public enum ThemingAssets {
   }
 
   public enum Component {
+    public enum Callout {
+      public enum Alert {
+        public static let button = ColorAsset(name: "Component/Callout/Alert/Button")
+        public static let symbol = ColorAsset(name: "Component/Callout/Alert/Symbol")
+      }
+    }
+
     public enum Link {
       public static let label = ColorAsset(name: "Component/Link/label")
     }

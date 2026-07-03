@@ -10,3 +10,10 @@ extension IsoJWT {
     XCTAssertEqual(json[IsoJWT.CodingKeys.date.rawValue] as? String, date?.formatted(.iso8601))
   }
 }
+
+extension SdJWS<IsoJWT> {
+  func assertDisclosures() {
+    XCTAssertEqual(disclosures.count, 1)
+    disclosures.assertContains([.string(IsoJWT.CodingKeys.date.rawValue)], rawDisclosure: IsoJWT.Mock.disclosure)
+  }
+}

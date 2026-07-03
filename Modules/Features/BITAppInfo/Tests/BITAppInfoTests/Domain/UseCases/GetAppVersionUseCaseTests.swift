@@ -1,50 +1,55 @@
 import Factory
 import Foundation
 import Spyable
-import XCTest
+import Testing
 @testable import BITAppInfo
 
-class GetAppVersionUseCaseTests: XCTestCase {
+struct GetAppVersionUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    repository = AppVersionRepositoryProtocolSpy()
-    Container.shared.appVersionRepository.register { self.repository }
+  init() {
+    let repository = AppVersionRepositoryProtocolSpy()
 
+    Container.shared.appVersionRepository.register { repository }
+
+    self.repository = repository
     useCase = GetAppVersionUseCase()
   }
 
-  func test_init() {
-    XCTAssertFalse(repository.getVersionCalled)
+  // MARK: Internal
+
+  @Test
+  func initialState() {
+    #expect(repository.getVersionCalled == false)
   }
 
-  func test_getVersion_happyPath() throws {
-    let expectedVersion = AppVersion.Mock.sample
+  @Test
+  func getVersion_happyPath() throws {
+    let expectedVersion = Version.Mock.sample
     repository.getVersionReturnValue = expectedVersion.rawValue
 
-    let version = try useCase.execute()
+    let version = try useCase()
 
-    XCTAssertEqual(expectedVersion, version)
-    XCTAssertEqual(expectedVersion.major, version.major)
-    XCTAssertEqual(expectedVersion.minor, version.minor)
-    XCTAssertEqual(expectedVersion.patch, version.patch)
+    #expect(expectedVersion == version)
+    #expect(expectedVersion.major == version.major)
+    #expect(expectedVersion.minor == version.minor)
+    #expect(expectedVersion.patch == version.patch)
 
-    XCTAssertTrue(repository.getVersionCalled)
-    XCTAssertEqual(repository.getVersionCallsCount, 1)
+    #expect(repository.getVersionCalled == true)
+    #expect(repository.getVersionCallsCount == 1)
   }
 
-  func test_getVersion_failurePath() throws {
+  @Test
+  func getVersion_failurePath() {
     repository.getVersionThrowableError = AppVersionError.notFound
-    XCTAssertThrowsError(try useCase.execute())
-    XCTAssertTrue(repository.getVersionCalled)
+    #expect(throws: Error.self, performing: useCase.callAsFunction)
+    #expect(repository.getVersionCalled == true)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var repository = AppVersionRepositoryProtocolSpy()
-  private var useCase: GetAppVersionUseCaseProtocol!
-  // swiftlint:enable all
+  private let repository: AppVersionRepositoryProtocolSpy
+  private let useCase: GetAppVersionUseCaseProtocol
 
 }

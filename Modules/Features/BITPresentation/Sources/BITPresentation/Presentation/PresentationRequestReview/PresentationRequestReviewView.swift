@@ -27,7 +27,7 @@ struct PresentationRequestReviewView: View {
   var body: some View {
     Content(
       state: viewModel.state,
-      isUnknownAlertPresented: $viewModel.isUnknownVerifierAlertShown,
+      alert: $viewModel.alert,
       eventAction: { event in Task { await viewModel.send(event) } },
       badgeAction: { badgeType in
         navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
@@ -53,12 +53,12 @@ extension PresentationRequestReviewView {
 
     init(
       state: PresentationRequestReviewState,
-      isUnknownAlertPresented: Binding<Bool>,
+      alert: Binding<PresentationRequestReviewAlert?>,
       eventAction: @escaping (PresentationRequestReviewViewModel.Event) -> Void = { _ in },
       badgeAction: @escaping (BadgeType) -> Void = { _ in })
     {
       self.state = state
-      self.isUnknownAlertPresented = isUnknownAlertPresented
+      self.alert = alert
       self.eventAction = eventAction
       self.badgeAction = badgeAction
     }
@@ -84,7 +84,7 @@ extension PresentationRequestReviewView {
     @State private var topInset: CGFloat = 0
 
     private let state: PresentationRequestReviewState
-    private let isUnknownAlertPresented: Binding<Bool>
+    private let alert: Binding<PresentationRequestReviewAlert?>
     private let eventAction: (PresentationRequestReviewViewModel.Event) -> Void
     private let badgeAction: (BadgeType) -> Void
 
@@ -119,7 +119,11 @@ extension PresentationRequestReviewView {
 
 extension PresentationRequestReviewView.Content {
   private func resultView(_ viewState: PresentationRequestReviewState.Result) -> some View {
-    VStack(alignment: .leading, spacing: .x4) {
+    let isAlertPresented = Binding(
+      get: { alert.wrappedValue != nil },
+      set: { if !$0 { alert.wrappedValue = nil } })
+
+    return VStack(alignment: .leading, spacing: .x4) {
       actorHeader(viewState.verifierDisplay)
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
@@ -140,7 +144,7 @@ extension PresentationRequestReviewView.Content {
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue) // not fully working for now...
         .accessibilityElement(children: .contain)
     }
-    .confirmationDialog(L10n.tkPresentReviewConfirmPresentationPrimary, isPresented: isUnknownAlertPresented, titleVisibility: .visible) {
+    .confirmationDialog(alert.wrappedValue?.title ?? "", isPresented: isAlertPresented, titleVisibility: .visible) {
       Button(L10n.tkPresentReviewConfirmPresentationButtonSecondary, role: .destructive) {
         eventAction(.deny)
       }
@@ -149,7 +153,9 @@ extension PresentationRequestReviewView.Content {
       }
       Button(L10n.tkGlobalCancel, role: .cancel) {}
     } message: {
-      Text(L10n.tkPresentReviewConfirmPresentationSecondary)
+      if let alert = alert.wrappedValue {
+        Text(alert.message)
+      }
     }
   }
 
@@ -249,6 +255,6 @@ extension PresentationRequestReviewView.Content {
 
 #if DEBUG
 #Preview {
-  PresentationRequestReviewView.Content(state: .Mock.result, isUnknownAlertPresented: .constant(false))
+  PresentationRequestReviewView.Content(state: .Mock.result, alert: .constant(nil))
 }
 #endif

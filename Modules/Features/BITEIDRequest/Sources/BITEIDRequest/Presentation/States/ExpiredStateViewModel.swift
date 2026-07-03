@@ -1,4 +1,5 @@
 import BITL10n
+import BITPushNotification
 import Factory
 
 public class ExpiredStateViewModel: RequestCaseStateBaseViewModel {
@@ -15,15 +16,20 @@ public class ExpiredStateViewModel: RequestCaseStateBaseViewModel {
 
   func primaryAction() async {
     do {
+      if let pushId {
+        try await deletePushIdUseCase(pushId)
+      }
+
       try await deleteEIDRequestCaseUseCase.execute(id)
       delegate?.didDeleteRequestCase()
     } catch {
-      // Do nothing
+      // Silent failing
     }
   }
 
   // MARK: Private
 
+  @Injected(\.deletePushIdUseCase) private var deletePushIdUseCase: DeletePushIdUseCaseProtocol
   @Injected(\.deleteEIDRequestCaseUseCase) private var deleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocol
 
 }

@@ -1,4 +1,5 @@
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -29,11 +30,9 @@ struct WalletPairingOfferView: View {
         await viewModel.fetchPairingQRCode()
       }
       .toolbar(.visible)
-      .toolbar(content: {
-        CloseButtonToolbar(accessibilityIdentifier: "closeButton") {
-          navigator.dismiss()
-        }
-      })
+      .toolbar {
+        CloseButtonToolbar(action: { navigator.returnToHomeSafely() })
+      }
       .toolbarBackground(ThemingAssets.Background.primary.swiftUIColor, for: .navigationBar)
       .navigate(to: $viewModel.destination)
       .navigationCheckpoint(EIDRequestCheckpoints.walletPairingOffer)

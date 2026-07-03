@@ -9,7 +9,8 @@ extension InvitationError {
     case .noConnection: Assets.noWifi.swiftUIImage
     case .expiredInvitation,
          .validationFailed: Assets.credential.swiftUIImage
-    case .invalidPresentationRequest,
+    case .expiredPresentationRequest,
+         .notFoundPresentationRequest,
          .unknownIssuer: Assets.questionmarkSquare.swiftUIImage
     case .invalidQRCode: Assets.qrcode.swiftUIImage
     default: nil
@@ -23,7 +24,8 @@ extension InvitationError {
     case .unknownIssuer: L10n.tkErrorNotregisteredTitle
     case .validationFailed: L10n.tkErrorInvitationcredentialTitle
     case .invalidQRCode: L10n.tkErrorInvitationcredentialTitle
-    case .invalidPresentationRequest: L10n.tkErrorInvalidrequestTitle
+    case .expiredPresentationRequest,
+         .notFoundPresentationRequest: L10n.tkErrorInvalidrequestTitle
     default: nil
     }
   }
@@ -35,7 +37,8 @@ extension InvitationError {
     case .unknownIssuer: L10n.tkErrorNotregisteredBody
     case .validationFailed: L10n.tkErrorInvitationcredentialBody
     case .invalidQRCode: L10n.tkErrorInvitationcredentialBody
-    case .invalidPresentationRequest: L10n.tkErrorInvalidrequestBody
+    case .expiredPresentationRequest,
+         .notFoundPresentationRequest: L10n.tkErrorInvalidrequestBody
     default: nil
     }
   }

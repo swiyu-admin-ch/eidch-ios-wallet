@@ -19,10 +19,8 @@ struct SetupView: View {
         buttonText: L10n.tkGlobalCancel),
       progressViewStyle: .infinite)
       .navigate(to: $viewModel.destination)
-      .onFirstAppear {
-        Task {
-          await viewModel.fetchAttestations()
-        }
+      .task {
+        await viewModel.fetchAttestations()
       }
   }
 

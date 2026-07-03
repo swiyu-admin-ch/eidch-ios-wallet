@@ -1,0 +1,748 @@
+{
+    "capture_bases": [
+        {
+            "type": "spec/capture_base/1.0",
+            "digest": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "attributes": {
+                "string": "Text",
+                "int": "Numeric",
+                "double": "Numeric",
+                "boolean": "Boolean",
+                "null": "Text",
+                "empty": "Text",
+                "date": "DateTime",
+                "date_time": "DateTime",
+                "date_time_zone": "DateTime",
+                "time": "DateTime",
+                "image_data_url_jpg": "Text",
+                "image_base64_png": "Binary",
+                "long_string": "Text",
+                "array_strings": "Array[Text]",
+                "array_objects": "Array[refs:IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i]",
+                "object": "refs:ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+                "expiry_date": "DateTime"
+            }
+        },
+        {
+            "type": "spec/capture_base/1.0",
+            "digest": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "attributes": {
+                "array_objects_claim": "Text"
+            }
+        },
+        {
+            "type": "spec/capture_base/1.0",
+            "digest": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "attributes": {
+                "claim": "Text",
+                "array_integers": "Array[Numeric]",
+                "array_objects": "Array[refs:IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ]",
+                "object": "refs:IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13"
+            }
+        },
+        {
+            "type": "spec/capture_base/1.0",
+            "digest": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "attributes": {
+                "object_array_objects_claim": "Text"
+            }
+        },
+        {
+            "type": "spec/capture_base/1.0",
+            "digest": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "attributes": {
+                "object_object_claim": "Text"
+            }
+        }
+    ],
+    "overlays": [
+        {
+            "type": "extend/overlays/data_source/2.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "format": "vc+sd-jwt",
+            "attribute_sources": {
+                "string": [
+                    "string"
+                ],
+                "int": [
+                    "int"
+                ],
+                "double": [
+                    "double"
+                ],
+                "boolean": [
+                    "boolean"
+                ],
+                "null": [
+                    "null"
+                ],
+                "empty": [
+                    "empty"
+                ],
+                "date": [
+                    "date"
+                ],
+                "date_time": [
+                    "date_time"
+                ],
+                "date_time_zone": [
+                    "date_time_zone"
+                ],
+                "time": [
+                    "time"
+                ],
+                "image_data_url_jpg": [
+                    "image_data_url_jpg"
+                ],
+                "image_base64_png": [
+                    "image_base64_png"
+                ],
+                "long_string": [
+                    "long_string"
+                ],
+                "array_strings": [
+                    "array_strings",
+                    null
+                ],
+                "array_objects": [
+                    "array_objects",
+                    null
+                ],
+                "object": [
+                    "object"
+                ],
+                "expiry_date": [
+                    "expiry_date"
+                ]
+            }
+        },
+        {
+            "type": "extend/overlays/data_source/2.0",
+            "capture_base": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "format": "vc+sd-jwt",
+            "attribute_sources": {
+                "array_objects_claim": [
+                    "array_objects",
+                    null,
+                    "claim"
+                ]
+            }
+        },
+        {
+            "type": "extend/overlays/data_source/2.0",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "format": "vc+sd-jwt",
+            "attribute_sources": {
+                "claim": [
+                    "object",
+                    "claim"
+                ],
+                "array_integers": [
+                    "object",
+                    "array_integers",
+                    null
+                ],
+                "array_objects": [
+                    "object",
+                    "array_objects",
+                    null
+                ],
+                "object": [
+                    "object",
+                    "object"
+                ]
+            }
+        },
+        {
+            "type": "extend/overlays/data_source/2.0",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "format": "vc+sd-jwt",
+            "attribute_sources": {
+                "object_array_objects_claim": [
+                    "object",
+                    "array_objects",
+                    null,
+                    "claim"
+                ]
+            }
+        },
+        {
+            "type": "extend/overlays/data_source/2.0",
+            "capture_base": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "format": "vc+sd-jwt",
+            "attribute_sources": {
+                "object_object_claim": [
+                    "object",
+                    "object",
+                    "claim"
+                ]
+            }
+        },
+        {
+            "type": "spec/overlays/meta/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "de-CH",
+            "name": "OCA Chasseral 03 meta (de-CH)",
+            "description": "Test-Credential für die swiyu Public Beta Umgebung"
+        },
+        {
+            "type": "spec/overlays/meta/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "fr-CH",
+            "name": "OCA Chasseral 03 meta (fr-CH)",
+            "description": "Credential de test pour l'environnement swiyu Public Beta"
+        },
+        {
+            "type": "spec/overlays/meta/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "it-CH",
+            "name": "OCA Chasseral 03 meta (it-CH)",
+            "description": "Credenziali di test per l'ambiente swiyu Public Beta"
+        },
+        {
+            "type": "spec/overlays/meta/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "rm-CH",
+            "name": "OCA Chasseral 03 meta (rm-CH)",
+            "description": "Credenziali da test per swiyu Public Beta"
+        },
+        {
+            "type": "spec/overlays/meta/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "en-US",
+            "name": "OCA Chasseral 03 meta (en-US)",
+            "description": "Test Credential for swiyu Public Beta environment"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "de-CH",
+            "theme": "light",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#FA8072",
+            "primary_field": "{{string}} {{int}} light de-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "de-CH",
+            "theme": "dark",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#C21906",
+            "primary_field": "{{array_strings[null]}} dark de-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "fr-CH",
+            "theme": "light",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#FA8072",
+            "primary_field": "{{string}} {{int}} light fr-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "fr-CH",
+            "theme": "dark",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#C21906",
+            "primary_field": "{{array_strings[null].join(' ')}} dark fr-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "it-CH",
+            "theme": "light",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#FA8072",
+            "primary_field": "{{string}} {{int}} light it-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "it-CH",
+            "theme": "dark",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#C21906",
+            "primary_field": "{{refs:ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w:array_integers[null]}} dark it-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "en-US",
+            "theme": "light",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#FA8072",
+            "primary_field": "{{string}} {{int}} light en-US"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "en-US",
+            "theme": "dark",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#C21906",
+            "primary_field": "{{refs:ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w:array_integers[null].join(\" \")}} dark en-US"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "rm-CH",
+            "theme": "light",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#FA8072",
+            "primary_field": "{{string}} {{int}} light rm-CH"
+        },
+        {
+            "type": "aries/overlays/branding/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "rm-CH",
+            "theme": "dark",
+            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAQAAADa613fAAAAt0lEQVR42u3YMQ4BQRiG4a2p3UMi0Wlcih5n2GYTWS6gcBahdZGfSqHZWdNMxvN+/WSe9m8aSZIkSaqiWMYzcV3ZkFWkdgEBAQEBAQEBAQEBAQEBAQEBKQ4S6zi8tx/Y7rM+GfIYfPV70xzIOcppBlIT5AQCAgICApIB6UFAQEBAQDIgx1og89iMWpv8rXtsR25S5jnoWstdCwQEBAQEBAQEBAQEBAQEBOSfIYu4Ja5tJEmSJP3UC98M2ozRcV9yAAAAAElFTkSuQmCC",
+            "primary_background_color": "#C21906",
+            "primary_field": "{{array_strings[0]}} dark rm-CH"
+        },
+        {
+            "type": "spec/overlays/character_encoding/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "default_character_encoding": "utf-8",
+            "attribute_character_encoding": {
+                "image_base64_png": "base64"
+            }
+        },
+        {
+            "type": "spec/overlays/standard/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "attr_standards": {
+                "date": "urn:iso:std:iso:8601",
+                "date_time": "urn:iso:std:iso:8601",
+                "date_time_zone": "urn:iso:std:iso:8601",
+                "time": "urn:iso:std:iso:8601",
+                "image_data_url_jpg": "urn:ietf:rfc:2397",
+                "expiry_date": "urn:iso:std:iso:8601"
+            }
+        },
+        {
+            "type": "spec/overlays/format/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "attribute_formats": {
+                "date": "yyyy-MM-dd",
+                "date_time": "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "date_time_zone": "yyyy-MM-dd'T'HH:mm:ssZ",
+                "time": "HH:mm:ss",
+                "image_base64_png": "image/png",
+                "expiry_date": "yyyy-MM-dd"
+            }
+        },
+        {
+            "type": "extend/overlays/order/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "attribute_orders": {
+                "string": 1,
+                "int": 2,
+                "double": 3,
+                "boolean": 4,
+                "null": 5,
+                "empty": 6,
+                "date": 7,
+                "date_time": 8,
+                "date_time_zone": 9,
+                "time": 10,
+                "image_data_url_jpg": 11,
+                "image_base64_png": 12,
+                "long_string": 13,
+                "array_strings": 14,
+                "array_objects": 15,
+                "object": 16,
+                "expiry_date": 17
+            }
+        },
+        {
+            "type": "extend/overlays/order/1.0",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "attribute_orders": {
+                "claim": 1,
+                "array_integers": 2,
+                "array_objects": 3,
+                "object": 4
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "de-CH",
+            "attribute_labels": {
+                "string": "String (de-CH)",
+                "int": "Integer (de-CH)",
+                "double": "Double sensitive (de-CH)",
+                "boolean": "Boolean (de-CH)",
+                "null": "Null (de-CH)",
+                "empty": "Empty (de-CH)",
+                "date": "Date (de-CH)",
+                "date_time": "DateTime with seconds and fraction (de-CH)",
+                "date_time_zone": "DateTime with seconds and zone (de-CH)",
+                "time": "Time with seconds (de-CH)",
+                "image_data_url_jpg": "Image data URL JPG sensitive (de-CH)",
+                "image_base64_png": "Image base64 PNG (de-CH)",
+                "long_string": "Long string (de-CH)",
+                "array_strings": "Array with strings (de-CH)",
+                "array_objects": "Array with objects {{refs:IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i:array_objects_claim}} (de-CH)",
+                "object": "Object level 1 (de-CH)",
+                "expiry_date": "Business expiry date (de-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "fr-CH",
+            "attribute_labels": {
+                "string": "String (fr-CH)",
+                "int": "Integer (fr-CH)",
+                "double": "Double sensitive (fr-CH)",
+                "boolean": "Boolean (fr-CH)",
+                "null": "Null (fr-CH)",
+                "empty": "Empty (fr-CH)",
+                "date": "Date (fr-CH)",
+                "date_time": "DateTime with seconds and fraction (fr-CH)",
+                "date_time_zone": "DateTime with seconds and zone (fr-CH)",
+                "time": "Time with seconds (fr-CH)",
+                "image_data_url_jpg": "Image data URL JPG sensitive (fr-CH)",
+                "image_base64_png": "Image base64 PNG (fr-CH)",
+                "long_string": "Long string (fr-CH)",
+                "array_strings": "Array with strings (fr-CH)",
+                "array_objects": "Array with objects {{refs:IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i:array_objects_claim}} (fr-CH)",
+                "object": "Object level 1 (fr-CH)",
+                "expiry_date": "Business expiry date (fr-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "it-CH",
+            "attribute_labels": {
+                "string": "String (it-CH)",
+                "int": "Integer (it-CH)",
+                "double": "Double sensitive (it-CH)",
+                "boolean": "Boolean (it-CH)",
+                "null": "Null (it-CH)",
+                "empty": "Empty (it-CH)",
+                "date": "Date (it-CH)",
+                "date_time": "DateTime with seconds and fraction (it-CH)",
+                "date_time_zone": "DateTime with seconds and zone (it-CH)",
+                "time": "Time with seconds (it-CH)",
+                "image_data_url_jpg": "Image data URL JPG sensitive (it-CH)",
+                "image_base64_png": "Image base64 PNG (it-CH)",
+                "long_string": "Long string (it-CH)",
+                "array_strings": "Array with strings (it-CH)",
+                "array_objects": "Array with objects {{refs:IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i:array_objects_claim}} (it-CH)",
+                "object": "Object level 1 (it-CH)",
+                "expiry_date": "Business expiry date (it-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "rm-CH",
+            "attribute_labels": {
+                "string": "String (rm-CH)",
+                "int": "Integer (rm-CH)",
+                "double": "Double sensitive (rm-CH)",
+                "boolean": "Boolean (rm-CH)",
+                "null": "Null (rm-CH)",
+                "empty": "Empty (rm-CH)",
+                "date": "Date (rm-CH)",
+                "date_time": "DateTime with seconds and fraction (rm-CH)",
+                "date_time_zone": "DateTime with seconds and zone (rm-CH)",
+                "time": "Time with seconds (rm-CH)",
+                "image_data_url_jpg": "Image data URL JPG sensitive (rm-CH)",
+                "image_base64_png": "Image base64 PNG (rm-CH)",
+                "long_string": "Long string (rm-CH)",
+                "array_strings": "Array with strings (rm-CH)",
+                "array_objects": "Array with objects {{refs:IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i:array_objects_claim}} (rm-CH)",
+                "object": "Object level 1 (rm-CH)",
+                "expiry_date": "Business expiry date (rm-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "en-US",
+            "attribute_labels": {
+                "string": "String (en-US)",
+                "int": "Integer (en-US)",
+                "double": "Double sensitive (en-US)",
+                "boolean": "Boolean (en-US)",
+                "null": "Null (en-US)",
+                "empty": "Empty (en-US)",
+                "date": "Date (en-US)",
+                "date_time": "DateTime with seconds and fraction (en-US)",
+                "date_time_zone": "DateTime with seconds and zone (en-US)",
+                "time": "Time with seconds (en-US)",
+                "image_data_url_jpg": "Image data URL JPG sensitive (en-US)",
+                "image_base64_png": "Image base64 PNG (en-US)",
+                "long_string": "Long string (en-US)",
+                "array_strings": "Array with strings (en-US)",
+                "array_objects": "Array with objects {{refs:IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i:array_objects_claim}} (en-US)",
+                "object": "Object level 1 (en-US)",
+                "expiry_date": "Business expiry date (en-US)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "language": "de-CH",
+            "attribute_labels": {
+                "array_objects_claim": "Array claim sensitive (de-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "language": "fr-CH",
+            "attribute_labels": {
+                "array_objects_claim": "Array claim sensitive (fr-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "language": "it-CH",
+            "attribute_labels": {
+                "array_objects_claim": "Array claim sensitive (it-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "language": "rm-CH",
+            "attribute_labels": {
+                "array_objects_claim": "Array claim sensitive (rm-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i",
+            "language": "en-US",
+            "attribute_labels": {
+                "array_objects_claim": "Array claim sensitive (en-US)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "language": "de-CH",
+            "attribute_labels": {
+                "claim": "Claim level 1 (de-CH)",
+                "array_integers": "Array level 1 {{array_integers[1]}} (de-CH)",
+                "array_objects": "Array level 2 (de-CH)",
+                "object": "Object level 2 (de-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "language": "fr-CH",
+            "attribute_labels": {
+                "claim": "Claim level 1 (fr-CH)",
+                "array_integers": "Array level 1 {{array_integers[1]}} (fr-CH)",
+                "array_objects": "Array level 2 (fr-CH)",
+                "object": "Object level 2 (fr-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "language": "it-CH",
+            "attribute_labels": {
+                "claim": "Claim level 1 (it-CH)",
+                "array_integers": "Array level 1 {{array_integers[1]}} (it-CH)",
+                "array_objects": "Array level 2 (it-CH)",
+                "object": "Object level 2 (it-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "language": "rm-CH",
+            "attribute_labels": {
+                "claim": "Claim level 1 (rm-CH)",
+                "array_integers": "Array level 1 {{array_integers[1]}} (rm-CH)",
+                "array_objects": "Array level 2 (rm-CH)",
+                "object": "Object level 2 (rm-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w",
+            "language": "en-US",
+            "attribute_labels": {
+                "claim": "Claim level 1 (en-US)",
+                "array_integers": "Array level 1 {{array_integers[1]}} (en-US)",
+                "array_objects": "Array level 2 (en-US)",
+                "object": "Object level 2 (en-US)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "language": "de-CH",
+            "attribute_labels": {
+                "object_array_objects_claim": "Array claim level 2 sensitive (de-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "language": "fr-CH",
+            "attribute_labels": {
+                "object_array_objects_claim": "Array claim level 2 sensitive (fr-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "language": "it-CH",
+            "attribute_labels": {
+                "object_array_objects_claim": "Array claim level 2 sensitive (it-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "language": "rm-CH",
+            "attribute_labels": {
+                "object_array_objects_claim": "Array claim level 2 sensitive (rm-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "language": "en-US",
+            "attribute_labels": {
+                "object_array_objects_claim": "Array claim level 2 sensitive (en-US)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "language": "de-CH",
+            "attribute_labels": {
+                "object_object_claim": "Claim level 2 (de-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "language": "fr-CH",
+            "attribute_labels": {
+                "object_object_claim": "Claim level 2 (fr-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "language": "it-CH",
+            "attribute_labels": {
+                "object_object_claim": "Claim level 2 (it-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "language": "rm-CH",
+            "attribute_labels": {
+                "object_object_claim": "Claim level 2 (rm-CH)"
+            }
+        },
+        {
+            "type": "spec/overlays/label/1.1",
+            "capture_base": "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13",
+            "language": "en-US",
+            "attribute_labels": {
+                "object_object_claim": "Claim level 2 (en-US)"
+            }
+        },
+        {
+            "type": "spec/overlays/entry_code/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "attribute_entry_codes": {
+                "boolean": [
+                    "true",
+                    "false"
+                ]
+            }
+        },
+        {
+            "type": "spec/overlays/entry/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "de-CH",
+            "attribute_entries": {
+                "boolean": {
+                    "true": "True (de-CH)",
+                    "false": "False (de-CH)"
+                }
+            }
+        },
+        {
+            "type": "spec/overlays/entry/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "fr-CH",
+            "attribute_entries": {
+                "boolean": {
+                    "true": "True (fr-CH)",
+                    "false": "False (fr-CH)"
+                }
+            }
+        },
+        {
+            "type": "spec/overlays/entry/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "it-CH",
+            "attribute_entries": {
+                "boolean": {
+                    "true": "True (it-CH)",
+                    "false": "False (it-CH)"
+                }
+            }
+        },
+        {
+            "type": "spec/overlays/entry/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "rm-CH",
+            "attribute_entries": {
+                "boolean": {
+                    "true": "True (rm-CH)",
+                    "false": "False (rm-CH)"
+                }
+            }
+        },
+        {
+            "type": "spec/overlays/entry/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "language": "en-US",
+            "attribute_entries": {
+                "boolean": {
+                    "true": "True (en-US)",
+                    "false": "False (en-US)"
+                }
+            }
+        },
+        {
+            "type": "spec/overlays/sensitive/1.0",
+            "capture_base": "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ",
+            "attributes": [
+                "double",
+                "image_data_url_jpg",
+                "array_objects"
+            ]
+        },
+        {
+            "type": "spec/overlays/sensitive/1.0",
+            "capture_base": "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ",
+            "attributes": [
+                "object_array_objects_claim"
+            ]
+        }
+    ]
+}

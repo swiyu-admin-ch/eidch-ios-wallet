@@ -1,4 +1,5 @@
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -59,9 +60,7 @@ extension NFCScanView {
     InformationView2(
       contents: [
         .heroCard {
-          Assets.nfc.swiftUIImage
-            .resizable()
-            .scaledToFit()
+          Lotties.readPassNfc
             .frame(minWidth: imageMinWidth, maxWidth: imageMaxWidth, minHeight: imageMinHeight, maxHeight: imageMaxHeight)
         },
         .title(L10n.tkEidRequestNfcScanPrimary, identifier: "primaryText"),
@@ -88,7 +87,7 @@ extension NFCScanView {
 
   private func close() {
     coordinator.cleanup()
-    navigator.dismiss()
+    navigator.returnToHomeSafely()
   }
 }
 

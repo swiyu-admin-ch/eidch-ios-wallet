@@ -1,23 +1,22 @@
+import AnyCodable
 import BITCore
 import BITCrypto
 import BITJWT
-import BITSdJWT
+import BITSwiyuSharedKMP
 import Foundation
 
 // MARK: - RequestObjectError
 
 public enum RequestObjectError: Error, Equatable {
   case invalidPayload(_ underlyingError: Error? = nil)
-  case invalidInputDescriptorFormat
-  case invalidDcqlQuery
-  case missingQueryType
+  case invalidQuery
+  case missingQuery
 
   public static func == (lhs: RequestObjectError, rhs: RequestObjectError) -> Bool {
     switch (lhs, rhs) {
-    case (.invalidDcqlQuery, .invalidDcqlQuery),
-         (.invalidInputDescriptorFormat, .invalidInputDescriptorFormat),
-         (.invalidPayload, .invalidPayload),
-         (.missingQueryType, .missingQueryType):
+    case (.invalidPayload, .invalidPayload),
+         (.invalidQuery, .invalidQuery),
+         (.missingQuery, .missingQuery):
       true
     default:
       false
@@ -34,23 +33,23 @@ public class RequestObject: Codable {
   // MARK: Lifecycle
 
   init(
-    queryType: PresentationRequestQueryType,
+    dcqlQuery: DcqlQuery?,
+    state: String? = nil,
     nonce: String?,
     responseUri: URL?,
     clientMetadata: ClientMetadata?,
     responseType: String,
     clientId: String,
-    clientIdScheme: String?,
     responseMode: ResponseMode,
     transactionData: [String]?)
   {
-    self.queryType = queryType
+    self.dcqlQuery = dcqlQuery
+    self.state = state
     self.nonce = nonce
     self.responseUri = responseUri
     self.clientMetadata = clientMetadata
     self.responseType = responseType
     self.clientId = clientId
-    self.clientIdScheme = clientIdScheme
     self.responseMode = responseMode
     self.transactionData = transactionData
   }
@@ -58,90 +57,79 @@ public class RequestObject: Codable {
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
+    state = try container.decodeIfPresent(String.self, forKey: .state)
     nonce = try container.decodeIfPresent(String.self, forKey: .nonce)
     responseUri = try container.decodeIfPresent(URL.self, forKey: .responseUri)
     clientMetadata = try container.decodeIfPresent(ClientMetadata.self, forKey: .clientMetadata)
     responseType = try container.decode(String.self, forKey: .responseType)
     clientId = try container.decode(String.self, forKey: .clientId)
-    clientIdScheme = try container.decodeIfPresent(String.self, forKey: .clientIdScheme)
     responseMode = try container.decode(ResponseMode.self, forKey: .responseMode)
     transactionData = try container.decodeIfPresent([String].self, forKey: .transactionData)
 
-    queryType = try PresentationRequestQueryType(from: decoder)
+    guard let query = try container.decodeIfPresent(AnyCodable.self, forKey: .dcqlQuery) else {
+      dcqlQuery = nil
+      return
+    }
+
+    let data = try JSONEncoder().encode(query)
+    guard let json = String(data: data, encoding: .utf8) else {
+      throw RequestObjectError.invalidQuery
+    }
+
+    dcqlQuery = try DcqlSupport().decodeDcqlQuery(json: json)
   }
 
   // MARK: Public
 
-  public let queryType: PresentationRequestQueryType
+  public let state: String?
   public let nonce: String?
   public let responseUri: URL?
   public let clientMetadata: ClientMetadata?
   public let responseType: String
   public let clientId: String
-  public let clientIdScheme: String?
+  public let dcqlQuery: DcqlQuery?
   public let responseMode: ResponseMode
   public let transactionData: [String]?
   public var raw: Data?
 
-  public var presentationDefinition: PresentationDefinition? {
-    if case .presentationDefinition(let definition) = queryType {
-      return definition
-    }
-    return nil
-  }
-
-  public var rawDcqlQuery: Data? {
-    if case .dcqlRaw(let data) = queryType {
-      return data
-    }
-    return nil
-  }
-
-  public var firstInputDescriptor: InputDescriptor? {
-    presentationDefinition?.inputDescriptors.first
-  }
-
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
+    try container.encodeIfPresent(state, forKey: .state)
     try container.encodeIfPresent(nonce, forKey: .nonce)
     try container.encodeIfPresent(responseUri, forKey: .responseUri)
     try container.encodeIfPresent(clientMetadata, forKey: .clientMetadata)
     try container.encodeIfPresent(responseType, forKey: .responseType)
     try container.encodeIfPresent(clientId, forKey: .clientId)
-    try container.encodeIfPresent(clientIdScheme, forKey: .clientIdScheme)
     try container.encode(responseMode, forKey: .responseMode)
     try container.encodeIfPresent(transactionData, forKey: .transactionData)
-
-    try queryType.encode(to: encoder)
   }
 
   public func isEqual(to other: RequestObject) -> Bool {
     guard type(of: self) == type(of: other) else { return false }
     return responseMode == other.responseMode &&
-      clientIdScheme == other.clientIdScheme &&
       clientId == other.clientId &&
       responseType == other.responseType &&
       responseUri == other.responseUri &&
+      state == other.state &&
       nonce == other.nonce &&
       clientMetadata == other.clientMetadata &&
-      queryType == other.queryType &&
+      dcqlQuery?.isEqual(other.dcqlQuery) ?? false &&
       transactionData == other.transactionData
   }
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case nonce
+    case nonce, state
     case responseUri = "response_uri"
     case clientMetadata = "client_metadata"
     case responseType = "response_type"
     case clientId = "client_id"
-    case clientIdScheme = "client_id_scheme"
     case responseMode = "response_mode"
     case transactionData = "transaction_data"
+    case dcqlQuery = "dcql_query"
   }
-
 }
 
 // MARK: RequestObject.ResponseMode
@@ -220,292 +208,4 @@ extension ClientMetadata {
       self.keys = keys
     }
   }
-}
-
-// MARK: ClientMetadata.LocalizedDisplay
-
-extension ClientMetadata {
-
-  // MARK: Public
-
-  /// Data model providing a Hash representation of the localized display
-  /// where the  key of the hash is the language in two letters form (ISO-639)
-  public struct LocalizedDisplay<T: Codable & Equatable>: Codable, Equatable {
-
-    // MARK: Lifecycle
-
-    init(values: [String: T]) {
-      self.values = values
-    }
-
-    init?(from container: KeyedDecodingContainer<DynamicCodingKey>, withBaseKey baseKey: String) throws {
-      for key in container.allKeys where key.stringValue.hasPrefix(baseKey) {
-        let language = key.stringValue.components(separatedBy: ClientMetadata.separator).dropFirst().joined(separator: ClientMetadata.separator)
-        if let value = try? container.decode(T.self, forKey: key) {
-          values[String(language)] = value
-        }
-      }
-
-      if values.isEmpty {
-        return nil
-      }
-    }
-
-    // MARK: Public
-
-    /// Retrieves the preferred display from a set of localized displays, considering the given language codes in their order.
-    ///
-    /// - Returns: The best matching display based on the given language codes or a fallback if available. Returns `nil` if no display is found.
-    public func getPreferredDisplay(considering languageCodes: [String] ) -> T? {
-      languageCodes
-        .lazy
-        .compactMap { values[$0] }
-        .first ?? values[""]
-    }
-
-    /// Returns all localized displays keyed by their locale identifier.
-    public func getAllDisplays() -> [String: T] {
-      values
-    }
-
-    // MARK: Private
-
-    private var values = [String: T]()
-  }
-
-  // MARK: Fileprivate
-
-  fileprivate static let separator = "#"
-
-}
-
-// MARK: - PresentationDefinition
-
-// https://identity.foundation/presentation-exchange/spec/v2.1.0/#presentation-definition
-
-public struct PresentationDefinition: Codable, Equatable {
-  public let id: String
-  public let name: String?
-  public let purpose: String?
-  public let inputDescriptors: [InputDescriptor]
-
-  // This format property seems to be the same as in the InputDescriptor
-
-  enum CodingKeys: String, CodingKey {
-    case id
-    case name
-    case purpose
-    case inputDescriptors = "input_descriptors"
-  }
-}
-
-// MARK: - InputDescriptor
-
-public struct InputDescriptor: Codable, Equatable {
-
-  // MARK: Lifecycle
-
-  public init(from decoder: any Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    id = try container.decode(String.self, forKey: .id)
-    name = try container.decodeIfPresent(String.self, forKey: .name)
-    purpose = try container.decodeIfPresent(String.self, forKey: .purpose)
-    constraints = try container.decode(Constraints.self, forKey: .constraints)
-
-    var formats = [Format]()
-    let formatContainer = try container.nestedContainer(keyedBy: Format.CodingKeys.self, forKey: .formats)
-
-    if let vcSdJwt = try formatContainer.decodeIfPresent(VcSdJwtFormat.self, forKey: .vcSdJwt) {
-      formats.append(.vcSdJwt(vcSdJwt))
-    }
-    if formats.isEmpty { throw RequestObjectError.invalidPayload() }
-
-    self.formats = formats
-  }
-
-  // MARK: Public
-
-  public let id: String
-  public let name: String?
-  public let purpose: String?
-  public let formats: [Format]
-  public let constraints: Constraints
-
-  public static func == (lhs: InputDescriptor, rhs: InputDescriptor) -> Bool {
-    lhs.name == rhs.name &&
-      lhs.purpose == rhs.purpose &&
-      lhs.constraints == rhs.constraints &&
-      lhs.id == rhs.id
-  }
-
-  // MARK: Internal
-
-  enum CodingKeys: String, CodingKey {
-    case id
-    case name
-    case purpose
-    case formats = "format"
-    case constraints
-  }
-}
-
-// MARK: - Constraints
-
-public struct Constraints: Codable, Equatable {
-  public let fields: [Field]
-  public let limitDisclosure: LimitDisclosure?
-
-  enum CodingKeys: String, CodingKey {
-    case fields
-    case limitDisclosure = "limit_disclosure"
-  }
-
-  public init(from decoder: any Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    fields = try container.decode([Field].self, forKey: .fields)
-    limitDisclosure = try container.decodeIfPresent(LimitDisclosure.self, forKey: .limitDisclosure)
-  }
-}
-
-// MARK: - Field
-
-public struct Field: Codable, Equatable {
-
-  // MARK: Lifecycle
-
-  public init(path: [String], filter: Filter? = nil, id: String? = nil, purpose: String? = nil, name: String? = nil, optional: Bool? = nil) {
-    self.path = path
-    self.filter = filter
-    self.id = id
-    self.purpose = purpose
-    self.name = name
-    self.optional = optional
-  }
-
-  // MARK: Public
-
-  public let path: [String]
-  public let filter: Filter?
-  public let id: String?
-  public let purpose: String?
-  public let name: String?
-  public var optional: Bool?
-
-  // MARK: Internal
-
-  enum CodingKeys: String, CodingKey {
-    case path
-    case filter
-    case id
-    case purpose
-    case name
-    case optional
-  }
-
-  func isMatching(_ value: Any) -> Bool {
-    guard path.contains(VcSdJwt.vctPath) else { return true } // we ignore filters for paths that are not vct
-    return filter?.isMatching(value) ?? true
-  }
-
-}
-
-// MARK: - LimitDisclosure
-
-public enum LimitDisclosure: String, Codable, Equatable {
-  case required
-  case preferred
-}
-
-// MARK: - Filter
-
-public struct Filter: Codable, Equatable {
-  public let const: String?
-  public let type: String
-
-  func isMatching(_ value: Any) -> Bool {
-    guard isSupported() else { return true } // we ignore unsupported filters
-    guard let stringValue = value as? String else { return false }
-    return stringValue == const
-  }
-
-  private func isSupported() -> Bool {
-    guard type == Self.stringType, let const else { return false }
-    return !const.isEmpty
-  }
-
-  private static let stringType = "string"
-}
-
-// MARK: - Format
-
-public enum Format: FormatType, Codable {
-  case vcSdJwt(FormatType)
-
-  // MARK: Lifecycle
-
-  public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-
-    if let vcSdJwt = try container.decodeIfPresent(VcSdJwtFormat.self, forKey: .vcSdJwt) {
-      self = .vcSdJwt(vcSdJwt)
-    } else {
-      throw RequestObjectError.invalidInputDescriptorFormat
-    }
-  }
-
-  // MARK: Public
-
-  public var label: String {
-    switch self {
-    case .vcSdJwt(let type): type.label
-    }
-  }
-
-  public var vcAlgorithm: [String]? {
-    switch self {
-    case .vcSdJwt(let type): type.vcAlgorithm
-    }
-  }
-
-  public var keyBindingAlgorithm: [String]? {
-    switch self {
-    case .vcSdJwt(let type): type.keyBindingAlgorithm
-    }
-  }
-
-  public func encode(to encoder: any Encoder) throws {
-    abort() // will be implemented if we actually need it
-  }
-
-  // MARK: Internal
-
-  enum CodingKeys: String, CodingKey {
-    case vcSdJwt = "vc+sd-jwt"
-  }
-
-}
-
-// MARK: - VcSdJwtFormat
-
-/// https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#name-verifier-metadata
-public struct VcSdJwtFormat: FormatType, Decodable, Equatable {
-  public let vcAlgorithm: [String]?
-  public let keyBindingAlgorithm: [String]?
-
-  enum CodingKeys: String, CodingKey {
-    case vcAlgorithm = "sd-jwt_alg_values"
-    case keyBindingAlgorithm = "kb-jwt_alg_values"
-  }
-
-  public var label: String {
-    "vc+sd-jwt"
-  }
-}
-
-// MARK: - FormatType
-
-public protocol FormatType: Decodable {
-  var vcAlgorithm: [String]? { get }
-  var keyBindingAlgorithm: [String]? { get }
-  var label: String { get }
 }

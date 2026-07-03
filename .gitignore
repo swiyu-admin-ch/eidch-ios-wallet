@@ -118,3 +118,4 @@ Modules/**/Package.resolved
 # Ignore generated SwiftPM/Xcode metadata inside modules
 Modules/**/.swiftpm/
 buildServer.json
+.codex/environments/environment.toml

@@ -24,11 +24,13 @@ struct ActivityDetailCredentialFactory: ActivityDetailCredentialFactoryProtocol 
 
   func callAsFunction(_ entity: CredentialEntity, claimIds: [UUID]) -> ActivityDetailCredential {
     if let verifiableCredential = entity.verifiableCredential {
-      let clusters = createClusters(for: verifiableCredential, claimIds: claimIds)
+      let allClusters = Array(verifiableCredential.clusters)
+      var clusters = createClusters(for: verifiableCredential, claimIds: claimIds)
+      clusters = clusters.map { $0.resolvePathTemplates(using: allClusters) }
       let displays = entity.displays
         .findDisplaysWithFallback()
         .map(CredentialDisplay.init)
-        .map { $0.resolveClaimTemplate(with: verifiableCredential.clusters) }
+        .map { $0.resolvePathTemplates(using: allClusters) }
       return ActivityDetailCredential(
         id: entity.id,
         displays: displays,
@@ -54,6 +56,7 @@ struct ActivityDetailCredentialFactory: ActivityDetailCredentialFactoryProtocol 
     guard !claims.isEmpty || !childClusters.isEmpty else { return nil }
     return CredentialClaimCluster(
       id: cluster.id,
+      path: ClaimsPathPointer(cluster.path) ?? [],
       order: Int(cluster.order),
       claims: Array(claims).map(CredentialClaim.init),
       childClusters: Array(childClusters),
@@ -66,38 +69,33 @@ struct ActivityDetailCredentialFactory: ActivityDetailCredentialFactoryProtocol 
         Self.filterClusterClaims(cluster, claimIds: claimIds)
       }
   }
-
 }
 
 #warning("TODO: should be moved to a CredentialDisplayFactory")
 extension CredentialDisplay {
 
-  // MARK: Fileprivate
-
-  fileprivate func resolveClaimTemplate(with clusters: List<CredentialClaimClusterEntity>) -> Self {
+  fileprivate func resolvePathTemplates(using clusters: [CredentialClaimClusterEntity]) -> Self {
     var copy = self
-
-    copy.summary = summary?.replacing(Self.regex) { match in
-      let templateContent = String(match.1)
-      guard
-        let path = ClaimsPathPointer(templateContent),
-        let claim = clusters.flatMap(\.claims).first(where: {
-          guard let claimPath = ClaimsPathPointer($0.path) else { return false }
-          return path.isPointing(at: claimPath)
-        })
-      else { return "" }
-      return claim.value ?? "–"
-    }
+    copy.summary = summary?.resolvePathTemplates(using: clusters)
     return copy
   }
+}
 
-  // MARK: Private
+extension CredentialClaimCluster {
 
-  private static let regex = Regex {
-    "{{"
-    Capture {
-      ZeroOrMore(.any, .reluctant)
-    }
-    "}}"
+  fileprivate func resolvePathTemplates(using clusters: [CredentialClaimClusterEntity]) -> Self {
+    var copy = self
+    copy.childClusters = childClusters.map { $0.resolvePathTemplates(using: clusters) }
+    copy.displays = displays.map { $0.resolvePathTemplates(using: clusters, indices: path.allIndices) }
+    return copy
+  }
+}
+
+extension ClusterDisplay {
+
+  fileprivate func resolvePathTemplates(using clusters: [CredentialClaimClusterEntity], indices: [Int]) -> Self {
+    var copy = self
+    copy.name = name.resolvePathTemplates(using: clusters, indices: indices)
+    return copy
   }
 }

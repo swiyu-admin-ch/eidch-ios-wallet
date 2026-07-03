@@ -16,7 +16,6 @@ public struct KeyAttestationJWT: JWT, Codable, Equatable {
 
   public let type: String? = "key-attestation+jwt"
   public let expiredAt: Date?
-  public let issuer: String?
   public let issuedAt: Date?
 
   public var activatedAt: Date? {
@@ -26,7 +25,6 @@ public struct KeyAttestationJWT: JWT, Codable, Equatable {
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case issuer = "iss"
     case issuedAt = "iat"
     case expiredAt = "exp"
     case keyStorage = "key_storage"
@@ -38,6 +36,10 @@ public struct KeyAttestationJWT: JWT, Codable, Equatable {
 }
 
 extension KeyAttestationJWT {
+  public var issuer: String? {
+    nil
+  }
+
   public var audience: String? {
     nil
   }

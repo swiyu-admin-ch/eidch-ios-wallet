@@ -1,6 +1,5 @@
 import Factory
 import XCTest
-@testable import BITCrypto
 @testable import BITJWT
 @testable import BITTestingCore
 
@@ -25,9 +24,8 @@ final class JWSValidatorTests: XCTestCase {
   func testValidate_validJws_argumentsPassed() async throws {
     try await validator.validate(jwsMock)
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 1)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidReceivedJws, jwsMock)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidReceivedDid, didIssuer)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateReceivedJws, jwsMock)
   }
 
   func testValidate_validActivatedAtAndExpiredAt_doesNotThrow() async throws {
@@ -50,7 +48,7 @@ final class JWSValidatorTests: XCTestCase {
       XCTAssertEqual(error as? JWSValidatorError, .expired)
     }
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 0)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
   }
 
   func testValidate_invalidActivatedAtAndValidExpiredAt_throwsNotYetActivated() async throws {
@@ -63,7 +61,7 @@ final class JWSValidatorTests: XCTestCase {
       XCTAssertEqual(error as? JWSValidatorError, .notYetActivated)
     }
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 0)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
   }
 
   func testValidate_invalidActivatedAtAndInvalidExpiredAt_throwsNotYetActivated() async throws {
@@ -138,7 +136,7 @@ final class JWSValidatorTests: XCTestCase {
       XCTAssertEqual(error as? JWSValidatorError, .issuedAtInFuture)
     }
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 0)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
   }
 
   func testValidate_validIssuedAtWithBuffer_doesNotThrow() async throws {
@@ -183,7 +181,7 @@ final class JWSValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsSignatureValidatorThrows_throws() async throws {
-    jwsSignatureValidatorMock.validateIssuerDidThrowableError = TestingError.error
+    jwsSignatureValidatorMock.validateThrowableError = TestingError.error
 
     do {
       try await validator.validate(jwsMock)
@@ -193,23 +191,8 @@ final class JWSValidatorTests: XCTestCase {
     }
   }
 
-  func testValidate_issuerKidMismatch_throwsInvalidKeyIdentifier() async throws {
-    let header = JWSHeader(algorithm: JWTAlgorithm.ES256, keyIdentifier: "did:tdw:example.com-mismatch#key-id")
-    let jws = JWS(payload: RegisteredClaimsJWT(issuer: didIssuer), rawPayload: "rawPayload", rawJWS: "rawJWS", header: header)
-
-    do {
-      try await validator.validate(jws)
-      XCTFail("Expected to throw.")
-    } catch {
-      XCTAssertEqual(error as? JWSValidatorError, .invalidKeyIdentifier)
-    }
-
-    XCTAssertEqual(jwsSignatureValidatorMock.validateIssuerDidCallsCount, 0)
-  }
-
   // MARK: Private
 
-  private let didIssuer = "did:tdw:example.com"
   private let jwsMock = createJws(from: RegisteredClaimsJWT(issuer: "did:tdw:example.com"))
   private let dateMock = Date()
 

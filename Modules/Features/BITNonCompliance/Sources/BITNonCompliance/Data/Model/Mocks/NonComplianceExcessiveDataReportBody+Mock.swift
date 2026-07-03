@@ -9,6 +9,7 @@ extension NonComplianceExcessiveDataReportBody: Mockable {
     public static let `default` = NonComplianceExcessiveDataReportBody(
       description: String(repeating: "x", count: 20),
       email: "admin@example.com",
+      language: "en",
       metadata: NonComplianceExcessiveDataReportBody.Metadata(
         verifierDid: "did:example:verifier",
         verifierUrl: "https://example.com",

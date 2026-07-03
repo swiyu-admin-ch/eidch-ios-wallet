@@ -20,17 +20,15 @@ final class ActivityPresentationTests: XCTestCase {
     assertActivity(
       activity,
       type: .presentationAccepted,
-      nonComplianceData: Self.rawRequestObjectMock,
       verifierDisplays: contextMock.verifierDisplays)
   }
 
   func testInit_jwtPresentationRequest_nonComplianceDataIsRawJWS() throws {
     let activity = try Activity(context: jwtContextMock, credential: XCTUnwrap(jwtContextMock.selectedCredential), type: .presentationDeclined)
 
-    try assertActivity(
+    assertActivity(
       activity,
       type: .presentationDeclined,
-      nonComplianceData: XCTUnwrap("rawJWS".data(using: .utf8)),
       verifierDisplays: jwtContextMock.verifierDisplays)
   }
 
@@ -39,13 +37,12 @@ final class ActivityPresentationTests: XCTestCase {
   private static let rawRequestObjectMock = "rawRequestObject".data(using: .utf8)!
 
   private let contextMock = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
-  private let jwtContextMock = PresentationRequestContext(presentationRequest: .jwt(RequestObjectJWS.Mock.sample), compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
+  private let jwtContextMock = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
 
-  private func assertActivity(_ activity: Activity, type: ActivityType, nonComplianceData: Data, verifierDisplays: [VerifierDisplay]) {
+  private func assertActivity(_ activity: Activity, type: ActivityType, verifierDisplays: [VerifierDisplay]) {
     XCTAssertEqual(activity.type, type)
     XCTAssertEqual(activity.actorTrust, .trusted)
     XCTAssertEqual(activity.vcSchemaTrust, .notProtected)
-    XCTAssertEqual(activity.nonComplianceData, String(data: nonComplianceData, encoding: .utf8))
 
     XCTAssertEqual(activity.claims.count, 2)
     let claimIds = activity.claims.map(\.credentialClaimId.uuidString)

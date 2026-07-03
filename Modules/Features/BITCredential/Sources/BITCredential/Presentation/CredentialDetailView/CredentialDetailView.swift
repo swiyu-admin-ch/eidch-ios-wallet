@@ -4,6 +4,7 @@ import BITL10n
 import BITNavigation
 import BITTheming
 import Factory
+import Foundation
 import NavigatorUI
 import Refresher
 import SwiftUI
@@ -14,8 +15,8 @@ struct CredentialDetailView: View {
 
   // MARK: Lifecycle
 
-  init(credential: CredentialProtocol) {
-    _viewModel = State(initialValue: Container.shared.credentialDetailViewModel(credential))
+  init(credentialId: UUID) {
+    _viewModel = State(initialValue: Container.shared.credentialDetailViewModel(credentialId))
   }
 
   // MARK: Internal
@@ -24,8 +25,12 @@ struct CredentialDetailView: View {
     case content = "credentialDetailContent"
     case closeButton
     case menuButton
-    case deleteButton
+    case refreshButton
     case wrongDataButton
+    case batchPrivacyWarning
+    case batchPrivacyWarningButton
+    case refreshErrorNotification
+    case deleteButton
     case card
   }
 
@@ -44,6 +49,19 @@ struct CredentialDetailView: View {
       }
       .background(ThemingAssets.Background.secondary.swiftUIColor)
       .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
+      .disabled(viewModel.isRefreshLoading)
+      .loadingOverlay(
+        isPresented: viewModel.isRefreshLoading,
+        message: L10n.tkDisplayrefreshLoadingTitle,
+        accessibility: .voiceOver())
+      .overlay(alignment: .bottom) {
+        errorNotificationView()
+      }
+      .animation(.easeInOut(duration: 0.2), value: viewModel.isRefreshErrorPresented)
+      .toast($viewModel.toast)
+      .navigationCheckpoint(CredentialDetailCheckpoints.refreshedCredential) { refreshedCredential in
+        viewModel.handleCredentialRefreshed(refreshedCredential)
+      }
       .navigationBarBackButtonHidden()
       .navigationTitle(viewModel.credentialViewModel?.credentialDisplay?.name ?? "")
       .navigationBarTitleDisplayMode(.inline)
@@ -56,6 +74,7 @@ struct CredentialDetailView: View {
         value: HomeCheckpointsState.deletedCredential)
       .task {
         await viewModel.onAppear()
+        isNavigationBarAccessibilityHidden = false
       }
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModel(with: scheme.rawValue)
@@ -71,6 +90,7 @@ struct CredentialDetailView: View {
   @Environment(\.navigator) private var navigator
 
   @State private var viewModel: CredentialDetailViewModel
+  @State private var isNavigationBarAccessibilityHidden = true
 
   @Orientation private var orientation
 
@@ -83,7 +103,7 @@ struct CredentialDetailView: View {
     }
 
     ToolbarItem(placement: .navigationBarTrailing) {
-      Button(action: { navigator.dismiss() }, label: {
+      Button(action: { navigator.returnToHomeSafely() }, label: {
         ThemingAssets.close.swiftUIImage
       })
       .accessibilityLabel(L10n.tkGlobalClosedetailsAlt)
@@ -93,11 +113,29 @@ struct CredentialDetailView: View {
 
   @ViewBuilder
   private func content() -> some View {
-    if orientation.isPortrait {
+    if viewModel.isLoading {
+      loadingView()
+    } else if let error = viewModel.error {
+      errorView(error)
+    } else if orientation.isPortrait {
       portraitLayout()
     } else {
       landscapeLayout()
     }
+  }
+
+  private func loadingView() -> some View {
+    VStack {
+      Spacer()
+      ProgressView()
+        .controlSize(.large)
+      Spacer()
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+
+  private func errorView(_ error: Error) -> some View {
+    EmptyStateView(.error(error: error)) {}
   }
 
 }
@@ -107,7 +145,7 @@ struct CredentialDetailView: View {
 extension CredentialDetailView {
   private func portraitLayout() -> some View {
     ScrollView(showsIndicators: false) {
-      VStack(spacing: .x6) {
+      LazyVStack(spacing: .x6) {
         if let credentialViewModel = viewModel.credentialViewModel {
           credentialCard(credentialViewModel)
             .frame(maxWidth: .infinity)
@@ -182,6 +220,18 @@ extension CredentialDetailView {
     Menu {
       if credentialViewModel is VerifiableCredentialViewModel {
         Section {
+          Button(action: {
+            if credentialViewModel.isRefreshable, let credential = viewModel.credential {
+              navigator.navigate(to: CredentialDestinations.refresh(CredentialDetailRefreshInput(credential: credential)))
+            } else {
+              navigator.navigate(to: CredentialDestinations.updateCredentialInfo(credentialViewModel.issuerDisplay))
+            }
+          }, label: {
+            Text(L10n.tkDisplayrefreshMenuPrimarybutton)
+          })
+          .accessibilityLabel(L10n.tkDisplayrefreshMenuPrimarybutton)
+          .accessibilityIdentifier(AccessibilityIdentifier.refreshButton.rawValue)
+
           Button(action: { navigator.navigate(to: CredentialDestinations.wrongData) }, label: {
             Label(title: { Text(L10n.tkGlobalWrongdata) }, icon: { Assets.warning.swiftUIImage })
           })
@@ -204,14 +254,25 @@ extension CredentialDetailView {
         .background(ThemingAssets.navigationAccent.swiftUIColor.opacity(0.12))
         .clipShape(.circle)
     }
+    .menuOrder(.fixed)
+    .accessibilityHidden(isNavigationBarAccessibilityHidden)
     .accessibilityLabel(L10n.tkGlobalMoreoptionsAlt)
     .accessibilityIdentifier(AccessibilityIdentifier.menuButton.rawValue)
     .accessibilityActions {
       if credentialViewModel is VerifiableCredentialViewModel {
+        Button(L10n.tkDisplayrefreshMenuPrimarybutton) {
+          if credentialViewModel.isRefreshable, let credential = viewModel.credential {
+            navigator.navigate(to: CredentialDestinations.refresh(CredentialDetailRefreshInput(credential: credential)))
+          } else {
+            navigator.navigate(to: CredentialDestinations.updateCredentialInfo(credentialViewModel.issuerDisplay))
+          }
+        }
+
         Button(L10n.tkGlobalWrongdata) {
           navigator.navigate(to: CredentialDestinations.wrongData)
         }
       }
+
       Button(L10n.tkDisplaydeleteCredentialmenuPrimarybutton) {
         viewModel.isDeleteCredentialAlertPresented.toggle()
       }
@@ -223,9 +284,68 @@ extension CredentialDetailView {
 
 extension CredentialDetailView {
 
+  private var wrongDataSection: some View {
+    SectionView {
+      IconCell(
+        image: Assets.warning.swiftUIImage,
+        text: L10n.tkReceiveIncorrectdataTitle,
+        disclosureIndicator: .navigation,
+        onTap: { navigator.navigate(to: CredentialDestinations.wrongData) })
+        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .padding(.horizontal, .x6)
+        .padding(.vertical, .x2)
+    }
+  }
+
   @ViewBuilder
-  private var issuerSection: some View {
-    if let issuer = viewModel.credentialViewModel?.issuerDisplay {
+  private var batchPrivacyWarningSection: some View {
+    if viewModel.isBatchPrivacyWarningVisible {
+      VStack(alignment: .leading, spacing: .x2) {
+        batchPrivacyWarningHeader {
+          Image(systemName: "exclamationmark.circle")
+            .foregroundStyle(ThemingAssets.Component.Callout.Alert.symbol.swiftUIColor)
+            .accessibilityHidden(true)
+
+          VStack(alignment: .leading, spacing: 0) {
+            Text(L10n.tkDisplaybatchPrivacyWarningTitle)
+              .font(.custom.footnoteEmphasized)
+              .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+
+            Text(L10n.tkDisplaybatchPrivacyWarningBody)
+              .font(.custom.footnote)
+              .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+              .multilineTextAlignment(.leading)
+          }
+        }
+
+        Button(action: {
+          Task {
+            await viewModel.refreshBatchCredential()
+          }
+        }) {
+          Text(L10n.tkDisplaybatchPrivacyWarningButton)
+            .font(.custom.subheadline)
+            .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: .x8)
+        }
+        .background(ThemingAssets.Component.Callout.Alert.button.swiftUIColor)
+        .clipShape(.capsule)
+        .accessibilityIdentifier(AccessibilityIdentifier.batchPrivacyWarningButton.rawValue)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.x4)
+      .background(ThemingAssets.Background.groupedRow.swiftUIColor)
+      .clipShape(RoundedRectangle(cornerRadius: .x5))
+      .padding(.horizontal, .x4)
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier(AccessibilityIdentifier.batchPrivacyWarning.rawValue)
+    }
+  }
+
+  @ViewBuilder
+  private func issuerSection(_ verifiableCredentialViewModel: VerifiableCredentialViewModel) -> some View {
+    if let issuer = verifiableCredentialViewModel.issuerDisplay {
       SectionView(title: L10n.tkDisplaydeleteDisplaycredential1Title5) {
         HStack(alignment: .center, spacing: .x3) {
           if !dynamicTypeSize.isAccessibilitySize {
@@ -241,32 +361,68 @@ extension CredentialDetailView {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, .x6)
         .padding(.vertical, .x2)
+
+        Divider()
+          .padding(.leading, .x6)
+        issuanceTypeView(
+          title: verifiableCredentialViewModel.issuanceTypeTitle,
+          credential: verifiableCredentialViewModel.credential)
       }
     }
   }
 
-  private var wrongDataSection: some View {
-    SectionView {
-      IconCell(
-        image: Assets.warning.swiftUIImage,
-        text: L10n.tkReceiveIncorrectdataTitle,
-        disclosureIndicator: .navigation,
-        onTap: { navigator.navigate(to: CredentialDestinations.wrongData) })
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        .padding(.horizontal, .x6)
-        .padding(.vertical, .x2)
+  @ViewBuilder
+  private func batchPrivacyWarningHeader(@ViewBuilder content: () -> some View) -> some View {
+    if dynamicTypeSize.isAccessibilitySize {
+      VStack(alignment: .leading, spacing: .x2, content: content)
+    } else {
+      HStack(alignment: .top, spacing: .x2, content: content)
     }
   }
 
   private func verifiableCredentialContent(_ verifiableCredentialViewModel: VerifiableCredentialViewModel) -> some View {
     VStack(alignment: .leading, spacing: .x6) {
-      RecentActivitiesWidget(viewModel.activities, credentialId: viewModel.credential.id, isActivityHistoryEnabled: viewModel.isActivityHistoryEnabled)
-      ClaimClusterList(verifiableCredentialViewModel.credential.clusters)
-      issuerSection
+      batchPrivacyWarningSection
+      RecentActivitiesWidget(viewModel.activities, credentialId: verifiableCredentialViewModel.credential.id, isActivityHistoryEnabled: viewModel.isActivityHistoryEnabled)
+      ClaimClusterList(verifiableCredentialViewModel.credential.resolvedClusters)
+      issuerSection(verifiableCredentialViewModel)
       wrongDataSection
     }
   }
 
+  private func issuanceTypeView(title: String, credential: VerifiableCredential) -> some View {
+    Button(action: { navigator.navigate(to: CredentialDestinations.issuanceType(credential.id)) }) {
+      KeyValueCell(key: L10n.tkCredentialIssuanceTypeTitle, value: title) {
+        Image(systemName: "chevron.right")
+          .font(.system(size: 14))
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, .x6)
+    }
+  }
+}
+
+extension CredentialDetailView {
+  @ViewBuilder
+  private func errorNotificationView() -> some View {
+    if viewModel.isRefreshErrorPresented {
+      Notification(
+        systemImageName: "exclamationmark.triangle",
+        imageColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor,
+        title: L10n.tkErrorGenericPrimary,
+        titleColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor,
+        content: L10n.tkErrorGenericSecondary,
+        contentColor: ThemingAssets.Label.secondary.swiftUIColor,
+        closeAction: viewModel.hideRefreshError,
+        background: ThemingAssets.Brand.Bright.swissRed.swiftUIColor,
+        closeButtonStyle: .secondary)
+        .padding(.horizontal, .x4)
+        .padding(.bottom, .x4)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(AccessibilityIdentifier.refreshErrorNotification.rawValue)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+  }
 }
 
 // MARK: - Deferred Credential
@@ -341,6 +497,26 @@ extension CredentialDetailView {
     }
   }
 
+  private var issuanceFailedContent: some View {
+    SectionView {
+      VStack(alignment: .leading) {
+        Text(L10n.tkDeferredCredentialDetailsIssuanceFailedContentTitle)
+          .font(.custom.bodyBold)
+          .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+          .accessibilityAddTraits(.isHeader)
+        Text(L10n.tkDeferredCredentialDetailsIssuanceFailedContentBody)
+          .font(.custom.body)
+          .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+          .multilineTextAlignment(.leading)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, .x6)
+      .padding(.vertical, .x4)
+    }
+  }
+
   @ViewBuilder
   private func deferredCredentialContent(_ deferredCredentialViewModel: DeferredCredentialViewModel) -> some View {
     switch deferredCredentialViewModel.credential.progressionState {
@@ -348,6 +524,8 @@ extension CredentialDetailView {
       inProgressContent
     case .invalid:
       invalidContent
+    case .issuanceFailed:
+      issuanceFailedContent
     }
   }
 
@@ -355,6 +533,6 @@ extension CredentialDetailView {
 
 #if DEBUG
 #Preview {
-  CredentialDetailView(credential: DeferredCredential.Mock.sample)
+  CredentialDetailView(credentialId: DeferredCredential.Mock.sample.id)
 }
 #endif

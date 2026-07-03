@@ -19,7 +19,7 @@ class LoginRouterMock: ClosableRoutesMock, LoginRouterRoutes {
     didCallAppSettings = true
   }
 
-  func versionEnforcement(_ versionEnforcement: VersionEnforcement) {
+  func versionEnforcement(_ versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate) {
     didCallversionEnforcement = true
     self.versionEnforcement = versionEnforcement
   }

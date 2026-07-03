@@ -136,7 +136,7 @@ extension ErrorDataset: Hashable {
   private var actionLabels: [String] {
     actions.compactMap { action in
       switch action {
-      case .primary(let label, _, _, _),
+      case .primary(let label, _, _, _, _),
            .primaryAsync(let label, _, _, _, _),
            .secondary(let label, _, _, _),
            .secondaryAsync(let label, _, _, _, _):

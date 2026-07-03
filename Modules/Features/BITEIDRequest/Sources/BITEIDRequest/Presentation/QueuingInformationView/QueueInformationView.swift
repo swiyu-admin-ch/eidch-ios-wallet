@@ -1,4 +1,5 @@
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import SwiftUI
@@ -26,7 +27,7 @@ struct QueueInformationView: View {
       ],
       actions: [
         .primary(L10n.tkGlobalContinue, identifier: "primaryButton", { navigator in
-          navigator.dismiss()
+          navigator.returnToHomeSafely()
         }),
       ])
       .toolbar(.visible)

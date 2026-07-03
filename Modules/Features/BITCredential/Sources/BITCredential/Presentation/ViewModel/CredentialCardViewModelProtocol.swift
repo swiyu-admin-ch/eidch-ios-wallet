@@ -10,6 +10,8 @@ public protocol CredentialCardViewModelProtocol {
   var issuerDisplay: CredentialIssuerDisplay? { get }
   var credentialDisplay: CredentialDisplay? { get }
   var environment: TrustEnvironment? { get }
+  var isRefreshable: Bool { get }
+  var isBatchPrivacyWarningVisible: Bool { get }
   var statusText: String { get }
   var statusImage: Image { get }
   var statusBadgeAccessibilityText: String { get }

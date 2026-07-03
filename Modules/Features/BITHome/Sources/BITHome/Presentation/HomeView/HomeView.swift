@@ -26,6 +26,7 @@ struct HomeView: View {
 
   var body: some View {
     content()
+      .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
       .onAppear {
         UIAccessibility.post(notification: .screenChanged, argument: L10n.tkHomeHomescreenAlt)
         focus = .scan
@@ -36,14 +37,20 @@ struct HomeView: View {
       }
       .onDisappear(perform: viewModel.stopRefresh)
       .navigate(to: $viewModel.destination)
-      .navigationCheckpoint(Checkpoints.home, completion: { state in
-        switch state {
-        case .acceptCredential: viewModel.didSaveCredential()
-        case .declineCredential: viewModel.didDeclineCredential()
-        case .deletedCredential: viewModel.didDeleteCredential()
-        case .startRequestCasePolling(let caseId): viewModel.startRequestCasePolling(for: caseId)
+      .navigationCheckpoint(Checkpoints.home) { state in
+        if let state {
+          switch state {
+          case .acceptCredential: viewModel.didSaveCredential()
+          case .declineCredential: viewModel.didDeclineCredential()
+          case .deletedCredential: viewModel.didDeleteCredential()
+          case .startRequestCasePolling(let caseId): viewModel.startRequestCasePolling(for: caseId)
+          }
         }
-      })
+
+        Task {
+          await viewModel.refresh()
+        }
+      }
       .onColorSchemeChange { scheme in
         viewModel.updateCredentialViewModels(with: scheme.rawValue)
       }
@@ -94,10 +101,41 @@ struct HomeView: View {
 
 extension HomeView {
 
+  private var listContent: some View {
+    ZStack {
+      ThemingAssets.Background.secondary.swiftUIColor
+        .frame(maxWidth: .infinity)
+        .ignoresSafeArea()
+
+      List {
+        RequestCasesListView(viewModel.requestCases)
+          .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
+        switch viewModel.state {
+        case .results:
+          credentialsList()
+            .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor, ThemingAssets.Label.primary.swiftUIColor)
+            .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
+            .accessibilityFocused($focus, equals: .list)
+            .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
+        case .error(let error):
+          errorView(error)
+        case .empty:
+          emptyView()
+            .listRowSeparator(.hidden)
+        }
+      }
+      .refreshable {
+        await viewModel.refresh()
+      }
+      .scrollContentBackground(.hidden)
+      .listStyle(.insetGrouped)
+    }
+  }
+
   @ViewBuilder
   private func mainContent() -> some View {
     if isProximityEnabled {
-      listContent()
+      listContent
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(L10n.tkHomeTitle)
         .toolbar {
@@ -111,37 +149,13 @@ extension HomeView {
           }
         }
     } else {
-      listContent()
+      listContent
         .safeAreaInset(edge: .bottom) {
           if !orientation.isLandscape {
             portraitFooter()
           }
         }
     }
-  }
-
-  private func listContent() -> some View {
-    List {
-      RequestCasesListView(viewModel.requestCases)
-        .listRowSeparator(.hidden)
-      switch viewModel.state {
-      case .results:
-        credentialsList()
-          .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor, ThemingAssets.Label.primary.swiftUIColor)
-          .accessibilityFocused($focus, equals: .list)
-          .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
-      case .error(let error):
-        errorView(error)
-      case .empty:
-        emptyView()
-          .listRowSeparator(.hidden)
-      }
-    }
-    .refreshable {
-      await viewModel.refresh()
-    }
-    .listRowSpacing(-10)
-    .listStyle(.plain)
   }
 
   private func emptyView() -> some View {
@@ -190,10 +204,12 @@ extension HomeView {
         Button(action: viewModel.openSettings, label: {
           Label(title: { Text(L10n.tkMenuHomeListSettings) }) { HomeAssets.menuSettings.swiftUIImage }
         })
+        .accessibilityHint(L10n.tkGlobalExternalLinkHint)
         Button(action: openHelp, label: {
           Label(title: { Text(L10n.tkMenuHomeListHelp) }) { HomeAssets.menuHelp.swiftUIImage }
         })
         .accessibilityAddTraits(.isLink)
+        .accessibilityHint(L10n.tkGlobalExternalLinkHint)
       }
     } label: {
       label()
@@ -305,6 +321,7 @@ extension HomeView {
     EmptyStateView(.error(error: error)) { Text(L10n.tkHomeHomescreenEmptyStateButton) } action: { await viewModel.refresh() }
       .padding(.horizontal, .x6)
   }
+
 }
 
 // MARK: - Portrait

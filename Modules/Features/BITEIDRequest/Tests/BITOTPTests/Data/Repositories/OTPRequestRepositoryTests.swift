@@ -36,9 +36,9 @@ final class OTPRequestRepositoryTests: XCTestCase {
     try await repository.requestOTP(email: "user@example.admin.ch")
 
     XCTAssertEqual(clientAttestationRepository.getUsingCallsCount, 1)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 1)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, otpServiceBaseUrl.absoluteString)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, attestationServiceUrl.appendingPathComponent("challenge"))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.audience, otpServiceBaseUrl.absoluteString)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.challengeEndpoint, attestationServiceUrl.appendingPathComponent("challenge"))
   }
 
   func testRequestOTP_sessionMissing_throwsInvalidClientAttestation() async {
@@ -61,7 +61,7 @@ final class OTPRequestRepositoryTests: XCTestCase {
   }
 
   func testRequestOTP_generateProofOfPossessionFails_throwsInvalidClientAttestation() async {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     await assertThrowsOTPError(
       expectedError: .invalidClientAttestation,
@@ -106,13 +106,13 @@ final class OTPRequestRepositoryTests: XCTestCase {
     try await repository.verifyOTP(email: "user@example.admin.ch", code: "123456")
 
     XCTAssertEqual(clientAttestationRepository.getUsingCallsCount, 1)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 1)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, otpServiceBaseUrl.absoluteString)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, attestationServiceUrl.appendingPathComponent("challenge"))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.audience, otpServiceBaseUrl.absoluteString)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.challengeEndpoint, attestationServiceUrl.appendingPathComponent("challenge"))
   }
 
   func testVerifyOTP_generateProofOfPossessionFails_throwsInvalidClientAttestation() async {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     await assertThrowsOTPError(
       expectedError: .invalidClientAttestation,
@@ -194,7 +194,7 @@ final class OTPRequestRepositoryTests: XCTestCase {
 
   private func createSuccessState() {
     clientAttestationRepository.getUsingReturnValue = ClientAttestationJWT.Mock.sample
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReturnValue = ClientAttestationProofOfPossession.Mock.sample
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReturnValue = ClientAttestationProofOfPossession.Mock.sample
   }
 
   private func registerMocks() {

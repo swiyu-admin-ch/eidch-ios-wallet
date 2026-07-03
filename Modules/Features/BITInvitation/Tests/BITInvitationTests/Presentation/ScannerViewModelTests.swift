@@ -361,6 +361,26 @@ final class CameraViewModelTests: XCTestCase {
   }
 
   @MainActor
+  func testValidatePresentationTransactionDataNotSupported_showsPushedErrorView() async throws {
+    getCredentialsCountUseCase.executeReturnValue = 2
+    checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
+    fetchPresentationRequestUseCase.executeUrlThrowableError = FetchPresentationRequestUseCaseError.transactionDataNotSupported("invalid_request")
+
+    viewModel = createViewModel(mode: .deeplink(url: url))
+    await viewModel.onAppear()
+
+    XCTAssertFalse(viewModel.isErrorPopupPresented)
+    XCTAssertEqual(viewModel.error as? InvitationError, .transactionDataNotSupported("invalid_request"))
+
+    switch viewModel.destination {
+    case .deeplinkError(let dataset, _):
+      XCTAssertEqual(dataset, try XCTUnwrap(InvitationError.transactionDataNotSupported("invalid_request").errorDataset))
+    default:
+      XCTFail("Expected deeplink error destination")
+    }
+  }
+
+  @MainActor
   func testFetchCredentialFailed_networkError() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample

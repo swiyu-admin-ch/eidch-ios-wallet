@@ -49,6 +49,10 @@ struct RealmMigrationService: MigrationServiceProtocol {
     if oldVersion < 25 && newVersion >= 25 {
       return migrateFromSchema24(migration)
     }
+
+    if oldVersion < 29 && newVersion >= 29 {
+      return migrateFromSchema28(migration)
+    }
   }
 
   // MARK: Private
@@ -60,7 +64,14 @@ struct RealmMigrationService: MigrationServiceProtocol {
   private func migrateFromSchema4(_ migration: Migration) {
     migration.enumerateObjects(ofType: "CredentialEntity") { oldCredential, newCredential in
       let oldClaims = oldCredential?["claims"] as? List<MigrationObject> ?? List()
-      let cluster = migration.create("CredentialClaimClusterEntity", value: [UUID(), Int16.max, [], [], []])
+      let cluster = migration.create("CredentialClaimClusterEntity", value: [
+        "id": UUID(),
+        "path": "[]",
+        "order": Int16.max,
+        "claims": [],
+        "childClusters": [],
+        "displays": [],
+      ])
       let clusterClaims = cluster["claims"] as? List<MigrationObject> ?? List()
 
       migration.enumerateObjects(ofType: "CredentialClaimEntity") { oldClaim, newClaim in
@@ -79,6 +90,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     setNextPresentableBundleItemId(in: migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
     deleteOrphanedObjects(migration)
   }
 
@@ -98,6 +110,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     setNextPresentableBundleItemId(in: migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
     deleteOrphanedObjects(migration)
   }
 
@@ -117,6 +130,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     setNextPresentableBundleItemId(in: migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
     deleteOrphanedObjects(migration)
   }
 
@@ -134,6 +148,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     setNextPresentableBundleItemId(in: migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
 
     deleteOrphanedObjects(migration)
   }
@@ -149,8 +164,10 @@ struct RealmMigrationService: MigrationServiceProtocol {
     setNextPresentableBundleItemId(in: migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
 
     deleteOrphanedObjects(migration)
+
   }
 
   /**
@@ -162,6 +179,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     setNextPresentableBundleItemId(in: migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
   }
 
   /**
@@ -174,6 +192,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateBatchData(migration)
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
   }
 
   /**
@@ -184,6 +203,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     replaceKeyWithClaimsPathPointer(migration)
     migrateBatchData(migration)
     migrateCredentialAuthentication(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
   }
 
   private func replaceKeyWithClaimsPathPointer(_ migration: Migration) {
@@ -205,6 +225,25 @@ struct RealmMigrationService: MigrationServiceProtocol {
   private func migrateFromSchema24(_ migration: Migration) {
     migrateBatchData(migration)
     migrateCredentialAuthentication(migration)
+    migrateCredentialDisplaySummaryTemplates(migration)
+  }
+
+  /**
+   * Version 6.9 (schema 29) (no schema change)
+   * - Replace JSON path templates in **CredentialDisplayEntity.summary** with claims path pointer templates
+   */
+  private func migrateFromSchema28(_ migration: Migration) {
+    migrateCredentialDisplaySummaryTemplates(migration)
+  }
+
+  private func migrateCredentialDisplaySummaryTemplates(_ migration: Migration) {
+    migration.enumerateObjects(ofType: "CredentialDisplayEntity") { oldDisplay, newDisplay in
+      guard let summary: String = oldDisplay?.getValue(forProperty: "summary") else {
+        return
+      }
+
+      newDisplay?["summary"] = summary.migrateJsonPathTemplatesToClaimsPathPointerTemplates()
+    }
   }
 
   private func migrateCredentialAuthentication(_ migration: Migration) {

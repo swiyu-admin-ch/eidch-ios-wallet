@@ -21,6 +21,7 @@ protocol EIDRequestRepositoryProtocol {
   func submitFile(_ file: EIDRequestCaseFile, caseId: String, authJwt: String, _ progress: ProgressBlock?) async throws
   func getPairingState(caseId: String, pairingId: String) async throws -> WalletPairingState
   func submitRequest(caseId: String, authJwt: String) async throws
+  func registerPushId(_ body: PushIdRegistrationBody, caseId: String) async throws
 }
 
 
@@ -102,6 +103,12 @@ struct EIDRequestRepository: EIDRequestRepositoryProtocol {
   func submitRequest(caseId: String, authJwt: String) async throws {
     let authPlugin = AccessTokenPlugin(tokenClosure: { _ in authJwt })
     try await networkService.request(EIDRequestEndpoint.submit(caseId: caseId), plugins: [authPlugin])
+  }
+
+  func registerPushId(_ body: PushIdRegistrationBody, caseId: String) async throws {
+    let clientAttestationPlugin = try await generateClientAttestationPlugin(for: body)
+
+    try await networkService.request(EIDRequestEndpoint.registerPushId(caseId: caseId, body: body), plugins: [clientAttestationPlugin])
   }
 
   // MARK: Private

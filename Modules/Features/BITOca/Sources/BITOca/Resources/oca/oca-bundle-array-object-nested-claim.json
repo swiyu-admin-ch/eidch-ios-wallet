@@ -1,0 +1,36 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IHQ56Q8_30nS2cqYjHZZQwNrxTm4hV3DRiS1Z7XZPjqq",
+      "attributes": {
+        "items": "Array[refs:IFIFlwXy56EBmnnX61HZjvcGRGxVCyOHOCxkR3EJstPH]"
+      }
+    },
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IFIFlwXy56EBmnnX61HZjvcGRGxVCyOHOCxkR3EJstPH",
+      "attributes": {
+        "nested_claim": "Text"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "type": "extend/overlays/data_source/2.0",
+      "capture_base": "IHQ56Q8_30nS2cqYjHZZQwNrxTm4hV3DRiS1Z7XZPjqq",
+      "format": "vc+sd-jwt",
+      "attribute_sources": {
+        "items": ["items", null]
+      }
+    },
+    {
+      "type": "extend/overlays/data_source/2.0",
+      "capture_base": "IFIFlwXy56EBmnnX61HZjvcGRGxVCyOHOCxkR3EJstPH",
+      "format": "vc+sd-jwt",
+      "attribute_sources": {
+        "nested_claim": ["items", null, "details", "claim"]
+      }
+    }
+  ]
+}

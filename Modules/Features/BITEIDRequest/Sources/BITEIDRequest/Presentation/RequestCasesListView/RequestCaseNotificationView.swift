@@ -38,10 +38,7 @@ struct RequestCaseNotificationView: View {
       }
     }
     .frame(maxWidth: .infinity)
-    .padding(.x6)
-    .background(ThemingAssets.Background.secondary.swiftUIColor)
-    .cornerRadius(.x5)
-    .contentShape(.accessibility, RoundedRectangle(cornerRadius: .x5))
+    .padding(.vertical, .x3)
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(title). \(content)")
     .accessibilityNotificationActions(notificationType)
@@ -68,7 +65,6 @@ struct RequestCaseNotificationView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  @ViewBuilder
   private func primaryCellView(label: String, action: @escaping () -> Void, buttonStyle: CustomButtonStyle) -> some View {
     VStack(alignment: .leading) {
       mainContent()
@@ -78,11 +74,8 @@ struct RequestCaseNotificationView: View {
       })
       .buttonStyle(buttonStyle)
       .controlSize(.regular)
-      .padding(.top, .x2)
       .dynamicTypeSize(...DynamicTypeSize.accessibility2)
     }
-
-    Spacer()
   }
 
   @ViewBuilder

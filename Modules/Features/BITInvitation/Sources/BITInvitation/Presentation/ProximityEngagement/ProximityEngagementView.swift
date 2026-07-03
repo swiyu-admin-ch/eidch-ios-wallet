@@ -22,7 +22,7 @@ struct ProximityEngagementView: View {
       qrCodePayload: viewModel.qrCodePayload,
       isErrorPopupPresented: $viewModel.isErrorPopupPresented,
       error: $viewModel.error,
-      closeAction: { navigator.returnToCheckpointSafely(Checkpoints.home) },
+      closeAction: { navigator.returnToHomeSafely() },
       closeErrorViewAction: viewModel.closeErrorView)
       .navigate(to: $viewModel.destination)
       .bluetoothPermission { state in

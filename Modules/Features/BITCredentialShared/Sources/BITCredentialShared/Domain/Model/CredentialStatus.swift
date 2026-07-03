@@ -8,6 +8,7 @@ public enum CredentialStatus: String, Codable, CaseIterable {
   case revoked
   case suspended
   case expired
+  case businessExpired
   case notYetValid
   case unsupported
   case unknown
@@ -24,6 +25,8 @@ public enum CredentialStatus: String, Codable, CaseIterable {
       self = .suspended
     case .expired:
       self = .expired
+    case .businessExpired:
+      self = .businessExpired
     case .notYetValid:
       self = .notYetValid
     case .unsupported:
@@ -46,6 +49,8 @@ extension BundleItemEntity.CredentialStatus {
       self = .suspended
     case .expired:
       self = .expired
+    case .businessExpired:
+      self = .businessExpired
     case .notYetValid:
       self = .notYetValid
     case .unsupported:

@@ -2,6 +2,7 @@ import BITAnyCredentialFormat
 import BITCore
 import BITCrypto
 import BITJWT
+import BITSwiyuSharedKMP
 import Factory
 import Foundation
 
@@ -25,6 +26,14 @@ extension Container {
     self { FetchAnyVerifiableCredentialUseCase() }
   }
 
+  public var refreshAnyVerifiableCredentialUseCase: Factory<RefreshAnyVerifiableCredentialUseCaseProtocol> {
+    self { RefreshAnyVerifiableCredentialUseCase() }
+  }
+
+  public var issuanceDPoPKeyRepository: Factory<IssuanceDPoPKeyRepositoryProtocol> {
+    self { IssuanceDPoPKeyRepository() }
+  }
+
   public var dateBuffer: Factory<TimeInterval> {
     self { 15 }
   }
@@ -33,12 +42,16 @@ extension Container {
     self { PresentationRequestService() }
   }
 
-  public var presentationFieldsValidator: Factory<PresentationFieldsValidatorProtocol> {
-    self { PresentationFieldsValidator() }
-  }
-
   public var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
     self { [.ES256] }
+  }
+
+  public var supportedDPoPSigningAlgorithms: Factory<[JWTAlgorithm]> {
+    self { [.ES256] }
+  }
+
+  public var isDPoPEnabled: Factory<Bool> {
+    self { false }
   }
 
   public var validateCredentialOfferInvitationUrlUseCase: Factory<ValidateCredentialOfferInvitationUrlUseCaseProtocol> {
@@ -61,10 +74,6 @@ extension Container {
     self { ["P-256"] }
   }
 
-  public var isPayloadEncryptionEnabled: Factory<Bool> {
-    self { false }
-  }
-
   public var isBatchIssuanceEnabled: Factory<Bool> {
     self { false }
   }
@@ -75,6 +84,10 @@ extension Container {
 
   public var credentialEncryptionContextGenerator: Factory<CredentialEncryptionContextGeneratorProtocol> {
     self { CredentialEncryptionContextGenerator() }
+  }
+
+  public var dpopGenerator: Factory<DPoPGeneratorProtocol> {
+    self { DPoPGenerator() }
   }
 
   // MARK: Internal
@@ -127,6 +140,14 @@ extension Container {
     self { CredentialRequestBodyGenerator() }
   }
 
+  var sdJwtBatchCredentialConsistencyValidator: Factory<SdJwtBatchCredentialConsistencyValidatorProtocol> {
+    self { SdJwtBatchCredentialConsistencyValidator() }
+  }
+
+  var sdJwtCredentialConsistencyChecker: Factory<SdJwtCredentialConsistencyCheckerProtocol> {
+    self { SdJwtCredentialConsistencyChecker() }
+  }
+
 }
 
 // MARK: - AnyFetcher
@@ -134,10 +155,6 @@ extension Container {
 extension Container {
 
   // MARK: Public
-
-  public var anyDescriptorMapGenerator: Factory<AnyDescriptorMapGeneratorProtocol> {
-    self { AnyDescriptorMapGenerator() }
-  }
 
   public var anyVpTokenGenerator: Factory<AnyVpTokenGeneratorProtocol> {
     self { AnyVpTokenGenerator() }
@@ -149,30 +166,10 @@ extension Container {
 
   // MARK: Internal
 
-  var anyDescriptorMapGeneratorDispatcher: Factory<[CredentialFormat: AnyDescriptorMapGeneratorProtocol]> {
-    self {
-      [
-        CredentialFormat.vcSdJwt: VcSdJwtDescriptorMapGenerator(),
-      ]
-    }
-  }
-
   var anyFetchCredentialDispatcher: Factory<[CredentialFormat: FetchAnyCredentialUseCaseProtocol]> {
     self {
       [
         CredentialFormat.vcSdJwt: FetchVcSdJwtCredentialUseCase(),
-      ]
-    }
-  }
-
-  var anyCredentialJsonGenerator: Factory<AnyCredentialJsonGeneratorProtocol> {
-    self { AnyCredentialJsonGenerator() }
-  }
-
-  var anyCredentialJsonGeneratorDispatcher: Factory<[CredentialFormat: AnyCredentialJsonGeneratorProtocol]> {
-    self {
-      [
-        CredentialFormat.vcSdJwt: VcSdJwtCredentialJsonGenerator(),
       ]
     }
   }
@@ -247,11 +244,24 @@ extension Container {
     }
   }
 
-  public var trustRegistryTrustedDids: Factory<[String: [String]]> {
+  public var trustRegistryTrustedDidsV1: Factory<TrustRegistryTrustedDidsV1> {
     self {
       [
         self.trustRegistry(): [self.trustRegistryDidProd()],
         self.trustRegistryInt(): [self.trustRegistryDidIntProd()],
+      ]
+    }
+  }
+
+  public var trustRegistryTrustedDids: Factory<TrustRegistryTrustedDids> {
+    self {
+      [
+        self.trustRegistry(): self.trustStatementTrustedDids(
+          trustStatementIssuer: self.trustStatementIssuerProd(),
+          publicTransparencyStatementIssuer: self.publicTransparencyStatementIssuerProd()),
+        self.trustRegistryInt(): self.trustStatementTrustedDids(
+          trustStatementIssuer: self.trustStatementIssuerIntProd(),
+          publicTransparencyStatementIssuer: self.publicTransparencyStatementIssuerIntProd()),
       ]
     }
   }
@@ -300,4 +310,34 @@ extension Container {
     self { "did:tdw:QmerEFUx69M5AB7oyoPQG6P17MbZQUHoe2Jxz9tXk7cSdf:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:02ee8aca-041f-4683-b878-8c6efa977292" }
   }
 
+  private var trustStatementIssuerProd: Factory<String> {
+    self { "did:webvh:QmaemSxuZiADoV3F5aBxyvemrUgbWURCv67KU222midYSo:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:cc6c0cc8-0743-4cf0-a6b8-c87e30c78d31" }
+  }
+
+  private var publicTransparencyStatementIssuerProd: Factory<String> {
+    self { "did:webvh:QmUtTiwizd74sn8vv2XfsjjrzjaEuPTbgeT2u3MpFCCqHu:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:82b5f3c4-ce00-464d-bc45-b28d3a04ee73" }
+  }
+
+  private var trustStatementIssuerIntProd: Factory<String> {
+    self { "did:webvh:QmdVPcfEJgvQAJKEjaTWAhskT1kc59KZQiXNenqHBB7iH5:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:4c131dc4-ced1-454b-bbd4-9401c7512e37" }
+  }
+
+  private var publicTransparencyStatementIssuerIntProd: Factory<String> {
+    self { "did:webvh:QmNTHuhETA3u2ypoujoaEMaZGKf5HpPwkV6ktfgzu7JzMp:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:5e5de412-0e7d-4982-a0ed-bd55a0f25a04" }
+  }
+
+  private func trustStatementTrustedDids(
+    trustStatementIssuer: String,
+    publicTransparencyStatementIssuer: String)
+    -> [String: [String]]
+  {
+    [
+      TrustStatementType.verificationQueryPublic: [publicTransparencyStatementIssuer],
+      TrustStatementType.identity: [trustStatementIssuer],
+      TrustStatementType.protectedIssuanceTrustList: [trustStatementIssuer],
+      TrustStatementType.protectedIssuanceAuthorization: [trustStatementIssuer],
+      TrustStatementType.nonComplianceTrustList: [trustStatementIssuer],
+      TrustStatementType.protectedVerificationAuthorization: [trustStatementIssuer],
+    ]
+  }
 }

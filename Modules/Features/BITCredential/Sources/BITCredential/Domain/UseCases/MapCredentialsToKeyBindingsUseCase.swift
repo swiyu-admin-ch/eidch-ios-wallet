@@ -36,7 +36,7 @@ struct MapCredentialsToKeyBindingsUseCase: MapCredentialsToKeyBindingsUseCasePro
     let keyBindingJwkPairs: [KeyBinding: JWK] = try Dictionary(
       uniqueKeysWithValues: keyPairs.compactMap { keyPair in
         guard
-          let keyBinding = try createKeyBinding(from: keyPair),
+          let keyBinding = try keyBindingGenerator.generate(from: keyPair),
           let publicKey = keyPair.publicKey
         else { return nil }
 
@@ -69,7 +69,9 @@ struct MapCredentialsToKeyBindingsUseCase: MapCredentialsToKeyBindingsUseCasePro
       guard let algorithm = VaultAlgorithm(rawValue: keyBinding.algorithm) else {
         throw MapCredentialsToKeyBindingsUseCaseError.invalidKeyBindingAlgorithm
       }
-      return try keyManager.getKeyPair(withIdentifier: keyBinding.id.uuidString, algorithm: algorithm)
+
+      let options: VaultOptions = keyBinding.bindingType == .hardware ? .secureEnclave : .none
+      return try keyManager.getKeyPair(withIdentifier: keyBinding.id.uuidString, algorithm: algorithm, options: options)
     }
 
     return try execute(credentials: credentials, keyPairs: keyPairs)
@@ -78,22 +80,7 @@ struct MapCredentialsToKeyBindingsUseCase: MapCredentialsToKeyBindingsUseCasePro
   // MARK: Private
 
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
-
-  private func createKeyBinding(from keyPair: VaultKeyPair?) throws -> KeyBinding? {
-    try keyPair.flatMap { keyPair in
-      let isHardwareKey = keyPair.options?.contains(.secureEnclave) ?? false
-      let (publicKey, privateKey): (Data?, Data?) = isHardwareKey
-        ? (nil, nil)
-        : try keyManager.getExternalRepresentation(of: keyPair.privateKey)
-
-      return KeyBinding(
-        id: UUID(uuidString: keyPair.identifier) ?? UUID(),
-        algorithm: keyPair.algorithm.rawValue,
-        bindingType: isHardwareKey ? .hardware : .software,
-        publicKey: publicKey,
-        privateKey: privateKey)
-    }
-  }
+  @Injected(\.keyBindingGenerator) private var keyBindingGenerator: KeyBindingGeneratorProtocol
 }
 
 // MARK: - MapCredentialsToKeyBindingsUseCaseError

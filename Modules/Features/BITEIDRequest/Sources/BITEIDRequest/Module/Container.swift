@@ -24,6 +24,10 @@ extension Container {
     self { @MainActor in ScanDocumentSubmitViewModel(scanDocumentOutput: $0) }
   }
 
+  var scanDocumentImageOverviewViewModel: ParameterFactory<ScanResultEntryImage, ScanDocumentImageOverviewViewModel> {
+    self { @MainActor in ScanDocumentImageOverviewViewModel(image: $0) }
+  }
+
   var recordDocumentViewModel: Factory<RecordDocumentViewModel> {
     self { @MainActor in RecordDocumentViewModel() }
   }
@@ -105,6 +109,10 @@ extension Container {
   var eidRequestFlowCoordinator: Factory<EIDRequestFlowCoordinatorProtocol> {
     self { @MainActor in EIDRequestFlowCoordinator() }.singleton
   }
+
+  var pushPermissionViewModel: ParameterFactory<EIDRequestCase, PushPermissionViewModel> {
+    self { @MainActor in PushPermissionViewModel($0) }
+  }
 }
 
 extension Container {
@@ -160,14 +168,6 @@ extension Container {
     }
   }
 
-  public var isEIDRequestAfterOnboardingEnabledUseCase: Factory<IsEIDRequestAfterOnboardingEnabledUseCaseProtocol> {
-    self { IsEIDRequestAfterOnboardingEnabledUseCase() }
-  }
-
-  public var enableEIDRequestAfterOnboardingUseCase: Factory<EnableEIDRequestAfterOnboardingUseCaseProtocol> {
-    self { EnableEIDRequestAfterOnboardingUseCase() }
-  }
-
   public var getEIDRequestCaseListUseCase: Factory<GetEIDRequestCaseListUseCaseProtocol> {
     self { GetEIDRequestCaseListUseCase() }
   }
@@ -178,6 +178,10 @@ extension Container {
 
   public var deleteEIDRequestCaseUseCase: Factory<DeleteEIDRequestCaseUseCaseProtocol> {
     self { DeleteEIDRequestCaseUseCase() }
+  }
+
+  public var updatePushTokenUseCase: Factory<UpdatePushTokenUseCaseProtocol> {
+    self { UpdatePushTokenUseCase() }
   }
 
   // MARK: Internal
@@ -365,6 +369,14 @@ extension Container {
   var updateInputFileUseCase: Factory<UpdateInputFileUseCaseProtocol> {
     self { UpdateInputFileUseCase() }
   }
+
+  var registerPushTokenUseCase: Factory<RegisterPushTokenUseCaseProtocol> {
+    self { RegisterPushTokenUseCase() }
+  }
+
+  var enablePushNotificationsUseCase: Factory<EnablePushNotificationsUseCaseProtocol> {
+    self { @MainActor in EnablePushNotificationsUseCase() }
+  }
 }
 
 @MainActor
@@ -380,6 +392,10 @@ extension Container {
 
   var walletPairingPollingManager: Factory<WalletPairingPollingProtocol> {
     self { @MainActor in WalletPairingPollingManager() }
+  }
+
+  var recordingStateManager: Factory<RecordingStateProtocol> {
+    self { @MainActor in RecordingStateManager() }
   }
 
 }

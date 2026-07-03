@@ -45,7 +45,7 @@ struct CredentialOfferView: View {
       badgeAction: { badgeType in
         navigator.navigate(to: InvitationDestinations.badgeInformation(badgeType))
       },
-      clusters: viewModel.credential.clusters,
+      clusters: viewModel.credential.resolvedClusters,
       credentialViewModel: viewModel.credentialViewModel,
       state: viewModel.state,
       trustInformation: viewModel.trustInformation)
@@ -253,11 +253,6 @@ extension CredentialOfferView.Content {
           .accessibilityHidden(true)
       }
       Spacer(minLength: compression.isCompressed ? .x6 : .x12)
-
-      ProgressView()
-        .controlSize(.large)
-        .padding(.bottom, .x10)
-        .accessibilityHidden(true)
     }
     .padding(.x6)
     .background(ThemingAssets.Background.secondary.swiftUIColor)
@@ -466,7 +461,7 @@ extension CredentialOfferView.Content {
     switch state {
     case .loading,
          .result:
-      credentialLandscapeContainer(isLoading: state == .loading)
+      credentialLandscapeContainer()
     case .decline:
       declineLandscapeContainer()
         .padding(.horizontal, .x3)
@@ -475,29 +470,23 @@ extension CredentialOfferView.Content {
     }
   }
 
-  private func credentialLandscapeContainer(isLoading: Bool) -> some View {
+  private func credentialLandscapeContainer() -> some View {
     HStack(spacing: .x5) {
       credentialCard()
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
-      if isLoading {
-        ProgressView()
-          .controlSize(.large)
-          .frame(maxWidth: .infinity)
-          .accessibilityHidden(true)
-      } else {
-        VStack(alignment: .leading, spacing: 0) {
-          issuerHeader()
-            .padding(.bottom, .x3)
-          subtitle()
-            .padding(.horizontal, .x2)
-            .padding(.bottom, .x4)
-          claimsList()
-          Spacer() // Pushes buttons down if VStack is not filling screen
-        }
-        .applyScrollViewIfNeeded()
-        .safeAreaInset(edge: .bottom) {
-          footerButtons()
-        }
+
+      VStack(alignment: .leading, spacing: 0) {
+        issuerHeader()
+          .padding(.bottom, .x3)
+        subtitle()
+          .padding(.horizontal, .x2)
+          .padding(.bottom, .x4)
+        claimsList()
+        Spacer() // Pushes buttons down if VStack is not filling screen
+      }
+      .applyScrollViewIfNeeded()
+      .safeAreaInset(edge: .bottom) {
+        footerButtons()
       }
     }
   }

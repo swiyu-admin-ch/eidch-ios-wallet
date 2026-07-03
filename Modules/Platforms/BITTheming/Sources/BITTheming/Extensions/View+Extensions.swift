@@ -30,6 +30,15 @@ extension View {
     }
   }
 
+  @ViewBuilder
+  public func `if`<T>(`let` optional: T?, _ transform: (_ value: T, _ view: Self) -> some View) -> some View {
+    if let optional {
+      transform(optional, self)
+    } else {
+      self
+    }
+  }
+
   /// Tell when a view **is** visible in the given `CGRect` & `CoordinateSpace`
   public func ifVisible(in rect: CGRect, in space: CoordinateSpace, execute: @escaping (CGRect) -> Void) -> some View {
     background(GeometryReader { geometry -> AnyView in

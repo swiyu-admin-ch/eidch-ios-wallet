@@ -15,8 +15,6 @@ enum NonComplianceEndpoint {
 
 extension NonComplianceEndpoint: TargetType {
 
-  // MARK: Internal
-
   var baseURL: URL {
     switch self {
     case .challenge,
@@ -43,7 +41,7 @@ extension NonComplianceEndpoint: TargetType {
 
   var task: Moya.Task {
     switch self {
-    case .report(let report): .requestCustomJSONEncodable(report, encoder: jsonEncoder)
+    case .report(let report): .requestCustomJSONEncodable(report, encoder: Container.shared.nonComplianceJsonEncoder())
     case .challenge,
          .nonCompliantActors: .requestPlain
     }
@@ -55,13 +53,5 @@ extension NonComplianceEndpoint: TargetType {
          .nonCompliantActors: NetworkHeader.standard.raw
     case .report: nil // handled by ClientAttestationPlugin
     }
-  }
-
-  // MARK: Private
-
-  private var jsonEncoder: JSONEncoder {
-    let encoder = JSONEncoder()
-    encoder.dateEncodingStrategy = .iso8601
-    return encoder
   }
 }

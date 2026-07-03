@@ -34,7 +34,7 @@ final class CompatibleCredentialViewModelTests: XCTestCase {
   @MainActor
   func testDidSelect_navigatesAndSelectsCredential() {
     let selectedCredential = CompatibleCredential.Mock.diploma
-    let context = PresentationRequestContext(requestObject: .Mock.VcSdJwt.sample, compatibleCredentials: [.Mock.BIT, selectedCredential], trustInformation: .Mock.trustedIdentity)
+    let context = PresentationRequestContext(requestObjectJWS: .Mock.sample, compatibleCredentials: [.Mock.BIT, selectedCredential], trustInformation: .Mock.trustedIdentity)
     XCTAssertNil(context.selectedCredential)
     viewModel = CompatibleCredentialViewModel(context: context)
 

@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITCore
 import Foundation
 
@@ -8,10 +9,6 @@ public struct OtherMockAnyCredential: AnyCredential {
 
   public var raw: String {
     "mock value"
-  }
-
-  public var claims: [any AnyClaim] {
-    []
   }
 
   public var issuer: String {
@@ -36,5 +33,9 @@ public struct OtherMockAnyCredential: AnyCredential {
 
   public func getClaimsJSON(_ claimSet: BITAnyCredentialFormat.ClaimKind) -> JSON {
     [:]
+  }
+
+  public func getPresentingPaths(for paths: [ClaimsPathPointer]) -> [ClaimsPathPointer] {
+    []
   }
 }

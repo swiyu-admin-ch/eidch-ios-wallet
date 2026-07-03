@@ -12,7 +12,7 @@ import XCTest
 @testable import BITTestingCore
 @testable import BITVault
 
-// MARK: - OpenIDRepository
+// MARK: - OpenIDRepositoryTests
 
 final class OpenIDRepositoryTests: XCTestCase {
 
@@ -46,11 +46,8 @@ final class OpenIDRepositoryTests: XCTestCase {
     XCTAssertEqual(expectedTypeMetadata.vct, typeMetadata.vct)
     XCTAssertEqual(expectedTypeMetadata.name, typeMetadata.name)
     XCTAssertEqual(expectedTypeMetadata.description, typeMetadata.description)
-    XCTAssertEqual(expectedTypeMetadata.extends, typeMetadata.extends)
-    XCTAssertEqual(expectedTypeMetadata.claims?.count, typeMetadata.claims?.count)
     XCTAssertEqual(expectedTypeMetadata.schemaUrl, typeMetadata.schemaUrl)
     XCTAssertEqual(expectedTypeMetadata.schemaIntegrity, typeMetadata.schemaIntegrity)
-    XCTAssertEqual(expectedTypeMetadata.schema, typeMetadata.schema)
     XCTAssertEqual(dataMock, response.response.data)
   }
 
@@ -82,9 +79,9 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     XCTAssertEqual(mocks.metadata, response.metadata)
     XCTAssertEqual(response.raw, Data(mocks.rawString.utf8))
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferCallsCount, 1)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedJws?.payload, mocks.jwt)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedActivationBuffer, 0)
+    XCTAssertEqual(mocks.validator.validateActivationBufferCallsCount, 1)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedJws?.payload, mocks.jwt)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedActivationBuffer, 0)
   }
 
   func testFetchMetadataJwtSuccess_oidConnectMetadata() async throws {
@@ -99,9 +96,9 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     XCTAssertEqual(mocks.metadata, response.metadata)
     XCTAssertEqual(response.raw, Data(mocks.rawString.utf8))
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferCallsCount, 1)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedJws?.payload, mocks.jwt)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedActivationBuffer, 0)
+    XCTAssertEqual(mocks.validator.validateActivationBufferCallsCount, 1)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedJws?.payload, mocks.jwt)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedActivationBuffer, 0)
   }
 
   func testFetchMetadataJwtValidationFails() async throws {
@@ -178,9 +175,9 @@ final class OpenIDRepositoryTests: XCTestCase {
     let response = try await repository.fetchOpenIdConfiguration(from: mockUrl)
 
     XCTAssertEqual(mocks.configuration, response)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferCallsCount, 1)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedJws?.payload, mocks.jwt)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedActivationBuffer, 0)
+    XCTAssertEqual(mocks.validator.validateActivationBufferCallsCount, 1)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedJws?.payload, mocks.jwt)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedActivationBuffer, 0)
   }
 
   func testFetchOpenIdConfigurationJwtSuccess_oidConnectOpenIdConfiguration() async throws {
@@ -194,9 +191,9 @@ final class OpenIDRepositoryTests: XCTestCase {
     let response = try await repository.fetchOpenIdConfiguration(from: mockUrl)
 
     XCTAssertEqual(mocks.configuration, response)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferCallsCount, 1)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedJws?.payload, mocks.jwt)
-    XCTAssertEqual(mocks.validator.validateIssuerDidActivationBufferReceivedActivationBuffer, 0)
+    XCTAssertEqual(mocks.validator.validateActivationBufferCallsCount, 1)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedJws?.payload, mocks.jwt)
+    XCTAssertEqual(mocks.validator.validateActivationBufferReceivedActivationBuffer, 0)
   }
 
   func testFetchOpenIdConfigurationJwtValidationFails() async throws {
@@ -258,20 +255,169 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     mockResponse(code: 200, data: AccessToken.Mock.sampleData)
 
-    let accessToken = try await repository.fetchAccessToken(from: mockUrl, preAuthorizedCode: preAuthorizedCode)
+    let authorization = try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: nil,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil)
 
-    XCTAssertEqual(expectedAccessToken, accessToken)
+    XCTAssertEqual(expectedAccessToken, authorization.accessToken)
   }
 
-  func testFetchAccessToken_error_errorPassedToParser() async throws {
+  func testFetchAccessToken_withDPoP_generatesProof() async throws {
+    let preAuthorizedCode = "code"
+    let dpopKeyPair = VaultKeyPair.Mock.ES256
+
+    mockResponse(code: 200, data: AccessToken.Mock.sampleData)
+
+    _ = try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: dpopKeyPair,
+      dpopNonce: "dpop-nonce",
+      dpopKeyAttestationJWS: nil)
+
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSCallsCount, 1)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.method, "POST")
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.url, mockUrl)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyPair.identifier, dpopKeyPair.identifier)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.nonce, "dpop-nonce")
+    XCTAssertNil(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.accessToken)
+    XCTAssertNil(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyAttestationJWS)
+  }
+
+  func testFetchAccessToken_withDPoPAndKeyAttestation_generatesProofWithAttestationHeader() async throws {
+    mockResponse(code: 200, data: AccessToken.Mock.sampleData)
+
+    _ = try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: "code",
+      dpopKeyPair: VaultKeyPair.Mock.ES256,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: "attestation-jws")
+
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyAttestationJWS, "attestation-jws")
+  }
+
+  func testFetchAccessToken_useDPoPNonceChallenge_retriesWithHeaderNonce() async throws {
+    let dpopKeyPair = VaultKeyPair.Mock.ES256
+    try mockResponses([
+      (400, JSONEncoder().encode(["error": "use_dpop_nonce"]), ["DPoP-Nonce": "auth-server-nonce"]),
+      (200, AccessToken.Mock.sampleData, nil),
+    ])
+
+    let authorization = try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: "code",
+      dpopKeyPair: dpopKeyPair,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil)
+
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSCallsCount, 2)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.nonce, "auth-server-nonce")
+    XCTAssertEqual(authorization.accessToken, AccessToken.Mock.sample)
+  }
+
+  func testFetchAccessToken_invalidRequest_returnsOpenIdRepositoryErrorInvalidRequest() async throws {
+    let preAuthorizedCode = "code"
+    let responseData = try JSONEncoder().encode(["error": "invalid_request"])
+
+    mockResponse(code: 400, data: responseData)
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: nil,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil))
+    { error in
+      XCTAssertEqual((error as! OpenIdRepositoryError), .invalidRequest("invalid_request"))
+    }
+  }
+
+  func testFetchAccessToken_invalidDPoPProof_returnsOpenIdRepositoryErrorInvalidDPoPProof() async throws {
+    let preAuthorizedCode = "code"
+    let responseData = try JSONEncoder().encode(["error": "invalid_dpop_proof"])
+
+    mockResponse(code: 400, data: responseData)
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: nil,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil))
+    { error in
+      XCTAssertEqual((error as! OpenIdRepositoryError), .invalidDPoPProof("invalid_dpop_proof"))
+    }
+  }
+
+  func testFetchAccessToken_useDPoPNonceWithoutHeader_returnsOpenIdRepositoryErrorUseDPoPNonce() async throws {
+    let preAuthorizedCode = "code"
+    let responseData = try JSONEncoder().encode(["error": "use_dpop_nonce"])
+
+    mockResponse(code: 400, data: responseData)
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: nil,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil))
+    { error in
+      XCTAssertEqual((error as! OpenIdRepositoryError), .useDPoPNonce("use_dpop_nonce", nil))
+    }
+  }
+
+  func testFetchAccessToken_useDPoPNonceAfterRetry_returnsOpenIdRepositoryErrorUseDPoPNonceWithHeaderNonce() async throws {
+    let dpopKeyPair = VaultKeyPair.Mock.ES256
+    try mockResponses([
+      (400, JSONEncoder().encode(["error": "use_dpop_nonce"]), ["DPoP-Nonce": "auth-server-nonce-1"]),
+      (400, JSONEncoder().encode(["error": "use_dpop_nonce"]), ["DPoP-Nonce": "auth-server-nonce-2"]),
+    ])
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: "code",
+      dpopKeyPair: dpopKeyPair,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil))
+    { error in
+      XCTAssertEqual((error as! OpenIdRepositoryError), .useDPoPNonce("use_dpop_nonce", "auth-server-nonce-2"))
+    }
+  }
+
+  func testFetchAccessToken_unknownBadRequest() async throws {
+    let preAuthorizedCode = "code"
+
+    let mockInvalidGandError = ["error": "something_unknown"]
+    let mockInvalidGandErrorData = try JSONEncoder().encode(mockInvalidGandError)
+    mockResponse(code: 400, data: mockInvalidGandErrorData)
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: nil,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil))
+    { error in
+      XCTAssertNotEqual((error as! NetworkError).status, .invalidGrant)
+    }
+  }
+
+  func testFetchAccessToken_failure() async throws {
+    let preAuthorizedCode = "code"
     mockResponse(code: 500)
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(from: mockUrl, preAuthorizedCode: "code")) { _ in
-      XCTAssertEqual(oAuthErrorParserProtocolSpy.parseCallsCount, 1)
-      guard let error = oAuthErrorParserProtocolSpy.parseReceivedError as? NetworkError else {
-        return XCTFail("Expected parser to receive a NetworkError")
-      }
-      XCTAssertEqual(error.status, .internalServerError)
+    await XCTAssertThrowsErrorAsync(try await repository.fetchAccessToken(
+      from: mockUrl,
+      preAuthorizedCode: preAuthorizedCode,
+      dpopKeyPair: nil,
+      dpopNonce: nil,
+      dpopKeyAttestationJWS: nil))
+    { error in
+      XCTAssertEqual((error as! NetworkError).status, .internalServerError)
     }
   }
 
@@ -284,7 +430,15 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     let nonce = try await repository.fetchNonce(from: mockUrl)
 
-    XCTAssertEqual(expectedNonce, nonce)
+    XCTAssertEqual(expectedNonce, nonce.nonce)
+  }
+
+  func testFetchNonce_success_returnsDPoPNonceHeader() async throws {
+    mockResponse(code: 200, data: Nonce.Mock.defaultData, headers: ["DPoP-Nonce": "dpop-nonce"])
+
+    let nonce = try await repository.fetchNonce(from: mockUrl)
+
+    XCTAssertEqual(nonce.dpopNonce, "dpop-nonce")
   }
 
   func testFetchNonce_failure() async throws {
@@ -343,8 +497,87 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     if case .deferred(let deferredCredentialContext) = result {
       XCTAssertEqual(deferredCredentialContext.transactionId, mockCredentialResponseDeferred.transactionId)
-      XCTAssertEqual(deferredCredentialContext.accessToken, mockFetchCredentialContext.accessToken.accessToken)
+      XCTAssertEqual(deferredCredentialContext.accessToken, mockFetchCredentialContext.accessToken)
       XCTAssertEqual(deferredCredentialContext.format, mockFetchCredentialContext.format)
+    }
+  }
+
+  func testFetchCredentialWithContext_withDPoP_generatesProofWithAccessTokenHashInput() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData)
+
+    let result = try await repository.fetchCredential(with: mockFetchCredentialContextWithDPoP, credentialRequest: .json(credentialRequest))
+
+    if case .credential = result {
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSCallsCount, 1)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.url, mockFetchCredentialContextWithDPoP.credentialEndpoint)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyPair.identifier, mockFetchCredentialContextWithDPoP.dpopKeyPair?.identifier)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.nonce, mockFetchCredentialContextWithDPoP.dpopNonce)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.accessToken, mockFetchCredentialContextWithDPoP.accessToken.accessToken)
+      XCTAssertNil(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyAttestationJWS)
+    } else {
+      XCTFail("Expected credential result")
+    }
+  }
+
+  func testFetchCredentialWithContext_useDPoPNonceChallenge_retriesWithHeaderNonce() async throws {
+    let challengedContext = try FetchCredentialContext(
+      credentialConfigurationId: "credential-configuration-id",
+      format: "vc+sd-jwt",
+      selectedCredential: XCTUnwrap(CredentialIssuerMetadata.Mock.sample.credentialConfigurationsSupported["elfa-sdjwt"]),
+      credentialIssuer: "credential-issuer",
+      holderBindings: HolderBinding.Mock.attestedHardwareKey,
+      authorization: IssuanceAuthorization(
+        accessToken: AccessToken.Mock.sample,
+        dpopKeyPair: VaultKeyPair.Mock.ES256),
+      nonce: Nonce.Mock.default,
+      credentialEndpoint: XCTUnwrap(URL(string: "https://credential.endpoint")),
+      credentialEncryptionContext: nil,
+      deferredCredentialEndpoint: XCTUnwrap(URL(string: "https://deferred.endpoint")))
+    mockResponses([
+      (401, CredentialResponseError.Mock.sampleInvalidAccessTokenData, [
+        "WWW-Authenticate": "DPoP error=\"use_dpop_nonce\"",
+        "DPoP-Nonce": "resource-server-nonce",
+      ]),
+      (200, mockCredentialResponseData, nil),
+    ])
+
+    let result = try await repository.fetchCredential(with: challengedContext, credentialRequest: .json(credentialRequest))
+
+    if case .credential = result {
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSCallsCount, 2)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.nonce, "resource-server-nonce")
+    } else {
+      XCTFail("Expected credential result")
+    }
+  }
+
+  func testFetchCredentialWithContext_useDPoPNonceAfterRetry_returnsOpenIdRepositoryErrorUseDPoPNonceWithHeaderNonce() async throws {
+    let challengedContext = try FetchCredentialContext(
+      credentialConfigurationId: "credential-configuration-id",
+      format: "vc+sd-jwt",
+      selectedCredential: XCTUnwrap(CredentialIssuerMetadata.Mock.sample.credentialConfigurationsSupported["elfa-sdjwt"]),
+      credentialIssuer: "credential-issuer",
+      holderBindings: HolderBinding.Mock.attestedHardwareKey,
+      authorization: IssuanceAuthorization(
+        accessToken: AccessToken.Mock.sample,
+        dpopKeyPair: VaultKeyPair.Mock.ES256),
+      nonce: Nonce.Mock.default,
+      credentialEndpoint: XCTUnwrap(URL(string: "https://credential.endpoint")),
+      credentialEncryptionContext: nil,
+      deferredCredentialEndpoint: XCTUnwrap(URL(string: "https://deferred.endpoint")))
+    mockResponses([
+      (401, CredentialResponseError.Mock.sampleInvalidAccessTokenData, [
+        "WWW-Authenticate": "DPoP error=\"use_dpop_nonce\"",
+        "DPoP-Nonce": "resource-server-nonce-1",
+      ]),
+      (401, CredentialResponseError.Mock.sampleInvalidAccessTokenData, [
+        "WWW-Authenticate": "DPoP error=\"use_dpop_nonce\"",
+        "DPoP-Nonce": "resource-server-nonce-2",
+      ]),
+    ])
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: challengedContext, credentialRequest: .json(credentialRequest))) { error in
+      XCTAssertEqual(error as? OpenIdRepositoryError, .useDPoPNonce("use_dpop_nonce", "resource-server-nonce-2"))
     }
   }
 
@@ -361,11 +594,8 @@ final class OpenIDRepositoryTests: XCTestCase {
   func testFetchCredentialWithContext_encryptionContextMissingPrivatekey_throwsMissingCredentialResponsePrivateKey() async throws {
     mockResponse(code: 200, data: mockCredentialResponseData, headers: ["Content-Type": "application/jwt"])
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: FetchCredentialContext.Mock.sampleCredentialEncryptionNoResponseEncryption, credentialRequest: .jwe(jweMock))) { _ in
-      guard let error = openID4VCIErrorParserSpy.parseReceivedError as? OpenIdRepositoryError else {
-        return XCTFail("Expected OpenIdRepositoryError")
-      }
-      XCTAssertEqual(error, .missingCredentialResponsePrivateKey)
+    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: FetchCredentialContext.Mock.sampleCredentialEncryptionNoResponseEncryption, credentialRequest: .jwe(jweMock))) { error in
+      XCTAssertEqual(error as? OpenIdRepositoryError, .missingCredentialResponsePrivateKey)
     }
   }
 
@@ -383,11 +613,8 @@ final class OpenIDRepositoryTests: XCTestCase {
   func testFetchCredentialWithContext_invalidCredentialResponseSuccessCode_throws() async throws {
     mockResponse(code: 201, data: mockCredentialResponseDeferredData)
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: .json(credentialRequest))) { _ in
-      guard let error = openID4VCIErrorParserSpy.parseReceivedError as? OpenIdRepositoryError else {
-        return XCTFail("Expected OpenIdRepositoryError")
-      }
-      XCTAssertEqual(error, .unsupportedCredentialStatusCode)
+    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: .json(credentialRequest))) { error in
+      XCTAssertEqual(error as? OpenIdRepositoryError, .unsupportedCredentialStatusCode)
     }
   }
 
@@ -425,34 +652,50 @@ final class OpenIDRepositoryTests: XCTestCase {
     if case .deferred(let deferred) = result {
       XCTAssertEqual(deferred.transactionId, mockCredentialResponseDeferred.transactionId)
       XCTAssertEqual(deferred.interval, mockCredentialResponseDeferred.interval)
-      XCTAssertEqual(deferred.accessToken, "accessToken")
+      XCTAssertEqual(deferred.accessToken.accessToken, mockFetchDeferredCredentialContext.authorization.accessToken.accessToken)
+      XCTAssertEqual(deferred.accessToken.tokenType, .bearer)
       XCTAssertEqual(deferred.endpoint, mockFetchDeferredCredentialContext.deferredCredentialEndpoint.absoluteString)
-      XCTAssertEqual(deferred.refreshToken, mockFetchDeferredCredentialContext.refreshToken)
+      XCTAssertEqual(deferred.accessToken.refreshToken, mockFetchDeferredCredentialContext.authorization.refreshToken)
     } else {
       XCTFail("Expected deferred result")
+    }
+  }
+
+  func testFetchCredentialFromDeferredEndpoint_withDPoP_generatesProofWithAccessTokenHashInput() async throws {
+    mockResponse(code: 200, data: mockCredentialResponseData)
+    let context = FetchDeferredCredentialContext(
+      format: mockFetchDeferredCredentialContext.format,
+      authorization: mockProtectedResourceAuthorization,
+      deferredCredentialEndpoint: mockFetchDeferredCredentialContext.deferredCredentialEndpoint,
+      privateKey: mockFetchDeferredCredentialContext.privateKey)
+
+    let result = try await repository.fetchCredential(with: context, requestBody: deferredCredentialRequestBody)
+
+    if case .credential = result {
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSCallsCount, 1)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.url, mockFetchDeferredCredentialContext.deferredCredentialEndpoint)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyPair.identifier, mockProtectedResourceAuthorization.dpopKeyPair?.identifier)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.nonce, mockProtectedResourceAuthorization.resourceServerDPoPNonce)
+      XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.accessToken, mockProtectedResourceAuthorization.accessToken.accessToken)
+      XCTAssertNil(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyAttestationJWS)
+    } else {
+      XCTFail("Expected credential result")
     }
   }
 
   func testFetchCredentialFromDeferredEndpoint_invalidCredentialResponseSuccessCode_throws() async throws {
     mockResponse(code: 201, data: mockCredentialResponseDeferredData)
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchDeferredCredentialContext, requestBody: deferredCredentialRequestBody)) { _ in
-      guard let error = openID4VCIErrorParserSpy.parseReceivedError as? OpenIdRepositoryError else {
-        return XCTFail("Expected OpenIdRepositoryError")
-      }
-      XCTAssertEqual(error, .unsupportedCredentialStatusCode)
+    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchDeferredCredentialContext, requestBody: deferredCredentialRequestBody)) { error in
+      XCTAssertEqual(error as? OpenIdRepositoryError, .unsupportedCredentialStatusCode)
     }
   }
 
-  func testFetchCredential_error_openID4VCIErrorParserReturnsParsedError() async throws {
+  func testFetchCredential_error_throwsNetworkError() async throws {
     mockResponse(code: 500)
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchDeferredCredentialContext, requestBody: deferredCredentialRequestBody)) { _ in
-      XCTAssertEqual(openID4VCIErrorParserSpy.parseCallsCount, 1)
-      guard let error = openID4VCIErrorParserSpy.parseReceivedError as? NetworkError else {
-        return XCTFail("Expected parser to receive a NetworkError")
-      }
-      XCTAssertEqual(error.status, .internalServerError)
+    await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchDeferredCredentialContext, requestBody: deferredCredentialRequestBody)) { error in
+      XCTAssertEqual((error as! NetworkError).status, .internalServerError)
     }
   }
 
@@ -499,20 +742,63 @@ final class OpenIDRepositoryTests: XCTestCase {
 
     mockResponse(code: 200, data: AccessToken.Mock.sampleData)
 
-    let accessToken = try await repository.refreshAccessToken(from: mockUrl, refreshToken: mockResfrehToken)
+    let authorization = try await repository.refreshAccessToken(
+      from: mockUrl,
+      refreshToken: mockResfrehToken,
+      dpopKeyPair: nil,
+      dpopNonce: nil)
 
-    XCTAssertEqual(expectedAccessToken, accessToken)
+    XCTAssertEqual(expectedAccessToken, authorization.accessToken)
   }
 
-  func testRefreshAccessToken_badRequest_passesErrorToParser() async throws {
-    mockResponse(code: 400)
+  func testRefreshAccessToken_withDPoP_generatesProof() async throws {
+    let dpopKeyPair = VaultKeyPair.Mock.ES256
 
-    await XCTAssertThrowsErrorAsync(try await repository.refreshAccessToken(from: mockUrl, refreshToken: mockResfrehToken)) { _ in
-      XCTAssertEqual(oAuthErrorParserProtocolSpy.parseCallsCount, 1)
-      guard let error = oAuthErrorParserProtocolSpy.parseReceivedError as? NetworkError else {
-        return XCTFail("Expected parser to receive a NetworkError")
+    mockResponse(code: 200, data: AccessToken.Mock.sampleData)
+
+    _ = try await repository.refreshAccessToken(
+      from: mockUrl,
+      refreshToken: mockResfrehToken,
+      dpopKeyPair: dpopKeyPair,
+      dpopNonce: "dpop-nonce")
+
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSCallsCount, 1)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.method, "POST")
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.url, mockUrl)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyPair.identifier, dpopKeyPair.identifier)
+    XCTAssertEqual(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.nonce, "dpop-nonce")
+    XCTAssertNil(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.accessToken)
+    XCTAssertNil(dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReceivedArguments?.keyAttestationJWS)
+  }
+
+  func testRefreshAccessToken_invalidRequest_returnsOpenIdRepositoryErrorInvalidRequest() async throws {
+    let responseData = try JSONEncoder().encode(["error": "invalid_request"])
+    mockResponse(code: 400, data: responseData)
+
+    do {
+      _ = try await repository.refreshAccessToken(
+        from: mockUrl,
+        refreshToken: mockResfrehToken,
+        dpopKeyPair: nil,
+        dpopNonce: nil)
+      XCTFail("Should have thrown an error")
+    } catch {
+      guard case .invalidRequest = error as? OpenIdRepositoryError else {
+        return XCTFail("Expected invalidRequest")
       }
-      XCTAssertEqual(error.status, .badRequest)
+    }
+  }
+
+  func testRefreshAccessToken_failure() async throws {
+    mockResponse(code: 500)
+
+    await XCTAssertThrowsErrorAsync(try await repository.refreshAccessToken(
+      from: mockUrl,
+      refreshToken: mockResfrehToken,
+      dpopKeyPair: nil,
+      dpopNonce: nil))
+    { error in
+      XCTAssertEqual((error as! NetworkError).status, .internalServerError)
     }
   }
 
@@ -534,7 +820,26 @@ final class OpenIDRepositoryTests: XCTestCase {
   private let mockCredentialResponseDeferred = CredentialResponseDeferred.Mock.sample
   private let mockCredentialResponseDeferredData = CredentialResponseDeferred.Mock.sampleData
   private let mockFetchCredentialContext = FetchCredentialContext.Mock.sample
+  private let mockFetchCredentialContextWithDPoP = FetchCredentialContext(
+    credentialConfigurationId: "credential-configuration-id",
+    format: "vc+sd-jwt",
+    selectedCredential: CredentialIssuerMetadata.Mock.sample.credentialConfigurationsSupported["elfa-sdjwt"]!,
+    credentialIssuer: "credential-issuer",
+    holderBindings: HolderBinding.Mock.attestedHardwareKey,
+    dpopKeyPair: VaultKeyPair.Mock.ES256,
+    accessToken: AccessToken.Mock.sample,
+    nonce: Nonce.Mock.default,
+    dpopNonce: "dpop-nonce",
+    credentialEndpoint: URL(string: "https://credential.endpoint")!,
+    credentialEncryptionContext: nil,
+    deferredCredentialEndpoint: URL(string: "https://deferred.endpoint")!)
   private let mockFetchDeferredCredentialContext = FetchDeferredCredentialContext.Mock.sample
+  private let mockProtectedResourceAuthorization = ProtectedResourceAuthorization(
+    accessToken: "accessToken",
+    accessTokenType: .dpop,
+    refreshToken: "refreshToken",
+    dpopKeyPair: VaultKeyPair.Mock.ES256,
+    dpopNonce: "dpop-nonce")
   private let credentialRequest = CredentialRequest.Mock.sample
   private let deferredCredentialRequestBody = DeferredCredentialRequestBody.json(
     DeferredCredentialRequest(
@@ -544,24 +849,27 @@ final class OpenIDRepositoryTests: XCTestCase {
   private let jwtResponseMock = "jwt"
   private let jweMock = "jwe"
   private let mockResfrehToken = "refreshToken"
+  private let keyIdentifierDidMock = "did:tdw:example"
 
   private var repository = OpenIDRepository()
   private var jweDecrypterMock = JWEDecrypterProtocolSpy()
-  private var openID4VCIErrorParserSpy = OpenID4VCIErrorParserProtocolSpy()
-  private var oAuthErrorParserProtocolSpy = OAuthErrorParserProtocolSpy()
+  private var dpopGeneratorSpy = DPoPGeneratorProtocolSpy()
+  private var didResolverHelperSpy = DidResolverHelperProtocolSpy()
 
   private func registerMocks() {
     jweDecrypterMock = JWEDecrypterProtocolSpy()
+    dpopGeneratorSpy = DPoPGeneratorProtocolSpy()
+    didResolverHelperSpy = DidResolverHelperProtocolSpy()
 
+    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
     Container.shared.jweDecrypter.register { self.jweDecrypterMock }
-    Container.shared.openID4VCIErrorParser.register { self.openID4VCIErrorParserSpy }
-    Container.shared.oAuthErrorParser.register { self.oAuthErrorParserProtocolSpy }
+    Container.shared.dpopGenerator.register { self.dpopGeneratorSpy }
   }
 
   private func success() {
     jweDecrypterMock.decryptPayloadPrivateKeyReturnValue = mockCredentialResponseData
-    openID4VCIErrorParserSpy.parseReturnValue = TestingError.error
-    oAuthErrorParserProtocolSpy.parseReturnValue = TestingError.error
+    dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenKeyAttestationJWSReturnValue = "dpop-proof"
+    didResolverHelperSpy.getDidFromReturnValue = keyIdentifierDidMock
   }
 
   private func credentialIssuerMetadataJwtMocks(
@@ -571,7 +879,6 @@ final class OpenIDRepositoryTests: XCTestCase {
     let metadata = CredentialIssuerMetadata.Mock.sample
     let jwtRawString = String(decoding: CredentialIssuerMetadata.Mock.sampleData, as: UTF8.self)
     let jwt = CredentialIssuerMetadataJWT(
-      issuer: nil,
       subject: mockUrl.absoluteString,
       issuedAt: Date(timeIntervalSince1970: 0),
       expiredAt: nil,
@@ -579,7 +886,7 @@ final class OpenIDRepositoryTests: XCTestCase {
     var jwsDecoderMock = JWSDecoderMock(jwt: jwt, rawPayload: jwtRawString)
     jwsDecoderMock.expectedInput = jwtResponseMock
     let jwsValidatorMock = registerJwsMocks(jwsDecoderMock: jwsDecoderMock)
-    jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = validatorError
+    jwsValidatorMock.validateThrowableError = validatorError
     return (metadata, jwtRawString, jwt, jwsValidatorMock)
   }
 
@@ -591,7 +898,6 @@ final class OpenIDRepositoryTests: XCTestCase {
     let configuration = OpenIdConfiguration.Mock.sample
     let jwtRawString = String(decoding: OpenIdConfiguration.Mock.sampleData, as: UTF8.self)
     let jwt = OpenIdConfigurationJWT(
-      issuer: "issuer",
       subject: mockUrl.absoluteString,
       issuedAt: Date(timeIntervalSince1970: 0),
       expiredAt: nil,
@@ -599,7 +905,7 @@ final class OpenIDRepositoryTests: XCTestCase {
     var jwsDecoderMock = JWSDecoderMock(jwt: jwt)
     jwsDecoderMock.expectedInput = jwtResponseMock
     let jwsValidatorMock = registerJwsMocks(jwsDecoderMock: jwsDecoderMock)
-    jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = validatorError
+    jwsValidatorMock.validateThrowableError = validatorError
     return (configuration, jwtRawString, jwt, jwsValidatorMock)
   }
 
@@ -655,4 +961,56 @@ final class OpenIDRepositoryTests: XCTestCase {
     }
     return .response(response, data)
   }
+
+  private func mockResponses(_ responses: [(code: Int, data: Data, headers: [String: String]?)]) {
+    let queue = ResponseQueue(responses)
+    NetworkContainer.shared.endpointClosure.register {
+      let nextResponse = queue.next()
+      guard
+        let response = HTTPURLResponse(
+          url: self.mockUrl,
+          statusCode: nextResponse.code,
+          httpVersion: nil,
+          headerFields: nextResponse.headers)
+      else {
+        XCTFail("Response error")
+        return .networkResponse(nextResponse.code, nextResponse.data)
+      }
+      return .response(response, nextResponse.data)
+    }
+  }
+}
+
+// MARK: - ResponseQueue
+
+private final class ResponseQueue: @unchecked Sendable {
+
+  // MARK: Lifecycle
+
+  init(_ responses: [(code: Int, data: Data, headers: [String: String]?)]) {
+    self.responses = responses
+  }
+
+  // MARK: Internal
+
+  func next() -> (code: Int, data: Data, headers: [String: String]?) {
+    lock.lock()
+    defer { lock.unlock() }
+
+    let response = responses.first!
+    if needsReplay {
+      needsReplay = false
+    } else {
+      needsReplay = true
+      responses.removeFirst()
+    }
+    return response
+  }
+
+  // MARK: Private
+
+  private let lock = NSLock()
+  private var responses: [(code: Int, data: Data, headers: [String: String]?)]
+  private var needsReplay = true
+
 }

@@ -15,12 +15,13 @@ final class AppAttestationRepositoryTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    Container.shared.reset()
+    NetworkContainer.shared.reset()
+    NetworkContainer.shared.stubClosure.register { { _ in .immediate } }
+
     registerMocks()
     repository = AppAttestationRepository()
     createSuccessState()
-
-    NetworkContainer.shared.reset()
-    NetworkContainer.shared.stubClosure.register { { _ in .immediate } }
   }
 
   // MARK: - FetchChallenge
@@ -42,6 +43,39 @@ final class AppAttestationRepositoryTests: XCTestCase {
       XCTFail("Should have thrown an error")
     } catch {
       XCTAssertEqual((error as? NetworkError)?.status, .internalServerError)
+    }
+  }
+
+  func testFetchChallenge_timeout_throwsTimeout() async throws {
+    mockResponse(code: 408)
+
+    do {
+      _ = try await repository.fetchChallenge()
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .timeout)
+    }
+  }
+
+  func testFetchChallenge_teapot_throwsServiceDeactivated() async throws {
+    mockResponse(code: 418)
+
+    do {
+      _ = try await repository.fetchChallenge()
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .serviceDeactivated)
+    }
+  }
+
+  func testFetchChallenge_serviceUnavailable_throwsServiceDeactivated() async throws {
+    mockResponse(code: 503)
+
+    do {
+      _ = try await repository.fetchChallenge()
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .serviceDeactivated)
     }
   }
 
@@ -72,6 +106,39 @@ final class AppAttestationRepositoryTests: XCTestCase {
     }
   }
 
+  func testFetchClientAttestation_timeout_throwsTimeout() async throws {
+    mockResponse(code: 408)
+
+    do {
+      _ = try await repository.fetchClientAttestation(mockClientAttestationRequestBody)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .timeout)
+    }
+  }
+
+  func testFetchClientAttestation_teapot_throwsServiceDeactivated() async throws {
+    mockResponse(code: 418)
+
+    do {
+      _ = try await repository.fetchClientAttestation(mockClientAttestationRequestBody)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .serviceDeactivated)
+    }
+  }
+
+  func testFetchClientAttestation_serviceUnavailable_throwsServiceDeactivated() async throws {
+    mockResponse(code: 503)
+
+    do {
+      _ = try await repository.fetchClientAttestation(mockClientAttestationRequestBody)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .serviceDeactivated)
+    }
+  }
+
   // MARK: - FetchKeyAttestation
 
   func testFetchKeyAttestation_success() async throws {
@@ -86,14 +153,14 @@ final class AppAttestationRepositoryTests: XCTestCase {
     let response = try await repository.fetchKeyAttestation(body: mockKeyAttestationRequestBody, clientAttestation: mockClientAttestation)
 
     XCTAssertEqual(response.payload, expectedResponse.payload)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.body as? KeyAttestationRequestBody, mockKeyAttestationRequestBody)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, mockClientAttestation.payload.issuer)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, URL(target: AttestationServiceEndpoint.challenge))
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.body as? KeyAttestationRequestBody, mockKeyAttestationRequestBody)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.audience, clientAttestationSigningDidMock)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.challengeEndpoint, URL(target: AttestationServiceEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.clientAttestation, mockClientAttestation)
   }
 
   func testFetchKeyAttestation_generateProofOfPossessionFails_throwsError() async throws {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     do {
       _ = try await repository.fetchKeyAttestation(body: mockKeyAttestationRequestBody, clientAttestation: mockClientAttestation)
@@ -114,14 +181,55 @@ final class AppAttestationRepositoryTests: XCTestCase {
     }
   }
 
+  func testFetchKeyAttestation_timeout_throwsTimeout() async throws {
+    mockResponse(code: 408)
+
+    do {
+      _ = try await repository.fetchKeyAttestation(
+        body: mockKeyAttestationRequestBody,
+        clientAttestation: mockClientAttestation)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .timeout)
+    }
+  }
+
+  func testFetchKeyAttestation_teapot_throwsServiceDeactivated() async throws {
+    mockResponse(code: 418)
+
+    do {
+      _ = try await repository.fetchKeyAttestation(
+        body: mockKeyAttestationRequestBody,
+        clientAttestation: mockClientAttestation)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .serviceDeactivated)
+    }
+  }
+
+  func testFetchKeyAttestation_serviceUnavailable_throwsServiceDeactivated() async throws {
+    mockResponse(code: 503)
+
+    do {
+      _ = try await repository.fetchKeyAttestation(
+        body: mockKeyAttestationRequestBody,
+        clientAttestation: mockClientAttestation)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual(error as? AppAttestationRepositoryError, .serviceDeactivated)
+    }
+  }
+
   // MARK: Private
 
   private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
   private let mockClientAttestationRequestBody = ClientAttestationRequestBody.Mock.sample
   private let mockKeyAttestationRequestBody = KeyAttestationRequestBody.Mock.sample
+  private let clientAttestationSigningDidMock = "did:tdw:example.com"
   private var repository: AppAttestationRepository!
   private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocolSpy!
+  private var didResolverSpy: DidResolverHelperProtocolSpy!
 
   private func mockResponse(code: Int, data: Data = Data()) {
     NetworkContainer.shared.endpointClosure.register {
@@ -130,14 +238,15 @@ final class AppAttestationRepositoryTests: XCTestCase {
   }
 
   private func createSuccessState() {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReturnValue = mockClientAttestationProofOfPossession
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReturnValue = mockClientAttestationProofOfPossession
+    didResolverSpy.getDidFromReturnValue = clientAttestationSigningDidMock
   }
 
   private func registerMocks() {
     proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
+    didResolverSpy = DidResolverHelperProtocolSpy()
 
     Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGenerator }
+    Container.shared.didResolverHelper.register { self.didResolverSpy }
   }
 }
-
-// swiftlint: enable implicitly_unwrapped_optional force_unwrapping

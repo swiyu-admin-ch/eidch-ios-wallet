@@ -15,6 +15,8 @@ final class VcSdJWSDecoderTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
+    registerMocks()
+    success()
     decoder = VcSdJWSDecoder()
   }
 
@@ -99,13 +101,25 @@ final class VcSdJWSDecoderTests: XCTestCase {
   private static let vctUrlMock = "https://credentials.example.com/identity_credential"
   private static let vctIntegrityMock = "sha265-onXnKxyPhvWaqkNqWgpL0r1lEoBfLIsJQfFuY5ydHPg"
 
+  private static let keyIdentifierDidMock = "did:tdw:example"
+
   private var decoder: VcSdJWSDecoder!
+
+  private var didResolverHelperSpy: DidResolverHelperProtocolSpy!
+
+  private func registerMocks() {
+    didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
+  }
+
+  private func success() {
+    didResolverHelperSpy.getDidFromReturnValue = Self.keyIdentifierDidMock
+  }
 
   private func assertVcSdJwt(_ jws: VcSdJWS, vct: String = vctUrlMock, vctIntegrity: String? = vctIntegrityMock, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil, headerType: String = VcSdJwt.currentType) throws {
     let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 285, uri: "https://example.com/statuslist/example.jwt"))
     let jwt = jws.payload
     XCTAssertEqual(jws.header.type, headerType)
-    XCTAssertEqual(jwt.issuer, "did:tdw:example")
     XCTAssertEqual(jwt.activatedAt, Date(timeIntervalSince1970: 1722499200))
     XCTAssertEqual(jwt.expiredAt, Date(timeIntervalSince1970: 1767168000))
     XCTAssertEqual(jwt.vct, vct)

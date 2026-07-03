@@ -132,7 +132,7 @@ public class LoginViewModel {
     Task {
       try? await Task.sleep(nanoseconds: loadingDelay)
       if let versionEnforcement = await checkVersionEnforcement() {
-        return router.versionEnforcement(versionEnforcement)
+        return router.versionEnforcement(versionEnforcement, delegate: self)
       }
 
       close()
@@ -272,7 +272,7 @@ extension LoginViewModel {
 
 extension LoginViewModel {
   private func checkVersionEnforcement() async -> VersionEnforcement? {
-    try? await useCases.fetchVersionEnforcementUseCase.execute()
+    try? await useCases.fetchVersionEnforcementUseCase()
   }
 }
 
@@ -327,3 +327,11 @@ extension LoginViewModel {
 // MARK: Vibrating
 
 extension LoginViewModel: Vibrating {}
+
+// MARK: @MainActor VersionEnforcementDelegate
+
+extension LoginViewModel: @MainActor VersionEnforcementDelegate {
+  public func didDismissVersionEnforcement() {
+    close()
+  }
+}

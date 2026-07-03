@@ -15,11 +15,7 @@ extension VcSdJWS: AnyCredential {
   }
 
   public var issuer: String {
-    payload.requiredIssuer
-  }
-
-  public var claims: [any AnyClaim] {
-    disclosableClaims
+    keyIdentifierDid
   }
 
   public var status: (any AnyStatus)? {
@@ -32,6 +28,19 @@ extension VcSdJWS: AnyCredential {
 
   public var validUntil: Date? {
     payload.expiredAt
+  }
+
+  public var businessExpiryDate: Date? {
+    guard let dateString = resolvedJSON["expiry_date"] as? String else { return nil }
+
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd"
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(identifier: "UTC")
+
+    guard let date = formatter.date(from: dateString) else { return nil }
+    // set the expiry to the end of that day
+    return Calendar.current.date(byAdding: .day, value: 1, to: date)
   }
 
   public var vcSchemaId: String {
@@ -47,7 +56,3 @@ extension VcSdJWS: AnyCredential {
     }
   }
 }
-
-// MARK: - SdJWTClaim + AnyClaim
-
-extension SdJWTClaim: AnyClaim {}

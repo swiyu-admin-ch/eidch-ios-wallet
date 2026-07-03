@@ -26,7 +26,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
     registerNotifications()
     guard let windowScene = scene as? UIWindowScene else { return }
-    window = UIWindow(windowScene: windowScene)
+    window = Window(windowScene: windowScene)
 
     changeScene(to: SplashScreenScene.self, animated: false)
     registerDeeplink(from: connectionOptions.urlContexts)

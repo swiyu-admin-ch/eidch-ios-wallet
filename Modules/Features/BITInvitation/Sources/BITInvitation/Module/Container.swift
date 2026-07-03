@@ -48,10 +48,6 @@ extension Container {
     self { @MainActor in StartProximityEngagementUseCase() }
   }
 
-  public var delayAfterAcceptingCredential: Factory<UInt64> {
-    self { @MainActor in 2_000_000_000 }
-  }
-
   public var invitationExternalViewProvider: Factory<(any NavigationViewProviding<InvitationExternalDestinations>)?> {
     self { @MainActor in nil }
   }

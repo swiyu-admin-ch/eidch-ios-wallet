@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITVault
 
 // MARK: - FetchAnyCredentialResult
 
@@ -8,14 +9,27 @@ public struct FetchAnyCredentialResult {
 
   public init(
     credentials: Credentials,
-    accessToken: String,
-    tokenType: AccessToken.TokenType,
-    refreshToken: String? = nil)
+    authorization: IssuanceAuthorization)
   {
     self.credentials = credentials
-    self.accessToken = accessToken
-    self.tokenType = tokenType
-    self.refreshToken = refreshToken
+    self.authorization = authorization
+  }
+
+  public init(
+    credentials: Credentials,
+    accessToken: String,
+    tokenType: AccessToken.TokenType = .bearer,
+    refreshToken: String? = nil,
+    dpopKeyPair: VaultKeyPair? = nil)
+  {
+    self.init(
+      credentials: credentials,
+      authorization: IssuanceAuthorization(
+        accessToken: AccessToken(
+          accessToken: accessToken,
+          tokenType: tokenType,
+          refreshToken: refreshToken),
+        dpopKeyPair: dpopKeyPair))
   }
 
   // MARK: Public
@@ -27,8 +41,5 @@ public struct FetchAnyCredentialResult {
   }
 
   public let credentials: Credentials
-  public let accessToken: String
-  public let tokenType: AccessToken.TokenType
-  public let refreshToken: String?
-
+  public let authorization: IssuanceAuthorization
 }

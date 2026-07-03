@@ -276,6 +276,14 @@
     {
       "parallelizable" : false,
       "target" : {
+        "containerPath" : "container:Modules\/Features\/BITPushNotification",
+        "identifier" : "BITPushNotificationTests",
+        "name" : "BITPushNotificationTests"
+      }
+    },
+    {
+      "parallelizable" : false,
+      "target" : {
         "containerPath" : "container:Modules\/Platforms\/BITSdJWT",
         "identifier" : "BITSdJWTTests",
         "name" : "BITSdJWTTests"

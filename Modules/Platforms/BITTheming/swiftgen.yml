@@ -16,6 +16,7 @@ json:
     output: Sources/BITTheming/Module/Lotties.swift
     params:
       publicAccess: true
+      themingModule: true
       enumName: Lotties
 
 # The fonts are not generated automatically.

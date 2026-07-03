@@ -31,7 +31,7 @@ extension IdentityTrustStatementJWT: Mockable {
 
     private static func createSdJWSMock(from trustStatement: IdentityTrustStatementJWT, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> IdentityTrustStatement {
       let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
-      return IdentityTrustStatement(jws: jws, payload: trustStatement, resolvedJSON: rawPayload, rawSdJWS: "rawSdJWS", disclosureMap: [:], disclosableClaims: [])
+      return IdentityTrustStatement(jws: jws, payload: trustStatement, resolvedJSON: rawPayload, rawSdJWS: "rawSdJWS", disclosures: [], rawKeyBinding: nil, keyIdentifierDid: "did:tdw:example")
     }
   }
 }

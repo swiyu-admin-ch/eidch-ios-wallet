@@ -74,6 +74,17 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
     }
   }
 
+  func testCallAsFunction_clientAttestationThrowsTimeout_throwsAttestationTimeout() async throws {
+    clientAttestationRepository.getUsingThrowableError = AppAttestationRepositoryError.timeout
+
+    do {
+      _ = try await useCase(userContext)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? ValidateDeviceSecurityRequirementsUseCaseError, .attestationTimeout)
+    }
+  }
+
   func testCallAsFunction_keyRepositoryThrows_throws() async throws {
     appAttestationKeyRepository.createForWithThrowableError = TestingError.error
 
@@ -93,6 +104,18 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testCallAsFunction_keyAttestationThrowsServiceDeactivated_throwsAttestationServiceDeactivated() async throws {
+    appAttestationRepository.fetchKeyAttestationBodyClientAttestationThrowableError =
+      AppAttestationRepositoryError.serviceDeactivated
+
+    do {
+      _ = try await useCase(userContext)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? ValidateDeviceSecurityRequirementsUseCaseError, .attestationServiceDeactivated)
     }
   }
 

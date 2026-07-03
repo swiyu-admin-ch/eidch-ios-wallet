@@ -61,6 +61,16 @@ public class CameraViewModel: Vibrating {
     isTipPresented = (try? await getCredentialsCountUseCase.execute() == 0) ?? true
   }
 
+  public func onCameraPermissionChange(_ permission: AVAuthorizationStatus) async {
+    let isAuthorized = permission == .authorized
+
+    if isAuthorized {
+      await onAppear()
+    }
+
+    isCameraReady = isAuthorized
+  }
+
   // MARK: Internal
 
   var error: Error?
@@ -69,6 +79,8 @@ public class CameraViewModel: Vibrating {
   var isScanEnabled = true
   var onDismiss = false
   var isBluetoothPermissionRequired = false
+
+  private(set) var isCameraReady = false
 
   var isTorchEnabled = false {
     didSet {

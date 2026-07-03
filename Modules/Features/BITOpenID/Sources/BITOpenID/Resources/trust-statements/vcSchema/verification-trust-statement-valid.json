@@ -1,6 +1,5 @@
 {
   "vct": "TrustStatementVerificationV1",
-  "iss": "issuer",
   "sub": "subject",
   "iat": 1742453211,
   "status": {

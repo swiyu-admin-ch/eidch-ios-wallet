@@ -80,6 +80,7 @@ public struct CredentialIssuerMetadata: Decodable {
   public let display: [Display]?
   public let deferredCredentialEndpoint: URL?
   public let batchCredentialIssuance: BatchCredentialIssuance?
+  public let nonceEndpoint: URL?
 
   // MARK: Internal
 
@@ -100,8 +101,6 @@ public struct CredentialIssuerMetadata: Decodable {
   let preferredDisplay: Display?
   let credentialRequestEncryption: CredentialRequestEncryption?
   let credentialResponseEncryption: CredentialResponseEncryption?
-  let nonceEndpoint: URL?
-
 }
 
 // MARK: CredentialIssuerMetadata.BatchCredentialIssuance

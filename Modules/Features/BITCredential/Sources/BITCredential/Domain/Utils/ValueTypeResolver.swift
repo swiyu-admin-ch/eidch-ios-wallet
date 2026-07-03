@@ -1,4 +1,3 @@
-import BITAnyCredentialFormat
 import BITCore
 import Foundation
 import Spyable
@@ -7,7 +6,7 @@ import Spyable
 
 @Spyable
 protocol ValueTypeResolverProtocol {
-  func callAsFunction(_ anyClaim: AnyClaim) -> ValueType?
+  func callAsFunction(_ value: Any?) -> ValueType?
 }
 
 // MARK: - ValueTypeResolver
@@ -16,20 +15,18 @@ struct ValueTypeResolver: ValueTypeResolverProtocol {
 
   // MARK: Internal
 
-  func callAsFunction(_ anyClaim: AnyClaim) -> ValueType? {
-    guard let value = anyClaim.value else { return nil }
+  func callAsFunction(_ value: Any?) -> ValueType? {
+    guard let primitive = JsonPrimitive(value) else { return nil }
 
-    return switch value {
+    return switch primitive {
     case .bool:
       .boolean
-    case .double,
-         .int:
+    case .numeric:
       .numeric
     case .string(let stringValue):
       parseDataURL(stringValue) ?? parseDate(stringValue) ?? parseBase64Image(stringValue) ?? .string
-    case .array,
-         .dictionary:
-      .string
+    case .null:
+      nil
     }
   }
 
@@ -61,7 +58,7 @@ struct ValueTypeResolver: ValueTypeResolverProtocol {
   private func parseDate(_ value: String) -> ValueType? {
     let formatter = DateFormatter()
 
-    for format in DateParserResult.Format.allCases {
+    for format in DateFormat.allCases {
       formatter.dateFormat = format.rawValue
       if formatter.date(from: value) != nil {
         return .dateTime

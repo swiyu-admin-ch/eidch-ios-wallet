@@ -1,0 +1,79 @@
+targets:
+  swiyu-notification-extension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ../../../swiyuNotificationExtension
+    info:
+      path: ../../../swiyuNotificationExtension/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
+        CFBundleDisplayName: $(PRODUCT_NAME)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: '6.0'
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationServiceExtension
+    settings:
+      base:
+        DEVELOPMENT_TEAM: 2NG6YF3PM2
+        TARGETED_DEVICE_FAMILY: 1
+        CODE_SIGN_STYLE: Manual
+        SDKROOT: iphoneos
+        SWIFT_VERSION: 5.7
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 100.0
+        PRODUCT_NAME: swiyu-notification-extension
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+      configs:
+        Dev (debug):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.dev.notification-extension
+        Ref (debug):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.ref.notification-extension
+        Abn (debug):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abn.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.abn.notification-extension
+        Sandbox (debug):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.sandbox.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.sandbox.notification-extension
+        Prod (debug):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.notification-extension
+        Dev (release):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.dev.notification-extension
+        Ref (release):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.ref.notification-extension
+        Abn (release):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abn.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.abn.notification-extension
+        Sandbox (release):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.sandbox.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.sandbox.notification-extension
+        Prod (release):
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.notification-extension
+    dependencies:
+      - package: BITCore
+      - package: BITPushNotification
+      - package: Factory

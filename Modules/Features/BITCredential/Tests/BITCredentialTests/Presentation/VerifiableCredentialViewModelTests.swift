@@ -7,6 +7,12 @@ import XCTest
 
 final class VerifiableCredentialViewModelTests: XCTestCase {
 
+  override class func setUp() {
+    super.setUp()
+    Container.shared.reset()
+    Container.shared.isBatchIssuanceEnabled.register { true }
+  }
+
   func testInit_withValidStatus_setsCorrectValues() {
     let viewModel = VerifiableCredentialViewModel(credential: VerifiableCredential.Mock.sample)
 
@@ -86,5 +92,75 @@ final class VerifiableCredentialViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusValid)
     XCTAssertEqual(viewModel.statusBadgeAccessibilityText, L10n.tkCredentialProgressionStateUnaccepted)
+  }
+
+  func testIsRefreshable_withRefreshToken_returnsTrue() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: credential.authentication.tokenType,
+      refreshToken: "refresh-token",
+      dpopBinding: credential.authentication.dpopBinding)
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    XCTAssertTrue(viewModel.isRefreshable)
+  }
+
+  func testIsRefreshable_withoutRefreshToken_returnsFalse() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: credential.authentication.tokenType,
+      refreshToken: nil,
+      dpopBinding: credential.authentication.dpopBinding)
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    XCTAssertFalse(viewModel.isRefreshable)
+  }
+
+  func testIsBatchPrivacyWarningVisible_withExhaustedBatchCredential_returnsTrue() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.batchData = BatchData(batchSize: 2)
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: credential.authentication.tokenType,
+      refreshToken: "refresh-token",
+      dpopBinding: credential.authentication.dpopBinding)
+    if credential.bundleItems.count == 1 {
+      credential.bundleItems.append(BundleItem(payload: Data("second".utf8)))
+    }
+    credential.bundleItems = credential.bundleItems.map {
+      var item = $0
+      item.presented = true
+      return item
+    }
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    XCTAssertTrue(viewModel.isBatchPrivacyWarningVisible)
+  }
+
+  func testIsBatchPrivacyWarningVisible_withoutRefreshToken_returnsFalse() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.batchData = BatchData(batchSize: 2)
+    if credential.bundleItems.count == 1 {
+      credential.bundleItems.append(BundleItem(payload: Data("second".utf8)))
+    }
+    credential.bundleItems = credential.bundleItems.map {
+      var item = $0
+      item.presented = true
+      return item
+    }
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: credential.authentication.tokenType,
+      refreshToken: nil,
+      dpopBinding: credential.authentication.dpopBinding)
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
   }
 }

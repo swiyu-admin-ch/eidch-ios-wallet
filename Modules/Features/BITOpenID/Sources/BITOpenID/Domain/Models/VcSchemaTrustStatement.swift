@@ -14,7 +14,6 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
   public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     vct = try container.decode(String.self, forKey: .vct)
-    issuer = try container.decodeIfPresent(String.self, forKey: .issuer)
     subject = try container.decodeIfPresent(String.self, forKey: .subject)
     issuedAt = try container.decodeIfPresent(Date.self, forKey: .issuedAt)
     statusList = try container.decode(VcSdJwtTokenStatusList.self, forKey: .statusList)
@@ -28,7 +27,6 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
   public let type: String? = VcSdJwt.legacyType
 
   public let vct: String
-  public let issuer: String?
   public let subject: String?
   public let issuedAt: Date?
   public let statusList: VcSdJwtTokenStatusList
@@ -50,7 +48,6 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
 
   enum CodingKeys: String, CodingKey {
     case vct
-    case issuer = "iss"
     case subject = "sub"
     case issuedAt = "iat"
     case statusList = "status"
@@ -71,6 +68,10 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
 }
 
 extension VcSchemaTrustStatementJWT {
+  public var issuer: String? {
+    nil
+  }
+
   public var audience: String? {
     nil
   }

@@ -19,7 +19,7 @@ extension IsoJWT: Mockable {
   struct Mock {
     /// ["salt_date", "date", "2001-01-01T00:00:00Z"]
     /// Ba0DsbQZLMQGvGarurfAIXuo2qGzcQuw5kV3_tbNzKY
-    private static let disclosure = "WyJzYWx0X2RhdGUiLCAiZGF0ZSIsICIyMDAxLTAxLTAxVDAwOjAwOjAwWiJd"
+    static let disclosure = "WyJzYWx0X2RhdGUiLCAiZGF0ZSIsICIyMDAxLTAxLTAxVDAwOjAwOjAwWiJd"
 
     static let payload = IsoJWT(date: Date(timeIntervalSinceReferenceDate: 0))
     /**

@@ -31,11 +31,12 @@ struct SettingsSection<Content: View>: View {
   private func sectionHeader(_ title: String) -> some View {
     if !title.isEmpty {
       Text(title)
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+        .foregroundStyle(ThemingAssets.Label.sectionHeader.swiftUIColor)
         .font(.custom.body)
-        .padding(.top, .x10)
-        .padding(.leading, .x2)
-        .padding(.bottom, .x3)
+        .fontWeight(.medium)
+        .padding(.top, .x4)
+        .padding(.leading, .x3)
+        .padding(.bottom, .x2)
         .accessibilityAddTraits(.isHeader)
     }
   }

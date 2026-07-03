@@ -7,7 +7,7 @@ import Spyable
 
 @Spyable
 public protocol VersionEnforcementRoutes {
-  func versionEnforcement(_ versionEnforcement: VersionEnforcement)
+  func versionEnforcement(_ versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate)
 }
 
 // MARK: - VersionEnforcementRoutes
@@ -15,8 +15,8 @@ public protocol VersionEnforcementRoutes {
 extension VersionEnforcementRoutes where Self: RouterProtocol {
 
   @MainActor
-  public func versionEnforcement(_ versionEnforcement: VersionEnforcement) {
-    let module = Container.shared.versionEnforcementModule(versionEnforcement)
+  public func versionEnforcement(_ versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate) {
+    let module = Container.shared.versionEnforcementModule((versionEnforcement, delegate))
     let style = ModalOpeningStyle(animatedWhenPresenting: true, modalPresentationStyle: .fullScreen)
     module.router.current = style
 

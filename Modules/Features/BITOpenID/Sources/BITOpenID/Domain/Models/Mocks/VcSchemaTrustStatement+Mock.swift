@@ -29,7 +29,7 @@ extension VcSchemaTrustStatementJWT: Mockable {
 
     private static func createSdJWSMock(from trustStatement: VcSchemaTrustStatementJWT, rawPayload: [String: Any] = [:], jwtAlgorithm: JWTAlgorithm = JWTAlgorithm.ES256) -> VcSchemaTrustStatement {
       let jws = JWS(payload: trustStatement, rawPayload: "rawJWSPayload", rawJWS: "rawJWS", header: JWSHeader(algorithm: jwtAlgorithm))
-      return VcSchemaTrustStatement(jws: jws, payload: trustStatement, resolvedJSON: rawPayload, rawSdJWS: "rawSdJWS", disclosureMap: [:], disclosableClaims: [])
+      return VcSchemaTrustStatement(jws: jws, payload: trustStatement, resolvedJSON: rawPayload, rawSdJWS: "rawSdJWS", disclosures: [], rawKeyBinding: nil, keyIdentifierDid: "did:tdw:example")
     }
   }
 }

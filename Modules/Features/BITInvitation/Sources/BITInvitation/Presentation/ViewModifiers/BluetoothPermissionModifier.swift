@@ -19,27 +19,23 @@ struct BluetoothPermissionModifier: ViewModifier {
   // MARK: Internal
 
   func body(content: Content) -> some View {
-    let transition = AnyTransition.asymmetric(
-      insertion: .identity,
-      removal: .push(from: .trailing)).combined(with: .opacity)
-
     content
       .fullScreenCover(isPresented: $isPermissionPresented) {
         permissionView
-          .transition(transition)
+          .transition(.push)
       }
       .animation(.easeInOut, value: state)
       .onAppear {
         refreshPermissionStateIfNeeded(isEnabled: isEnabled)
       }
-      .onChange(of: isEnabled) { isEnabled in
+      .onChange(of: isEnabled) { _, isEnabled in
         if isEnabled {
           refreshPermissionStateIfNeeded(isEnabled: isEnabled)
         } else {
           isPermissionPresented = false
         }
       }
-      .onChange(of: state) { newState in
+      .onChange(of: state) { _, newState in
         isPermissionPresented = newState != .authorized
         handler?(newState)
       }
@@ -82,7 +78,7 @@ struct BluetoothPermissionModifier: ViewModifier {
           .body(L10n.tkReceiveBluetoothPermissionSecondary),
         ],
         actions: [
-          .primary(state.label) { _ in
+          .primary(state.label, alt: state.label, hint: state.labelHint) { _ in
             openSettings()
           },
         ])
@@ -129,7 +125,7 @@ struct BluetoothPermissionModifier: ViewModifier {
 
   private func openSettings() {
     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-    UIApplication.shared.open(url, options: [:], completionHandler: nil)
+    openURL(url)
   }
 }
 

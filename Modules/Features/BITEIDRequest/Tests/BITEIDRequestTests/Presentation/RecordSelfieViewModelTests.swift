@@ -21,6 +21,10 @@ class RecordSelfieViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+
+    Container.shared.reset()
+
     avBeam = AVBeamProtocolSpy()
     saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
     context = EIDRequestContext()
@@ -32,6 +36,7 @@ class RecordSelfieViewModelTests: XCTestCase {
     Container.shared.recordSelfieTimeout.register { 10.0 }
     Container.shared.avBeamAppID.register { @MainActor in self.appId }
     Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     success()
   }
@@ -42,7 +47,7 @@ class RecordSelfieViewModelTests: XCTestCase {
 
   func testInitialization_stateIsLoading() {
     XCTAssertEqual(viewModel.state, .loading)
-    XCTAssertEqual(viewModel.buttonState, .initial)
+    XCTAssertEqual(viewModel.recordingState, .initial)
     XCTAssertFalse(viewModel.isNotificationPresented)
     XCTAssertNil(viewModel.notification)
     XCTAssertNotNil(avBeam.messageDelegate)
@@ -123,7 +128,7 @@ class RecordSelfieViewModelTests: XCTestCase {
   func testStopRecordSelfie_stopCaptureFace() {
     viewModel.stopRecordSelfie()
 
-    XCTAssertEqual(viewModel.buttonState, .initial)
+    XCTAssertEqual(viewModel.recordingState, .initial)
     XCTAssertFalse(viewModel.isNotificationPresented)
     XCTAssertNil(viewModel.notification)
     XCTAssertTrue(avBeam.stopCaptureFaceCalled)
@@ -177,7 +182,7 @@ class RecordSelfieViewModelTests: XCTestCase {
 
     await Task.yield()
 
-    XCTAssertEqual(viewModel.buttonState, .record)
+    XCTAssertEqual(viewModel.recordingState, .recording(type: .countdown(elapsedTime: 0, timeout: 10)))
   }
 
   func testDidReceiveNotification_defaultCase_showsNotification() async {
@@ -203,7 +208,7 @@ class RecordSelfieViewModelTests: XCTestCase {
     XCTAssertTrue(saveEIDRequestFilesUseCase.executeForRequestCaseIdCalled)
     XCTAssertTrue(avBeam.stopCaptureFaceCalled)
     XCTAssertEqual(viewModel.destination, .submitEidRequest)
-    XCTAssertEqual(viewModel.buttonState, .success)
+    XCTAssertEqual(viewModel.recordingState, .success)
   }
 
   func testDidCompleteCaptureFace_missingCaseId_handlesError() async {

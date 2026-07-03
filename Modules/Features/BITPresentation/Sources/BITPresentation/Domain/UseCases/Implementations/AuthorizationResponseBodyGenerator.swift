@@ -1,6 +1,7 @@
 import BITAnalytics
 import BITAnyCredentialFormat
 import BITAppAuth
+import BITClaimsPathPointer
 import BITCredential
 import BITCredentialShared
 import BITCrypto
@@ -20,11 +21,7 @@ enum AuthorizationResponseBodyGeneratorError: Error {
 
 @Spyable
 public protocol AuthorizationResponseBodyGeneratorProtocol {
-  func callAsFunction(
-    for compatibleCredential: CompatibleCredential,
-    requestObject: RequestObject,
-    inputDescriptor: InputDescriptor?)
-    throws -> AuthorizationResponseBody
+  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject) throws -> AuthorizationResponseBody
 }
 
 // MARK: - AuthorizationResponseBodyGenerator
@@ -33,21 +30,9 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
 
   // MARK: Internal
 
-  func callAsFunction(
-    for compatibleCredential: CompatibleCredential,
-    requestObject: RequestObject,
-    inputDescriptor: InputDescriptor?)
-    throws -> AuthorizationResponseBody
-  {
-    if let inputDescriptor {
-      let payload = try generateDif(for: compatibleCredential, requestObject: requestObject, inputDescriptor: inputDescriptor)
-      return try buildResponseBody(for: payload, requestObject: requestObject, responseType: .dif)
-    }
-    if (try? requestObject.dcqlQuery) != nil {
-      let payload = try generateDcql(for: compatibleCredential, requestObject: requestObject)
-      return try buildResponseBody(for: payload, requestObject: requestObject, responseType: .dcql)
-    }
-    throw RequestObjectError.invalidPayload()
+  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject) throws -> AuthorizationResponseBody {
+    let payload = try generate(for: compatibleCredential, requestObject: requestObject)
+    return try buildResponseBody(for: payload, requestObject: requestObject)
   }
 
   // MARK: Private
@@ -56,58 +41,33 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
   @Injected(\.userSession) private var userSession: Session
   @Injected(\.anyVpTokenGenerator) private var anyVpTokenGenerator: AnyVpTokenGeneratorProtocol
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
-  @Injected(\.anyDescriptorMapGenerator) private var anyDescriptorMapGenerator: AnyDescriptorMapGeneratorProtocol
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.jweEncrypter) private var jweEncrypter: JWEEncrypterProtocol
-  @Injected(\.isPayloadEncryptionEnabled) private var isPayloadEncryptionEnabled
   @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
 
-  private func generateDif(
-    for compatibleCredential: CompatibleCredential,
-    requestObject: RequestObject,
-    inputDescriptor: InputDescriptor)
-    throws -> AuthorizationResponse
-  {
-    let credential = compatibleCredential.credential
-    let fields = compatibleCredential.requestedFields.map(\.key)
-
-    let vpToken = try createVpToken(credential: credential, requestObject: requestObject, fields: fields)
-    let descriptorMaps = try anyDescriptorMapGenerator.generate(using: inputDescriptor, vcFormat: credential.format)
-    guard
-      let definitionId = requestObject.presentationDefinition?.id,
-      !definitionId.isEmpty
-    else {
-      throw RequestObjectError.invalidPayload()
-    }
-    let presentationSubmission = AuthorizationResponse.PresentationSubmission(
-      id: UUID().uuidString,
-      definitionId: definitionId,
-      descriptorMap: descriptorMaps)
-    return AuthorizationResponse(vpToken: vpToken, presentationSubmission: presentationSubmission)
-  }
-
-  private func generateDcql(
+  private func generate(
     for compatibleCredential: CompatibleCredential,
     requestObject: RequestObject)
     throws -> AuthorizationResponse
   {
     guard
-      let dcqlQueryId = compatibleCredential.dcqlQueryId
+      let queryId = compatibleCredential.dcqlQueryId
     else {
-      throw RequestObjectError.invalidDcqlQuery
+      throw RequestObjectError.invalidQuery
     }
 
     let credential = compatibleCredential.credential
-    let fields = compatibleCredential.requestedFields.map(\.key)
+    let paths = compatibleCredential.presentingPaths
 
-    let vpToken = try createVpToken(credential: credential, requestObject: requestObject, fields: fields)
+    let vpToken = try createVpToken(credential: credential, requestObject: requestObject, paths: paths)
 
     return AuthorizationResponse(
-      vpTokenByCredentialQueryId: [dcqlQueryId: [vpToken]],
-      responseMode: requestObject.responseMode)
+      vpToken: [queryId: [vpToken]],
+      responseMode: requestObject.responseMode,
+      state: requestObject.state)
   }
 
-  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, fields: [String]) throws -> VpToken {
+  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, paths: [ClaimsPathPointer]) throws -> VpToken {
     guard
       userSession.isLoggedIn,
       let context = userSession.context
@@ -136,17 +96,16 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
       }
     }
 
-    return try anyVpTokenGenerator.generate(requestObject: requestObject, credential: anyCredential, keyPair: keyPair, fields: fields)
+    return try anyVpTokenGenerator.generate(requestObject: requestObject, credential: anyCredential, keyPair: keyPair, paths: paths)
   }
 
   private func buildResponseBody(
     for payload: DictionarySerializable,
-    requestObject: RequestObject,
-    responseType: AuthorizationResponseType) throws
+    requestObject: RequestObject) throws
     -> AuthorizationResponseBody
   {
-    guard requestObject.responseMode == .directPostJWT && isPayloadEncryptionEnabled else {
-      return .json(payload, responseType)
+    guard requestObject.responseMode == .directPostJWT else {
+      return .json(payload)
     }
 
     guard let jwk = requestObject.clientMetadata?.jwks?.keys.first else {
@@ -154,12 +113,15 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
     }
 
     let data = try JSONSerialization.data(withJSONObject: payload.asDictionary())
+    let firstSupportedEncAlgorithmRaw = requestObject.clientMetadata?.encryptedResponseEncValuesSupported?.first(
+      where: { EncryptionAlgorithm(rawValue: $0) != nil })
+    let encryptionAlgorithm = EncryptionAlgorithm(rawValue: firstSupportedEncAlgorithmRaw ?? "") ?? .A128GCM
     let jwe = try jweEncrypter.encrypt(
       data: data,
       publicKey: jwk,
-      encryptionAlgorithm: .A128GCM,
+      encryptionAlgorithm: encryptionAlgorithm,
       compressionAlgorithm: nil)
 
-    return .jwe(jwe, responseType)
+    return .jwe(jwe)
   }
 }

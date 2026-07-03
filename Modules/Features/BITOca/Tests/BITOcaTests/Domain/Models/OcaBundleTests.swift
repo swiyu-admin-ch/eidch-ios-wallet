@@ -108,6 +108,23 @@ final class OcaBundleTests: XCTestCase {
     XCTAssertEqual(ocaBundle.overlays.count, 20)
   }
 
+  func testDecode_chasseral() {
+    let ocaBundle = OcaBundle.Mock.chasseral
+
+    XCTAssertEqual(ocaBundle.captureBases.count, 5)
+    XCTAssertEqual(ocaBundle.captureBases[0].attributes.count, 17)
+    XCTAssertEqual(ocaBundle.captureBases[0].digest, Self.chasseralRootCaptureBaseDigest)
+    XCTAssertEqual(ocaBundle.captureBases[1].attributes.count, 1)
+    XCTAssertEqual(ocaBundle.captureBases[1].digest, Self.chasseralArrayObjectsDigest)
+    XCTAssertEqual(ocaBundle.captureBases[2].attributes.count, 4)
+    XCTAssertEqual(ocaBundle.captureBases[2].digest, Self.chasseralObjectsDigest)
+    XCTAssertEqual(ocaBundle.captureBases[3].attributes.count, 1)
+    XCTAssertEqual(ocaBundle.captureBases[3].digest, Self.chasseralNestedArrayDigest)
+    XCTAssertEqual(ocaBundle.captureBases[4].attributes.count, 1)
+    XCTAssertEqual(ocaBundle.captureBases[4].digest, Self.chasseralNestedArrayObjectsDigest)
+    XCTAssertEqual(ocaBundle.overlays.count, 58)
+  }
+
   func testInit_argumentsPassed() throws {
     let bases = [CaptureBase1x0(digest: "digest", attributes: ["attribute": .text], classification: nil, flaggedAttributes: nil)]
     let overlays = [DataSourceOverlay1x0(captureBaseDigest: "digest", format: "format", attributeSources: ["attribute": [.string(".jsonPath")]])]
@@ -216,6 +233,12 @@ final class OcaBundleTests: XCTestCase {
   private static let nestedCaptureBase1Digest = "IACad8m8doJZoyOwmkcSOGD0OKL6JoNtC22I1K4DlFMh"
   private static let nestedCaptureBase2Digest = "IMg6sVkwVROTddb1csCbOI83tufFvbMkwpbwImZ89joJ"
   private static let nestedArrayCaptureBaseDigest = "ICFYTvQNUDNlVfS7_35nv1YpjDHx1EhlNqncFqd7zmyt"
+
+  private static let chasseralRootCaptureBaseDigest = "ICk1UdYOAUZTXWcg3hgt-eSgQW-Kr491Tu93yS5u5qvZ"
+  private static let chasseralObjectsDigest = "ICZCr3rXuMy1F9_hDFroASYgpVEDzZ36b_PuebyVtd6w"
+  private static let chasseralArrayObjectsDigest = "IEw4BZAnLVMDtVIto5ETY730oBfUsl8kvfRwgGmHHr2i"
+  private static let chasseralNestedArrayDigest = "IH2iUkh9kKNjyfMVD6SLH_A8vVBvhogO4t8jva31fFyZ"
+  private static let chasseralNestedArrayObjectsDigest = "IL2II0k_6S3aaRd0fkZFXDEm5oOCxtuq8kLU-AeEci13"
 
   private static let rootCaptureBaseDigest = "rootCaptureBase"
   private static let otherCaptureBaseDigest = "otherCaptureBase"

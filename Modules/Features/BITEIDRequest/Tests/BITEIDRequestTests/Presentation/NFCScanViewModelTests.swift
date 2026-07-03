@@ -17,6 +17,9 @@ class NFCScanViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+
+    Container.shared.reset()
     registerMocks()
     viewModel = NFCScanViewModel()
     createSuccessCase()
@@ -201,6 +204,7 @@ class NFCScanViewModelTests: XCTestCase {
     Container.shared.avBeam.register { @MainActor in self.avBeam }
     Container.shared.avBeamNFCConfigurator.register { @MainActor in self.avBeamNFCConfigurator }
     Container.shared.maxFailedNFCScanAttempts.register { 3 }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
   }
 
   private func createSuccessCase() {

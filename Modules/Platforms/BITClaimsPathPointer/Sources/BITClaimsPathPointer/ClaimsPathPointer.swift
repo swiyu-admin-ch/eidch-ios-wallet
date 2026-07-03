@@ -4,7 +4,7 @@ public typealias ClaimsPathPointer = [ClaimsPathPointerElement]
 
 // MARK: - ClaimsPathPointerElement
 
-public enum ClaimsPathPointerElement: Codable {
+public enum ClaimsPathPointerElement: Codable, Hashable {
   case string(String)
   case index(Int)
   case null
@@ -41,23 +41,6 @@ public enum ClaimsPathPointerElement: Codable {
   }
 }
 
-// MARK: Equatable
-
-extension ClaimsPathPointerElement: Equatable {
-  public static func == (lhs: ClaimsPathPointerElement, rhs: ClaimsPathPointerElement) -> Bool {
-    switch (lhs, rhs) {
-    case (.string(let lhsString), .string(let rhsString)):
-      lhsString == rhsString
-    case (.index(let lhsIndex), .index(let rhsIndex)):
-      lhsIndex == rhsIndex
-    case (.null, .null):
-      true
-    default:
-      false
-    }
-  }
-}
-
 extension ClaimsPathPointer {
 
   // MARK: Lifecycle
@@ -86,15 +69,43 @@ extension ClaimsPathPointer {
     return String(decoding: data, as: UTF8.self)
   }
 
-  public func isPointing(at otherPath: ClaimsPathPointer) -> Bool {
-    for (index, component) in enumerated() {
-      let otherComponent = otherPath[index]
-      if component == .null && component != otherComponent {
+  public var allIndices: [Int] {
+    compactMap { element in
+      if case .index(let index) = element {
+        return index
+      }
+      return nil
+    }
+  }
+
+  public func pointsAtSetOf(_ otherPath: ClaimsPathPointer, enforceLength: Bool = false) -> Bool {
+    if enforceLength {
+      guard count == otherPath.count else { return false }
+    } else {
+      guard count <= otherPath.count else { return false }
+    }
+
+    for (component, otherComponent) in zip(self, otherPath) {
+      if component != otherComponent {
+        guard component == .null else { return false }
         guard case .index = otherComponent else { return false }
-      } else {
-        guard otherComponent == component else { return false }
       }
     }
+
     return true
+  }
+
+  public func resolveNullElement(with indices: [Int]) -> ClaimsPathPointer {
+    var indices = indices
+    return map { element in
+      if element == .null {
+        guard let index = indices.first else { return element }
+        let newElement = ClaimsPathPointerElement.index(index)
+        indices = [Int](indices.dropFirst())
+        return newElement
+      }
+
+      return element
+    }
   }
 }

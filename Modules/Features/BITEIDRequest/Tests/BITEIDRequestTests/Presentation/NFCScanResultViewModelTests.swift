@@ -87,7 +87,13 @@ final class NFCScanResultViewModelTests: XCTestCase {
     mockContext = EIDRequestContext(caseId: mockCaseId)
     fetchNFCScanResultUseCase = FetchNFCScanResultUseCaseProtocolSpy()
     mockNFCScanResultEntries = [
-      .image(key: L10n.tkEidRequestNfcScanResultPhotoKey, value: mockNFCScanResult.facePicture, accessibilityLabel: L10n.tkEidRequestNfcScanResultPhotoAlt),
+      .image(
+        ScanResultEntryImage(
+          key: L10n.tkEidRequestNfcScanResultPhotoKey,
+          value: mockNFCScanResult.facePicture,
+          side: .recto,
+          uiOrientation: .portrait,
+          accessibilityLabel: L10n.tkEidRequestNfcScanResultPhotoAlt)),
       .text(key: L10n.tkEidRequestNfcScanResultSurnameKey, value: mockNFCScanResult.surname),
       .text(key: L10n.tkEidRequestNfcScanResultGivenNamesKey, value: mockNFCScanResult.givenName),
       .text(key: L10n.tkEidRequestNfcScanResultExpirationDateKey, value: mockNFCScanResult.expirationDate),

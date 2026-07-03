@@ -5,16 +5,49 @@
 {% set accessModifier %}{% if param.publicAccess %}public{% else %}internal{% endif %}{% endset %}
 {% set enumName %}{{param.enumName|default:"Lottie"}}{% endset %}
 import Foundation
-import Lottie
+{% if param.themingModule != true %}
+import BITTheming
+{% endif %}
 
-// MARK: - Lottie Files Enum
+// MARK: - {{enumName}}
 
 {{accessModifier}} enum {{enumName}} {
-  {% for file in files %}
-  {{accessModifier}} static let {{file.name|swiftIdentifier:"pretty"|lowerFirstWord|escapeReservedKeywords}} = LottieView(animationFile: "{{file.name}}")
-  {% endfor %}
+    {% for file in files %}
+      {% set base %}{{file.name}}{% endset %}
+      {% if base|hasSuffix:"-light" %}
+        {% set stem %}{{base|replace:"-light",""}}{% endset %}
+        {% set darkName %}{{stem}}-dark{% endset %}
+        {% set hasDark %}
+          {% for other in files %}
+            {% if other.name == darkName %}Y{% endif %}
+          {% endfor %}
+        {% endset %}
+        {% if hasDark != "" %}
+  {{accessModifier}} static let {{stem|swiftIdentifier:"pretty"|lowerFirstWord|escapeReservedKeywords}} = LottieView(animationFile: "{{base}}", darkModeFile: "{{darkName}}", in: BundleToken.bundle)
+        {% else %}
+  {{accessModifier}} static let {{stem|swiftIdentifier:"pretty"|lowerFirstWord|escapeReservedKeywords}} = LottieView(animationFile: "{{base}}", in: BundleToken.bundle)
+        {% endif %}
+      {% elif base|hasSuffix:"-dark" %}
+      {% else %}
+  {{accessModifier}} static let {{base|swiftIdentifier:"pretty"|lowerFirstWord|escapeReservedKeywords}} = LottieView(animationFile: "{{base}}", in: BundleToken.bundle)
+      {% endif %}
+    {% endfor %}
 }
 
+// MARK: - BundleToken
+
+// swiftlint:disable convenience_type
+private final class BundleToken {
+  static let bundle: Bundle = {
+    #if SWIFT_PACKAGE
+    return Bundle.module
+    #else
+    return Bundle(for: BundleToken.self)
+    #endif
+  }()
+}
+
+// swiftlint:enable convenience_type
 {% else %}
 // No files found
 {% endif %}

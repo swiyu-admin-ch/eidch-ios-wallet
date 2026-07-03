@@ -15,7 +15,8 @@ final class SdJWSDecoderTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-
+    registerMocks()
+    success()
     decoder = SdJWSDecoder()
   }
 
@@ -24,6 +25,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, UndisclosedJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertEqual(sdJWT.disclosures.count, 0)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_typed() throws {
@@ -31,13 +34,28 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, TypedJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flat() throws {
     let sdJWT = try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.data)
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatJWT.Mock.payload)
+    XCTAssertEqual(sdJWT.digestAlgorithm, .sha256)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+  }
+
+  func testDecode_flatWithoutSdAlg_usesSha256() throws {
+    let sdJWT = try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.withoutSdAlgData)
+
+    XCTAssertEqual(sdJWT.resolvedPayload, FlatJWT.Mock.payload)
+    XCTAssertEqual(sdJWT.digestAlgorithm, .sha256)
+    sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flatWithIsoDate() throws {
@@ -48,20 +66,20 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, IsoJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
-  func testDecode_flatUsingSha384() throws {
-    let sdJWT = try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.sha384Data)
-
-    XCTAssertEqual(sdJWT.resolvedPayload, FlatJWT.Mock.payload)
-    sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+  func testDecode_flatUsingSha384_throws() throws {
+    XCTAssertThrowsError(try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.sha384Data)) { error in
+      XCTAssertEqual(error as? SdJWSDecoderError, .unsupportedDigestAlgorithm)
+    }
   }
 
-  func testDecode_flatUsingSha512() throws {
-    let sdJWT = try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.sha512Data)
-
-    XCTAssertEqual(sdJWT.resolvedPayload, FlatJWT.Mock.payload)
-    sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+  func testDecode_flatUsingSha512_throws() throws {
+    XCTAssertThrowsError(try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.sha512Data)) { error in
+      XCTAssertEqual(error as? SdJWSDecoderError, .unsupportedDigestAlgorithm)
+    }
   }
 
   func testDecode_flatWithSimpleArrayAndOtherClaims() throws {
@@ -69,6 +87,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatSimpleArrayJWT.Mock.otherClaimsPayload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures(hasOtherClaims: true)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flatWithSimpleArrayOnly() throws {
@@ -76,6 +96,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatSimpleArrayJWT.Mock.arrayOnlyPayload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures(hasOtherClaims: false)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flatWithObjectArrayAndOneDisclosedElement() throws {
@@ -83,6 +105,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatObjectArrayJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures(fullyDisclosed: false)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flatWithObjectArrayFullyDisclosed() throws {
@@ -90,6 +114,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatObjectArrayJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures(fullyDisclosed: true)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_structured() throws {
@@ -97,6 +123,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, StructuredJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_structuredWithKeyBindingJWT() throws {
@@ -104,6 +132,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, StructuredJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertEqual(sdJWT.rawKeyBinding, StructuredJWT.Mock.keyBinding)
   }
 
   func testDecode_recursive() throws {
@@ -111,6 +140,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, RecursiveJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flatWithDecoys() throws {
@@ -118,6 +149,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatJWT(testKey1: "test_value_1"))
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_flatWithArrayDecoys() throws {
@@ -125,6 +157,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, FlatSimpleArrayJWT(array: ["test_array_value_1"]))
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_complex() throws {
@@ -132,6 +165,8 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, ComplexJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    sdJWT.assertDisclosures()
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_simpleRFCExample() throws {
@@ -139,6 +174,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, SimpleRFCJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_complexRFCExample() throws {
@@ -146,6 +182,7 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, ComplexRFCJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertNil(sdJWT.rawKeyBinding)
   }
 
   func testDecode_duplicateClaimNameOnDifferentLevels() throws {
@@ -153,6 +190,22 @@ final class SdJWSDecoderTests: XCTestCase {
 
     XCTAssertEqual(sdJWT.resolvedPayload, DuplicateNameJWT.Mock.payload)
     sdJWT.resolvedPayload.assertIn(sdJWT.resolvedJSON)
+    XCTAssertNil(sdJWT.rawKeyBinding)
+  }
+
+  func testDecode_didResolverHelperReturnsDid_returnsKeyIdentifierDid() throws {
+    let sdJWT = try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.data)
+
+    XCTAssertEqual(didResolverHelperSpy.getDidFromCallsCount, 1)
+    XCTAssertEqual(sdJWT.keyIdentifierDid, Self.keyIdentifierDidMock)
+  }
+
+  func testDecode_didResolverHelperThrows_throws() throws {
+    didResolverHelperSpy.getDidFromThrowableError = TestingError.error
+
+    XCTAssertThrowsError(try SdJWSDecoder().decode(FlatJWT.self, from: FlatJWT.Mock.data)) { error in
+      XCTAssertEqual(error as? TestingError, .error)
+    }
   }
 
   func testDecode_emptySdArray() throws {
@@ -363,6 +416,20 @@ final class SdJWSDecoderTests: XCTestCase {
     }
   }
 
+  func testDecode_nonStringDigestAlgorithm_throwsError() throws {
+    /*
+     {
+       "_sd_alg": 123
+     }
+     */
+    let jws = "eyJ0eXAiOiJmbGF0IiwiYWxnIjoiRVM1MTIifQ.eyJfc2RfYWxnIjoxMjN9.ATYtdZatwQvoqUU6YGt5EEONjoxWQlmcBIjfnGIQjVWfAG8Z5PIXQTpqB6az5P4Bt8wXt9jwDc5QSp_cgMfReo7KAEzfPesGiKr6D9XZxim0jfV07_RWVfeNAi8Vbz5C678OMl_op1IDYArwgrbYM8MuCzpR7H-YtQ5paXypEm3rvynf"
+    let data = jws.sdJWSData(with: FlatJWT.Mock.disclosures)
+
+    XCTAssertThrowsError(try decoder.decode(FlatJWT.self, from: data)) { error in
+      XCTAssertEqual(error as? SdJWSDecoderError, .unsupportedDigestAlgorithm)
+    }
+  }
+
   func testDecode_nonDisclosableClaimInDisclosure_throwsError() throws {
     // ["test_salt", "iss", "value"]
     let disclosure = "WyJ0ZXN0X3NhbHQiLCAiaXNzIiwgInZhbHVlIl0"
@@ -390,5 +457,18 @@ final class SdJWSDecoderTests: XCTestCase {
 
   // MARK: Private
 
+  private static let keyIdentifierDidMock = "did:tdw:example"
+
   private var decoder = SdJWSDecoder()
+
+  private var didResolverHelperSpy = DidResolverHelperProtocolSpy()
+
+  private func registerMocks() {
+    didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
+  }
+
+  private func success() {
+    didResolverHelperSpy.getDidFromReturnValue = Self.keyIdentifierDidMock
+  }
 }

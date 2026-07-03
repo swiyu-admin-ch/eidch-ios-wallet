@@ -6,72 +6,95 @@ import Spyable
 
 @Spyable
 public protocol FetchVersionEnforcementUseCaseProtocol {
-  func execute() async throws -> VersionEnforcement?
+  func callAsFunction() async throws -> VersionEnforcement?
 }
 
 // MARK: - FetchVersionEnforcementUseCase
 
 struct FetchVersionEnforcementUseCase: FetchVersionEnforcementUseCaseProtocol {
 
-  // MARK: Lifecycle
-
-  init(repository: VersionEnforcementRepositoryProtocol = Container.shared.versionEnforcementRepository(), getAppVersionUseCase: GetAppVersionUseCaseProtocol = Container.shared.getAppVersionUseCase()) {
-    self.repository = repository
-    self.getAppVersionUseCase = getAppVersionUseCase
-  }
-
   // MARK: Internal
 
-  func execute() async throws -> VersionEnforcement? {
-    let versionEnforcements = try await repository.fetchVersionEnforcements()
-    return try getVersionEnforcement(for: versionEnforcements)
+  func callAsFunction() async throws -> VersionEnforcement? {
+    let response = try await repository.fetchVersionEnforcement()
+    return try enforcement(from: response)
   }
 
   // MARK: Private
 
-  private static let highPriority = "high"
-  private static let iOSPlatform = "ios"
-
-  private let repository: VersionEnforcementRepositoryProtocol
-  private var getAppVersionUseCase: GetAppVersionUseCaseProtocol
+  @Injected(\.versionEnforcementRepository) private var repository
+  @Injected(\.getAppVersionUseCase) private var getAppVersionUseCase
+  @Injected(\.currentDate) private var currentDate
+  @Injected(\.deviceInfoProvider) private var deviceInfoProvider
+  @Injected(\.calendar) private var calendar
 }
 
 extension FetchVersionEnforcementUseCase {
 
-  private func getVersionEnforcement(for versionEnforcements: [VersionEnforcement]) throws -> VersionEnforcement? {
-    if versionEnforcements.isEmpty {
-      throw FetchVersionEnforcementUseCaseError.emptyVersionEnforcements
+  private func enforcement(from response: VersionEnforcement.Response) throws -> VersionEnforcement? {
+    try checkEnforcementForMinimumOsVersion(response) ??
+      checkEnforcementForDeviceBlacklist(response) ??
+      checkEnforcementForPreferredVersion(response)
+  }
+
+  private func checkEnforcementForMinimumOsVersion(_ response: VersionEnforcement.Response) -> VersionEnforcement? {
+    guard let systemVersion = deviceInfoProvider.systemVersion else {
+      return nil
     }
+    let minimumOsVersion = Version(response.minimumOsVersion)
+    return systemVersion < minimumOsVersion ? VersionEnforcement(type: .outdatedOsVersion) : nil
+  }
 
-    guard let versionEnforcement = versionEnforcements.first(where: { $0.priority == Self.highPriority && $0.platform == Self.iOSPlatform }) else {
-      throw FetchVersionEnforcementUseCaseError.noValidVersionEnforcement
-    }
+  private func checkEnforcementForDeviceBlacklist(_ response: VersionEnforcement.Response) -> VersionEnforcement? {
+    response.deviceBlacklist
+      .contains(deviceInfoProvider.modelDescription) ? VersionEnforcement(type: .blacklistedDevice) : nil
+  }
 
-    let appVersion = try getAppVersionUseCase.execute()
-    let criteria = versionEnforcement.criteria
-
-    if let minAppVersionIncluded = criteria.minAppVersionIncluded {
-      let minAppVersion = AppVersion(minAppVersionIncluded)
-      guard appVersion >= minAppVersion else {
-        return nil
-      }
-    }
-
-    let maxAppVersion = AppVersion(criteria.maxAppVersionExcluded)
-    guard appVersion < maxAppVersion else {
+  private func checkEnforcementForPreferredVersion(_ response: VersionEnforcement.Response) throws -> VersionEnforcement? {
+    guard let preferredVersion = try preferredVersion(for: response) else {
       return nil
     }
 
-    return versionEnforcement
+    let type: VersionEnforcementType = switch preferredVersion.updateType {
+    case .forced: .forced
+    case .optional: .optional
+    }
+
+    return VersionEnforcement(type: type, messages: preferredVersion.message)
   }
-}
 
-// MARK: FetchVersionEnforcementUseCase.FetchVersionEnforcementUseCaseError
+  private func preferredVersion(for response: VersionEnforcement.Response) throws -> VersionEnforcement.Response.Version? {
+    let appVersion = try getAppVersionUseCase().rawValue
 
-extension FetchVersionEnforcementUseCase {
-  enum FetchVersionEnforcementUseCaseError: Error {
-    case emptyVersionEnforcements
-    case noValidVersionEnforcement
-    case cannotFindVersionEnforcementUrl
+    return versionForForcedUpgrade(response, appVersion) ??
+      versionForOptionalUpgradeForUngaranteedVersion(response, appVersion, currentDate) ??
+      versionForOptionalUpgradeForExpiredVersion(response, appVersion, currentDate)
+  }
+
+  private func versionForForcedUpgrade(_ response: VersionEnforcement.Response, _ appVersion: String) -> VersionEnforcement.Response.Version? {
+    response.versions.first(where: { $0.updateType == .forced && $0.version > appVersion })
+  }
+
+  private func versionForOptionalUpgradeForUngaranteedVersion(_ response: VersionEnforcement.Response, _ appVersion: String, _ currentDate: Date) -> VersionEnforcement.Response.Version? {
+    response.versions
+      .filter { $0.updateType == .optional && $0.version >= appVersion }
+      .first {
+        guard let supportGuaranteedUntil = $0.supportGuaranteedUntil else { return false }
+        return supportGuaranteedUntil <= currentDate
+      }
+  }
+
+  private func versionForOptionalUpgradeForExpiredVersion(_ response: VersionEnforcement.Response, _ appVersion: String, _ currentDate: Date) -> VersionEnforcement.Response.Version? {
+    response.versions
+      .filter {
+        $0.updateType == .optional && $0.version >= appVersion && $0.supportGuaranteedUntil == nil
+      }
+      .first {
+        let lifetimeDays = response.defaultReleaseSupportDays
+        guard let lifetimeLimitDate = calendar.date(byAdding: .day, value: lifetimeDays, to: $0.releaseDate) else {
+          return false
+        }
+        return lifetimeLimitDate <= currentDate
+      }
   }
 }

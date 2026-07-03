@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITVault
 import Foundation
 import Spyable
@@ -9,5 +10,5 @@ public typealias VpToken = String
 
 @Spyable
 public protocol AnyVpTokenGeneratorProtocol {
-  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, fields: [String]) throws -> VpToken
+  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer]) throws -> VpToken
 }

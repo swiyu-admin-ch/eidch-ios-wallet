@@ -16,7 +16,7 @@ only_rules:
   - legacy_constructor
   - legacy_nsgeometry_functions
   - operator_usage_whitespace
-  - overriden_super_call
+  - overridden_super_call
   - redundant_string_enum_value
   - redundant_void_return
   - return_arrow_whitespace

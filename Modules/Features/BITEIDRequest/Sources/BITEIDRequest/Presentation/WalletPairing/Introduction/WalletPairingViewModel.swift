@@ -1,3 +1,4 @@
+import BITTheming
 import Factory
 import Foundation
 
@@ -21,7 +22,11 @@ class WalletPairingViewModel {
 
       destination = .avIdentityCheck(caseId: caseId)
     } catch {
-      #warning("TODO: Redirect to error screen")
+      destination = .error(.retry(error) { [weak self] _ in
+        Task {
+          await self?.primaryAction()
+        }
+      })
     }
   }
 

@@ -2,10 +2,11 @@ import Factory
 import XCTest
 @testable import BITActivity
 @testable import BITAnyCredentialFormat
-@testable import BITAnyCredentialFormatMocks
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITJWT
 @testable import BITOpenID
+@testable import BITSdJWT
 @testable import BITTestingCore
 @testable import BITVault
 
@@ -30,11 +31,12 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     try await useCase.execute(for: mockDeferredCredential)
 
     XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForCallsCount, 1)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 1)
     XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCallsCount, 1)
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdCallsCount, 1)
     XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 1)
-    XCTAssertEqual(credentialRepository.deleteCallsCount, 1)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsCallsCount, 1)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
     XCTAssertEqual(activityService.createCredentialIdCallsCount, 1)
   }
@@ -43,6 +45,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     try await useCase.execute(for: mockDeferredCredential)
 
     XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForReceivedDeferredCredential, mockDeferredCredential)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateReceivedJws as? VcSdJWS, anyCredential)
 
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialReceivedAnyCredential?.raw, anyCredential.raw)
 
@@ -65,7 +68,8 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId, anyCredential.vcSchemaId)
 
     XCTAssertEqual(credentialRepository.createVerifiableCredentialReceivedVerifiableCredential?.id, generatedCredential.id)
-    XCTAssertEqual(credentialRepository.deleteReceivedId, mockDeferredCredential.id)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.id, mockDeferredCredential.id)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.deleteKeyPairs, false)
 
     XCTAssertEqual(activityService.createCredentialIdReceivedArguments?.activity.type, .issuance)
     XCTAssertEqual(activityService.createCredentialIdReceivedArguments?.credentialId, repositoryCredential.id)
@@ -74,41 +78,72 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_updateDeferredCredential_success() async throws {
-    fetchDeferredCredentialService.callAsFunctionForReturnValue = try (
+    let refreshedAccessToken = AccessToken.Mock.sampleDPoP
+    let refreshedAuthentication = CredentialAuthentication(
+      accessToken: refreshedAccessToken.accessToken,
+      tokenType: refreshedAccessToken.tokenType,
+      refreshToken: refreshedAccessToken.refreshToken,
+      dpopBinding: mockDeferredCredential.authentication.dpopBinding)
+    credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperAuthenticationReturnValue = DeferredCredential(
+      id: mockDeferredCredential.id,
+      transactionId: mockDeferredCredential.transactionId,
+      createdAt: mockDeferredCredential.createdAt,
+      progressionState: mockDeferredCredential.progressionState,
+      endpoint: mockDeferredCredential.endpoint,
+      format: mockDeferredCredential.format,
+      issuerUrl: mockDeferredCredential.issuerUrl,
+      selectedConfigurationId: mockDeferredCredential.selectedConfigurationId,
+      issuerDisplays: mockDeferredCredential.issuerDisplays,
+      displays: mockDeferredCredential.displays,
+      pollingInterval: mockDeferredCredential.pollingInterval,
+      keyBindings: mockDeferredCredential.keyBindings,
+      rawCredentialData: mockDeferredCredential.rawCredentialData,
+      polledAt: mockDeferredCredential.polledAt,
+      authentication: refreshedAuthentication)
+
+    fetchDeferredCredentialService.callAsFunctionForReturnValue = (
       metadataResponse,
       .deferred(
         DeferredCredentialContext(
           transactionId: mockDeferredCredential.transactionId,
-          accessToken: mockDeferredCredential.authentication.accessToken,
+          accessToken: refreshedAccessToken,
           endpoint: mockDeferredCredential.endpoint,
           format: mockDeferredCredential.format,
-          interval: 1000,
-          refreshToken: mockDeferredCredential.authentication.refreshToken)))
+          interval: 1000)))
 
     try await useCase.execute(for: mockDeferredCredential)
 
     XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForCallsCount, 1)
     XCTAssertEqual(fetchVcMetadataUseCase.executeMetadataCallsCount, 1)
-    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperCallsCount, 1)
+    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperAuthenticationCallsCount, 1)
     XCTAssertEqual(credentialRepository.updateDeferredCredentialCallsCount, 1)
     XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.pollingInterval, 1000)
     XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.id, mockDeferredCredential.id)
     XCTAssertNotNil(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.polledAt)
-    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperReceivedArguments?.deferredCredentialContext.interval, 1000)
-    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperReceivedArguments?.metadataWrapper.rawData, metadataResponse.raw)
+    XCTAssertEqual(
+      credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.authentication.accessToken,
+      refreshedAccessToken.accessToken)
+    XCTAssertEqual(
+      credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.authentication.refreshToken,
+      refreshedAccessToken.refreshToken)
+    XCTAssertEqual(
+      credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.authentication.tokenType,
+      .dpop)
+    XCTAssertEqual(
+      credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.authentication.dpopBinding,
+      mockDeferredCredential.authentication.dpopBinding)
   }
 
   func testExecute_updateDeferredCredential_invalid() async throws {
-    fetchDeferredCredentialService.callAsFunctionForReturnValue = try (
+    fetchDeferredCredentialService.callAsFunctionForReturnValue = (
       metadataResponse,
       .deferred(
         DeferredCredentialContext(
           transactionId: "invalidTransactionId",
-          accessToken: mockDeferredCredential.authentication.accessToken,
+          accessToken: AccessToken.Mock.sample,
           endpoint: mockDeferredCredential.endpoint,
           format: mockDeferredCredential.format,
-          interval: 1000,
-          refreshToken: mockDeferredCredential.authentication.refreshToken)))
+          interval: 1000)))
 
     try await useCase.execute(for: mockDeferredCredential)
 
@@ -117,7 +152,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_batchCredential_mapsAndGeneratesCredential_success() async throws {
-    let secondCredential = try MockAnyCredential(payload: XCTUnwrap("second-credential".data(using: .utf8)))
+    let secondCredential: AnyCredential = VcSdJWS.Mock.noKeyBinding
     let firstKeyPair = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
     let secondKeyPair = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
     let firstKeyBinding = try makeCredentialKeyBinding(from: firstKeyPair)
@@ -138,28 +173,25 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsCallsCount, 1)
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsReceivedArguments?.credentials.count, 2)
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsReceivedArguments?.keyBindings.count, 2)
+    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
     XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCallsCount, 1)
     XCTAssertEqual(
       credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationReceivedArguments?.credentialsWithKeyBinding.count,
       2)
     XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 1)
-    XCTAssertEqual(credentialRepository.deleteCallsCount, 1)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsCallsCount, 1)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.deleteKeyPairs, false)
   }
 
-  func testExecute_batchCredentialWithoutKeyBindings_throwsInvalidBatch() async throws {
+  func testExecute_batchCredentialWithoutKeyBindings_updatesCredentialIssuanceFailed() async throws {
     fetchDeferredCredentialService.callAsFunctionForReturnValue = (metadataResponse, .batch(credentials: [anyCredential]))
 
-    do {
-      try await useCase.execute(for: mockDeferredCredential)
-      XCTFail("Expected invalidBatchCredentials")
-    } catch {
-      XCTAssertEqual(error as? RefreshDeferredCredentialUseCaseError, .invalidBatchCredentials)
-      XCTAssertFalse(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCalled)
-    }
+    try await useCase.execute(for: mockDeferredCredential)
+    XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.progressionState, .issuanceFailed)
   }
 
-  func testExecute_batchCredential_mapCredentialsToKeyBindingsThrows_throwsError() async throws {
-    let secondCredential = try MockAnyCredential(payload: XCTUnwrap("second-credential".data(using: .utf8)))
+  func testExecute_batchCredential_mapCredentialsToKeyBindingsThrows_updatesCredentialIssuanceFailed() async throws {
+    let secondCredential: AnyCredential = VcSdJWS.Mock.noKeyBinding
     var deferredCredential = mockDeferredCredential
     deferredCredential.keyBindings = try [makeCredentialKeyBinding(from: VaultKeyPair.Mock.ES256SavePermanently(id: UUID()))]
 
@@ -168,18 +200,13 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
       .batch(credentials: [anyCredential, secondCredential]))
     mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsThrowableError = TestingError.error
 
-    do {
-      try await useCase.execute(for: deferredCredential)
-      XCTFail("Expected a TestingError.error instead")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsCallsCount, 1)
-      XCTAssertFalse(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCalled)
-    }
+    try await useCase.execute(for: deferredCredential)
+
+    XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.progressionState, .issuanceFailed)
   }
 
-  func testExecute_batchCredential_mapCredentialsToKeyBindingsReturnsEmpty_throwsInvalidBatch() async throws {
-    let secondCredential = try MockAnyCredential(payload: XCTUnwrap("second-credential".data(using: .utf8)))
+  func testExecute_batchCredential_mapCredentialsToKeyBindingsReturnsEmpty_updatesCredentialIssuanceFailed() async throws {
+    let secondCredential: AnyCredential = VcSdJWS.Mock.noKeyBinding
     var deferredCredential = mockDeferredCredential
     deferredCredential.keyBindings = try [makeCredentialKeyBinding(from: VaultKeyPair.Mock.ES256SavePermanently(id: UUID()))]
 
@@ -188,40 +215,35 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
       .batch(credentials: [anyCredential, secondCredential]))
     mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsReturnValue = []
 
-    do {
-      try await useCase.execute(for: deferredCredential)
-      XCTFail("Expected invalidBatchCredentials")
-    } catch {
-      XCTAssertEqual(error as? RefreshDeferredCredentialUseCaseError, .invalidBatchCredentials)
-      XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.executeCredentialsKeyBindingsCallsCount, 1)
-      XCTAssertFalse(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCalled)
-    }
+    try await useCase.execute(for: deferredCredential)
+
+    XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.progressionState, .issuanceFailed)
   }
 
   func testExecute_cannotRefreshCredential_success() async throws {
     try await useCase.execute(for: .Mock.sampleIncorrectInterval)
 
-    XCTAssertFalse(fetchDeferredCredentialService.callAsFunctionForCalled)
-    XCTAssertFalse(fetchVcMetadataUseCase.executeAnyCredentialCalled)
-    XCTAssertFalse(fetchVcMetadataUseCase.executeMetadataCalled)
-    XCTAssertFalse(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCalled)
-    XCTAssertFalse(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperCalled)
-    XCTAssertFalse(trustInformationService.fetchForTypeVcSchemaIdCalled)
-    XCTAssertFalse(credentialRepository.createVerifiableCredentialCalled)
-    XCTAssertFalse(credentialRepository.deleteCalled)
+    XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForCallsCount, 0)
+    XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 0)
+    XCTAssertEqual(fetchVcMetadataUseCase.executeMetadataCallsCount, 0)
+    XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCallsCount, 0)
+    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperAuthenticationCallsCount, 0)
+    XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdCallsCount, 0)
+    XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 0)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsCallsCount, 0)
   }
 
   func testExecute_deferredCredentialIsInvalid_doesNotRefresh() async throws {
     try await useCase.execute(for: .Mock.sampleInvalid)
 
-    XCTAssertFalse(fetchDeferredCredentialService.callAsFunctionForCalled)
-    XCTAssertFalse(fetchVcMetadataUseCase.executeAnyCredentialCalled)
-    XCTAssertFalse(fetchVcMetadataUseCase.executeMetadataCalled)
-    XCTAssertFalse(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCalled)
-    XCTAssertFalse(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperCalled)
-    XCTAssertFalse(trustInformationService.fetchForTypeVcSchemaIdCalled)
-    XCTAssertFalse(credentialRepository.createVerifiableCredentialCalled)
-    XCTAssertFalse(credentialRepository.deleteCalled)
+    XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForCallsCount, 0)
+    XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 0)
+    XCTAssertEqual(fetchVcMetadataUseCase.executeMetadataCallsCount, 0)
+    XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationCallsCount, 0)
+    XCTAssertEqual(credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperAuthenticationCallsCount, 0)
+    XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdCallsCount, 0)
+    XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 0)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsCallsCount, 0)
   }
 
   func testExecute_deferredCredentialHasNoSeclectedConfigurationId_throws() async throws {
@@ -229,7 +251,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
       try await useCase.execute(for: .Mock.sampleWithoutSelectedConfigurationId)
     } catch {
       XCTAssertEqual(error as? RefreshDeferredCredentialUseCaseError, .invalidConfigurationId)
-      XCTAssertTrue(fetchDeferredCredentialService.callAsFunctionForCalled)
+      XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForCallsCount, 1)
     }
   }
 
@@ -250,17 +272,6 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_fetchDeferredCredentialServiceThrows_throws() async throws {
-    fetchDeferredCredentialService.callAsFunctionForThrowableError = TestingError.error
-
-    do {
-      try await useCase.execute(for: mockDeferredCredential)
-      XCTFail("Expected a TestingError.error instead")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
-  }
-
   func testExecute_fetchDeferredCredentialServiceThrowsInvalidCredential_throws() async throws {
     fetchDeferredCredentialService.callAsFunctionForThrowableError = OpenIdRepositoryError.invalidCredential
 
@@ -270,48 +281,13 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.progressionState, .invalid)
   }
 
-  func testExecute_fetchVcMetadataFailure_throwsError() async throws {
-    fetchVcMetadataUseCase.executeAnyCredentialThrowableError = TestingError.error
+  func testExecute_fetchDeferredCredentialServiceThrowsAnyException_setStateToIssuanceFailed() async throws {
+    fetchDeferredCredentialService.callAsFunctionForThrowableError = TestingError.error
 
-    do {
-      try await useCase.execute(for: mockDeferredCredential)
-      XCTFail("Expected a TestingError.error instead")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
-  }
+    try await useCase.execute(for: mockDeferredCredential)
 
-  func testExecute_credentialGeneratorFailure_throwsError() async throws {
-    credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationThrowableError = TestingError.error
-
-    do {
-      try await useCase.execute(for: mockDeferredCredential)
-      XCTFail("Expected a TestingError.error instead")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
-  }
-
-  func testExecute_createVerifiableCredentialRepositoryFailure_throwsError() async throws {
-    credentialRepository.createVerifiableCredentialThrowableError = TestingError.error
-
-    do {
-      try await useCase.execute(for: mockDeferredCredential)
-      XCTFail("Expected a TestingError.error instead")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
-  }
-
-  func testExecute_deleteDeferredCredentialRepositoryFailure_throwsError() async throws {
-    credentialRepository.deleteThrowableError = TestingError.error
-
-    do {
-      try await useCase.execute(for: mockDeferredCredential)
-      XCTFail("Expected a TestingError.error instead")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
+    XCTAssertEqual(credentialRepository.updateDeferredCredentialCallsCount, 1)
+    XCTAssertEqual(credentialRepository.updateDeferredCredentialReceivedDeferredCredential?.progressionState, .issuanceFailed)
   }
 
   func testExecute_checkAndUpdateCredentialStatusFailure() async throws {
@@ -337,6 +313,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   private var activityService: ActivityServiceProtocolSpy!
   private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
   private var mapCredentialsToKeyBindingsUseCase: MapCredentialsToKeyBindingsUseCaseProtocolSpy!
+  private var jwsSignatureValidatorMock: JWSSignatureValidatorMock<VcSdJwt>!
 
   private let mockDeferredCredential = DeferredCredential.Mock.sample
   private let updatedDeferredCredential = DeferredCredential(
@@ -350,7 +327,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   private let generatedCredential: VerifiableCredential = .Mock.sample
   private let repositoryCredential: VerifiableCredential = .Mock.sampleWithoutKeyBinding
   private let mockTrustInformation = TrustInformation.Mock.trustedIdentity
-  private let anyCredential: AnyCredential = MockAnyCredential()
+  private let anyCredential = VcSdJWS.Mock.sample
   private let metadataResponse = CredentialIssuerMetadataResponse(metadata: CredentialIssuerMetadata.Mock.sample, raw: CredentialIssuerMetadata.Mock.sampleData)
   private let updatedCredential: VerifiableCredential = .Mock.sampleDisplaysEmpty
 
@@ -363,6 +340,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     activityService = ActivityServiceProtocolSpy()
     checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
     mapCredentialsToKeyBindingsUseCase = MapCredentialsToKeyBindingsUseCaseProtocolSpy()
+    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
 
     Container.shared.fetchDeferredCredentialService.register { self.fetchDeferredCredentialService }
     Container.shared.fetchVcMetadataUseCase.register { self.fetchVcMetadataUseCase }
@@ -372,6 +350,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     Container.shared.activityService.register { self.activityService }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
     Container.shared.mapCredentialsToKeyBindingsUseCase.register { self.mapCredentialsToKeyBindingsUseCase }
+    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
   }
 
   private func createSuccessState() {
@@ -379,7 +358,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     fetchVcMetadataUseCase.executeAnyCredentialReturnValue = rawOcaBundleMock
     fetchVcMetadataUseCase.executeMetadataReturnValue = rawOcaBundleMock
     credentialGenerator.generateForRawOcaBundleMetadataWrapperTrustStatementAuthenticationReturnValue = generatedCredential
-    credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperReturnValue = updatedDeferredCredential
+    credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperAuthenticationReturnValue = mockDeferredCredential
     credentialRepository.createVerifiableCredentialReturnValue = repositoryCredential
     credentialRepository.updateDeferredCredentialReturnValue = updatedDeferredCredential
     trustInformationService.fetchForTypeVcSchemaIdReturnValue = mockTrustInformation

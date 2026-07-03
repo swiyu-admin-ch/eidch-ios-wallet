@@ -18,13 +18,11 @@ public struct ClientAttestationJWT: JWT, Codable, Equatable {
   public let type: String? = "oauth-client-attestation+jwt"
   public let expiredAt: Date?
   public let activatedAt: Date?
-  public let issuer: String?
   public let subject: String?
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case issuer = "iss"
     case activatedAt = "nbf"
     case expiredAt = "exp"
     case subject = "sub"
@@ -58,6 +56,10 @@ extension ClientAttestation {
 }
 
 extension ClientAttestationJWT {
+  public var issuer: String? {
+    nil
+  }
+
   public var audience: String? {
     nil
   }

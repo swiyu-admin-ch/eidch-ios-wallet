@@ -1,3 +1,4 @@
+import BITL10n
 import BITTheming
 import SwiftUI
 
@@ -36,6 +37,7 @@ struct SettingsItem: View {
         Link(destination: url, label: {
           content
         })
+        .accessibilityHint(L10n.tkGlobalExternalLinkHint)
       }
     case .button(_, let action),
          .navigation(let action),

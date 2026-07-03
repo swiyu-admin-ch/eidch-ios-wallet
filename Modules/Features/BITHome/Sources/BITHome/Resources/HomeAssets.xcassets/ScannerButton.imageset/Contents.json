@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Button_qr.svg",
+      "filename" : "qr_code_button.svg",
       "idiom" : "universal"
     },
     {
@@ -11,7 +11,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Button_qr_dark.svg",
+      "filename" : "qr_code_button_dark.svg",
       "idiom" : "universal"
     }
   ],

@@ -16,4 +16,6 @@ extension Notification.Name {
 
   public static let permissionAlertPresented = Notification.Name("permissionAlertPresented")
   public static let permissionAlertFinished = Notification.Name("permissionAlertFinished")
+  public static let windowDidUpdateFocus = Notification.Name("windowDidUpdateFocus")
+  public static let windowPressesBegan = Notification.Name("windowPressesBegan")
 }

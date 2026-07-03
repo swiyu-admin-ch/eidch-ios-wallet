@@ -4,7 +4,7 @@ import NavigatorUI
 
 public struct Checkpoints: NavigationCheckpoints {
 
-  public static var home: NavigationCheckpoint<HomeCheckpointsState> {
+  public static var home: NavigationCheckpoint<HomeCheckpointsState?> {
     checkpoint()
   }
 }
@@ -16,4 +16,12 @@ public enum HomeCheckpointsState: Hashable {
   case declineCredential
   case deletedCredential
   case startRequestCasePolling(caseId: String)
+}
+
+// MARK: - Navigator
+
+extension Navigator {
+  public func returnToHomeSafely(with state: HomeCheckpointsState? = nil) {
+    returnToCheckpointSafely(Checkpoints.home, value: state)
+  }
 }

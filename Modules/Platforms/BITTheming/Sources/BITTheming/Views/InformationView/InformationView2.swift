@@ -25,6 +25,16 @@ public struct InformationView2: View {
     self.actions = actions
   }
 
+  public init(
+    lottie: LottieView,
+    contents: [ContentType] = [],
+    actions: [ActionType] = [])
+
+  {
+    self.contents = [.hero(lottie: lottie)] + contents
+    self.actions = actions
+  }
+
   // MARK: Public
 
   public var body: some View {
@@ -91,6 +101,9 @@ extension InformationView2 {
     case image(Image)
     case view(AnyView)
     case card(AnyView)
+    case lottie(LottieView)
+
+    // MARK: Internal
 
     @ViewBuilder
     var body: some View {
@@ -103,6 +116,8 @@ extension InformationView2 {
         view
       case .card(let view):
         view
+      case .lottie(let lottie):
+        lottie
       }
     }
   }
@@ -136,6 +151,10 @@ extension InformationView2 {
       .hero(.card(AnyView(content())))
     }
 
+    public static func hero(lottie: LottieView) -> ContentType {
+      .hero(.lottie(lottie))
+    }
+
     public static func anyView(@ViewBuilder _ content: () -> some View) -> ContentType {
       .anyView(AnyView(content()))
     }
@@ -153,7 +172,7 @@ extension InformationView2 {
   // MARK: - ActionType
 
   public enum ActionType {
-    case primary(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
+    case primary(_ label: String, alt: String? = nil, hint: String? = nil, identifier: String? = nil, (Navigator) -> Void)
     case secondary(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
     case primaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), (Navigator) async -> Void)
     case secondaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), (Navigator) async -> Void)
@@ -198,7 +217,7 @@ struct ContentTypeView: View {
         .accessibilityLabel(alt ?? label)
         .accessibilityAddTraits(.isHeader)
         .accessibility(identifier: identifier ?? alt ?? label)
-        .accessibilityPriorityFocus()
+        .accessibilityPriorityFocus(delay: .seconds(0))
     case .body(let label, let alt, let identifier):
       Text(label)
         .font(.custom.body)
@@ -239,7 +258,8 @@ struct ContentTypeView: View {
       ButtonLinkText(label, { action(navigator) })
         .font(.custom.footnote)
         .foregroundColor(ThemingAssets.Component.Link.label.swiftUIColor)
-        .accessibilityLabel((alt ?? label) + ", " + L10n.tkGlobalExternalLinkAlt)
+        .accessibilityLabel(alt ?? label)
+        .accessibilityHint(L10n.tkGlobalExternalLinkHint)
         .accessibilityAddTraits(.isLink)
         .accessibility(identifier: identifier ?? alt ?? label)
     case .anyView(let view):
@@ -255,6 +275,10 @@ struct ContentTypeView: View {
           .accessibilityIdentifier(InformationView2.AccessibilityIdentifier.image.rawValue)
       case .card(let view):
         Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor)) { view }
+          .accessibilityHidden(true)
+          .accessibilityIdentifier(InformationView2.AccessibilityIdentifier.image.rawValue)
+      case .lottie(let lottie):
+        Card(background: .color(ThemingAssets.Background.secondary.swiftUIColor), lottieView: lottie)
           .accessibilityHidden(true)
           .accessibilityIdentifier(InformationView2.AccessibilityIdentifier.image.rawValue)
       }
@@ -283,8 +307,8 @@ struct ActionTypeView: View {
 
   var body: some View {
     switch actionType {
-    case .primary(let label, let alt, let identifier, let action):
-      button(label: label, alt: alt, identifier: identifier, action)
+    case .primary(let label, let alt, let hint, let identifier, let action):
+      button(label: label, alt: alt, hint: hint, identifier: identifier, action)
     case .secondary(let label, let alt, let identifier, let action):
       button(label: label, alt: alt, identifier: identifier, style: .secondary, action)
     case .primaryAsync(let label, let alt, let identifier, let actionOptions, let action):
@@ -301,8 +325,12 @@ struct ActionTypeView: View {
   private let actionType: InformationView2.ActionType
 
   private func button(
-    label: String, alt: String? = nil, identifier: String? = nil,
-    style: CustomButtonStyle = .primary, _ action: @escaping ((Navigator) -> Void))
+    label: String,
+    alt: String? = nil,
+    hint: String? = nil,
+    identifier: String? = nil,
+    style: CustomButtonStyle = .primary,
+    _ action: @escaping ((Navigator) -> Void))
     -> some View
   {
     Button(action: { action(navigator) }) {
@@ -314,6 +342,9 @@ struct ActionTypeView: View {
     .controlSize(.large)
     .accessibilityLabel(alt ?? label)
     .accessibility(identifier: identifier ?? alt ?? label)
+    .if(let: hint) { value, view in
+      view.accessibilityHint(value)
+    }
   }
 
   private func asyncButton(label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), style: CustomButtonStyle = .primary, _ action: @escaping ((Navigator) async -> Void)) -> some View {

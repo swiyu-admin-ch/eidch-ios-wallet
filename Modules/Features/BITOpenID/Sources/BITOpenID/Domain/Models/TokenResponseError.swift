@@ -10,6 +10,8 @@ struct TokenResponseError: Codable {
     case unauthorizedClient = "unauthorized_client"
     case unsupportedGrantType = "unsupported_grant_type"
     case invalidScope = "invalid_scope"
+    case invalidDPoPProof = "invalid_dpop_proof"
+    case useDPoPNonce = "use_dpop_nonce"
 
     // MARK: Lifecycle
 

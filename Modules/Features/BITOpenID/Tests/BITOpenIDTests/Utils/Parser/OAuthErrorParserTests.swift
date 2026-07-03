@@ -29,6 +29,17 @@ final class OAuthErrorParserTests: XCTestCase {
     XCTAssertEqual(parsed as? OpenIdRepositoryError, .invalidClient("invalid_client"))
   }
 
+  func testParse_useDPoPNonce_returnsUseDPoPNonceRepositoryErrorWithHeaderNonce() throws {
+    let error = try makeNetworkError(
+      statusCode: 400,
+      data: JSONEncoder().encode(["error": "use_dpop_nonce"]),
+      headers: ["DPoP-Nonce": "auth-server-nonce"])
+
+    let parsed = parser.parse(error)
+
+    XCTAssertEqual(parsed as? OpenIdRepositoryError, .useDPoPNonce("use_dpop_nonce", "auth-server-nonce"))
+  }
+
   func testParse_unknownOAuthError_returnsOriginalNetworkError() throws {
     let error = try makeNetworkError(statusCode: 400, data: JSONEncoder().encode(["error": "something_unknown"]))
 
@@ -55,9 +66,12 @@ final class OAuthErrorParserTests: XCTestCase {
     "unauthorized_client": .unauthorizedClient("unauthorized_client"),
     "unsupported_grant_type": .unsupportedGrantType("unsupported_grant_type"),
     "invalid_scope": .invalidScope("invalid_scope"),
+    "invalid_dpop_proof": .invalidDPoPProof("invalid_dpop_proof"),
   ]
 
-  private func makeNetworkError(statusCode: Int, data: Data) -> NetworkError {
-    NetworkError(response: Response(statusCode: statusCode, data: data))
+  private func makeNetworkError(statusCode: Int, data: Data, headers: [String: String]? = nil) throws -> NetworkError {
+    let url = try XCTUnwrap(URL(string: "https://example.com"))
+    let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: headers))
+    return NetworkError(response: Response(statusCode: statusCode, data: data, response: response))
   }
 }

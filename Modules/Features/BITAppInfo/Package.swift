@@ -23,6 +23,7 @@ let package = Package(
     .package(path: "../../Platforms/BITNetworking"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
+    .package(url: "https://github.com/devicekit/DeviceKit.git", exact: "5.7.0"),
   ],
   targets: [
     .target(
@@ -36,6 +37,7 @@ let package = Package(
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "BITAnalytics", package: "BITAnalytics"),
+        .product(name: "DeviceKit", package: "DeviceKit"),
       ],
       resources: [.process("Resources")],
       swiftSettings: [
@@ -47,6 +49,7 @@ let package = Package(
         "BITAppInfo",
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
+        .product(name: "DeviceKit", package: "DeviceKit"),
       ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),

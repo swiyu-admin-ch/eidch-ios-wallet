@@ -26,7 +26,6 @@ struct WelcomeIntroductionView: View {
       content: {
         DefaultInformationContentView(
           primary: L10n.tkOnboardingIntroductionStepSecurityPrimary,
-          primaryAlt: L10n.tkOnboardingIntroductionStepSecurityScreenAlt,
           secondary: L10n.tkOnboardingIntroductionStepSecuritySecondary)
       },
       footer: {

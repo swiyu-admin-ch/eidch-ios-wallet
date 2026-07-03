@@ -16,6 +16,7 @@ public class VerifiableCredentialEntity: Object {
   @Persisted public var validUntil: Date?
 
   @Persisted public var createdAt = Date()
+  @Persisted public var refreshedAt: Date?
 
   @Persisted public var bundleItems = List<BundleItemEntity>()
   @Persisted public var nextPresentableBundleItemId: UUID

@@ -23,4 +23,22 @@ final class AccessTokenTests: XCTestCase {
       XCTAssertEqual(error as? AccessTokenError, .accessTokenDecodingError)
     }
   }
+
+  func testDecode_dpopTokenType_success() throws {
+    let data = AccessToken.Mock.sampleDPoPData
+
+    let accessToken = try JSONDecoder().decode(AccessToken.self, from: data)
+
+    XCTAssertEqual(accessToken.tokenType, .dpop)
+    XCTAssertEqual(accessToken.accessToken, AccessToken.Mock.sampleDPoP.accessToken)
+    XCTAssertEqual(accessToken.refreshToken, AccessToken.Mock.sampleDPoP.refreshToken)
+  }
+
+  func testDecode_uppercaseTokenType_success() throws {
+    let data = AccessToken.Mock.sampleUppercaseDPoPData
+
+    let accessToken = try JSONDecoder().decode(AccessToken.self, from: data)
+
+    XCTAssertEqual(accessToken.tokenType, .dpop)
+  }
 }

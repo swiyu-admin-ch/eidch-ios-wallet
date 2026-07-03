@@ -7,9 +7,9 @@ public class VersionEnforcementModule {
 
   // MARK: Lifecycle
 
-  public init(versionEnforcement: VersionEnforcement, router: VersionEnforcementRouter = Container.shared.versionEnforcementRouter()) {
+  public init(versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate, router: VersionEnforcementRouter = Container.shared.versionEnforcementRouter()) {
     let router = router
-    let viewModel = Container.shared.versionEnforcementViewModel((router, versionEnforcement))
+    let viewModel = Container.shared.versionEnforcementViewModel((router, versionEnforcement, delegate))
     let viewController = UIHostingController(rootView: VersionEnforcementView(viewModel: viewModel))
     router.viewController = viewController
 

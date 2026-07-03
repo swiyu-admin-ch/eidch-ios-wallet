@@ -27,19 +27,20 @@ extension TypedJWT: Mockable {
     static let payload = TypedJWT(number: 42, boolean: true)
     static let data = JWS.sdJWSData(with: disclosures)
 
-    // MARK: Private
-
     /// ["salt_number", "key_number", 42]
     /// shlXUWLol2Dqa6w-hNHnIeuEgPdB25svAe5-BnPT1a4
-    private static let numberDisclosure = "WyJzYWx0X251bWJlciIsICJrZXlfbnVtYmVyIiwgNDJd"
+    static let numberDisclosure = "WyJzYWx0X251bWJlciIsICJrZXlfbnVtYmVyIiwgNDJd"
 
     /// ["salt_boolean", "key_boolean", true]
     /// 8E9yFMJMl7WfdxTKPSRWHOfpirT-udb3r3rLCw8f7qc
-    private static let booleanDisclosure = "WyJzYWx0X2Jvb2xlYW4iLCAia2V5X2Jvb2xlYW4iLCB0cnVlXQ"
+    static let booleanDisclosure = "WyJzYWx0X2Jvb2xlYW4iLCAia2V5X2Jvb2xlYW4iLCB0cnVlXQ"
 
     /// ["salt_null", "key_null", null]
     /// elB_obeWnlIBhWYILJTVZpbmTrAYwCTjPZa22VBgB70
-    private static let nullDisclosure = "WyJzYWx0X251bGwiLCAia2V5X251bGwiLCBudWxsXQ"
+    static let nullDisclosure = "WyJzYWx0X251bGwiLCAia2V5X251bGwiLCBudWxsXQ"
+
+    // MARK: Private
+
     private static let disclosures = [numberDisclosure, booleanDisclosure, nullDisclosure]
 
     /**

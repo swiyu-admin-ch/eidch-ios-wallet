@@ -1,12 +1,15 @@
 import BITL10n
 import BITTheming
+import Factory
 import SwiftUI
 
 struct RecordDocumentInformationView: View {
 
+  // MARK: Internal
+
   var body: some View {
     InformationView2(
-      image: Assets.scanDocumentPreview.swiftUIImage,
+      lottie: lottieView,
       contents: [
         .title(L10n.tkEidRequestRecordDocumentInformationPrimary, identifier: "primaryText"),
         .body(L10n.tkEidRequestRecordDocumentInformationSecondary, identifier: "secondaryText"),
@@ -24,6 +27,15 @@ struct RecordDocumentInformationView: View {
   }
 
   // MARK: Private
+
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+
+  private var lottieView: LottieView {
+    guard case .passport = context.identityType else {
+      return Lotties.recordDoc
+    }
+    return Lotties.recordPass
+  }
 
 }
 

@@ -3,6 +3,8 @@ import Foundation
 
 extension Container {
 
+  // MARK: Public
+
   public var getAppVersionUseCase: Factory<GetAppVersionUseCaseProtocol> {
     self { GetAppVersionUseCase() }
   }
@@ -29,19 +31,25 @@ extension Container {
 
   public var versionEnforcementUrl: Factory<URL> {
     self {
-      guard let url = URL(string: "https://wallet-ve.trust-infra.swiyu.admin.ch/v1/ios") else {
+      guard let url = URL(string: "https://versioning.trust-infra.swiyu.admin.ch/api/versioning?platform=ios&app_id=wallet") else {
         fatalError("No valid URL for version enforcement")
       }
       return url
     }
   }
 
-  public var versionEnforcementRepository: Factory<VersionEnforcementRepositoryProtocol> {
+  public var appIdentifierRepository: Factory<AppIdentifierRepositoryProtocol> {
+    self { AppIdentifierRepository() }
+  }
+
+  // MARK: Internal
+
+  var versionEnforcementRepository: Factory<VersionEnforcementRepositoryProtocol> {
     self { VersionEnforcementRepository() }
   }
 
-  public var appIdentifierRepository: Factory<AppIdentifierRepositoryProtocol> {
-    self { AppIdentifierRepository() }
+  var deviceInfoProvider: Factory<DeviceInfoProviderProtocol> {
+    self { DeviceInfoProvider() }
   }
 }
 
@@ -49,12 +57,12 @@ extension Container {
 extension Container {
 
   @MainActor
-  var versionEnforcementModule: ParameterFactory<VersionEnforcement, VersionEnforcementModule> {
-    self { @MainActor in VersionEnforcementModule(versionEnforcement: $0) }
+  var versionEnforcementModule: ParameterFactory<(VersionEnforcement, VersionEnforcementDelegate), VersionEnforcementModule> {
+    self { @MainActor in VersionEnforcementModule(versionEnforcement: $0, delegate: $1) }
   }
 
   @MainActor
-  var versionEnforcementViewModel: ParameterFactory<(VersionEnforcementRouterRoutes, VersionEnforcement), VersionEnforcementViewModel> {
-    self { @MainActor in VersionEnforcementViewModel(router: $0, versionEnforcement: $1) }
+  var versionEnforcementViewModel: ParameterFactory<(VersionEnforcementRouterRoutes, VersionEnforcement, VersionEnforcementDelegate), VersionEnforcementViewModel> {
+    self { @MainActor in VersionEnforcementViewModel(router: $0, versionEnforcement: $1, delegate: $2) }
   }
 }

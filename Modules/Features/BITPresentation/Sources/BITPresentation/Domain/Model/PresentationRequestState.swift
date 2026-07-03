@@ -1,6 +1,5 @@
 public enum PresentationRequestResultState: Equatable, Hashable {
-  case success
-  case invalidCredential
+  case dataTransmitted
   case deny
   case error
 }

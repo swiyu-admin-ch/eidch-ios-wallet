@@ -38,7 +38,13 @@ class NFCScanResultViewModel {
       let result = try fetchNFCScanResultUseCase.execute(for: caseId, packageResult: package)
 
       let entries: [ScanResultEntryType] = [
-        .image(key: L10n.tkEidRequestNfcScanResultPhotoKey, value: result.facePicture, accessibilityLabel: L10n.tkEidRequestNfcScanResultPhotoAlt),
+        .image(
+          ScanResultEntryImage(
+            key: L10n.tkEidRequestNfcScanResultPhotoKey,
+            value: result.facePicture,
+            side: .recto,
+            uiOrientation: .portrait,
+            accessibilityLabel: L10n.tkEidRequestNfcScanResultPhotoAlt)),
         .text(key: L10n.tkEidRequestNfcScanResultSurnameKey, value: result.surname),
         .text(key: L10n.tkEidRequestNfcScanResultGivenNamesKey, value: result.givenName),
         .text(key: L10n.tkEidRequestNfcScanResultExpirationDateKey, value: result.expirationDate),

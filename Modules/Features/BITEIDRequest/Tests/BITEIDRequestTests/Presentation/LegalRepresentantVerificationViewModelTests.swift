@@ -19,7 +19,7 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
   }
 
   func testStartVerification_success_validRouteCalled() async {
-    let context = PresentationRequestContext.Mock.vcSdJwtSampleWithoutInputDescriptors
+    let context = PresentationRequestContext.Mock.vcSdJwtSample
     getLegalRepresentantPresentationRequestContextUseCaseSpy.executeForReturnValue = context
 
     await viewModel.startVerification()
@@ -71,6 +71,7 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
 
     Container.shared.getLegalRepresentantPresentationRequestContextUseCase.register { @MainActor in self.getLegalRepresentantPresentationRequestContextUseCaseSpy }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCaseSpy }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
   }
 
 }

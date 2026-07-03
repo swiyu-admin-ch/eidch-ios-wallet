@@ -1,5 +1,6 @@
 import Factory
 import XCTest
+@testable import BITClaimsPathPointer
 @testable import BITCrypto
 @testable import BITJWT
 @testable import BITOpenID
@@ -30,46 +31,46 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   }
 
   func testGenerate_oneClaimRequested() throws {
-    let requestedClaims = [Self.mockKey1]
+    let requestedClaims = [Self.mockPath1]
 
-    let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
 
     asserts(vpToken, disclosureCount: 1, hasKeyBinding: true)
   }
 
   func testGenerate_severalClaimsRequested() throws {
-    let requestedClaims: [String] = [Self.mockKey1, Self.mockKey2]
+    let requestedClaims = [Self.mockPath1, Self.mockPath2]
 
-    let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
 
     asserts(vpToken, disclosureCount: 2, hasKeyBinding: true)
   }
 
   func testGenerate_noClaimsRequested() throws {
-    let requestedClaims = [String]()
+    let requestedClaims = [ClaimsPathPointer]()
 
-    let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
 
     asserts(vpToken, disclosureCount: 0, hasKeyBinding: true)
   }
 
   func testGenerate_noKeyBinding() throws {
     let mockCredentialNoKeyBinding = VcSdJWS.Mock.noKeyBinding
-    let requestedClaims = [Self.mockKey1]
+    let requestedClaims = [Self.mockPath1]
 
-    let vpToken = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredentialNoKeyBinding, keyPair: nil, fields: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredentialNoKeyBinding, keyPair: nil, paths: requestedClaims)
 
     asserts(vpToken, disclosureCount: 1, hasKeyBinding: false)
   }
 
   func testGenerate_missingClaim() throws {
-    let requestedClaims: [String] = [
-      Self.mockKey1,
-      "special-claim",
+    let requestedClaims: [ClaimsPathPointer] = [
+      Self.mockPath1,
+      [.string("special-claim")],
     ]
 
     do {
-      _ = try generator.generate(requestObject: .Mock.VcSdJwt.sample, credential: mockCredential, keyPair: mockKeyPair, fields: requestedClaims)
+      _ = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
     } catch {
       XCTAssertFalse(sha256HasherSpy.hashCalled)
     }
@@ -78,8 +79,8 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   // MARK: Private
 
   private static let mockJwtString = "jwtString"
-  private static let mockKey1 = "test_key_1"
-  private static let mockKey2 = "test_key_2"
+  private static let mockPath1: ClaimsPathPointer = [.string("test_key_1")]
+  private static let mockPath2: ClaimsPathPointer = [.string("test_key_2")]
   private static let mockJwtData = mockJwtString.data(using: .utf8)!
 
   private let mockKeyPair = VaultKeyPair.Mock.ES256

@@ -46,10 +46,21 @@ final class HomeViewModelTests: XCTestCase {
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
+    XCTAssertEqual(updatePushTokenUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(viewModel.state, .results)
     XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
-    XCTAssertEqual(viewModel.requestCases.map(\.id), mockEIDRequestCases.map(\.id))
+  }
+
+  func testOnAppear_updatePushTokenFails_silentFails() async {
+    updatePushTokenUseCase.callAsFunctionThrowableError = TestingError.error
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(updatePushTokenUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(viewModel.state, .results)
   }
 
   func testOnAppear_noCredential_stateEmpty() async {
@@ -176,7 +187,7 @@ final class HomeViewModelTests: XCTestCase {
       return XCTFail("Expected credential detail destination")
     }
 
-    XCTAssertEqual(input.credential.id, DeferredCredential.Mock.sample.id)
+    XCTAssertEqual(input.credentialId, DeferredCredential.Mock.sample.id)
   }
 
   func testOpenCredential_unacceptedCredential_routeToOffer() {
@@ -207,7 +218,7 @@ final class HomeViewModelTests: XCTestCase {
       return XCTFail("Expected credential detail destination")
     }
 
-    XCTAssertEqual(input.credential.id, VerifiableCredential.Mock.sample.id)
+    XCTAssertEqual(input.credentialId, VerifiableCredential.Mock.sample.id)
   }
 
   func testOpenBetaId() {
@@ -304,10 +315,13 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertNotNil(viewModel.toast)
   }
 
-  func testDidDeleteCredential_success() {
+  func testDidDeleteCredential_success() async {
     viewModel.didDeleteCredential()
 
+    await Task.yield()
+
     XCTAssertNotNil(viewModel.toast)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
   }
 
   func testDidTapWalletPairing() {
@@ -363,6 +377,7 @@ final class HomeViewModelTests: XCTestCase {
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
   private var isOTPEnabledUseCase: IsOTPEnabledUseCaseProtocolSpy!
   private var requestCasePollingManager: RequestCasePollingProtocolSpy!
+  private var updatePushTokenUseCase: UpdatePushTokenUseCaseProtocolSpy!
 
   private func registerMocks() {
     getCredentialListUseCase = GetCredentialListUseCaseProtocolSpy()
@@ -373,6 +388,7 @@ final class HomeViewModelTests: XCTestCase {
     isUserLoggedInUseCase = IsUserLoggedInUseCaseProtocolSpy()
     isOTPEnabledUseCase = IsOTPEnabledUseCaseProtocolSpy()
     requestCasePollingManager = RequestCasePollingProtocolSpy()
+    updatePushTokenUseCase = UpdatePushTokenUseCaseProtocolSpy()
 
     Container.shared.getEIDRequestCaseListUseCase.register { @MainActor in self.getEIDRequestCaseListUseCase }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
@@ -383,6 +399,7 @@ final class HomeViewModelTests: XCTestCase {
     Container.shared.requestCasePollingManager.register { @MainActor in self.requestCasePollingManager }
     Container.shared.isEIDRequestFeatureEnabled.register { @MainActor in true }
     Container.shared.isOTPEnabledUseCase.register { @MainActor in self.isOTPEnabledUseCase }
+    Container.shared.updatePushTokenUseCase.register { @MainActor in self.updatePushTokenUseCase }
   }
 
   private func createSuccesState() {

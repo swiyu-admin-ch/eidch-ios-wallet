@@ -4,6 +4,7 @@ import XCTest
 @testable import BITAppAuth
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITNetworking
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITTestingCore
@@ -28,7 +29,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     viewModel = PresentationRequestReviewViewModel(context: context)
 
     XCTAssertEqual(viewModel.state, .loading)
-    XCTAssertEqual(viewModel.isUnknownVerifierAlertShown, false)
+    XCTAssertNil(viewModel.alert)
   }
 
   @MainActor
@@ -84,7 +85,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
-  func testSubmit_Success_stateIsProcessingAndNavigatesToSuccess() async {
+  func testSubmit_Success_stateIsProcessingAndNavigatesToDataTransmitted() async {
     if case .result(let oldViewState) = viewModel.state {
 
       await viewModel.send(.submit(oldViewState, false))
@@ -95,7 +96,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
         XCTAssertEqual(viewState.isMessagePresented, false)
         switch viewModel.destination {
         case .resultState(let state, let destinationContext):
-          XCTAssertEqual(state, .success)
+          XCTAssertEqual(state, .dataTransmitted)
           XCTAssertEqual(destinationContext, context)
         default:
           XCTFail("Expected result state destination")
@@ -132,7 +133,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
         XCTAssertEqual(viewState.progress, progress)
         switch viewModel.destination {
         case .resultState(let state, let destinationContext):
-          XCTAssertEqual(state, .success)
+          XCTAssertEqual(state, .dataTransmitted)
           XCTAssertEqual(destinationContext, context)
         default:
           XCTFail("Expected result state destination")
@@ -151,7 +152,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
       await viewModel.send(.submit(oldViewState, false))
 
       if case .result = viewModel.state {
-        XCTAssertTrue(viewModel.isUnknownVerifierAlertShown)
+        XCTAssertEqual(viewModel.alert, .unknownVerifier)
         XCTAssertNil(viewModel.destination)
         XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
         XCTAssertFalse(declinePresentationUseCase.callAsFunctionContextCalled)
@@ -161,7 +162,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
-  func testSubmit_unknownTrustIdentityWithForce_navigatesToSuccess() async {
+  func testSubmit_unknownTrustIdentityWithForce_navigatesToDataTransmitted() async {
     viewModel = PresentationRequestReviewViewModel(context: .Mock.vcSdJwtWithUnknownIdentityTrust)
     viewModel.updateCredential(with: colorSchemeMock)
     if case .result(let oldViewState) = viewModel.state {
@@ -174,7 +175,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
         XCTAssertEqual(viewState.isMessagePresented, false)
         switch viewModel.destination {
         case .resultState(let state, let destinationContext):
-          XCTAssertEqual(state, .success)
+          XCTAssertEqual(state, .dataTransmitted)
           XCTAssertEqual(destinationContext, .Mock.vcSdJwtWithUnknownIdentityTrust)
         default:
           XCTFail("Expected result state destination")
@@ -185,15 +186,77 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
-  func testSubmit_useCaseThrowsError_navigatesToError() async {
+  func testSubmit_businessExpiredCredential_showsAlert() async {
+    selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
+      guard var bundleItem = credential.bundleItems.first else { throw CredentialError.noBundleItem }
+      bundleItem.status = .businessExpired
+      return bundleItem
+    }
+
     if case .result(let oldViewState) = viewModel.state {
-      submitPresentationUseCase.executeContextReturnValue = .fail(TestingError.error)
+      await viewModel.send(.submit(oldViewState, false))
+
+      if case .result = viewModel.state {
+        XCTAssertEqual(viewModel.alert, .businessExpiredCredential)
+        XCTAssertNil(viewModel.destination)
+        XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
+        return
+      }
+    }
+
+    XCTFail("Wrong state: \(viewModel.state)")
+  }
+
+  func testSubmit_businessExpiredCredentialWithForce_submits() async {
+    selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
+      guard var bundleItem = credential.bundleItems.first else { throw CredentialError.noBundleItem }
+      bundleItem.status = .businessExpired
+      return bundleItem
+    }
+
+    if case .result(let oldViewState) = viewModel.state {
+      await viewModel.send(.submit(oldViewState, true))
+
+      if case .processing = viewModel.state {
+        XCTAssertNil(viewModel.alert)
+        XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
+        return
+      }
+    }
+
+    XCTFail("Wrong state: \(viewModel.state)")
+  }
+
+  func testSubmit_suspendedCredential_showsAlert() async {
+    selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
+      guard var bundleItem = credential.bundleItems.first else { throw CredentialError.noBundleItem }
+      bundleItem.status = .suspended
+      return bundleItem
+    }
+
+    if case .result(let oldViewState) = viewModel.state {
+      await viewModel.send(.submit(oldViewState, false))
+
+      if case .result = viewModel.state {
+        XCTAssertEqual(viewModel.alert, .suspendedCredential)
+        XCTAssertNil(viewModel.destination)
+        XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
+        return
+      }
+    }
+
+    XCTFail("Wrong state: \(viewModel.state)")
+  }
+
+  func testSubmit_useCaseThrowsNetworkError_navigatesToDataTransmitted() async {
+    if case .result(let oldViewState) = viewModel.state {
+      submitPresentationUseCase.executeContextReturnValue = .fail(NetworkError(status: .badRequest))
 
       await viewModel.send(.submit(oldViewState, false))
 
       switch viewModel.destination {
       case .resultState(let state, let destinationContext):
-        XCTAssertEqual(state, .error)
+        XCTAssertEqual(state, .dataTransmitted)
         XCTAssertEqual(destinationContext, context)
       default:
         XCTFail("Expected result state destination")
@@ -203,43 +266,45 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     }
   }
 
-  func testSubmit_useCaseThrowsInvalidCredential_navigatesToInvalidCredential() async {
-    if case .result(let oldViewState) = viewModel.state {
-      submitPresentationUseCase.executeContextReturnValue = .fail(PresentationError.invalidCredential)
-
-      await viewModel.send(.submit(oldViewState, false))
-
-      switch viewModel.destination {
-      case .resultState(let state, let destinationContext):
-        XCTAssertEqual(state, .invalidCredential)
-        XCTAssertEqual(destinationContext, context)
-      default:
-        XCTFail("Expected result state destination")
-      }
-    } else {
+  func testSubmit_useCaseThrowsHostnameNotFound_navigatesToError() async {
+    guard case .result(let oldViewState) = viewModel.state else {
       XCTFail("Wrong state: \(viewModel.state)")
+      return
+    }
+
+    submitPresentationUseCase.executeContextReturnValue = .fail(NetworkError(status: .hostnameNotFound))
+
+    await viewModel.send(.submit(oldViewState, false))
+
+    switch viewModel.destination {
+    case .resultState(let state, let destinationContext):
+      XCTAssertEqual(state, .error)
+      XCTAssertEqual(destinationContext, context)
+    default:
+      XCTFail("Expected result state destination")
     }
   }
 
-  func testSubmit_useCaseThrowsVerifierError_navigatesToErrorView() async throws {
-    if case .result(let oldViewState) = viewModel.state {
-      submitPresentationUseCase.executeContextReturnValue = .fail(
-        PresentationError.submitPresentationError("invalid_credential", nil))
-
-      await viewModel.send(.submit(oldViewState, false))
-
-      switch viewModel.destination {
-      case .error(let dataset):
-        XCTAssertEqual(dataset, try XCTUnwrap(PresentationError.submitPresentationError("invalid_credential", nil).errorDataset))
-      default:
-        XCTFail("Expected error destination")
-      }
-    } else {
+  func testSubmit_useCaseThrowsTimeout_navigatesToError() async {
+    guard case .result(let oldViewState) = viewModel.state else {
       XCTFail("Wrong state: \(viewModel.state)")
+      return
+    }
+
+    submitPresentationUseCase.executeContextReturnValue = .fail(NetworkError(status: .timeout))
+
+    await viewModel.send(.submit(oldViewState, false))
+
+    switch viewModel.destination {
+    case .resultState(let state, let destinationContext):
+      XCTAssertEqual(state, .error)
+      XCTAssertEqual(destinationContext, context)
+    default:
+      XCTFail("Expected result state destination")
     }
   }
 
-  func testSubmitPresentation_useCaseThrowsUserNotLoggedIn_navigatesToErrorResult() async {
+  func testSubmitPresentation_useCaseThrowsUserNotLoggedIn_navigatesToError() async {
     if case .result(let oldViewState) = viewModel.state {
       submitPresentationUseCase.executeContextReturnValue = .fail(UserSessionError.notLoggedIn)
 
@@ -247,7 +312,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
       if case .result(let viewState) = viewModel.state {
         XCTAssertEqual(viewState, oldViewState)
-        XCTAssertFalse(viewModel.isUnknownVerifierAlertShown)
+        XCTAssertNil(viewModel.alert)
         XCTAssertFalse(declinePresentationUseCase.callAsFunctionContextCalled)
       } else {
         XCTFail("Wrong state: \(viewModel.state)")
@@ -301,12 +366,19 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
   private let context: PresentationRequestContext = .Mock.vcSdJwtWithIdentityTrust
   private var submitPresentationUseCase: SubmitPresentationUseCaseProtocolSpy!
   private var declinePresentationUseCase: DeclinePresentationUseCaseProtocolSpy!
+  private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocolSpy!
 
   private func registerMocks() {
     submitPresentationUseCase = SubmitPresentationUseCaseProtocolSpy()
     declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
+    selectCredentialBundleItemUseCase = SelectCredentialBundleItemUseCaseProtocolSpy()
+    selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
+      guard let first = credential.bundleItems.first else { throw CredentialError.noBundleItem }
+      return first
+    }
     Container.shared.submitPresentationUseCase.register { @MainActor in self.submitPresentationUseCase }
     Container.shared.declinePresentationUseCase.register { @MainActor in self.declinePresentationUseCase }
+    Container.shared.selectCredentialBundleItemUseCase.register { @MainActor in self.selectCredentialBundleItemUseCase }
 
     submitPresentationUseCase.executeContextReturnValue = .just(.success)
   }

@@ -99,6 +99,40 @@ final class SetupViewModelTests: XCTestCase {
   }
 
   @MainActor
+  func testFetchAttestations_attestationTimeout_displaysErrorView() async {
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError =
+      ValidateDeviceSecurityRequirementsUseCaseError.attestationTimeout
+    let startTime = Date()
+
+    await viewModel.fetchAttestations()
+
+    let elapsedTime = Date().timeIntervalSince(startTime)
+
+    guard case .error(let dataset) = viewModel.destination else {
+      return XCTFail("Expected attestation service error destination")
+    }
+    XCTAssertEqual(dataset, .Setup.attestationServiceError)
+    XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
+  }
+
+  @MainActor
+  func testFetchAttestations_attestationServiceDeactivated_displaysErrorView() async {
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError =
+      ValidateDeviceSecurityRequirementsUseCaseError.attestationServiceDeactivated
+    let startTime = Date()
+
+    await viewModel.fetchAttestations()
+
+    let elapsedTime = Date().timeIntervalSince(startTime)
+
+    guard case .error(let dataset) = viewModel.destination else {
+      return XCTFail("Expected attestation service error destination")
+    }
+    XCTAssertEqual(dataset, .Setup.attestationServiceError)
+    XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
+  }
+
+  @MainActor
   func testFetchAttestations_fastExecution_appliesMinimumDelay() async {
     let startTime = Date()
     await viewModel.fetchAttestations()

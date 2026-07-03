@@ -6,14 +6,14 @@ import Spyable
 
 @Spyable
 public protocol GetBuildNumberUseCaseProtocol {
-  func execute() throws -> BuildNumber
+  func callAsFunction() throws -> BuildNumber
 }
 
 // MARK: - GetBuildNumberUseCase
 
 struct GetBuildNumberUseCase: GetBuildNumberUseCaseProtocol {
 
-  func execute() throws -> BuildNumber {
+  func callAsFunction() throws -> BuildNumber {
     try BuildNumber(repository.getBuildNumber())
   }
 

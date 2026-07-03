@@ -18,18 +18,34 @@ final class RequestObjectEncryptionValidatorTests: XCTestCase {
 
   func testValidate_directPostJwt_success() throws {
     let jwk = JWK.Mock.build(alg: KeyManagementAlgorithm.ECDH_ES.rawValue)
-    let metadata = makeClientMetadata(
-      jwks: ClientMetadata.JWKs(keys: [jwk]),
-      encValuesSupported: [EncryptionAlgorithm.A128GCM.rawValue])
-    let requestObject = makeRequestObject(responseMode: .directPostJWT, clientMetadata: metadata)
 
-    XCTAssertNoThrow(try validator.validate(requestObject))
+    for algorithm in [EncryptionAlgorithm.A128GCM, EncryptionAlgorithm.A256GCM] {
+      let metadata = makeClientMetadata(
+        jwks: ClientMetadata.JWKs(keys: [jwk]),
+        encValuesSupported: [algorithm.rawValue])
+      let requestObject = makeRequestObject(responseMode: .directPostJWT, clientMetadata: metadata)
+
+      XCTAssertNoThrow(try validator.validate(requestObject))
+    }
   }
 
   func testValidate_directPost_success() throws {
     let requestObject = makeRequestObject(responseMode: .directPost, clientMetadata: nil)
 
     XCTAssertNoThrow(try validator.validate(requestObject))
+  }
+
+  func testValidate_encValuesSupported_success() throws {
+    let jwk = JWK.Mock.build(alg: KeyManagementAlgorithm.ECDH_ES.rawValue)
+
+    for algorithm in ["A128GCM", "A256GCM"] {
+      let metadata = makeClientMetadata(
+        jwks: ClientMetadata.JWKs(keys: [jwk]),
+        encValuesSupported: [algorithm])
+      let requestObject = makeRequestObject(responseMode: .directPostJWT, clientMetadata: metadata)
+
+      XCTAssertNoThrow(try validator.validate(requestObject))
+    }
   }
 
   func testValidate_missingClientMetadata_throwsMissingClientMetadata() throws {
@@ -102,7 +118,7 @@ final class RequestObjectEncryptionValidatorTests: XCTestCase {
   // MARK: Private
 
   private let mockResponseUri = URL(string: "https://example.com")!
-  private let presentationDefinition = RequestObject.Mock.VcSdJwt.sample.presentationDefinition!
+  private let dcqlQuery = RequestObjectJWS.Mock.sample.payload.dcqlQuery
 
   private var validator = RequestObjectEncryptionValidator()
 
@@ -128,13 +144,12 @@ final class RequestObjectEncryptionValidatorTests: XCTestCase {
     -> RequestObject
   {
     RequestObject(
-      queryType: .presentationDefinition(presentationDefinition),
+      dcqlQuery: dcqlQuery,
       nonce: "nonce",
       responseUri: mockResponseUri,
       clientMetadata: clientMetadata,
       responseType: "vp_token",
       clientId: "did:example:12345",
-      clientIdScheme: "did",
       responseMode: responseMode,
       transactionData: nil)
   }

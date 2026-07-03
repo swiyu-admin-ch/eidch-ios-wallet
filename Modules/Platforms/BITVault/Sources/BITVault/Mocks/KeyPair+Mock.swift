@@ -17,6 +17,11 @@ extension VaultKeyPair {
       algorithm: .eciesEncryptionStandardVariableIVX963SHA512AESGCM,
       options: .secureEnclave)
 
+    public static let ES256WithoutOptions = VaultKeyPair(
+      identifier: UUID().uuidString,
+      privateKey: createPrivateKey(size: 256),
+      algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
+
     public static func ES256SecureEnclavePermanently(id: UUID) -> VaultKeyPair {
       VaultKeyPair(
         identifier: id.uuidString,

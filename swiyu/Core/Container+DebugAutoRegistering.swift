@@ -42,7 +42,6 @@ extension Container: AutoRegistering {
     }
 
     if ProcessInfo().arguments.contains(Argument.disableDelays.rawValue) {
-      delayAfterAcceptingCredential.register { 0 }
       loadingDelay.register { 0 }
     }
 

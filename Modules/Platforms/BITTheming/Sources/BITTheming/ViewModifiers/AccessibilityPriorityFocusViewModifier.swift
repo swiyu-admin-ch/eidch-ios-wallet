@@ -18,11 +18,19 @@ struct AccessibilityPriorityFocusViewModifier: ViewModifier {
       .task {
         await setFocus()
       }
+      .onAppear {
+        observeSystemPermissionAlert()
+      }
+      .onDisappear {
+        cancelSystemPermissionAlertObservation()
+      }
   }
 
   // MARK: Private
 
   @AccessibilityFocusState private var isFocused: Bool
+  @State private var permissionAlertPresentedTask: Task<Void, Never>?
+  @State private var permissionAlertFinishedTask: Task<Void, Never>?
 
   private let delay: Duration
 
@@ -31,6 +39,24 @@ struct AccessibilityPriorityFocusViewModifier: ViewModifier {
     isFocused = false
     try? await Task.sleep(for: delay)
     isFocused = true
+  }
+
+  private func observeSystemPermissionAlert() {
+    permissionAlertPresentedTask = observationTask(for: .permissionAlertPresented, isFocused: false)
+    permissionAlertFinishedTask = observationTask(for: .permissionAlertFinished, isFocused: true)
+  }
+
+  private func cancelSystemPermissionAlertObservation() {
+    permissionAlertPresentedTask?.cancel()
+    permissionAlertFinishedTask?.cancel()
+  }
+
+  private func observationTask(for notificationName: Foundation.Notification.Name, isFocused: Bool) -> Task<Void, Never> {
+    Task {
+      for await _ in NotificationCenter.default.notifications(named: notificationName) {
+        self.isFocused = isFocused
+      }
+    }
   }
 }
 

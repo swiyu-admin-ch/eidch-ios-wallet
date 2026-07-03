@@ -39,15 +39,15 @@ extension FlatObjectArrayJWT: Mockable {
     static let oneDisclosedElementData = oneDisclosedElementJWS.sdJWSData(with: [disclosureElement2])
     static let fullyDisclosedData = fullyDisclosedJWS.sdJWSData(with: [disclosureElement1, disclosureElement2])
 
-    // MARK: Private
-
     /// ["test_salt_1", {"test_key_1":"test_value_1", "test_key_2":"test_value_2"}]
     /// 6KyeusuhLExIaIKOx2ejZE9776pTDf1cQjnraJfAV94
-    private static let disclosureElement1 = "WyJ0ZXN0X3NhbHRfMSIsIHsidGVzdF9rZXlfMSI6InRlc3RfdmFsdWVfMSIsICJ0ZXN0X2tleV8yIjoidGVzdF92YWx1ZV8yIn1d"
+    static let disclosureElement1 = "WyJ0ZXN0X3NhbHRfMSIsIHsidGVzdF9rZXlfMSI6InRlc3RfdmFsdWVfMSIsICJ0ZXN0X2tleV8yIjoidGVzdF92YWx1ZV8yIn1d"
 
     /// ["test_salt_2", {"test_key_1":"test_value_3", "test_key_2":"test_value_4"}]
     /// V4cLLcpCfh_E_dvB3bgSGJCVwwKYclks5CNtApcwZEg
-    private static let disclosureElement2 = "WyJ0ZXN0X3NhbHRfMiIsIHsidGVzdF9rZXlfMSI6InRlc3RfdmFsdWVfMyIsICJ0ZXN0X2tleV8yIjoidGVzdF92YWx1ZV80In1d"
+    static let disclosureElement2 = "WyJ0ZXN0X3NhbHRfMiIsIHsidGVzdF9rZXlfMSI6InRlc3RfdmFsdWVfMyIsICJ0ZXN0X2tleV8yIjoidGVzdF92YWx1ZV80In1d"
+
+    // MARK: Private
 
     /**
      {

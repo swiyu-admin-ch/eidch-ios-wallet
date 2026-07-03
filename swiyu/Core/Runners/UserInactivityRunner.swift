@@ -15,6 +15,7 @@ class UserInactivityRunner: ApplicationRunnerProtocol {
     observeAccessibilityFocus()
     observeApplicationLifecycle()
     observeSuspensionNotifications()
+    observeWindowActivity()
   }
 
   deinit {
@@ -108,6 +109,22 @@ class UserInactivityRunner: ApplicationRunnerProtocol {
       object: nil)
   }
 
+  private func observeWindowActivity() {
+    let names: [Notification.Name] = [
+      .windowDidUpdateFocus,
+      .windowPressesBegan,
+    ]
+
+    for name in names {
+      NotificationCenter.default
+        .addObserver(
+          self,
+          selector: #selector(handleWindowActivity),
+          name: name,
+          object: nil)
+    }
+  }
+
   @objc
   private func handleAccessibilityFocus() {
     guard !isSuspended else { return }
@@ -172,5 +189,11 @@ class UserInactivityRunner: ApplicationRunnerProtocol {
 
   private func onTimeout() {
     NotificationCenter.default.post(name: .userInactivityTimeout, object: nil)
+  }
+
+  @objc
+  private func handleWindowActivity() {
+    guard !isSuspended else { return }
+    resetInactivityTimer()
   }
 }

@@ -47,11 +47,11 @@ struct OCABundleService: OCABundleServiceProtocol {
   @Injected(\.ocaRepository) private var ocaRepository: OCARepositoryProtocol
 
   private func fetchRawOcaBundle(from url: URL, with ocaRendering: VcSdJwtOcaRendering) async throws -> RawOcaBundle {
-    guard let uriIntegrity = ocaRendering.uriIntegrity else {
-      throw OCABundleServiceError.invalidOCABundle
-    }
-
     let rawOcaBundle = try await ocaRepository.fetchOCABundle(from: url)
+
+    guard let uriIntegrity = ocaRendering.uriIntegrity else {
+      return rawOcaBundle
+    }
 
     guard try sriValidator.validate(rawOcaBundle, with: uriIntegrity) else {
       throw OCABundleServiceError.invalidOCABundle

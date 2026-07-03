@@ -1,15 +1,26 @@
-import XCTest
+import Testing
 @testable import BITCredentialShared
 @testable import BITOpenID
 
-final class CredentialDisplayTests: XCTestCase {
+struct CredentialDisplayTests {
 
-  func testResolveClaimTemplate_claimsPathPointerPlaceholder_resolvesClaim() {
-    let display = CredentialDisplay(locale: "en", summary: "Firstname: {{[\"info\",0]}}")
-    let claims = [CredentialClaim(path: [.string("info"), .index(0)], value: "Arthur")]
+  // MARK: Internal
 
-    let resolvedDisplay = display.resolveClaimTemplate(with: claims)
+  @Test
+  func resolvePathTemplate_oneStringPath_returnsResolvedClaim() {
+    let display = CredentialDisplay(locale: Self.localeMock, summary: "Test: {{[\"\(Self.attribute)\"]}}")
+    let clusters = [CredentialClaimCluster(claims: [claim])]
 
-    XCTAssertEqual(resolvedDisplay.summary, "Firstname: Arthur")
+    let result = display.resolvePathTemplate(with: clusters)
+
+    #expect(result.summary == "Test: \(Self.attributeResolved)")
   }
+
+  // MARK: Private
+
+  private static let localeMock = "locale"
+  private static let attribute = "attribute"
+  private static let attributeResolved = "attributeResolved"
+
+  private let claim = CredentialClaim(path: [.string(Self.attribute)], value: Self.attributeResolved)
 }

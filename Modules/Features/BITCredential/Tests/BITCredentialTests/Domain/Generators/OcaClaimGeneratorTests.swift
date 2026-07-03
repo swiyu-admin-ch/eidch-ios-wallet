@@ -1,6 +1,5 @@
 import Factory
 import XCTest
-@testable import BITAnyCredentialFormat
 @testable import BITClaimsPathPointer
 @testable import BITCore
 @testable import BITCredential
@@ -20,17 +19,17 @@ final class OcaClaimGeneratorTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
+    Container.shared.reset()
     registerMocks()
     success()
     generator = OcaClaimGenerator()
   }
 
   func testGenerate_attributeWithLabels_returnsClaimWithDisplays() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let labels = createLabels(for: ["en", "de"])
     let attribute = createAttribute(attributeType: .text, labels: labels)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     let expectedDisplays = labels.map { locale, name in
       CredentialClaimDisplay(locale: locale, name: name)
@@ -39,11 +38,10 @@ final class OcaClaimGeneratorTests: XCTestCase {
   }
 
   func testGenerate_textAttributeWithEntries_returnsClaimWithDisplays() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.entryCodeMock))
     let entryMapping = createEntryMapping(for: ["en", "de"], entryCode: Self.entryCodeMock)
     let attribute = createAttribute(attributeType: .text, entryMapping: entryMapping)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.entryCodeMock, attribute: attribute)
 
     let expectedDisplays = entryMapping.map { locale, entries in
       CredentialClaimDisplay(locale: locale, value: entries[Self.entryCodeMock])
@@ -52,11 +50,10 @@ final class OcaClaimGeneratorTests: XCTestCase {
   }
 
   func testGenerate_numericAttributeWithEntries_returnsClaimWithDisplays() throws {
-    let anyClaim = createAnyClaim(value: .int(1))
     let entryMapping = createEntryMapping(for: ["en", "de"], entryCode: "1")
     let attribute = createAttribute(attributeType: .numeric, entryMapping: entryMapping)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: "1", attribute: attribute)
 
     let expectedDisplays = entryMapping.map { locale, entries in
       CredentialClaimDisplay(locale: locale, value: entries["1"])
@@ -65,26 +62,24 @@ final class OcaClaimGeneratorTests: XCTestCase {
   }
 
   func testGenerate_booleanAttributeWithEntries_returnsClaimWithDisplays() throws {
-    let anyClaim = createAnyClaim(value: .bool(true))
     let entryMapping = createEntryMapping(for: ["en", "de"], entryCode: "true")
-    let attribute = createAttribute(attributeType: .numeric, entryMapping: entryMapping)
+    let attribute = createAttribute(attributeType: .boolean, entryMapping: entryMapping)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: "true", attribute: attribute)
 
     let expectedDisplays = entryMapping.map { locale, entries in
       CredentialClaimDisplay(locale: locale, value: entries["true"])
     }
-    assertClaim(claim, value: "true", valueType: .numeric, displays: expectedDisplays)
+    assertClaim(claim, value: "true", valueType: .boolean, displays: expectedDisplays)
   }
 
   func testGenerate_attributeWithLabelsAndEntries_returnsClaimWithDisplays() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.entryCodeMock))
     let locales = ["en", "de"]
     let labels = createLabels(for: locales)
     let entryMapping = createEntryMapping(for: locales)
     let attribute = createAttribute(attributeType: .text, entryMapping: entryMapping, labels: labels)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.entryCodeMock, attribute: attribute)
 
     let expectedDisplays = locales.map { locale in
       CredentialClaimDisplay(locale: locale, name: "\(labelMock)_\(locale)", value: "\(Self.entryCodeMock)_\(locale)")
@@ -93,12 +88,11 @@ final class OcaClaimGeneratorTests: XCTestCase {
   }
 
   func testGenerate_attributeWithSomeLabelsAndSomeEntries_returnsClaimWithDisplays() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.entryCodeMock))
     let labels = createLabels(for: ["en", "de"])
     let entryMapping = createEntryMapping(for: ["de", "fr"])
     let attribute = createAttribute(attributeType: .text, entryMapping: entryMapping, labels: labels)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.entryCodeMock, attribute: attribute)
 
     let expectedDisplays = [
       CredentialClaimDisplay(locale: "en", name: "\(labelMock)_en"),
@@ -109,200 +103,183 @@ final class OcaClaimGeneratorTests: XCTestCase {
   }
 
   func testGenerate_attributeWithoutLabelsNorEntries_returnsClaimWithoutDisplays() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .text)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, displays: [])
   }
 
   func testGenerate_attributeWithMismatchingEntries_returnsClaimWithoutDisplays() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let entryMapping = createEntryMapping(for: ["de"], entryCode: "other")
     let attribute = createAttribute(attributeType: .text, entryMapping: entryMapping)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, displays: [])
   }
 
   func testGenerate_attributeWithOrder_returnsClaimWithOrder() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .text, order: 1)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, order: 1)
   }
 
+  func testGenerate_withOrder_returnsClaimWithOrder() throws {
+    let attribute = createAttribute(attributeType: .text)
+
+    let claim = try generate(value: Self.valueMock, attribute: attribute, order: 3)
+
+    assertClaim(claim, order: 3)
+  }
+
+  func testGenerate_withPath_returnsClaimWithPath() throws {
+    let attribute = createAttribute(attributeType: .text)
+    let path: ClaimsPathPointer = [.string("object"), .string("array"), .index(1)]
+
+    let claim = try generate(path: path, value: Self.valueMock, attribute: attribute)
+
+    assertClaim(claim, path: path)
+  }
+
   func testGenerate_attributeWithIsSensitive_returnsClaimWithIsSensitive() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .text, isSensitive: true)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, isSensitive: true)
   }
 
   func testGenerate_dataURLPNG_returnsPNGClaim() throws {
-    let anyClaim = createAnyClaim(value: .string("data:image/png;base64,\(Self.mockPngBase64)"))
     let attribute = createAttribute(attributeType: .text, standard: .dataURLScheme)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: "data:image/png;base64,\(Self.mockPngBase64)", attribute: attribute)
 
     assertClaim(claim, value: Self.mockPngBase64, valueType: .imagePng)
-
     XCTAssertEqual(imageValidator.validateBase64ImageAgainstCallsCount, 1)
     XCTAssertEqual(imageValidator.validateBase64ImageAgainstReceivedArguments?.valueType, .imagePng)
     XCTAssertEqual(imageValidator.validateBase64ImageAgainstReceivedArguments?.base64Image, Self.mockPngBase64)
   }
 
   func testGenerate_dataURLPNGWithNilValue_returnsStringClaim() throws {
-    let anyClaim = createAnyClaim(value: nil)
     let attribute = createAttribute(attributeType: .text, standard: .dataURLScheme)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: nil, attribute: attribute)
 
     assertClaim(claim, value: nil, valueType: .string)
   }
 
   func testGenerate_binaryPNG_returnsPNGClaim() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .binary, encoding: .base64, format: "image/png")
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, value: Self.valueMock, valueType: .imagePng)
   }
 
   func testGenerate_binaryPNGWithNilValue_returnsPNGClaim() throws {
-    let anyClaim = createAnyClaim(value: nil)
     let attribute = createAttribute(attributeType: .binary, encoding: .base64, format: "image/png")
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: nil, attribute: attribute)
 
     assertClaim(claim, value: nil, valueType: .imagePng)
   }
 
   func testGenerate_dataURLJPG_returnsJPGClaim() throws {
-    let anyClaim = createAnyClaim(value: .string("data:image/jpeg;base64,\(Self.mockJpegBase64)"))
     let attribute = createAttribute(attributeType: .text, standard: .dataURLScheme)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: "data:image/jpeg;base64,\(Self.mockJpegBase64)", attribute: attribute)
 
     assertClaim(claim, value: Self.mockJpegBase64, valueType: .imageJpg)
-
     XCTAssertEqual(imageValidator.validateBase64ImageAgainstCallsCount, 1)
     XCTAssertEqual(imageValidator.validateBase64ImageAgainstReceivedArguments?.valueType, .imageJpg)
     XCTAssertEqual(imageValidator.validateBase64ImageAgainstReceivedArguments?.base64Image, Self.mockJpegBase64)
   }
 
   func testGenerate_binaryJPG_returnsJPGClaim() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .binary, encoding: .base64, format: "image/jpeg")
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, value: Self.valueMock, valueType: .imageJpg)
   }
 
   func testGenerate_dataURLUnknownFormat_returnsStringClaim() throws {
     let url = "data:unknown/unknown;base64,\(Self.valueMock)"
-    let anyClaim = createAnyClaim(value: .string(url))
     let attribute = createAttribute(attributeType: .text, standard: .dataURLScheme)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: url, attribute: attribute)
 
     assertClaim(claim, value: url, valueType: .string)
   }
 
   func testGenerate_binaryUnknownFormat_returnsStringClaim() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .binary, encoding: .base64, format: "unknown/unknown")
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, valueType: .string)
   }
 
   func testGenerate_binaryPNGWithoutEncoding_returnsStringClaim() throws {
-    let anyClaim = createAnyClaim(value: .string(Self.valueMock))
     let attribute = createAttribute(attributeType: .binary, encoding: nil, format: "image/png")
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: Self.valueMock, attribute: attribute)
 
     assertClaim(claim, valueType: .string)
   }
 
   func testGenerate_dateTime_returnsDateTimeClaim() throws {
-    let anyClaim = createAnyClaim(value: .string(dateTimeMock))
     let attribute = createAttribute(attributeType: .dateTime)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: dateTimeMock, attribute: attribute)
 
-    assertClaim(claim, value: Self.normalizedDateTimeMock, valueType: .dateTime, valueDisplayInfo: Self.dateFormatMock.rawValue, ocaAttribute: attribute)
+    assertClaim(
+      claim,
+      value: Self.normalizedDateTimeMock,
+      valueType: .dateTime,
+      valueDisplayInfo: Self.dateFormatMock.rawValue,
+      ocaAttribute: attribute)
   }
 
   func testGenerate_dateTimeWithNilValue_returnsDateTimeClaim() throws {
-    let anyClaim = createAnyClaim(value: nil)
     let attribute = createAttribute(attributeType: .dateTime)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: nil, attribute: attribute)
 
     assertClaim(claim, value: nil, valueType: .dateTime)
   }
 
   func testGenerate_dateTimeParserReturnsNil_returnsDateTimeClaimWithoutFormat() throws {
-    let anyClaim = createAnyClaim(value: .string(dateTimeMock))
     let attribute = createAttribute(attributeType: .dateTime)
     overlayAttributeDateParserSpy.parseWithReturnValue = nil
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: dateTimeMock, attribute: attribute)
 
     assertClaim(claim, value: dateTimeMock, valueType: .dateTime, valueDisplayInfo: nil, ocaAttribute: attribute)
   }
 
-  func testGenerate_arrayAttribute_returnsStringClaim() throws {
-    let anyClaim = createAnyClaim(value: .array([.string("value")]))
-    let attribute = createAttribute(attributeType: .array(type: .text))
-
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
-
-    try assertClaim(claim, value: XCTUnwrap(anyClaim.value?.rawValue), valueType: .string)
-  }
-
-  func testGenerate_referenceAttribute_returnsStringClaim() throws {
-    let anyClaim = createAnyClaim(value: .dictionary(["test": .string("value")]))
-    let attribute = createAttribute(attributeType: .reference(digest: "digest"))
-
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
-
-    try assertClaim(claim, value: XCTUnwrap(anyClaim.value?.rawValue), valueType: .string)
-  }
-
   func testGenerate_nilValue_returnsStringClaim() throws {
-    let anyClaim = createAnyClaim(value: nil)
     let attribute = createAttribute(attributeType: .text)
 
-    let claim = try generator.generate(for: anyClaim, ocaAttribute: attribute)
+    let claim = try generate(value: nil, attribute: attribute)
 
     assertClaim(claim, value: nil)
   }
 
   func testGenerate_imageValidatorThrowsError_throwsError() throws {
     imageValidator.validateBase64ImageAgainstThrowableError = TestingError.error
-
-    let anyClaim = createAnyClaim(value: .string("data:image/jpeg;base64,\(Self.mockJpegBase64)"))
     let attribute = createAttribute(attributeType: .text, standard: .dataURLScheme)
 
-    XCTAssertThrowsError(try generator.generate(for: anyClaim, ocaAttribute: attribute))
+    XCTAssertThrowsError(try generate(value: "data:image/jpeg;base64,\(Self.mockJpegBase64)", attribute: attribute))
   }
 
   // MARK: Private
 
   private static let normalizedDateTimeMock = "normalizedDateTime"
-  private static let dateFormatMock = DateParserResult.Format.date
+  private static let dateFormatMock = DateFormat.date
   private static let valueMock = "value"
   private static let mockPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII="
   private static let mockJpegBase64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUQEhIVFRUVFRUVFRUVFRUVFRUVFRUXFhUVFRUYHSggGBolHRUVITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGxAQGy0lICUtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAAEAAQMBIgACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAAAQID/8QAFhABAQEAAAAAAAAAAAAAAAAAAQAC/9oADAMBAAIQAxAAAAGzAP/EABcQAAMBAAAAAAAAAAAAAAAAAAABERL/2gAIAQEAAQUCk//EABYRAQEBAAAAAAAAAAAAAAAAAAEAEf/aAAgBAwEBPwGn/8QAFhEBAQEAAAAAAAAAAAAAAAAAABEh/9oACAECAQE/AYf/xAAaEAACAgMAAAAAAAAAAAAAAAABEQAhMUFR/9oACAEBAAY/Ah2yqf/EABoQAQACAwEAAAAAAAAAAAAAAAERIQAxQVH/2gAIAQEAAT8hUqS1kS0k8f/Z="
@@ -328,12 +305,14 @@ final class OcaClaimGeneratorTests: XCTestCase {
     overlayAttributeDateParserSpy.parseWithReturnValue = dateParserResultMock
   }
 
-  private func createAnyClaim(value: CodableValue?) -> AnyClaim {
-    let anyClaim = AnyClaimSpy()
-    anyClaim.key = "key"
-    anyClaim.path = [.string("key")]
-    anyClaim.value = value
-    return anyClaim
+  private func generate(
+    path: ClaimsPathPointer = pathMock,
+    value: String?,
+    attribute: OverlayBundleAttribute?,
+    order: Int? = nil) throws
+    -> CredentialClaim
+  {
+    try generator.generate(path: path, value: value, ocaAttribute: attribute, order: order)
   }
 
   private func createAttribute(
@@ -347,7 +326,17 @@ final class OcaClaimGeneratorTests: XCTestCase {
     standard: Standard? = nil)
     -> OverlayBundleAttribute
   {
-    OverlayBundleAttribute(captureBaseDigest: "captureBaseDigest", name: "name", attributeType: attributeType, characterEncoding: encoding, entryMapping: entryMapping, format: format, labels: labels, order: order, isSensitive: isSensitive, standard: standard)
+    OverlayBundleAttribute(
+      captureBaseDigest: "captureBaseDigest",
+      name: "name",
+      attributeType: attributeType,
+      characterEncoding: encoding,
+      entryMapping: entryMapping,
+      format: format,
+      labels: labels,
+      order: order,
+      isSensitive: isSensitive,
+      standard: standard)
   }
 
   private func createLabels(for locales: [BITOca.Locale]) -> [BITOca.Locale: String] {

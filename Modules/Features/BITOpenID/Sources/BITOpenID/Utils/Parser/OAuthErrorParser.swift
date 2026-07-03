@@ -13,6 +13,8 @@ protocol OAuthErrorParserProtocol {
 
 struct OAuthErrorParser: OAuthErrorParserProtocol {
 
+  // MARK: Internal
+
   func parse(_ error: Error) -> Error {
     guard let networkError = error as? NetworkError else {
       return error
@@ -42,10 +44,20 @@ struct OAuthErrorParser: OAuthErrorParserProtocol {
         return OpenIdRepositoryError.invalidGrant(response.error.rawValue)
       case .unsupportedGrantType:
         return OpenIdRepositoryError.unsupportedGrantType(response.error.rawValue)
+      case .invalidDPoPProof:
+        return OpenIdRepositoryError.invalidDPoPProof(response.error.rawValue)
+      case .useDPoPNonce:
+        let dpopNonce = networkError.response?.response?.value(forHTTPHeaderField: Self.dpopNonceHeaderField)
+        return OpenIdRepositoryError.useDPoPNonce(response.error.rawValue, dpopNonce)
       }
 
     default:
       return error
     }
   }
+
+  // MARK: Private
+
+  private static let dpopNonceHeaderField = "DPoP-Nonce"
+
 }

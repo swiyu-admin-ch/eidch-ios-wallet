@@ -37,66 +37,47 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
       XCTFail("Expected AuthorizationResponseBody")
       return
     }
-    if case .json(let payload, _) = submittedBody {
+    if case .json(let payload) = submittedBody {
       XCTAssertEqual(payload as? AuthorizationResponse, authorizationResponseMock)
     } else {
       XCTFail("Expected json authorization response body")
     }
 
-    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.compatibleCredential, mockCompatibleCredential)
-    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.requestObject, context.requestObject)
-    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, mockInputDescriptor)
-
+    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectReceivedArguments?.compatibleCredential, mockCompatibleCredential)
+    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectReceivedArguments?.requestObject, context.requestObject)
     XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationAccepted)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, mockCompatibleCredential.id)
     XCTAssertEqual(rotateNextPresentableBundleItemUseCaseProtocolSpy.callAsFunctionCallsCount, 1)
   }
 
-  func testSubmitPresentation_DcqlPreferredOverDif_UsesDcqlGenerator() async throws {
-    prepareSuccess()
-
-    let requestObject = RequestObject.Mock.VcSdJwt.sampleWithDcqlQuery
-    let contextWithDcql = PresentationRequestContext(
-      requestObject: requestObject,
-      compatibleCredentials: [mockCompatibleCredential])
-    contextWithDcql.selectedCredential = mockCompatibleCredential
-
-    try await useCase.execute(context: contextWithDcql).collectAndAssertEquals([.success])
-
-    XCTAssertTrue(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorCalled)
-    XCTAssertEqual(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReceivedArguments?.inputDescriptor, requestObject.firstInputDescriptor)
-  }
-
   func testSubmitPresentation_generatorThrowsInvalidPayload_ThrowsAuthorizationRequestError() async throws {
     prepareSuccess()
-    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorThrowableError = RequestObjectError.invalidPayload()
-    let contextWithoutInputDescriptors = PresentationRequestContext.Mock.vcSdJwtSampleWithoutInputDescriptors
-    contextWithoutInputDescriptors.selectedCredential = mockCompatibleCredential
+    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectThrowableError = RequestObjectError.invalidPayload()
 
-    await XCTAssertThrowsErrorAsync(try await useCase.execute(context: contextWithoutInputDescriptors).collect()) { error in
-      XCTAssertEqual(error as? PresentationError, .authorizationRequestError)
+    await XCTAssertThrowsErrorAsync(try await useCase.execute(context: context).collect()) { error in
+      XCTAssertEqual(error as? SubmitPresentationUseCaseError, .invalidAuthorizationRequest)
       XCTAssertFalse(repositorySpy.submitAuthorizationResponseToCalled)
     }
   }
 
-  func testSubmitPresentation_NoSelectedCredential_ThrowsAuthorizationRequestError() async throws {
+  func testSubmitPresentation_NoSelectedCredential_ThrowsMissingSelectedCredential() async throws {
     prepareSuccess()
     context.selectedCredential = nil
 
     await XCTAssertThrowsErrorAsync(try await useCase.execute(context: context).collect()) { error in
-      XCTAssertEqual(error as? PresentationError, .authorizationRequestError)
+      XCTAssertEqual(error as? SubmitPresentationUseCaseError, .missingSelectedCredential)
       XCTAssertFalse(repositorySpy.submitAuthorizationResponseToCalled)
     }
   }
 
   func testSubmitPresentation_AuthorizationResponseBodyGeneratorThrows_ThrowsException() async throws {
     prepareSuccess()
-    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorThrowableError = TestingError.error
+    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectThrowableError = TestingError.error
 
     await XCTAssertThrowsErrorAsync(try await useCase.execute(context: context).collect()) { error in
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertTrue(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorCalled)
+      XCTAssertTrue(authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectCalled)
     }
   }
 
@@ -115,18 +96,29 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertTrue(repositorySpy.submitAuthorizationResponseToCalled)
       XCTAssertEqual(rotateNextPresentableBundleItemUseCaseProtocolSpy.callAsFunctionCallsCount, 1)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 0)
     }
   }
 
-  func testSubmitPresentation_RepositoryThrowsPresentationResponseError_MapsSubmitPresentationError() async throws {
+  func testSubmitPresentation_RepositoryThrowsTimeout_DoesNotCreateActivity() async throws {
     prepareSuccess()
-    repositorySpy.submitAuthorizationResponseToThrowableError = PresentationRequestRepositoryError.presentationResponseError("invalid_request", nil)
+    repositorySpy.submitAuthorizationResponseToThrowableError = NetworkError(status: .timeout)
 
     await XCTAssertThrowsErrorAsync(try await useCase.execute(context: context).collect()) { error in
-      XCTAssertEqual(
-        error as? PresentationError,
-        .submitPresentationError("invalid_request", nil))
+      XCTAssertEqual((error as? NetworkError)?.status, .timeout)
       XCTAssertTrue(repositorySpy.submitAuthorizationResponseToCalled)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 0)
+    }
+  }
+
+  func testSubmitPresentation_RepositoryThrowsHttpNetworkError_DoesNotCreateActivity() async throws {
+    prepareSuccess()
+    repositorySpy.submitAuthorizationResponseToThrowableError = NetworkError(status: .badRequest)
+
+    await XCTAssertThrowsErrorAsync(try await useCase.execute(context: context).collect()) { error in
+      XCTAssertEqual((error as? NetworkError)?.status, .badRequest)
+      XCTAssertTrue(repositorySpy.submitAuthorizationResponseToCalled)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 0)
     }
   }
 
@@ -134,7 +126,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     prepareSuccess(mockProximityRepository: true)
 
     let proximityContext = PresentationRequestContext(
-      presentationRequest: context.presentationRequest,
+      requestObjectJWS: context.requestObjectJWS,
       compatibleCredentials: context.compatibleCredentials,
       transport: .proximity)
     proximityContext.selectedCredential = context.selectedCredential
@@ -152,7 +144,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     proximityRepository.submitPresentationRequestBodyReturnValue = .fail(TestingError.error)
 
     let proximityContext = PresentationRequestContext(
-      presentationRequest: context.presentationRequest,
+      requestObjectJWS: context.requestObjectJWS,
       compatibleCredentials: context.compatibleCredentials,
       transport: .proximity)
     proximityContext.selectedCredential = context.selectedCredential
@@ -168,10 +160,9 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   // MARK: Private
 
   private let context = PresentationRequestContext.Mock.vcSdJwtSample
-  private var authorizationResponseMock = AuthorizationResponse(vpToken: "vpToken", presentationSubmission: AuthorizationResponse.PresentationSubmission(id: "id", definitionId: "definitionId", descriptorMap: []))
+  private var authorizationResponseMock = AuthorizationResponse(vpToken: ["id": ["token"]])
 
   private var mockCompatibleCredential: CompatibleCredential!
-  private var mockInputDescriptor: InputDescriptor!
   private var useCase: SubmitPresentationUseCase!
   private var repositorySpy: PresentationRequestRepositoryProtocolSpy!
   private var authorizationResponseBodyGeneratorSpy: AuthorizationResponseBodyGeneratorProtocolSpy!
@@ -193,15 +184,11 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     Container.shared.rotateNextPresentableBundleItemUseCase.register { @MainActor in self.rotateNextPresentableBundleItemUseCaseProtocolSpy }
 
     mockCompatibleCredential = .Mock.BIT
-    guard let descriptor = context.requestObject.presentationDefinition?.inputDescriptors.first else {
-      fatalError("Missing input descriptor fixture")
-    }
-    mockInputDescriptor = descriptor
   }
 
   private func prepareSuccess(mockProximityRepository: Bool = false) {
     context.selectedCredential = mockCompatibleCredential
-    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectInputDescriptorReturnValue = .json(authorizationResponseMock, .dif)
+    authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectReturnValue = .json(authorizationResponseMock)
     if mockProximityRepository {
       proximityRepository.submitPresentationRequestBodyReturnValue = .just(.success)
     }

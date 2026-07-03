@@ -18,10 +18,9 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
     issuerDisplay = credential.issuerDisplays.findDisplayWithFallback()
     id = credential.id
     self.colorScheme = colorScheme
-    let claims = credential.clusters.flatMap(\.claims)
 
     let display = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
-    credentialDisplay = display?.resolveClaimTemplate(with: claims)
+    credentialDisplay = display?.resolvePathTemplate(with: credential.resolvedClusters)
   }
 
   // MARK: Public
@@ -33,10 +32,23 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   public let id: UUID
   public let colorScheme: String
 
+  public var isRefreshable: Bool {
+    credential.authentication.refreshToken != nil
+  }
+
+  public var isBatchPrivacyWarningVisible: Bool {
+    isBatchIssuanceEnabled &&
+      credential.batchData != nil &&
+      isRefreshable &&
+      !credential.bundleItems.isEmpty &&
+      credential.bundleItems.allSatisfy(\.presented)
+  }
+
   public var statusText: String {
     switch selectedCredentialStatus {
     case .valid: L10n.tkCredentialStatusValid
-    case .expired: L10n.tkCredentialStatusInvalid
+    case .businessExpired,
+         .expired: L10n.tkCredentialStatusInvalid
     case .notYetValid: getNotYetValidText()
     case .revoked: L10n.tkCredentialStatusRevoked
     case .suspended: L10n.tkCredentialStatusSuspended
@@ -48,7 +60,8 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   public var statusTextAlt: String {
     switch selectedCredentialStatus {
     case .valid: L10n.tkCredentialStatusValidAlt
-    case .expired: L10n.tkCredentialStatusInvalidAlt
+    case .businessExpired,
+         .expired: L10n.tkCredentialStatusInvalidAlt
     case .notYetValid: getNotYetValidAltText()
     case .revoked: L10n.tkCredentialStatusRevokedAlt
     case .suspended: L10n.tkCredentialStatusSuspendedAlt
@@ -60,7 +73,8 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   public var statusImage: Image {
     switch selectedCredentialStatus {
     case .valid: Assets.statusValid.swiftUIImage
-    case .expired: Assets.statusInvalid.swiftUIImage
+    case .businessExpired,
+         .expired: Assets.statusInvalid.swiftUIImage
     case .notYetValid: Assets.statusNotYetValid.swiftUIImage
     case .revoked: Assets.statusInvalid.swiftUIImage
     case .suspended: Assets.statusSuspended.swiftUIImage
@@ -83,7 +97,8 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
     case .unknown,
          .unsupported,
          .valid: ThemingAssets.Label.secondary.swiftUIColor
-    case .expired,
+    case .businessExpired,
+         .expired,
          .notYetValid,
          .revoked,
          .suspended: ThemingAssets.Brand.Core.swissRed.swiftUIColor
@@ -99,7 +114,8 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
     case .unknown,
          .unsupported,
          .valid: .outline
-    case .expired,
+    case .businessExpired,
+         .expired,
          .notYetValid,
          .revoked,
          .suspended: .error
@@ -110,6 +126,12 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
     .verifiable
   }
 
+  public var issuanceTypeTitle: String {
+    credential.bundleItems.count == 1
+      ? L10n.tkCredentialIssuanceTypeSingle
+      : L10n.tkCredentialIssuanceTypeBatch
+  }
+
   public func view() -> some View {
     VerifiableCredentialCellV1(self)
   }
@@ -118,6 +140,7 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
 
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
   @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
+  @Injected(\.isBatchIssuanceEnabled) private var isBatchIssuanceEnabled: Bool
 
   private var selectedCredentialStatus: CredentialStatus {
     (try? selectCredentialBundleItemUseCase(credential).status) ?? CredentialStatus.unknown

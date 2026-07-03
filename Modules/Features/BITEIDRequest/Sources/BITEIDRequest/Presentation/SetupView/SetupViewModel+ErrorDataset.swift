@@ -42,6 +42,18 @@ extension ErrorDataset {
       ])
     }
 
+    @MainActor
+    static var attestationServiceError: ErrorDataset {
+      ErrorDataset([
+        .title(L10n.tkEidRequestClientAttestationSecurityCheckErrorTitle),
+        .body(L10n.tkEidRequestClientAttestationSecurityCheckErrorBody),
+      ], actions: [
+        .primary(L10n.tkGlobalClose) { navigator in
+          navigator.dismiss()
+        },
+      ])
+    }
+
     // MARK: Private
 
     private static func openLink(_ link: String) {

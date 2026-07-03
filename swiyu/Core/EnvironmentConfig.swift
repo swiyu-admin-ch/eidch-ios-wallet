@@ -4,12 +4,11 @@ import Moya
 
 // MARK: - EnvironmentFeatureFlags
 
-struct EnvironmentFeatureFlags: Sendable {
+struct EnvironmentFeatureFlags {
   let isEIDRequestFeatureEnabled: Bool
-  let imageValidatorEnabled: Bool
   let isNonComplianceEnabled: Bool
+  let isDPoPEnabled: Bool
   let isProximityEnabled: Bool
-  let isPayloadEncryptionEnabled: Bool
   let isBatchIssuanceEnabled: Bool
   let isLottieViewerEnabled: Bool
   let isOTPSkipEnabled: Bool
@@ -18,29 +17,48 @@ struct EnvironmentFeatureFlags: Sendable {
 
 // MARK: - EnvironmentBaseURLs
 
-struct EnvironmentBaseURLs: Sendable {
+struct EnvironmentBaseURLs {
   let versionEnforcement: String
   let sidBase: String
   let avBase: String
   let nonComplianceBase: String
   let avSocket: String
   let otpServiceBase: String
+  let pushNotification: String
 }
 
 // MARK: - EnvironmentAttestationConfiguration
 
-struct EnvironmentAttestationConfiguration: Sendable {
+struct EnvironmentAttestationConfiguration {
   let serviceURL: String
   let trustedDids: [String]
 }
 
 // MARK: - EnvironmentTrustConfiguration
 
-struct EnvironmentTrustConfiguration: Sendable {
+struct EnvironmentTrustConfiguration {
   let registryMapping: [String: String]
-  let trustedDids: [String: [String]]
+  let trustedDidsV1: [String: [String]]
+  let trustedDids: [String: [String: [String]]]
   let trustEnvironmentDidRegex: Regex<Substring>
   let demoTrustEnvironmentDidRegex: Regex<Substring>
+}
+
+extension EnvironmentTrustConfiguration {
+  static func trustedDidsByTrustStatementType(
+    trustStatementIssuer: String,
+    publicTransparencyStatementIssuer: String)
+    -> [String: [String]]
+  {
+    [
+      "swiyu-verification-query-public-statement+jwt": [publicTransparencyStatementIssuer],
+      "swiyu-identity-trust-statement+jwt": [trustStatementIssuer],
+      "swiyu-protected-issuance-trust-list-statement+jwt": [trustStatementIssuer],
+      "swiyu-protected-issuance-authorization-trust-statement+jwt": [trustStatementIssuer],
+      "swiyu-non-compliance-trust-list-statement+jwt": [trustStatementIssuer],
+      "swiyu-protected-verification-authorization-trust-statement+jwt": [trustStatementIssuer],
+    ]
+  }
 }
 
 // MARK: - EnvironmentNetworkingConfiguration

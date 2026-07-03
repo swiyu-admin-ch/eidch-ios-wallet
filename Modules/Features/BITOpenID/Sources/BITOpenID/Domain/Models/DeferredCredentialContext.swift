@@ -1,20 +1,47 @@
 import Foundation
 
-public struct DeferredCredentialContext: Codable, Equatable {
+public struct DeferredCredentialContext: Equatable {
 
-  public init(transactionId: String, accessToken: String, endpoint: String, format: String, interval: Int, refreshToken: String? = nil) {
+  // MARK: Lifecycle
+
+  public init(
+    transactionId: String,
+    authorization: IssuanceAuthorization,
+    endpoint: String,
+    format: String,
+    interval: Int)
+  {
     self.transactionId = transactionId
-    self.accessToken = accessToken
+    self.authorization = authorization
     self.endpoint = endpoint
     self.format = format
     self.interval = interval
-    self.refreshToken = refreshToken
   }
 
+  public init(
+    transactionId: String,
+    accessToken: AccessToken,
+    endpoint: String,
+    format: String,
+    interval: Int)
+  {
+    self.init(
+      transactionId: transactionId,
+      authorization: IssuanceAuthorization(accessToken: accessToken),
+      endpoint: endpoint,
+      format: format,
+      interval: interval)
+  }
+
+  // MARK: Public
+
   public let transactionId: String
-  public let accessToken: String
-  public let refreshToken: String?
+  public let authorization: IssuanceAuthorization
   public let endpoint: String
   public let format: String
   public let interval: Int
+
+  public var accessToken: AccessToken {
+    authorization.accessToken
+  }
 }

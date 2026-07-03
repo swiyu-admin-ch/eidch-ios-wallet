@@ -34,5 +34,6 @@ struct NonComplianceExcessiveDataReportBody: Encodable {
   let type = NonComplianceCategory.excessiveDataRequest
   let description: String
   let email: String?
+  let language: String?
   let metadata: Metadata
 }

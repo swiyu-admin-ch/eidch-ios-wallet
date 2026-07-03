@@ -42,6 +42,7 @@ public struct LoginView: View {
   // MARK: Private
 
   @Environment(\.sizeCategory) private var sizeCategory
+  @Environment(\.verticalSizeClass) private var verticalSizeClass
   @FocusState private var inputFocused: Bool
   @State private var viewModel: LoginViewModel
 
@@ -195,14 +196,18 @@ extension LoginView {
 
   private func loginLandscapeLayout() -> some View {
     VStack(alignment: .leading) {
-      HStack {
+      HStack(spacing: .x6) {
         secureField()
 
-        loginButton()
+        VStack(spacing: .x4) {
+          loginButton()
+            .accessibilitySortPriority(500)
 
-        if viewModel.isBiometricAuthenticationAvailable {
-          biometricButton()
-            .buttonStyle(.secondary)
+          if viewModel.isBiometricAuthenticationAvailable {
+            biometricButton()
+              .buttonStyle(.secondary)
+              .accessibilitySortPriority(400)
+          }
         }
       }
 
@@ -213,16 +218,19 @@ extension LoginView {
 
   @ViewBuilder
   private func loginPortraitLayout() -> some View {
-    VStack {
-      if !sizeCategory.isAccessibilityCategory {
-        Assets.login.swiftUIImage
-          .accessibilityHidden(true)
+    if verticalSizeClass != .compact {
+      VStack {
+        if !sizeCategory.isAccessibilityCategory {
+          Assets.login.swiftUIImage
+            .accessibilityHidden(true)
+        }
+        Text(L10n.tkGlobalWelcomeback)
+          .font(.custom.title)
+        Text(L10n.tkLoginFacenotrecognised2Body)
       }
-      Text(L10n.tkGlobalWelcomeback)
-        .font(.custom.title)
-      Text(L10n.tkLoginFacenotrecognised2Body)
+      .accessibilityElement(children: .combine)
+      .accessibilitySortPriority(1000)
     }
-    .accessibilityElement(children: .combine)
 
     VStack(alignment: .leading) {
       secureField()
@@ -234,18 +242,16 @@ extension LoginView {
   }
 
   private func loginFooterView() -> some View {
-    HStack {
+    VStack(spacing: .x4) {
+      loginButton()
+
       if viewModel.isBiometricAuthenticationAvailable {
         biometricButton()
           .buttonStyle(.secondary)
       }
-
-      Spacer()
-
-      loginButton()
     }
     .padding(.horizontal, .x6)
-    .padding(.vertical, .x2)
+    .padding(.vertical, .x4)
   }
 
   private func secureField() -> some View {
@@ -275,6 +281,8 @@ extension LoginView {
     }
     .accessibilityPriorityFocus()
     .secureTextFieldAccessibilityIdentifier(AccessibilityIdentifier.pinField.rawValue)
+    .accessibilityLabel(L10n.tkLoginPasswordAlt)
+    .accessibilitySortPriority(800)
   }
 
   @ViewBuilder
@@ -297,12 +305,8 @@ extension LoginView {
         await viewModel.promptBiometricAuthentication()
       }
     } label: {
-      if viewModel.state == .locked {
-        Label(L10n.tkGlobalLoginfaceidPrimarybutton(viewModel.biometricType.text), systemImage: viewModel.biometricType.icon)
-      } else {
-        viewModel.biometricType.image
-          .padding(2)
-      }
+      Label(L10n.tkGlobalLoginfaceidPrimarybutton(viewModel.biometricType.text), systemImage: viewModel.biometricType.icon)
+        .frame(maxWidth: .infinity)
     }
     .controlSize(.large)
     .environment(\.colorScheme, .light)
@@ -313,6 +317,7 @@ extension LoginView {
       viewModel.pinCodeAuthentication()
     } label: {
       Text(L10n.tkGlobalLoginPrimarybutton)
+        .frame(maxWidth: .infinity)
     }
     .environment(\.colorScheme, .light)
     .buttonStyle(.primary)

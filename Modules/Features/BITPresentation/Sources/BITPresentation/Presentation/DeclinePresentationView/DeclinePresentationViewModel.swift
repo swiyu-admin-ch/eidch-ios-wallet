@@ -24,7 +24,7 @@ final class DeclinePresentationViewModel {
     do {
       try await declinePresentationUseCase(context: context)
       try? await Task.sleep(nanoseconds: declinePresentationRequestDelay)
-      navigator.returnToCheckpointSafely(Checkpoints.home)
+      navigator.returnToHomeSafely()
     } catch {
       navigator.pop()
     }

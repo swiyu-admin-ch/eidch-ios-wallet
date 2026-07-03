@@ -25,7 +25,8 @@ public struct CustomLink: View {
       .multilineTextAlignment(.leading)
       .foregroundStyle(ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor)
     }
-    .accessibilityLabel(accessibilityText)
+    .accessibilityLabel(label)
+    .accessibilityHint(L10n.tkGlobalExternalLinkHint)
     .accessibilityElement(children: .combine)
     .accessibilityRemoveTraits(.isLink)
     .accessibilityRemoveTraits(.isButton)
@@ -35,10 +36,6 @@ public struct CustomLink: View {
 
   private let label: String
   private let url: URL
-
-  private var accessibilityText: String {
-    label + ", " + L10n.tkGlobalExternalLinkAlt
-  }
 }
 
 // MARK: - ButtonLinkText
@@ -65,7 +62,7 @@ public struct ButtonLinkText: View {
     })
     .accessibilityElement(children: .combine)
     .accessibilityLabel(text)
-    .accessibilityHint(L10n.tkGlobalExternalLinkAlt)
+    .accessibilityHint(L10n.tkGlobalExternalLinkHint)
     .accessibilityRemoveTraits(.isButton)
     .accessibilityAddTraits(.isLink)
   }

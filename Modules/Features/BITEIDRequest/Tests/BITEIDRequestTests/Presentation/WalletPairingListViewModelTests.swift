@@ -604,6 +604,7 @@ class WalletPairingListViewModelTests: XCTestCase {
     Container.shared.walletPairingDateFormatter.register { @MainActor in self.walletPairingDateFormatter }
     Container.shared.walletPairingPollingManager.register { @MainActor in self.walletPairingPollingManager }
     Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
   }
 
   private func setupSuccessfulStatusResponse() {

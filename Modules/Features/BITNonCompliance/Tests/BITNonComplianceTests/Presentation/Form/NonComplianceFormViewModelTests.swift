@@ -1,187 +1,201 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import XCTest
+import Foundation
+import Testing
 @testable import BITActivity
 @testable import BITNonCompliance
 @testable import BITTestingCore
 
 @MainActor
-final class NonComplianceFormViewModelTests: XCTestCase {
+struct NonComplianceFormViewModelTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    let getActivityActorDisplayUseCaseSpy = GetActivityActorDisplayUseCaseProtocolSpy()
+    self.getActivityActorDisplayUseCaseSpy = getActivityActorDisplayUseCaseSpy
+
+    let nonComplianceFormValidatorSpy = NonComplianceFormValidatorProtocolSpy()
+
+    self.nonComplianceFormValidatorSpy = nonComplianceFormValidatorSpy
+
+    Container.shared.getActivityActorDisplayUseCase.register { getActivityActorDisplayUseCaseSpy }
+    Container.shared.nonComplianceFormValidator.register { nonComplianceFormValidatorSpy }
+
+    viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
+    getActivityActorDisplayUseCaseSpy.callAsFunctionReturnValue = actorDisplayMock
+    nonComplianceFormValidatorSpy.validateForReturnValue = .valid
+  }
 
   // MARK: Internal
 
-  override func setUp() async throws {
-    try await super.setUp()
-    Container.shared.reset()
-    registerMocks()
-    viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
-    await createSuccessState()
-  }
-
-  func testInit_stateIsLoadingAndFieldsEmpty() {
-    viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
-
+  @Test
+  func init_stateIsLoadingAndFieldsEmpty() {
     if case .loading = viewModel.state {
-      XCTAssertEqual(viewModel.description, "")
-      XCTAssertEqual(viewModel.email, "")
+      #expect(viewModel.description == "")
+      #expect(viewModel.email == "")
     }
   }
 
-  func testSetDescription_descriptionIsSetAndHasStateOfValidator() {
+  @Test
+  func setDescription_descriptionIsSetAndHasStateOfValidator() {
     nonComplianceFormValidatorSpy.validateForReturnValue = .tooShort
 
     viewModel.description = "test"
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(viewModel.description, "test")
-      XCTAssertEqual(resultState.validations[.description], .tooShort)
+      #expect(viewModel.description == "test")
+      #expect(resultState.validations[.description] == .tooShort)
     }
   }
 
-  func testSetEmail_emailIsSetAndHasStateOfValidator() {
+  @Test
+  func setEmail_emailIsSetAndHasStateOfValidator() {
     nonComplianceFormValidatorSpy.validateForReturnValue = .malformed
 
     viewModel.email = "test"
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(viewModel.email, "test")
-      XCTAssertEqual(resultState.validations[.email], .malformed)
+      #expect(viewModel.email == "test")
+      #expect(resultState.validations[.email] == .malformed)
     }
   }
 
-  func testIsSendingEnabled_allValid_returnsTrue() {
+  @Test
+  func isSendingEnabled_allValid_returnsTrue() {
     viewModel.description = "test"
     viewModel.email = "test"
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(resultState.isSendingEnabled, true)
+      #expect(resultState.isSendingEnabled == true)
     }
   }
 
-  func testIsSendingEnabled_oneInvalid_returnsFalse() {
+  @Test
+  func isSendingEnabled_oneInvalid_returnsFalse() {
     viewModel.description = "test"
     nonComplianceFormValidatorSpy.validateForReturnValue = .malformed
     viewModel.email = "test"
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(resultState.isSendingEnabled, false)
+      #expect(resultState.isSendingEnabled == false)
     }
   }
 
-  func testIsSendingEnabled_allInvalid_returnsFalse() {
+  @Test
+  func isSendingEnabled_allInvalid_returnsFalse() {
     nonComplianceFormValidatorSpy.validateForReturnValue = .malformed
     viewModel.description = "test"
     viewModel.email = "test"
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(resultState.isSendingEnabled, false)
+      #expect(resultState.isSendingEnabled == false)
     }
   }
 
-  func testFetchActorDisplay_loading_stateIsResult() async {
-    viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
-
+  @Test
+  func fetchActorDisplay_loading_stateIsResult() async {
     await viewModel.send(.fetchActorDisplay)
 
     if case .result(let resultState) = viewModel.state {
-      XCTAssertEqual(resultState.actorImage, actorDisplayMock.image)
-      XCTAssertEqual(resultState.actorName, actorDisplayMock.name)
-      XCTAssertEqual(resultState.isSendingEnabled, false)
-      XCTAssertTrue(resultState.validations.isEmpty)
+      #expect(resultState.actorImage == actorDisplayMock.image)
+      #expect(resultState.actorName == actorDisplayMock.name)
+      #expect(resultState.isSendingEnabled == false)
+      #expect(resultState.validations.isEmpty == true)
     } else {
-      XCTFail("Wrong state: \(viewModel.state)")
+      Issue.record("Wrong state: \(viewModel.state)")
     }
   }
 
-  func testFetchActorDisplay_loading_argumentsPassed() async {
-    XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 1)
-    viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
-
+  @Test
+  func fetchActorDisplay_loading_argumentsPassed() async {
     await viewModel.send(.fetchActorDisplay)
 
     if case .result = viewModel.state {
-      XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 2)
-      XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionReceivedActivityId, activityIdMock)
+      #expect(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount == 1)
+      #expect(getActivityActorDisplayUseCaseSpy.callAsFunctionReceivedActivityId == activityIdMock)
     } else {
-      XCTFail("Wrong state: \(viewModel.state)")
+      Issue.record("Wrong state: \(viewModel.state)")
     }
   }
 
-  func testFetchActorDisplay_result_doesNothing() async {
-    XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 1)
+  @Test
+  func fetchActorDisplay_result_doesNothing() async {
+    await viewModel.send(.fetchActorDisplay)
+    #expect(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount == 1)
+
     if case .result(let oldState) = viewModel.state {
       await viewModel.send(.fetchActorDisplay)
 
       if case .result(let resultState) = viewModel.state {
-        XCTAssertEqual(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount, 1)
-        XCTAssertEqual(resultState, oldState)
+        #expect(getActivityActorDisplayUseCaseSpy.callAsFunctionCallsCount == 1)
+        #expect(resultState == oldState)
         return
       }
     }
-    XCTFail("Wrong state: \(viewModel.state)")
+    Issue.record("Wrong state: \(viewModel.state)")
   }
 
-  func testFetchActorDisplay_getActivityThrows_errorState() async {
+  @Test
+  func fetchActorDisplay_getActivityThrows_errorState() async {
     getActivityActorDisplayUseCaseSpy.callAsFunctionThrowableError = TestingError.error
-    viewModel = NonComplianceFormViewModel(category: categoryMock, activityId: activityIdMock)
-
     await viewModel.send(.fetchActorDisplay)
 
     if case .error(let error) = viewModel.state {
-      XCTAssertEqual(error, .actorDisplayNotFound)
+      #expect(error == .actorDisplayNotFound)
     } else {
-      XCTFail("Expected NonComplianceFormViewModelError")
+      Issue.record("Expected NonComplianceFormViewModelError")
     }
   }
 
-  func testUpdateForm_description_setsDescriptionOnly() async {
+  @Test
+  func updateForm_description_setsDescriptionOnly() async {
     let update = NonComplianceFormCheckpointUpdate(field: .description, value: "test")
 
+    await viewModel.send(.fetchActorDisplay)
     await viewModel.send(.updateForm(update))
 
     if case .result = viewModel.state {
-      XCTAssertEqual(viewModel.description, "test")
-      XCTAssertEqual(viewModel.email, "")
+      #expect(viewModel.description == "test")
+      #expect(viewModel.email == "")
     } else {
-      XCTFail("Wrong state: \(viewModel.state)")
+      Issue.record("Wrong state: \(viewModel.state)")
     }
   }
 
-  func testUpdateForm_email_setsEmailOnly() async {
+  @Test
+  func updateForm_email_setsEmailOnly() async {
     let update = NonComplianceFormCheckpointUpdate(field: .email, value: "test")
 
+    await viewModel.send(.fetchActorDisplay)
     await viewModel.send(.updateForm(update))
 
     if case .result = viewModel.state {
-      XCTAssertEqual(viewModel.email, "test")
-      XCTAssertEqual(viewModel.description, "")
+      #expect(viewModel.email == "test")
+      #expect(viewModel.description == "")
     } else {
-      XCTFail("Wrong state: \(viewModel.state)")
+      Issue.record("Wrong state: \(viewModel.state)")
+    }
+  }
+
+  @Test
+  func sendReport_fails_routeToError() async {
+    await viewModel.send(.sendReport)
+
+    if case .error = viewModel.destination {
+      #expect(true)
+    } else {
+      Issue.record("Wrong state: \(viewModel.state)")
     }
   }
 
   // MARK: Private
 
-  private var viewModel: NonComplianceFormViewModel!
   private let activityIdMock = UUID()
   private let credentialIdMock = UUID()
-  private let categoryMock = NonComplianceCategory.excessiveDataRequest
   private let actorDisplayMock = ActivityActorDisplay.Mock.default
+  private let categoryMock = NonComplianceCategory.excessiveDataRequest
 
-  private var getActivityActorDisplayUseCaseSpy: GetActivityActorDisplayUseCaseProtocolSpy!
-  private var nonComplianceFormValidatorSpy: NonComplianceFormValidatorProtocolSpy!
-
-  private func registerMocks() {
-    getActivityActorDisplayUseCaseSpy = GetActivityActorDisplayUseCaseProtocolSpy()
-    nonComplianceFormValidatorSpy = NonComplianceFormValidatorProtocolSpy()
-
-    Container.shared.getActivityActorDisplayUseCase.register { @MainActor in self.getActivityActorDisplayUseCaseSpy }
-    Container.shared.nonComplianceFormValidator.register { @MainActor in self.nonComplianceFormValidatorSpy }
-  }
-
-  private func createSuccessState() async {
-    getActivityActorDisplayUseCaseSpy.callAsFunctionReturnValue = actorDisplayMock
-    nonComplianceFormValidatorSpy.validateForReturnValue = .valid
-    await viewModel.send(.fetchActorDisplay)
-  }
+  private var viewModel: NonComplianceFormViewModel
+  private var nonComplianceFormValidatorSpy: NonComplianceFormValidatorProtocolSpy
+  private var getActivityActorDisplayUseCaseSpy: GetActivityActorDisplayUseCaseProtocolSpy
 }

@@ -28,12 +28,12 @@ final class TrustStatementValidatorTests: XCTestCase {
   func testValidate_valid_argumentsPassed() async {
     _ = await validator.validate(trustStatementMock, for: subjectMock)
 
-    XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferCallsCount, 1)
-    XCTAssertEqual(jwsValidatorMock.validateIssuerDidActivationBufferReceivedJws?.rawJWS, trustStatementMock.rawJWS)
+    XCTAssertEqual(jwsValidatorMock.validateActivationBufferCallsCount, 1)
+    XCTAssertEqual(jwsValidatorMock.validateActivationBufferReceivedJws?.rawJWS, trustStatementMock.rawJWS)
 
     XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerCallsCount, 1)
     XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.anyStatus.type, trustStatementMock.payload.statusList.type)
-    XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.issuer, trustStatementMock.payload.issuer)
+    XCTAssertEqual(tokenStatusListValidatorSpy.validateIssuerReceivedArguments?.issuer, issuerMock)
   }
 
   func testValidate_wrongSubject_returnsFalse() async {
@@ -53,7 +53,7 @@ final class TrustStatementValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsValidatorReturnsFalse_returnsFalse() async {
-    jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
+    jwsValidatorMock.validateThrowableError = TestingError.error
 
     let result = await validator.validate(trustStatementMock, for: subjectMock)
 
@@ -61,7 +61,7 @@ final class TrustStatementValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsValidatorError_returnsFalse() async {
-    jwsValidatorMock.validateIssuerDidActivationBufferThrowableError = TestingError.error
+    jwsValidatorMock.validateThrowableError = TestingError.error
 
     let result = await validator.validate(trustStatementMock, for: subjectMock)
 
@@ -82,21 +82,26 @@ final class TrustStatementValidatorTests: XCTestCase {
 
   private let trustStatementMock = IdentityTrustStatementJWT.Mock.validSample
   private let subjectMock = "subject"
+  private let issuerMock = "did"
 
   private var jwsValidatorMock: JWSValidatorMock<IdentityTrustStatementJWT>!
+  private var didResolverSpy: DidResolverHelperProtocolSpy!
   private var tokenStatusListValidatorSpy: AnyStatusCheckValidatorProtocolSpy!
 
   private var validator: TrustStatementValidator!
 
   private func registerMocks() {
     jwsValidatorMock = JWSValidatorMock()
+    didResolverSpy = DidResolverHelperProtocolSpy()
     tokenStatusListValidatorSpy = AnyStatusCheckValidatorProtocolSpy()
 
     Container.shared.jwsValidator.register { self.jwsValidatorMock }
+    Container.shared.didResolverHelper.register { self.didResolverSpy }
     Container.shared.tokenStatusListValidator.register { self.tokenStatusListValidatorSpy }
   }
 
   private func createSuccessState() {
     tokenStatusListValidatorSpy.validateIssuerReturnValue = .valid
+    didResolverSpy.getDidFromReturnValue = issuerMock
   }
 }

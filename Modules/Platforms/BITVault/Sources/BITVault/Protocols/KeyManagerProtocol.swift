@@ -14,7 +14,8 @@ public protocol KeyManagerProtocol {
 
 extension KeyManagerProtocol {
 
-  public func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm) throws -> VaultKeyPair {
-    try getKeyPair(withIdentifier: identifier, algorithm: algorithm, query: nil)
+  public func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query? = nil, options: VaultOptions? = nil) throws -> VaultKeyPair {
+    let keyPair = try getKeyPair(withIdentifier: identifier, algorithm: algorithm, query: query)
+    return VaultKeyPair(identifier: keyPair.identifier, privateKey: keyPair.privateKey, algorithm: keyPair.algorithm, options: options)
   }
 }

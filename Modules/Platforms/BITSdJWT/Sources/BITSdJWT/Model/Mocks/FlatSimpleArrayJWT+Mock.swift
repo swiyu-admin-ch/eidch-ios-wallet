@@ -37,19 +37,19 @@ extension FlatSimpleArrayJWT: Mockable {
     static let arrayOnlyData = arrayOnlyJWS.sdJWSData(with: [disclosureElement1, disclosureElement2])
     static let arrayWithDecoysData = arrayOnlyJWS.sdJWSData(with: [disclosureElement1])
 
-    // MARK: Private
-
     /// ["test_salt_1", "test_key_1", "test_value_1"]
     /// YRLf606clwt4-hjyGze49ySFi6VCmwb9n5hwb4VUJSY
-    private static let disclosure1 = "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIiwgInRlc3RfdmFsdWVfMSJd"
+    static let disclosure1 = "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIiwgInRlc3RfdmFsdWVfMSJd"
 
     /// ["test_salt", "test_array_value_1"]
     /// bgUmES59QYf9VR8IbgJy3LpbXWMrwEaoblSFS3poqEg
-    private static let disclosureElement1 = "WyJ0ZXN0X3NhbHQiLCAidGVzdF9hcnJheV92YWx1ZV8xIl0"
+    static let disclosureElement1 = "WyJ0ZXN0X3NhbHQiLCAidGVzdF9hcnJheV92YWx1ZV8xIl0"
 
     /// ["test_salt", "test_array_value_2"]
     /// HWWQ_E69DRWp7FhCHyQdS01ushRMA9GXJpzh5DosDHU
-    private static let disclosureElement2 = "WyJ0ZXN0X3NhbHQiLCAidGVzdF9hcnJheV92YWx1ZV8yIl0"
+    static let disclosureElement2 = "WyJ0ZXN0X3NhbHQiLCAidGVzdF9hcnJheV92YWx1ZV8yIl0"
+
+    // MARK: Private
 
     /**
       {

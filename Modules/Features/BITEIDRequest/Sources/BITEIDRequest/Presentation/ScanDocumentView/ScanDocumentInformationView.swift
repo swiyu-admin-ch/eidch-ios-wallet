@@ -1,5 +1,6 @@
 import BITL10n
 import BITTheming
+import Factory
 import SwiftUI
 
 // MARK: - NFCHelpView
@@ -16,7 +17,7 @@ struct ScanDocumentInformationView: View {
 
   var body: some View {
     InformationView2(
-      image: Assets.scanDocumentPreview.swiftUIImage,
+      lottie: lottie,
       contents: [
         .title(L10n.tkEidRequestScanDocumentInformationPrimary, identifier: "primaryText"),
         .body(L10n.tkEidRequestScanDocumentInformationSecondary, identifier: "secondaryText"),
@@ -37,7 +38,16 @@ struct ScanDocumentInformationView: View {
 
   @Environment(\.navigator) private var navigator
 
+  @ObservationIgnored @Injected(\.eidRequestContext) private var context
+
   private var isBackEnabled: Bool
+
+  private var lottie: LottieView {
+    guard case .passport = context.identityType else {
+      return Lotties.scanDocFront
+    }
+    return Lotties.scanDocPass1
+  }
 
 }
 

@@ -22,3 +22,22 @@ public struct LabelOverlay1x0: LabelOverlay {
     case categoryLabels = "category_labels"
   }
 }
+
+// MARK: - LabelOverlay1x1
+
+public struct LabelOverlay1x1: LabelOverlay {
+  public let type = OverlaySpecType.label1_1
+  public let captureBaseDigest: String
+  public let language: String
+  public var attributeLabels: [AttributeKey: String]
+  public let attributeCategories: [String]?
+  public let categoryLabels: [String: String]?
+
+  enum CodingKeys: String, CodingKey {
+    case captureBaseDigest = "capture_base"
+    case language
+    case attributeLabels = "attribute_labels"
+    case attributeCategories = "attribute_categories"
+    case categoryLabels = "category_labels"
+  }
+}

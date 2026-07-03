@@ -1,5 +1,8 @@
+import BITClaimsPathPointer
+import BITCore
 import BITJWT
 import BITOpenID
+import BITSwiyuSharedKMP
 import Factory
 import Foundation
 import Spyable
@@ -34,6 +37,7 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
   // MARK: Private
 
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
+  @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
 
   private func buildExcessiveDataReportBody(from report: NonComplianceReport) throws -> NonComplianceExcessiveDataReportBody {
     guard let excessiveDataReport = report as? NonComplianceExcessiveDataReport else {
@@ -54,6 +58,7 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
     return NonComplianceExcessiveDataReportBody(
       description: excessiveDataReport.description,
       email: excessiveDataReport.email,
+      language: preferredUserLanguageCodes.first,
       metadata: metadata)
   }
 
@@ -70,16 +75,58 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
   }
 
   private func getPresentationRequestFields(from requestObject: RequestObject) -> [NonComplianceExcessiveDataReportBody.Field] {
-    guard let presentationDefinition = requestObject.presentationDefinition else {
+    guard let credentials = requestObject.dcqlQuery?.credentials else {
       return []
     }
 
-    return presentationDefinition.inputDescriptors
-      .flatMap(\.constraints.fields)
-      .flatMap { field in
-        field.path.map { path in
-          NonComplianceExcessiveDataReportBody.Field(name: path, constraint: field.filter?.const)
+    return credentials.flatMap { credential in
+      var fields = [
+        NonComplianceExcessiveDataReportBody.Field(
+          name: "vct",
+          constraint: getVctConstraint(from: credential.meta)),
+      ]
+
+      let claimFields = credential.claims?.map { claim in
+        NonComplianceExcessiveDataReportBody.Field(
+          name: ClaimsPathPointer(heidiPath: claim.path).stringValue,
+          constraint: getConstraint(from: claim.values))
+      } ?? []
+
+      fields.append(contentsOf: claimFields)
+      return fields
+    }
+  }
+
+  private func getVctConstraint(from meta: Heidi_dcqlMeta?) -> String? {
+    guard let meta = meta as? Heidi_dcqlMeta.SdjwtVc else { return nil }
+
+    return meta.vctValues.joined(separator: ", ")
+  }
+
+  private func getConstraint(from values: [Heidi_utilValue]?) -> String? {
+    values?
+      .map { value in
+        let type = BITSwiyuSharedKMP.onEnum(of: value)
+        if case .string = type {
+          return "\"\(value.jsonString())\""
         }
+        return value.jsonString()
       }
+      .joined(separator: ", ")
+  }
+}
+
+extension ClaimsPathPointer {
+  init(heidiPath: [Heidi_credentialsPointerPart]) {
+    self = heidiPath.map { pathPart in
+      switch BITSwiyuSharedKMP.onEnum(of: pathPart) {
+      case .string(let value):
+        .string(value.v1)
+      case .index(let value):
+        .index(Int(value.v1))
+      case .null:
+        .null
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ include:
   - .config/Projects/swiyu/dependencies.yml
   - .config/Projects/swiyu/entitlements.yml
   - .config/Projects/swiyu/app.yml
+  - .config/Projects/swiyu/notification-extension.yml
   - .config/Projects/swiyu/tests.yml
 
   - .config/Projects/debugger/dependencies.yml

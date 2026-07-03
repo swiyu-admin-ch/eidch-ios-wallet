@@ -19,7 +19,7 @@ extension ErrorDataset {
     case .critical:
       criticalDataset(contents, closeAction)
     case .error:
-      errorDataset(contents)
+      errorDataset(contents, retryAction)
     case .warning:
       warningDataset(contents, retryAction)
     }
@@ -47,11 +47,11 @@ extension ErrorDataset {
     ])
   }
 
-  private static func errorDataset(_ contents: [InformationView2.ContentType]) -> ErrorDataset {
+  private static func errorDataset(_ contents: [InformationView2.ContentType], _ action: ((Navigator) -> Void)? = nil) -> ErrorDataset {
     ErrorDataset(contents, actions: [
       .primary(L10n.tkErrorGenericButtonPrimary, { navigator in
         Task { @MainActor in
-          navigator.returnToCheckpointSafely(EIDRequestCheckpoints.start)
+          action?(navigator)
         }
       }),
     ])

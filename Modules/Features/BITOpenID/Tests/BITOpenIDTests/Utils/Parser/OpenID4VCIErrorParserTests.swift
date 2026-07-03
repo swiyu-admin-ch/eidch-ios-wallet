@@ -11,7 +11,7 @@ final class OpenID4VCIErrorParserTests: XCTestCase {
 
   // MARK: Internal
 
-  func testParse_unauthorized_returnsExpiredAccessToken() throws {
+  func testParse_unauthorized_returnsInvalidToken() throws {
     let error = try makeNetworkError(statusCode: 401, data: JSONEncoder().encode([
       "error": "INVALID_TOKEN",
       "error_description": "Access token expired",
@@ -20,6 +20,23 @@ final class OpenID4VCIErrorParserTests: XCTestCase {
     let parsed = parser.parse(error)
 
     XCTAssertEqual(parsed as? OpenIdRepositoryError, .expiredAccessToken)
+  }
+
+  func testParse_unauthorizedUseDPoPNonce_returnsUseDPoPNonceWithHeaderNonce() throws {
+    let error = try makeNetworkError(
+      statusCode: 401,
+      data: JSONEncoder().encode([
+        "error": "INVALID_TOKEN",
+        "error_description": "Use fresh DPoP nonce",
+      ]),
+      headers: [
+        "WWW-Authenticate": "DPoP error=\"use_dpop_nonce\"",
+        "DPoP-Nonce": "resource-server-nonce",
+      ])
+
+    let parsed = parser.parse(error)
+
+    XCTAssertEqual(parsed as? OpenIdRepositoryError, .useDPoPNonce("use_dpop_nonce", "resource-server-nonce"))
   }
 
   func testParse_requestDenied_returnsInvalidCredential() throws {
@@ -51,9 +68,12 @@ final class OpenID4VCIErrorParserTests: XCTestCase {
     "unknown_credential_configuration": .unknownCredentialConfiguration("unknown_credential_configuration"),
     "unknown_credential_identifier": .unknownCredentialIdentifier("unknown_credential_identifier"),
     "invalid_transaction_id": .invalidTransactionId("invalid_transaction_id"),
+    "insufficient_scope": .insufficientScope("insufficient_scope"),
   ]
 
-  private func makeNetworkError(statusCode: Int, data: Data) -> NetworkError {
-    NetworkError(response: Response(statusCode: statusCode, data: data))
+  private func makeNetworkError(statusCode: Int, data: Data, headers: [String: String]? = nil) throws -> NetworkError {
+    let url = try XCTUnwrap(URL(string: "https://example.com"))
+    let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: headers))
+    return NetworkError(response: Response(statusCode: statusCode, data: data, response: response))
   }
 }

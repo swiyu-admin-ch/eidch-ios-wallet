@@ -59,29 +59,22 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
 
   private func makeContext(from parJwt: String) async throws -> PresentationRequestContext {
-    let requestObject = try decodeRequestObject(from: parJwt)
-    let compatibleCredentials = try await getCompatibleCredentialsUseCase.execute(using: requestObject)
+    let requestObject = try decodeJWS(from: parJwt)
+    let compatibleCredentials = try await getCompatibleCredentialsUseCase.execute(using: requestObject.payload)
 
     return PresentationRequestContext(
-      presentationRequest: .plain(requestObject),
+      requestObjectJWS: requestObject,
       compatibleCredentials: compatibleCredentials,
       transport: .proximity)
   }
 
-  private func decodeRequestObject(from parJwt: String) throws -> RequestObject {
+  private func decodeJWS(from parJwt: String) throws -> RequestObjectJWS {
     let data = Data(parJwt.utf8)
 
-    var jwsError: Error?
     do {
-      let jws = try jwsDecoder.decode(RequestObjectJWT.self, from: data)
-      return jws.payload
+      return try jwsDecoder.decode(RequestObjectJWT.self, from: data)
     } catch {
-      jwsError = error
-    }
-    do {
-      return try JSONDecoder().decode(RequestObject.self, from: data)
-    } catch {
-      throw RequestObjectError.invalidPayload(jwsError ?? error)
+      throw RequestObjectError.invalidPayload(error)
     }
   }
 

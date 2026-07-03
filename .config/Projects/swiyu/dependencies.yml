@@ -28,6 +28,7 @@ targetTemplates:
       - package: BITOpenID
       - package: BITAnyCredentialFormat
       - package: BITEIDRequest
+      - package: BITPushNotification
       - package: BITOca
       - package: BITAppAttestation
       - package: BITJsonCanonicalizer
@@ -37,3 +38,5 @@ targetTemplates:
       - package: BITNonCompliance
       - package: BITClaimsPathPointer
       - package: BITL10n
+      - target: swiyu-notification-extension
+        embed: true

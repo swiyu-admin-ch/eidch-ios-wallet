@@ -35,7 +35,6 @@ let package = Package(
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/hmlongco/Navigator", exact: "2.0.2"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.33"),
   ],
   targets: [
     .target(
@@ -56,7 +55,6 @@ let package = Package(
         .product(name: "BITLocalAuthentication", package: "BITLocalAuthentication"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
-        .product(name: "Sextant", package: "Sextant"),
         .product(name: "BITAnyCredentialFormat", package: "BITAnyCredentialFormat"),
         .product(name: "BITSwiyuSharedKMP", package: "BITSwiyuSharedKMP"),
         .product(name: "BITOpenID", package: "BITOpenID"),

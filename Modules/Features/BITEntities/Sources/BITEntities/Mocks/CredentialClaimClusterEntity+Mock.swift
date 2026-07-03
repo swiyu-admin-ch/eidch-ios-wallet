@@ -7,13 +7,16 @@ extension CredentialClaimClusterEntity: Mockable {
   public struct Mock {
     public static func create(
       id: UUID = UUID(),
+      path: String = "[]",
       claims: [CredentialClaimEntity] = [],
       childClusters: [CredentialClaimClusterEntity] = [],
+      displays: [CredentialClaimClusterDisplayEntity] = [],
       createParent: Bool = true) throws
       -> CredentialClaimClusterEntity
     {
       let entity = CredentialClaimClusterEntity()
       entity.id = id
+      entity.path = path
 
       let claimList = List<CredentialClaimEntity>()
       claimList.append(objectsIn: claims)
@@ -22,6 +25,10 @@ extension CredentialClaimClusterEntity: Mockable {
       let childClusterList = List<CredentialClaimClusterEntity>()
       childClusterList.append(objectsIn: childClusters)
       entity.childClusters = childClusterList
+
+      let displayList = List<CredentialClaimClusterDisplayEntity>()
+      displayList.append(objectsIn: displays)
+      entity.displays = displayList
 
       try Realm.save(entity)
       if createParent {

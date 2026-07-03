@@ -71,7 +71,7 @@ struct ScanResultView: View {
   private func credentialSections(credential: any CredentialProtocol, trustInformation: TrustInformation?) -> some View {
     if let verifiableCredential = credential as? VerifiableCredential {
       ClaimLanguageSection(
-        locales: CredentialLocalizationSupport.availableClaimLocales(for: verifiableCredential.clusters),
+        locales: CredentialLocalizationSupport.availableClaimLocales(for: verifiableCredential.resolvedClusters),
         selectedLanguage: $selectedClaimLanguage)
 
       Section("Credential UI") {
@@ -86,7 +86,7 @@ struct ScanResultView: View {
 
       Section("Claims") {
         DisclosureGroup(isExpanded: $isClaimsExpanded) {
-          compactClaimList(CredentialLocalizationSupport.localizedClusters(verifiableCredential.clusters, selectedLanguage: selectedClaimLanguage))
+          compactClaimList(CredentialLocalizationSupport.localizedClusters(verifiableCredential.resolvedClusters, selectedLanguage: selectedClaimLanguage))
         } label: {
           Text("Show claims")
         }

@@ -20,6 +20,10 @@ class RecordDocumentViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+
+    Container.shared.reset()
+
     avBeam = AVBeamProtocolSpy()
     updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
     saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
@@ -33,6 +37,7 @@ class RecordDocumentViewModelTests: XCTestCase {
     Container.shared.recordDocumentTimeout.register { 10.0 }
     Container.shared.avBeamAppID.register { @MainActor in self.appId }
     Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     success()
   }
@@ -46,7 +51,7 @@ class RecordDocumentViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.scanningState, .recto)
     XCTAssertFalse(viewModel.isNotificationPresented)
     XCTAssertNil(viewModel.notification)
-    XCTAssertEqual(viewModel.buttonState, .initial)
+    XCTAssertEqual(viewModel.recordingState, .initial)
     XCTAssertNotNil(avBeam.messageDelegate)
     XCTAssertNotNil(avBeam.recordDocumentDelegate)
   }
@@ -129,7 +134,7 @@ class RecordDocumentViewModelTests: XCTestCase {
 
     XCTAssertTrue(avBeam.startCameraCalled)
     XCTAssertEqual(viewModel.state, .camera)
-    XCTAssertEqual(viewModel.buttonState, .initial)
+    XCTAssertEqual(viewModel.recordingState, .initial)
   }
 
   // MARK: - Record Tests
@@ -152,7 +157,7 @@ class RecordDocumentViewModelTests: XCTestCase {
     viewModel.stopRecordDocument()
 
     XCTAssertEqual(viewModel.scanningState, .recto)
-    XCTAssertEqual(viewModel.buttonState, .initial)
+    XCTAssertEqual(viewModel.recordingState, .initial)
     XCTAssertEqual(viewModel.isNotificationPresented, false)
     XCTAssertNil(viewModel.notification)
     XCTAssertTrue(avBeam.stopRecordDocumentCalled)
@@ -220,7 +225,7 @@ class RecordDocumentViewModelTests: XCTestCase {
     // Wait for async completion
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    XCTAssertEqual(viewModel.buttonState, .success)
+    XCTAssertEqual(viewModel.recordingState, .success)
     XCTAssertEqual(viewModel.destination, .avIntroSelfieVideo)
   }
 

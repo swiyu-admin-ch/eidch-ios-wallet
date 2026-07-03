@@ -9,16 +9,26 @@ enum AccessTokenError: Error {
 // MARK: - AccessToken
 
 /// OAuth 2.0 Access Token
-/// https://www.rfc-editor.org/rfc/pdfrfc/rfc6749.txt.pdf
+/// https://www.rfc-editor.org/rfc/rfc6749.html
+/// https://www.rfc-editor.org/rfc/rfc9449.html
 public struct AccessToken: Codable, Equatable {
 
   // MARK: Lifecycle
+
+  public init(
+    accessToken: String,
+    tokenType: TokenType = .bearer,
+    refreshToken: String? = nil)
+  {
+    self.accessToken = accessToken
+    self.tokenType = tokenType
+    self.refreshToken = refreshToken
+  }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
     accessToken = try container.decode(String.self, forKey: .accessToken)
-    expiresIn = try container.decodeIfPresent(Int.self, forKey: .expiresIn)
     refreshToken = try container.decodeIfPresent(String.self, forKey: .refreshToken)
 
     let rawType = try container.decode(String.self, forKey: .tokenType)
@@ -36,18 +46,15 @@ public struct AccessToken: Codable, Equatable {
   }
 
   public let accessToken: String
+  public let tokenType: TokenType
+  public let refreshToken: String?
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
     case accessToken = "access_token"
     case tokenType = "token_type"
-    case expiresIn = "expires_in"
     case refreshToken = "refresh_token"
   }
-
-  let tokenType: TokenType
-  let expiresIn: Int?
-  let refreshToken: String?
 
 }

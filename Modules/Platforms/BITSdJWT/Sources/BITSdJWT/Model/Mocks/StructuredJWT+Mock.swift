@@ -44,17 +44,19 @@ extension StructuredJWT: Mockable {
      */
     static let JWS = "eyJ0eXAiOiJzdHJ1Y3R1cmVkIiwiYWxnIjoiRVM1MTIifQ.eyJ0ZXN0Ijp7Il9zZCI6WyJZUkxmNjA2Y2x3dDQtaGp5R3plNDl5U0ZpNlZDbXdiOW41aHdiNFZVSlNZIiwiUWh1dklNUWQ1THlYOGdPUjN3ZVZ6U1kweUdaR0dIZFZYWTBFLU5oaFVmdyJdfSwiX3NkX2FsZyI6InNoYS0yNTYifQ.AUD8pZhe2-1sx5A0v0p8amxjkHPgKkzvC1QHfg3KR8LjS7ej8TQRcfKM7WzpA33lXrkAZh7DATRG4ICJao66HuvNAegi7QRff6-y9S1y5ZFZxNqzPci5kUA4Hy50RiquODRE6V3L95Fx2fk49iviZCiuiB9uMVOGXy_1z6MY9eEYHtl2"
     static let data = JWS.sdJWSData(with: disclosures)
-    static let dataWithKeyBinding = JWS.sdJWSData(with: disclosures, keyBindingJWT: "KEY.BINDING.JWT")
-
-    // MARK: Private
+    static let keyBinding = "KEY.BINDING.JWT"
+    static let dataWithKeyBinding = JWS.sdJWSData(with: disclosures, keyBindingJWT: keyBinding)
 
     /// ["test_salt_1", "test_key_1", "test_value_1"]
     /// YRLf606clwt4-hjyGze49ySFi6VCmwb9n5hwb4VUJSY
-    private static let disclosure1 = "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIiwgInRlc3RfdmFsdWVfMSJd"
+    static let disclosure1 = "WyJ0ZXN0X3NhbHRfMSIsICJ0ZXN0X2tleV8xIiwgInRlc3RfdmFsdWVfMSJd"
 
     /// ["test_salt_2", "test_key_2", "test_value_2"]
     /// QhuvIMQd5LyX8gOR3weVzSY0yGZGGHdVXY0E-NhhUfw
-    private static let disclosure2 = "WyJ0ZXN0X3NhbHRfMiIsICJ0ZXN0X2tleV8yIiwgInRlc3RfdmFsdWVfMiJd"
+    static let disclosure2 = "WyJ0ZXN0X3NhbHRfMiIsICJ0ZXN0X2tleV8yIiwgInRlc3RfdmFsdWVfMiJd"
+
+    // MARK: Private
+
     private static let disclosures = [disclosure1, disclosure2]
   }
 }

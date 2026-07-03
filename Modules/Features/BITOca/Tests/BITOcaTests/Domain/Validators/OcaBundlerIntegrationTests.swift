@@ -25,4 +25,10 @@ final class OcaBundlerIntegrationTests: XCTestCase {
     XCTAssertEqual(ocaBundle.captureBases.count, 4)
     XCTAssertEqual(ocaBundle.overlays.count, 20)
   }
+
+  func testCreateOcaBundle_chasseral_createsValid() throws {
+    let ocaBundle = try OcaBundler().createOcaBundle(OcaBundle.Mock.chasseralData)
+    XCTAssertEqual(ocaBundle.captureBases.count, 5)
+    XCTAssertEqual(ocaBundle.overlays.count, 58)
+  }
 }

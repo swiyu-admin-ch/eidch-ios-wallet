@@ -1,47 +1,51 @@
 import Factory
 import Foundation
 import Spyable
-import XCTest
+import Testing
 @testable import BITAppInfo
 
-class GetBuildNumberUseCaseTests: XCTestCase {
+struct GetBuildNumberUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
-    repository = AppVersionRepositoryProtocolSpy()
+  init() {
+    let repository = AppVersionRepositoryProtocolSpy()
 
-    Container.shared.appVersionRepository.register { self.repository }
+    Container.shared.appVersionRepository.register { repository }
+
+    self.repository = repository
     useCase = GetBuildNumberUseCase()
   }
 
-  func test_init() {
-    XCTAssertFalse(repository.getBuildNumberCalled)
-    XCTAssertFalse(repository.getVersionCalled)
+  // MARK: Internal
+
+  @Test
+  func initialState() {
+    #expect(repository.getBuildNumberCalled == false)
+    #expect(repository.getVersionCalled == false)
   }
 
-  func test_getBuildNumber_happyPath() throws {
+  @Test
+  func getBuildNumber_happyPath() throws {
     let expectedNumber = BuildNumber.Mock.sample
     repository.getBuildNumberReturnValue = expectedNumber
 
-    let number = try useCase.execute()
+    let number = try useCase()
 
-    XCTAssertEqual(expectedNumber, number)
-    XCTAssertTrue(repository.getBuildNumberCalled)
-    XCTAssertEqual(1, repository.getBuildNumberCallsCount)
+    #expect(expectedNumber == number)
+    #expect(repository.getBuildNumberCalled == true)
+    #expect(repository.getBuildNumberCallsCount == 1)
   }
 
-  func test_getVersion_failurePath() throws {
+  @Test
+  func getVersion_failurePath() {
     repository.getBuildNumberThrowableError = AppVersionError.notFound
-    XCTAssertThrowsError(try useCase.execute())
-    XCTAssertTrue(repository.getBuildNumberCalled)
+    #expect(throws: Error.self, performing: useCase.callAsFunction)
+    #expect(repository.getBuildNumberCalled == true)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var repository = AppVersionRepositoryProtocolSpy()
-  private var useCase: GetBuildNumberUseCaseProtocol!
-  // swiftlint:enable all
+  private let repository: AppVersionRepositoryProtocolSpy
+  private let useCase: GetBuildNumberUseCaseProtocol
 }

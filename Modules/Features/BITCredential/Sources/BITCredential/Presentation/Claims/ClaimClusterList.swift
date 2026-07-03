@@ -18,21 +18,7 @@ public struct ClaimClusterList: View {
   public var body: some View {
     LazyVStack(spacing: .x6) {
       ForEach(clusters, id: \.id) { cluster in
-        SectionView(title: cluster.preferredDisplay?.name) {
-          let items = cluster.items
-          ForEach(Array(zip(items.indices, items)), id: \.0) { index, item in
-            VStack(alignment: .leading, spacing: 0) {
-              if let claim = item as? CredentialClaim {
-                let isPreviousItemCluster = index > 0 && items[index - 1] is CredentialClaimCluster
-                ClaimCell(claim, showDivider: index < items.count - 1)
-                  .padding(.top, isPreviousItemCluster ? .x4 : 0)
-              } else if let childCluster = item as? CredentialClaimCluster {
-                childClusterView(childCluster, isFirstInCluster: index == 0, showLastDivider: index < items.count - 1)
-              }
-            }
-            .padding(.leading, .x6)
-          }
-        }
+        sectionView(cluster)
       }
     }
   }
@@ -41,16 +27,43 @@ public struct ClaimClusterList: View {
 
   private var clusters: [CredentialClaimCluster]
 
+  private func sectionView(_ cluster: CredentialClaimCluster) -> some View {
+    SectionView(title: cluster.displays.findDisplayWithFallback()?.name) {
+      let items = cluster.items
+      ForEach(items.indices, id: \.self) { index in
+        let item = items[index]
+        VStack(alignment: .leading, spacing: 0) {
+          if let claim = item as? CredentialClaim {
+            let isPreviousItemCluster = index > 0 && items[index - 1] is CredentialClaimCluster
+            ClaimCell(
+              claim,
+              isSensitive: cluster.isSensitive,
+              showDivider: index < items.count - 1,
+              showClaimKey: !cluster.isSimpleArray)
+              .padding(.top, isPreviousItemCluster ? .x4 : 0)
+          } else if let childCluster = item as? CredentialClaimCluster {
+            childClusterView(
+              childCluster,
+              isSensitive: cluster.isSensitive,
+              isFirstInCluster: index == 0,
+              showLastDivider: index < items.count - 1)
+          }
+        }
+        .padding(.leading, .x6)
+      }
+    }
+  }
+
   @ViewBuilder
-  private func childClusterView(_ cluster: CredentialClaimCluster, isFirstInCluster: Bool, showLastDivider: Bool) -> some View {
-    if let title = cluster.preferredDisplay?.name {
+  private func childClusterView(_ cluster: CredentialClaimCluster, isSensitive: Bool, isFirstInCluster: Bool, showLastDivider: Bool) -> some View {
+    if let title = cluster.displays.findDisplayWithFallback()?.name {
       Text(title)
         .font(.custom.title3Emphasized)
         .padding(.vertical, .x2)
         .accessibilityAddTraits(.isHeader)
     }
-    ChildClusterView(cluster, showLastDivider: showLastDivider)
-      .padding(.top, !isFirstInCluster && cluster.preferredDisplay == nil ? .x8 : 0)
+    ChildClusterView(cluster, isSensitive: isSensitive, showLastDivider: showLastDivider)
+      .padding(.top, !isFirstInCluster && cluster.displays.findDisplayWithFallback() == nil ? .x8 : 0)
   }
 }
 

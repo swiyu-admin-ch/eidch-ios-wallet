@@ -10,6 +10,8 @@ class VersionEnforcementRouterMock: VersionEnforcementRouterRoutes {
   var popCountCalledValue = 0
   var popToRootCalled = false
   var dismissCalled = false
+  var openedExternalLink: URL?
+  var externalSettingsCalled = false
 
   var didCallVersionEnforcement = false
   var didCallExternalLink = false
@@ -40,11 +42,16 @@ class VersionEnforcementRouterMock: VersionEnforcementRouterRoutes {
     dismissCalled = true
   }
 
-  func versionEnforcement(_ versionEnforcement: VersionEnforcement) {
+  func versionEnforcement(_ versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate) {
     didCallVersionEnforcement = true
   }
 
   func openExternalLink(url: URL) {
     didCallExternalLink = true
+    openedExternalLink = url
+  }
+
+  func externalSettings() {
+    externalSettingsCalled = true
   }
 }

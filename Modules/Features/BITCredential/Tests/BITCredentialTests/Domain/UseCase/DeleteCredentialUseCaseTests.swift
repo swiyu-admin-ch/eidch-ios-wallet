@@ -19,18 +19,19 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
   func testDeleteCredential_Success() async throws {
     try await useCase.execute(mockCredential)
 
-    XCTAssertEqual(credentialRepository.deleteReceivedId, mockCredential.id)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.id, mockCredential.id)
+    XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.deleteKeyPairs, true)
   }
 
   func testDeleteCredential_FailureOnRepository() async throws {
-    credentialRepository.deleteThrowableError = TestingError.error
+    credentialRepository.deleteDeleteKeyPairsThrowableError = TestingError.error
 
     do {
       try await useCase.execute(mockCredential)
       XCTFail("Should have thrown an exception")
     } catch TestingError.error {
-      XCTAssertTrue(credentialRepository.deleteCalled)
-      XCTAssertEqual(credentialRepository.deleteCallsCount, 1)
+      XCTAssertTrue(credentialRepository.deleteDeleteKeyPairsCalled)
+      XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsCallsCount, 1)
     }
   }
 

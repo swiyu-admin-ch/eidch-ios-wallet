@@ -1,5 +1,6 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import BITL10n
+import Factory
 import XCTest
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
@@ -8,6 +9,13 @@ import XCTest
 class LegalRepresentantConsentStateViewModelTests: XCTestCase {
 
   // MARK: Internal
+
+  override func setUp() {
+    super.setUp()
+
+    Container.shared.reset()
+    Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
+  }
 
   func testInit_inQueueState_legalRepresentantVerified() throws {
     let requestCase = EIDRequestCase.Mock.sampleInQueue

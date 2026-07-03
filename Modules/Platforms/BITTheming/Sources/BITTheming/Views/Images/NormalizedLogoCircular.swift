@@ -13,7 +13,7 @@ public struct NormalizedLogoCircular: View {
   // MARK: Public
 
   public var body: some View {
-    (imageData.flatMap(Image.init) ?? ThemingAssets.unknownIcon.swiftUIImage)
+    (imageData.flatMap { Image(data: $0) } ?? ThemingAssets.unknownIcon.swiftUIImage)
       .renderingMode(.template)
       .resizable()
       .aspectRatio(contentMode: .fit)

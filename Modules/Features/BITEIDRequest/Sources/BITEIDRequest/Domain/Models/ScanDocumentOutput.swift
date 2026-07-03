@@ -1,6 +1,7 @@
 import BITAVWrapper
 import BITEIDRequestShared
 import Foundation
+import UIKit
 
 // MARK: - ScanDocumentOutput
 
@@ -8,7 +9,12 @@ public struct ScanDocumentOutput: Equatable, Hashable {
 
   // MARK: Lifecycle
 
-  init(_ packageResult: AVBeamPackageResult, identityType: IdentityType) throws {
+  init(
+    _ packageResult: AVBeamPackageResult,
+    scanningOrientiations: [ScanningState: UIDeviceOrientation],
+    identityType: IdentityType)
+    throws
+  {
     mrz = try MRZ(from: packageResult)
     files = packageResult.files.map { EIDRequestCaseFile($0, category: .documentScan) }
 
@@ -19,12 +25,19 @@ public struct ScanDocumentOutput: Equatable, Hashable {
     files.append(extractedDataFile)
 
     self.identityType = identityType
+    self.scanningOrientiations = scanningOrientiations
   }
 
-  init(mrz: MRZ, files: [EIDRequestCaseFile] = [], identityType: IdentityType) {
+  init(
+    mrz: MRZ,
+    files: [EIDRequestCaseFile] = [],
+    scanningOrientiations: [ScanningState: UIDeviceOrientation] = [:],
+    identityType: IdentityType)
+  {
     self.mrz = mrz
     self.files = files
     self.identityType = identityType
+    self.scanningOrientiations = scanningOrientiations
   }
 
   // MARK: Public
@@ -54,6 +67,7 @@ public struct ScanDocumentOutput: Equatable, Hashable {
 
   static let extractedDataFileName = "extractedData.json"
 
+  let scanningOrientiations: [ScanningState: UIDeviceOrientation]
   private(set) var files: [EIDRequestCaseFile]
 
 }

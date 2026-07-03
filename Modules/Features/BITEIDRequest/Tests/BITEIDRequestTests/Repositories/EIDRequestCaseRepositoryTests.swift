@@ -29,12 +29,14 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
     _ = try await repository.create(eIDRequestCase: .Mock.sampleAVReady)
     _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueueNoOnlineSessionStart)
     _ = try await repository.create(eIDRequestCase: .Mock.sampleExpired)
+    _ = try await repository.create(eIDRequestCase: .Mock.sampleCancelled)
 
     let eIDRequestCases = try await repository.getAll()
 
     let sortedArray: [EIDRequestCase] = [
       .Mock.sampleInQueueNoOnlineSessionStart,
       .Mock.sampleExpired,
+      .Mock.sampleCancelled,
       .Mock.sampleAVReady,
       .Mock.sampleInQueue,
     ]
@@ -145,11 +147,31 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
     }
   }
 
+  func testGetAllPushIds_success() async throws {
+    _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
+    _ = try await repository.create(eIDRequestCase: .Mock.sampleAVReady)
+    _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueueNoOnlineSessionStart)
+
+    let result = try await repository.getAllPushIds()
+
+    XCTAssertEqual(result.count, 3)
+  }
+
+  func testSavePushId_repository() async throws {
+    let mockPushId = "push_id"
+    var mockRequestCase = EIDRequestCase.Mock.sampleInQueue
+    mockRequestCase.pushId = mockPushId
+    _ = try await repository.create(eIDRequestCase: mockRequestCase)
+
+    try await repository.savePushId(mockPushId, for: mockRequestCase.id)
+
+    let updateRequestCase = try await repository.get(id: mockRequestCase.id)
+
+    XCTAssertEqual(updateRequestCase.pushId, mockPushId)
+  }
+
   // MARK: Private
 
   private var repository: EIDRequestCaseRepositoryProtocol!
   private let mockEIDRequestState = EIDRequestState.Mock.sample
-
 }
-
-// swiftlint:enable implicitly_unwrapped_optional

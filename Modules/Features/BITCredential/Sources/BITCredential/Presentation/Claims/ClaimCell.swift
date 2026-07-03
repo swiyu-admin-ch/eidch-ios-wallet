@@ -10,9 +10,11 @@ public struct ClaimCell: View {
 
   // MARK: Lifecycle
 
-  public init(_ claim: CredentialClaim, showDivider: Bool) {
+  public init(_ claim: CredentialClaim, isSensitive: Bool, showDivider: Bool, showClaimKey: Bool) {
     viewModel = CredentialClaimViewModel(claim)
+    self.isSensitive = isSensitive
     self.showDivider = showDivider
+    self.showClaimKey = showClaimKey
   }
 
   // MARK: Public
@@ -20,7 +22,7 @@ public struct ClaimCell: View {
   public var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       if let imageData = viewModel.imageData {
-        KeyValueCustomCell(key: viewModel.nameLabel, trailingContent: {
+        KeyValueCustomCell(key: viewModel.nameLabel, showClaimKey: showClaimKey, trailingContent: {
           trailingView
         }) {
           Image(data: imageData)?
@@ -31,7 +33,7 @@ public struct ClaimCell: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, .x6)
       } else {
-        KeyValueCell(key: viewModel.nameLabel, value: viewModel.valueLabel) {
+        KeyValueCell(key: viewModel.nameLabel, value: viewModel.valueLabel, showClaimKey: showClaimKey) {
           trailingView
         }.padding(.trailing, .x6)
           .frame(minHeight: Defaults.minHeight)
@@ -53,11 +55,13 @@ public struct ClaimCell: View {
   }
 
   private let viewModel: CredentialClaimViewModel
+  private let isSensitive: Bool
   private let showDivider: Bool
+  private let showClaimKey: Bool
 
   @ViewBuilder
   private var trailingView: some View {
-    if viewModel.isSensitive {
+    if isSensitive || viewModel.isSensitive {
       Badge(label: L10n.tkGlobalSensitiveData)
         .badgeStyle(.sensitive)
     } else {

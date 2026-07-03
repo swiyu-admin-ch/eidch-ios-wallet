@@ -58,7 +58,6 @@ final class CredentialOfferViewModel {
       state = .loading
 
       try await acceptCredentialUseCase(credential)
-      try? await Task.sleep(nanoseconds: delayAfterAcceptingCredential)
       isOfferAccepted = true
     } catch {
       state = .error
@@ -96,7 +95,6 @@ final class CredentialOfferViewModel {
 
   // MARK: Private
 
-  @ObservationIgnored @Injected(\.delayAfterAcceptingCredential) private var delayAfterAcceptingCredential: UInt64
   @ObservationIgnored @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @ObservationIgnored @Injected(\.acceptCredentialUseCase) private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocol
   @ObservationIgnored @Injected(\.fetchIssuanceTrustInformationUseCase) private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocol

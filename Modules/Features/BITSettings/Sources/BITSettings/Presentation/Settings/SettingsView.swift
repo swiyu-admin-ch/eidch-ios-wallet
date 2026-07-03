@@ -17,17 +17,44 @@ struct SettingsView: View {
             image: Assets.lock.swiftUIImage,
             title: L10n.tkSettingsWalletSecurityPrivacy,
             type: .navigation { path.append(Setting.security) })
+
           SettingsItem(
             image: Assets.language.swiftUIImage,
             title: L10n.tkSettingsWalletLanguage,
             type: .navigation { viewModel.openLanguage() },
             hasDivider: false)
+            .accessibilityHint(L10n.tkGlobalExternalLinkHint)
         }
+
+        SettingsSection(title: L10n.tkSettingsFeedbackSupportSectionTitle) {
+          SettingsItem(
+            image: Assets.help.swiftUIImage,
+            title: L10n.tkSettingsGeneralHelpLinkText,
+            type: .link(L10n.tkSettingsGeneralHelpLinkValue))
+
+          SettingsItem(
+            image: Assets.feedback.swiftUIImage,
+            title: L10n.tkSettingsGeneralFeedbackLinkText,
+            type: .link(L10n.tkSettingsGeneralFeedbackLinkValue),
+            hasDivider: false)
+        }
+
         SettingsSection(title: L10n.tkSettingsGeneralSectionTitle) {
-          SettingsItem(image: Assets.help.swiftUIImage, title: L10n.tkSettingsGeneralHelpLinkText, type: .link(L10n.tkSettingsGeneralHelpLinkValue))
-          SettingsItem(image: Assets.feedback.swiftUIImage, title: L10n.tkSettingsGeneralFeedbackLinkText, type: .link(L10n.tkSettingsGeneralFeedbackLinkValue))
-          SettingsItem(image: Assets.licenses.swiftUIImage, title: L10n.tkSettingsGeneralLicences, type: .navigation { path.append(Setting.licenses) })
-          SettingsItem(image: Assets.imprint.swiftUIImage, title: L10n.tkSettingsGeneralImprint, type: .navigation { path.append(Setting.imprint) }, hasDivider: false)
+          SettingsItem(
+            image: Assets.accessibility.swiftUIImage,
+            title: L10n.tkSettingsGeneralAccessibility,
+            type: .navigation { path.append(Setting.accessibility) })
+
+          SettingsItem(
+            image: Assets.licenses.swiftUIImage,
+            title: L10n.tkSettingsGeneralLicences,
+            type: .navigation { path.append(Setting.licenses) })
+
+          SettingsItem(
+            image: Assets.imprint.swiftUIImage,
+            title: L10n.tkSettingsGeneralImprint,
+            type: .navigation { path.append(Setting.imprint) },
+            hasDivider: false)
         }
 
         if viewModel.isOTPDebugToggleVisible || viewModel.isLottieViewerEnabled {
@@ -54,11 +81,13 @@ struct SettingsView: View {
       .navigationDestination(for: Setting.self) { setting in
         switch setting {
         case .security: SecuritySettingsView(path: $path)
+        case .accessibility: AccessibilitySettingsView()
         case .licenses: LicencesListView(path: $path)
         case .imprint: ImprintView()
         case .lottie: LottieViewer()
         }
       }
+      .presentationDragIndicator(.visible)
     }
   }
 
@@ -74,6 +103,7 @@ struct SettingsView: View {
 
 enum Setting: Hashable {
   case security
+  case accessibility
   case licenses
   case imprint
   case lottie

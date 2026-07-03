@@ -84,15 +84,12 @@ extension RequestCaseViewState {
     case .cancelled(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
-        content: viewModel.notificationTitle,
-        notificationType: .complete(
-          label: viewModel.primaryActionLabel,
-          action: viewModel.openFAQ,
-          dismissAction: {
-            Task {
-              await viewModel.deleteRequestCase()
-            }
-          }))
+        content: viewModel.notificationContent,
+        notificationType: .dismiss {
+          Task {
+            await viewModel.deleteRequestCase()
+          }
+        })
     }
   }
 }

@@ -45,7 +45,7 @@ public struct LoadingOverlayViewModifier: ViewModifier {
 
   public init(
     isPresented: Bool,
-    message: String,
+    message: String? = nil,
     indicatorTint: Color,
     accessibility: LoadingOverlayAccessibility?)
   {
@@ -72,14 +72,16 @@ public struct LoadingOverlayViewModifier: ViewModifier {
                 .tint(indicatorTint)
                 .controlSize(.large)
 
-              Text(message)
-                .font(.custom.body)
-                .foregroundStyle(Color.white)
-                .multilineTextAlignment(.center)
+              if let message {
+                Text(message)
+                  .font(.custom.body)
+                  .foregroundStyle(Color.white)
+                  .multilineTextAlignment(.center)
+                  .accessibilityLabel(message)
+              }
             }
             .padding(.horizontal, .x6)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel(message)
             .accessibilityFocused($isLoadingIndicatorFocused)
           }
           .accessibilityElement(children: .contain)
@@ -107,7 +109,7 @@ public struct LoadingOverlayViewModifier: ViewModifier {
   @AccessibilityFocusState private var isLoadingIndicatorFocused: Bool
 
   private let isPresented: Bool
-  private let message: String
+  private let message: String?
   private let indicatorTint: Color
   private let accessibility: LoadingOverlayAccessibility?
 
@@ -167,7 +169,7 @@ public struct LoadingOverlayViewModifier: ViewModifier {
 extension View {
   public func loadingOverlay(
     isPresented: Bool,
-    message: String,
+    message: String? = nil,
     indicatorTint: Color = .white,
     accessibility: LoadingOverlayAccessibility? = .voiceOver())
     -> some View

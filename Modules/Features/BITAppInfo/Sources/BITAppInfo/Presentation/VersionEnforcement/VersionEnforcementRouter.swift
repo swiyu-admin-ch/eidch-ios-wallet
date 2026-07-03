@@ -7,4 +7,4 @@ public typealias VersionEnforcementRouterRoutes = ClosableRoutes & ExternalRoute
 
 // MARK: - VersionEnforcementRouter
 
-final public class VersionEnforcementRouter: Router<UIViewController>, VersionEnforcementRouterRoutes { }
+final public class VersionEnforcementRouter: Router<UIViewController>, VersionEnforcementRouterRoutes {}

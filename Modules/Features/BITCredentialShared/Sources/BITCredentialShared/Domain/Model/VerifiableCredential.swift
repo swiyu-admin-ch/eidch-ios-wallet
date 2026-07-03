@@ -12,6 +12,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public init(
     id: UUID = UUID(),
     createdAt: Date = Date(),
+    refreshedAt: Date? = nil,
     progressionState: ProgressState = .unaccepted,
     bundleItems: [BundleItem] = [],
     nextPresentableBundleItemId: UUID,
@@ -30,6 +31,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   {
     self.id = id
     self.createdAt = createdAt
+    self.refreshedAt = refreshedAt
     self.progressionState = progressionState
     self.bundleItems = bundleItems
     self.nextPresentableBundleItemId = nextPresentableBundleItemId
@@ -45,7 +47,6 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     self.rawCredentialData = rawCredentialData
     self.issuerDisplays = issuerDisplays
     self.displays = displays
-
     environment = TrustEnvironment(did: issuer)
   }
 
@@ -57,6 +58,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     self.init(
       id: entity.id,
       createdAt: entity.createdAt,
+      refreshedAt: verifiableCredential.refreshedAt,
       progressionState: ProgressState(verifiableCredential.progressionState),
       bundleItems: Array(verifiableCredential.bundleItems.map(BundleItem.init)),
       nextPresentableBundleItemId: verifiableCredential.nextPresentableBundleItemId,
@@ -95,6 +97,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
 
   public let id: UUID
   public let createdAt: Date
+  public let refreshedAt: Date?
 
   public var progressionState: ProgressState
   public let rawCredentialData: RawCredentialData?
@@ -105,11 +108,18 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     bundleItems.compactMap(\.keyBinding)
   }
 
+  public var resolvedClusters: [CredentialClaimCluster] {
+    clusters.map { cluster in
+      cluster.resolvePathTemplates(using: clusters)
+    }
+  }
+
   // MARK: Private
 
   private enum CodingKeys: String, CodingKey {
     case id
     case createdAt
+    case refreshedAt
     case progressionState
     case bundleItems
     case nextPresentableBundleItemId
@@ -136,6 +146,7 @@ extension VerifiableCredential: Equatable {
   public static func == (lhs: VerifiableCredential, rhs: VerifiableCredential) -> Bool {
     lhs.id == rhs.id &&
       lhs.createdAt == rhs.createdAt &&
+      lhs.refreshedAt == rhs.refreshedAt &&
       lhs.progressionState == rhs.progressionState &&
       lhs.bundleItems == rhs.bundleItems &&
       lhs.nextPresentableBundleItemId == rhs.nextPresentableBundleItemId &&
@@ -182,6 +193,7 @@ extension VerifiableCredential: Hashable {
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(createdAt)
+    hasher.combine(refreshedAt)
     hasher.combine(bundleItems)
     hasher.combine(nextPresentableBundleItemId)
     hasher.combine(issuer)
@@ -189,5 +201,24 @@ extension VerifiableCredential: Hashable {
     hasher.combine(validUntil)
     hasher.combine(batchData)
     hasher.combine(authentication)
+  }
+}
+
+extension CredentialClaimCluster {
+
+  fileprivate func resolvePathTemplates(using clusters: [CredentialClaimCluster]) -> Self {
+    var copy = self
+    copy.childClusters = childClusters.map { $0.resolvePathTemplates(using: clusters) }
+    copy.displays = displays.map { $0.resolvePathTemplates(using: clusters, indices: path.allIndices) }
+    return copy
+  }
+}
+
+extension ClusterDisplay {
+
+  fileprivate func resolvePathTemplates(using clusters: [CredentialClaimCluster], indices: [Int]) -> Self {
+    var copy = self
+    copy.name = name.resolvePathTemplates(using: clusters, indices: indices)
+    return copy
   }
 }

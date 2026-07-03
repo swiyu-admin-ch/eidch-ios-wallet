@@ -1,4 +1,5 @@
 import XCTest
+@testable import BITCore
 @testable import BITCredential
 @testable import BITOca
 
@@ -41,7 +42,7 @@ final class OverlayAttributeDateParserTests: XCTestCase {
   }
 
   func testParse_attributeWithIso8601StandardDateOnly_parsesFormat() {
-    let testCases: [(raw: String, format: DateParserResult.Format, expectedNormalizedDate: String)] = [
+    let testCases: [(raw: String, format: DateFormat, expectedNormalizedDate: String)] = [
       ("2025-06-05", .date, "2025-06-05T00:00:00Z"),
       ("2025-06", .yearMonth, "2025-06-01T00:00:00Z"),
       ("2025", .year, "2025-01-01T00:00:00Z"),
@@ -57,7 +58,7 @@ final class OverlayAttributeDateParserTests: XCTestCase {
   }
 
   func testParse_attributeWithIso8601StandardTimeOnly_parsesFormat() {
-    let testCases: [(raw: String, format: DateParserResult.Format, expectedNormalizedDate: String)] = [
+    let testCases: [(raw: String, format: DateFormat, expectedNormalizedDate: String)] = [
       ("23:59:59.999Z", .timeTimeZoneSecondsFractional, "2000-01-01T23:59:59Z"),
       ("23:59:59Z", .timeTimeZoneSeconds, "2000-01-01T23:59:59Z"),
       ("23:59Z", .timeTimeZone, "2000-01-01T23:59:00Z"),

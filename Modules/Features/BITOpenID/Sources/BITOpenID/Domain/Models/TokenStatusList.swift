@@ -9,14 +9,12 @@ public struct TokenStatusList: JWT, Codable, Equatable {
   // MARK: Lifecycle
 
   public init(
-    issuer: String?,
     subject: String?,
     issuedAt: Date?,
     expiredAt: Date? = nil,
     timeToLive: UInt? = nil,
     statusList: StatusList)
   {
-    self.issuer = issuer
     self.subject = subject
     self.issuedAt = issuedAt
     self.expiredAt = expiredAt
@@ -28,7 +26,6 @@ public struct TokenStatusList: JWT, Codable, Equatable {
 
   public let type: String? = "statuslist+jwt"
 
-  public let issuer: String?
   public let subject: String?
   public let issuedAt: Date?
   public let expiredAt: Date?
@@ -38,7 +35,6 @@ public struct TokenStatusList: JWT, Codable, Equatable {
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case issuer = "iss"
     case subject = "sub"
     case issuedAt = "iat"
     case expiredAt = "exp"
@@ -65,6 +61,10 @@ extension TokenStatusList {
 }
 
 extension TokenStatusList {
+  public var issuer: String? {
+    nil
+  }
+
   public var audience: String? {
     nil
   }

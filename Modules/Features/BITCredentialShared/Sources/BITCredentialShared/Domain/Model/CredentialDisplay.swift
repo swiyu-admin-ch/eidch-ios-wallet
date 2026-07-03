@@ -84,27 +84,9 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
 
   #warning("TODO: should be moved to a CredentialDisplayFactory")
 
-  public func resolveClaimTemplate(with claims: [CredentialClaim]) -> Self {
+  public func resolvePathTemplate(with clusters: [CredentialClaimCluster]) -> Self {
     var copy = self
-
-    copy.summary = summary?.replacing(Self.regex) { match in
-      let templateContent = String(match.1)
-      guard
-        let path = ClaimsPathPointer(templateContent),
-        let claim = claims.first(where: { path.isPointing(at: $0.path) })
-      else { return "" }
-      return claim.value ?? "–"
-    }
+    copy.summary = summary?.resolvePathTemplates(using: clusters)
     return copy
-  }
-
-  // MARK: Private
-
-  private static let regex = Regex {
-    "{{"
-    Capture {
-      ZeroOrMore(.any, .reluctant)
-    }
-    "}}"
   }
 }

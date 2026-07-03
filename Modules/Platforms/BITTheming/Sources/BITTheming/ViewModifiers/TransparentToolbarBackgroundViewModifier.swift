@@ -36,13 +36,11 @@ public struct TransparentToolbarBackgroundViewModifier: ViewModifier {
   private let topInset: CGFloat
 
   private var cameraNavigationAppearance: UINavigationBarAppearance {
-    let appearance = UINavigationBarAppearance()
-    appearance.configureWithTransparentBackground()
+    let appearance = UINavigationBarAppearance.defaultTransparent
     appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
     appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
     appearance.buttonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
     appearance.doneButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
-    appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
     return appearance
   }
 }

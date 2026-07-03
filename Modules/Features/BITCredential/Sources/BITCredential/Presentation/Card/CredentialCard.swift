@@ -197,7 +197,6 @@ public struct CredentialCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
             .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
-            .accessibilityAddTraits(.isHeader)
 
           if let summary {
             Text(summary)

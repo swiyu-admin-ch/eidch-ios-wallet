@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import BITClaimsPathPointer
 import BITCore
 import BITCredential
@@ -25,14 +26,14 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
   ///
   func match(credentials: [VerifiableCredential], with dcqlQuery: DcqlQuery) async throws -> [CompatibleCredential] {
     // 1. Extract raw payloads
-    let rawCredentials = try credentials.compactMap { credential -> (VerifiableCredential, String)? in
+    let rawCredentials: [String: VerifiableCredential] = try credentials.compactGroupBy { credential in
       let selectedBundleItem = try selectCredentialBundleItemUseCase(credential)
       guard
         let rawPayload = String(data: selectedBundleItem.payload, encoding: .utf8) else
       {
         return nil
       }
-      return (credential, rawPayload)
+      return rawPayload
     }
 
     guard !rawCredentials.isEmpty else {
@@ -40,46 +41,46 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
     }
 
     // 2. Ask shared DCQL helper for concrete matches
-    let rawPayloads = rawCredentials.map(\.1)
+    let rawPayloads = rawCredentials.map(\.key)
     let matches = DcqlSupport().matchDcqlCredentials(query: dcqlQuery, credentialPayloads: rawPayloads)
 
     // 3. Map summaries to CompatibleCredential instances
     var compatibleCredentials = [CompatibleCredential]()
-    let credentialsByPayload = Dictionary(grouping: rawCredentials, by: { $0.1 })
-
     for match in matches {
-      guard let candidates = credentialsByPayload[match.credentialPayload] else {
+      guard let credential = rawCredentials[match.credentialPayload] else {
         continue
       }
 
-      let requestedFields = resolveRequestedFields(claimValues: match.claimValues)
-      guard !requestedFields.isEmpty else {
+      let requestedPaths = resolveRequestedPaths(claimValues: match.claimValues)
+      guard !requestedPaths.isEmpty else {
         continue
       }
-      for (credential, _) in candidates {
-        let compatibleCredential = CompatibleCredential(
-          credential: credential,
-          requestedFields: requestedFields,
-          dcqlQueryId: match.credentialQueryId)
-        compatibleCredentials.append(compatibleCredential)
-      }
+      let presentingPaths = try getPresentingPaths(for: requestedPaths, payload: match.credentialPayload, format: credential.format)
+      let compatibleCredential = CompatibleCredential(
+        credential: credential,
+        presentingPaths: presentingPaths,
+        dcqlQueryId: match.credentialQueryId)
+      compatibleCredentials.append(compatibleCredential)
     }
 
     return compatibleCredentials
   }
 
-  func resolveRequestedFields(claimValues: [DcqlClaimValue]) -> [PresentationField] {
+  // MARK: Private
+
+  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase
+  @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase
+
+  private func resolveRequestedPaths(claimValues: [DcqlClaimValue]) -> [ClaimsPathPointer] {
     claimValues.compactMap { claimValue in
-      guard let value = DcqlCodableValueMapper.codableValue(from: claimValue.value) else {
-        return nil
-      }
-      return PresentationField(pathPointer: claimValue.paths.map(\.toClaimsPathPointerElement), value: value)
+      claimValue.paths.map(\.toClaimsPathPointerElement)
     }
   }
 
-  // MARK: Private
-
-  @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
+  private func getPresentingPaths(for requestedPaths: [ClaimsPathPointer], payload: String, format: String) throws -> [ClaimsPathPointer] {
+    let anyCredential = try createAnyCredentialUseCase.execute(from: Data(payload.utf8), format: format)
+    return anyCredential.getPresentingPaths(for: requestedPaths)
+  }
 
 }
 

@@ -33,7 +33,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_withQrCode_callsRepository() async throws {
     proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = try .just(
-      .request(XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))))
+      .request(XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))))
 
     getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = []
 
@@ -52,7 +52,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_returnsCompatibleCredentials() async throws {
     proximityPresentationRepository.startEngagementReturnValue = try .just(
-      .request(XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))))
+      .request(XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))))
 
     try await assert_returns_compatible_credentials {
       useCase()
@@ -63,7 +63,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_withQrCode_returns_compatible_credentials() async throws {
     proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = try .just(
-      .request(XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))))
+      .request(XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))))
 
     try await assert_returns_compatible_credentials {
       useCase(qrCode: "qr-code")
@@ -73,7 +73,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_decodesJwt() async throws {
-    let requestString = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))
+    let requestString = try XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))
     proximityPresentationRepository.startEngagementReturnValue = try .just(
       .request(XCTUnwrap(requestString)))
 
@@ -85,7 +85,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_withQrCode_decodesJwt() async throws {
-    let requestString = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))
+    let requestString = try XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))
     proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = try .just(
       .request(XCTUnwrap(requestString)))
 
@@ -96,41 +96,16 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
     XCTAssertEqual(proximityPresentationRepository.startEngagementReverseQrCodeCallsCount, 1)
   }
 
-  func testCallAsFunction_decodesJson_whenJwtDecodingFails() async throws {
-    let requestString = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))
-    proximityPresentationRepository.startEngagementReturnValue = .just(.request(requestString))
+  func testCallAsFunction_throwsInvalidPayload_whenJwtDecodingFails() async throws {
+    jwsDecoderSpy.throwingError = TestingError.error
+    proximityPresentationRepository.startEngagementReturnValue = .just(.request("not-a-valid-jwt"))
+    useCase = StartProximityEngagementUseCase()
 
-    try await assert_decodesJson_whenJwtDecodingFails {
-      useCase()
-    }
-
-    XCTAssertEqual(proximityPresentationRepository.startEngagementCallsCount, 1)
-  }
-
-  func testCallAsFunction_withQrCodeJwtDecodingFails_decodesJson() async throws {
-    let requestString = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.jsonSampleData, encoding: .utf8))
-    proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = .just(.request(requestString))
-
-    try await assert_decodesJson_whenJwtDecodingFails {
-      useCase(qrCode: "qr-code")
-    }
-
-    XCTAssertEqual(proximityPresentationRepository.startEngagementReverseQrCodeCallsCount, 1)
-  }
-
-  func testCallAsFunction_throwsInvalidPayload_whenJwtAndJsonDecodingFail() async throws {
-    try await assert_throwsInvalidPayload_whenJwtAndJsonDecodingFail {
-      proximityPresentationRepository.startEngagementReturnValue = .just(.request($0))
-    } stream: {
-      useCase()
-    }
-  }
-
-  func testCallAsFunction_withQrCode_throwsInvalidPayload_whenJwtAndJsonDecodingFail() async throws {
-    try await assert_throwsInvalidPayload_whenJwtAndJsonDecodingFail {
-      proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = .just(.request($0))
-    } stream: {
-      useCase(qrCode: "qr-code")
+    do {
+      _ = try await useCase().collect()
+      XCTFail("Expected callAsFunction to throw")
+    } catch {
+      XCTAssertEqual(error as? RequestObjectError, .invalidPayload())
     }
   }
 
@@ -138,56 +113,8 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   private var proximityPresentationRepository: ProximityPresentationRepositoryProtocolSpy!
   private var getCompatibleCredentialsUseCaseSpy: GetCompatibleCredentialsUseCaseProtocolSpy!
+  private var jwsDecoderSpy: JWSDecoderMock<RequestObjectJWT>!
   private var useCase: StartProximityEngagementUseCase!
-
-  private func assert_decodesJson_whenJwtDecodingFails(stream: () -> AsyncThrowingStream<ProximityEngagementEvent, Error>) async throws {
-    Container.shared.jwsDecoder.register {
-      JWSDecoderMock<RequestObjectJWT>(
-        jwt: nil,
-        rawPayload: nil,
-        throwingError: TestingError.error)
-    }
-
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = []
-
-    useCase = StartProximityEngagementUseCase()
-
-    let events = try await stream().collect()
-
-    let first = try XCTUnwrap(events.first)
-
-    guard case .request = first else {
-      return XCTFail("Expected .request, got \(first)")
-    }
-  }
-
-  private func assert_throwsInvalidPayload_whenJwtAndJsonDecodingFail(
-    setReturnValue: (String) -> Void,
-    stream: () -> AsyncThrowingStream<ProximityEngagementEvent, Error>) async throws
-  {
-    let jwtString = "not-a-valid-jwt"
-
-    Container.shared.jwsDecoder.register {
-      JWSDecoderMock(
-        jwt: RequestObjectJWS.Mock.sampleJWT,
-        rawPayload: "rawPayload",
-        expectedInput: jwtString,
-        throwingError: TestingError.error)
-    }
-
-    setReturnValue(jwtString)
-
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = []
-
-    useCase = StartProximityEngagementUseCase()
-
-    do {
-      _ = try await stream().collect()
-      XCTFail("Expected callAsFunction to throw")
-    } catch {
-      XCTAssertEqual(error as? RequestObjectError, .invalidPayload())
-    }
-  }
 
   private func assert_returns_compatible_credentials(stream: () -> AsyncThrowingStream<ProximityEngagementEvent, Error>) async throws {
     let mockCredentials = [CompatibleCredential.Mock.BIT]
@@ -233,8 +160,10 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
   private func registerMocks() {
     proximityPresentationRepository = ProximityPresentationRepositoryProtocolSpy()
     getCompatibleCredentialsUseCaseSpy = GetCompatibleCredentialsUseCaseProtocolSpy()
+    jwsDecoderSpy = JWSDecoderMock(jwt: RequestObjectJWS.Mock.sampleJWT, rawPayload: "rawPayload")
 
     Container.shared.proximityPresentationRepository.register { @MainActor in self.proximityPresentationRepository }
     Container.shared.getCompatibleCredentialsUseCase.register { @MainActor in self.getCompatibleCredentialsUseCaseSpy }
+    Container.shared.jwsDecoder.register { @MainActor in self.jwsDecoderSpy }
   }
 }

@@ -3,7 +3,7 @@ import Foundation
 @testable import BITCore
 @testable import BITJWT
 
-extension ClientAttestationProofOfPossession: Mockable {
+extension ClientAttestationProofOfPossession {
   struct Mock {
 
     // MARK: Internal
@@ -19,7 +19,7 @@ extension ClientAttestationProofOfPossession: Mockable {
       bundle: Bundle = Bundle.module)
       -> ClientAttestationProofOfPossession
     {
-      let jwt: ClientAttestationProofOfPossessionJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
+      let jwt: ClientAttestationProofOfPossessionJWT = Mocker.decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
       let header = JWSHeader(algorithm: algorithm, type: type)
 
       // swiftlint: enable force_cast force_try

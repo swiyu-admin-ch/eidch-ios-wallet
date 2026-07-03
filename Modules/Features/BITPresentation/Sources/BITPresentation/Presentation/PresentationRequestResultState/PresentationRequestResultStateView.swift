@@ -55,8 +55,7 @@ struct PresentationRequestResultStateView: View {
   @ViewBuilder
   var content: some View {
     switch viewModel.state {
-    case .invalidCredential,
-         .success:
+    case .dataTransmitted:
       dataTransmittedView
     case .deny:
       denyView
@@ -156,8 +155,7 @@ struct PresentationRequestResultStateView: View {
   @ViewBuilder
   private var buttons: some View {
     switch viewModel.state {
-    case .invalidCredential,
-         .success:
+    case .dataTransmitted:
       finishButton
         .buttonStyle(.firGreen)
     case .deny:
@@ -189,7 +187,7 @@ struct PresentationRequestResultStateView: View {
     }
 
     if navigator.canReturnToCheckpoint(Checkpoints.home) {
-      return navigator.returnToCheckpointSafely(Checkpoints.home)
+      return navigator.returnToHomeSafely()
     }
 
     navigator.dismiss()
@@ -199,8 +197,7 @@ struct PresentationRequestResultStateView: View {
 extension PresentationRequestResultState {
   fileprivate var backgroundColor: Color {
     switch self {
-    case .invalidCredential,
-         .success:
+    case .dataTransmitted:
       ThemingAssets.Brand.Core.firGreen.swiftUIColor
     case .deny:
       ThemingAssets.Brand.Core.navyBlue.swiftUIColor
@@ -211,8 +208,7 @@ extension PresentationRequestResultState {
 
   fileprivate var icon: Image {
     switch self {
-    case .invalidCredential,
-         .success:
+    case .dataTransmitted:
       Assets.presentationDataTransmitted.swiftUIImage
     case .deny:
       Assets.presentationDeny.swiftUIImage
@@ -223,9 +219,8 @@ extension PresentationRequestResultState {
 
   fileprivate var sheetAccessibilityLabel: String {
     switch self {
-    case .deny,
-         .invalidCredential,
-         .success:
+    case .dataTransmitted,
+         .deny:
       L10n.tkPresentResultConfirmAlt
     case .error:
       L10n.tkPresentResultWarningAlt
@@ -235,6 +230,6 @@ extension PresentationRequestResultState {
 
 #if DEBUG
 #Preview {
-  PresentationRequestResultStateView(state: .invalidCredential, context: .Mock.vcSdJwtSample)
+  PresentationRequestResultStateView(state: .dataTransmitted, context: .Mock.vcSdJwtSample)
 }
 #endif

@@ -13,7 +13,7 @@ final class PresentationRequestContextTests: XCTestCase {
     XCTAssertEqual(try String(data: XCTUnwrap(display.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(display.name, "EN entityName")
     if case .trusted(let statement) = display.trustInformation.identity {
-      XCTAssertEqual(statement as? IdentityTrustStatementJWT, IdentityTrustStatementJWT.Mock.validSample.resolvedPayload)
+      XCTAssertEqual(statement, IdentityTrustStatementJWT.Mock.validSample.resolvedPayload)
     }
   }
 

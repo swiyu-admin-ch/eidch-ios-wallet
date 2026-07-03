@@ -37,9 +37,8 @@ let package = Package(
     .package(path: "../BITOca"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
-    .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.33"),
     .package(url: "https://github.com/gh123man/SwiftUI-Refresher", exact: "1.1.9"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "10.54.3"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.4"),
   ],
   targets: [
     .target(
@@ -65,7 +64,6 @@ let package = Package(
         .product(name: "BITOca", package: "BITOca"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
-        .product(name: "Sextant", package: "Sextant"),
         .product(name: "Refresher", package: "SwiftUI-Refresher"),
         .product(name: "RealmSwift", package: "realm-swift"),
       ],

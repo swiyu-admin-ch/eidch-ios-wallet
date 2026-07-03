@@ -7,7 +7,6 @@ public enum JWSValidatorError: Error, Equatable {
   case notYetActivated
   case issuedAtInFuture
   case expired
-  case invalidKeyIdentifier
 }
 
 // MARK: - JWSValidatorProtocol
@@ -40,26 +39,11 @@ public struct JWSValidator: JWSValidatorProtocol {
       throw JWSValidatorError.expired
     }
 
-    let keyIdentifierDid = try getIssuerDid(from: jws.header.keyIdentifier)
-    if let issuer = jws.payload.issuer {
-      guard issuer == keyIdentifierDid else { throw JWSValidatorError.invalidKeyIdentifier }
-      try await jwsSignatureValidator.validate(jws, issuerDid: issuer)
-    } else {
-      try await jwsSignatureValidator.validate(jws, issuerDid: keyIdentifierDid)
-    }
+    try await jwsSignatureValidator.validate(jws)
   }
 
   // MARK: Private
 
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
-
-  private func getIssuerDid(from keyIdentifier: String?) throws -> String {
-    guard
-      let keyIdentifier,
-      let issuerDid = keyIdentifier.split(separator: "#").first else
-    {
-      throw JWSValidatorError.invalidKeyIdentifier
-    }
-    return String(issuerDid)
-  }
+  @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
 }

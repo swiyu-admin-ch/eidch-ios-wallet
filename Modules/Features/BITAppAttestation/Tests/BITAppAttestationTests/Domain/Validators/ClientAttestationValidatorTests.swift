@@ -33,7 +33,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   func testValidate_count_success() async {
     _ = await validator(mockClientAttestation)
 
-    XCTAssertEqual(jwsValidator.validateIssuerDidActivationBufferCallsCount, 1)
+    XCTAssertEqual(jwsValidator.validateActivationBufferCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.getForCallsCount, 1)
     XCTAssertEqual(appIdentifierRepository.getCallsCount, 1)
   }
@@ -44,10 +44,10 @@ final class ClientAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_notTrustedDid_returnsFalse() async {
+  func testValidate_notTrustedIssuerWithTrustedKid_returnsTrue() async {
     let result = await validator(ClientAttestationJWT.Mock.sampleNotTrusted)
 
-    XCTAssertFalse(result)
+    XCTAssertTrue(result)
   }
 
   func testValidate_missingExpiredAt_returnsFalse() async {
@@ -75,6 +75,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_incorrectKid_returnsFalse() async {
+    didResolverSpy.getDidFromReturnValue = "did:tdw:mock.com"
     let result = await validator(ClientAttestationJWT.Mock.sampleIncorrectKid)
 
     XCTAssertFalse(result)
@@ -87,7 +88,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsValidatorThrows_returnsFalse() async {
-    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
+    jwsValidator.validateThrowableError = TestingError.error
 
     let result = await validator(mockClientAttestation)
 
@@ -103,7 +104,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   func testValidate_jwsValidatorThrowsError_returnsFalse() async {
-    jwsValidator.validateIssuerDidActivationBufferThrowableError = TestingError.error
+    jwsValidator.validateThrowableError = TestingError.error
 
     let result = await validator(mockClientAttestation)
 
@@ -118,6 +119,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   private var mockClientAttestation: ClientAttestation!
   private var validator: ClientAttestationValidator!
   private var jwsValidator: JWSValidatorMock<ClientAttestationJWT>!
+  private var didResolverSpy: DidResolverHelperProtocolSpy!
   private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy!
   private var jsonCanonicalizer: JsonCanonicalizerProtocolSpy!
   private var appIdentifierRepository: AppIdentifierRepositoryProtocolSpy!
@@ -128,6 +130,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
     appAttestationKeyRepository.getForReturnValue = keyPair
     jsonCanonicalizer.canonicalizeDataReturnValue = Data(base64URLEncoded: "eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6IjE4d0hMZUlnVzl3Vk42VkQxVHhncHF5MkxzellrTWY2SjhualZBaWJ2aE0iLCJ5IjoiLVY0ZFM0VWFMTWdQXzRmWTRqOGlyN2NsMVRYbEZkQWdjeDU1bzdUa2NTQSJ9")!
     appIdentifierRepository.getReturnValue = "ch.mock.identifier"
+    didResolverSpy.getDidFromReturnValue = "did:tdw:example.com"
   }
 
   private func registerMocks() {
@@ -135,11 +138,13 @@ final class ClientAttestationValidatorTests: XCTestCase {
     trustedDids = [ "did:tdw:example.com" ]
     supportedAlgorithms = [ .ES256 ]
     jwsValidator = JWSValidatorMock()
+    didResolverSpy = DidResolverHelperProtocolSpy()
     appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
     jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
     appIdentifierRepository = AppIdentifierRepositoryProtocolSpy()
 
     Container.shared.jwsValidator.register { self.jwsValidator }
+    Container.shared.didResolverHelper.register { self.didResolverSpy }
     Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
     Container.shared.attestationServiceTrustedDids.register { self.trustedDids }
     Container.shared.jsonCanonicalizer.register { self.jsonCanonicalizer }
@@ -147,5 +152,3 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
 }
-
-// swiftlint: enable implicitly_unwrapped_optional force_unwrapping

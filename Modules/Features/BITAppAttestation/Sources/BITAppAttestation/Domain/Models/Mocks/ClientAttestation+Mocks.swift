@@ -3,7 +3,7 @@ import Foundation
 @testable import BITCore
 @testable import BITJWT
 
-extension ClientAttestationJWT: Mockable {
+extension ClientAttestationJWT {
   struct Mock {
 
     // MARK: Internal
@@ -23,7 +23,7 @@ extension ClientAttestationJWT: Mockable {
     // MARK: Private
 
     private static func decodeClientAttestation(fromFile filename: String) -> ClientAttestation {
-      let data = getData(fromFile: filename, ofType: "txt", bundle: Bundle.module) ?? Data()
+      let data = Mocker.getData(fromFile: filename, ofType: "txt", bundle: Bundle.module) ?? Data()
       // swiftlint: disable force_cast force_try
       return try! JWSDecoder().decode(ClientAttestationJWT.self, from: data)
       // swiftlint: enable force_cast force_try
@@ -37,7 +37,7 @@ extension ClientAttestationJWT: Mockable {
       bundle: Bundle = Bundle.module)
       -> ClientAttestation
     {
-      let jwt: ClientAttestationJWT = decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
+      let jwt: ClientAttestationJWT = Mocker.decode(fromFile: filename, dateFormatter: .secondsSince1970, bundle: bundle)
       let header = JWSHeader(algorithm: algorithm, type: type, keyIdentifier: kid)
       return ClientAttestation(payload: jwt, rawPayload: "", rawJWS: "", header: header)
     }

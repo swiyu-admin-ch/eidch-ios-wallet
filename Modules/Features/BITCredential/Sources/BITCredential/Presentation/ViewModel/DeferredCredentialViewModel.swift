@@ -14,7 +14,9 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
     id = credential.id
     self.credential = credential
     issuerDisplay = credential.issuerDisplays.findDisplayWithFallback()
-    credentialDisplay = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
+
+    let display = getCredentialDisplayUseCase.execute(for: credential.displays, colorScheme: colorScheme)
+    credentialDisplay = display?.resolvePathTemplate(with: []) // Set empty claims as they aren't available yet but summary field can still contains a static value
   }
 
   // MARK: Public
@@ -24,11 +26,14 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
   public let issuerDisplay: CredentialIssuerDisplay?
   public var credentialDisplay: CredentialDisplay?
   public var environment: TrustEnvironment?
+  public let isRefreshable = false
+  public let isBatchPrivacyWarningVisible = false
 
   public var statusText: String {
     switch credential.progressionState {
     case .inProgress: L10n.tkDeferredCredentialStatusInProgress
     case .invalid: L10n.tkDeferredCredentialStatusInvalid
+    case .issuanceFailed: L10n.tkDeferredCredentialStatusIssuanceFailed
     }
   }
 
@@ -36,7 +41,8 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
     switch credential.progressionState {
     case .inProgress:
       Image(systemName: "clock")
-    case .invalid:
+    case .invalid,
+         .issuanceFailed:
       Image(systemName: "xmark")
     }
   }
@@ -49,6 +55,7 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
     switch credential.progressionState {
     case .inProgress: L10n.tkDeferredCredentialStatusInProgress
     case .invalid: L10n.tkDeferredCredentialStatusInvalid
+    case .issuanceFailed: L10n.tkDeferredCredentialStatusIssuanceFailed
     }
   }
 

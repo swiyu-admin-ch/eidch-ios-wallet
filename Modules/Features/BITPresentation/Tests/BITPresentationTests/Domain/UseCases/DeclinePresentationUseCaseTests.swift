@@ -50,12 +50,13 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
       try await useCase(context: contextMock)
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 0)
     }
   }
 
   func testExecute_Proximity_UsesRepositoryOnly() async throws {
     let proximityContext = PresentationRequestContext(
-      presentationRequest: .plain(contextMock.requestObject),
+      requestObjectJWS: contextMock.requestObjectJWS,
       compatibleCredentials: contextMock.compatibleCredentials,
       transport: .proximity)
     proximityContext.selectedCredential = contextMock.selectedCredential
@@ -64,6 +65,9 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
 
     XCTAssertTrue(proximityRepository.declineCalled)
     XCTAssertFalse(presentationRequestServiceSpy.declineUrlWithCalled)
+    XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
+    XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
+    XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
   }
 
   func testExecuteWithUrl_serviceThrows_throwsError() async throws {

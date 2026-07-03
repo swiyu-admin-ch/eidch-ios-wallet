@@ -3,7 +3,7 @@ import Moya
 
 // MARK: - NetworkErrorStatus
 
-public enum NetworkErrorStatus: Error, Equatable {
+public enum NetworkErrorStatus: Error, Equatable, Hashable {
 
   // >= 400
   case badRequest
@@ -22,6 +22,7 @@ public enum NetworkErrorStatus: Error, Equatable {
   case unsupportedMediaType
   case gone
   case invalidRequest
+  case serviceDeactivated
 
   // >= 500
   case internalServerError
@@ -72,6 +73,7 @@ public enum NetworkErrorStatus: Error, Equatable {
     case 413: self = .payloadTooLarge
     case 414: self = .uriTooLong
     case 415: self = .unsupportedMediaType
+    case 418: self = .serviceDeactivated
     case 422: self = .unprocessableEntity
     case 410: self = .gone
     case 500: self = .internalServerError
@@ -131,6 +133,7 @@ extension NetworkErrorStatus: LocalizedError {
     case .badGateway,
          .internalServerError,
          .notImplemented,
+         .serviceDeactivated,
          .serviceUnavailable:
       "Server not available"
 

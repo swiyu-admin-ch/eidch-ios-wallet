@@ -31,6 +31,7 @@ let package = Package(
     .package(path: "../../Platforms/BITNavigation"),
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITNetworking"),
+    .package(path: "../BITPushNotification"),
     .package(path: "../../Platforms/BITQRCode"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/hmlongco/Navigator", exact: "2.0.2"),
@@ -57,6 +58,7 @@ let package = Package(
         .product(name: "BITNavigation", package: "BITNavigation"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "BITNetworking", package: "BITNetworking"),
+        .product(name: "BITPushNotification", package: "BITPushNotification"),
         .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITAVWrapper", package: "eidch-ios-av-lib"),
         .product(name: "Factory", package: "Factory"),
@@ -92,6 +94,7 @@ let package = Package(
       name: "BITEIDRequestTests",
       dependencies: [
         "BITEIDRequest",
+        .product(name: "BITPushNotification", package: "BITPushNotification"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

@@ -1,30 +1,28 @@
 import Foundation
+import Security
 
-public class FetchDeferredCredentialContext {
+public struct FetchDeferredCredentialContext {
 
   // MARK: Lifecycle
 
-  public init(format: String, accessToken: String, deferredCredentialEndpoint: URL, privateKey: SecKey?, refreshToken: String? = nil) {
+  public init(
+    format: String,
+    authorization: IssuanceAuthorization,
+    deferredCredentialEndpoint: URL,
+    privateKey: SecKey?)
+  {
     self.format = format
-    self.accessToken = accessToken
+    self.authorization = authorization
     self.deferredCredentialEndpoint = deferredCredentialEndpoint
     self.privateKey = privateKey
-    self.refreshToken = refreshToken
   }
 
   // MARK: Public
 
-  public func updateTokens(from accessToken: AccessToken) {
-    self.accessToken = accessToken.accessToken
-    refreshToken = accessToken.refreshToken ?? refreshToken
-  }
+  public let authorization: IssuanceAuthorization
+  public let format: String
+  public let deferredCredentialEndpoint: URL
+  public let privateKey: SecKey?
 
   // MARK: Internal
-
-  let format: String
-  let deferredCredentialEndpoint: URL
-  let privateKey: SecKey?
-  var accessToken: String
-  var refreshToken: String?
-
 }

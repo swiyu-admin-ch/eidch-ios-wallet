@@ -22,16 +22,14 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
     do {
       guard
         keyAttestation.header.algorithm == .ES256,
-        let kid = keyAttestation.header.keyIdentifier,
-        hasValidKid(kid)
+        let did = try? didResolverHelper.getDid(from: keyAttestation.header.keyIdentifier),
+        attestationServiceTrustedDids.contains(did)
       else {
         throw KeyAttestationValidatorError.invalidHeader
       }
 
       guard
         keyAttestation.payload.expiredAt != nil,
-        let issuer = keyAttestation.payload.issuer,
-        attestationServiceTrustedDids.contains(issuer),
         supportedKeyStorageSecurityLevel.contains(keyAttestation.payload.keyStorage),
         try hasValidAttestedKey(keyPair, keyAttestation.payload.attestedKeys)
       else {
@@ -47,22 +45,13 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
 
   // MARK: Private
 
-  private static let kidSeparator: Character = "#"
-
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
+  @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
   @Injected(\.supportedKeyStorageSecurityLevel) private var supportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel]
 
   private var now: Date {
     Date()
-  }
-
-  private func hasValidKid(_ kid: String) -> Bool {
-    guard let did = kid.split(separator: Self.kidSeparator).first, !did.isEmpty else {
-      return false
-    }
-
-    return attestationServiceTrustedDids.contains(String(did))
   }
 
   private func hasValidAttestedKey(_ keyPair: VaultKeyPair, _ jwks: [JWK]) throws -> Bool {

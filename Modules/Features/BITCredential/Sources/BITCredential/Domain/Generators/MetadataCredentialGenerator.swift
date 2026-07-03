@@ -34,7 +34,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     // For now we assume all credentials in the batch are equivalent and use the first.
     // Claim equality across credentials will be validated in a future iteration.
     let primaryCredential = primaryCredentialWithKeyBinding.credential
-    let cluster = try createCluster(from: primaryCredential.claims, metadataClaims: selectedCredential.credentialMetadata?.claims)
+    let cluster = try createCluster(from: primaryCredential.getClaimsJSON(.nonTechnical), metadataClaims: selectedCredential.credentialMetadata?.claims ?? [])
     let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display, credentialId: context.credentialId)
 
     let bundleItems = try createBundleItems(from: credentialsWithKeyBinding)
@@ -81,7 +81,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
       displays: credentialDisplays,
       keyBindings: keyBindings,
       rawCredentialData: context.rawCredentialData,
-      authentication: CredentialAuthentication(accessToken: deferredCredentialContext.accessToken, refreshToken: deferredCredentialContext.refreshToken))
+      authentication: context.authentication)
   }
 
   // MARK: Private
@@ -98,56 +98,114 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     }
   }
 
-  private func createCluster(from anyClaims: [AnyClaim], metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim]?) throws -> CredentialClaimCluster {
-    #warning("object and array claims will be implemented in a future story")
-    let credentialClaim = try anyClaims.map { anyClaim in
-      let metadataClaim = getMetadataClaim(from: anyClaim, metadataClaims ?? [])
-      var index = Int(Int16.max)
-      if let metadataClaim {
-        index = metadataClaims?.firstIndex(of: metadataClaim) ?? Int(Int16.max)
-      }
-
-      return try createClaim(anyClaim: anyClaim, metadataClaim: metadataClaim, index: index)
+  private func createCluster(
+    from object: JSON,
+    metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim],
+    path: ClaimsPathPointer = [],
+    order: Int? = nil) throws
+    -> CredentialClaimCluster
+  {
+    let elements = try Array(object).compactMap { entry in
+      let path = path + [.string(entry.key)]
+      return try createElement(
+        from: entry.value,
+        path: path,
+        metadataClaims: metadataClaims,
+        order: getOrder(for: path, in: metadataClaims))
     }
 
-    return CredentialClaimCluster(claims: credentialClaim)
+    return CredentialClaimCluster(
+      path: path,
+      order: order ?? Int(Int16.max),
+      claims: elements.compactMap(\.claim),
+      childClusters: elements.compactMap(\.cluster),
+      displays: createClusterDisplays(for: path, metadataClaims: metadataClaims))
+  }
+
+  private func createArrayCluster(
+    from array: [Any],
+    metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim],
+    path: ClaimsPathPointer,
+    order: Int) throws
+    -> CredentialClaimCluster
+  {
+    let arrayPath = path + [.null]
+    let elements = try array.enumerated().map { index, element in
+      try createElement(
+        from: element,
+        path: path + [.index(index)],
+        metadataClaims: metadataClaims,
+        order: index)
+    }
+
+    return CredentialClaimCluster(
+      path: arrayPath,
+      order: order,
+      claims: elements.compactMap(\.claim),
+      childClusters: elements.compactMap(\.cluster),
+      displays: createClusterDisplays(for: arrayPath, metadataClaims: metadataClaims))
+  }
+
+  private func createElement(
+    from element: Any,
+    path: ClaimsPathPointer,
+    metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim],
+    order: Int) throws
+    -> GeneratedElement
+  {
+    if let object = element as? JSON {
+      return try .cluster(createCluster(
+        from: object,
+        metadataClaims: metadataClaims,
+        path: path,
+        order: order))
+    }
+
+    if let array = element as? [Any] {
+      return try .cluster(createArrayCluster(
+        from: array,
+        metadataClaims: metadataClaims,
+        path: path,
+        order: order))
+    }
+
+    let metadataClaim = getMetadataClaim(for: path, metadataClaims)
+    return try .claim(createClaim(
+      from: element,
+      path: path,
+      metadataClaim: metadataClaim,
+      order: order))
   }
 
   private func getMetadataClaim(
-    from anyClaim: AnyClaim,
+    for path: ClaimsPathPointer,
     _ metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim])
     -> CredentialIssuerMetadata.CredentialMetadata.Claim?
   {
     metadataClaims.first(where: { metadataClaim in
-      guard
-        let keyElement = metadataClaim.path.last,
-        case .string(let key) = keyElement
-      else {
-        return false
-      }
-
-      return key == anyClaim.key
+      metadataClaim.path.last != .null && metadataClaim.path.pointsAtSetOf(path, enforceLength: true)
     })
   }
 
   private func createClaim(
-    anyClaim: AnyClaim,
+    from value: Any,
+    path: ClaimsPathPointer,
     metadataClaim: CredentialIssuerMetadata.CredentialMetadata.Claim?,
-    index: Int)
-    throws -> CredentialClaim
+    order: Int) throws
+    -> CredentialClaim
   {
-    let valueType = valueTypeResolver(anyClaim) ?? .string
-    let value = getClaimValue(from: anyClaim, valueType: valueType)
+    let valueType = valueTypeResolver(value) ?? .string
+    let claimValue = getClaimValue(from: value, valueType: valueType)
 
-    if valueType.isImage, let value {
-      try imageValidator.validate(base64Image: value, against: valueType)
+    if valueType.isImage, let claimValue {
+      try imageValidator.validate(base64Image: claimValue, against: valueType)
     }
 
     return CredentialClaim(
-      path: metadataClaim?.path ?? [ClaimsPathPointerElement.string(anyClaim.key)],
-      value: value,
+      path: path,
+      value: claimValue,
       valueType: valueType.rawValue,
-      order: index,
+      order: order,
       displays: createClaimDisplays(from: metadataClaim?.display))
   }
 
@@ -170,17 +228,33 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     } ?? []
   }
 
-  private func getClaimValue(from anyClaim: AnyClaim, valueType: ValueType) -> String? {
-    guard let value = anyClaim.value else { return nil }
+  private func getOrder(for path: ClaimsPathPointer, in claims: [CredentialIssuerMetadata.CredentialMetadata.Claim]) -> Int {
+    claims.firstIndex(where: { $0.path.removedTrailingNull.pointsAtSetOf(path, enforceLength: true) }) ?? Int(Int16.max)
+  }
+
+  private func getClaimValue(from value: Any, valueType: ValueType) -> String? {
+    let primitiveString = JsonPrimitive(value)?.stringValue
 
     if
       valueType.isImage,
-      case .string(let stringValue) = value,
-      let imageValue = URL(string: stringValue)?.dataURLDataString
+      let primitiveString,
+      let imageValue = URL(string: primitiveString)?.dataURLDataString
     {
       return imageValue
     }
 
-    return value.rawValue
+    return primitiveString
+  }
+
+  private func createClusterDisplays(for path: ClaimsPathPointer, metadataClaims: [CredentialIssuerMetadata.CredentialMetadata.Claim]) -> [ClusterDisplay]
+  {
+    let metadataClaim = metadataClaims.first(where: { $0.path.removedTrailingNull == path.removedTrailingNull })
+
+    return metadataClaim?.display?.compactMap { display in
+      guard let name = display.name else {
+        return nil
+      }
+      return ClusterDisplay(locale: display.locale ?? UserLocale.defaultLocaleIdentifier, name: name)
+    } ?? []
   }
 }

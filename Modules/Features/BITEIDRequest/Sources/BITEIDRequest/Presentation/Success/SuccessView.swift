@@ -26,7 +26,7 @@ struct SuccessView: View {
       actions: [
         .primary(L10n.tkGlobalClose) { navigator in
           coordinator.cleanup()
-          navigator.returnToCheckpointSafely(Checkpoints.home, value: .startRequestCasePolling(caseId: caseId))
+          navigator.returnToHomeSafely(with: .startRequestCasePolling(caseId: caseId))
         },
       ])
       .navigationBarBackButtonHidden()

@@ -17,14 +17,10 @@ struct CameraPermissionModifier: ViewModifier {
   // MARK: Internal
 
   func body(content: Content) -> some View {
-    let transition = AnyTransition.asymmetric(
-      insertion: .identity,
-      removal: .push(from: .trailing)).combined(with: .opacity)
-
     content
       .fullScreenCover(isPresented: $isPermissionPresented) {
         permissionView
-          .transition(transition)
+          .transition(.push)
       }
       .animation(.easeInOut, value: state)
       .onAppear {
@@ -78,8 +74,8 @@ struct CameraPermissionModifier: ViewModifier {
           .body(L10n.tkReceiveCameraaccessneeded3Body),
         ],
         actions: [
-          .primary(L10n.tkGlobalTothesettings) { _ in
-            openLink(UIApplication.openSettingsURLString)
+          .primary(L10n.tkGlobalTothesettings, alt: L10n.tkGlobalTothesettings, hint: L10n.tkGlobalExternalLinkHint) { _ in
+            openSettings()
           },
         ])
         .toolbar { CloseButtonToolbar(action: { dismiss() }) }
@@ -99,12 +95,11 @@ struct CameraPermissionModifier: ViewModifier {
             Task { await requestPermission() }
           },
         ])
-        .toolbar { CloseButtonToolbar(action: { dismiss() }) }
     }
   }
 
-  private func openLink(_ urlString: String) {
-    guard let url = URL(string: urlString) else { return }
+  private func openSettings() {
+    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
     openURL(url)
   }
 

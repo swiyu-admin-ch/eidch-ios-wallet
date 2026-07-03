@@ -17,6 +17,7 @@ enum EIDRequestEndpoint {
   case submitFile(caseId: String, file: EIDRequestCaseFile)
   case submit(caseId: String)
   case pairingState(caseId: String, pairingId: String)
+  case registerPushId(caseId: String, body: PushIdRegistrationBody)
 }
 
 // MARK: TargetType
@@ -33,6 +34,7 @@ extension EIDRequestEndpoint: TargetType {
          .legalRepresentantVerification,
          .pairingState,
          .pairWallet,
+         .registerPushId,
          .startAutoVerification,
          .startOnlineSession,
          .validateAttestations:
@@ -64,6 +66,8 @@ extension EIDRequestEndpoint: TargetType {
       "cases/v1/\(caseId)/files"
     case .submit(let caseId):
       "cases/v1/\(caseId)/submit"
+    case .registerPushId(let caseId, _):
+      "api/rest/eid/\(caseId)/peer-push-id"
     }
   }
 
@@ -78,6 +82,7 @@ extension EIDRequestEndpoint: TargetType {
          .legalRepresentantVerification,
          .pairingState: .get
     case .pairWallet,
+         .registerPushId,
          .startAutoVerification,
          .startOnlineSession: .put
     }
@@ -86,6 +91,7 @@ extension EIDRequestEndpoint: TargetType {
   var task: Moya.Task {
     switch self {
     case .apply(let body as Codable),
+         .registerPushId(_, let body as Codable),
          .validateAttestations(let body as Codable):
       .requestJSONEncodable(body)
     case .submitFile(_, file: let file):
@@ -118,6 +124,7 @@ extension EIDRequestEndpoint: TargetType {
          .legalRepresentantVerification,
          .pairingState,
          .pairWallet,
+         .registerPushId,
          .startAutoVerification,
          .startOnlineSession,
          .submit:

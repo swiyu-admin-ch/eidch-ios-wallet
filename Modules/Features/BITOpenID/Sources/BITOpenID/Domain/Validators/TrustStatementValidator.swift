@@ -17,10 +17,10 @@ struct TrustStatementValidator: TrustStatementValidatorProtocol {
 
   func validate(_ trustStatement: SdJWS<some TrustStatement & Decodable>, for subject: String) async -> Bool {
     guard
-      let issuer = trustStatement.payload.issuer,
       trustStatement.resolvedPayload.subject == subject,
       trustStatement.header.algorithm == JWTAlgorithm.ES256,
-      (try? await jwsValidator.validate(trustStatement)) != nil
+      (try? await jwsValidator.validate(trustStatement)) != nil,
+      let issuer = try? didResolverHelper.getDid(from: trustStatement.header.keyIdentifier)
     else { return false }
     return await tokenStatusListValidator.validate(trustStatement.payload.statusList, issuer: issuer) == .valid
   }
@@ -28,5 +28,6 @@ struct TrustStatementValidator: TrustStatementValidatorProtocol {
   // MARK: Private
 
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
+  @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
   @Injected(\.tokenStatusListValidator) private var tokenStatusListValidator: AnyStatusCheckValidatorProtocol
 }

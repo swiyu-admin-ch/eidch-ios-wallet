@@ -66,7 +66,7 @@ final class CredentialRepositoryTest: XCTestCase {
 
     try await repository.delete(createdCredential.id)
 
-    XCTAssertTrue(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 1)
     XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier, keyBinding.id.uuidString)
     XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm, .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
   }
@@ -87,8 +87,52 @@ final class CredentialRepositoryTest: XCTestCase {
 
     try await repository.delete(createdCredential.id)
 
-    XCTAssertTrue(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 1)
     XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier, keyBinding.id.uuidString)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm, .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
+  }
+
+  func testDeleteCredential_deletesVerifiableCredentialDPoPKeyPair() async throws {
+    let dpopBinding = KeyBinding(
+      id: UUID(),
+      algorithm: VaultAlgorithm.eciesEncryptionStandardVariableIVX963SHA256AESGCM.rawValue,
+      bindingType: .hardware)
+    var credential = VerifiableCredential.Mock.sampleWithoutKeyBinding
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: .dpop,
+      refreshToken: credential.authentication.refreshToken,
+      dpopBinding: dpopBinding)
+    let createdCredential = try await repository.create(verifiableCredential: credential)
+
+    try await repository.delete(createdCredential.id)
+
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 1)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier, dpopBinding.id.uuidString)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm, .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
+  }
+
+  func testDeleteCredential_deletesDeferredCredentialDPoPKeyPair() async throws {
+    let dpopBinding = KeyBinding(
+      id: UUID(),
+      algorithm: VaultAlgorithm.eciesEncryptionStandardVariableIVX963SHA256AESGCM.rawValue,
+      bindingType: .hardware)
+    let authentication = CredentialAuthentication(
+      accessToken: "access-token",
+      tokenType: .dpop,
+      dpopBinding: dpopBinding)
+    let credential = DeferredCredential(
+      transactionId: "tx-id",
+      endpoint: "https://issuer/deferred",
+      format: "vc+sd-jwt",
+      issuerUrl: "https://issuer",
+      authentication: authentication)
+    let createdCredential = try await repository.create(deferredCredential: credential)
+
+    try await repository.delete(createdCredential.id)
+
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 1)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier, dpopBinding.id.uuidString)
     XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm, .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
   }
 
@@ -109,7 +153,7 @@ final class CredentialRepositoryTest: XCTestCase {
 
     try await repository.delete(createdCredential.id)
 
-    XCTAssertFalse(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 0)
     await XCTAssertCredentialNotFound(id: createdCredential.id)
   }
 
@@ -132,8 +176,24 @@ final class CredentialRepositoryTest: XCTestCase {
 
     try await repository.delete(createdCredential.id)
 
-    XCTAssertTrue(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCalled)
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 1)
     await XCTAssertCredentialNotFound(id: createdCredential.id)
+  }
+
+  func testDeleteCredential_deleteKeyPairsFalse_deleteKeyPairNotCalled() async throws {
+    let deferredCredential = DeferredCredential(
+      transactionId: "tx-id",
+      endpoint: "https://issuer/deferred",
+      format: "vc+sd-jwt",
+      issuerUrl: "https://issuer",
+      keyBindings: [],
+      authentication: CredentialAuthentication(accessToken: "accessToken"))
+    let createdDeferredCredential = try await repository.create(deferredCredential: deferredCredential)
+
+    try await repository.delete(createdDeferredCredential.id, deleteKeyPairs: false)
+
+    XCTAssertEqual(keyManagerSpy.deleteKeyPairWithIdentifierAlgorithmCallsCount, 0)
+    await XCTAssertCredentialNotFound(id: createdDeferredCredential.id)
   }
 
   func testGetCredential() async throws {
@@ -150,6 +210,59 @@ final class CredentialRepositoryTest: XCTestCase {
     let credentials = try await repository.getAll()
 
     XCTAssertEqual(credentials.count, 2)
+  }
+
+  func testGetIssuanceSummary_success() async throws {
+    let firstBundleItem = BundleItem(payload: Data("first".utf8), presented: false)
+    let secondBundleItem = BundleItem(payload: Data("second".utf8), presented: true)
+    let thirdBundleItem = BundleItem(payload: Data("third".utf8), presented: false)
+    let issuedAt = Date(timeIntervalSince1970: 1_234_567)
+    let credential = VerifiableCredential(
+      createdAt: issuedAt,
+      progressionState: .accepted,
+      bundleItems: [firstBundleItem, secondBundleItem, thirdBundleItem],
+      nextPresentableBundleItemId: firstBundleItem.id,
+      format: "vc+sd-jwt",
+      issuerUrl: "https://issuer",
+      issuer: "issuer",
+      authentication: CredentialAuthentication(accessToken: "accessToken"))
+    let createdCredential = try await repository.create(verifiableCredential: credential)
+
+    let summary = try await repository.getIssuanceSummary(id: createdCredential.id)
+
+    XCTAssertEqual(summary, CredentialIssuanceSummary(issuedAt: issuedAt, available: 2, total: 3))
+  }
+
+  func testGetIssuanceSummary_refreshedCredential_usesRefreshedAt() async throws {
+    let issuedAt = Date(timeIntervalSince1970: 1_234_567)
+    let refreshedAt = Date(timeIntervalSince1970: 2_345_678)
+    let bundleItem = BundleItem(payload: Data("first".utf8), presented: false)
+    let credential = VerifiableCredential(
+      createdAt: issuedAt,
+      refreshedAt: refreshedAt,
+      progressionState: .accepted,
+      bundleItems: [bundleItem],
+      nextPresentableBundleItemId: bundleItem.id,
+      format: "vc+sd-jwt",
+      issuerUrl: "https://issuer",
+      issuer: "issuer",
+      authentication: CredentialAuthentication(accessToken: "accessToken"))
+    let createdCredential = try await repository.create(verifiableCredential: credential)
+
+    let summary = try await repository.getIssuanceSummary(id: createdCredential.id)
+
+    XCTAssertEqual(summary.issuedAt, refreshedAt)
+  }
+
+  func testGetIssuanceSummary_deferredCredential_throwsUnsupportedCredential() async throws {
+    let credential = try await repository.create(deferredCredential: .Mock.sample)
+
+    do {
+      _ = try await repository.getIssuanceSummary(id: credential.id)
+      XCTFail("Expecting CredentialRepositoryError.unsupportedCredential error")
+    } catch {
+      XCTAssertEqual(error as? CredentialRepositoryError, .unsupportedCredential)
+    }
   }
 
   // MARK: - Verifiable Credentials
@@ -182,6 +295,25 @@ final class CredentialRepositoryTest: XCTestCase {
     let database = Container.shared.dataStore()
     let updatedEntity = try XCTUnwrap(try database.get(CredentialEntity.self, forPrimaryKey: credential.id))
     XCTAssertEqual(updatedEntity.verifiableCredential?.bundleItems[0].status, .expired)
+  }
+
+  func testUpdateVerifiableCredential_storesRefreshedAt() async throws {
+    let refreshedAt = Date(timeIntervalSince1970: 1_234_567)
+    let bundleItem = BundleItem(payload: Data())
+    let credential = VerifiableCredential(
+      refreshedAt: refreshedAt,
+      bundleItems: [bundleItem],
+      nextPresentableBundleItemId: bundleItem.id,
+      format: "vc+sd-jwt",
+      issuerUrl: "https://issuer.example",
+      issuer: "issuer",
+      authentication: CredentialAuthentication(accessToken: "access-token"))
+    let verifiableCredential = try VerifiableCredentialEntity.Mock.create()
+    _ = try CredentialEntity.Mock.create(id: credential.id, verifiableCredential: verifiableCredential)
+
+    let storedCredential = try await repository.update(verifiableCredential: credential)
+
+    XCTAssertEqual(storedCredential.refreshedAt?.timeIntervalSince1970, refreshedAt.timeIntervalSince1970)
   }
 
   func testCreateVerifiableCredential_withBatchData_storesBatchData() async throws {

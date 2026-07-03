@@ -11,7 +11,26 @@ import Spyable
 
 @Spyable
 public protocol ProofOfPossessionGeneratorProtocol {
-  func callAsFunction(for body: Encodable, audience: String?, challengeEndpoint: URL, clientAttestation: ClientAttestation) async throws -> ClientAttestationProofOfPossession
+  func callAsFunction(
+    for body: Encodable,
+    audience: String?,
+    challengeEndpoint: URL,
+    clientAttestation: ClientAttestation,
+    encoder: JSONEncoder) async throws
+    -> ClientAttestationProofOfPossession
+}
+
+extension ProofOfPossessionGeneratorProtocol {
+  public func callAsFunction(
+    for body: Encodable,
+    audience: String? = nil,
+    challengeEndpoint: URL,
+    clientAttestation: ClientAttestation,
+    encoder: JSONEncoder = JSONEncoder()) async throws
+    -> ClientAttestationProofOfPossession
+  {
+    try await callAsFunction(for: body, audience: audience, challengeEndpoint: challengeEndpoint, clientAttestation: clientAttestation, encoder: encoder)
+  }
 }
 
 // MARK: - ProofOfPossessionGenerator
@@ -20,11 +39,18 @@ struct ProofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol {
 
   // MARK: Internal
 
-  func callAsFunction(for body: Encodable, audience: String?, challengeEndpoint: URL, clientAttestation: ClientAttestation) async throws -> ClientAttestationProofOfPossession {
+  func callAsFunction(
+    for body: Encodable,
+    audience: String?,
+    challengeEndpoint: URL,
+    clientAttestation: ClientAttestation,
+    encoder: JSONEncoder) async throws
+    -> ClientAttestationProofOfPossession
+  {
     let challenge = try await fetchChallenge(challengeEndpoint)
     let clientAttestationKey = try appAttestationKeyRepository.get(for: .client)
 
-    let canonicalizedBody = try jsonCanonicalizer.canonicalize(data: JSONEncoder().encode(body))
+    let canonicalizedBody = try jsonCanonicalizer.canonicalize(data: encoder.encode(body))
     let bodyHash = sha256Hasher.hash(canonicalizedBody).hexString
 
     let jwt = ClientAttestationProofOfPossessionJWT(

@@ -1,39 +1,56 @@
-import XCTest
+import BITL10n
+import Factory
+import Foundation
+import Spyable
+import Testing
 @testable import BITAppInfo
 
-final class VersionEnforcementViewModelTests: XCTestCase {
+struct VersionEnforcementViewModelTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    let versionEnforcementRouter = VersionEnforcementRouterMock()
+    let versionEnforcementDelegate = VersionEnforcementDelegateSpy()
+    let getAppVersionUseCase = GetAppVersionUseCaseProtocolSpy()
+    getAppVersionUseCase.callAsFunctionReturnValue = Version.Mock.sample
+
+    Container.shared.getAppVersionUseCase.register { getAppVersionUseCase }
+
+    viewModel = VersionEnforcementViewModel(router: versionEnforcementRouter, versionEnforcement: .Mock.forced, delegate: versionEnforcementDelegate)
+    self.versionEnforcementRouter = versionEnforcementRouter
+    self.versionEnforcementDelegate = versionEnforcementDelegate
+    self.getAppVersionUseCase = getAppVersionUseCase
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    mockRouter = VersionEnforcementRouterMock()
+  @Test(arguments: [
+    VersionEnforcement.Mock.noDisplay,
+    VersionEnforcement.Mock.blacklistedDevice,
+    VersionEnforcement.Mock.outdatedOsVersion,
+    VersionEnforcement.Mock.optional,
+    VersionEnforcement.Mock.forced,
+  ])
+  mutating func initialState(for enforcement: VersionEnforcement) {
+    viewModel = VersionEnforcementViewModel(router: versionEnforcementRouter, versionEnforcement: enforcement, delegate: versionEnforcementDelegate)
 
-    viewModel = VersionEnforcementViewModel(router: mockRouter, versionEnforcement: mockVersionEnforcement)
+    #expect(viewModel.enforcementType == enforcement.type)
+    #expect(viewModel.message == enforcement.messages.findDisplayWithFallback())
   }
 
-  func testInitialState() {
-    XCTAssertFalse(viewModel.title.isEmpty)
-    XCTAssertFalse(viewModel.content.isEmpty)
-  }
+  @Test
+  func dismissToHomeScreen() {
+    viewModel.dismissToHomeScreen()
 
-  func testVersionEnforcementWithoutDisplay() {
-    viewModel = VersionEnforcementViewModel(versionEnforcement: .Mock.noDisplaysSample)
-
-    XCTAssertEqual(viewModel.title, "n/a")
-    XCTAssertEqual(viewModel.content, "n/a")
-  }
-
-  func testOpenAppStore() {
-    viewModel.openAppStore()
-
-    XCTAssertTrue(mockRouter.didCallExternalLink)
+    #expect(versionEnforcementRouter.closeWithCompletionCalled == true)
+    #expect(versionEnforcementDelegate.didDismissVersionEnforcementCalled == true)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var mockRouter: VersionEnforcementRouterMock!
-  private var mockVersionEnforcement = VersionEnforcement.Mock.sample
-  private var viewModel: VersionEnforcementViewModel!
-  // swiftlint:enable all
+  private var viewModel: VersionEnforcementViewModel
+  private let versionEnforcementRouter: VersionEnforcementRouterMock
+  private let versionEnforcementDelegate: VersionEnforcementDelegateSpy
+  private let getAppVersionUseCase: GetAppVersionUseCaseProtocolSpy
 }

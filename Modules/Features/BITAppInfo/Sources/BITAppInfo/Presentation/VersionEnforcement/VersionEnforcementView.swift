@@ -15,8 +15,6 @@ struct VersionEnforcementView: View {
 
   // MARK: Internal
 
-  @Environment(\.horizontalSizeClass) var horizontalSizeClass
-  @Environment(\.verticalSizeClass) var verticalSizeClass
   @Environment(\.sizeCategory) var sizeCategory
 
   var body: some View {
@@ -27,7 +25,7 @@ struct VersionEnforcementView: View {
             .resizable()
             .scaledToFill()
             .clipped()
-            .overlay(.black.opacity(Defaults.overlayDimming)))
+            .overlay(.black.opacity(overlayDimming)))
         .clipped()
         .ignoresSafeArea()
         .accessibilityHidden(true)
@@ -39,84 +37,26 @@ struct VersionEnforcementView: View {
 
   // MARK: Private
 
-  private enum Defaults {
-    static let overlayDimming = 0.21
-    static let contentMaxWidth = 530.0
-  }
-
   @State private var viewModel: VersionEnforcementViewModel
 
+  private let overlayDimming = 0.21
+
+  @Orientation private var orientation
+
+  @ViewBuilder
   private func content() -> some View {
-    ViewThatFits(in: .vertical) {
-      contentLayout()
-      scrollableContentLayout()
-    }
-  }
-}
+    switch viewModel.enforcementType {
+    case .forced:
+      VersionEnforcementForcedView(message: viewModel.message)
 
-// MARK: - Components
+    case .optional:
+      VersionEnforcementOptionalView(message: viewModel.message, onDismiss: viewModel.dismissToHomeScreen)
 
-extension VersionEnforcementView {
-  private func mainContent() -> some View {
-    VStack(spacing: .x2) {
-      Text(viewModel.title)
-        .font(.custom.title)
-        .foregroundColor(.white)
-        .multilineTextAlignment(.center)
-        .accessibilityLabel(viewModel.title)
+    case .outdatedOsVersion:
+      VersionEnforcementOudatedOsView()
 
-      Text(viewModel.content)
-        .font(.custom.body)
-        .foregroundColor(.white)
-        .multilineTextAlignment(.center)
-        .accessibilityLabel(viewModel.content)
-    }
-    .padding(.horizontal, .x6)
-  }
-
-  private func footer() -> some View {
-    Button(action: viewModel.openAppStore) {
-      Text(L10n.versionEnforcementButton)
-    }
-    .padding(.bottom, .x2)
-    .controlSize(.large)
-    .buttonStyle(.primary)
-    .accessibilityLabel(L10n.versionEnforcementButton)
-  }
-
-  private func contentLayout() -> some View {
-    VStack(spacing: 0) {
-      Spacer()
-      mainContent()
-      Spacer()
-      footer()
-    }
-    .frame(maxWidth: Defaults.contentMaxWidth)
-  }
-
-  private func scrollableContentLayout() -> some View {
-    ZStack(alignment: .bottom) {
-      VStack {
-        ScrollView(showsIndicators: false) {
-          mainContent()
-            .frame(maxWidth: Defaults.contentMaxWidth)
-        }
-
-        if sizeCategory.isAccessibilityCategory {
-          footer()
-        }
-      }
-    }
-    .if(!sizeCategory.isAccessibilityCategory, transform: {
-      $0.safeAreaInset(edge: .bottom) {
-        footer()
-      }
-    })
-    .overlay(alignment: .top) {
-      Color.clear
-        .background(ThemingAssets.Brand.Core.white.swiftUIColor)
-        .ignoresSafeArea(edges: .top)
-        .frame(height: 0)
+    case .blacklistedDevice:
+      VersionEnforcementBlacklistedDeviceView()
     }
   }
 }

@@ -33,15 +33,15 @@ struct OcaBundler: OcaBundlerProtocol {
     }
 
     let captureBases = try decodeCaptureBases(json)
-    let overlays = try brandingOverlayResolver.resolve(overlays: decodeOverlays(json))
+    let overlays = try templateResolver(overlays: decodeOverlays(json))
 
     return try OcaBundle(captureBases: captureBases, overlays: overlays)
   }
 
   // MARK: Private
 
-  @Injected(\.ocaCaptureBaseDigestsValidator) private var digestsValidator: OcaCaptureBaseDigestsValidatorProtocol
-  @Injected(\.brandingOverlayResolver) private var brandingOverlayResolver: BrandingOverlayResolverProtocol
+  @Injected(\.ocaCaptureBaseDigestsValidator) private var digestsValidator
+  @Injected(\.overlayTemplateResolver) private var templateResolver
 
   private func decodeCaptureBases(_ json: [String: Any]) throws -> [any CaptureBase] {
     guard let captureBasesJSON = json["capture_bases"] as? [[String: Any]] else {

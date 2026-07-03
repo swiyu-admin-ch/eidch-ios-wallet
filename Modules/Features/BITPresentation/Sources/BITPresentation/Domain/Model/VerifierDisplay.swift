@@ -1,12 +1,11 @@
 import BITCore
 import BITCredential
-import BITOpenID
 import Factory
 import Foundation
 
 // MARK: - VerifierDisplay
 
-public struct VerifierDisplay: Equatable {
+struct VerifierDisplay: Equatable {
 
   init(name: String?, locale: UserLocale? = nil, logo: Data?, trustInformation: TrustInformation) {
     self.name = name

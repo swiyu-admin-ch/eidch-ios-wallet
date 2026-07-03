@@ -13,6 +13,7 @@ public struct OpenIdConfiguration: Codable, Equatable {
     case issuerEndpoint = "issuer"
     case tokenEndpoint = "token_endpoint"
     case jwksURI = "jwks_uri"
+    case dpopSigningAlgValuesSupported = "dpop_signing_alg_values_supported"
 
     case authorizationEndpoint = "authorization_endpoint"
     case userinfoEndpoint = "userinfo_endpoint"
@@ -65,7 +66,7 @@ public struct OpenIdConfiguration: Codable, Equatable {
   public let tokenEndpoint: URL
 
   let jwksURI: URL?
-
+  let dpopSigningAlgValuesSupported: [String]?
   let authorizationEndpoint: String?
   let responseTypesSupported: [String]?
   let subjectTypesSupported: [String]?
@@ -108,6 +109,15 @@ public struct OpenIdConfiguration: Codable, Equatable {
   let frontchannelLogoutSessionSupported: Bool?
   let backchannelLogoutSupported: Bool?
   let backchannelLogoutSessionSupported: Bool?
+
+  /// RFC 9449 servers advertise DPoP signing support via `dpop_signing_alg_values_supported`.
+  func supportsDPoP(for supportedAlgorithms: some Collection<String>) -> Bool {
+    guard let dpopSigningAlgValuesSupported else {
+      return false
+    }
+
+    return !Set(dpopSigningAlgValuesSupported).isDisjoint(with: supportedAlgorithms)
+  }
 
   // MARK: Private
 

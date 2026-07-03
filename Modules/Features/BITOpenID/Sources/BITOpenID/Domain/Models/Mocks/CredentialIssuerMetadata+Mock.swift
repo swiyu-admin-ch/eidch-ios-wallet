@@ -10,6 +10,7 @@ extension CredentialIssuerMetadata: Mockable {
     static let simpleSampleWithoutDisplays: CredentialIssuerMetadata = Mocker.decode(fromFile: "credential-metadata-empty-displays", bundle: Bundle.module)
     static let simpleSampleWithoutValueType: CredentialIssuerMetadata = Mocker.decode(fromFile: "credential-metadata-simple-sample-without-value-type", bundle: Bundle.module)
     static let simpleSampleKeyAttestationRequired: CredentialIssuerMetadata = Mocker.decode(fromFile: "credential-metadata-simple-sample-key-attestation-required", bundle: Bundle.module)
+    static let credentialComplex: CredentialIssuerMetadata = Mocker.decode(fromFile: "credential-complex", bundle: Bundle.module) // https://www.rfc-editor.org/rfc/rfc9901.html#name-complex-structured-sd-jwt
     static let sampleNoClaims: CredentialIssuerMetadata = Mocker.decode(fromFile: "uetliberg-credential-metadata-noclaims", bundle: Bundle.module)
     static let sampleMultipass: CredentialIssuerMetadata = Mocker.decode(fromFile: "multipass-credential-metadata", bundle: Bundle.module)
     static let sampleUnknownAlgorithm: CredentialIssuerMetadata = Mocker.decode(fromFile: "credential-metadata-unknown-algo", bundle: Bundle.module)
@@ -31,6 +32,7 @@ extension CredentialIssuerMetadata: Mockable {
     static let simpleSampleData: Data = Mocker.getData(fromFile: "credential-metadata-simple-sample", bundle: Bundle.module) ?? Data()
     static let simpleSampleWithoutDisplaysData: Data = Mocker.getData(fromFile: "credential-metadata-empty-displays", bundle: Bundle.module) ?? Data()
     static let simpleSampleKeyAttestationRequiredData: Data = Mocker.getData(fromFile: "credential-metadata-simple-sample-key-attestation-required", bundle: Bundle.module) ?? Data()
+    static let credentialComplexData: Data = Mocker.getData(fromFile: "credential-complex", bundle: Bundle.module) ?? Data() // https://www.rfc-editor.org/rfc/rfc9901.html#name-complex-structured-sd-jwt
     static let sampleNoClaimsData: Data = Mocker.getData(fromFile: "uetliberg-credential-metadata-noclaims", bundle: Bundle.module) ?? Data()
     static let sampleMultipassData: Data = Mocker.getData(fromFile: "multipass-credential-metadata", bundle: Bundle.module) ?? Data()
     static let sampleUnknownAlgorithmData: Data = Mocker.getData(fromFile: "credential-metadata-unknown-algo", bundle: Bundle.module) ?? Data()

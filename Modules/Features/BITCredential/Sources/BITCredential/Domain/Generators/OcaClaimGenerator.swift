@@ -1,4 +1,4 @@
-import BITAnyCredentialFormat
+import BITClaimsPathPointer
 import BITCore
 import BITCredentialShared
 import BITCrypto
@@ -12,7 +12,7 @@ import Spyable
 
 @Spyable
 protocol OcaClaimGeneratorProtocol {
-  func generate(for anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute) throws -> CredentialClaim
+  func generate(path: ClaimsPathPointer, value: String?, ocaAttribute: OverlayBundleAttribute?, order: Int?) throws -> CredentialClaim
 }
 
 // MARK: - OcaClaimGenerator
@@ -21,34 +21,34 @@ struct OcaClaimGenerator: OcaClaimGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(for anyClaim: AnyClaim, ocaAttribute: OverlayBundleAttribute) throws -> CredentialClaim {
-    var value = anyClaim.value?.rawValue
+  func generate(path: ClaimsPathPointer, value: String?, ocaAttribute: OverlayBundleAttribute?, order: Int?) throws -> CredentialClaim {
+    var value = value
     var valueType: ValueType?
     var valueDisplayInfo: String?
-    if ocaAttribute.standard == .dataURLScheme, let dataUrl = value, let (type, dataString) = parseDataURL(dataUrl) {
+    if ocaAttribute?.standard == .dataURLScheme, let dataUrl = value, let (type, dataString) = parseDataURL(dataUrl) {
       value = dataString
       valueType = type
-    } else if ocaAttribute.attributeType == .dateTime {
+    } else if ocaAttribute?.attributeType == .dateTime, let ocaAttribute {
       let result = value.flatMap { overlayAttributeDateParser.parse($0, with: ocaAttribute) }
       value = result?.normalizedDate ?? value
       valueDisplayInfo = result?.format.rawValue
       valueType = .dateTime
     }
 
-    let finalValueType = valueType ?? ValueType(ocaAttribute)
+    let finalValueType = valueType ?? ocaAttribute.map(ValueType.init) ?? .string
 
     if finalValueType.isImage, let value {
       try imageValidator.validate(base64Image: value, against: finalValueType)
     }
 
     return CredentialClaim(
-      path: anyClaim.path,
+      path: path,
       value: value,
       valueType: finalValueType.rawValue,
       valueDisplayInfo: valueDisplayInfo,
-      order: ocaAttribute.order ?? Int(Int16.max),
-      isSensitive: ocaAttribute.isSensitive,
-      displays: createClaimDisplays(from: ocaAttribute, value: value))
+      order: order ?? ocaAttribute?.order ?? Int(Int16.max),
+      isSensitive: ocaAttribute?.isSensitive ?? false,
+      displays: ocaAttribute.map { createClaimDisplays(from: $0, value: value) } ?? [])
   }
 
   // MARK: Private
@@ -69,7 +69,7 @@ struct OcaClaimGenerator: OcaClaimGeneratorProtocol {
   }
 
   private func createClaimDisplays(from ocaAttribute: OverlayBundleAttribute, value: String?) -> [CredentialClaimDisplay] {
-    let displays = ocaAttribute.labels.map { locale, label in
+    let displays: [CredentialClaimDisplay] = ocaAttribute.labels.map { locale, label in
       let entries = ocaAttribute.entryMapping.first { $0.key == locale }?.value ?? [:]
       let localizedValue = entries.first { $0.key == value }?.value
       return CredentialClaimDisplay(locale: locale, name: label, value: localizedValue)

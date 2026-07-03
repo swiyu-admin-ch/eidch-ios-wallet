@@ -3,13 +3,6 @@ import BITNetworking
 import Foundation
 import Moya
 
-// MARK: - PresentationEndpointError
-
-private enum PresentationEndpointError: Error {
-  case incorrectParameters
-  case incorrectData
-}
-
 // MARK: - PresentationEndpoint
 
 enum PresentationEndpoint {
@@ -61,16 +54,17 @@ extension PresentationEndpoint: TargetType {
 
   var headers: [String: String]? {
     switch self {
-    case .requestObject:
-      NetworkHeader.standard.raw
+    case .requestObject: [
+        NetworkHeader.accept("application/oauth-authz-req+jwt, application/jwt"),
+      ].raw
     case .errorSubmission:
       [
         NetworkHeader.form,
       ].raw
-    case .submission(_, let authorizationResponse):
+    case .submission:
       [
         NetworkHeader.form,
-        NetworkHeader.swiyuAPIVersion(authorizationResponse.type == .dcql ? "2" : "1"),
+        NetworkHeader.swiyuAPIVersion("2"),
       ].raw
     }
   }

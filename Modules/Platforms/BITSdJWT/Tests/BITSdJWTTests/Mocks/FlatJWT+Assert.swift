@@ -13,3 +13,12 @@ extension FlatJWT {
     XCTAssertEqual(json[FlatJWT.CodingKeys.testKey3.rawValue] as? String, testKey3)
   }
 }
+
+extension SdJWS<FlatJWT> {
+  func assertDisclosures() {
+    XCTAssertEqual(disclosures.count, 3)
+    disclosures.assertContains([.string(FlatJWT.CodingKeys.testKey1.rawValue)], rawDisclosure: FlatJWT.Mock.disclosure1)
+    disclosures.assertContains([.string(FlatJWT.CodingKeys.testKey2.rawValue)], rawDisclosure: FlatJWT.Mock.disclosure2)
+    disclosures.assertContains([.string(FlatJWT.CodingKeys.testKey3.rawValue)], rawDisclosure: FlatJWT.Mock.disclosure3)
+  }
+}

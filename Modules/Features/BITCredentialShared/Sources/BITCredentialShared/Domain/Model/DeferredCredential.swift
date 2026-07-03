@@ -76,6 +76,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
   public enum ProgressionState: String, Codable {
     case inProgress
     case invalid
+    case issuanceFailed
   }
 
   public static let defaultPollingInterval = 5

@@ -1,7 +1,6 @@
 import BITActivity
 import BITAppAttestation
 import BITAppAuth
-import BITCore
 import BITEntities
 import BITLocalAuthentication
 import BITNetworking
@@ -44,7 +43,7 @@ struct NonComplianceRepository: NonComplianceRepositoryProtocol {
 
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.nonComplianceBaseURL) private var baseURL
-  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator
+  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
   @Injected(\.userSession) private var userSession: Session
   @Injected(\.nonComplianceReportRequestBodyGenerator) private var reportBodyGenerator: NonComplianceReportRequestBodyGeneratorProtocol
@@ -52,6 +51,7 @@ struct NonComplianceRepository: NonComplianceRepositoryProtocol {
   @Injected(\.dataStore) private var database
   @Injected(\.activityActorDisplayFactory) private var activityActorDisplayFactory
   @Injected(\.nonComplianceActivityFactory) private var nonComplianceActivityFactory
+  @Injected(\.nonComplianceJsonEncoder) private var nonComplianceJsonEncoder: JSONEncoder
 
   private func generateClientAttestationPlugin(for body: Encodable) async throws -> ClientAttestationPlugin {
     let clientAttestation = try await clientAttestationRepository.get(using: userContext())
@@ -59,7 +59,8 @@ struct NonComplianceRepository: NonComplianceRepositoryProtocol {
       for: body,
       audience: baseURL.absoluteString,
       challengeEndpoint: URL(target: NonComplianceEndpoint.challenge),
-      clientAttestation: clientAttestation)
+      clientAttestation: clientAttestation,
+      encoder: nonComplianceJsonEncoder)
 
     return ClientAttestationPlugin(clientAttestation: clientAttestation.rawJWS, proofOfPossession: proofOfPossession.rawJWS)
   }

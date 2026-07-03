@@ -64,14 +64,14 @@ final class EIDRequestRepositoryTests: XCTestCase {
     let response = try await repository.apply(with: mockeIDRequestPayload)
 
     XCTAssertEqual(expectedResponse, response)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.body as? EIDRequestPayload, mockeIDRequestPayload)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, strURL.absoluteString)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, URL(target: EIDRequestEndpoint.challenge))
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.body as? EIDRequestPayload, mockeIDRequestPayload)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.audience, strURL.absoluteString)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.challengeEndpoint, URL(target: EIDRequestEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.clientAttestation, mockClientAttestation)
   }
 
   func testApplyRequest_generateProofOfPossessionsFails_throwsError() async throws {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     guard let mockeIDRequestPayload: EIDRequestPayload = MRZData.Mock.array.first?.payload else {
       fatalError("Failed to create mock EIDRequestPayload")
@@ -172,18 +172,18 @@ final class EIDRequestRepositoryTests: XCTestCase {
 
     try await repository.startOnlineSession(caseId: "caseId")
 
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 1)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
   }
 
   func testStartOnlineSession_generateProofOfPossessionsFails_throwsError() async throws {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     do {
       _ = try await repository.startOnlineSession(caseId: "caseId")
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 1)
+      XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
     }
   }
 
@@ -195,11 +195,11 @@ final class EIDRequestRepositoryTests: XCTestCase {
     let result = try await repository.pairWallet(caseId: "caseId")
 
     XCTAssertEqual(result, WalletPairingResponse.Mock.sample)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 1)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
   }
 
   func testPairWallet_generateProofOfPossessionsFails_throwsError() async throws {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     do {
       _ = try await repository.pairWallet(caseId: "caseId")
@@ -217,11 +217,11 @@ final class EIDRequestRepositoryTests: XCTestCase {
     let result = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1, isNFCAvailable: true)
 
     XCTAssertEqual(result, AutoVerificationResponse.Mock.nfcSample)
-    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 1)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
   }
 
   func testPStartAutoVerification_generateProofOfPossessionsFails_throwsError() async throws {
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     do {
       _ = try await repository.startAutoVerification(caseId: "caseId", autoVerificationType: .av1, isNFCAvailable: true)
@@ -249,10 +249,48 @@ final class EIDRequestRepositoryTests: XCTestCase {
     }
   }
 
+  // MARK: - Register push id
+
+  func testRegisterPushId_success() async throws {
+    let pushId = "pushId"
+    mockResponse(code: 200)
+
+    try await repository.registerPushId(mockePushIdRegistrationBody, caseId: "caseId")
+
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 1)
+    XCTAssertEqual((proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.body as? PushIdRegistrationBody)?.pushId, pushId)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.audience, strURL.absoluteString)
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.challengeEndpoint, URL(target: EIDRequestEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.clientAttestation, mockClientAttestation)
+  }
+
+  func testRegisterPushId_getClientAttestationFails_throwsError() async throws {
+    clientAttestationRepository.getUsingThrowableError = TestingError.error
+
+    do {
+      try await repository.registerPushId(mockePushIdRegistrationBody, caseId: "caseId")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testRegisterPushId_generateProofOfPossessionsFails_throwsError() async throws {
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
+
+    do {
+      try await repository.registerPushId(mockePushIdRegistrationBody, caseId: "caseId")
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
   // MARK: Private
 
   private let strURL = URL(string: "some://url")!
   private var repository = EIDRequestRepository()
+  private let mockePushIdRegistrationBody = PushIdRegistrationBody.Mock.sample
   private let mockeIDRequestResponse: EIDRequestResponse = .Mock.sample
   private let mockValidateAttestationsRequestBody: ValidateAttestationsRequestBody = .Mock.sample
 
@@ -272,7 +310,7 @@ final class EIDRequestRepositoryTests: XCTestCase {
 
   private func createSuccessState() {
     clientAttestationRepository.getUsingReturnValue = mockClientAttestation
-    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationReturnValue = mockClientAttestationProofOfPossession
+    proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReturnValue = mockClientAttestationProofOfPossession
   }
 
   private func registerMocks() {

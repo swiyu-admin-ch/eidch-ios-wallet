@@ -7,7 +7,9 @@ import XCTest
 @testable import BITAnalyticsMocks
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITL10n
 @testable import BITTestingCore
+@testable import BITTheming
 
 // MARK: - CredentialDetailViewModelTests
 
@@ -22,14 +24,15 @@ final class CredentialDetailViewModelTests: XCTestCase {
     registerMocks()
     createSuccessState()
 
-    viewModel = CredentialDetailViewModel(mockVerifiableCredential, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
+    viewModel = CredentialDetailViewModel(mockVerifiableCredential.id, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
   }
 
   func testInitialState() {
     XCTAssertFalse(viewModel.isCredentialDeleted)
     XCTAssertFalse(viewModel.isDeleteCredentialAlertPresented)
+    XCTAssertTrue(viewModel.isLoading)
     XCTAssertTrue(viewModel.activities.isEmpty)
-    XCTAssertEqual(viewModel.credential as? VerifiableCredential, mockVerifiableCredential)
+    XCTAssertNil(viewModel.credential)
     XCTAssertEqual(getActivityHistoryEnabledSubjectUseCaseSpy.callAsFunctionCallsCount, 1)
   }
 
@@ -43,19 +46,20 @@ final class CredentialDetailViewModelTests: XCTestCase {
   }
 
   func testOnAppear_withDeferredCredential_doNothing() async {
-    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
-    viewModel = CredentialDetailViewModel(mockDeferredCredential, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
+    getCredentialUseCaseSpy.callAsFunctionIdReturnValue = mockDeferredCredential
+    viewModel = CredentialDetailViewModel(mockDeferredCredential.id, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
 
     await viewModel.onAppear()
 
     XCTAssertTrue(viewModel.activities.isEmpty)
     XCTAssertFalse(checkAndUpdateCredentialStatusUseCaseSpy.executeForCalled)
-    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 0)
   }
 
   func testOnAppear_withVerifiableCredential_argumentsPassed() async {
     await viewModel.onAppear()
 
+    XCTAssertEqual(getCredentialUseCaseSpy.callAsFunctionIdReceivedId, mockVerifiableCredential.id)
     XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReceivedArguments?.credentialId, mockVerifiableCredential.id)
     XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReceivedArguments?.limit, 2)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCaseSpy.executeForReceivedCredential, mockVerifiableCredential)
@@ -63,7 +67,21 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, updatemockVerifiableCredential.displays)
   }
 
+  func testOnAppear_refreshesCredentialFromDatabaseBeforeUpdatingStatus() async {
+    getCredentialUseCaseSpy.callAsFunctionIdReturnValue = updatemockVerifiableCredential
+    checkAndUpdateCredentialStatusUseCaseSpy.executeForReturnValue = updatemockVerifiableCredential
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(getCredentialUseCaseSpy.callAsFunctionIdCallsCount, 1)
+    XCTAssertEqual(getCredentialUseCaseSpy.callAsFunctionIdReceivedId, mockVerifiableCredential.id)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCaseSpy.executeForReceivedCredential, updatemockVerifiableCredential)
+    XCTAssertEqual(viewModel.credential as? VerifiableCredential, updatemockVerifiableCredential)
+  }
+
   func testOnRefresh_withVerifiableCredential_updateCredentials() async {
+    await viewModel.onAppear()
+
     await viewModel.refresh()
 
     XCTAssertEqual(viewModel.credential as? VerifiableCredential, updatemockVerifiableCredential)
@@ -72,31 +90,37 @@ final class CredentialDetailViewModelTests: XCTestCase {
   }
 
   func testOnRefresh_withDeferredCredential_doNothing() async {
-    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
-    viewModel = CredentialDetailViewModel(mockDeferredCredential, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
+    getCredentialUseCaseSpy.callAsFunctionIdReturnValue = mockDeferredCredential
+    viewModel = CredentialDetailViewModel(mockDeferredCredential.id, getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
+    await viewModel.onAppear()
 
     await viewModel.refresh()
 
-    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
+    XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 0)
   }
 
   func testOnRefresh_withVerifiableCredential_argumentsPassed() async {
+    await viewModel.onAppear()
+
     await viewModel.refresh()
 
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCaseSpy.executeForReceivedCredential, mockVerifiableCredential)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCaseSpy.executeForReceivedCredential, updatemockVerifiableCredential)
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, "")
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.displays, updatemockVerifiableCredential.displays)
   }
 
   func test_delete_success() async {
+    await viewModel.onAppear()
+
     await viewModel.deleteCredential()
 
     XCTAssertTrue(viewModel.isCredentialDeleted)
     XCTAssertEqual(deleteCredentialUseCaseSpy.executeCallsCount, 1)
-    XCTAssertEqual(deleteCredentialUseCaseSpy.executeReceivedCredential?.id, mockVerifiableCredential.id)
+    XCTAssertEqual(deleteCredentialUseCaseSpy.executeReceivedCredential?.id, updatemockVerifiableCredential.id)
   }
 
   func test_delete_failure() async {
+    await viewModel.onAppear()
     deleteCredentialUseCaseSpy.executeThrowableError = TestingError.error
 
     await viewModel.deleteCredential()
@@ -104,7 +128,78 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertEqual(analyticsProvider.logCounter, 1)
   }
 
+  func testHandleCredentialRefreshed_updatesCredentialAndShowsToast() {
+    viewModel.handleCredentialRefreshed(updatemockVerifiableCredential)
+
+    XCTAssertEqual(viewModel.credential as? VerifiableCredential, updatemockVerifiableCredential)
+    XCTAssertEqual(viewModel.toast, Toast(L10n.tkDisplayrefreshNotificationSuccess))
+  }
+
+  func testBatchPrivacyWarningVisible_withExhaustedBatchCredential_returnsTrue() {
+    let exhaustedBatchCredential = makeBatchCredential(allBundleItemsPresented: true)
+
+    viewModel.credential = exhaustedBatchCredential
+
+    XCTAssertTrue(viewModel.isBatchPrivacyWarningVisible)
+  }
+
+  func testBatchPrivacyWarningVisible_withRemainingUnpresentedBundleItem_returnsFalse() {
+    let batchCredential = makeBatchCredential(allBundleItemsPresented: false)
+
+    viewModel.credential = batchCredential
+
+    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
+  }
+
+  func testBatchPrivacyWarningVisible_withoutBatchesWithUnpresentedBundleItem_returnsFalse() {
+    viewModel.credential = mockVerifiableCredential
+
+    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
+  }
+
+  func testBatchPrivacyWarningVisible_withoutBatchesWithPresentedBundleItem_returnsFalse() {
+    var credential = mockVerifiableCredential
+    credential.bundleItems = credential.bundleItems.map {
+      var item = $0
+      item.presented = true
+      return item
+    }
+    viewModel.credential = credential
+
+    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
+  }
+
+  func testRefreshBatchCredential_success_updatesCredentialAndShowsToast() async {
+    let exhaustedBatchCredential = makeBatchCredential(allBundleItemsPresented: true)
+    refreshCredentialUseCaseSpy.callAsFunctionReturnValue = updatemockVerifiableCredential
+    viewModel.credential = exhaustedBatchCredential
+
+    await viewModel.refreshBatchCredential()
+
+    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionReceivedCredential, exhaustedBatchCredential)
+    XCTAssertEqual(viewModel.credential as? VerifiableCredential, updatemockVerifiableCredential)
+    XCTAssertEqual(viewModel.toast, Toast(L10n.tkDisplayrefreshNotificationSuccess))
+    XCTAssertFalse(viewModel.isRefreshLoading)
+    XCTAssertFalse(viewModel.isRefreshErrorPresented)
+  }
+
+  func testRefreshBatchCredential_failure_showsErrorNotification() async {
+    let exhaustedBatchCredential = makeBatchCredential(allBundleItemsPresented: true)
+    refreshCredentialUseCaseSpy.callAsFunctionThrowableError = TestingError.error
+    viewModel.credential = exhaustedBatchCredential
+
+    await viewModel.refreshBatchCredential()
+
+    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 1)
+    XCTAssertTrue(viewModel.isRefreshErrorPresented)
+    XCTAssertFalse(viewModel.isRefreshLoading)
+    XCTAssertEqual(analyticsProvider.logCounter, 1)
+  }
+
   func testUpdateCredentialViewModel_argumentsPassed() {
+    viewModel.credential = mockVerifiableCredential
+
     viewModel.updateCredentialViewModel(with: themeMock)
 
     XCTAssertEqual(getCredentialDisplayUseCaseSpy.executeForColorSchemeReceivedArguments?.colorScheme, themeMock)
@@ -112,6 +207,7 @@ final class CredentialDetailViewModelTests: XCTestCase {
   }
 
   func testGetActivityHistoryEnabledSubjectReceive_newValue_setsValueAndFetchesActivities() async {
+    await viewModel.onAppear()
     XCTAssertEqual(getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitCallsCount, 1)
 
     subjectMock.send(false)
@@ -123,7 +219,7 @@ final class CredentialDetailViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testWillResignActive() async {
+  func testWillResignActive_resetsDeleteAlert() async {
     viewModel.isDeleteCredentialAlertPresented = true
 
     NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil, userInfo: nil)
@@ -148,6 +244,8 @@ final class CredentialDetailViewModelTests: XCTestCase {
   private var analyticsProvider: MockProvider!
   private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
   private var checkAndUpdateCredentialStatusUseCaseSpy = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
+  private var getCredentialUseCaseSpy = GetCredentialUseCaseProtocolSpy()
+  private var refreshCredentialUseCaseSpy = RefreshVerifiableCredentialUseCaseProtocolSpy()
   private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
   private var getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
   private var getActivityHistoryEnabledSubjectUseCaseSpy = GetActivityHistoryEnabledSubjectUseCaseProtocolSpy()
@@ -155,6 +253,7 @@ final class CredentialDetailViewModelTests: XCTestCase {
   // swiftlint:enable all
 
   private func createSuccessState() {
+    getCredentialUseCaseSpy.callAsFunctionIdReturnValue = mockVerifiableCredential
     checkAndUpdateCredentialStatusUseCaseSpy.executeForReturnValue = updatemockVerifiableCredential
     deleteCredentialUseCaseSpy.executeClosure = { _ in }
     getCredentialDisplayUseCaseSpy.executeForColorSchemeReturnValue = credentialDisplayMock
@@ -171,12 +270,37 @@ final class CredentialDetailViewModelTests: XCTestCase {
       fatalError("analytics should be initialized in registerMocks")
     }
 
+    Container.shared.isBatchIssuanceEnabled.register { true }
     Container.shared.analytics.register { @MainActor in analytics }
     Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCaseSpy }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { @MainActor in self.checkAndUpdateCredentialStatusUseCaseSpy }
+    Container.shared.getCredentialUseCase.register { @MainActor in self.getCredentialUseCaseSpy }
+    Container.shared.refreshCredentialUseCase.register { @MainActor in self.refreshCredentialUseCaseSpy }
     Container.shared.getCredentialDisplayUseCase.register { @MainActor in self.getCredentialDisplayUseCaseSpy }
     Container.shared.getCredentialActivitiesUseCase.register { @MainActor in self.getCredentialActivitiesUseCaseSpy }
     Container.shared.getActivityHistoryEnabledSubjectUseCase.register { @MainActor in self.getActivityHistoryEnabledSubjectUseCaseSpy }
+  }
+
+  private func makeBatchCredential(allBundleItemsPresented: Bool) -> VerifiableCredential {
+    var credential = mockVerifiableCredential
+    credential.batchData = BatchData(batchSize: 2)
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: credential.authentication.tokenType,
+      refreshToken: "refresh-token",
+      dpopBinding: credential.authentication.dpopBinding)
+
+    if credential.bundleItems.count == 1 {
+      credential.bundleItems.append(BundleItem(payload: Data("second".utf8)))
+    }
+
+    credential.bundleItems = credential.bundleItems.enumerated().map { index, item in
+      var item = item
+      item.presented = allBundleItemsPresented || index == 0
+      return item
+    }
+    credential.nextPresentableBundleItemId = credential.bundleItems.last?.id ?? credential.nextPresentableBundleItemId
+    return credential
   }
 
 }

@@ -22,7 +22,8 @@ protocol CredentialGeneratorProtocol {
     _ deferredCredentialContext: DeferredCredentialContext,
     keyBindings: [KeyBinding],
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialIssuerMetadataWrapper) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper,
+    authentication: CredentialAuthentication) throws
     -> DeferredCredential
 }
 
@@ -56,14 +57,15 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
     _ deferredCredentialContext: DeferredCredentialContext,
     keyBindings: [KeyBinding],
     rawOcaBundle: RawOcaBundle?,
-    metadataWrapper: CredentialIssuerMetadataWrapper) throws
+    metadataWrapper: CredentialIssuerMetadataWrapper,
+    authentication: CredentialAuthentication) throws
     -> DeferredCredential
   {
     let (context, ocaBundle) = try generateContext(
       rawOcaBundle: rawOcaBundle,
       metadataWrapper: metadataWrapper,
       trustStatement: nil,
-      authentication: CredentialAuthentication(accessToken: deferredCredentialContext.accessToken, tokenType: .bearer, refreshToken: deferredCredentialContext.refreshToken))
+      authentication: authentication)
 
     return if let ocaBundle {
       try ocaCredentialGenerator.generateDeferred(

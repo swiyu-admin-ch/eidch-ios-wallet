@@ -3,6 +3,7 @@ import BITCrypto
 import BITJWT
 import BITNetworking
 import BITSdJWT
+import BITVault
 import Factory
 import Foundation
 import Moya
@@ -48,54 +49,92 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.publicKeyInfo(jwksUrl: jwksUrl))
   }
 
-  func fetchAccessToken(from url: URL, preAuthorizedCode: String) async throws -> AccessToken {
-    do {
-      return try await networkService.request(OpenIDEndpoint.accessToken(fromTokenUrl: url, preAuthorizedCode: preAuthorizedCode))
-    } catch {
-      throw oAuthErrorParser.parse(error)
+  /// RFC 9449 Section 8 allows authorization servers to challenge with `use_dpop_nonce`
+  /// and Section 8.2 allows returning the next nonce on a successful response.
+  func fetchAccessToken(
+    from url: URL,
+    preAuthorizedCode: String,
+    dpopKeyPair: VaultKeyPair?,
+    dpopNonce: String?,
+    dpopKeyAttestationJWS: String?) async throws
+    -> IssuanceAuthorization
+  {
+    try await fetchTokenAuthorization(
+      from: url,
+      dpopKeyPair: dpopKeyPair,
+      initialNonce: dpopNonce,
+      keyAttestationJWS: dpopKeyAttestationJWS)
+    { proof in
+      OpenIDEndpoint.accessToken(
+        fromTokenUrl: url,
+        preAuthorizedCode: preAuthorizedCode,
+        dpopProof: proof)
     }
   }
 
-  func refreshAccessToken(from url: URL, refreshToken: String) async throws -> AccessToken {
-    do {
-      return try await networkService.request(OpenIDEndpoint.refreshAccessToken(fromTokenUrl: url, refreshToken: refreshToken))
-    } catch {
-      throw oAuthErrorParser.parse(error)
+  func refreshAccessToken(
+    from url: URL,
+    refreshToken: String,
+    dpopKeyPair: VaultKeyPair?,
+    dpopNonce: String?) async throws
+    -> IssuanceAuthorization
+  {
+    try await fetchTokenAuthorization(
+      from: url,
+      dpopKeyPair: dpopKeyPair,
+      initialNonce: dpopNonce,
+      keyAttestationJWS: nil)
+    { proof in
+      OpenIDEndpoint.refreshAccessToken(
+        fromTokenUrl: url,
+        refreshToken: refreshToken,
+        dpopProof: proof)
     }
   }
 
-  func fetchNonce(from url: URL) async throws -> Nonce {
-    try await networkService.request(OpenIDEndpoint.nonce(url: url))
+  func fetchNonce(from url: URL) async throws -> (nonce: Nonce, dpopNonce: String?) {
+    let (nonce, response): (Nonce, Response) = try await networkService.request(OpenIDEndpoint.nonce(url: url))
+    return (nonce, response.response?.value(forHTTPHeaderField: Self.dpopNonceHeaderField))
   }
 
   func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequestBody) async throws -> FetchAnyCredentialResult.Credentials {
-    let endpoint = OpenIDEndpoint.credential(
-      url: context.credentialEndpoint,
-      body: credentialRequest,
-      accessToken: context.accessToken)
+    let (response, authorization) = try await fetchProtectedResource(
+      from: context.credentialEndpoint,
+      authorization: context.authorization)
+    { accessToken, dpopProof in
+      OpenIDEndpoint.credential(
+        url: context.credentialEndpoint,
+        body: credentialRequest,
+        accessToken: accessToken,
+        dpopProof: dpopProof)
+    }
 
     return try await fetchCredential(
-      endpoint: endpoint,
-      accessToken: context.accessToken.accessToken,
+      response: response,
+      authorization: authorization,
       format: context.format,
       privateKey: context.credentialEncryptionContext?.responseKeyPair?.privateKey,
-      deferredCredentialEndpoint: context.deferredCredentialEndpoint,
-      refreshToken: context.accessToken.refreshToken)
+      deferredCredentialEndpoint: context.deferredCredentialEndpoint)
   }
 
   func fetchCredential(with context: FetchDeferredCredentialContext, requestBody: DeferredCredentialRequestBody) async throws -> FetchAnyCredentialResult.Credentials {
-    let endpoint = OpenIDEndpoint.deferredCredential(
-      url: context.deferredCredentialEndpoint,
-      body: requestBody,
-      accessToken: context.accessToken)
+    let (response, authorization) = try await fetchProtectedResource(
+      from: context.deferredCredentialEndpoint,
+      authorization: context.authorization)
+    { accessToken, dpopProof in
+      OpenIDEndpoint.deferredCredential(
+        url: context.deferredCredentialEndpoint,
+        body: requestBody,
+        accessToken: accessToken,
+        dpopProof: dpopProof)
+    }
 
     return try await fetchCredential(
-      endpoint: endpoint,
-      accessToken: context.accessToken,
+      response: response,
+      authorization: authorization,
       format: context.format,
       privateKey: context.privateKey,
-      deferredCredentialEndpoint: context.deferredCredentialEndpoint,
-      refreshToken: context.refreshToken)
+      deferredCredentialEndpoint: context.deferredCredentialEndpoint)
   }
 
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList> {
@@ -105,15 +144,169 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
 
   // MARK: Private
 
+  private static let dpopNonceHeaderField = "DPoP-Nonce"
+
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\.vcSdJwsDecoder) private var vcSdJwsDecoder: VcSdJWSDecoderProtocol
   @Injected(\NetworkContainer.decoder) private var jsonDecoder: JSONDecoder
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
   @Injected(\.jweDecrypter) private var jweDecrypter: JWEDecrypterProtocol
+  @Injected(\.dpopGenerator) private var dpopGenerator: DPoPGeneratorProtocol
   @Injected(\.isBatchIssuanceEnabled) private var isBatchIssuanceEnabled
   @Injected(\.oAuthErrorParser) private var oAuthErrorParser: OAuthErrorParserProtocol
   @Injected(\.openID4VCIErrorParser) private var openID4VCIErrorParser: OpenID4VCIErrorParserProtocol
+
+  private func createDPoPProof(
+    method: String,
+    url: URL,
+    keyPair: VaultKeyPair?,
+    nonce: String?,
+    accessToken: String?,
+    keyAttestationJWS: String? = nil) throws
+    -> String?
+  {
+    guard let keyPair else {
+      return nil
+    }
+
+    return try dpopGenerator.generate(
+      method: method,
+      url: url,
+      keyPair: keyPair,
+      nonce: nonce,
+      accessToken: accessToken,
+      keyAttestationJWS: keyAttestationJWS)
+  }
+
+  /// Sends the token request and retries once if the authorization server challenges with
+  /// RFC 9449 `error=use_dpop_nonce`.
+  ///
+  /// - Parameters:
+  ///   - url: Token endpoint URL.
+  ///   - dpopKeyPair: Key pair used to sign the DPoP proof, if DPoP is enabled.
+  ///   - initialNonce: Optional nonce for the first proof, for example from the
+  ///     OpenID4VCI 1.0 Section 7 `nonce_endpoint`.
+  ///   - endpoint: Builds the concrete token request from the generated proof.
+  /// - Returns: The issued authorization.
+  private func fetchTokenAuthorization(
+    from url: URL,
+    dpopKeyPair: VaultKeyPair?,
+    initialNonce: String?,
+    keyAttestationJWS: String?,
+    endpoint: (String?) -> OpenIDEndpoint) async throws
+    -> IssuanceAuthorization
+  {
+    do {
+      return try await requestTokenAuthorization(
+        from: url,
+        dpopKeyPair: dpopKeyPair,
+        nonce: initialNonce,
+        keyAttestationJWS: keyAttestationJWS,
+        endpoint: endpoint)
+    } catch {
+      let parsedError = oAuthErrorParser.parse(error)
+      guard case OpenIdRepositoryError.useDPoPNonce(_, let challengedNonce?) = parsedError else {
+        throw parsedError
+      }
+
+      do {
+        return try await requestTokenAuthorization(
+          from: url,
+          dpopKeyPair: dpopKeyPair,
+          nonce: challengedNonce,
+          keyAttestationJWS: keyAttestationJWS,
+          endpoint: endpoint)
+      } catch {
+        throw oAuthErrorParser.parse(error)
+      }
+    }
+  }
+
+  /// Sends the protected-resource request and retries once if the resource server
+  /// challenges with RFC 9449 `use_dpop_nonce`.
+  ///
+  /// - Parameters:
+  ///   - url: Protected-resource endpoint URL.
+  ///   - authorization: Current authorization state, including access token, DPoP key
+  ///     binding, and any proactive resource nonce from OpenID4VCI 1.0 Section 7
+  ///     `nonce_endpoint`.
+  ///   - endpoint: Builds the concrete protected-resource request from the access token
+  ///     and generated proof.
+  /// - Returns: The raw response together with updated authorization state.
+  private func fetchProtectedResource(
+    from url: URL,
+    authorization: IssuanceAuthorization,
+    endpoint: (AccessToken, String?) -> OpenIDEndpoint) async throws
+    -> (response: Response, authorization: IssuanceAuthorization)
+  {
+    do {
+      return try await requestProtectedResource(
+        from: url,
+        authorization: authorization,
+        nonce: authorization.resourceServerDPoPNonce,
+        endpoint: endpoint)
+    } catch {
+      let parsedError = openID4VCIErrorParser.parse(error)
+      guard case OpenIdRepositoryError.useDPoPNonce(_, let challengedNonce?) = parsedError else {
+        throw parsedError
+      }
+
+      do {
+        return try await requestProtectedResource(
+          from: url,
+          authorization: authorization,
+          nonce: challengedNonce,
+          endpoint: endpoint)
+      } catch {
+        throw openID4VCIErrorParser.parse(error)
+      }
+    }
+  }
+
+  private func requestTokenAuthorization(
+    from url: URL,
+    dpopKeyPair: VaultKeyPair?,
+    nonce: String?,
+    keyAttestationJWS: String?,
+    endpoint: (String?) -> OpenIDEndpoint) async throws
+    -> IssuanceAuthorization
+  {
+    let dpopProof = try createDPoPProof(
+      method: Moya.Method.post.rawValue.uppercased(),
+      url: url,
+      keyPair: dpopKeyPair,
+      nonce: nonce,
+      accessToken: nil,
+      keyAttestationJWS: keyAttestationJWS)
+    let accessToken: AccessToken = try await networkService.request(endpoint(dpopProof))
+    return IssuanceAuthorization(
+      accessToken: accessToken,
+      dpopKeyPair: dpopKeyPair)
+  }
+
+  private func requestProtectedResource(
+    from url: URL,
+    authorization: IssuanceAuthorization,
+    nonce: String?,
+    endpoint: (AccessToken, String?) -> OpenIDEndpoint) async throws
+    -> (response: Response, authorization: IssuanceAuthorization)
+  {
+    let accessToken = authorization.accessToken
+    let dpopProof = try createDPoPProof(
+      method: Moya.Method.post.rawValue.uppercased(),
+      url: url,
+      keyPair: authorization.dpopKeyPair,
+      nonce: nonce,
+      accessToken: authorization.dpopKeyPair == nil ? nil : accessToken.accessToken)
+    let response = try await networkService.request(endpoint(accessToken, dpopProof))
+    return (
+      response,
+      IssuanceAuthorization(
+        accessToken: authorization.accessToken,
+        dpopKeyPair: authorization.dpopKeyPair,
+        resourceServerDPoPNonce: response.response?.value(forHTTPHeaderField: Self.dpopNonceHeaderField)))
+  }
 
   private func parseMetadataResponse(_ response: Response, from endpoint: URL) async throws -> CredentialIssuerMetadataResponse {
     switch ContentType(response.response) {
@@ -150,26 +343,22 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
   }
 
   private func fetchCredential(
-    endpoint: OpenIDEndpoint,
-    accessToken: String,
+    response: Response,
+    authorization: IssuanceAuthorization,
     format: String,
     privateKey: SecKey? = nil,
-    deferredCredentialEndpoint: URL?,
-    refreshToken: String? = nil) async throws
+    deferredCredentialEndpoint: URL?) async throws
     -> FetchAnyCredentialResult.Credentials
   {
     do {
-      let response = try await networkService.request(endpoint)
-
       switch ContentType(response.response) {
       case .json:
         return try getAnyCredentialResult(
           from: response.statusCode,
           data: response.data,
-          accessToken: accessToken,
+          authorization: authorization,
           format: format,
-          deferredCredentialEndpoint: deferredCredentialEndpoint,
-          refreshToken: refreshToken)
+          deferredCredentialEndpoint: deferredCredentialEndpoint)
       case .jwt:
         guard let privateKey else {
           throw OpenIdRepositoryError.missingCredentialResponsePrivateKey
@@ -178,28 +367,32 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
         return try getAnyCredentialResult(
           from: response.statusCode,
           data: decryptedPayload,
-          accessToken: accessToken,
+          authorization: authorization,
           format: format,
-          deferredCredentialEndpoint: deferredCredentialEndpoint,
-          refreshToken: refreshToken)
+          deferredCredentialEndpoint: deferredCredentialEndpoint)
       }
     } catch {
       throw openID4VCIErrorParser.parse(error)
     }
   }
 
-  private func getAnyCredentialResult(from statusCode: Int, data: Data, accessToken: String, format: String, deferredCredentialEndpoint: URL?, refreshToken: String? = nil) throws -> FetchAnyCredentialResult.Credentials {
+  private func getAnyCredentialResult(
+    from statusCode: Int,
+    data: Data,
+    authorization: IssuanceAuthorization,
+    format: String,
+    deferredCredentialEndpoint: URL?) throws
+    -> FetchAnyCredentialResult.Credentials
+  {
     var credential: FetchAnyCredentialResult.Credentials
 
     if statusCode == 202 { // see RFC 9110 §15.3.3 for status codes
       let deferred = try JSONDecoder().decode(CredentialResponseDeferred.self, from: data)
-      credential = try .deferred(
-        getDeferredCredential(
-          from: deferred,
-          accessToken: accessToken,
-          format: format,
-          deferredCredentialEndpoint: deferredCredentialEndpoint,
-          refreshToken: refreshToken))
+      credential = try .deferred(getDeferredCredential(
+        from: deferred,
+        authorization: authorization,
+        format: format,
+        deferredCredentialEndpoint: deferredCredentialEndpoint))
     } else if statusCode == 200 {
       let immediate = try JSONDecoder().decode(CredentialResponseImmediate.self, from: data)
       let credentials = try getAnyCredentials(from: immediate.credentials)
@@ -219,10 +412,9 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
 
   private func getDeferredCredential(
     from credentialResponse: CredentialResponseDeferred,
-    accessToken: String,
+    authorization: IssuanceAuthorization,
     format: String,
-    deferredCredentialEndpoint: URL?,
-    refreshToken: String? = nil) throws
+    deferredCredentialEndpoint: URL?) throws
     -> DeferredCredentialContext
   {
     guard let endpoint = deferredCredentialEndpoint?.absoluteString else {
@@ -231,11 +423,10 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
 
     return DeferredCredentialContext(
       transactionId: credentialResponse.transactionId,
-      accessToken: accessToken,
+      authorization: authorization,
       endpoint: endpoint,
       format: format,
-      interval: credentialResponse.interval,
-      refreshToken: refreshToken)
+      interval: credentialResponse.interval)
   }
 
   private func getAnyCredentials(from rawCredentials: [CredentialResponseImmediate.Credential]) throws -> [AnyCredential] {
@@ -259,8 +450,11 @@ public enum OpenIdRepositoryError: Error, Equatable {
   case invalidClient(String)
   case invalidGrant(String)
   case unsupportedGrantType(String)
+  case invalidDPoPProof(String)
+  case useDPoPNonce(String, String?)
   case invalidToken(String)
   case insufficientScope(String)
+  case expiredAccessToken
 
   // credential request
   case invalidCredentialRequest(String)
@@ -280,5 +474,4 @@ public enum OpenIdRepositoryError: Error, Equatable {
   case invalidCredentialIssuerMetadataJWT
   case invalidOpenIdConfigurationJWT
   case missingCredentialResponsePrivateKey
-  case expiredAccessToken
 }

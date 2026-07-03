@@ -1,5 +1,4 @@
 {
-  "iss": "did:tdw:example.com",
   "iat": 1747230798,
   "key_storage": ["iso_18045_high"],
   "attested_keys": [

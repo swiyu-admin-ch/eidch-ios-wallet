@@ -31,6 +31,7 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
 
     XCTAssertEqual(body.description, descriptionMock)
     XCTAssertEqual(body.email, emailMock)
+    XCTAssertEqual(body.language, languageMock)
     XCTAssertEqual(body.metadata.verifierDid, payloadMock.clientId)
     XCTAssertEqual(body.metadata.verifierUrl, payloadMock.responseUri?.absoluteString)
     XCTAssertEqual(body.metadata.presentationActionCreatedAt, Self.createdAtMock)
@@ -40,7 +41,7 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
   }
 
   func testGenerate_plainRequestObject_returnsBody() throws {
-    let nonComplianceData = try XCTUnwrap(String(data: RequestObject.Mock.VcSdJwt.sampleData, encoding: .utf8))
+    let nonComplianceData = try XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))
     let activityMock = createActivity(nonComplianceData: nonComplianceData)
     jwsDecoder.throwingError = TestingError.error
     generator = NonComplianceReportRequestBodyGenerator()
@@ -51,12 +52,30 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
 
     XCTAssertEqual(body.description, descriptionMock)
     XCTAssertEqual(body.email, emailMock)
+    XCTAssertEqual(body.language, languageMock)
     XCTAssertEqual(body.metadata.verifierDid, requestObjectMock.clientId)
     XCTAssertEqual(body.metadata.verifierUrl, requestObjectMock.responseUri?.absoluteString)
     XCTAssertEqual(body.metadata.presentationActionCreatedAt, Self.createdAtMock)
     XCTAssertEqual(body.metadata.presentedCredentialIssuerDid, Self.issuerMock)
     XCTAssertEqual(body.metadata.presentationRequestJwt, nonComplianceData)
-    assertPlainRequestFields(body.metadata.presentationRequestFields)
+    assertRequestFields(body.metadata.presentationRequestFields)
+  }
+
+  func testGenerate_requestObjectWithConstraints_returnsFieldConstraints() throws {
+    let nonComplianceData = try XCTUnwrap(String(data: RequestObjectJWS.Mock.withConstraintsData, encoding: .utf8))
+    let activityMock = createActivity(nonComplianceData: nonComplianceData)
+    jwsDecoder.throwingError = TestingError.error
+    generator = NonComplianceReportRequestBodyGenerator()
+
+    let report = NonComplianceExcessiveDataReport(description: descriptionMock, email: emailMock, activity: activityMock)
+
+    let body = try XCTUnwrap(generator.generate(from: report) as? NonComplianceExcessiveDataReportBody)
+
+    XCTAssertEqual(body.metadata.presentationRequestFields, [
+      NonComplianceExcessiveDataReportBody.Field(name: "vct", constraint: "pid-vct, pid-vct-alt"),
+      NonComplianceExcessiveDataReportBody.Field(name: "[\"firstName\"]", constraint: "\"Ada\", \"Bea\""),
+      NonComplianceExcessiveDataReportBody.Field(name: "[\"age\"]", constraint: "42"),
+    ])
   }
 
   func testGenerate_missingRequestObject_throwsDecodingError() {
@@ -83,7 +102,8 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
 
   private let descriptionMock = String(repeating: "x", count: 20)
   private let emailMock = "email@example.org"
-  private let requestObjectMock = RequestObject.Mock.VcSdJwt.sample
+  private let languageMock = "de"
+  private let requestObjectMock = RequestObjectJWS.Mock.sample.payload
   private var payloadMock = RequestObjectJWS.Mock.sampleJWT
 
   private var generator: NonComplianceReportRequestBodyGenerator!
@@ -92,6 +112,7 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
   private func registerMocks() {
     jwsDecoder = JWSDecoderMock(jwt: payloadMock, rawPayload: "rawPayload")
     Container.shared.jwsDecoder.register { self.jwsDecoder }
+    Container.shared.preferredUserLanguageCodes.register { [self.languageMock] }
   }
 
   private func createActivity(nonComplianceData: String? = nil, createdAt: Date = createdAtMock, issuer: String = issuerMock) -> NonComplianceActivity {
@@ -103,25 +124,12 @@ final class NonComplianceReportRequestBodyGeneratorTests: XCTestCase {
       XCTFail("Unexpected number of fields: \(fields.count)")
       return
     }
-    XCTAssertEqual(fields[0].name, "$.vct")
+    XCTAssertEqual(fields[0].name, "vct")
     XCTAssertEqual(fields[0].constraint, "vcSchemaId")
-    XCTAssertEqual(fields[1].name, "$.firstName")
-    XCTAssertEqual(fields[2].name, "$.lastName")
-    XCTAssertEqual(fields[3].name, "$.dateOfBirth")
-    XCTAssertEqual(fields[4].name, "$.hometown")
-    XCTAssertEqual(fields[5].name, "$.categoryCode")
-  }
-
-  private func assertPlainRequestFields(_ fields: [NonComplianceExcessiveDataReportBody.Field]) {
-    let expectedNames = ["$.firstName", "$.lastName", "$.dateOfBirth", "$.hometown", "$.categoryCode"]
-    guard fields.count == expectedNames.count else {
-      XCTFail("Unexpected number of fields: \(fields.count)")
-      return
-    }
-
-    for (index, name) in expectedNames.enumerated() {
-      XCTAssertEqual(fields[index].name, name)
-      XCTAssertNil(fields[index].constraint)
-    }
+    XCTAssertEqual(fields[1].name, "[\"firstName\"]")
+    XCTAssertEqual(fields[2].name, "[\"lastName\"]")
+    XCTAssertEqual(fields[3].name, "[\"dateOfBirth\"]")
+    XCTAssertEqual(fields[4].name, "[\"hometown\"]")
+    XCTAssertEqual(fields[5].name, "[\"categoryCode\"]")
   }
 }

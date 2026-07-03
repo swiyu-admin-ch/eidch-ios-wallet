@@ -20,20 +20,16 @@ public struct Card<Content: View>: View {
       VStack {
         if let lottieView {
           lottieView
-            .frame(minWidth: minWidthContent, maxWidth: maxWidthContent, minHeight: minHeightContent, idealHeight: maxHeightContent, maxHeight: maxHeightContent)
-            .colorScheme(colorScheme)
         } else if let content {
           content
-            .preferredColorScheme(colorScheme)
         } else if let image {
           image
             .resizable()
             .scaledToFit()
             .frame(width: maxWidthContent, height: maxHeightContent)
-            .colorScheme(colorScheme)
         }
       }
-      .padding(.x8)
+      .padding(lottieView == nil ? .x8 : 0)
     }
     .frame(maxWidth: .infinity, minHeight: minHeightCard, idealHeight: idealHeightCard, maxHeight: maxHeightCard)
     .background(background.view)
@@ -45,7 +41,6 @@ public struct Card<Content: View>: View {
 
   // MARK: Internal
 
-  @Environment(\.colorScheme) var colorScheme
   @Environment(\.sizeCategory) var sizeCategory
   @Environment(\.cardAccessibilityMaxHeight) var cardAccessibilityMaxHeight
 
@@ -148,7 +143,7 @@ extension CardBackground {
         .resizable()
         .aspectRatio(contentMode: .fill)
         .clipped()
-        .preferredColorScheme(.light)
+        .colorScheme(.light)
     }
   }
 }

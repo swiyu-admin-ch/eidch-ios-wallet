@@ -6,3 +6,14 @@ xcassets:
       output: Sources/BITSettings/Module/Assets.swift
       params:
         enumName: Assets
+
+json:
+  inputs:
+    - Sources/BITSettings/Resources/Lottie/
+  outputs:
+    templatePath: ../../Platforms/BITTheming/Config/lottie-swift5.stencil
+    output: Sources/BITSettings/Module/Lotties.swift
+    params:
+      publicAccess: false
+      themingModule: false
+      enumName: Lotties

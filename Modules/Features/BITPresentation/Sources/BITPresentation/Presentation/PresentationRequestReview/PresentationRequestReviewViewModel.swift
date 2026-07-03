@@ -3,6 +3,7 @@ import BITAnalytics
 import BITCore
 import BITCredential
 import BITCredentialShared
+import BITNetworking
 import BITOpenID
 import Factory
 import Foundation
@@ -32,7 +33,7 @@ public class PresentationRequestReviewViewModel {
   }
 
   private(set) var state = PresentationRequestReviewState.loading
-  var isUnknownVerifierAlertShown = false
+  var alert: PresentationRequestReviewAlert?
   var destination: PresentationDestinations?
 
   private(set) var denyTask: Task<Void, Error>?
@@ -70,12 +71,32 @@ public class PresentationRequestReviewViewModel {
   @ObservationIgnored @Injected(\.declinePresentationUseCase) private var declinePresentationUseCase: DeclinePresentationUseCaseProtocol
   @ObservationIgnored @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
   @ObservationIgnored @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
+  @ObservationIgnored @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
+
+  private var credentialStatusAlert: PresentationRequestReviewAlert? {
+    guard let bundleItem = try? selectCredentialBundleItemUseCase(credential.credential) else { return nil }
+    switch bundleItem.status {
+    case .businessExpired:
+      return .businessExpiredCredential
+    case .suspended:
+      return .suspendedCredential
+    default:
+      return nil
+    }
+  }
 
   private var verifierDisplay: VerifierDisplay {
     context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
   }
 
   private func submit(_ result: PresentationRequestReviewState.Result, force: Bool = false) async {
+    alert = nil
+
+    if !force, let credentialStatusAlert {
+      alert = credentialStatusAlert
+      return
+    }
+
     if force || context.trustInformation.identity != .unknown {
       let viewState = PresentationRequestReviewState.Processing(result: result)
       state = .processing(viewState)
@@ -87,7 +108,7 @@ public class PresentationRequestReviewViewModel {
             guard case .processing(let currentState) = state else { continue }
             state = .processing(currentState.changing(\.progress, to: progress))
           case .success:
-            destination = .resultState(.success, context)
+            destination = .resultState(.dataTransmitted, context)
             return
           }
         }
@@ -95,7 +116,7 @@ public class PresentationRequestReviewViewModel {
         handleSubmitError(error, processing: viewState)
       }
     } else {
-      isUnknownVerifierAlertShown = true
+      alert = .unknownVerifier
     }
   }
 
@@ -113,7 +134,19 @@ public class PresentationRequestReviewViewModel {
 
   private func handleSubmitError(_ error: Error, processing: PresentationRequestReviewState.Processing) {
     analytics.log(error)
-    destination = destination(for: error)
+    if let networkError = error as? NetworkError {
+      switch networkError.status {
+      case .hostnameNotFound,
+           .noConnection,
+           .timeout,
+           .unknown:
+        destination = .resultState(.error, context)
+      default:
+        destination = .resultState(.dataTransmitted, context)
+      }
+    } else {
+      destination = .resultState(.error, context)
+    }
     let viewModel = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: processing.credential.colorScheme)
     state = .result(viewModel)
   }
@@ -125,22 +158,5 @@ public class PresentationRequestReviewViewModel {
     }
 
     destination = .resultState(.deny, context)
-  }
-
-  private func destination(for error: Error) -> PresentationDestinations {
-    if let error = error as? PresentationError {
-      switch error {
-      case .invalidCredential:
-        return .resultState(.invalidCredential, context)
-      case .submitPresentationError:
-        if let dataset = error.errorDataset {
-          return .error(dataset)
-        }
-      case .authorizationRequestError:
-        break
-      }
-    }
-
-    return .resultState(.error, context)
   }
 }

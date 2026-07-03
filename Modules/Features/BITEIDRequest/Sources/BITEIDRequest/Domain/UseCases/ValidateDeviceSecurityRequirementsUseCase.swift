@@ -35,6 +35,10 @@ struct ValidateDeviceSecurityRequirementsUseCase: ValidateDeviceSecurityRequirem
       throw EIDRequestRepository.Error.invalidClientAttestation
     } catch AppAttestationRepositoryError.invalidKeyAttestation {
       throw EIDRequestRepository.Error.invalidKeyAttestation
+    } catch AppAttestationRepositoryError.timeout {
+      throw ValidateDeviceSecurityRequirementsUseCaseError.attestationTimeout
+    } catch AppAttestationRepositoryError.serviceDeactivated {
+      throw ValidateDeviceSecurityRequirementsUseCaseError.attestationServiceDeactivated
     } catch is NetworkError {
       throw ValidateDeviceSecurityRequirementsUseCaseError.networkError
     } catch {
@@ -55,4 +59,6 @@ struct ValidateDeviceSecurityRequirementsUseCase: ValidateDeviceSecurityRequirem
 
 enum ValidateDeviceSecurityRequirementsUseCaseError: Error {
   case networkError
+  case attestationTimeout
+  case attestationServiceDeactivated
 }

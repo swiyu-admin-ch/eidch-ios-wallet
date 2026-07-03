@@ -1,5 +1,6 @@
 import BITAVWrapper
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -121,7 +122,7 @@ extension RecordSelfieView {
   }
 
   private func recordButtonView() -> some View {
-    RecordingButton(state: $viewModel.buttonState, onTapInitial: viewModel.startRecordSelfie, onTapRecord: viewModel.stopRecordSelfie)
+    RecordingButton(state: $viewModel.recordingState, onTapInitial: viewModel.startRecordSelfie, onTapRecord: viewModel.stopRecordSelfie)
       .accessibilityLabel(viewModel.buttonStateAccessibilityLabel)
       .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
   }
@@ -150,7 +151,7 @@ extension RecordSelfieView {
 
   private func close() {
     coordinator.cleanup()
-    navigator.dismiss()
+    navigator.returnToHomeSafely()
   }
 
 }

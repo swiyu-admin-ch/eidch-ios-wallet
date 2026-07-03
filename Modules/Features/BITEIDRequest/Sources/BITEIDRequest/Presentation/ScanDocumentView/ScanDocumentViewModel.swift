@@ -22,34 +22,6 @@ class ScanDocumentViewModel {
 
   // MARK: Internal
 
-  enum ScanningState: Equatable {
-    case recto
-    case verso
-
-    // MARK: Internal
-
-    var title: String {
-      switch self {
-      case .recto: L10n.tkEidRequestMrzScannerRecto
-      case .verso: L10n.tkEidRequestMrzScannerVerso
-      }
-    }
-
-    var popupTitle: String {
-      switch self {
-      case .recto: L10n.tkEidRequestMrzScannerNotificationRectoPrimary
-      case .verso: L10n.tkEidRequestMrzScannerNotificationVersoPrimary
-      }
-    }
-
-    var popupContent: String {
-      switch self {
-      case .recto: L10n.tkEidRequestMrzScannerNotificationRectoSecondary
-      case .verso: L10n.tkEidRequestMrzScannerNotificationVersoSecondary
-      }
-    }
-  }
-
   enum StateView: Equatable {
     case loading
     case camera
@@ -58,7 +30,7 @@ class ScanDocumentViewModel {
   var state = StateView.loading
   var isNotificationPresented = false
   var notification: AVBeamNotification?
-  var buttonState = RecordingButton.State.initial
+  var buttonState = RecordingState.initial
   var destination: EIDRequestDestinations?
 
   @ObservationIgnored @Injected(\.avBeam) var avBeam: AVBeamProtocol
@@ -79,13 +51,16 @@ class ScanDocumentViewModel {
   }
 
   var title: String {
-    scanningState.title
+    switch scanningState {
+    case .recto: L10n.tkEidRequestMrzScannerRecto
+    case .verso: L10n.tkEidRequestMrzScannerVerso
+    }
   }
 
   var buttonStateAccessibilityLabel: String {
     switch buttonState {
     case .initial: L10n.tkEidRequestScanDocumentButtonInitialStateAlt
-    case .record: L10n.tkEidRequestScanDocumentButtonRecordStateAlt
+    case .recording: L10n.tkEidRequestScanDocumentButtonRecordStateAlt
     case .loading,
          .success: ""
     }
@@ -139,7 +114,7 @@ class ScanDocumentViewModel {
   }
 
   func startScan() {
-    buttonState = .record
+    buttonState = .recording()
 
     if scanningState == .verso {
       return avBeam.notifySecondScan()
@@ -174,15 +149,20 @@ class ScanDocumentViewModel {
     scanningState = .verso
   }
 
+  func uiOrientationDidChange(to orientation: UIDeviceOrientation) {
+    uiOrientation = orientation
+  }
+
   // MARK: Private
+
+  private var uiOrientation: UIDeviceOrientation?
+  private var scanningOrientiations = [ScanningState: UIDeviceOrientation]()
 
   @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @ObservationIgnored @Injected(\.scanDelay) private var scanDelay
   @ObservationIgnored @Injected(\.avBeamAppID) private var avBeamAppID
   @ObservationIgnored @Injected(\.eidRequestContext) private var context
   @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
-  @ObservationIgnored @Injected(\.compareScanDocumentOutputUseCase) private var compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocol
-  @ObservationIgnored @Injected(\.updateEIDRequestCaseFilesUseCase) private var updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocol
   @ObservationIgnored @Injected(\.updateInputFileUseCase) private var updateInputFileUseCase: UpdateInputFileUseCaseProtocol
 
   private func reset() {
@@ -199,33 +179,16 @@ class ScanDocumentViewModel {
 
   private func handleScanDocumentOutput(_ output: ScanDocumentOutput) async throws {
     try? await Task.sleep(nanoseconds: scanDelay)
-
-    guard
-      let caseId = context.caseId,
-      let autoVerificationResponse = context.autoVerificationResponse
-    else {
-      await showSuccessButtonState()
-      destination = .scanDocumentSubmit(output)
-      return
-    }
-
-    guard await compareScanDocumentOutputUseCase(for: caseId, with: output) else {
-      await showSuccessButtonState()
-      destination = .error(.ScanDocument.wrongDocument)
-      return
-    }
-
-    try await updateEIDRequestCaseFilesUseCase(for: caseId, scanDocumentOutput: output)
     await showSuccessButtonState()
-    destination =
-      autoVerificationResponse.isDocumentVideoRecordingRequired
-        ? .recordDocumentInformation : .avIntroSelfieVideo
+    destination = .scanDocumentSubmit(output)
   }
 }
 
 // MARK: AVBeamMessageDelegate
 
 extension ScanDocumentViewModel: AVBeamMessageDelegate {
+
+  // MARK: Internal
 
   nonisolated func didReceiveError(error: AVBeamError) {
     Task { @MainActor in
@@ -246,18 +209,16 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
           handleError(error)
         }
 
-      case .idDocMatched,
-           .idDocNotMatched:
+      case .idDetectionDone,
+           .idDocNotMatched,
+           .idRecognitionStopped:
         break
 
       case .streamingStarted:
         buttonState = .initial
 
-      case .idDetectionDone:
-        break
-
-      case .idRecognitionStopped:
-        break
+      case .idDocMatched:
+        catchUIOrientationOnDocumentScan()
 
       case .idNeedSecondPageForMatching:
         destination = .scanDocumentSecondPageInstructions(Callback(handler: { self.startScanSecondPage() }))
@@ -267,6 +228,12 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
         self.notification = notification
       }
     }
+  }
+
+  // MARK: Private
+
+  private func catchUIOrientationOnDocumentScan() {
+    scanningOrientiations[scanningState] = uiOrientation
   }
 }
 
@@ -287,7 +254,9 @@ extension ScanDocumentViewModel: AVBeamScanDocumentDelegate {
         self.notification = nil
 
         let output = try ScanDocumentOutput(
-          packageResult, identityType: self.context.identityType ?? .identityCard)
+          packageResult,
+          scanningOrientiations: scanningOrientiations,
+          identityType: self.context.identityType ?? .identityCard)
         try await handleScanDocumentOutput(output)
       } catch {
         self.handleError(error)

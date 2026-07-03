@@ -15,6 +15,7 @@ extension VerifiableCredentialEntity {
 
   public func setValues(from credential: VerifiableCredential) {
     createdAt = credential.createdAt
+    refreshedAt = credential.refreshedAt
     progressionState = ProgressionState(credential.progressionState)
     issuer = credential.issuer
     let bundleItemEntities = credential.bundleItems.map(BundleItemEntity.init)

@@ -11,6 +11,8 @@ protocol EIDRequestCaseRepositoryProtocol {
   func create(eIDRequestCase: EIDRequestCase) async throws -> EIDRequestCase
   func get(id: String) async throws -> EIDRequestCase
   func getAll() async throws -> [EIDRequestCase]
+  func getAllPushIds() async throws -> [String]
+  func savePushId(_ pushId: String, for caseId: String) async throws
 
   @discardableResult
   func update(_ eIDRequestCase: EIDRequestCase) async throws -> EIDRequestCase
@@ -49,7 +51,6 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
 
   func getAll() throws -> [EIDRequestCase] {
     try database.get(EIDRequestCaseEntity.self)
-      .filter { $0.state?.state != EIDRequestStatus.State.cancelled.rawValue }
       .sorted { $0.createdAt > $1.createdAt }
       .map(EIDRequestCase.init)
   }
@@ -113,6 +114,18 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
     let entity = try getEntity(id)
     try database.write {
       entity.files.removeAll()
+    }
+  }
+
+  func getAllPushIds() async throws -> [String] {
+    try database.get(EIDRequestCaseEntity.self)
+      .compactMap(\.pushId)
+  }
+
+  func savePushId(_ pushId: String, for caseId: String) async throws {
+    let entity = try getEntity(caseId)
+    try database.write {
+      entity.pushId = pushId
     }
   }
 

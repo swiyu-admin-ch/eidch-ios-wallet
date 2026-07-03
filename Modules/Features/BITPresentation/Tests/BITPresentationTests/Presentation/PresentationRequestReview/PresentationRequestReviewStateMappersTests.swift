@@ -1,6 +1,7 @@
 // swiftlint:disable force_unwrapping implicitly_unwrapped_optional
 import Factory
 import XCTest
+@testable import BITClaimsPathPointer
 @testable import BITCore
 @testable import BITCredential
 @testable import BITCredentialShared
@@ -21,24 +22,23 @@ class PresentationRequestReviewStateMappersTests: XCTestCase {
 
   func testResultInit() {
     let result = PresentationRequestReviewState.Result(credential: compatibleCredentialMock, verifierDisplay: verifierDisplayMock, colorScheme: colorSchemeMock)
-    let claims = compatibleCredentialMock.requestedClaimClusters.flatMap(\.claims)
 
     XCTAssertEqual(result.credential.credential, compatibleCredentialMock.credential)
     XCTAssertEqual(result.credential.colorScheme, colorSchemeMock)
     XCTAssertEqual(result.verifierDisplay, verifierDisplayMock)
 
     XCTAssertEqual(result.claimBadges.count, 2)
-    XCTAssertEqual(result.claimBadges[0].name, claims[0].preferredDisplay.name)
+    XCTAssertEqual(result.claimBadges[0].name, lastName)
     XCTAssertEqual(result.claimBadges[0].isSensitive, false)
-    XCTAssertEqual(result.claimBadges[1].name, claims[1].preferredDisplay.name)
+    XCTAssertEqual(result.claimBadges[1].name, firstName)
     XCTAssertEqual(result.claimBadges[1].isSensitive, false)
 
     XCTAssertEqual(result.clusters, compatibleCredentialMock.requestedClaimClusters)
   }
 
   func testResultInit_sensitiveClaim_rightOrder() {
-    let photoImage = PresentationField(jsonPath: "$.photoImage", value: CodableValue(value: "Test", as: "string"))
-    let compatibleCredential = CompatibleCredential(credential: .Mock.sample, requestedFields: [CompatibleCredential.Mock.fieldFirstName, CompatibleCredential.Mock.fieldLastName, photoImage])
+    let photoImage: ClaimsPathPointer = [.string("photoImage")]
+    let compatibleCredential = CompatibleCredential(credential: .Mock.sample, presentingPaths: [CompatibleCredential.Mock.pathFirstName, CompatibleCredential.Mock.pathLastName, photoImage])
 
     let result = PresentationRequestReviewState.Result(credential: compatibleCredential, verifierDisplay: verifierDisplayMock, colorScheme: colorSchemeMock)
     let expectedBadges = compatibleCredential.requestedClaimClusters
@@ -47,21 +47,59 @@ class PresentationRequestReviewStateMappersTests: XCTestCase {
       .sorted { $0.isSensitive && !$1.isSensitive }
 
     XCTAssertEqual(result.claimBadges.count, 3)
-    XCTAssertEqual(result.claimBadges[0].name, expectedBadges[0].name)
+    XCTAssertEqual(result.claimBadges[0].name, "Photo")
     XCTAssertEqual(result.claimBadges[0].isSensitive, expectedBadges[0].isSensitive)
-    XCTAssertEqual(result.claimBadges[1].name, expectedBadges[1].name)
+    XCTAssertEqual(result.claimBadges[1].name, lastName)
     XCTAssertEqual(result.claimBadges[1].isSensitive, expectedBadges[1].isSensitive)
-    XCTAssertEqual(result.claimBadges[2].name, expectedBadges[2].name)
+    XCTAssertEqual(result.claimBadges[2].name, firstName)
     XCTAssertEqual(result.claimBadges[2].isSensitive, expectedBadges[2].isSensitive)
   }
 
   func testResultInit_noClaim_noClaimBadgesOrClusters() {
-    let compatibleCredential = CompatibleCredential(credential: .Mock.sample, requestedFields: [])
+    let compatibleCredential = CompatibleCredential(credential: .Mock.sample, presentingPaths: [])
 
     let result = PresentationRequestReviewState.Result(credential: compatibleCredential, verifierDisplay: verifierDisplayMock, colorScheme: colorSchemeMock)
 
     XCTAssertTrue(result.claimBadges.isEmpty)
     XCTAssertTrue(result.clusters.isEmpty)
+  }
+
+  func testResultInit_arraysWithDuplicateClaimBadge_rightOrderAndUniqueBadges() {
+    let compatibleCredential = CompatibleCredential(credential: .Mock.multiCluster, presentingPaths: [path1, path2])
+
+    let result = PresentationRequestReviewState.Result(credential: compatibleCredential, verifierDisplay: verifierDisplayMock, colorScheme: colorSchemeMock)
+
+    XCTAssertEqual(result.claimBadges.count, 3)
+    XCTAssertEqual(result.claimBadges[0].name, claimName2)
+    XCTAssertEqual(result.claimBadges[0].isSensitive, true)
+    XCTAssertEqual(result.claimBadges[1].name, claimName1)
+    XCTAssertEqual(result.claimBadges[1].isSensitive, false)
+    XCTAssertEqual(result.claimBadges[2].name, claimName2)
+    XCTAssertEqual(result.claimBadges[2].isSensitive, false)
+  }
+
+  func testResultInit_nestedWithDuplicates_rightOrderAndUniqueBadges() {
+    let compatibleCredential = CompatibleCredential(credential: .Mock.nestedCluster, presentingPaths: [path1, path2])
+
+    let result = PresentationRequestReviewState.Result(credential: compatibleCredential, verifierDisplay: verifierDisplayMock, colorScheme: colorSchemeMock)
+
+    XCTAssertEqual(result.claimBadges.count, 3)
+    XCTAssertEqual(result.claimBadges[0].name, "Third claim")
+    XCTAssertEqual(result.claimBadges[0].isSensitive, true)
+    XCTAssertEqual(result.claimBadges[1].name, claimName2)
+    XCTAssertEqual(result.claimBadges[1].isSensitive, true)
+    XCTAssertEqual(result.claimBadges[2].name, claimName1)
+    XCTAssertEqual(result.claimBadges[2].isSensitive, false)
+  }
+
+  func testResultInit_simpleTypedArray_oneBadge() {
+    let compatibleCredential = CompatibleCredential(credential: .Mock.simpleTypedCluster, presentingPaths: [path1])
+
+    let result = PresentationRequestReviewState.Result(credential: compatibleCredential, verifierDisplay: verifierDisplayMock, colorScheme: colorSchemeMock)
+
+    XCTAssertEqual(result.claimBadges.count, 1)
+    XCTAssertEqual(result.claimBadges[0].name, "First cluster")
+    XCTAssertEqual(result.claimBadges[0].isSensitive, true)
   }
 
   func testProcessingInit() {
@@ -79,5 +117,11 @@ class PresentationRequestReviewStateMappersTests: XCTestCase {
   private let compatibleCredentialMock = CompatibleCredential.Mock.BIT
   private let verifierDisplayMock = VerifierDisplay.Mock.sample
   private let colorSchemeMock = "colorScheme"
+  private let claimName1 = "First claim"
+  private let claimName2 = "Second claim"
+  private let firstName = "First name"
+  private let lastName = "Last name"
+  private let path1: ClaimsPathPointer = [.string("path1")]
+  private let path2: ClaimsPathPointer = [.string("path2")]
 
 }

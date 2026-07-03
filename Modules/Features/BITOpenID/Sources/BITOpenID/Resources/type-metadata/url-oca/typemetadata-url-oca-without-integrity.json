@@ -2,53 +2,17 @@
   "vct": "https://example.com/education_credential",
   "name": "Education Credential",
   "description": "A credential for academic achievements",
-  "extends": "https://example.com/base_credential",
   "display": [
-      {
-          "lang": "en",
-          "name": "Education Credential",
-          "description": "Academic credential for students",
-          "rendering": {
-              "simple": {
-                  "logo": {
-                      "uri": "https://example.com/logo.png",
-                      "uri#integrity": "sha256-validBase64==",
-                      "alt_text": "University Logo"
-                  },
-                  "background_color": "#FFFFFF",
-                  "text_color": "#000000"
-              },
-              "svg_templates": [
-                  {
-                      "uri": "https://example.com/template.svg",
-                      "uri#integrity": "sha256-validBase64==",
-                      "properties": {
-                          "orientation": "landscape",
-                          "color_scheme": "light",
-                          "contrast": "high"
-                      }
-                  }
-              ],
-              "oca": {
-                "uri":"https://example.com/oca/oca-bundle.json"
-              }
-          }
+    {
+      "lang": "en",
+      "name": "Education Credential",
+      "description": "Academic credential for students",
+      "rendering": {
+        "oca": {
+          "uri": "https://example.com/oca/oca-bundle.json"
+        }
       }
+    }
   ],
-  "claims": [
-      {
-          "path": ["name"],
-          "display": [
-              { "lang": "en", "label": "Full Name", "description": "The student's full name." }
-          ],
-          "sd": "allowed",
-          "svg_id": "full_name"
-      },
-      {
-          "path": ["degrees", null, "type"],
-          "sd": "never"
-      }
-  ],
-  "schema": "credential_schema",
   "schema_uri": "https://example.com/schema.json"
 }

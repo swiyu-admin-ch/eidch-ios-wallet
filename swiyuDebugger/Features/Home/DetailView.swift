@@ -2,6 +2,7 @@ import BITCore
 import BITCredential
 import BITCredentialShared
 import BITTheming
+import Factory
 import SwiftUI
 
 // MARK: - DetailView
@@ -29,23 +30,45 @@ struct DetailView: View {
       }
     }
     .navigationTitle("Credential")
+    .alert("Fetch failed", isPresented: showsFetchError) {
+      Button("OK", role: .cancel) { }
+    } message: {
+      Text(fetchErrorMessage ?? "Unknown error.")
+    }
   }
 
   // MARK: Private
 
   @State private var selectedClaimLanguage: String?
   @State private var useDarkCredentialCard = false
+  @State private var isFetchingDeferredCredential = false
+  @State private var fetchErrorMessage: String?
+
+  @Environment(\.dismiss) private var dismiss
 
   private let credential: any CredentialProtocol
+
+  @Injected(\.refreshCredentialsUseCase) private var refreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol
+  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
 
   private var cardColorScheme: ColorScheme {
     useDarkCredentialCard ? .dark : .light
   }
 
+  private var showsFetchError: Binding<Bool> {
+    Binding(
+      get: { fetchErrorMessage != nil },
+      set: { isPresented in
+        if !isPresented {
+          fetchErrorMessage = nil
+        }
+      })
+  }
+
   @ViewBuilder
   private func verifiableCredentialSections(credential: VerifiableCredential) -> some View {
     ClaimLanguageSection(
-      locales: CredentialLocalizationSupport.availableClaimLocales(for: credential.clusters),
+      locales: CredentialLocalizationSupport.availableClaimLocales(for: credential.resolvedClusters),
       selectedLanguage: $selectedClaimLanguage)
 
     Section("Credential UI") {
@@ -59,12 +82,25 @@ struct DetailView: View {
     }
 
     Section("Claims") {
-      compactClaimList(CredentialLocalizationSupport.localizedClusters(credential.clusters, selectedLanguage: selectedClaimLanguage))
+      compactClaimList(CredentialLocalizationSupport.localizedClusters(credential.resolvedClusters, selectedLanguage: selectedClaimLanguage))
     }
   }
 
   @ViewBuilder
   private func deferredCredentialSections(credential: DeferredCredential) -> some View {
+    Section("Actions") {
+      Button(action: { triggerDeferredCredentialFetch(credential) }) {
+        HStack {
+          Text("Fetch credential")
+          Spacer()
+          if isFetchingDeferredCredential {
+            ProgressView()
+          }
+        }
+      }
+      .disabled(isFetchingDeferredCredential)
+    }
+
     Section("Credential UI") {
       Toggle("Dark mode", isOn: $useDarkCredentialCard)
       VStack(spacing: .x6) {
@@ -148,6 +184,33 @@ struct DetailView: View {
   private func compactClaimList(_ clusters: [CredentialClaimCluster]) -> some View {
     ClaimClusterList(clusters)
       .padding(.leading, -.x6)
+  }
+
+  private func triggerDeferredCredentialFetch(_ credential: DeferredCredential) {
+    Task {
+      await MainActor.run {
+        isFetchingDeferredCredential = true
+        fetchErrorMessage = nil
+      }
+
+      do {
+        var forcedDeferredCredential = credential
+        forcedDeferredCredential.polledAt = nil
+        _ = try await credentialRepository.update(deferredCredential: forcedDeferredCredential)
+
+        _ = try await refreshCredentialsUseCase()
+
+        await MainActor.run {
+          isFetchingDeferredCredential = false
+          dismiss()
+        }
+      } catch {
+        await MainActor.run {
+          isFetchingDeferredCredential = false
+          fetchErrorMessage = error.localizedDescription
+        }
+      }
+    }
   }
 
 }

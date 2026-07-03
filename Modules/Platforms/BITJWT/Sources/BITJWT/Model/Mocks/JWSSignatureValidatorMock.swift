@@ -2,17 +2,15 @@
 
 public class JWSSignatureValidatorMock<U: JWT>: JWSSignatureValidatorProtocol {
 
-  public var validateIssuerDidReceivedJws: JWS<U>?
-  public var validateIssuerDidReceivedDid: String?
-  public var validateIssuerDidCallsCount = 0
+  public var validateReceivedJws: JWS<U>?
+  public var validateCallsCount = 0
 
-  public var validateIssuerDidThrowableError: Error?
+  public var validateThrowableError: Error?
 
-  public func validate(_ jws: some JWS<some Codable & Equatable>, issuerDid: String) async throws {
-    validateIssuerDidCallsCount += 1
-    validateIssuerDidReceivedJws = jws as? JWS<U>
-    validateIssuerDidReceivedDid = issuerDid
-    if let throwingError = validateIssuerDidThrowableError {
+  public func validate(_ jws: JWS<some JWT>) async throws {
+    validateCallsCount += 1
+    validateReceivedJws = jws as? JWS<U>
+    if let throwingError = validateThrowableError {
       throw throwingError
     }
   }

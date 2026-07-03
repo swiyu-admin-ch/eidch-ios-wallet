@@ -13,3 +13,11 @@ extension RecursiveJWT {
     XCTAssertEqual(nested[RecursiveJWT.Nested.CodingKeys.key.rawValue] as? String, key?.key)
   }
 }
+
+extension SdJWS<RecursiveJWT> {
+  func assertDisclosures() {
+    XCTAssertEqual(disclosures.count, 2)
+    disclosures.assertContains([.string(RecursiveJWT.CodingKeys.key.rawValue)], rawDisclosure: RecursiveJWT.Mock.disclosure1)
+    disclosures.assertContains([.string(RecursiveJWT.CodingKeys.key.rawValue), .string(RecursiveJWT.Nested.CodingKeys.key.rawValue)], rawDisclosure: RecursiveJWT.Mock.disclosure2)
+  }
+}

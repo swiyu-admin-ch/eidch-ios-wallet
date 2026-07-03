@@ -51,4 +51,8 @@ extension Container {
   var descriptionFormFieldMaximumLength: Factory<Int> {
     self { 500 }
   }
+
+  var nonComplianceJsonEncoder: Factory<JSONEncoder> {
+    self { JSONEncoder(dateEncodingStrategy: .iso8601) }
+  }
 }

@@ -7,18 +7,18 @@ import Spyable
 // MARK: - VersionEnforcementRepositoryProtocol
 
 @Spyable
-public protocol VersionEnforcementRepositoryProtocol {
-  func fetchVersionEnforcements() async throws -> [VersionEnforcement]
+protocol VersionEnforcementRepositoryProtocol {
+  func fetchVersionEnforcement() async throws -> VersionEnforcement.Response
 }
 
 // MARK: - VersionEnforcementRepository
 
 struct VersionEnforcementRepository: VersionEnforcementRepositoryProtocol {
 
-  func fetchVersionEnforcements() async throws -> [VersionEnforcement] {
+  func fetchVersionEnforcement() async throws -> VersionEnforcement.Response {
     do {
-      let versionEnforcements: [VersionEnforcement] = try await networkService.request(VersionEnforcementEndpoint.configuration(versionEnforcementUrl: versionEnforcementUrl))
-      return versionEnforcements.sorted(by: { $0.created > $1.created })
+      let decoder = JSONDecoder(dateDecodingStrategy: .formatted(DateFormatter(format: "yyyy-MM-dd")))
+      return try await networkService.request(VersionEnforcementEndpoint.configuration(versionEnforcementUrl: versionEnforcementUrl), decoder: decoder)
     } catch let error as NetworkError where error.status == .pinning {
       analytics.log(AnalyticsEvent.versionEnforcementServerEvaluationFailed)
       throw error

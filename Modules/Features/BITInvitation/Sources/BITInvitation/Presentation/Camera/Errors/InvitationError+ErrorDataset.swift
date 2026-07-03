@@ -10,10 +10,14 @@ extension InvitationError {
     switch self {
     case .oAuth(let openIDError):
       let rawErrorCode = getRawErrorCode(from: openIDError)
-      return makeErrorDataSet(rawErrorCode: rawErrorCode, errorDescription: openIDError.invitationErrorDescription)
+      return makeIssuanceErrorDataSet(rawErrorCode: rawErrorCode, errorDescription: openIDError.invitationErrorDescription)
     case .credentialRequest(let openIDError):
       let rawErrorCode = getRawErrorCode(from: openIDError)
-      return makeErrorDataSet(rawErrorCode: rawErrorCode, errorDescription: openIDError.invitationErrorDescription)
+      return makeIssuanceErrorDataSet(rawErrorCode: rawErrorCode, errorDescription: openIDError.invitationErrorDescription)
+    case .invalidPresentationRequest(let rawErrorCode):
+      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, body: L10n.tkPresentErrorSecondary)
+    case .transactionDataNotSupported(let rawErrorCode):
+      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, body: L10n.tkPresentErrorInvalidTransactionDataSecondary)
     default: return nil
     }
   }
@@ -28,6 +32,8 @@ extension InvitationError {
     case .invalidClient(let code): code
     case .invalidGrant(let code): code
     case .unsupportedGrantType(let code): code
+    case .invalidDPoPProof(let code): code
+    case .useDPoPNonce(let code, _): code
     case .invalidToken(let code): code
     case .insufficientScope(let code): code
     case .invalidCredentialRequest(let code): code
@@ -42,7 +48,7 @@ extension InvitationError {
     }
   }
 
-  private func makeErrorDataSet(rawErrorCode: String?, errorDescription: String?) -> ErrorDataset {
+  private func makeIssuanceErrorDataSet(rawErrorCode: String?, errorDescription: String?) -> ErrorDataset {
     var content: [InformationView2.ContentType] = [
       .title(L10n.tkCredentialOfferErrorPrimary),
       .body(L10n.tkCredentialOfferErrorSecondary),
@@ -54,6 +60,15 @@ extension InvitationError {
       content.append(.caption(errorDescription))
     }
     return ErrorDataset(content)
+  }
+
+  private func makePresentationErrorDataset(rawErrorCode: String, body: String) -> ErrorDataset {
+    ErrorDataset([
+      .title(L10n.tkPresentErrorPrimary),
+      .body(L10n.tkPresentErrorSecondary),
+      .caption(rawErrorCode),
+      .caption(body),
+    ])
   }
 }
 

@@ -31,7 +31,7 @@ final class OcaBundlerTests: XCTestCase {
     let bundle = try bundler.createOcaBundle(ocaBundleDataMock)
 
     XCTAssertEqual(digestsValidatorSpy.validateReceivedRawOcaData, ocaBundleDataMock)
-    XCTAssertEqual(brandingOverlayResolverSpy.resolveOverlaysReceivedOverlays?.count, bundle.overlays.count)
+    XCTAssertEqual(overlayTemplateResolverSpy.callAsFunctionOverlaysReceivedOverlays?.count, bundle.overlays.count)
   }
 
   func testCreateOcaBundle_digestValidatorReturnsFalse_throwsInvalidCESRHashError() throws {
@@ -48,7 +48,7 @@ final class OcaBundlerTests: XCTestCase {
   }
 
   func testCreateOcaBundle_missingBrandingOverlays_verifyBrandingOverlaysEmpty() throws {
-    brandingOverlayResolverSpy.resolveOverlaysReturnValue = []
+    overlayTemplateResolverSpy.callAsFunctionOverlaysReturnValue = []
     let bundle = try bundler.createOcaBundle(OcaBundle.Mock.emptyBrandingOverlayData)
     XCTAssertEqual(bundle.overlays.compactMap { $0 as? BrandingOverlay1x1 }.count, 0)
   }
@@ -95,18 +95,18 @@ final class OcaBundlerTests: XCTestCase {
   private var bundler = OcaBundler()
 
   private var digestsValidatorSpy = OcaCaptureBaseDigestsValidatorProtocolSpy()
-  private var brandingOverlayResolverSpy = BrandingOverlayResolverProtocolSpy()
+  private var overlayTemplateResolverSpy = OverlayTemplateResolverProtocolSpy()
 
   private func registerMocks() {
     digestsValidatorSpy = OcaCaptureBaseDigestsValidatorProtocolSpy()
-    brandingOverlayResolverSpy = BrandingOverlayResolverProtocolSpy()
+    overlayTemplateResolverSpy = OverlayTemplateResolverProtocolSpy()
     Container.shared.ocaCaptureBaseDigestsValidator.register { self.digestsValidatorSpy }
-    Container.shared.brandingOverlayResolver.register { self.brandingOverlayResolverSpy }
+    Container.shared.overlayTemplateResolver.register { self.overlayTemplateResolverSpy }
   }
 
   private func successState() {
     digestsValidatorSpy.validateReturnValue = true
-    brandingOverlayResolverSpy.resolveOverlaysReturnValue = ocaBundleaMock.overlays
+    overlayTemplateResolverSpy.callAsFunctionOverlaysReturnValue = ocaBundleaMock.overlays
   }
 }
 

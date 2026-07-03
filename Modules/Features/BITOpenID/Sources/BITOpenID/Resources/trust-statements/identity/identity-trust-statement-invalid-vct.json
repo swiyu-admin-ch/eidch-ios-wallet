@@ -1,6 +1,5 @@
 {
   "vct": "invalid",
-  "iss": "issuer",
   "sub": "subject",
   "iat": 1742453211,
   "status": {

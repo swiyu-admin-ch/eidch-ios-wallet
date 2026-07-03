@@ -10,15 +10,15 @@ enum OpenIDEndpoint {
   case typeMetadata(url: URL)
   case metadata(fromIssuerUrl: URL)
   case oidConnectMetadata(fromIssuerUrl: URL)
-  case credential(url: URL, body: CredentialRequestBody, accessToken: AccessToken)
-  case accessToken(fromTokenUrl: URL, preAuthorizedCode: String)
-  case refreshAccessToken(fromTokenUrl: URL, refreshToken: String)
+  case credential(url: URL, body: CredentialRequestBody, accessToken: AccessToken, dpopProof: String?)
+  case accessToken(fromTokenUrl: URL, preAuthorizedCode: String, dpopProof: String?)
+  case refreshAccessToken(fromTokenUrl: URL, refreshToken: String, dpopProof: String?)
   case nonce(url: URL)
   case openIdConfiguration(fromIssuerUrl: URL)
   case oidConnectOpenIdConfiguration(fromIssuerUrl: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
-  case deferredCredential(url: URL, body: DeferredCredentialRequestBody, accessToken: String)
+  case deferredCredential(url: URL, body: DeferredCredentialRequestBody, accessToken: AccessToken, dpopProof: String?)
 }
 
 // MARK: TargetType
@@ -29,14 +29,14 @@ extension OpenIDEndpoint: TargetType {
 
   var baseURL: URL {
     switch self {
-    case .accessToken(let baseUrl, _),
-         .credential(let baseUrl, _, _),
-         .deferredCredential(let baseUrl, _, _),
+    case .accessToken(let baseUrl, _, _),
+         .credential(let baseUrl, _, _, _),
+         .deferredCredential(let baseUrl, _, _, _),
          .nonce(let baseUrl),
          .oidConnectMetadata(let baseUrl),
          .oidConnectOpenIdConfiguration(let baseUrl),
          .publicKeyInfo(let baseUrl),
-         .refreshAccessToken(let baseUrl, _),
+         .refreshAccessToken(let baseUrl, _, _),
          .status(let baseUrl),
          .typeMetadata(let baseUrl),
          .vcSchema(let baseUrl):
@@ -103,7 +103,7 @@ extension OpenIDEndpoint: TargetType {
          .vcSchema:
       .requestPlain
 
-    case .deferredCredential(_, let body, _):
+    case .deferredCredential(_, let body, _, _):
       switch body {
       case .json(let request):
         .requestParameters(
@@ -113,19 +113,19 @@ extension OpenIDEndpoint: TargetType {
         .requestData(Data(token.utf8))
       }
 
-    case .accessToken(_, let preAuthorizedCode):
+    case .accessToken(_, let preAuthorizedCode, _):
       .requestParameters(parameters: [
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": preAuthorizedCode,
       ], encoding: URLEncoding.httpBody)
 
-    case .refreshAccessToken(_, let refreshToken):
+    case .refreshAccessToken(_, let refreshToken, _):
       .requestParameters(parameters: [
         "grant_type": "refresh_token",
         "refresh_token": refreshToken,
       ], encoding: URLEncoding.httpBody)
 
-    case .credential(_, let credentialBody, _):
+    case .credential(_, let credentialBody, _, _):
       switch credentialBody {
       case .json(let request):
         .requestParameters(
@@ -142,39 +142,62 @@ extension OpenIDEndpoint: TargetType {
     case .nonce,
          .publicKeyInfo,
          .typeMetadata:
-      NetworkHeader.standard.raw
+      return NetworkHeader.standard.raw
     case .metadata,
-         .oidConnectMetadata: [
+         .oidConnectMetadata:
+      return [
         NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
         NetworkHeader.acceptLanguage(UserLocale.LocaleIdentifier.allCases.map(\.rawValue)),
       ].raw
     case .oidConnectOpenIdConfiguration,
-         .openIdConfiguration: [
+         .openIdConfiguration:
+      return [
         NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
       ].raw
-    case .credential(_, let body, let accessToken):
-      [
+    case .credential(_, let body, let accessToken, let dpopProof):
+      var headers = [
         NetworkHeader.authorization(value: "\(accessToken.tokenType.rawValue) \(accessToken.accessToken)"),
         NetworkHeader.swiyuAPIVersion("2"),
         NetworkHeader.contentType(body.contentType.rawValue),
         NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
-      ].raw
-    case .accessToken,
-         .refreshAccessToken:
-      [
+      ]
+      if let dpopProof {
+        headers.append(.dpop(dpopProof))
+      }
+      return headers.raw
+    case .accessToken(_, _, let dpopProof):
+      var headers = [
         NetworkHeader.formUrlEncoded,
         NetworkHeader.swiyuAPIVersion("2"),
-      ].raw
-    case .deferredCredential(_, let body, let accessToken):
-      // OAuth 2.0 access token to be implemented with batch issuance feature
-      [
-        NetworkHeader.authorization(value: "Bearer \(accessToken)"),
+      ]
+      if let dpopProof {
+        headers.append(.dpop(dpopProof))
+      }
+      return headers.raw
+    case .refreshAccessToken(_, _, let dpopProof):
+      var headers = [
+        NetworkHeader.formUrlEncoded,
+        NetworkHeader.swiyuAPIVersion("2"),
+      ]
+      if let dpopProof {
+        headers.append(.dpop(dpopProof))
+      }
+      return headers.raw
+    case .deferredCredential(_, let body, let accessToken, let dpopProof):
+      var headers = [
+        NetworkHeader.authorization(value: "\(accessToken.tokenType.rawValue) \(accessToken.accessToken)"),
         NetworkHeader.swiyuAPIVersion("2"),
         NetworkHeader.contentType(body.contentType.rawValue),
         NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
-      ].raw
-    case .status: [ Self.keyAccept: Self.valueApplicationStatusList ]
-    case .vcSchema: [
+      ]
+      if let dpopProof {
+        headers.append(.dpop(dpopProof))
+      }
+      return headers.raw
+    case .status:
+      return [ Self.keyAccept: Self.valueApplicationStatusList ]
+    case .vcSchema:
+      return [
         Self.keyAccept: [
           Self.valueApplicationJson,
           Self.valueApplicationVcSchema,
@@ -214,19 +237,4 @@ extension OpenIDEndpoint: TargetType {
   private static let valueApplicationFormUrlEncoded = "application/x-www-form-urlencoded"
   private static let valueApplicationVcSchema = "application/schema+json"
   private static let valueApplicationVcSchemaInstance = "application/schema-instance+json"
-}
-
-// MARK: AccessTokenAuthorizable
-
-extension OpenIDEndpoint: AccessTokenAuthorizable {
-
-  var authorizationType: AuthorizationType? {
-    switch self {
-    case .deferredCredential:
-      .bearer
-    default:
-      nil
-    }
-  }
-
 }

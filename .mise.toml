@@ -10,43 +10,46 @@ danger-swift = '3.22.0'
 ruby = '3.4.7'
 'gem:bundler' = '2.7'
 
-[tasks.generate-project]
+# ── Project ──────────────────────────────────────────────────────────
+
+[tasks."project:generate"]
 description = 'Build xcode project'
-depends = ['build-project']
+depends = ['project:build']
 run = ['open swiyu.xcodeproj']
 
-[tasks.regenerate-project]
+[tasks."project:regenerate"]
 description = 'Build xcode project without applying swiftgen, swiftformat'
-depends = ['rebuild-project']
+depends = ['project:rebuild']
 run = ['open swiyu.xcodeproj']
 
-[tasks.build-project]
+[tasks."project:build"]
 description = 'Build xcode project'
 run = [
-    'mise swiftgen',
-    'mise swiftformat',
-    'mise xcode-configuration',
-    'mise xcodegen',
+    'mise quality:gen',
+    'mise quality:format',
+    'mise setup:xcode',
+    'mise project:xcodegen',
 ]
 
-[tasks.rebuild-project]
+[tasks."project:rebuild"]
 description = 'Re-Build xcode project without applying swiftgen, swiftformat'
-run = ['mise xcode-configuration', 'mise xcodegen']
+run = ['mise setup:xcode', 'mise project:xcodegen']
 
-[tasks.tests]
-description = 'Run app tests'
-depends = ['build-project']
-run = ['bundle exec fastlane scan --scheme "swiyu Ref"']
+[tasks."project:xcodegen"]
+description = 'Build xcodeproj file'
+run = 'xcodegen'
 
-[tasks.swiftlint]
+# ── Quality ──────────────────────────────────────────────────────────
+
+[tasks."quality:lint"]
 description = 'Linting'
 run = 'swiftlint --strict'
 
-[tasks.swiftformat]
+[tasks."quality:format"]
 description = 'Format the project to expected code standards'
-run = 'mise exec -- swiftformat .'
+run = 'swiftformat .'
 
-[tasks.swiftgen]
+[tasks."quality:gen"]
 description = 'Generate assets files'
 run = [
     'swiftgen',
@@ -66,129 +69,156 @@ run = [
     'swiftgen --config Modules/Features/BITSettings/swiftgen.yml',
 ]
 
-[tasks.xcodegen]
-description = 'Build xcodeproj file'
-run = 'xcodegen'
+[tasks."quality:pre-commit"]
+description = 'pre-commit hook'
+depends = ['quality:format', 'quality:lint', 'quality:remove-duplicate-text-keys']
 
-[tasks.danger]
+[tasks."quality:remove-duplicate-text-keys"]
+description = 'Removes duplicate text keys from localization files'
+run = ['.resources/scripts/remove_duplicate_textkeys.rb']
+
+# ── Test ─────────────────────────────────────────────────────────────
+
+[tasks."test:run"]
+description = 'Run app tests'
+depends = ['project:build']
+run = ['bundle exec fastlane scan --scheme "swiyu Ref"']
+
+[tasks."test:danger"]
 description = 'Danger swift'
 run = ['swift build', 'swift run danger-swift ci']
 
-[tasks.bundler]
-description = 'Install bundler dependencies'
-run = 'bundle install'
+# ── Deploy ───────────────────────────────────────────────────────────
 
-[tasks.deploy]
+[tasks."deploy:run"]
 description = 'Deploy'
 run = ['bundle install', 'bundle exec fastlane deploy env:{{option(name="environment", default="ref")}}']
 
-[tasks.deploy-ref]
-description = 'Deploy REF (updraft)'
-depends = ['bundler']
-run = 'mise run deploy --environment ref'
+[tasks."deploy:ref"]
+description = 'Deploy REF (testflight)'
+depends = ['setup:bundler']
+run = 'mise run deploy:run --environment ref'
 
-[tasks.deploy-abn]
-description = 'Deploy ABN (updraft)'
-depends = ['bundler']
-run = 'mise run deploy --environment abn'
+[tasks."deploy:abn"]
+description = 'Deploy ABN (testflight)'
+depends = ['setup:bundler']
+run = 'mise run deploy:run --environment abn'
 
-[tasks.deploy-abnstore]
-description = 'Deploy ABN Store (testflight)'
-depends = ['bundler']
-run = 'mise run deploy --environment abnstore'
-
-[tasks.deploy-debugger]
+[tasks."deploy:debugger"]
 description = 'Deploy Debugger (updraft)'
-depends = ['bundler']
-run = 'mise run deploy --environment debugger'
+depends = ['setup:bundler']
+run = 'mise run deploy:run --environment debugger'
 
-[tasks.deploy-prod]
+[tasks."deploy:sandbox"]
+description = 'Deploy Sandbox (testflight)'
+depends = ['setup:bundler']
+run = 'mise run deploy:run --environment sandbox'
+
+[tasks."deploy:prod"]
 description = 'Deploy PROD (testflight, appstoreconnect)'
-depends = ['bundler']
-run = 'mise run deploy --environment prod'
+depends = ['setup:bundler']
+run = ['mise run deploy:run --environment prod', 'mise run deploy:run --environment sandbox', 'mise run deploy:run --environment abn']
 
-[tasks.refresh-all-profiles]
-description = 'Refresh all prov. profiles (appstore, enterprise)'
-run = ['mise refresh-profiles-appstore', 'mise refresh-profiles-enterprise']
+# ── Profiles ─────────────────────────────────────────────────────────
 
-[tasks.refresh-profiles-appstore]
-description = 'Refresh AppStore provisonning profiles (all envs)'
-depends = ['bundler']
-run = [
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:dev',
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref',
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn',
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:prod',
-    'bundle exec fastlane ios refresh_provisioning_profile_appstore env:debugger',
-]
+[tasks."profiles:appstore-dev"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:dev'
+[tasks."profiles:appstore-ref"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref'
+[tasks."profiles:appstore-abn"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:abn'
+[tasks."profiles:appstore-prod"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:prod'
+[tasks."profiles:appstore-sandbox"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:sandbox'
+[tasks."profiles:appstore-debugger"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:debugger'
 
-[tasks.refresh-profiles-enterprise]
-description = 'Refresh Enterprise provisonning profiles (all envs)'
-depends = ['bundler']
-run = [
-    'bundle exec fastlane ios refresh_provisioning_profile_enterprise env:ref',
-    'bundle exec fastlane ios refresh_provisioning_profile_enterprise env:abn',
-    'bundle exec fastlane ios refresh_provisioning_profile_enterprise env:debugger',
-]
+[tasks."profiles:refresh-appstore"]
+description = 'Refresh AppStore provisioning profiles (all envs, parallel)'
+depends = ['setup:bundler']
+run = 'mise run -j 6 profiles:appstore-dev profiles:appstore-ref profiles:appstore-abn profiles:appstore-prod profiles:appstore-sandbox profiles:appstore-debugger'
 
-[tasks.sonar]
+[tasks."profiles:development-dev"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:dev'
+[tasks."profiles:development-ref"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:ref'
+[tasks."profiles:development-abn"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:abn'
+[tasks."profiles:development-prod"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:prod'
+[tasks."profiles:development-sandbox"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:sandbox'
+[tasks."profiles:development-debugger"]
+run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:debugger'
+
+[tasks."profiles:refresh-development"]
+description = 'Refresh development provisioning profiles (all envs, parallel)'
+depends = ['setup:bundler']
+run = 'mise run -j 6 profiles:development-dev profiles:development-ref profiles:development-abn profiles:development-prod profiles:development-sandbox profiles:development-debugger'
+
+# ── CI ───────────────────────────────────────────────────────────────
+
+[tasks."ci:sonar"]
 description = 'Run sonar lane (dev)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_sonar env:dev']
 
-[tasks.ci]
+[tasks."ci:run"]
 description = 'Run CI lane (dev)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:dev']
 
-[tasks.ci-build-ref]
+[tasks."ci:build-ref"]
 description = 'Run build lane (ref)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:ref']
 
-[tasks.ci-build-debugger]
+[tasks."ci:build-debugger"]
 description = 'Run build lane (debugger)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:debugger']
 
-[tasks.ci-build-abn]
+[tasks."ci:build-abn"]
 description = 'Run appstore build (abn)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:abn']
 
-[tasks.ci-build-abn-store]
-description = 'Run appstore build (abn_store)'
-depends = ['xcode-configuration-ci']
-run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:abnstore']
+[tasks."ci:build-sandbox"]
+description = 'Run appstore build (sandbox)'
+depends = ['setup:xcode-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:sandbox']
 
-[tasks.ci-build-prod]
+[tasks."ci:build-prod"]
 description = 'Run appstore build (prod)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build env:prod']
 
-[tasks.tag]
+[tasks."ci:tag"]
 description = 'Run tag a version for a type defined as an env variable'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane run tag_version version_bump_type:$APP_VERSION_BUMP_TYPE']
 
-[tasks.ci-build-ref-sim]
+[tasks."ci:build-ref-sim"]
 description = 'Run simulator build (ref)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build_simulator env:ref']
 
-[tasks.ci-build-abn-sim]
+[tasks."ci:build-abn-sim"]
 description = 'Run simulator build (abn)'
-depends = ['xcode-configuration-ci']
+depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_build_simulator env:abn']
 
-[tasks.xcode-configuration-ci]
+# ── Setup ────────────────────────────────────────────────────────────
+
+[tasks."setup:xcode-ci"]
 description = 'Xcode configuration for CI'
 run = [
     'defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidation -bool YES',
     'defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES',
 ]
 
-[tasks.xcode-configuration]
+[tasks."setup:xcode"]
 description = 'Add a series of configurations for xcode to align with necessary requirements'
 run = [
     'defaults write com.apple.dt.Xcode DVTTextEditorTrimTrailingWhitespace -bool YES',
@@ -198,7 +228,7 @@ run = [
     'defaults write com.apple.dt.Xcode DVTTextPageGuideLocation -int 100',
 ]
 
-[tasks.install-git-hooks]
+[tasks."setup:git-hooks"]
 description = 'Configure local git hooks for this repository'
 run = [
     'chmod +x .githooks/post-checkout',
@@ -208,18 +238,6 @@ run = [
     'git config --local core.hooksPath .githooks',
 ]
 
-[tasks.pre-commit]
-description = 'pre-commit hook'
-depends = ['swiftformat', 'swiftlint', 'sort-text-keys-strict', 'remove-duplicate-text-keys']
-
-[tasks.sort-text-keys]
-description = 'Sorts text keys in place'
-run = ['.resources/scripts/sort_text_keys.rb']
-
-[tasks.sort-text-keys-strict]
-description = 'Sorts text keys and fails if files were unsorted'
-run = ['.resources/scripts/sort_text_keys.rb --strict']
-
-[tasks.remove-duplicate-text-keys]
-description = 'Removes duplicate text keys from localization files'
-run = ['.resources/scripts/remove_duplicate_textkeys.rb']
+[tasks."setup:bundler"]
+description = 'Install bundler dependencies'
+run = 'bundle install'

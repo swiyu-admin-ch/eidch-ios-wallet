@@ -32,10 +32,6 @@ struct ImageValidator: ImageValidatorProtocol {
   // MARK: Internal
 
   func validate(base64Image: String, against valueType: ValueType) throws {
-    guard imageValidatorEnabled else {
-      return
-    }
-
     if !supportedImageType.contains(valueType) {
       throw ImageValidatorError.unsupportedImageFormat
     }
@@ -55,7 +51,6 @@ struct ImageValidator: ImageValidatorProtocol {
   // MARK: Private
 
   @Injected(\.supportedImageType) private var supportedImageType
-  @Injected(\.imageValidatorEnabled) private var imageValidatorEnabled
 }
 
 // MARK: - ImageValidatorError

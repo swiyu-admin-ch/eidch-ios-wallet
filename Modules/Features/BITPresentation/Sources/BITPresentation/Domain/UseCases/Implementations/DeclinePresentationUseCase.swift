@@ -19,19 +19,16 @@ struct DeclinePresentationUseCase: DeclinePresentationUseCaseProtocol {
   // MARK: Internal
 
   func callAsFunction(context: PresentationRequestContext) async throws {
-    if let credential = context.selectedCredential {
-      let activity = Activity(context: context, credential: credential, type: .presentationDeclined)
-      _ = try? activityService.create(activity, credentialId: credential.id)
-    }
-
     switch context.transport {
     case .proximity:
       proximityRepository.decline()
+      recordActivity(context: context)
     case .network:
       guard let responseUri = context.requestObject.responseUri else {
         return
       }
       try await presentationRequestService.decline(url: responseUri, with: .accessDenied)
+      recordActivity(context: context)
     }
   }
 
@@ -44,4 +41,11 @@ struct DeclinePresentationUseCase: DeclinePresentationUseCaseProtocol {
   @Injected(\.presentationRequestService) private var presentationRequestService
   @Injected(\.activityService) private var activityService
   @Injected(\.proximityPresentationRepository) private var proximityRepository
+
+  private func recordActivity(context: PresentationRequestContext) {
+    guard let credential = context.selectedCredential else { return }
+
+    let activity = Activity(context: context, credential: credential, type: .presentationDeclined)
+    _ = try? activityService.create(activity, credentialId: credential.id)
+  }
 }

@@ -29,9 +29,10 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
     XCTAssertEqual(result.count, mockVerifiableCredentials.count + mockDeferredCredentials.count)
 
     XCTAssertEqual(credentialRepository.getAllDeferredCredentialsCallsCount, 1)
-    XCTAssertEqual(credentialRepository.getAllVerifiableCredentialsCallsCount, 1)
+    XCTAssertEqual(credentialRepository.getAllVerifiableCredentialsCallsCount, 2)
     XCTAssertEqual(credentialRepository.getAllCallsCount, 1)
     XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
+    XCTAssertEqual(refreshVerifiableCredentialsUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
   }
 
@@ -39,7 +40,8 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
     _ = try await useCase.callAsFunction()
 
     XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials, mockDeferredCredentials)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReceivedCredentials, mockVerifiableCredentials)
+    XCTAssertEqual(refreshVerifiableCredentialsUseCase.callAsFunctionReceivedCredentials, mockVerifiableCredentials)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReceivedCredentials, refreshedVerifiableCredentials)
   }
 
   func testCallAsFunction_getAllDeferredCredentialsFails_throwsError() async throws {
@@ -103,24 +105,32 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
 
   private var credentialRepository: CredentialRepositoryProcotolSpy!
   private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocolSpy!
+  private var refreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseProtocolSpy!
   private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
 
   private let mockDeferredCredentials = [DeferredCredential.Mock.sample, DeferredCredential.Mock.sampleWithoutMetadata]
   private let mockVerifiableCredentials = [VerifiableCredential.Mock.sample, VerifiableCredential.Mock.diploma]
+  private let refreshedVerifiableCredentials = [VerifiableCredential.Mock.sampleDisplaysAdditional]
 
   private func registerMocks() {
     credentialRepository = CredentialRepositoryProcotolSpy()
     refreshDeferredCredentialUseCase = RefreshDeferredCredentialUseCaseProtocolSpy()
+    refreshVerifiableCredentialsUseCase = RefreshVerifiableCredentialsUseCaseProtocolSpy()
     checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
 
     Container.shared.credentialRepository.register { self.credentialRepository }
     Container.shared.refreshDeferredCredentialUseCase.register { self.refreshDeferredCredentialUseCase }
+    Container.shared.refreshVerifiableCredentialsUseCase.register { self.refreshVerifiableCredentialsUseCase }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
   }
 
   private func createSuccessState() {
     credentialRepository.getAllDeferredCredentialsReturnValue = mockDeferredCredentials
-    credentialRepository.getAllVerifiableCredentialsReturnValue = mockVerifiableCredentials
+    credentialRepository.getAllVerifiableCredentialsClosure = {
+      self.credentialRepository.getAllVerifiableCredentialsCallsCount == 1 ?
+        self.mockVerifiableCredentials :
+        self.refreshedVerifiableCredentials
+    }
     checkAndUpdateCredentialStatusUseCase.executeReturnValue = mockVerifiableCredentials
     credentialRepository.getAllReturnValue = mockDeferredCredentials + mockVerifiableCredentials
   }

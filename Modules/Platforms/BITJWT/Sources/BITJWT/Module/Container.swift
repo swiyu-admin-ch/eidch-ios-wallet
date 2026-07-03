@@ -21,18 +21,14 @@ extension Container {
     self { JWSEncoder() }
   }
 
-  // MARK: Internal
-
-  var didResolverHelper: Factory<DidResolverHelperProtocol> {
+  public var didResolverHelper: Factory<DidResolverHelperProtocol> {
     self { DidResolverHelper() }
   }
 
+  // MARK: Internal
+
   var didResolverRepository: Factory<DidResolverRepositoryProtocol> {
     self { DidResolverRepository() }
-  }
-
-  var currentDate: Factory<Date> {
-    self { Date() }
   }
 
 }

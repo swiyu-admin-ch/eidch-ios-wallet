@@ -16,7 +16,28 @@ extension DeferredCredential: Mockable {
       issuerUrl: issuerUrl,
       selectedConfigurationId: selectedConfigurationId,
       rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
-      authentication: CredentialAuthentication(accessToken: accessToken, refreshToken: refreshToken))
+      authentication: CredentialAuthentication(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        dpopBinding: KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)))
+
+    public static func sample(
+      dpopBinding: KeyBinding,
+      authenticationOverrides: (accessToken: String, refreshToken: String?)? = nil)
+      -> DeferredCredential
+    {
+      DeferredCredential(
+        transactionId: transactionId,
+        endpoint: endpoint,
+        format: format,
+        issuerUrl: issuerUrl,
+        selectedConfigurationId: selectedConfigurationId,
+        rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
+        authentication: CredentialAuthentication(
+          accessToken: authenticationOverrides?.accessToken ?? accessToken,
+          refreshToken: authenticationOverrides?.refreshToken ?? refreshToken,
+          dpopBinding: dpopBinding))
+    }
 
     // MARK: Internal
 
@@ -86,7 +107,7 @@ extension DeferredCredential: Mockable {
     static let issuerUrl = "https://issuer"
     static let format = "sd-jwt"
     static let selectedConfigurationId = "elfa-sdjwt"
-    static let refreshToken = "refreshToken"
+    static let refreshToken = "502b8c3c-5343-4e13-8a72-963fc53d2ea2"
   }
 }
 #endif

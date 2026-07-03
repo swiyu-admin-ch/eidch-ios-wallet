@@ -53,7 +53,7 @@ extension FetchCredentialContext {
         selectedCredential: credentialConfig,
         credentialIssuer: "credential-issuer",
         holderBindings: holderBindings,
-        accessToken: AccessToken.Mock.sample,
+        authorization: IssuanceAuthorization(accessToken: AccessToken.Mock.sample),
         nonce: Nonce.Mock.default,
         credentialEndpoint: mockEndpointsUrl,
         credentialEncryptionContext: credentialEncryptionContext,

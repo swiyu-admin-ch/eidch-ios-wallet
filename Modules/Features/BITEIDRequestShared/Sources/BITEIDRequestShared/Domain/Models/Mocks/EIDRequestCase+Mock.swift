@@ -1,8 +1,7 @@
 #if DEBUG
 import Foundation
-@testable import BITCore
 
-extension EIDRequestCase: Mockable {
+extension EIDRequestCase {
   public struct Mock {
 
     // MARK: Public
@@ -21,19 +20,55 @@ extension EIDRequestCase: Mockable {
 
     // MARK: Internal
 
-    static let sampleInQueue: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-queue", bundle: Bundle.module)
-    static let sampleInQueueNotVerified: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-queue-not-verified", bundle: Bundle.module)
-    static let sampleExpired: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-expired", bundle: Bundle.module)
-    static let sampleCancelled: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-cancelled", bundle: Bundle.module)
-    static let sampleInQueueNoOnlineSessionStart: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-queue-without-online-session-start", bundle: Bundle.module)
-    static let sampleAVReady: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready", bundle: Bundle.module)
-    static let sampleAgentReview: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-agent-review", bundle: Bundle.module)
-    static let sampleDeclined: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-refused", bundle: Bundle.module)
-    static let sampleAVReadyNotVerified: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-not-verified", bundle: Bundle.module)
-    static let sampleAVReadyNoOnlineSessionTimeout: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-av-ready-without-online-session-timeout", bundle: Bundle.module)
-    static let sampleWithoutState: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-without-state", bundle: Bundle.module)
-    static let sampleWalletPairing: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-wallet-pairing", bundle: Bundle.module)
-    static let sampleAutoVerification: EIDRequestCase = Mocker.decode(fromFile: "eid-request-case-auto-verification", bundle: Bundle.module)
+    static let sampleInQueue = createRequestCase(createdAt: Date().addingTimeInterval(-4), state: createRequestCaseState(.inQueue, openAt: Date()))
+    static let sampleInQueueNotVerified = createRequestCase(state: createRequestCaseState(.inQueue, consent: .notVerified, openAt: Date()))
+    static let sampleExpired = createRequestCase(createdAt: Date().addingTimeInterval(-1), state: createRequestCaseState(.expired, openAt: Date()))
+    static let sampleCancelled = createRequestCase(createdAt: Date().addingTimeInterval(-2), state: createRequestCaseState(.cancelled, consent: .notRequired))
+    static let sampleInQueueNoOnlineSessionStart = createRequestCase(createdAt: Date(), state: createRequestCaseState(.inQueue))
+    static let sampleAVReady = createRequestCase(createdAt: Date().addingTimeInterval(-3), state: createRequestCaseState(.readyForOnlineSession, timeoutAt: Date()))
+    static let sampleAgentReview = createRequestCase(state: createRequestCaseState(.agentReview, openAt: Date()))
+    static let sampleDeclined = createRequestCase(state: createRequestCaseState(.refused, openAt: Date()))
+    static let sampleAVReadyNotVerified = createRequestCase(state: createRequestCaseState(.readyForOnlineSession, consent: .notVerified, timeoutAt: Date()))
+    static let sampleAVReadyNoOnlineSessionTimeout = createRequestCase(state: createRequestCaseState(.readyForOnlineSession, openAt: Date()))
+    static let sampleWithoutState = createRequestCase()
+    static let sampleWalletPairing = createRequestCase(state: createRequestCaseState(.inTargetWalletPairing))
+    static let sampleAutoVerification = createRequestCase(state: createRequestCaseState(.autoVerification))
+
+    // MARK: Private
+
+    private static func createRequestCase(createdAt: Date = Date(), state: EIDRequestState? = nil, pushId: String = UUID().uuidString) -> EIDRequestCase {
+      EIDRequestCase(
+        id: UUID().uuidString,
+        createdAt: createdAt,
+        rawMRZ: [
+          "ID<<<I7G<<<<<<3<<<<<<<<<<<<<<<",
+          "1001015X3012316<<<<<<<<<<<<<<0",
+          "MINDERJAEHRIGE<<ANNETTE<<<<<<<",
+        ],
+        documentNumber: "A123456789",
+        selectedDocumentType: .identityCard,
+        lastName: "Do",
+        firstName: "John",
+        state: state,
+        filesSubmitted: false,
+        pushId: pushId)
+    }
+
+    private static func createRequestCaseState(
+      _ state: EIDRequestStatus.State,
+      consent: LegalRepresentantConsent = .verified,
+      openAt: Date? = nil,
+      timeoutAt: Date? = nil)
+      -> EIDRequestState
+    {
+      EIDRequestState(
+        id: UUID(),
+        state: state,
+        legalRepresentantConsent: consent,
+        lastPolledAt: Date(),
+        onlineSessionStartOpenAt: openAt,
+        onlineSessionStartTimeoutAt: timeoutAt)
+    }
 
   }
 }

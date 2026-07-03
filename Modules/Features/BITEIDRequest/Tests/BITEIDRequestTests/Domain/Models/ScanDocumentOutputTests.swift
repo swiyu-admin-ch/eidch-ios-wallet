@@ -1,14 +1,18 @@
-import XCTest
+import Testing
+import UIKit
 @testable import BITAVWrapper
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 
-final class ScanDocumentOutputTests: XCTestCase {
+struct ScanDocumentOutputTests {
 
-  func testInit() throws {
-    let documentOutput = try ScanDocumentOutput(.Mock.sample, identityType: .passport)
+  @Test
+  func initialization() throws {
+    let scanningOrientiations: [ScanningState: UIDeviceOrientation] = [.recto: .portrait, .verso: .landscapeLeft]
+    let documentOutput = try ScanDocumentOutput(.Mock.sample, scanningOrientiations: scanningOrientiations, identityType: .passport)
 
-    XCTAssertEqual(documentOutput.identityType, .passport)
-    XCTAssertEqual(documentOutput.files.count, 3)
+    #expect(documentOutput.identityType == .passport)
+    #expect(documentOutput.files.count == 3)
+    #expect(documentOutput.scanningOrientiations == scanningOrientiations)
   }
 }

@@ -20,8 +20,6 @@ public struct VcSdJwt: JWT, Codable, Equatable {
 
   public let type: String? = Self.legacyType
 
-  public var requiredIssuer: String
-
   public var activatedAt: Date?
 
   public var expiredAt: Date?
@@ -46,16 +44,9 @@ public struct VcSdJwt: JWT, Codable, Equatable {
     [Self.legacyType, Self.currentType]
   }
 
-  // registered claims can be found [here](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html#name-registered-jwt-claims)
-
-  public var issuer: String? {
-    requiredIssuer
-  }
-
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
-    case requiredIssuer = "iss"
     case activatedAt = "nbf"
     case expiredAt = "exp"
     case keyBinding = "cnf"
@@ -102,6 +93,10 @@ extension VcSdJwt {
 }
 
 extension VcSdJwt {
+  public var issuer: String? {
+    nil
+  }
+
   public var audience: String? {
     nil
   }

@@ -72,9 +72,12 @@ final class AppAttestationKeyRepositoryTests: XCTestCase {
   }
 
   func testGet_success() throws {
+    let keyPair = VaultKeyPair.Mock.ES256WithoutOptions
+    keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryReturnValue = keyPair
+
     let key = try repository.get(for: .client)
 
-    XCTAssertEqual(key, mockKeyPair)
+    XCTAssertEqual(key, keyPair)
     XCTAssertEqual(keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryCallsCount, 1)
     XCTAssertEqual(keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryReceivedArguments?.algorithm, .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
   }

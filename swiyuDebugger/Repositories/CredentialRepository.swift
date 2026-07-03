@@ -16,7 +16,7 @@ class LocalCredentialRepository: CredentialRepositoryProcotol {
     credentials.count
   }
 
-  func delete(_ id: UUID) async throws {
+  func delete(_ id: UUID, deleteKeyPairs: Bool) async throws {
     credentials.removeAll { $0.id == id }
   }
 
@@ -66,7 +66,18 @@ class LocalCredentialRepository: CredentialRepositoryProcotol {
   }
 
   func getAllDeferredCredentials() async throws -> [DeferredCredential] {
-    []
+    credentials.compactMap { $0 as? DeferredCredential }
+  }
+
+  func getIssuanceSummary(id: UUID) async throws -> BITCredential.CredentialIssuanceSummary {
+    let credential = try await get(id: id)
+    guard let verifiableCredential = credential as? VerifiableCredential else {
+      throw NSError(domain: "LocalCredentialRepository", code: 4)
+    }
+    return CredentialIssuanceSummary(
+      issuedAt: verifiableCredential.createdAt,
+      available: verifiableCredential.bundleItems.count(where: { !$0.presented }),
+      total: verifiableCredential.bundleItems.count)
   }
 
   // MARK: Private

@@ -39,9 +39,9 @@ final class NonComplianceRepositoryTests: XCTestCase {
 
     XCTAssertEqual(reportBodyGeneratorSpy.generateFromCallsCount, 1)
     XCTAssertEqual(reportBodyGeneratorSpy.generateFromReceivedReport as? NonComplianceExcessiveDataReport, reportMock)
-    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.audience, baseURLMock.absoluteString)
-    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.challengeEndpoint, URL(target: NonComplianceEndpoint.challenge))
-    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReceivedArguments?.clientAttestation, clientAttestationMock)
+    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.audience, baseURLMock.absoluteString)
+    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.challengeEndpoint, URL(target: NonComplianceEndpoint.challenge))
+    XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReceivedArguments?.clientAttestation, clientAttestationMock)
   }
 
   func testCreate_bodyGeneratorError_throws() async throws {
@@ -52,12 +52,12 @@ final class NonComplianceRepositoryTests: XCTestCase {
       XCTFail("Expected error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationCallsCount, 0)
+      XCTAssertEqual(proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount, 0)
     }
   }
 
   func testCreate_generateProofOfPossessionsFails_throws() async throws {
-    proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationThrowableError = TestingError.error
+    proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
 
     do {
       try await repository.create(reportMock)
@@ -212,7 +212,7 @@ final class NonComplianceRepositoryTests: XCTestCase {
 
   private func success() {
     reportBodyGeneratorSpy.generateFromReturnValue = reportBodyMock
-    proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationReturnValue = clientAttestationProofOfPossessionMock
+    proofOfPossessionGeneratorSpy.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReturnValue = clientAttestationProofOfPossessionMock
     clientAttestationRepositorySpy.getUsingReturnValue = clientAttestationMock
     mapperSpy.mapDidReturnValue = trustRegistryURLMock
     actorDisplayFactorySpy.callAsFunctionReturnValue = actorDisplayMock

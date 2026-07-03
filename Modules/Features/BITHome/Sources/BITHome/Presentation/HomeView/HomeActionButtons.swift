@@ -102,10 +102,10 @@ struct HomeActionButtons: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(width: iconSize, height: iconSize)
-        .foregroundColor(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
+        .foregroundColor(ThemingAssets.Fills.primary.swiftUIColor)
         .frame(width: .x14, height: .x14)
     }
-    .buttonBackground(tint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
+    .buttonBackground(tint: ThemingAssets.Background.Button.secondary.swiftUIColor)
     .contentShape(.accessibility, .capsule)
     .accessibilityLabel(L10n.tkProximityEngagementTitle)
   }
@@ -117,10 +117,10 @@ struct HomeActionButtons: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(width: landscapeIconSize, height: landscapeIconSize)
-        .foregroundColor(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
+        .foregroundColor(ThemingAssets.Fills.primary.swiftUIColor)
         .frame(width: landscapeButtonSize, height: landscapeButtonSize)
     }
-    .buttonBackground(tint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
+    .buttonBackground(tint: ThemingAssets.Background.Button.secondary.swiftUIColor)
     .contentShape(.accessibility, .capsule)
     .accessibilityLabel(L10n.tkProximityEngagementTitle)
   }

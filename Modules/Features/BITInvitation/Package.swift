@@ -63,6 +63,7 @@ let package = Package(
         .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "BITAnalyticsMocks", package: "BITAnalytics"),
         .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
+        .product(name: "BITQRCode", package: "BITQRCode"),
         .product(name: "Spyable", package: "swift-spyable"),
       ]),
   ])

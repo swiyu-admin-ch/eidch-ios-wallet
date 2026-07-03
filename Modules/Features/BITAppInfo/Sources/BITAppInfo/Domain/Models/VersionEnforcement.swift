@@ -2,27 +2,28 @@ import BITCore
 
 // MARK: - VersionEnforcement
 
-public struct VersionEnforcement: Codable, Equatable {
-  let id: String
-  let platform: String
-  let priority: String
-  let created: String
-  let criteria: Criteria
-  let displays: [Display]
+public struct VersionEnforcement: Equatable {
 
+  // MARK: Lifecycle
+
+  init(type: VersionEnforcementType, messages: [Message] = []) {
+    self.type = type
+    self.messages = messages
+  }
+
+  // MARK: Internal
+
+  let type: VersionEnforcementType
+  let messages: [Message]
 }
+
+// MARK: VersionEnforcement.Message
 
 extension VersionEnforcement {
 
-  struct Display: Codable, DisplayLocalizable, Equatable {
+  struct Message: Decodable, DisplayLocalizable, Equatable {
     let title: String
     let body: String
     let locale: UserLocale?
   }
-
-  struct Criteria: Codable, Equatable {
-    let minAppVersionIncluded: String?
-    let maxAppVersionExcluded: String
-  }
-
 }

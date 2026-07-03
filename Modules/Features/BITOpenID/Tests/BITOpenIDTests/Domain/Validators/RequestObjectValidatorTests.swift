@@ -1,3 +1,5 @@
+// swiftlint:disable implicitly_unwrapped_optional
+import Factory
 import XCTest
 @testable import BITJWT
 @testable import BITOpenID
@@ -9,77 +11,163 @@ final class RequestObjectValidatorTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
+    Container.shared.reset()
+    registerMocks()
+    success()
     validator = RequestObjectValidator()
   }
 
-  // MARK: - JSON Request Object
+  func testValidate_validJws_validates() async throws {
+    let jws = RequestObjectJWS.Mock.sample
 
-  func testValidationSuccess() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sample
-
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertTrue(result)
+    do {
+      try await validator.validate(jws)
+    } catch {
+      XCTFail("Expected no throw, but got: \(error)")
+    }
+    XCTAssertEqual(requestObjectEncryptionValidatorSpy.validateCallsCount, 1)
+    XCTAssertEqual(jwsValidatorMock.validateActivationBufferCallsCount, 1)
   }
 
-  func testValidationWithUnsupportedResponseType() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.unsupportedResponseTypeSample
+  func testValidate_withoutHolderBindingAndWithState_validates() async throws {
+    let jws = RequestObjectJWS.Mock.sample
 
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
+    do {
+      try await validator.validate(jws)
+    } catch {
+      XCTFail("Expected no throw, but got: \(error)")
+    }
   }
 
-  func testValidationWithUnsupportedClientIdScheme() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithUnsupportedClientIdScheme
+  func testValidate_didPrefixClientIdMatchesKid_validates() async {
+    let jws = RequestObjectJWS.Mock.clientIdDIDPrefix
 
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
+    do {
+      try await validator.validate(jws)
+    } catch {
+      XCTFail("Expected no throw, but got: \(error)")
+    }
   }
 
-  func testValidationWithClientIdButNoClientIdScheme() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithClientIdAndWithoutClientIdScheme
+  func testValidateJWS_noAudience_validates() async {
+    let jws = RequestObjectJWS.Mock.noAudience
 
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
+    do {
+      try await validator.validate(jws)
+    } catch {
+      XCTFail("Expected no throw, but got: \(error)")
+    }
   }
 
-  func testValidationWithUnsupportedClientId() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithUnsupportedClientId
+  func testValidate_withUnsupportedAlgorithm_throwsInvalidJWSSignatureAlgorithm() async {
+    let jws = RequestObjectJWS.Mock.unsupportedAlgorithm
 
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidJWSSignatureAlgorithm)
+    }
   }
 
-  func testValidationWithoutAnyConstraintsFields() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithoutAnyConstraintsFields
+  func testValidate_withClientIdMismatch_throwsInvalidClientId() async {
+    let jws = RequestObjectJWS.Mock.clientIdMismatch
 
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    }
   }
 
-  func testValidationWithInvalidConstraintsPath() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithInvalidContraintPath
+  func testValidate_kidMismatch_throwsInvalidClientId() async {
+    didResolverSpy.getDidFromReturnValue = "did:example:mismatch"
+    let jws = RequestObjectJWS.Mock.kidMismatch
 
-    let result = validator.validate(mockRequestObject)
-
-    XCTAssertFalse(result)
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    }
   }
 
-  func testValidationWithTransactionData() {
-    let mockRequestObject = RequestObject.Mock.VcSdJwt.sampleWithTransactionData
+  func testValidate_clientIdNotADid_throwsInvalidClientId() async {
+    let jws = RequestObjectJWS.Mock.clientIdNotADid
 
-    let result = validator.validate(mockRequestObject)
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    }
+  }
 
-    XCTAssertFalse(result)
+  func testValidate_jwsValidatorThrows_rethrowsError() async {
+    let jws = RequestObjectJWS.Mock.sample
+    jwsValidatorMock.validateThrowableError = TestingError.error
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? TestingError, .error)
+    }
+  }
+
+  func testValidate_requestObjectEncryptionValidatorThrows_rethrowsError() async {
+    let jws = RequestObjectJWS.Mock.sample
+    requestObjectEncryptionValidatorSpy.validateThrowableError = RequestObjectEncryptionError.missingClientMetadata
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectEncryptionError, .missingClientMetadata)
+    }
+  }
+
+  func testValidate_withUnsupportedResponseType_throwsInvalidResponseType() async throws {
+    let jws = RequestObjectJWS.Mock.unsupportedResponseType
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidResponseType)
+    }
+  }
+
+  func testValidate_withUnsupportedClientId_throwsInvalidClientId() async throws {
+    let jws = RequestObjectJWS.Mock.unsupportedClientId
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    }
+  }
+
+  func testValidate_withTransactionData_throwsTransactionDataNotSupported() async throws {
+    let jws = RequestObjectJWS.Mock.transactionData
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .transactionDataNotSupported)
+    }
+  }
+
+  func testValidate_withoutHolderBindingAndWithoutState_throwsInvalidState() async throws {
+    let jws = RequestObjectJWS.Mock.missingState
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidState)
+    }
+  }
+
+  func testValidate_audienceIssuerMismatch_throwsInvalidAudience() async {
+    let jws = RequestObjectJWS.Mock.audienceIssuerMismatch
+
+    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
+      XCTAssertEqual(error as? RequestObjectValidationError, .invalidAudience)
+    }
   }
 
   // MARK: Private
 
   private var validator = RequestObjectValidator()
+  private var jwsValidatorMock: JWSValidatorMock<RequestObjectJWT>!
+  private var didResolverSpy: DidResolverHelperProtocolSpy!
+  private var requestObjectEncryptionValidatorSpy: RequestObjectEncryptionValidatorProtocolSpy!
 
+  private func registerMocks() {
+    jwsValidatorMock = JWSValidatorMock()
+    didResolverSpy = DidResolverHelperProtocolSpy()
+    requestObjectEncryptionValidatorSpy = RequestObjectEncryptionValidatorProtocolSpy()
+
+    Container.shared.jwsValidator.register { self.jwsValidatorMock }
+    Container.shared.didResolverHelper.register { self.didResolverSpy }
+    Container.shared.requestObjectEncryptionValidator.register { self.requestObjectEncryptionValidatorSpy }
+  }
+
+  private func success() {
+    didResolverSpy.getDidFromReturnValue = "did:example:12345"
+  }
 }

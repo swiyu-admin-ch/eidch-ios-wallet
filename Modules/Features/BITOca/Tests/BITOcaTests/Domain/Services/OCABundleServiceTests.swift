@@ -55,20 +55,14 @@ final class OCABundleServiceTests: XCTestCase {
 
   // MARK: - OCA URL
 
-  func testFetchOCABundle_UrlSchemeWithoutUrlIntegrity_ThrowsError() async throws {
+  func testFetchOCABundle_UrlSchemeWithoutUrlIntegrity_returnsBundle() async throws {
     let mockOca = VcSdJwtOcaRendering.Mock.sampleUriWithoutIntegrity
     ocaRepository.fetchOCABundleFromReturnValue = mockRawOcaBundle
     sriValidator.validateWithReturnValue = true
 
-    do {
-      _ = try await service.fetchVcSdJwtOcaBundle(from: mockOca)
-      XCTFail("Expected an error")
-    } catch OCABundleServiceError.invalidOCABundle {
-      XCTAssertFalse(sriValidator.validateWithCalled)
-      XCTAssertFalse(ocaRepository.fetchOCABundleFromCalled)
-    } catch {
-      XCTFail("Unexpected an error")
-    }
+    let rawOcaBundle = try await service.fetchVcSdJwtOcaBundle(from: mockOca)
+
+    XCTAssertEqual(rawOcaBundle, mockRawOcaBundle)
   }
 
   func testFetchOCABundle_UrlSchemeRepositoryError_ThrowsError() async throws {

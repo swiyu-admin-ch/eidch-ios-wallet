@@ -1,0 +1,23 @@
+{
+  "capture_bases": [
+    {
+      "type": "spec/capture_base/1.0",
+      "digest": "IM1ojx_uFCOavg4fpUuB75LyybpyR1Eh2RW3t2O3g8BO",
+      "attributes": {
+        "claim1": "Text",
+        "claim2": "Text"
+      }
+    }
+  ],
+  "overlays": [
+    {
+      "type": "extend/overlays/data_source/2.0",
+      "capture_base": "IM1ojx_uFCOavg4fpUuB75LyybpyR1Eh2RW3t2O3g8BO",
+      "format": "vc+sd-jwt",
+      "attribute_sources": {
+        "claim1": ["key1", "key3"],
+        "claim2": ["key2", "key4"]
+      }
+    }
+  ]
+}

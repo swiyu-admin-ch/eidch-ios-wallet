@@ -1,3 +1,4 @@
+import BITNavigation
 import BITTheming
 import Factory
 import NavigatorUI
@@ -18,10 +19,7 @@ struct DefaultEidRequestToolbar: ViewModifier {
   func body(content: Content) -> some View {
     content
       .toolbar {
-        CloseButtonToolbar {
-          handleClose()
-
-        }
+        CloseButtonToolbar(action: handleClose)
       }
   }
 
@@ -36,7 +34,7 @@ struct DefaultEidRequestToolbar: ViewModifier {
   private func handleClose() {
     onClose?()
     coordinator.cleanup()
-    navigator.dismiss()
+    navigator.returnToHomeSafely()
   }
 }
 
