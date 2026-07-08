@@ -9,7 +9,8 @@ as part of the electronic identity (E-ID) project.
 
 - [Overview](#overview)
 - [Installation and building](#installation-and-building)
-- [Known Issues](#known-issues)
+- [swiyu Sandbox Wallet](#swiyu-sandbox-wallet)
+- [Missing Features and Known Issues](#missing-features-and-known-issues)
 - [Contributions and feedback](#contributions-and-feedback)
 - [License](#license)
 
@@ -39,6 +40,39 @@ Once in Xcode:
 - We are using some Macros part of our development process. Make sure to trust them.
 - Be aware that it's more appropriate to run on real devices rather than in Simulator because of several restrictions and KeyChain usage
 - Finally, just build & run in Xcode with `command + R`
+
+## swiyu Sandbox Wallet
+
+A sandbox version of the swiyu Wallet application is available for integration and testing purposes.
+
+### Availability
+
+The swiyu Sandbox Wallet is **not published in the App Store**. It can be downloaded directly from:
+
+> [https://apps.apple.com/us/app/swiyu-sandbox-wallet/id6771296857](https://apps.apple.com/us/app/swiyu-sandbox-wallet/id6771296857)
+
+This version is intended exclusively for testing against the **Sandbox registries**. It cannot be used with the productive registries.
+
+### Current Limitations
+
+The swiyu Sandbox Wallet currently operates without dedicated backend services. Backend functionality may be added in a future release.
+
+As a result, the following features are **not available**:
+
+- Reporting of non-compliant issuers and verifiers
+- App version enforcement
+- Key Attestation and Client Attestation
+  - Consequently, **hardware-bound credentials cannot be issued**.
+- e-ID issuance flow
+
+### Supported URI Schemes
+
+The sandbox wallet currently registers only the following URI schemes:
+
+- `openid-credential-offer`
+- `openid4vp`
+- `swiyu-sandbox`
+- `swiyu-verify-sandbox`
 
 ## Missing Features and Known Issues
 
