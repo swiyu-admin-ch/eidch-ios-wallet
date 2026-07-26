@@ -99,6 +99,18 @@ final class FetchPresentationRequestUseCaseTests: XCTestCase {
     XCTAssertEqual(context.trustInformation, trustInformationMock)
   }
 
+  func testExecute_jwtRequestObjectWithClientIdPrefix_returnsContextWithTrustStatement() async throws {
+    let requestObject = RequestObjectJWS.Mock.clientIdDIDPrefix
+    createSuccessState(request: requestObject)
+
+    let context = try await useCase.execute(url: urlMock)
+
+    XCTAssertEqual(context.requestObject, requestObject.payload)
+    XCTAssertEqual(context.compatibleCredentials, compatibleCredentialsMock)
+    XCTAssertEqual(context.selectedCredential, compatibleCredentialsMock.first)
+    XCTAssertEqual(context.trustInformation, trustInformationMock)
+  }
+
   func testExecute_jwtRequestObjectWithoutVct_doesNotPassVct() async throws {
     let requestObject = RequestObjectJWS.Mock.noVct
     createSuccessState(request: requestObject)

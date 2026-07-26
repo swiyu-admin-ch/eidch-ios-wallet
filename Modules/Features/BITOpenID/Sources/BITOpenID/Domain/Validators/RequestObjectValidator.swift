@@ -47,10 +47,7 @@ struct RequestObjectValidator: RequestObjectValidatorProtocol {
 
   private func validateClientId(_ jws: RequestObjectJWS) throws {
     let did = try didResolverHelper.getDid(from: jws.header.keyIdentifier)
-    guard
-      let clientId = jws.payload.clientId.normalizedDid(),
-      clientId == did else
-    {
+    guard jws.payload.clientId.normalizedDid() == did else {
       throw RequestObjectValidationError.invalidClientId
     }
   }
@@ -88,10 +85,7 @@ extension RequestObject {
     guard let regex = try? Regex(Self.regex) else {
       throw RequestObjectValidationError.invalidClientId
     }
-    guard let clientId = clientId.normalizedDid() else {
-      throw RequestObjectValidationError.invalidClientId
-    }
-    guard !clientId.matches(of: regex).isEmpty else {
+    guard !clientId.normalizedDid().matches(of: regex).isEmpty else {
       throw RequestObjectValidationError.invalidClientId
     }
   }

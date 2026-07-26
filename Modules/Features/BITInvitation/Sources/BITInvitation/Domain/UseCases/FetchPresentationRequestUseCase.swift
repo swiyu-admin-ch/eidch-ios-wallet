@@ -59,7 +59,7 @@ public struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCasePr
 
   private func createContext(requestObjectJWS: RequestObjectJWS, compatibleCredentials: [CompatibleCredential]) async throws -> PresentationRequestContext {
     let context = PresentationRequestContext(requestObjectJWS: requestObjectJWS, compatibleCredentials: compatibleCredentials)
-    context.trustInformation = await trustInformationService.fetch(for: requestObjectJWS.payload.clientId, type: .verification, vcSchemaId: requestObjectJWS.payload.requestedVcSchemaId)
+    context.trustInformation = await trustInformationService.fetch(for: requestObjectJWS.payload.clientId.normalizedDid(), type: .verification, vcSchemaId: requestObjectJWS.payload.requestedVcSchemaId)
     return context
   }
 }
