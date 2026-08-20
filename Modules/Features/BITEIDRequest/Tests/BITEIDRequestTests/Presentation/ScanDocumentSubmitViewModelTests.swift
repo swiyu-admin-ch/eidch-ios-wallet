@@ -28,7 +28,7 @@ final class ScanDocumentSubmitViewModelTests {
     let compareScanDocumentOutputUseCase = CompareScanDocumentOutputUseCaseProtocolSpy()
     let updateEIDRequestCaseFilesUseCase = UpdateEIDRequestCaseFilesUseCaseProtocolSpy()
     let enablePushNotificationsUseCase = EnablePushNotificationsUseCaseProtocolSpy()
-    let coordinator = EIDRequestFlowCoordinatorProtocolMock(context: context)
+    let coordinator = EIDRequestFlowCoordinatorProtocolSpy()
 
     Container.shared.eidRequestContext.register { @MainActor in context }
     Container.shared.applyEIDRequestUseCase.register { @MainActor in applyEIDRequestUseCase }
@@ -73,7 +73,6 @@ final class ScanDocumentSubmitViewModelTests {
 
     if case .inQueue(let inQueueStateViewModel) = viewState {
       #expect(viewModel.destination == .queueInformation(inQueueStateViewModel.onlineSessionStartOpenAt))
-      #expect(context.caseId == mockEidRequestCase.id)
       #expect(enablePushNotificationsUseCase.callAsFunctionForCallsCount == 1)
       #expect(enablePushNotificationsUseCase.callAsFunctionForReceivedCaseId == mockEidRequestCase.id)
     }
@@ -81,7 +80,7 @@ final class ScanDocumentSubmitViewModelTests {
 
   @Test
   func submit_withNotDeterminedPushPermission_routesToPushPermission() async throws {
-    coordinator.getNextDestinationReturnValue = .pushPermission(mockEidRequestCase)
+    coordinator.getNextDestinationForReturnValue = .pushPermission(mockEidRequestCase)
 
     await viewModel.submit()
 
@@ -97,7 +96,7 @@ final class ScanDocumentSubmitViewModelTests {
 
   @Test
   func submit_withDeniedPushPermission_routesToPushPermission() async throws {
-    coordinator.getNextDestinationReturnValue = .pushPermission(mockEidRequestCase)
+    coordinator.getNextDestinationForReturnValue = .pushPermission(mockEidRequestCase)
 
     await viewModel.submit()
 
@@ -115,6 +114,7 @@ final class ScanDocumentSubmitViewModelTests {
   func submit_withLegalRepresentantConsent_registersPushTokenAndRoutesToLegalRepresentantConsent() async {
     let requestCase = EIDRequestCase.Mock.sampleInQueueNotVerified
     applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = requestCase
+    coordinator.getNextDestinationForReturnValue = .legalRepresentantConsent(caseId: requestCase.id)
 
     await viewModel.submit()
 
@@ -127,6 +127,7 @@ final class ScanDocumentSubmitViewModelTests {
   func submit_withWalletPairing_registersPushTokenAndRoutesToWalletPairing() async {
     let requestCase = EIDRequestCase.Mock.sampleAVReady
     applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = requestCase
+    coordinator.getNextDestinationForReturnValue = .walletPairing
 
     await viewModel.submit()
 
@@ -306,68 +307,18 @@ final class ScanDocumentSubmitViewModelTests {
   private let compareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtocolSpy
   private let updateEIDRequestCaseFilesUseCase: UpdateEIDRequestCaseFilesUseCaseProtocolSpy
   private let enablePushNotificationsUseCase: EnablePushNotificationsUseCaseProtocolSpy
-  private let coordinator: EIDRequestFlowCoordinatorProtocolMock
+  private let coordinator: EIDRequestFlowCoordinatorProtocolSpy
 
   private func success() {
     viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
 
     applyEIDRequestUseCase.callAsFunctionScanDocumentOutputHasLegalRepresentantReturnValue = mockEidRequestCase
     compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = true
-  }
-
-}
-
-
-private final class EIDRequestFlowCoordinatorProtocolMock: EIDRequestFlowCoordinatorProtocol {
-
-  // MARK: Lifecycle
-
-  init(context: EIDRequestContext) {
-    self.context = context
-  }
-
-  // MARK: Internal
-
-  var getNextDestinationReturnValue: EIDRequestDestinations?
-  var cleanupCalled = false
-
-  func getNextDestination(for requestCase: EIDRequestCase) async throws -> EIDRequestDestinations? {
-    if let getNextDestinationReturnValue {
-      return getNextDestinationReturnValue
-    }
-
-    return try getNextDestinationAfterApply(for: requestCase)
-  }
-
-  func getNextDestinationAfterApply(for requestCase: EIDRequestCase) throws -> EIDRequestDestinations? {
-    if let getNextDestinationReturnValue {
-      return getNextDestinationReturnValue
-    }
-
-    let viewState = try RequestCaseViewState(requestCase)
-    context.caseId = requestCase.id
-
-    if !viewState.isLegalRepresentantConsentVerified {
-      return .legalRepresentantConsent(caseId: requestCase.id)
-    }
-
-    switch viewState {
-    case .inQueue(let state):
-      return .queueInformation(state.onlineSessionStartOpenAt)
-    case .readyForOnlineSession:
-      return .walletPairing
-    default:
-      return nil
+    if case .inQueue(let state) = try? RequestCaseViewState(mockEidRequestCase) {
+      coordinator.getNextDestinationForReturnValue = .queueInformation(state.onlineSessionStartOpenAt)
     }
   }
 
-  func cleanup() {
-    cleanupCalled = true
-  }
-
-  // MARK: Private
-
-  private let context: EIDRequestContext
 }
 
 

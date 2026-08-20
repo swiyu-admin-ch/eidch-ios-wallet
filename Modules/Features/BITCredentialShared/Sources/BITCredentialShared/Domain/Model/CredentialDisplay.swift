@@ -53,7 +53,7 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
       theme: entity.theme,
       locale: entity.locale ?? UserLocale.defaultLocaleIdentifier,
       logoAltText: entity.logoAltText,
-      logoBase64: entity.logoData,
+      logoBase64: entity.cachedLogoData,
       summary: entity.summary,
       credentialId: entity.credential.first?.id)
   }

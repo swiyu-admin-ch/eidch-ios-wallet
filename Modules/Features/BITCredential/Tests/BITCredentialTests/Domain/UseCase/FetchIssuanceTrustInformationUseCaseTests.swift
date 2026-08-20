@@ -1,9 +1,11 @@
 import Factory
 import XCTest
 @testable import BITAnyCredentialFormat
-@testable import BITAnyCredentialFormatMocks
+@testable import BITCore
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITNonCompliance
+@testable import BITOpenID
 @testable import BITTestingCore
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
@@ -13,15 +15,27 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
+    Container.shared.reset()
     registerMocks()
     useCase = FetchIssuanceTrustInformationUseCase()
     createSuccess()
   }
 
-  func testUseCase_success_returnsTrustInformation() async throws {
-    let result = try await useCase(for: mockCredential)
+  func testUseCase_success_returnsTrustInformationAndActorCompliance() async throws {
+    let (trustInformation, actorCompliance) = try await useCase(for: mockCredential)
 
-    XCTAssertEqual(result, mockTrustInformation)
+    XCTAssertEqual(trustInformation, mockTrustInformation)
+    XCTAssertEqual(actorCompliance, mockActorCompliance)
+  }
+
+  func testUseCase_untrustedV1_returnsTrustInformationAndActorCompliance() async throws {
+    trustInformationService.fetchForTypeVcSchemaIdReturnValue = TrustInformation.Mock.untrustedIdentity
+
+    let (trustInformation, actorCompliance) = try await useCase(for: mockCredential)
+
+    XCTAssertEqual(trustInformation.identity, .trusted)
+    XCTAssertEqual(actorCompliance, mockActorCompliance)
   }
 
   func testUseCase_success_assertParametersAndCount() async throws {
@@ -36,6 +50,17 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdReceivedArguments?.subjectDid, mockAnyCredential.issuer)
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdReceivedArguments?.type, .issuance)
     XCTAssertEqual(trustInformationService.fetchForTypeVcSchemaIdReceivedArguments?.vcSchemaId, mockAnyCredential.vcSchemaId)
+
+    XCTAssertEqual(nonComplianceRepository.fetchActorComplianceForCallsCount, 1)
+    XCTAssertEqual(nonComplianceRepository.fetchActorComplianceForReceivedSubjectDid, mockAnyCredential.issuer)
+  }
+
+  func testUseCase_fetchActorComplianceFails_returnsNotCompliantWithoutReason() async throws {
+    nonComplianceRepository.fetchActorComplianceForThrowableError = TestingError.error
+
+    let (_, actorCompliance) = try await useCase(for: mockCredential)
+
+    XCTAssertEqual(actorCompliance, .notCompliant(nil))
   }
 
   func testUseCase_createAnyCredentialFails_throwsError() async throws {
@@ -54,18 +79,26 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
   private let mockCredential = VerifiableCredential.Mock.sample
   private let mockAnyCredential = MockAnyCredential()
   private let mockTrustInformation = TrustInformation.Mock.fullyTrusted
+  private let mockActorCompliance = ActorCompliance.notCompliant(LocalizedDisplay(values: ["en": "reason EN"]))
 
   private var useCase: FetchIssuanceTrustInformationUseCase!
   private var trustInformationService: TrustInformationServiceProtocolSpy!
+  private var nonComplianceRepository: NonComplianceRepositoryProtocolSpy!
   private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocolSpy!
+  private var trustStatementValidator: TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>!
   private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private func registerMocks() {
     trustInformationService = TrustInformationServiceProtocolSpy()
+    nonComplianceRepository = NonComplianceRepositoryProtocolSpy()
     createAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
+    trustStatementValidator = TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>()
 
     Container.shared.trustInformationService.register { self.trustInformationService }
+    Container.shared.nonComplianceRepository.register { self.nonComplianceRepository }
     Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCase }
+    Container.shared.trustStatementValidator.register { self.trustStatementValidator }
+    Container.shared.selectCredentialBundleItemUseCase.register { self.selectCredentialBundleItemUseCaseSpy }
 
     selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
       guard let first = $0.bundleItems.first else { throw CredentialError.noBundleItem }
@@ -76,6 +109,7 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
   private func createSuccess() {
     createAnyCredentialUseCase.executeFromFormatReturnValue = mockAnyCredential
     trustInformationService.fetchForTypeVcSchemaIdReturnValue = mockTrustInformation
+    nonComplianceRepository.fetchActorComplianceForReturnValue = mockActorCompliance
   }
 
 }

@@ -39,7 +39,8 @@ public struct ImprintView: View {
             .resizable()
             .scaledToFit()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityLabel("") // This prevents VoiceOver to read out image name as it magically reads the text in the image
+            .accessibilityRemoveTraits(.isImage)
+            .accessibilityLabel(L10n.tkSettingsImprintPublisherName)
           if let url = URL(string: L10n.tkSettingsImprintPublisherLinkValue) {
             CustomLink(to: url, label: L10n.tkSettingsImprintPublisherLinkText)
           }
@@ -59,6 +60,7 @@ public struct ImprintView: View {
             .font(.custom.body)
             .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
             .padding(.horizontal, .x6)
+            .accessibilityAddTraits(.isHeader)
           Text(L10n.tkSettingsImprintLegalDisclaimerSecondary)
             .multilineTextAlignment(.leading)
             .font(.custom.caption1)

@@ -92,7 +92,8 @@ extension ProximityEngagementView {
             .autohideIn(voiceOverEnabled ? nil : 7)
         }
         .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar { toolbarContent() }
+        .navigationTitle(L10n.tkProximityEngagementTitle)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     // MARK: Private
@@ -121,7 +122,7 @@ extension ProximityEngagementView {
           EdrQRCodeView(content: qrCodePayload ?? "", correctionLevel: .medium)
             .aspectRatio(1, contentMode: .fit)
             .opacity(qrCodePayload == nil ? 0 : 1)
-            .accessibilityLabel(L10n.tkProximityEngagementTitle)
+            .accessibilityLabel(L10n.tkProximityEngagementQrCodeAltText)
             .accessibilityHidden(qrCodePayload == nil)
           progressView()
             .opacity(qrCodePayload == nil ? 1 : 0)
@@ -129,6 +130,7 @@ extension ProximityEngagementView {
         }
       }
       .padding(.horizontal, .x4)
+      .accessibilityElement(children: .combine)
     }
 
     private func progressView() -> some View {
@@ -141,7 +143,7 @@ extension ProximityEngagementView {
 
     @ViewBuilder
     private func errorView(_ error: Error) -> some View {
-      let invitationError = error as? InvitationError ?? .invalidQRCode
+      let invitationError = error as? InvitationError ?? .invalidQRCode()
       Notification(
         image: invitationError.icon,
         imageColor: ThemingAssets.Label.primary.swiftUIColor,
@@ -154,17 +156,6 @@ extension ProximityEngagementView {
         closeButtonStyle: .secondary)
         .frame(maxWidth: orientation.isPortrait ? .infinity : tipViewMaxWidth)
         .padding(.horizontal, orientation.isPortrait ? .x3 : .x1)
-    }
-
-    @ToolbarContentBuilder
-    private func toolbarContent() -> some ToolbarContent {
-      ToolbarItem(placement: .principal) {
-        Text(L10n.tkProximityEngagementTitle)
-          .font(.custom.body)
-          .fontWeight(.semibold)
-          .foregroundStyle(ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
-          .lineLimit(1)
-      }
     }
   }
 }

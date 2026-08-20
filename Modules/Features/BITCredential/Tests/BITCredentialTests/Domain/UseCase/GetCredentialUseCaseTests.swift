@@ -12,7 +12,7 @@ final class GetCredentialUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-    repositorySpy = CredentialRepositoryProcotolSpy()
+    repositorySpy = CredentialRepositoryProtocolSpy()
     Container.shared.credentialRepository.register { self.repositorySpy }
     useCase = GetCredentialUseCase()
   }
@@ -42,7 +42,7 @@ final class GetCredentialUseCaseTests: XCTestCase {
   private var credentialIdMock = UUID()
   private var credentialMock = VerifiableCredential.Mock.sample
 
-  private var repositorySpy: CredentialRepositoryProcotolSpy!
+  private var repositorySpy: CredentialRepositoryProtocolSpy!
 
   private var useCase: GetCredentialUseCase!
 }

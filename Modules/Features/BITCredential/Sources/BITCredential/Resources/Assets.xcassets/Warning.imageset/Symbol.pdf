@@ -1,129 +1,0 @@
-%PDF-1.7
-
-1 0 obj
-  << /Length 2 0 R >>
-stream
-1.000000 0 0.050000 0.050000 0.950000 0.950000 d1
-
-endstream
-endobj
-
-2 0 obj
-  50
-endobj
-
-3 0 obj
-  [ 1.000000 ]
-endobj
-
-4 0 obj
-  << /Length 5 0 R >>
-stream
-/CIDInit /ProcSet findresource begin
-12 dict begin
-begincmap
-/CIDSystemInfo
-<< /Registry (FigmaPDF)
-   /Ordering (FigmaPDF)
-   /Supplement 0
->> def
-/CMapName /A-B-C def
-/CMapType 2 def
-1 begincodespacerange
-<00> <FF>
-endcodespacerange
-1 beginbfchar
-<00> <0065006D0065007200670065006E00630079005F0068006F006D0065>
-endbfchar
-endcmap
-CMapName currentdict /CMap defineresource pop
-end
-end
-endstream
-endobj
-
-5 0 obj
-  384
-endobj
-
-6 0 obj
-  << /Subtype /Type3
-     /CharProcs << /C0 1 0 R >>
-     /Encoding << /Type /Encoding
-                  /Differences [ 0 /C0 ]
-               >>
-     /Widths 3 0 R
-     /FontBBox [ 0.000000 0.000000 0.000000 0.000000 ]
-     /FontMatrix [ 1.000000 0.000000 0.000000 1.000000 0.000000 0.000000 ]
-     /Type /Font
-     /ToUnicode 4 0 R
-     /FirstChar 0
-     /LastChar 0
-     /Resources << >>
-  >>
-endobj
-
-7 0 obj
-  << /Font << /F1 6 0 R >> >>
-endobj
-
-8 0 obj
-  << /Filter /FlateDecode
-     /Length 9 0 R
-  >>
-stream
-x¥”»N1E{…K(ÖÙñÛ-O‰Ø¨¬DA"‘P$¾ŸkoüÈj+p5>¾sÇ{ws·ıùŒÛ—Ç~ûÊ6mOì›‘óàc	†Õµ„!Œ’“DjB$Yä’±Ş*Òè¤;Åc³H@~`{ ÂÜ
-¯H†„inI¿zJÂYï2m«°Ëß'@>ø¶	PIĞSGÁ”GµÌ\rğ‰Èff‚r`1e[gO­3Ë(3iÑ†¡JÎ.Ôa§KÊâè„­Ù¥¶Ë‘vsvÙ¥Hge9\fG‹h’KÉ=Â(8çb~Ah”UµpŠRn‚ç¶–×ƒ4Ô¸‡çÖ4·ÚÁVµkuÛ]½“v†şê`t,^^şùáb·ŸÃDMQç§†ƒKÇŒLĞ\—v¶‹ÇFød`õlÅ«.ø|JA]Øº²³]Ô«r”[¡&¤{¶cGöüÏŸÆÍ”ºŠ)FË¯A[ëŒêïc:°Íµ¥iÇŞøÕ;ÂkşÁ§'v?aƒ¿öH
-endstream
-endobj
-
-9 0 obj
-  407
-endobj
-
-10 0 obj
-  << /Annots []
-     /Type /Page
-     /MediaBox [ 0.000000 0.000000 16.200195 16.199951 ]
-     /Resources 7 0 R
-     /Contents 8 0 R
-     /Parent 11 0 R
-  >>
-endobj
-
-11 0 obj
-  << /Kids [ 10 0 R ]
-     /Count 1
-     /Type /Pages
-  >>
-endobj
-
-12 0 obj
-  << /Pages 11 0 R
-     /Type /Catalog
-  >>
-endobj
-
-xref
-0 13
-0000000000 65535 f
-0000000010 00000 n
-0000000116 00000 n
-0000000137 00000 n
-0000000168 00000 n
-0000000608 00000 n
-0000000630 00000 n
-0000001042 00000 n
-0000001088 00000 n
-0000001579 00000 n
-0000001601 00000 n
-0000001776 00000 n
-0000001852 00000 n
-trailer
-<< /ID [ (some) (id) ]
-   /Root 12 0 R
-   /Size 13
->>
-startxref
-1913
-%%EOF

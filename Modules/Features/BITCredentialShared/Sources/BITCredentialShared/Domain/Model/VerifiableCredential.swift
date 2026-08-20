@@ -17,8 +17,8 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     bundleItems: [BundleItem] = [],
     nextPresentableBundleItemId: UUID,
     clusters: [CredentialClaimCluster] = [],
-    format: String,
-    issuerUrl: String,
+    format: CredentialFormat,
+    issuerUrl: URL,
     selectedConfigurationId: String? = nil,
     issuer: String,
     batchData: BatchData? = nil,
@@ -51,7 +51,10 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   }
 
   public init(_ entity: CredentialEntity) throws {
-    guard let verifiableCredential = entity.verifiableCredential else {
+    guard
+      let verifiableCredential = entity.verifiableCredential,
+      let issuerUrl = URL(string: entity.issuerUrl)
+    else {
       throw CredentialError.invalidEntity
     }
 
@@ -63,8 +66,8 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
       bundleItems: Array(verifiableCredential.bundleItems.map(BundleItem.init)),
       nextPresentableBundleItemId: verifiableCredential.nextPresentableBundleItemId,
       clusters: Array(verifiableCredential.clusters.map(CredentialClaimCluster.init)),
-      format: entity.format,
-      issuerUrl: entity.issuerUrl,
+      format: CredentialFormat(rawValue: entity.format) ?? .vcSdJwt,
+      issuerUrl: issuerUrl,
       selectedConfigurationId: entity.selectedConfigurationId,
       issuer: verifiableCredential.issuer,
       batchData: verifiableCredential.batchData.flatMap(BatchData.init),
@@ -85,8 +88,8 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public var validFrom: Date?
   public let validUntil: Date?
 
-  public var format: String
-  public var issuerUrl: String
+  public var format: CredentialFormat
+  public var issuerUrl: URL
   public var selectedConfigurationId: String?
   public var batchData: BatchData?
   public var authentication: CredentialAuthentication
@@ -106,6 +109,11 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
 
   public var keyBindings: [KeyBinding] {
     bundleItems.compactMap(\.keyBinding)
+  }
+
+  /// The bundle item that would be presented next.
+  public var presentableBundleItem: BundleItem? {
+    bundleItems.first { $0.id == nextPresentableBundleItemId }
   }
 
   public var resolvedClusters: [CredentialClaimCluster] {

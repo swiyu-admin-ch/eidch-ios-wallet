@@ -1,29 +1,39 @@
 import Foundation
-import JsonSchemaValidator
-import XCTest
+import Testing
 @testable import BITOpenID
-@testable import BITSdJWT
-@testable import BITTestingCore
 
-final class VcSdJwtSchemaValidatorIntegrationTests: XCTestCase {
+// MARK: - VcSdJwtSchemaValidatorIntegrationTests
+
+struct VcSdJwtSchemaValidatorIntegrationTests {
 
   // MARK: Internal
 
-  func testValidate_success() throws {
-    XCTAssertTrue(try validator.validate(schema: schemaCredential))
+  @Test
+  func validate_success() throws {
+    #expect(try validator.validate(schema: schemaCredential))
   }
 
-  func testValidate_emptySchema_throwsError() throws {
-    XCTAssertThrowsError(try validator.validate(schema: Data()))
+  @Test
+  func validate_emptySchema_throwsError() throws {
+    #expect(throws: (any Error).self) {
+      try validator.validate(schema: Data())
+    }
   }
 
-  func testValidate_invalidSchema_returnsFalse() throws {
-    XCTAssertFalse(try validator.validate(schema: schemaMalformed))
+  @Test
+  func validate_invalidSchema_returnsFalse() throws {
+    #expect(try !validator.validate(schema: schemaMalformed))
   }
 
-  func testValidate_schemaMissingVcSdJwtSupport_returnsFalse() throws {
+  @Test
+  func validate_schemaMissingVcSdJwtSupport_returnsFalse() throws {
     // schema only passes meta-schema, but not vcSdJwt-specific validation
-    XCTAssertFalse(try validator.validate(schema: schemaInsufficient))
+    #expect(try !validator.validate(schema: schemaInsufficient))
+  }
+
+  @Test
+  func validate_schemaWithRegex_returnsFalse() throws {
+    #expect(try !validator.validate(schema: schemaWithRegex))
   }
 
   // MARK: Private
@@ -33,4 +43,5 @@ final class VcSdJwtSchemaValidatorIntegrationTests: XCTestCase {
   private let schemaCredential = String.Mock.schemaCredential
   private let schemaMalformed = String.Mock.schemaMalformed
   private let schemaInsufficient = String.Mock.schemaInsufficient
+  private let schemaWithRegex = String.Mock.schemaWithRegex
 }

@@ -17,6 +17,7 @@ let package = Package(
   dependencies: [
     .package(path: "../BITEntities"),
     .package(path: "../BITCredentialShared"),
+    .package(path: "../../Platforms/BITCrypto"),
     .package(path: "../../Platforms/BITDataStore"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITL10n"),
@@ -31,6 +32,7 @@ let package = Package(
       dependencies: [
         .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
+        .product(name: "BITCrypto", package: "BITCrypto"),
         .product(name: "BITDataStore", package: "BITDataStore"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITTheming", package: "BITTheming"),
@@ -43,6 +45,7 @@ let package = Package(
       name: "BITActivityTests",
       dependencies: [
         "BITActivity",
+        .product(name: "BITCrypto", package: "BITCrypto"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

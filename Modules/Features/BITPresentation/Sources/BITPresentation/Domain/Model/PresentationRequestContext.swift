@@ -1,5 +1,6 @@
 import BITCore
 import BITCredential
+import BITNonCompliance
 import BITOpenID
 import Foundation
 import Spyable
@@ -13,11 +14,13 @@ public class PresentationRequestContext: Equatable {
   public init(
     requestObjectJWS: RequestObjectJWS,
     compatibleCredentials: [CompatibleCredential],
-    transport: PresentationTransport = .network)
+    transport: PresentationTransport = .network,
+    origin: String? = nil)
   {
     self.requestObjectJWS = requestObjectJWS
     self.compatibleCredentials = compatibleCredentials
     self.transport = transport
+    self.origin = origin
     if compatibleCredentials.count == 1 {
       selectedCredential = compatibleCredentials.first
     }
@@ -26,20 +29,26 @@ public class PresentationRequestContext: Equatable {
   // MARK: Public
 
   public var trustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected)
-
+  public var actorCompliance = ActorCompliance.compliant
+  public var legacyVerifierNames: [String: String]?
   public let compatibleCredentials: [CompatibleCredential]
   public var transport: PresentationTransport
+  public let origin: String?
+
+  #warning("Remove idTS check once TP 2.0 is enforced")
+
+  public var hasVerifiedQuery: Bool {
+    switch transport {
+    case .network:
+      requestObjectJWS.payload.identityTrustStatement == nil ||
+        requestObjectJWS.payload.verificationQueryPublicStatement != nil
+    case .proximity:
+      true
+    }
+  }
 
   public var responseUri: URL? {
     requestObject.responseUri
-  }
-
-  public static func == (lhs: PresentationRequestContext, rhs: PresentationRequestContext) -> Bool {
-    lhs.requestObject == rhs.requestObject &&
-      lhs.compatibleCredentials == rhs.compatibleCredentials &&
-      lhs.transport == rhs.transport &&
-      lhs.selectedCredential == rhs.selectedCredential &&
-      lhs.responseUri == rhs.responseUri
   }
 
   // MARK: Internal
@@ -53,60 +62,49 @@ public class PresentationRequestContext: Equatable {
   }
 
   var verifierDisplays: [VerifierDisplay] {
-    if case .trusted(let trustStatement) = trustInformation.identity {
-      getIdentityTrustDisplays(trustStatement)
-    } else {
-      getClientMetadataDisplays()
-    }
+    let logos = requestObject.clientMetadata?.logoUri?.getAllDisplays() ?? [:]
+    let locales = Set(verifierNames.keys)
+      .union(logos.keys)
+      .sorted()
+    return locales.map(createVerifierDisplay)
   }
 
   func getPreferredVerifierDisplay(considering languageCodes: [UserLanguageCode]) -> VerifierDisplay {
     let logo = requestObject.clientMetadata?.logoUri?.getPreferredDisplay(considering: languageCodes)
-    let name = if case .trusted(let trustStatement) = trustInformation.identity {
-      trustStatement.getLocalizedEntityName(considering: languageCodes)
-    } else {
-      requestObject.clientMetadata?.clientName?.getPreferredDisplay(considering: languageCodes)
-    }
-    return VerifierDisplay(name: name, logo: logo?.dataURLData, trustInformation: trustInformation)
+    let name = verifierNames.findValue(considering: languageCodes, fallback: "entityName")
+    return VerifierDisplay(name: name, logo: logo?.dataURLData, trustInformation: trustInformation, actorCompliance: actorCompliance)
   }
 
   // MARK: Private
 
-  private func getIdentityTrustDisplays(_ trustStatement: IdentityTrustStatementJWT) -> [VerifierDisplay] {
-    let logos = requestObject.clientMetadata?.logoUri?.getAllDisplays() ?? [:]
-    let locales = Set(trustStatement.entityNames.keys)
-      .union(logos.keys.filter { !$0.isEmpty })
-      .sorted()
-    return locales
-      .map { locale in
-        let name = trustStatement.getLocalizedEntityName(considering: [locale])
-        return createVerifierDisplay(locale: locale, name: name)
-      }
+  private var verifierNames: [String: String] {
+    guard let identityTrustStatement = requestObject.identityTrustStatement else {
+      return legacyVerifierNames ?? requestObject.clientMetadata?.clientName?.getAllDisplays() ?? [:]
+    }
+    return identityTrustStatement.payload.entityNames.getAllDisplays()
   }
 
-  private func getClientMetadataDisplays() -> [VerifierDisplay] {
-    let names = requestObject.clientMetadata?.clientName?.getAllDisplays() ?? [:]
-    return names.keys
-      .map { locale in
-        createVerifierDisplay(locale: locale, name: names[locale])
-      }
-  }
-
-  private func createVerifierDisplay(locale: String, name: String?) -> VerifierDisplay {
-    let logos = requestObject.clientMetadata?.logoUri?.getAllDisplays() ?? [:]
+  private func createVerifierDisplay(locale: String) -> VerifierDisplay {
+    let name = verifierNames.findValue(considering: [locale], fallback: "entityName")
+    let logo = requestObject.clientMetadata?.logoUri?.getPreferredDisplay(considering: [locale])
     return VerifierDisplay(
       name: name,
       locale: locale,
-      logo: logos[locale]?.dataURLData ?? logos[""]?.dataURLData,
-      trustInformation: trustInformation)
+      logo: logo?.dataURLData,
+      trustInformation: trustInformation,
+      actorCompliance: actorCompliance)
   }
 }
 
 // MARK: Hashable
 
 extension PresentationRequestContext: Hashable {
+  public static func == (lhs: PresentationRequestContext, rhs: PresentationRequestContext) -> Bool {
+    ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+  }
+
   public func hash(into hasher: inout Hasher) {
-    hasher.combine(trustInformation)
+    hasher.combine(ObjectIdentifier(self))
   }
 }
 
@@ -120,20 +118,27 @@ extension PresentationRequestContext {
     requestObjectJWS: RequestObjectJWS,
     compatibleCredentials: [CompatibleCredential],
     trustInformation: TrustInformation = TrustInformation(identity: .untrusted, vcSchema: .notProtected),
-    transport: PresentationTransport = .network)
+    actorCompliance: ActorCompliance = .compliant,
+    transport: PresentationTransport = .network,
+    origin: String? = nil)
   {
     self.init(
       requestObjectJWS: requestObjectJWS,
       compatibleCredentials: compatibleCredentials,
-      transport: transport)
+      transport: transport,
+      origin: origin)
     self.trustInformation = trustInformation
+    self.actorCompliance = actorCompliance
   }
 
   // MARK: Internal
 
   enum Mock {
-    static let vcSdJwtSample = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: CompatibleCredential.Mock.array)
-    static let vcSdJwtWithIdentityTrust = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.identityTrust, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
+    static let vcSdJwtSample = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
+    static let vcSdJwtSampleProximity = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sampleProximity, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: TrustInformation(identity: .trustedCheckApp, vcSchema: .trusted), transport: .proximity)
+    static let sampleWithoutVerifiedQuery = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sampleWithoutVerifiedQuery, compatibleCredentials: CompatibleCredential.Mock.array)
+    static let vcSdJwtWithoutVerifiedQuery = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.identityTrustedWithoutVerifiedQuery, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
+    static let vcSdJwtWithoutIdentityTrust = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.withoutIdentityTrust, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.untrustedIdentity)
     static let vcSdJwtWithUnknownIdentityTrust = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.unknownIdentity)
   }
 }

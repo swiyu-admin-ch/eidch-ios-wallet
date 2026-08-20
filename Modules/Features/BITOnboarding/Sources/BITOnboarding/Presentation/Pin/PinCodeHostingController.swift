@@ -14,7 +14,7 @@ class PinCodeHostingController<Content: View>: UIHostingController<Content> {
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
 
-    applyNavigationAppearance(.login)
+    applyNavigationAppearance(.login, tintColor: .white)
   }
 
   override func viewWillDisappear(_ animated: Bool) {

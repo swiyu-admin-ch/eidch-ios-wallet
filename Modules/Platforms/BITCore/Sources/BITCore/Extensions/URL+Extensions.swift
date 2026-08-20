@@ -1,3 +1,4 @@
+import Factory
 import Foundation
 import RegexBuilder
 
@@ -12,9 +13,9 @@ extension URL {
   }
 
   public var isValidHttpUrl: Bool {
-    let pattern = #/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/#
-    let regex = Regex(pattern)
-    return absoluteString.firstMatch(of: regex) != nil
+    let maxHttpUrlLength = Container.shared.maxHttpUrlLength()
+    guard absoluteString.count <= maxHttpUrlLength else { return false }
+    return (try? httpUrlRegex.wholeMatch(in: absoluteString)) ?? false
   }
 
   /// A Boolean that is true if the URL conforms to RFC 2397 (data URL); otherwise nil.
@@ -53,6 +54,8 @@ extension URL {
     return components.url
   }
 }
+
+private let httpUrlRegex: TimeLimitedRegex = #"https?://(?:www\.)?(?:[-a-zA-Z0-9@:%_\+~#=]{1,256}\.)+[a-zA-Z0-9()]+\b(?:[-a-zA-Z0-9()@:%_\+.~#?&/=]*)"#
 
 private let mediaTypeReference = Reference(String?.self)
 private let mediaTypeCapture = Capture(as: mediaTypeReference) {

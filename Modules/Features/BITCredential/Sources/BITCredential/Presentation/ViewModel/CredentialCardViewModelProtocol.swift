@@ -24,7 +24,7 @@ public protocol CredentialCardViewModelProtocol {
 
 // MARK: - CredentialViewModelProtocol
 
-public protocol CredentialViewModelProtocol: Identifiable {
+public protocol CredentialViewModelProtocol: CredentialCardViewModelProtocol, Identifiable {
   associatedtype CredentialType where CredentialType: CredentialProtocol
   var credential: CredentialType { get }
 

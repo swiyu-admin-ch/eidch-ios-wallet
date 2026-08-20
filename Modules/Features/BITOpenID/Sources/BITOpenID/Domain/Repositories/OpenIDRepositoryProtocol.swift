@@ -11,7 +11,7 @@ import Spyable
 public protocol OpenIDRepositoryProtocol {
   func fetchVcSchemaData(from url: URL) async throws -> VcSchema
   func fetchTypeMetadata(from url: URL) async throws -> (object: TypeMetadata, response: Response)
-  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialIssuerMetadataResponse
+  func fetchMetadata(from issuerUrl: URL) async throws -> JWS<CredentialIssuerMetadataJWT>
   func fetchOpenIdConfiguration(from issuerURL: URL) async throws -> OpenIdConfiguration
   func fetchIssuerPublicKeyInfo(from jwksUrl: URL) async throws -> PublicKeyInfo
   func fetchAccessToken(
@@ -28,7 +28,7 @@ public protocol OpenIDRepositoryProtocol {
     dpopNonce: String?) async throws
     -> IssuanceAuthorization
   func fetchNonce(from url: URL) async throws -> (nonce: Nonce, dpopNonce: String?)
-  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequestBody) async throws -> FetchAnyCredentialResult.Credentials
-  func fetchCredential(with context: FetchDeferredCredentialContext, requestBody: DeferredCredentialRequestBody) async throws -> FetchAnyCredentialResult.Credentials
+  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequest) async throws -> FetchAnyCredentialResult.Credentials
+  func fetchCredential(with context: FetchDeferredCredentialContext, deferredCredentialRequest: DeferredCredentialRequest) async throws -> FetchAnyCredentialResult.Credentials
   func fetchCredentialStatus(from url: URL) async throws -> JWS<TokenStatusList>
 }

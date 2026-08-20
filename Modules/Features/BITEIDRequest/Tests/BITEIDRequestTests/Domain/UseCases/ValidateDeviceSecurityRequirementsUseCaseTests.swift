@@ -26,7 +26,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
 
     XCTAssertEqual(clientAttestationRepository.getUsingCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 1)
-    XCTAssertEqual(appAttestationRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 1)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 1)
     XCTAssertEqual(keyAttestationValidator.callAsFunctionKeyPairWithCallsCount, 1)
     XCTAssertEqual(validateAttestationsUseCase.executeClientAttestationKeyAttestationCallsCount, 1)
   }
@@ -35,7 +35,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
     try await useCase(userContext)
 
     XCTAssertEqual(appAttestationKeyRepository.createForWithReceivedArguments?.context.localizedReason, mockReason)
-    XCTAssertEqual(appAttestationRepository.fetchKeyAttestationBodyClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
     XCTAssertEqual(keyAttestationValidator.callAsFunctionKeyPairWithReceivedArguments?.keyPair, mockKeyPair)
     XCTAssertEqual(validateAttestationsUseCase.executeClientAttestationKeyAttestationReceivedArguments?.keyAttestation, mockKeyAttestation)
     XCTAssertEqual(validateAttestationsUseCase.executeClientAttestationKeyAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
@@ -53,13 +53,13 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_invalidClientAttestation_throws() async throws {
-    clientAttestationRepository.getUsingThrowableError = AppAttestationRepositoryError.invalidClientAttestation
+    clientAttestationRepository.getUsingThrowableError = AttestationServiceRepositoryError.invalidClientAttestation
 
     do {
       _ = try await useCase(userContext)
       XCTFail("An error was expected")
     } catch {
-      XCTAssertEqual(error as? EIDRequestRepository.Error, .invalidClientAttestation)
+      XCTAssertEqual(error as? SIDRepository.Error, .invalidClientAttestation)
     }
   }
 
@@ -75,13 +75,25 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_clientAttestationThrowsTimeout_throwsAttestationTimeout() async throws {
-    clientAttestationRepository.getUsingThrowableError = AppAttestationRepositoryError.timeout
+    clientAttestationRepository.getUsingThrowableError = AttestationServiceRepositoryError.timeout
 
     do {
       _ = try await useCase(userContext)
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? ValidateDeviceSecurityRequirementsUseCaseError, .attestationTimeout)
+    }
+  }
+
+  func testCallAsFunction_withDisabledClientAttestationRepository_throwsAttestationServiceDeactivated() async throws {
+    Container.shared.clientAttestationRepository.register { DisabledClientAttestationRepository() }
+    useCase = ValidateDeviceSecurityRequirementsUseCase()
+
+    do {
+      _ = try await useCase(userContext)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? ValidateDeviceSecurityRequirementsUseCaseError, .attestationServiceDeactivated)
     }
   }
 
@@ -97,7 +109,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_keyAttestationThrows_throws() async throws {
-    appAttestationRepository.fetchKeyAttestationBodyClientAttestationThrowableError = TestingError.error
+    attestationServiceRepository.fetchKeyAttestationBodyClientAttestationThrowableError = TestingError.error
 
     do {
       _ = try await useCase(userContext)
@@ -108,8 +120,8 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_keyAttestationThrowsServiceDeactivated_throwsAttestationServiceDeactivated() async throws {
-    appAttestationRepository.fetchKeyAttestationBodyClientAttestationThrowableError =
-      AppAttestationRepositoryError.serviceDeactivated
+    attestationServiceRepository.fetchKeyAttestationBodyClientAttestationThrowableError =
+      AttestationServiceRepositoryError.serviceDeactivated
 
     do {
       _ = try await useCase(userContext)
@@ -137,7 +149,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
       _ = try await useCase(userContext)
       XCTFail("An error was expected")
     } catch {
-      XCTAssertEqual(error as? EIDRequestRepository.Error, .invalidKeyAttestation)
+      XCTAssertEqual(error as? SIDRepository.Error, .invalidKeyAttestation)
     }
   }
 
@@ -151,7 +163,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
   private let mockReason = "mockReason"
 
   private var clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
-  private var appAttestationRepository = AppAttestationRepositoryProtocolSpy()
+  private var attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
   private var validateAttestationsUseCase = ValidateAttestationsUseCaseProtocolSpy()
   private var appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
   private var keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
@@ -159,7 +171,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
 
   private func setupMocks() {
     Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
-    Container.shared.appAttestationRepository.register { self.appAttestationRepository }
+    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
     Container.shared.validateAttestationsUseCase.register { self.validateAttestationsUseCase }
     Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
     Container.shared.keyAttestationValidator.register { self.keyAttestationValidator }
@@ -171,7 +183,7 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
     useCase = ValidateDeviceSecurityRequirementsUseCase()
 
     clientAttestationRepository.getUsingReturnValue = mockClientAttestation
-    appAttestationRepository.fetchKeyAttestationBodyClientAttestationReturnValue = mockKeyAttestation
+    attestationServiceRepository.fetchKeyAttestationBodyClientAttestationReturnValue = mockKeyAttestation
     appAttestationKeyRepository.createForWithReturnValue = mockKeyPair
     keyAttestationValidator.callAsFunctionKeyPairWithReturnValue = true
   }

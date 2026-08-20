@@ -48,7 +48,7 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
     let presentationRequestFields = getPresentationRequestFields(from: requestObject)
 
     let metadata = NonComplianceExcessiveDataReportBody.Metadata(
-      verifierDid: requestObject.clientId,
+      verifierDid: requestObject.clientIdentifier.clientId,
       verifierUrl: requestObject.responseUri?.absoluteString,
       presentationActionCreatedAt: excessiveDataReport.activity.createdAt,
       presentedCredentialIssuerDid: excessiveDataReport.activity.issuer,
@@ -75,7 +75,7 @@ struct NonComplianceReportRequestBodyGenerator: NonComplianceReportRequestBodyGe
   }
 
   private func getPresentationRequestFields(from requestObject: RequestObject) -> [NonComplianceExcessiveDataReportBody.Field] {
-    guard let credentials = requestObject.dcqlQuery?.credentials else {
+    guard let credentials = requestObject.dcqlQuery.credentials else {
       return []
     }
 

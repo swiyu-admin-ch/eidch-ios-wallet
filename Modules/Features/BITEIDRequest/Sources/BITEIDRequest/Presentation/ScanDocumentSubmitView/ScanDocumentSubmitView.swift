@@ -23,6 +23,7 @@ struct ScanDocumentSubmitView: View {
           ScanResultListView(entries: viewModel.scanImages, buttonAction: viewModel.displayScanImageOverview)
         }
         .listRowInsets(EdgeInsets())
+        .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
         .textCase(nil)
       }
       .frame(maxWidth: 635)
@@ -50,7 +51,6 @@ struct ScanDocumentSubmitView: View {
     }
     .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
-    .toolbarBackground(ThemingAssets.Background.secondary.swiftUIColor)
     .navigationBarBackButtonHidden()
     .navigationTitle(L10n.tkEidRequestScanDocumentSubmitTitle)
     .navigationBarTitleDisplayMode(.inline)

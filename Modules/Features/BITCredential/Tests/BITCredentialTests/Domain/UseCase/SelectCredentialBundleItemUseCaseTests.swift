@@ -1,4 +1,6 @@
+// swiftlint:disable force_unwrapping
 import XCTest
+@testable import BITAnyCredentialFormat
 @testable import BITCredential
 @testable import BITCredentialShared
 
@@ -13,8 +15,8 @@ final class SelectCredentialBundleItemUseCaseTests: XCTestCase {
     let credential = VerifiableCredential(
       bundleItems: [firstPresentedItem, firstUnpresentedItem, secondUnpresentedItem],
       nextPresentableBundleItemId: firstUnpresentedItem.id,
-      format: "format",
-      issuerUrl: "https://issuer",
+      format: .vcSdJwt,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
 
@@ -29,8 +31,8 @@ final class SelectCredentialBundleItemUseCaseTests: XCTestCase {
     let credential = VerifiableCredential(
       bundleItems: [firstPresentedItem, secondPresentedItem],
       nextPresentableBundleItemId: firstPresentedItem.id,
-      format: "format",
-      issuerUrl: "https://issuer",
+      format: .vcSdJwt,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
 
@@ -43,8 +45,8 @@ final class SelectCredentialBundleItemUseCaseTests: XCTestCase {
     let credential = VerifiableCredential(
       bundleItems: [],
       nextPresentableBundleItemId: UUID(),
-      format: "format",
-      issuerUrl: "https://issuer",
+      format: .vcSdJwt,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
 
@@ -54,6 +56,8 @@ final class SelectCredentialBundleItemUseCaseTests: XCTestCase {
   }
 
   // MARK: Private
+
+  private let issuerUrl = URL(string: "https://issuer.domain.ch")!
 
   private let useCase: SelectCredentialBundleItemUseCaseProtocol = SelectCredentialBundleItemUseCase()
 }

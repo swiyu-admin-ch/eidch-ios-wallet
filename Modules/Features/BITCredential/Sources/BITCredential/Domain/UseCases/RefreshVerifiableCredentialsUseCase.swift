@@ -49,13 +49,14 @@ struct RefreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseP
   private func shouldRefresh(_ credential: VerifiableCredential) -> Bool {
     guard
       credential.progressionState == .accepted,
-      credential.authentication.refreshToken != nil,
-      let batchData = credential.batchData
+      credential.authentication.refreshToken != nil
     else {
       return false
     }
+    let presentedCredentials = credential.bundleItems.filter { !$0.presented }
+    let threshold = getCredentialRefreshThresholdUseCase(for: credential.bundleItems.count)
 
-    return freshCredentialCount(for: credential) <= refreshThreshold(for: batchData)
+    return presentedCredentials.count <= threshold
   }
 
   private func refresh(_ credential: VerifiableCredential) async {
@@ -66,13 +67,4 @@ struct RefreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseP
       return
     }
   }
-
-  private func freshCredentialCount(for credential: VerifiableCredential) -> Int {
-    credential.bundleItems.count { !$0.presented }
-  }
-
-  private func refreshThreshold(for batchData: BatchData) -> Int {
-    getCredentialRefreshThresholdUseCase(for: batchData.batchSize)
-  }
-
 }

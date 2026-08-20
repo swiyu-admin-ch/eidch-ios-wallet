@@ -8,8 +8,8 @@ import Spyable
 
 @Spyable @MainActor
 protocol EIDRequestFlowCoordinatorProtocol: AnyObject {
-  func getNextDestination(for requestCase: EIDRequestCase) async throws -> EIDRequestDestinations?
-  func getNextDestinationAfterApply(for requestCase: EIDRequestCase) throws -> EIDRequestDestinations?
+  func getNextDestination(for requestCase: EIDRequestCase) async -> EIDRequestDestinations?
+  func getNextDestinationAfterApply(for requestCase: EIDRequestCase) -> EIDRequestDestinations?
   func cleanup()
 }
 
@@ -19,7 +19,7 @@ class EIDRequestFlowCoordinator: EIDRequestFlowCoordinatorProtocol {
 
   // MARK: Internal
 
-  func getNextDestination(for requestCase: EIDRequestCase) async throws -> EIDRequestDestinations? {
+  func getNextDestination(for requestCase: EIDRequestCase) async -> EIDRequestDestinations? {
     guard requestCase.state != nil else {
       return nil
     }
@@ -30,7 +30,7 @@ class EIDRequestFlowCoordinator: EIDRequestFlowCoordinatorProtocol {
     case .authorized,
          .ephemeral,
          .provisional:
-      try getNextDestinationAfterApply(for: requestCase)
+      getNextDestinationAfterApply(for: requestCase)
     case .denied,
          .notDetermined:
       .pushPermission(requestCase)
@@ -39,8 +39,11 @@ class EIDRequestFlowCoordinator: EIDRequestFlowCoordinatorProtocol {
     }
   }
 
-  func getNextDestinationAfterApply(for requestCase: EIDRequestCase) throws -> EIDRequestDestinations? {
-    let viewState = try RequestCaseViewState(requestCase)
+  func getNextDestinationAfterApply(for requestCase: EIDRequestCase) -> EIDRequestDestinations? {
+    guard let viewState = try? RequestCaseViewState(requestCase) else {
+      return nil
+    }
+
     context.caseId = requestCase.id
 
     if !viewState.isLegalRepresentantConsentVerified {

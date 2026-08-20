@@ -29,9 +29,7 @@ struct OTPLegalView: View {
         }),
       ])
       .toolbar {
-        CloseButtonToolbar(accessibilityIdentifier: "closeButton") {
-          navigator.dismiss()
-        }
+        CloseButtonToolbar { navigator.dismiss() }
       }
   }
 

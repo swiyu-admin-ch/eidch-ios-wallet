@@ -1,0 +1,40 @@
+{
+  "iss": "decentralized_identifier:did:example:12345",
+  "sub": "subject",
+  "aud": "https://self-issued.me/v2",
+  "exp": 1767168000,
+  "nbf": 1722499200,
+  "iat": 1729168416,
+  "jti": "jwtIdentifier",
+  "client_id": "verifier_attestation:did:example:verifier-subject",
+  "response_uri": "https://eid.admin.ch/response",
+  "response_mode": "dc_api.jwt",
+  "response_type": "vp_token",
+  "expected_origins" : [
+    "iso18013-5://test"
+  ],
+  "nonce": "1234",
+  "dcql_query": {
+    "credentials": [
+      {
+        "id": "pid",
+        "format": "vc+sd-jwt",
+        "claims": [
+          { "path": [ "firstName" ] },
+          { "path": [ "lastName" ] }
+        ]
+      }
+    ],
+    "credential_sets": [
+      {
+        "options": [
+          [ "pid" ]
+        ]
+      }
+    ]
+  },
+  "state": "1234",
+  "client_metadata": {
+    "client_name": "Verifier"
+  }
+}

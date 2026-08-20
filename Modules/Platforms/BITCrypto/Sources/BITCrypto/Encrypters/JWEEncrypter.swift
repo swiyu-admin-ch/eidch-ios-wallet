@@ -1,6 +1,6 @@
 import BITCore
 import Foundation
-import JOSESwift
+import JWSETKit
 import Spyable
 
 // MARK: - JWEEncrypterError
@@ -29,58 +29,36 @@ public struct JWEEncrypter: JWEEncrypterProtocol {
     compressionAlgorithm: BITCrypto.CompressionAlgorithm?) throws
     -> String
   {
-    let keyManagementAlgorithm = try JOSESwift.KeyManagementAlgorithm(from: publicKey)
-    let contentEncryptionAlgorithm = try ContentEncryptionAlgorithm(from: encryptionAlgorithm)
+    let keyManagementAlgorithm = try JSONWebKeyEncryptionAlgorithm(from: publicKey)
+    let contentEncryptionAlgorithm = try JSONWebContentEncryptionAlgorithm(from: encryptionAlgorithm)
+    guard let encryptionKey = try publicKey.jsonWebKey() as? JSONWebECPublicKey else {
+      throw JWEEncrypterError.encrypterCreationFailed
+    }
 
     let header = try createHeader(
       publicKey: publicKey,
-      keyManagementAlgorithm: keyManagementAlgorithm,
-      contentEncryptionAlgorithm: contentEncryptionAlgorithm,
       compressionAlgorithm: compressionAlgorithm)
-    let encrypter = try createEncrypter(
-      publicKey: publicKey,
-      keyManagementAlgorithm: keyManagementAlgorithm,
+    let jwe = try JSONWebEncryption(
+      protected: header,
+      content: data,
+      keyEncryptingAlgorithm: keyManagementAlgorithm,
+      keyEncryptionKey: encryptionKey,
       contentEncryptionAlgorithm: contentEncryptionAlgorithm)
 
-    let jwe = try JWE(header: header, payload: Payload(data), encrypter: encrypter)
-
-    return jwe.compactSerializedString
+    return try String(jwe)
   }
 
   // MARK: Private
 
   private func createHeader(
     publicKey: JWK,
-    keyManagementAlgorithm: JOSESwift.KeyManagementAlgorithm,
-    contentEncryptionAlgorithm: ContentEncryptionAlgorithm,
     compressionAlgorithm: BITCrypto.CompressionAlgorithm?) throws
-    -> JWEHeader
+    -> JOSEHeader
   {
-    var header = JWEHeader(
-      keyManagementAlgorithm: keyManagementAlgorithm,
-      contentEncryptionAlgorithm: contentEncryptionAlgorithm)
-    header.kid = publicKey.kid
-    header.zip = compressionAlgorithm?.rawValue
+    var header = JOSEHeader()
+    header.keyId = publicKey.kid
+    header.compressionAlgorithm = compressionAlgorithm.map { JSONWebCompressionAlgorithm(rawValue: $0.rawValue) }
 
     return header
-  }
-
-  private func createEncrypter(
-    publicKey: JWK,
-    keyManagementAlgorithm: JOSESwift.KeyManagementAlgorithm,
-    contentEncryptionAlgorithm: ContentEncryptionAlgorithm) throws
-    -> Encrypter
-  {
-    let encryptionKey = try ECPublicKey(publicKey)
-    guard
-      let encrypter = Encrypter(
-        keyManagementAlgorithm: keyManagementAlgorithm,
-        contentEncryptionAlgorithm: contentEncryptionAlgorithm,
-        encryptionKey: encryptionKey)
-    else {
-      throw JWEEncrypterError.encrypterCreationFailed
-    }
-
-    return encrypter
   }
 }

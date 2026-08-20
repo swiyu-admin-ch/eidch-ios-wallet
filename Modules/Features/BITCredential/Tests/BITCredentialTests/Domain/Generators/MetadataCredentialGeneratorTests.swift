@@ -59,19 +59,9 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.bundleItems[1].keyBinding, mockCredentialKeyBinding)
   }
 
-  func testGenerate_withoutClaimDisplay_returnsCredentialClaimWithoutDisplay() throws {
-    let selectedCredential = try XCTUnwrap(CredentialIssuerMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first?.value)
-
-    let credential = try generator.generate(
-      for: [credentialWithoutKeyBinding],
-      selectedCredential: selectedCredential,
-      context: mockCredentialGeneratorContext)
-
-    XCTAssertTrue(allClaims(in: credential.clusters).allSatisfy(\.displays.isEmpty))
-  }
-
-  func testGenerate_withoutCredentialDisplay_returnsCredentialWithoutCredentialDisplays() throws {
-    let selectedCredential = try XCTUnwrap(CredentialIssuerMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first?.value)
+  func testGenerate_withoutDisplays_returnsCredentialAndClaimsWithoutDisplays() throws {
+    let metadata = CredentialIssuerMetadata.Mock.simpleSampleWithoutDisplays
+    let selectedCredential = try XCTUnwrap(metadata.credentialConfigurationsSupported.first?.value)
 
     let credential = try generator.generate(
       for: [credentialWithoutKeyBinding],
@@ -79,6 +69,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
       context: mockCredentialGeneratorContext)
 
     XCTAssertTrue(credential.displays.isEmpty)
+    XCTAssertTrue(allClaims(in: credential.clusters).allSatisfy(\.displays.isEmpty))
   }
 
   func testGenerate_withBatchSize_setsBatchData() throws {
@@ -153,7 +144,7 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   private static let salutationPath: ClaimsPathPointer = [.string("salutation")]
   private static let msisdnPath: ClaimsPathPointer = [.string("msisdn")]
 
-  private let formatMock = "vc+sd-jwt"
+  private let formatMock = CredentialFormat.vcSdJwt
   private let issuerMock = "issuer"
   private let validFromMock = Date()
   private let validUntilMock = Date()

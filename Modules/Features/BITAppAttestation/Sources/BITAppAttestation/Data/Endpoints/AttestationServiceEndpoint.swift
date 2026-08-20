@@ -9,6 +9,7 @@ enum AttestationServiceEndpoint {
   case challenge
   case clientAttestation(ClientAttestationRequestBody)
   case keyAttestation(KeyAttestationRequestBody)
+  case batchKeyAttestations(BatchKeyAttestationRequestBody)
 }
 
 // MARK: - AttestationChallengeEndpoint
@@ -34,6 +35,8 @@ extension AttestationServiceEndpoint: TargetType {
       "ios/client-attestations"
     case .keyAttestation:
       "ios/key-attestations"
+    case .batchKeyAttestations:
+      "ios/key-attestations/batch"
     }
   }
 
@@ -41,7 +44,8 @@ extension AttestationServiceEndpoint: TargetType {
     switch self {
     case .challenge:
       .get
-    case .clientAttestation,
+    case .batchKeyAttestations,
+         .clientAttestation,
          .keyAttestation:
       .post
     }
@@ -51,7 +55,8 @@ extension AttestationServiceEndpoint: TargetType {
     switch self {
     case .challenge:
       .requestPlain
-    case .clientAttestation(let requestBody as Encodable),
+    case .batchKeyAttestations(let requestBody as Encodable),
+         .clientAttestation(let requestBody as Encodable),
          .keyAttestation(let requestBody as Encodable):
       .requestJSONEncodable(requestBody)
     }
@@ -62,7 +67,8 @@ extension AttestationServiceEndpoint: TargetType {
     case .challenge,
          .clientAttestation:
       NetworkHeader.standard.raw
-    case .keyAttestation:
+    case .batchKeyAttestations,
+         .keyAttestation:
       nil // Handle by ClientAttestationPlugin
     }
   }

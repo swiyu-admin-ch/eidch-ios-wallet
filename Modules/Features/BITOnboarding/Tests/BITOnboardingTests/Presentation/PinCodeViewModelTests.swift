@@ -60,7 +60,7 @@ final class PinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testEnterShortPinCode() {
-    validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
     viewModel.pinCode = "1234"
 
     viewModel.validate()

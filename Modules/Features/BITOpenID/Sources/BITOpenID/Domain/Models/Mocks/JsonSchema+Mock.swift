@@ -8,6 +8,7 @@ extension String.Mock {
   static let schemaCredential = Mocker.getData(fromFile: "json-schema-credential", ofType: "json", bundle: Bundle.module) ?? Data()
   static let schemaMalformed = Mocker.getData(fromFile: "json-schema-malformed", ofType: "json", bundle: Bundle.module) ?? Data()
   static let schemaInsufficient = Mocker.getData(fromFile: "json-schema-insufficient-vcSdJwt", ofType: "json", bundle: Bundle.module) ?? Data()
+  static let schemaWithRegex = JsonSchemaMock.withRegularExpression.data
 }
 
 #endif

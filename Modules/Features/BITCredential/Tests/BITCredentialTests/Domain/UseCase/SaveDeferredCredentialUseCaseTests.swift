@@ -40,6 +40,6 @@ final class SaveDeferredCredentialUseCaseTests: XCTestCase {
   private var useCase: SaveDeferredCredentialUseCase!
 
   private var mockCredential = DeferredCredential.Mock.sample
-  private var credentialRepository = CredentialRepositoryProcotolSpy()
+  private var credentialRepository = CredentialRepositoryProtocolSpy()
 
 }

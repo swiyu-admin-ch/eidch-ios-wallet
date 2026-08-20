@@ -22,7 +22,7 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
 
     viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
 
-    XCTAssertEqual(viewModel.verifierDisplay.name, "EN entityName")
+    XCTAssertEqual(viewModel.verifierDisplay.name, "entityName en-US")
     XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(viewModel.verifierDisplay.trustInformation, context.trustInformation)
   }
@@ -38,6 +38,6 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
   // MARK: Private
 
   private var viewModel: PresentationRequestResultStateViewModel!
-  private let context = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
+  private let context = PresentationRequestContext.Mock.vcSdJwtSample
   // swiftlint:enable all
 }

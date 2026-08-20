@@ -17,7 +17,7 @@ public struct ClientAttestationProofOfPossessionJWT: JWT, Codable, Equatable {
   init(
     expiredAt: Date,
     issuer: String?,
-    jwtIdentifier: String,
+    jwtId: String,
     audience: String?,
     requestBody: String?,
     nonce: String? = nil,
@@ -26,7 +26,7 @@ public struct ClientAttestationProofOfPossessionJWT: JWT, Codable, Equatable {
   {
     self.expiredAt = expiredAt
     self.issuer = issuer
-    self.jwtIdentifier = jwtIdentifier
+    self.jwtId = jwtId
     self.requestBody = requestBody
     self.nonce = nonce
     self.audience = audience
@@ -51,13 +51,13 @@ public struct ClientAttestationProofOfPossessionJWT: JWT, Codable, Equatable {
     case activatedAt = "nbf"
     case expiredAt = "exp"
     case issuedAt = "iat"
-    case jwtIdentifier = "jti"
+    case jwtId = "jti"
     case nonce
     case requestBody = "req"
     case audience = "aud"
   }
 
-  let jwtIdentifier: String
+  let jwtId: String
   let nonce: String?
 
   /// Hash of request body

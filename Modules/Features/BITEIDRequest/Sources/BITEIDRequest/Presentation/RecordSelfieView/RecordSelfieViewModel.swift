@@ -168,7 +168,6 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
       switch notification {
       case .initialized:
         self.startCamera()
-        state = .camera
       case .faceCapturingStopped:
         self.isNotificationPresented = false
         self.notification = nil

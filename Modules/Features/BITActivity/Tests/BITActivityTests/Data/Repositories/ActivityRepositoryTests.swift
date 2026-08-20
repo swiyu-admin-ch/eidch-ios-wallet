@@ -1,5 +1,5 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
-import BITCore
+import BITCrypto
 import BITDataStore
 import BITEntities
 import Factory

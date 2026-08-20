@@ -3,7 +3,7 @@ targetTemplates:
     info:
       path: ../../../swiyu/Info.plist
       properties:
-        UIDesignRequiresCompatibility: true
+        UIDesignRequiresCompatibility: false
         LSHasLocalizedDisplayName: true
         ITSAppUsesNonExemptEncryption: false
         CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
@@ -15,6 +15,7 @@ targetTemplates:
         CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        AppGroupIdentifier: $(APP_GROUP_IDENTIFIER)
         UIApplicationSupportsIndirectInputEvents: true
         UILaunchScreen:
           UIColorName: Launchscreen-background
@@ -39,12 +40,6 @@ targetTemplates:
               - swiyu-verify
         UILaunchStoryboardName:
           LaunchScreen.storyboard
-        UIApplicationSceneManifest:
-          UIApplicationSupportsMultipleScenes: false
-          UISceneConfigurations:
-            UIWindowSceneSessionRoleApplication:
-              - UISceneConfigurationName: Default Configuration
-                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
         NSCameraUsageDescription: 'swiyu app would like to use your camera to scan QRCodes.'
         NSBluetoothAlwaysUsageDescription: 'swiyu app would like to use Bluetooth for proximity verification.'
         NSFaceIDUsageDescription: 'swiyu app would like to use your biometric references to access secured resources.'
@@ -55,7 +50,7 @@ targetTemplates:
         DTXApplicationID: $(DYNATRACE_APP_ID)
         DTXBeaconURL: $(DYNATRACE_BEACON_URL)
         DTXLogLevel: $(DYNATRACE_DEBUG_LEVEL)
-        DTXAutoStart: true
+        DTXAutoStart: $(DYNATRACE_AUTO_START)
         DTXStartupLoadBalancing: true
         # DTX User actions
         DTXInstrumentAutoUserAction: false

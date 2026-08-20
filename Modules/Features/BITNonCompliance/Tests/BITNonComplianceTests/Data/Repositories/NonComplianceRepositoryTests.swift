@@ -1,13 +1,13 @@
 // swiftlint: disable implicitly_unwrapped_optional force_unwrapping force_try
 import BITNetworking
 import Factory
-import RealmSwift
 import XCTest
 @testable import BITActivity
 @testable import BITAppAttestation
 @testable import BITAppAuth
 @testable import BITDataStore
 @testable import BITEntities
+@testable import BITJWT
 @testable import BITLocalAuthentication
 @testable import BITNonCompliance
 @testable import BITOpenID
@@ -80,44 +80,52 @@ final class NonComplianceRepositoryTests: XCTestCase {
     }
   }
 
-  func testFetchNonCompliantActor_isNonCompliant_success() async throws {
-    mockResponse(code: 200, data: nonCompliantActorsResponseDataMock)
+  func testFetchActorCompliance_isNonCompliant_success() async throws {
+    mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
 
-    let result = try await repository.fetchNonCompliantActor(for: subjectDidMock)
+    let result = try await repository.fetchActorCompliance(for: subjectDidMock)
 
     XCTAssertEqual(mapperSpy.mapDidCallsCount, 1)
     XCTAssertEqual(mapperSpy.mapDidReceivedDid, subjectDidMock)
-    XCTAssertEqual(result?.did, nonCompliantActorsResponseMock.nonCompliantActors.first?.did)
-    XCTAssertEqual(result?.reason, nonCompliantActorsResponseMock.nonCompliantActors.first?.reason)
+    XCTAssertEqual(result, .notCompliant(NonComplianceTrustListStatementJWT.Mock.notCompliantReason))
   }
 
-  func testFetchNonCompliantActor_isNotListed_success() async throws {
-    mockResponse(code: 200, data: nonCompliantActorsResponseDataMock)
+  func testFetchActorCompliance_isNotListed_success() async throws {
+    mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
     let notListedDid = "did:example:notlisted"
 
-    let result = try await repository.fetchNonCompliantActor(for: notListedDid)
+    let result = try await repository.fetchActorCompliance(for: notListedDid)
 
-    XCTAssertNil(result)
+    XCTAssertEqual(result, .compliant)
   }
 
-  func testFetchNonCompliantActor_emptyList_success() async throws {
-    mockResponse(code: 200, data: NonCompliantActorsResponse.Mock.emptyData)
+  func testFetchActorCompliance_emptyList_success() async throws {
+    jwsDecoderMock.jwt = emptyNonComplianceTrustListStatementMock.payload
+    mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
     let notListedDid = "did:example:notlisted"
 
-    let result = try await repository.fetchNonCompliantActor(for: notListedDid)
+    let result = try await repository.fetchActorCompliance(for: notListedDid)
 
-    XCTAssertNil(result)
+    XCTAssertEqual(result, .compliant)
   }
 
-  func testFetchNonCompliantActor_urlMapperThrows_throws() async throws {
-    mockResponse(code: 200, data: nonCompliantActorsResponseDataMock)
+  func testFetchActorCompliance_urlMapperThrows_throws() async throws {
+    mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
     mapperSpy.mapDidThrowableError = TestingError.error
 
-    do {
-      _ = try await repository.fetchNonCompliantActor(for: subjectDidMock)
-      XCTFail("An error was expected")
-    } catch {
+    await XCTAssertThrowsErrorAsync(try await repository.fetchActorCompliance(for: subjectDidMock)) { error in
       XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(trustStatementValidatorSpy.validateForCallsCount, 0)
+    }
+  }
+
+  func testFetchActorCompliance_trustStatementValidatorThrows_throws() async throws {
+    mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
+    trustStatementValidatorSpy.validateThrowingError = TestingError.error
+
+    await XCTAssertThrowsErrorAsync(try await repository.fetchActorCompliance(for: subjectDidMock)) { error in
+      XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(trustStatementValidatorSpy.validateCallsCount, 1)
     }
   }
 
@@ -172,15 +180,17 @@ final class NonComplianceRepositoryTests: XCTestCase {
   private let clientAttestationProofOfPossessionMock = ClientAttestationProofOfPossession.Mock.sample
   private let subjectDidMock = "did:example:verifier1"
   private let trustRegistryURLMock = URL(string: "https://example.com")
-  private let nonCompliantActorsResponseMock = NonCompliantActorsResponse.Mock.default
-  private let nonCompliantActorsResponseDataMock = NonCompliantActorsResponse.Mock.defaultData
   private let actorDisplayMock = ActivityActorDisplay.Mock.default
   private let nonComplianceActivityMock = NonComplianceActivity.Mock.default
+  private let nonComplianceTrustListStatementMock = NonComplianceTrustListStatementJWT.Mock.sample
+  private let emptyNonComplianceTrustListStatementMock = NonComplianceTrustListStatementJWT.Mock.empty
 
   private var reportBodyGeneratorSpy: NonComplianceReportRequestBodyGeneratorProtocolSpy!
   private var proofOfPossessionGeneratorSpy: ProofOfPossessionGeneratorProtocolSpy!
   private var clientAttestationRepositorySpy: ClientAttestationRepositoryProtocolSpy!
   private var mapperSpy: TrustRegistryUrlMapperProtocolSpy!
+  private var jwsDecoderMock: JWSDecoderMock<NonComplianceTrustListStatementJWT>!
+  private var trustStatementValidatorSpy: TrustStatementValidatorProtocolSpy<NonComplianceTrustListStatementJWT>!
   private var userSession: SessionSpy!
   private var userContext: LAContextProtocolSpy!
   private var actorDisplayFactorySpy: ActivityActorDisplayFactoryProtocolSpy!
@@ -191,6 +201,11 @@ final class NonComplianceRepositoryTests: XCTestCase {
     proofOfPossessionGeneratorSpy = ProofOfPossessionGeneratorProtocolSpy()
     clientAttestationRepositorySpy = ClientAttestationRepositoryProtocolSpy()
     mapperSpy = TrustRegistryUrlMapperProtocolSpy()
+    jwsDecoderMock = JWSDecoderMock(
+      jwt: nonComplianceTrustListStatementMock.payload,
+      rawPayload: nonComplianceTrustListStatementMock.rawPayload,
+      expectedInput: NonComplianceTrustListStatementJWT.Mock.rawJWS)
+    trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy<NonComplianceTrustListStatementJWT>()
     actorDisplayFactorySpy = ActivityActorDisplayFactoryProtocolSpy()
     activityFactorySpy = NonComplianceActivityFactoryProtocolSpy()
 
@@ -204,6 +219,8 @@ final class NonComplianceRepositoryTests: XCTestCase {
     Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGeneratorSpy }
     Container.shared.clientAttestationRepository.register { self.clientAttestationRepositorySpy }
     Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
+    Container.shared.jwsDecoder.register { self.jwsDecoderMock }
+    Container.shared.trustStatementValidator.register { self.trustStatementValidatorSpy }
     Container.shared.activityActorDisplayFactory.register { self.actorDisplayFactorySpy }
     Container.shared.nonComplianceActivityFactory.register { self.activityFactorySpy }
     Container.shared.nonComplianceBaseURL.register { self.baseURLMock }

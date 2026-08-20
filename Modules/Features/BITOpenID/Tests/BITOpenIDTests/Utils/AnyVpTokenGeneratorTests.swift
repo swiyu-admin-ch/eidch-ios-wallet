@@ -31,7 +31,7 @@ final class AnyVpTokenGeneratorTests: XCTestCase {
   func testVpTokenGeneration() throws {
     let requestedClaims: [ClaimsPathPointer] = [[.string("test_key_1")]]
 
-    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims, withOrigin: nil)
 
     asserts(vpToken, disclosureCount: 1, hasKeyBinding: true)
   }

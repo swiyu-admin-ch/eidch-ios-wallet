@@ -1,0 +1,14 @@
+{
+  "jti": "2e5d7824-7df4-4de6-97e9-f4fd9f6be2f2",
+  "iat": 1690360968,
+  "exp": 1753432968,
+  "status": {
+    "status_list": {
+      "idx": 0,
+      "uri": "https://example.com/statuslists/1"
+    }
+  },
+  "vct_values": [
+    "other"
+  ]
+}

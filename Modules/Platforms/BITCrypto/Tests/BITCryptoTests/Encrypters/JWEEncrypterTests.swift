@@ -1,7 +1,8 @@
 import Foundation
-import JOSESwift
+import JWSETKit
 import XCTest
 @testable import BITCrypto
+@testable import BITTestingCore
 
 // MARK: - JWEEncrypterTests
 
@@ -22,13 +23,13 @@ final class JWEEncrypterTests: XCTestCase {
       encryptionAlgorithm: .A128GCM,
       compressionAlgorithm: .deflate)
 
-    let jwe = try JWE(compactSerialization: jweString)
+    let jwe = try JSONWebEncryption(from: jweString)
 
-    XCTAssertEqual(jwe.header.keyManagementAlgorithm, KeyManagementAlgorithm.ECDH_ES)
-    XCTAssertEqual(jwe.header.contentEncryptionAlgorithm, ContentEncryptionAlgorithm.A128GCM)
-    XCTAssertEqual(jwe.header.kid, publicKeyMock.kid)
-    XCTAssertEqual(jwe.header.zip, CompressionAlgorithm.deflate.rawValue)
-    XCTAssertFalse(jwe.compactSerializedString.isEmpty)
+    XCTAssertEqual(jwe.header.protected.algorithm?.rawValue, KeyManagementAlgorithm.ECDH_ES.rawValue)
+    XCTAssertEqual(jwe.header.protected.encryptionAlgorithm, .aesEncryptionGCM128)
+    XCTAssertEqual(jwe.header.protected.keyId, publicKeyMock.kid)
+    XCTAssertEqual(jwe.header.protected.compressionAlgorithm, .deflate)
+    XCTAssertFalse(jwe.description.isEmpty)
   }
 
   func testEncrypt_invalidPublicKeyMock_throws() throws {
@@ -39,7 +40,7 @@ final class JWEEncrypterTests: XCTestCase {
       encryptionAlgorithm: .A128GCM,
       compressionAlgorithm: nil))
     { error in
-      XCTAssertEqual(error as? JOSESwift.KeyManagementAlgorithm.KeyManagementAlgorithmError, .notFound)
+      XCTAssertEqual(error as? JSONWebKeyEncryptionAlgorithm.KeyManagementAlgorithmError, .notFound)
     }
   }
 

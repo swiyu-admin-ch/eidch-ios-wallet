@@ -1,6 +1,5 @@
 import BITCrypto
 import BITVault
-import JOSESwift
 
 extension BITCrypto.JWK {
 
@@ -9,14 +8,14 @@ extension BITCrypto.JWK {
       throw JWK.JWKError.invalidSecKey
     }
 
-    let ecPublicKey = try ECPublicKey(publicKey: publicKey)
+    let jwk = try JWK(from: publicKey)
 
     self.init(
-      kty: ecPublicKey.keyType.rawValue,
+      kty: jwk.kty,
       kid: keyPair.identifier,
-      crv: ecPublicKey.crv.rawValue,
-      x: ecPublicKey.x,
-      y: ecPublicKey.y,
+      crv: jwk.crv,
+      x: jwk.x,
+      y: jwk.y,
       alg: keyPair.algorithm.rawValue)
   }
 }

@@ -5,5 +5,5 @@ import Foundation
 
 public enum ProximityEngagementUpdate {
   case qrCode(String)
-  case request(String)
+  case request(requestObject: String, origin: String?)
 }

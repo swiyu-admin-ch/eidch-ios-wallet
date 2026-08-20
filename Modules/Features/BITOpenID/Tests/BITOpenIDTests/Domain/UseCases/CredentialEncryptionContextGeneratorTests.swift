@@ -1,19 +1,21 @@
 // swiftlint: disable implicitly_unwrapped_optional force_unwrapping
+
 import BITCrypto
 import Factory
-import XCTest
+import Foundation
+import Testing
 @testable import BITOpenID
 @testable import BITTestingCore
 @testable import BITVault
 
 // MARK: - CredentialEncryptionContextGeneratorTests
 
-final class CredentialEncryptionContextGeneratorTests: XCTestCase {
+@Suite(.serialized)
+struct CredentialEncryptionContextGeneratorTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
+  init() {
     Container.shared.reset()
     registerMocks()
     success()
@@ -21,89 +23,136 @@ final class CredentialEncryptionContextGeneratorTests: XCTestCase {
     generator = CredentialEncryptionContextGenerator()
   }
 
-  // MARK: - Execute
+  // MARK: Internal
 
-  func testExecute_missingRequestEncryption_returnsNil() throws {
-    let metadata = makeMetadata(requestEncryption: nil, responseEncryption: responseEncryptionMock)
+  @Test
+  func generate_valid_returnsContext() throws {
+    let context = try generator(for: metadataMock)
+
+    #expect(keyRepositorySpy.createUsingCallsCount == 1)
+    #expect(keyRepositorySpy.createUsingReceivedResponseEncryption == Self.responseEncryptionMock)
+
+    #expect(context.issuerPublicKey == Self.issuerPublicKeyMock)
+    #expect(context.credentialRequestEncryptionAlgorithm == Self.encryptionAlgorithmMock)
+    #expect(context.credentialRequestEncryptionZipValue == Self.zipValueMock)
+
+    #expect(context.responseKeyPair == keyPairMock)
+    #expect(context.credentialResponseEncryptionAlgorithm == Self.encryptionAlgorithmMock)
+    #expect(context.credentialResponseEncryptionZipValue == Self.zipValueMock)
+  }
+
+  @Test
+  func generate_validAndUnsupportedJwk_returnsContext() throws {
+    let requestEncryption = CredentialIssuerMetadata.CredentialRequestEncryption.Mock.build(jwks: [.Mock.build(alg: "unsupported"), Self.issuerPublicKeyMock])
+    let metadata = metadataMock.changing(\.credentialRequestEncryption, to: requestEncryption)
 
     let context = try generator(for: metadata)
 
-    XCTAssertNil(context)
-    XCTAssertEqual(validatorSpy.validateCallsCount, 0)
-    XCTAssertEqual(keyRepositorySpy.createUsingCallsCount, 0)
+    #expect(context.issuerPublicKey == Self.issuerPublicKeyMock)
   }
 
-  func testExecute_requestEncryptionWithoutResponseEncryption_returnsContextWithoutKeyPair() throws {
-    let metadata = makeMetadata(requestEncryption: requestEncryptionMock, responseEncryption: nil)
+  @Test
+  func generate_withoutZipValues_returnsContext() throws {
+    let requestEncryption = CredentialIssuerMetadata.CredentialRequestEncryption.Mock.build(supportedZipValues: [])
+    let responseEncryption = CredentialIssuerMetadata.CredentialResponseEncryption.Mock.build(supportedZipValues: [])
+    let metadata = metadataMock.changing(\.credentialRequestEncryption, to: requestEncryption)
+      .changing(\.credentialResponseEncryption, to: responseEncryption)
 
     let context = try generator(for: metadata)
 
-    XCTAssertEqual(validatorSpy.validateCallsCount, 1)
-    XCTAssertEqual(validatorSpy.validateReceivedMetadata, metadata)
-    XCTAssertEqual(context?.issuerPublicKey, issuerPublicKeyMock)
-    XCTAssertEqual(context?.credentialRequestEncryptionAlgorithm, requestEncryptionMock.supportedEncryptionAlgorithms.first)
-    XCTAssertEqual(context?.credentialRequestEncryptionZipValue, requestEncryptionMock.supportedZipValues?.first)
-    XCTAssertNil(context?.credentialResponseEncryptionAlgorithm)
-    XCTAssertNil(context?.credentialResponseEncryptionZipValue)
-    XCTAssertNil(context?.responseKeyPair)
-    XCTAssertEqual(keyRepositorySpy.createUsingCallsCount, 0)
+    #expect(context.issuerPublicKey == Self.issuerPublicKeyMock)
   }
 
-  func testExecute_requestAndResponseEncryption_returnsContextWithKeyPair() throws {
-    let metadata = makeMetadata(requestEncryption: requestEncryptionMock, responseEncryption: responseEncryptionMock)
+  @Test
+  func generate_noRequestEncryptionAlgorithm_throws() throws {
+    let requestEncryption = CredentialIssuerMetadata.CredentialRequestEncryption.Mock.build(supportedEncryptionAlgorithms: [])
+    let metadata = metadataMock.changing(\.credentialRequestEncryption, to: requestEncryption)
 
-    let context = try generator(for: metadata)
-
-    XCTAssertEqual(context?.credentialResponseEncryptionAlgorithm, responseEncryptionMock.supportedEncryptionAlgorithms.first)
-    XCTAssertEqual(context?.credentialResponseEncryptionZipValue, responseEncryptionMock.supportedZipValues?.first)
-    XCTAssertEqual(context?.responseKeyPair, keyPairMock)
-  }
-
-  func testExecute_validatorThrows_throws() throws {
-    validatorSpy.validateThrowableError = TestingError.error
-    let metadata = makeMetadata(requestEncryption: requestEncryptionMock, responseEncryption: responseEncryptionMock)
-
-    XCTAssertThrowsError(try generator(for: metadata)) { error in
-      XCTAssertEqual(error as? TestingError, .error)
+    #expect(throws: CredentialEncryptionContextGeneratorError.noSupportedEncryptionAlgorithm) {
+      try generator(for: metadata)
     }
   }
 
-  func testExecute_keyRepositoryThrows_throws() throws {
-    keyRepositorySpy.createUsingThrowableError = TestingError.error
-    let metadata = makeMetadata(requestEncryption: requestEncryptionMock, responseEncryption: responseEncryptionMock)
+  @Test
+  func generate_noResponseEncryptionAlgorithm_throws() throws {
+    let responseEncryption = CredentialIssuerMetadata.CredentialResponseEncryption.Mock.build(supportedEncryptionAlgorithms: [])
+    let metadata = metadataMock.changing(\.credentialResponseEncryption, to: responseEncryption)
 
-    XCTAssertThrowsError(try generator(for: metadata)) { error in
-      XCTAssertEqual(error as? TestingError, .error)
+    #expect(throws: CredentialEncryptionContextGeneratorError.noSupportedEncryptionAlgorithm) {
+      try generator(for: metadata)
+    }
+  }
+
+  @Test
+  func generate_noRequestEncryptionJwk_throws() throws {
+    let requestEncryption = CredentialIssuerMetadata.CredentialRequestEncryption.Mock.build(jwks: [])
+    let metadata = metadataMock.changing(\.credentialRequestEncryption, to: requestEncryption)
+
+    #expect(throws: CredentialEncryptionContextGeneratorError.missingIssuerEncryptionKeys) {
+      try generator(for: metadata)
+    }
+  }
+
+  @Test
+  func generate_unsupportedRequestEncryptionJwks_throws() throws {
+    let requestEncryption = CredentialIssuerMetadata.CredentialRequestEncryption.Mock.build(jwks: [.Mock.build(alg: "unsupported"), .Mock.build(crv: "unsupported")])
+    let metadata = metadataMock.changing(\.credentialRequestEncryption, to: requestEncryption)
+
+    #expect(throws: CredentialEncryptionContextGeneratorError.noSuitableEncryptionKey) {
+      try generator(for: metadata)
+    }
+  }
+
+  @Test
+  func execute_keyRepositoryThrows_throws() {
+    keyRepositorySpy.createUsingThrowableError = TestingError.error
+
+    #expect(throws: TestingError.error) {
+      try generator(for: metadataMock)
     }
   }
 
   // MARK: Private
 
-  private let metadataMock = CredentialIssuerMetadata.Mock.chasseralIssuer01
-  private let issuerPublicKeyMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!.jwks.keys.first!
+  private static let requestEncryptionMock =
+    CredentialIssuerMetadata.CredentialRequestEncryption.Mock.build(
+      jwks: [issuerPublicKeyMock],
+      supportedEncryptionAlgorithms: [Self.encryptionAlgorithmMock],
+      supportedZipValues: [Self.zipValueMock])
+  private static let responseEncryptionMock =
+    CredentialIssuerMetadata.CredentialResponseEncryption.Mock.build(
+      supportedEncryptionAlgorithms: [Self.encryptionAlgorithmMock],
+      supportedZipValues: [Self.zipValueMock])
+  private static let encryptionAlgorithmMock = EncryptionAlgorithm.A256GCM
+  private static let zipValueMock = CompressionAlgorithm.deflate
+  private static let issuerPublicKeyMock = JWK.Mock.build()
+
   private let keyPairMock = VaultKeyPair.Mock.ES256
-  private lazy var requestEncryptionMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialRequestEncryption!
-  private let responseEncryptionMock = CredentialIssuerMetadata.Mock.chasseralIssuer01.credentialResponseEncryption!
+  private let metadataMock = CredentialIssuerMetadata.Mock.sample
+    .changing(\.credentialRequestEncryption, to: requestEncryptionMock)
+    .changing(\.credentialResponseEncryption, to: responseEncryptionMock)
 
   private var generator = CredentialEncryptionContextGenerator()
   private var keyRepositorySpy = CredentialResponseEncryptionKeyRepositoryProtocolSpy()
-  private var validatorSpy = CredentialEncryptionValidatorProtocolSpy()
 
-  private func registerMocks() {
-    keyRepositorySpy = CredentialResponseEncryptionKeyRepositoryProtocolSpy()
-    validatorSpy = CredentialEncryptionValidatorProtocolSpy()
+  private mutating func registerMocks() {
+    let keyRepositorySpy = CredentialResponseEncryptionKeyRepositoryProtocolSpy()
+    self.keyRepositorySpy = keyRepositorySpy
 
-    Container.shared.credentialResponseEncryptionKeyRepository.register { self.keyRepositorySpy }
-    Container.shared.credentialEncryptionValidator.register { self.validatorSpy }
+    Container.shared.credentialResponseEncryptionKeyRepository.register {
+      keyRepositorySpy
+    }
+
+    Container.shared.encryptionSupportedCurves.register { ["P-256"] }
   }
 
-  private func success() {
+  private mutating func success() {
     keyRepositorySpy.createUsingReturnValue = keyPairMock
   }
 
   private func makeMetadata(
-    requestEncryption: CredentialIssuerMetadata.CredentialRequestEncryption?,
-    responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption?)
+    requestEncryption: CredentialIssuerMetadata.CredentialRequestEncryption,
+    responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption)
     -> CredentialIssuerMetadata
   {
     CredentialIssuerMetadata(

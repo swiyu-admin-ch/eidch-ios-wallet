@@ -19,7 +19,7 @@ let package = Package(
     .package(path: "../../Platforms/BITL10n"),
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITAnalytics"),
-    .package(path: "../../Platforms/BITSettings"),
+    .package(path: "../BITSettings"),
     .package(path: "../BITAppAuth"),
     .package(path: "../BITActivity"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),

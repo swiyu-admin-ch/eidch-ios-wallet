@@ -6,7 +6,7 @@ GREEN := \033[0;32m
 BLUE := \033[0;34m
 
 # Main setup target
-setup: .install-mise .configure-mise .install-mise-tools .install-git-hooks .bundler .list-tools .list-tasks .warm generate
+setup: .install-mise .configure-mise .install-mise-tools .install-git-hooks .configure-xcode .bundler .list-tools .list-tasks .warm generate
 	@printf "$(GREEN)=> Setup completed successfully!$(RESET)\n"
 	@printf "$(BLUE)=> Opening up swiyu$(RESET)\n"
 	@printf "$(BLUE)=> Note: From now on, you can simply use make to open the project$(RESET)\n"
@@ -53,10 +53,16 @@ setup-ci: .install-mise-github-action .install-mise-tools
 	mise trust
 	mise settings experimental=true
 	mise install
+	mise snyk-configuration
 
 .install-git-hooks:
 	@printf "$(GREEN)=> Configuring git hooks$(RESET)\n"
 	mise setup:git-hooks
+
+# Apply local Xcode editor preferences
+.configure-xcode:
+	@printf "$(GREEN)=> Configuring Xcode editor preferences$(RESET)\n"
+	mise setup:xcode
 
 # List installed tools
 .list-tools:

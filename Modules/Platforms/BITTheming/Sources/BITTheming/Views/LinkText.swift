@@ -19,7 +19,7 @@ public struct CustomLink: View {
       HStack(alignment: .lastTextBaseline, spacing: .x1) {
         Text(label)
           .font(.custom.footnote)
-        Image(systemName: "chevron.right")
+        Image(systemName: "arrow.up.right")
           .font(.caption)
       }
       .multilineTextAlignment(.leading)
@@ -55,7 +55,7 @@ public struct ButtonLinkText: View {
     Button(action: action, label: {
       HStack(alignment: .lastTextBaseline, spacing: .x1) {
         Text(text)
-        Image(systemName: "chevron.right")
+        Image(systemName: "arrow.up.right")
           .font(.caption)
       }
       .multilineTextAlignment(.leading)

@@ -1,4 +1,5 @@
 import BITCrypto
+import BITJsonCanonicalizer
 import BITJWT
 import BITVault
 import Factory
@@ -9,21 +10,45 @@ import Spyable
 
 @Spyable
 public protocol DPoPGeneratorProtocol {
+
   func generate(
     method: String,
     url: URL,
     keyPair: VaultKeyPair,
     nonce: String?,
     accessToken: String?,
-    keyAttestationJWS: String?) throws
-    -> String
+    requestBody: Data?,
+    additionalHeaderParameters: [String: Any]) throws
+    -> DPoP
+}
+
+extension DPoPGeneratorProtocol {
+
+  public func generate(
+    method: String,
+    url: URL,
+    keyPair: VaultKeyPair,
+    nonce: String? = nil,
+    accessToken: String? = nil,
+    requestBody: Data? = nil,
+    additionalHeaderParameters: [String: Any] = [:]) throws
+    -> DPoP
+  {
+    try generate(
+      method: method,
+      url: url,
+      keyPair: keyPair,
+      nonce: nonce,
+      accessToken: accessToken,
+      requestBody: requestBody,
+      additionalHeaderParameters: additionalHeaderParameters)
+  }
 }
 
 // MARK: - DPoPGeneratorError
 
 enum DPoPGeneratorError: Error {
   case invalidTargetURI
-  case invalidEncoding
 }
 
 // MARK: - DPoPGenerator
@@ -32,46 +57,28 @@ struct DPoPGenerator: DPoPGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(
-    method: String,
-    url: URL,
-    keyPair: VaultKeyPair,
-    nonce: String?,
-    accessToken: String?,
-    keyAttestationJWS: String?) throws
-    -> String
-  {
+  func generate(method: String, url: URL, keyPair: VaultKeyPair, nonce: String?, accessToken: String?, requestBody: Data?, additionalHeaderParameters: [String: Any]) throws -> DPoP {
+    var requestBodyHash: String?
+
+    if let requestBody {
+      requestBodyHash = sha256Hasher.hash(requestBody).base64URLEncodedString()
+    }
+
     let jwt = try DPoPJWT(
-      jwtIdentifier: UUID().uuidString,
       httpMethod: method.uppercased(),
       httpTargetURI: normalizeTargetURI(url),
       nonce: nonce,
       accessTokenHash: accessToken.flatMap(createAccessTokenHash),
-      issuedAt: issuedAt())
+      requestBody: requestBodyHash)
 
-    var additionalHeaderParameters: [String: Any] = ["profile_version": "swiss-profile-issuance:1.0.0"]
-    if let keyAttestationJWS {
-      additionalHeaderParameters[ProofJWT.AdditionalHeaderParameter.keyAttestation.rawValue] = keyAttestationJWS
-    }
-
-    let data = try jwsEncoder.encode(jwt, using: keyPair, additionalHeaderParameters: additionalHeaderParameters)
-
-    guard let proof = String(data: data, encoding: .utf8) else {
-      throw DPoPGeneratorError.invalidEncoding
-    }
-
-    return proof
+    return try jwsEncoder.encode(jwt, keyPair: keyPair, additionalHeaderParameters: additionalHeaderParameters)
   }
 
   // MARK: Private
 
-  @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
   @Injected(\.sha256Hasher) private var sha256Hasher: Hashable
-
-  private func issuedAt() -> Date {
-    let timestamp = floor(Date().timeIntervalSince1970)
-    return Date(timeIntervalSince1970: timestamp)
-  }
+  @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
+  @Injected(\.jsonCanonicalizer) private var jsonCanonicalizer: JsonCanonicalizerProtocol
 
   private func normalizeTargetURI(_ url: URL) throws -> String {
     guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
@@ -90,15 +97,6 @@ struct DPoPGenerator: DPoPGeneratorProtocol {
 
   private func createAccessTokenHash(_ accessToken: String) -> String {
     let accessTokenData = Data(accessToken.utf8)
-
-    #warning("Remove padded base64url ath workaround once the issuer accepts unpadded RFC 9449 values.")
-    // return sha256Hasher.hash(accessTokenData).base64URLEncodedString()
-    return base64URLEncodedStringWithPadding(sha256Hasher.hash(accessTokenData))
-  }
-
-  private func base64URLEncodedStringWithPadding(_ data: Data) -> String {
-    data.base64EncodedString()
-      .replacingOccurrences(of: "+", with: "-")
-      .replacingOccurrences(of: "/", with: "_")
+    return sha256Hasher.hash(accessTokenData).base64URLEncodedString()
   }
 }

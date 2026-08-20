@@ -8,25 +8,34 @@ public typealias AnalyticsProtocol = Loggable & PrivacySettable & ProviderRegist
 
 final class Analytics: AnalyticsProtocol {
 
+  private(set) var isAnalyticsEnabled = false
   private(set) var providers = [AnalyticsProviderProtocol]()
 
-  var isAnalyticsEnabled: Bool {
-    providers.contains { $0.isAnalyticsEnabled }
-  }
-
   func log(_ event: AnalyticsEventProtocol) {
+    guard isAnalyticsEnabled else {
+      return
+    }
+
     for provider in providers {
       provider.log(event)
     }
   }
 
   func log(_ errorEvent: AnalyticsErrorEventProtocol) {
+    guard isAnalyticsEnabled else {
+      return
+    }
+
     for provider in providers {
       provider.log(errorEvent)
     }
   }
 
   func log(_ error: Error) {
+    guard isAnalyticsEnabled else {
+      return
+    }
+
     for provider in providers {
       provider.log(error)
     }
@@ -38,6 +47,8 @@ final class Analytics: AnalyticsProtocol {
   }
 
   func applyUserPrivacyPolicy(_ isEnabled: Bool) async {
+    isAnalyticsEnabled = isEnabled
+
     for provider in providers {
       await provider.applyUserPrivacyPolicy(isEnabled)
     }

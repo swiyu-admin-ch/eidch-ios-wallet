@@ -27,8 +27,8 @@ struct PresentationRequestResultStateView: View {
 
   var body: some View {
     VStack {
-      ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { badgeType in
-        navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
+      ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { actorInformation in
+        navigator.navigate(to: PresentationDestinations.actorInformation(actorInformation))
       }.padding(.bottom, .x3)
       stateView
     }
@@ -52,15 +52,23 @@ struct PresentationRequestResultStateView: View {
     .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
-  @ViewBuilder
   var content: some View {
-    switch viewModel.state {
-    case .dataTransmitted:
-      dataTransmittedView
-    case .deny:
-      denyView
-    case .error:
-      errorMessages(title: L10n.tkPresentResultErrorPrimary, subtitle: L10n.tkPresentResultErrorSecondary)
+    VStack(spacing: 0) {
+      switch viewModel.state {
+      case .dataTransmitted:
+        dataTransmittedView
+      case .deny:
+        denyView
+      case .error:
+        errorMessages(title: L10n.tkPresentResultErrorPrimary, subtitle: L10n.tkPresentResultErrorSecondary)
+      }
+
+      if let redirectInformationText = viewModel.redirectInformationText {
+        Text(redirectInformationText)
+          .multilineTextAlignment(.center)
+          .font(.custom.body)
+          .foregroundStyle(viewModel.state.foregroundColor.opacity(0.7))
+      }
     }
   }
 
@@ -114,7 +122,7 @@ struct PresentationRequestResultStateView: View {
     VStack(spacing: .x1) {
       Text(L10n.tkPresentResultDataTransmittedTitle)
         .accessibilityAddTraits(.isHeader)
-      Text(L10n.tkPresentResultDataTransmittedBody)
+      Text(viewModel.dataTransmittedBody)
         .opacity(0.7)
     }
     .padding(.bottom, compression.isCompressed ? .x2 : .x4)
@@ -126,8 +134,8 @@ struct PresentationRequestResultStateView: View {
   }
 
   private var finishButton: some View {
-    Button(action: close) {
-      Text(L10n.tkGlobalFinish)
+    Button(action: primaryAction) {
+      Text(viewModel.finishButtonText)
         .frame(maxWidth: .infinity)
     }
     .controlSize(.large)
@@ -181,6 +189,14 @@ struct PresentationRequestResultStateView: View {
     .accessibilityPriorityFocus()
   }
 
+  private func primaryAction() {
+    if viewModel.hasRedirectUri {
+      viewModel.openRedirectUri(close)
+    } else {
+      close()
+    }
+  }
+
   private func close() {
     if navigator.canReturnToCheckpoint(PresentationCheckpoints.didFinish) {
       return navigator.returnToCheckpointSafely(PresentationCheckpoints.didFinish, value: viewModel.state)
@@ -195,6 +211,17 @@ struct PresentationRequestResultStateView: View {
 }
 
 extension PresentationRequestResultState {
+  fileprivate var foregroundColor: Color {
+    switch self {
+    case .dataTransmitted:
+      ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor
+    case .deny:
+      ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor
+    case .error:
+      ThemingAssets.Label.primary.swiftUIColor
+    }
+  }
+
   fileprivate var backgroundColor: Color {
     switch self {
     case .dataTransmitted:
@@ -230,6 +257,6 @@ extension PresentationRequestResultState {
 
 #if DEBUG
 #Preview {
-  PresentationRequestResultStateView(state: .dataTransmitted, context: .Mock.vcSdJwtSample)
+  PresentationRequestResultStateView(state: .dataTransmitted(nil), context: .Mock.vcSdJwtSample)
 }
 #endif

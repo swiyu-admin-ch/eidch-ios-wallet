@@ -26,17 +26,16 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
 
   func execute(for context: FetchCredentialContext) async throws -> FetchAnyCredentialResult.Credentials {
     let proofs = try createProofs(using: context)
-    let body = try credentialRequestBodyGenerator.generate(for: context, proofs: proofs)
-    let fetchCredentialResult = try await repository.fetchCredential(with: context, credentialRequest: body)
-
-    switch fetchCredentialResult {
-    case .credential(let anyCredential):
-      return try await validateCredential(anyCredential)
-    case .batch(let credentials):
-      return try await validateVcSdJwtBatchCredentials(credentials)
-    case .deferred:
-      return fetchCredentialResult
+    let credentialResponseEncryption = try CredentialResponseEncryption(from: context.credentialEncryptionContext)
+    let request = CredentialRequest(
+      credentialConfigurationId: context.credentialConfigurationId,
+      proofs: proofs,
+      credentialResponseEncryption: credentialResponseEncryption)
+    let fetchCredentialResult = try await repository.fetchCredential(with: context, credentialRequest: request)
+    if case .credential(let credentials) = fetchCredentialResult {
+      try await validateCredentials(credentials)
     }
+    return fetchCredentialResult
   }
 
   // MARK: Private
@@ -44,7 +43,6 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
   @Injected(\.openIDRepository) private var repository: OpenIDRepositoryProtocol
   @Injected(\.jwsEncoder) private var jwsEncoder: JWSEncoderProtocol
-  @Injected(\.credentialRequestBodyGenerator) private var credentialRequestBodyGenerator: CredentialRequestBodyGeneratorProtocol
   @Injected(\.sdJwtBatchCredentialConsistencyValidator) private var sdJwtBatchCredentialConsistencyValidator: SdJwtBatchCredentialConsistencyValidatorProtocol
 
   private func createProofs(using context: FetchCredentialContext) throws -> CredentialRequest.Proofs? {
@@ -52,7 +50,7 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
 
     let proofs = try bindings.map { binding in
       let jwt = ProofJWT(
-        audience: context.credentialIssuer,
+        audience: context.credentialIssuer.absoluteString,
         nonce: context.nonce?.cNonce,
         issuedAt: context.createdAt)
       let additionalHeaderParameters: [String: Any] = binding.keyAttestationJWS
@@ -69,37 +67,19 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
     return CredentialRequest.Proofs(jwt: proofs)
   }
 
-  private func validateCredential(_ anyCredential: AnyCredential) async throws -> FetchAnyCredentialResult.Credentials {
+  private func validateCredentials(_ credentials: [AnyCredential]) async throws {
     do {
-      return try .credential(await validateVcSdJwtCredentialSignature(anyCredential))
-    } catch JWSSignatureValidatorError.cannotResolveDid(_) {
-      throw FetchAnyVerifiableCredentialError.unknownIssuer
-    } catch {
-      throw error
-    }
-  }
-
-  private func validateVcSdJwtCredentialSignature(_ anyCredential: AnyCredential) async throws -> VcSdJWS {
-    guard let vcSdJWS = anyCredential as? VcSdJWS else {
-      throw FetchAnyVerifiableCredentialError.validationFailed
-    }
-
-    try await jwsSignatureValidator.validate(vcSdJWS)
-    return vcSdJWS
-  }
-
-  private func validateVcSdJwtBatchCredentials(_ credentials: [AnyCredential]) async throws -> FetchAnyCredentialResult.Credentials {
-    do {
-      var validatedCredentials = [VcSdJWS]()
-      validatedCredentials.reserveCapacity(credentials.count)
-
-      for credential in credentials {
-        try validatedCredentials.append(await validateVcSdJwtCredentialSignature(credential))
+      let vcSdJwsCredentials = try credentials.map {
+        guard let vcSdJWS = $0 as? VcSdJWS else {
+          throw FetchAnyVerifiableCredentialError.validationFailed
+        }
+        return vcSdJWS
+      }
+      for credential in vcSdJwsCredentials {
+        try await jwsSignatureValidator.validate(credential)
       }
 
-      try sdJwtBatchCredentialConsistencyValidator.validate(validatedCredentials)
-
-      return .batch(credentials: validatedCredentials)
+      try sdJwtBatchCredentialConsistencyValidator.validate(vcSdJwsCredentials)
     } catch JWSSignatureValidatorError.cannotResolveDid(_) {
       throw FetchAnyVerifiableCredentialError.unknownIssuer
     } catch {

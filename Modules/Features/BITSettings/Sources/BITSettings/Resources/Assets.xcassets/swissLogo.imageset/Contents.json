@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "English_light.svg",
+      "filename" : "Logo_EN_Light.svg",
       "idiom" : "universal"
     },
     {
@@ -11,11 +11,11 @@
           "value" : "dark"
         }
       ],
-      "filename" : "English_dark.svg",
+      "filename" : "Logo_EN_Dark 1.svg",
       "idiom" : "universal"
     },
     {
-      "filename" : "French_light.svg",
+      "filename" : "Logo_FR_Light.svg",
       "idiom" : "universal",
       "locale" : "fr"
     },
@@ -26,12 +26,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "French_dark.svg",
+      "filename" : "Logo_FR_Dark.svg",
       "idiom" : "universal",
       "locale" : "fr"
     },
     {
-      "filename" : "German_light.svg",
+      "filename" : "Logo_DE_Light.svg",
       "idiom" : "universal",
       "locale" : "de"
     },
@@ -42,12 +42,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "German_dark.svg",
+      "filename" : "Logo_DE_Dark.svg",
       "idiom" : "universal",
       "locale" : "de"
     },
     {
-      "filename" : "Italian_light.svg",
+      "filename" : "Logo_IT_Light.svg",
       "idiom" : "universal",
       "locale" : "it"
     },
@@ -58,12 +58,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Italian_dark.svg",
+      "filename" : "Logo_IT_Dark.svg",
       "idiom" : "universal",
       "locale" : "it"
     },
     {
-      "filename" : "Rumantsch_light.svg",
+      "filename" : "Logo_RM_Light.svg",
       "idiom" : "universal",
       "locale" : "rm"
     },
@@ -74,12 +74,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Rumantsch_dark.svg",
+      "filename" : "Logo_RM_Dark.svg",
       "idiom" : "universal",
       "locale" : "rm"
     },
     {
-      "filename" : "English_light 1.svg",
+      "filename" : "Logo_EN_Light 1.svg",
       "idiom" : "universal",
       "locale" : "en"
     },
@@ -90,7 +90,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "English_dark 1.svg",
+      "filename" : "Logo_EN_Dark.svg",
       "idiom" : "universal",
       "locale" : "en"
     }

@@ -13,14 +13,14 @@ enum GetCredentialIssuanceSummaryUseCaseError: Error {
 
 @Spyable
 protocol GetCredentialIssuanceSummaryUseCaseProtocol {
-  func execute(for credentialId: UUID) async throws -> CredentialIssuanceSummary
+  func callAsFunction(for credentialId: UUID) async throws -> CredentialIssuanceSummary
 }
 
 // MARK: - GetCredentialIssuanceSummaryUseCase
 
 struct GetCredentialIssuanceSummaryUseCase: GetCredentialIssuanceSummaryUseCaseProtocol {
 
-  func execute(for credentialId: UUID) async throws -> CredentialIssuanceSummary {
+  func callAsFunction(for credentialId: UUID) async throws -> CredentialIssuanceSummary {
     do {
       return try await credentialRepository.getIssuanceSummary(id: credentialId)
     } catch CredentialRepositoryError.unsupportedCredential {
@@ -30,5 +30,5 @@ struct GetCredentialIssuanceSummaryUseCase: GetCredentialIssuanceSummaryUseCaseP
 
   // MARK: Private
 
-  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
+  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProtocol
 }

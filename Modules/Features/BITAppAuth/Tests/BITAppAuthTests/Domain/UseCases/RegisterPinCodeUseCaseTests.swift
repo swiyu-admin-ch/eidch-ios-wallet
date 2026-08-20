@@ -1,7 +1,7 @@
 import Factory
 import Foundation
 import Spyable
-import XCTest
+import Testing
 @testable import BITAppAuth
 @testable import BITDataStore
 @testable import BITLocalAuthentication
@@ -9,81 +9,72 @@ import XCTest
 
 // MARK: - RegisterPinCodeUseCaseTests
 
-final class RegisterPinCodeUseCaseTests: XCTestCase {
+@Suite(.serialized)
+@MainActor
+struct RegisterPinCodeUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
-    pinCodeManager = PinCodeManagerProtocolSpy()
-    saltService = SaltServiceProtocolSpy()
-    pepperService = PepperServiceProtocolSpy()
-    uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
-    internalContext = LAContextProtocolSpy()
-    isBiometricUsageAllowedUseCase = IsBiometricUsageAllowedUseCaseProtocolSpy()
-    dataStoreConfiguration = DataStoreConfigurationManagerProtocolSpy()
-    userSession = SessionSpy()
+  init() {
+    Container.shared.reset()
 
-    Container.shared.pinCodeManager.register { self.pinCodeManager }
-    Container.shared.saltService.register { self.saltService }
-    Container.shared.pepperService.register { self.pepperService }
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManager }
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.internalContext.register { self.internalContext }
-    Container.shared.isBiometricUsageAllowedUseCase.register { self.isBiometricUsageAllowedUseCase }
-    Container.shared.dataStoreConfigurationManager.register { self.dataStoreConfiguration }
+    let pinCodeService = PinCodeServiceProtocolSpy()
+    let uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    let internalContext = LAContextProtocolSpy()
+    let getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    let dataStoreConfiguration = DataStoreConfigurationManagerProtocolSpy()
+    let userSession = SessionSpy()
 
+    Container.shared.pinCodeService.register { pinCodeService }
+    Container.shared.uniquePassphraseManager.register { uniquePassphraseManager }
+    Container.shared.userSession.register { userSession }
+    Container.shared.internalContext.register { internalContext }
+    Container.shared.getBiometricStateUseCase.register { getBiometricStateUseCase }
+    Container.shared.dataStoreConfigurationManager.register { dataStoreConfiguration }
+
+    self.pinCodeService = pinCodeService
+    self.uniquePassphraseManager = uniquePassphraseManager
+    self.internalContext = internalContext
+    self.getBiometricStateUseCase = getBiometricStateUseCase
+    self.dataStoreConfiguration = dataStoreConfiguration
+    self.userSession = userSession
     useCase = RegisterPinCodeUseCase()
   }
 
-  func testStandardPinCode() throws {
-    try testHappyPath(pinCode: "123456")
+  // MARK: Internal
+
+  @Test(arguments: ["123456", "aA#$_0", "12345678901234567890"] as [PinCode])
+  func happyPath(pinCode: PinCode) throws {
+    try testHappyPath(pinCode: pinCode)
   }
 
-  func testSpecialCharsPinCode() throws {
-    try testHappyPath(pinCode: "aA#$_0")
-  }
-
-  func testLongPinCode() throws {
-    try testHappyPath(pinCode: "12345678901234567890")
-  }
-
-  func testValidationError() throws {
+  @Test
+  func validationError() {
     let pinCode: PinCode = "1"
-    saltService.generateSaltReturnValue = pinCode.data(using: .utf8)
-    pepperService.generatePepperReturnValue = SecKeyTestsHelper.createPrivateKey()
-    pinCodeManager.encryptThrowableError = PinCodeError.tooShort
+    pinCodeService.registerThrowableError = PinCodeError.tooShort
     internalContext.setCredentialTypeReturnValue = true
-    do {
-      try useCase.execute(pinCode: pinCode)
-      XCTFail("Should fail instead...")
-    } catch PinCodeError.tooShort {
-      XCTAssertTrue(pinCodeManager.encryptCalled)
-      XCTAssertTrue(saltService.generateSaltCalled)
-      XCTAssertTrue(pepperService.generatePepperCalled)
-      XCTAssertFalse(userSession.startSessionPassphraseCredentialTypeCalled)
-      XCTAssertFalse(uniquePassphraseManager.generateCalled)
-      XCTAssertFalse(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
-      XCTAssertFalse(isBiometricUsageAllowedUseCase.executeCalled)
-      XCTAssertFalse(dataStoreConfiguration.setEncryptionKeyCalled)
-    } catch {
-      XCTFail("Unexpected error type")
+
+    #expect(throws: PinCodeError.tooShort) {
+      try useCase(pinCode: pinCode)
     }
+
+    #expect(pinCodeService.registerCalled)
+    #expect(!userSession.startSessionPassphraseCredentialTypeCalled)
+    #expect(!uniquePassphraseManager.generateCalled)
+    #expect(!uniquePassphraseManager.saveUniquePassphraseForContextCalled)
+    #expect(!getBiometricStateUseCase.callAsFunctionCalled)
+    #expect(!dataStoreConfiguration.setEncryptionKeyCalled)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var pinCodeManager: PinCodeManagerProtocolSpy!
-  private var saltService: SaltServiceProtocolSpy!
-  private var pepperService: PepperServiceProtocolSpy!
-  private var uniquePassphraseManager: UniquePassphraseManagerProtocolSpy!
-  private var useCase: RegisterPinCodeUseCase!
-  private var isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocolSpy!
-  private var dataStoreConfiguration: DataStoreConfigurationManagerProtocolSpy!
-  private var userSession: SessionSpy!
-  private var internalContext: LAContextProtocolSpy!
-  // swiftlint:enable all
+  private let pinCodeService: PinCodeServiceProtocolSpy
+  private let uniquePassphraseManager: UniquePassphraseManagerProtocolSpy
+  private let useCase: RegisterPinCodeUseCase
+  private let getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy
+  private let dataStoreConfiguration: DataStoreConfigurationManagerProtocolSpy
+  private let userSession: SessionSpy
+  private let internalContext: LAContextProtocolSpy
 
 }
 
@@ -92,40 +83,36 @@ extension RegisterPinCodeUseCaseTests {
   private func testHappyPath(pinCode: PinCode) throws {
     let mockPinCodeEncrypted = Data()
     let mockUniquePassphraseData = Data()
-    let mockSalt = Data()
-    let mockPepperKey: SecKey = SecKeyTestsHelper.createPrivateKey()
     internalContext.setCredentialTypeReturnValue = true
     userSession.startSessionPassphraseCredentialTypeReturnValue = LAContextProtocolSpy()
-    isBiometricUsageAllowedUseCase.executeReturnValue = true
-    configureSpy(pinCodeEncrypted: mockPinCodeEncrypted, uniquePassphrase: mockUniquePassphraseData, salt: mockSalt, pepperKey: mockPepperKey)
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    configureSpy(pinCodeEncrypted: mockPinCodeEncrypted, uniquePassphrase: mockUniquePassphraseData)
 
-    try useCase.execute(pinCode: pinCode)
-    assertResult(pinCode: pinCode, pinCodeEncrypted: mockPinCodeEncrypted, uniquePassphrase: mockUniquePassphraseData)
+    try useCase(pinCode: pinCode)
+    try assertResult(pinCode: pinCode, pinCodeEncrypted: mockPinCodeEncrypted, uniquePassphrase: mockUniquePassphraseData)
   }
 
-  private func configureSpy(pinCodeEncrypted: Data, uniquePassphrase: Data, salt: Data, pepperKey: SecKey) {
-    pinCodeManager.encryptReturnValue = pinCodeEncrypted
+  private func configureSpy(pinCodeEncrypted: Data, uniquePassphrase: Data) {
+    pinCodeService.registerReturnValue = pinCodeEncrypted
     uniquePassphraseManager.generateReturnValue = uniquePassphrase
-    saltService.generateSaltReturnValue = salt
-    pepperService.generatePepperReturnValue = pepperKey
   }
 
-  private func assertResult(pinCode: PinCode, pinCodeEncrypted: Data, uniquePassphrase: Data) {
-    XCTAssertTrue(pinCodeManager.encryptCalled)
-    XCTAssertTrue(saltService.generateSaltCalled)
-    XCTAssertTrue(pepperService.generatePepperCalled)
-    XCTAssertTrue(userSession.startSessionPassphraseCredentialTypeCalled)
-    XCTAssertTrue(uniquePassphraseManager.generateCalled)
-    XCTAssertTrue(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
-    XCTAssertEqual(pinCodeManager.encryptReceivedPinCode, pinCode)
-    XCTAssertEqual(userSession.startSessionPassphraseCredentialTypeCallsCount, 1)
-    XCTAssertEqual(pinCodeEncrypted, userSession.startSessionPassphraseCredentialTypeReceivedInvocations[0].passphrase)
-    XCTAssertEqual(uniquePassphrase, uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase)
-    XCTAssertEqual(AuthMethod.biometric, uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.authMethod)
-    XCTAssertTrue(isBiometricUsageAllowedUseCase.executeCalled)
+  private func assertResult(pinCode: PinCode, pinCodeEncrypted: Data, uniquePassphrase: Data) throws {
+    #expect(pinCodeService.registerCalled)
+    #expect(userSession.startSessionPassphraseCredentialTypeCalled)
+    #expect(uniquePassphraseManager.generateCalled)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
+    #expect(pinCodeService.registerReceivedPinCode == pinCode)
+    #expect(userSession.startSessionPassphraseCredentialTypeCallsCount == 1)
 
-    XCTAssertTrue(dataStoreConfiguration.setEncryptionKeyCalled)
-    XCTAssertEqual(dataStoreConfiguration.setEncryptionKeyCallsCount, 1)
+    let sessionInvocation = try #require(userSession.startSessionPassphraseCredentialTypeReceivedInvocations.first)
+    #expect(sessionInvocation.passphrase == pinCodeEncrypted)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase == uniquePassphrase)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.authMethod == AuthMethod.biometric)
+    #expect(getBiometricStateUseCase.callAsFunctionCalled)
+
+    #expect(dataStoreConfiguration.setEncryptionKeyCalled)
+    #expect(dataStoreConfiguration.setEncryptionKeyCallsCount == 1)
   }
 
 }

@@ -1,3 +1,4 @@
+import BITCrypto
 import BITEntities
 import Foundation
 
@@ -17,7 +18,8 @@ extension CredentialDisplayEntity {
     locale = display.locale
     name = display.name
     logoAltText = display.logoAltText
-    logoData = display.logoBase64
+    logoDataHash = ImageHasher.hash(from: display.logoBase64)
+    logoData = nil
     summary = display.summary
     backgroundColor = display.backgroundColor
     theme = display.theme

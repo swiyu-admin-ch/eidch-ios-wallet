@@ -1,66 +1,68 @@
 import Factory
-import Foundation
-import XCTest
+import FactoryTesting
+import Testing
 @testable import BITAppAuth
 @testable import BITLocalAuthentication
 @testable import BITTestingCore
 
-final class HasBiometricAuthUseCaseTests: XCTestCase {
+@Suite(.container)
+struct HasBiometricAuthUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
-    registerMocks()
+  init() {
+    let context = LAContextProtocolSpy()
+    let validator = LocalAuthenticationPolicyValidatorProtocolSpy()
+
+    Container.shared.internalContext.register { context }
+    Container.shared.localAuthenticationPolicyValidator.register { validator }
+
+    self.context = context
+    self.validator = validator
     useCase = HasBiometricAuthUseCase()
   }
 
-  func testExecute_argumentsArePassed() {
-    policyValidatorSpy.validatePolicyContextReturnValue = true
+  // MARK: Internal
 
-    _ = useCase.execute()
+  @Test
+  func callAsFunction_argumentsArePassed() {
+    validator.validatePolicyContextReturnValue = true
 
-    XCTAssertEqual(policyValidatorSpy.validatePolicyContextReceivedArguments?.policy, .deviceOwnerAuthenticationWithBiometrics)
+    _ = useCase()
+
+    #expect(validator.validatePolicyContextReceivedArguments?.policy == .deviceOwnerAuthenticationWithBiometrics)
   }
 
-  func testExecute_policyIsValid_returnsTrue() {
-    policyValidatorSpy.validatePolicyContextReturnValue = true
+  @Test
+  func callAsFunction_policyIsValid_returnsTrue() {
+    validator.validatePolicyContextReturnValue = true
 
-    let result = useCase.execute()
+    let result = useCase()
 
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func testExecute_policyIsNotValid_returnsFalse() {
-    policyValidatorSpy.validatePolicyContextReturnValue = false
+  @Test
+  func callAsFunction_policyIsNotValid_returnsFalse() {
+    validator.validatePolicyContextReturnValue = false
 
-    let result = useCase.execute()
+    let result = useCase()
 
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func testExecute_policyThrowsError_returnsFalse() {
-    policyValidatorSpy.validatePolicyContextThrowableError = TestingError.error
+  @Test
+  func callAsFunction_policyThrowsError_returnsFalse() {
+    validator.validatePolicyContextThrowableError = TestingError.error
 
-    let result = useCase.execute()
+    let result = useCase()
 
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var policyValidatorSpy: LocalAuthenticationPolicyValidatorProtocolSpy!
-  private var contextSpy: LAContextProtocolSpy!
-  private var useCase: HasBiometricAuthUseCase!
-
-  // swiftlint:enable all
-
-  private func registerMocks() {
-    policyValidatorSpy = LocalAuthenticationPolicyValidatorProtocolSpy()
-    contextSpy = LAContextProtocolSpy()
-    Container.shared.localAuthenticationPolicyValidator.register { self.policyValidatorSpy }
-    Container.shared.internalContext.register { self.contextSpy }
-  }
-
+  private let context: LAContextProtocolSpy
+  private let validator: LocalAuthenticationPolicyValidatorProtocolSpy
+  private let useCase: HasBiometricAuthUseCase
 }

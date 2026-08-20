@@ -8,7 +8,7 @@ import Moya
 enum NonComplianceEndpoint {
   case challenge
   case report(Encodable)
-  case nonCompliantActors(url: URL)
+  case nonComplianceTrustList(url: URL)
 }
 
 // MARK: TargetType
@@ -19,7 +19,7 @@ extension NonComplianceEndpoint: TargetType {
     switch self {
     case .challenge,
          .report: Container.shared.nonComplianceBaseURL()
-    case .nonCompliantActors(let baseUrl): baseUrl
+    case .nonComplianceTrustList(let baseUrl): baseUrl
     }
   }
 
@@ -27,14 +27,14 @@ extension NonComplianceEndpoint: TargetType {
     switch self {
     case .challenge: "mobile-api/v1/challenge"
     case .report: "mobile-api/v1/cases/non-compliant-actors"
-    case .nonCompliantActors: "api/v1/non-compliant-actors"
+    case .nonComplianceTrustList: "api/v2/non-compliance-trust-list"
     }
   }
 
   var method: Moya.Method {
     switch self {
     case .challenge,
-         .nonCompliantActors: .get
+         .nonComplianceTrustList: .get
     case .report: .post
     }
   }
@@ -43,14 +43,14 @@ extension NonComplianceEndpoint: TargetType {
     switch self {
     case .report(let report): .requestCustomJSONEncodable(report, encoder: Container.shared.nonComplianceJsonEncoder())
     case .challenge,
-         .nonCompliantActors: .requestPlain
+         .nonComplianceTrustList: .requestPlain
     }
   }
 
   var headers: [String: String]? {
     switch self {
     case .challenge,
-         .nonCompliantActors: NetworkHeader.standard.raw
+         .nonComplianceTrustList: NetworkHeader.standard.raw
     case .report: nil // handled by ClientAttestationPlugin
     }
   }

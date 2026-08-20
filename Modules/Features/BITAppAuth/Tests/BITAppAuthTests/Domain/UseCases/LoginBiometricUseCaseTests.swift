@@ -37,7 +37,7 @@ final class LoginBiometricUseCaseTests: XCTestCase {
 
     let didLoginNotification = expectation(forNotification: .didLogin, object: nil)
 
-    try await useCase.execute()
+    try await useCase()
     XCTAssertTrue(context.evaluatePolicyLocalizedReasonCalled)
     XCTAssertTrue(uniquePassphraseManager.getUniquePassphraseAuthMethodContextCalled)
     XCTAssertTrue(userSession.startSessionPassphraseCredentialTypeCalled)
@@ -54,7 +54,7 @@ final class LoginBiometricUseCaseTests: XCTestCase {
   func testBiometricsUseCaseError() async throws {
     context.evaluatePolicyLocalizedReasonReturnValue = false
     do {
-      try await useCase.execute()
+      try await useCase()
       XCTFail("Should fail instead...")
     } catch AuthError.LAContextError {
       XCTAssertTrue(context.evaluatePolicyLocalizedReasonCalled)
@@ -71,7 +71,7 @@ final class LoginBiometricUseCaseTests: XCTestCase {
     context.evaluatePolicyLocalizedReasonReturnValue = true
     uniquePassphraseManager.getUniquePassphraseAuthMethodContextThrowableError = VaultError.secretRetrievalError(reason: "wrong biometrics")
     do {
-      try await useCase.execute()
+      try await useCase()
       XCTFail("Should fail instead...")
     } catch VaultError.secretRetrievalError {
       XCTAssertTrue(context.evaluatePolicyLocalizedReasonCalled)

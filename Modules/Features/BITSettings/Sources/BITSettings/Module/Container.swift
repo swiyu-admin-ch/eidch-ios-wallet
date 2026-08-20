@@ -32,8 +32,6 @@ extension Container {
 
 extension Container {
 
-  // MARK: Public
-
   public var fetchPackagesUseCase: Factory<FetchPackagesUseCaseProtocol> {
     self { FetchPackagesUseCase(filePath: "package-list") }
   }
@@ -50,10 +48,8 @@ extension Container {
     self { false }
   }
 
-  // MARK: Internal
-
-  var fetchAnalyticStatusUseCase: Factory<FetchAnalyticStatusUseCaseProtocol> {
-    self { FetchAnalyticStatusUseCase() }
+  public var isAnalyticsEnabledUseCase: Factory<IsAnalyticsEnabledUseCaseProtocol> {
+    self { IsAnalyticsEnabledUseCase() }
   }
 
 }

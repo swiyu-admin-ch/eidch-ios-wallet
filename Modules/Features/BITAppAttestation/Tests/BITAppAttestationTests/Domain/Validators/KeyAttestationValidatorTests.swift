@@ -1,6 +1,5 @@
 // swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import JOSESwift
 import XCTest
 @testable import BITAppAttestation
 @testable import BITCore
@@ -16,7 +15,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
   override func setUp() {
     registerMocks()
     validator = KeyAttestationValidator()
-    try? createSuccessState()
+    createSuccessState()
   }
 
   func testValidate_parameters_success() async {
@@ -86,9 +85,7 @@ final class KeyAttestationValidatorTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockJWK = JWK(kty: "EC", crv: "P-256", x: "18wHLeIgW9wVN6VD1Txgpqy2LszYkMf6J8njVAibvhM", y: "-V4dS4UaLMgP_4fY4j8ir7cl1TXlFdAgcx55o7TkcSA")
   private var trustedDids: [String]!
-  private var supportedAlgorithms: [JWTAlgorithm]!
   private var mockKeyAttestation: KeyAttestation!
   private var mockKeyPair: VaultKeyPair!
   private var validator: KeyAttestationValidator!
@@ -96,17 +93,14 @@ final class KeyAttestationValidatorTests: XCTestCase {
   private var didResolverSpy: DidResolverHelperProtocolSpy!
   private let mockSupportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel] = [.iso18045High]
 
-  private func createSuccessState() throws {
-    let key = try ECPublicKey.getSecKey(curve: mockJWK.crv, x: mockJWK.x, y: mockJWK.y)!
-    let keyPair = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
-    mockKeyPair = keyPair
+  private func createSuccessState() {
+    mockKeyPair = VaultKeyPair.Mock.attestedKey
     didResolverSpy.getDidFromReturnValue = "did:tdw:example.com"
   }
 
   private func registerMocks() {
     mockKeyAttestation = KeyAttestationJWT.Mock.sample
     trustedDids = [ "did:tdw:example.com" ]
-    supportedAlgorithms = [ .ES256 ]
     jwsValidator = JWSValidatorMock()
     didResolverSpy = DidResolverHelperProtocolSpy()
 

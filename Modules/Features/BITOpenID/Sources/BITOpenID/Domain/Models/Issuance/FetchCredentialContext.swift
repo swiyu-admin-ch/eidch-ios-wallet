@@ -1,20 +1,22 @@
+import BITAnyCredentialFormat
+import BITCore
 import BITVault
 import Foundation
 
-public class FetchCredentialContext {
+public class FetchCredentialContext: Changeable {
 
   // MARK: Lifecycle
 
   init(
     credentialConfigurationId: String,
-    format: String,
+    format: CredentialFormat,
     selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported,
-    credentialIssuer: String,
+    credentialIssuer: URL,
     holderBindings: [HolderBinding]?,
     authorization: IssuanceAuthorization,
     nonce: Nonce? = nil,
     credentialEndpoint: URL,
-    credentialEncryptionContext: CredentialEncryptionContext? = nil,
+    credentialEncryptionContext: CredentialEncryptionContext,
     createdAt: Date = .now,
     deferredCredentialEndpoint: URL? = nil)
   {
@@ -33,16 +35,16 @@ public class FetchCredentialContext {
 
   convenience init(
     credentialConfigurationId: String,
-    format: String,
+    format: CredentialFormat,
     selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported,
-    credentialIssuer: String,
+    credentialIssuer: URL,
     holderBindings: [HolderBinding]?,
     dpopKeyPair: VaultKeyPair? = nil,
     accessToken: AccessToken,
     nonce: Nonce? = nil,
     dpopNonce: String? = nil,
     credentialEndpoint: URL,
-    credentialEncryptionContext: CredentialEncryptionContext? = nil,
+    credentialEncryptionContext: CredentialEncryptionContext,
     createdAt: Date = .now,
     deferredCredentialEndpoint: URL? = nil)
   {
@@ -66,12 +68,12 @@ public class FetchCredentialContext {
   // MARK: Internal
 
   let credentialConfigurationId: String
-  let format: String
+  let format: CredentialFormat
   let selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported
-  let credentialIssuer: String
+  let credentialIssuer: URL
   let holderBindings: [HolderBinding]?
-  let authorization: IssuanceAuthorization
-  let credentialEncryptionContext: CredentialEncryptionContext?
+  var authorization: IssuanceAuthorization
+  let credentialEncryptionContext: CredentialEncryptionContext
   let createdAt: Date
   let nonce: Nonce?
   let credentialEndpoint: URL

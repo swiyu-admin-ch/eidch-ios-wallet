@@ -29,9 +29,10 @@ let package = Package(
     .package(path: "../BITCredentialShared"),
     .package(path: "../BITEIDRequest"),
     .package(path: "../BITEIDRequestShared"),
+    .package(path: "../BITPushNotification"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/gh123man/SwiftUI-Refresher", exact: "1.1.9"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.4"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.5"),
   ],
   targets: [
     .target(
@@ -49,6 +50,7 @@ let package = Package(
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITEIDRequest", package: "BITEIDRequest"),
         .product(name: "BITOTP", package: "BITEIDRequest"),
+        .product(name: "BITPushNotification", package: "BITPushNotification"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "Refresher", package: "SwiftUI-Refresher"),
@@ -63,6 +65,7 @@ let package = Package(
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
         .product(name: "BITEIDRequest", package: "BITEIDRequest"),
         .product(name: "BITOTP", package: "BITEIDRequest"),
+        .product(name: "BITPushNotification", package: "BITPushNotification"),
         .product(name: "BITEIDRequestShared", package: "BITEIDRequestShared"),
         .product(name: "BITInvitation", package: "BITInvitation"),
         .product(name: "BITNavigation", package: "BITNavigation"),

@@ -35,6 +35,11 @@ extension List where Element: DisplayLocalizable {
   // MARK: Private
 
   private func getFallbackDisplays() -> [Element] {
+    let emptyMatches = filter { $0.locale == "" }
+    if !emptyMatches.isEmpty {
+      return Array(emptyMatches)
+    }
+
     guard let locale = first?.locale else { return [] }
     return findDisplaysWithFallback(preferredLanguageCodes: [locale])
   }

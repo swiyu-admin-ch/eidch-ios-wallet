@@ -22,7 +22,7 @@ final class GetLockedWalletTimeLeftUseCaseTests: XCTestCase {
   func testExecute_systemUptimeEqualsLockTime_returnsDelay() {
     processInfoServiceSpy.systemUptime = lockTime
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, delay)
   }
@@ -31,7 +31,7 @@ final class GetLockedWalletTimeLeftUseCaseTests: XCTestCase {
     let difference = 2.0
     processInfoServiceSpy.systemUptime = lockTime + delay - difference
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, difference)
   }
@@ -39,7 +39,7 @@ final class GetLockedWalletTimeLeftUseCaseTests: XCTestCase {
   func testExecute_systemUptimeRightOnLockDelay_returnsZero() {
     processInfoServiceSpy.systemUptime = lockTime + delay
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, 0)
   }
@@ -47,7 +47,7 @@ final class GetLockedWalletTimeLeftUseCaseTests: XCTestCase {
   func testExecute_systemUptimeAfterLockDelay_returnsNegativeNumber() {
     processInfoServiceSpy.systemUptime = lockTime + 2 * delay
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, -delay)
   }
@@ -55,7 +55,7 @@ final class GetLockedWalletTimeLeftUseCaseTests: XCTestCase {
   func testExecute_lockTimeNil_returnsNil() {
     lockWalletRepositorySpy.getLockedWalletTimeIntervalReturnValue = nil
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertNil(result)
   }

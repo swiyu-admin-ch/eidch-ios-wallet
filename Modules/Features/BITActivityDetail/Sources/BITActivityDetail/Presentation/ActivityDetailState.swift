@@ -19,9 +19,8 @@ enum ActivityDetailState {
 
   struct Actor: Equatable {
     let title: String
-    let name: String?
-    let image: Data?
-    let badges: [ActorInformationBadgeType]
+    let viewModel: ActorHeaderViewModel
+    let isReportAllowed: Bool
   }
 }
 
@@ -31,9 +30,8 @@ extension ActivityDetailState.Result {
     credential = ActivityCredentialViewModel(detail: activityDetail, colorScheme: colorScheme)
     actor = ActivityDetailState.Actor(
       title: activityDetail.type.actorTitle,
-      name: activityDetail.actorDisplay?.name,
-      image: activityDetail.actorDisplay?.image,
-      badges: activityDetail.actorInformationBadgeTypes)
+      viewModel: activityDetail.actorHeaderViewModel,
+      isReportAllowed: activityDetail.actorTrust != .trustedCheckApp)
   }
 }
 
@@ -44,7 +42,10 @@ extension ActivityDetailState {
       let activityDetail = ActivityDetail.Mock.trustedIssuance
       let activityViewModel = ActivityCellViewModel(detail: activityDetail)
       let credentialViewModel = ActivityCredentialViewModel(detail: activityDetail, colorScheme: "light")
-      let viewState = ActivityDetailState.Result(activity: activityViewModel, credential: credentialViewModel, actor: Actor(title: "Actor title", name: "Actor name", image: nil, badges: [.trusted]))
+      let viewState = ActivityDetailState.Result(
+        activity: activityViewModel,
+        credential: credentialViewModel,
+        actor: Actor(title: "Actor title", viewModel: ActorHeaderViewModel(name: "Actor name", identity: .trusted), isReportAllowed: true))
       return .result(viewState)
     }
   }

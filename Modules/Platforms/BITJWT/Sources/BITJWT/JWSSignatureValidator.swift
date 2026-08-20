@@ -1,12 +1,13 @@
 import BITCrypto
 import Factory
 import Foundation
-import JOSESwift
+import JWSETKit
 
 // MARK: - JWSSignatureValidatorProtocol
 
 public protocol JWSSignatureValidatorProtocol {
   func validate(_ jws: JWS<some JWT>) async throws
+  func validate(_ jws: JWS<some JWT>, with jwk: BITCrypto.JWK) throws
 }
 
 // MARK: - JWSSignatureValidatorError
@@ -30,6 +31,12 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
     }
   }
 
+  public func validate(_ jws: JWS<some JWT>, with jwk: BITCrypto.JWK) throws {
+    guard validateJwtSignature(for: jws, jwk: jwk) else {
+      throw JWSSignatureValidatorError.invalidSignature
+    }
+  }
+
   // MARK: Private
 
   @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
@@ -44,19 +51,16 @@ public struct JWSSignatureValidator: JWSSignatureValidatorProtocol {
 
   private func validateJwtSignature(for jws: JWS<some JWT>, jwk: BITCrypto.JWK) -> Bool {
     do {
-      guard let verifier = try createVerifier(for: jwk, algorithm: jws.header.algorithm) else { return false }
-      let jws = try JOSESwift.JWS(compactSerialization: jws.rawJWS)
-      _ = try jws.validate(using: verifier).payload
+      let validatingKey = try jwk.jsonWebKey()
+      guard let validatingKey = validatingKey as? any JSONWebValidatingKey else {
+        return false
+      }
+      let jws = try JSONWebSignaturePlain(from: jws.rawJWS)
+      try jws.verifySignature(using: [validatingKey])
       return true
     } catch {
       return false
     }
-  }
-
-  private func createVerifier(for jwk: BITCrypto.JWK, algorithm: JWTAlgorithm) throws -> Verifier? {
-    guard let secKey = try ECPublicKey.getSecKey(curve: jwk.crv, x: jwk.x, y: jwk.y) else { return nil }
-    let signatureAlgorithm = try SignatureAlgorithm(from: algorithm)
-    return Verifier(signatureAlgorithm: signatureAlgorithm, key: secKey)
   }
 }
 

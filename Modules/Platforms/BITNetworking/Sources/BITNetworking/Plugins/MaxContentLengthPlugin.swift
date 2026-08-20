@@ -9,7 +9,7 @@ public struct MaxContentLengthPlugin: PluginType {
   // MARK: Lifecycle
 
   public init(
-    maxResponseSize: Int = 150 * 1024 * 1024 // 150MB
+    maxResponseSize: Int = 25 * 1024 * 1024 // 25MB
   ) {
     self.maxResponseSize = maxResponseSize
   }

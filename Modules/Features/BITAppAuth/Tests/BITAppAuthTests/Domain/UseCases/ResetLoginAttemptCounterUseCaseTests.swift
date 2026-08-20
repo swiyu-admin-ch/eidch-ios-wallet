@@ -21,7 +21,7 @@ final class ResetLoginAttemptCounterUseCaseTests: XCTestCase {
   func testHappyPath() throws {
     repository.resetAttemptsKindClosure = { _ in }
 
-    try useCase.execute()
+    try useCase()
 
     XCTAssertTrue(repository.resetAttemptsKindCalled)
     XCTAssertEqual(repository.resetAttemptsKindCallsCount, 2)
@@ -31,7 +31,7 @@ final class ResetLoginAttemptCounterUseCaseTests: XCTestCase {
   func testResetBiometric() throws {
     repository.resetAttemptsKindClosure = { _ in }
 
-    try useCase.execute(kind: .biometric)
+    try useCase(kind: .biometric)
 
     XCTAssertTrue(repository.resetAttemptsKindCalled)
     XCTAssertEqual(repository.resetAttemptsKindCallsCount, 1)
@@ -41,7 +41,7 @@ final class ResetLoginAttemptCounterUseCaseTests: XCTestCase {
   func testResetPin() throws {
     repository.resetAttemptsKindClosure = { _ in }
 
-    try useCase.execute(kind: .appPin)
+    try useCase(kind: .appPin)
 
     XCTAssertTrue(repository.resetAttemptsKindCalled)
     XCTAssertEqual(repository.resetAttemptsKindCallsCount, 1)

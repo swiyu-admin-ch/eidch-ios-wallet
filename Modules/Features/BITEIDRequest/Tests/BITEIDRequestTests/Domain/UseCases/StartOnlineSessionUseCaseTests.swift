@@ -39,11 +39,11 @@ final class StartOnlineSessionUseCaseTests: XCTestCase {
   private let caseId = "caseId"
 
   private var useCase: StartOnlineSessionUseCase!
-  private var repository: EIDRequestRepositoryProtocolSpy!
+  private var repository: SIDRepositoryProtocolSpy!
 
   private func registerMocks() {
-    repository = EIDRequestRepositoryProtocolSpy()
-    Container.shared.eIDRequestRepository.register { self.repository }
+    repository = SIDRepositoryProtocolSpy()
+    Container.shared.sidRepository.register { self.repository }
   }
 
 }

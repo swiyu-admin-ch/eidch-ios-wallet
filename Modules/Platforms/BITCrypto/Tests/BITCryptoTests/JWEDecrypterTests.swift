@@ -1,6 +1,5 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
 import Foundation
-import JOSESwift
 import Security
 import XCTest
 @testable import BITCrypto
@@ -17,10 +16,16 @@ class JWEDecrypterTests: XCTestCase {
     decrypter = JWEDecrypter()
   }
 
-  func testDecrypt_success() throws {
-    let data = try decrypter.decrypt(
-      payload: JWE.Mock.validSampleData,
-      privateKey: privateKeyMock)
+  func testDecrypt_uncompressed_returnsDecrypted() throws {
+    let data = try decrypter.decrypt(payload: JWEMock.Mock.validSampleData, privateKey: privateKeyMock)
+
+    let decoded = try JSONDecoder().decode(MockPayload.self, from: data)
+
+    XCTAssertEqual(decoded, payloadMock)
+  }
+
+  func testDecrypt_deflated_returnsDecryptedAndDecompressed() throws {
+    let data = try decrypter.decrypt(payload: JWEMock.Mock.validDeflateSampleData, privateKey: privateKeyMock)
 
     let decoded = try JSONDecoder().decode(MockPayload.self, from: data)
 
@@ -32,8 +37,21 @@ class JWEDecrypterTests: XCTestCase {
 
     XCTAssertThrowsError(
       try decrypter.decrypt(
-        payload: JWE.Mock.validSampleData,
+        payload: JWEMock.Mock.validSampleData,
         privateKey: rsaPrivateKey))
+  }
+
+  func testDecrypt_cipherTextLengthTooBig_throws() throws {
+    let rsaPrivateKey = SecKeyTestsHelper.createPrivateKey(type: kSecAttrKeyTypeRSA as String)
+    let payload = String(repeating: "x", count: 6_000_001)
+
+    XCTAssertThrowsError(
+      try decrypter.decrypt(
+        payload: Data(payload.utf8),
+        privateKey: rsaPrivateKey))
+    { error in
+      XCTAssertEqual(error as? JWEDecrypterError, .maxCompressedCipherTextLengthExceeded)
+    }
   }
 
   // MARK: Private

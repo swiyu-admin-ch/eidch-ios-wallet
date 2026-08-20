@@ -12,7 +12,7 @@ extension DateFormatter {
   // MARK: Public
 
   public static let longDateFormatter: DateFormatter = generateFormatter(forTemplate: "dd MMMM yyyy")
-  public static let shotDateFormatter: DateFormatter = generateFormatter(forTemplate: "dd.MM.yyyy")
+  public static let shortDateFormatter: DateFormatter = generateFormatter(forTemplate: "dd.MM.yyyy")
   public static let shortHourFormatter: DateFormatter = generateFormatter(forTemplate: "HH:mm")
   public static let yearMonthGroupedFormatter: DateFormatter = generateFormatter(forTemplate: "MMMM yyyy")
 

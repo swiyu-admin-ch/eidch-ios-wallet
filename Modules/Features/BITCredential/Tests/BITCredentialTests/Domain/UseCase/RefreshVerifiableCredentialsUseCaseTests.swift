@@ -2,7 +2,6 @@ import Factory
 import Foundation
 import Testing
 @testable import BITAnalytics
-@testable import BITAnalyticsMocks
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITTestingCore
@@ -21,7 +20,7 @@ struct RefreshVerifiableCredentialsUseCaseTests {
     let getCredentialRefreshThresholdUseCase = GetCredentialRefreshThresholdUseCaseProtocolSpy()
     getCredentialRefreshThresholdUseCase.callAsFunctionForReturnValue = 2
     let analyticsProvider = MockProvider()
-    let analytics = Analytics()
+    let analytics = AnalyticsSpy()
     analytics.register(analyticsProvider)
 
     Container.shared.analytics.register { analytics }
@@ -51,16 +50,6 @@ struct RefreshVerifiableCredentialsUseCaseTests {
   @Test
   func callAsFunction_freshCredentialCountAboveThreshold_doesNotRefreshCredential() async {
     let credential = refreshableCredential(freshCredentialCount: 3, batchSize: 10)
-
-    await useCase([credential])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCalled == false)
-  }
-
-  @Test
-  func callAsFunction_withoutBatchData_doesNotRefreshCredential() async {
-    var credential = refreshableCredential(freshCredentialCount: 1, batchSize: 10)
-    credential.batchData = nil
 
     await useCase([credential])
 

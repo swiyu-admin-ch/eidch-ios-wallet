@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import Foundation
 
 public struct MockAnyCredentialConfigurationSupported: CredentialIssuerMetadata.AnyCredentialConfigurationSupported {
@@ -10,9 +11,11 @@ public struct MockAnyCredentialConfigurationSupported: CredentialIssuerMetadata.
 
   // MARK: Public
 
-  public var format = "format"
+  public var format = CredentialFormat.vcSdJwt
 
   public var scope: String?
+
+  public var protectedIssuanceAuthorizationTrustStatement: ProtectedIssuanceAuthorizationTrustStatement?
 
   public var cryptographicBindingMethodsSupported: [CredentialIssuerMetadata.CryptographicBindingMethod]?
 

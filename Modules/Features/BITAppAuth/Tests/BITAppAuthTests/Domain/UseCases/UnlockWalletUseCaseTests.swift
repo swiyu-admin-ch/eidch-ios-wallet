@@ -17,7 +17,7 @@ final class UnlockWalletUseCaseTests: XCTestCase {
   }
 
   func testExecute_success() throws {
-    try useCase.execute()
+    try useCase()
 
     XCTAssertTrue(lockWalletRepositorySpy.unlockWalletCalled)
   }
@@ -25,7 +25,7 @@ final class UnlockWalletUseCaseTests: XCTestCase {
   func testExecute_repositoryThrowsError_throwsError() throws {
     lockWalletRepositorySpy.unlockWalletThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try useCase.execute()) { error in
+    XCTAssertThrowsError(try useCase()) { error in
       XCTAssertEqual(error as? TestingError, .error)
     }
   }

@@ -58,6 +58,7 @@ let package = Package(
         .product(name: "BITOTP", package: "BITEIDRequest"),
         .product(name: "BITTheming", package: "BITTheming"),
         .product(name: "Factory", package: "Factory"),
+        .product(name: "FactoryTesting", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),

@@ -18,12 +18,12 @@ struct LegalRepresentantVerificationService: LegalRepresentantVerificationServic
   // MARK: Internal
 
   func getURL(for caseId: String) async throws -> URL {
-    let verification = try await eIDRequestRepository.fetchLegalRepresentantVerification(for: caseId)
+    let verification = try await sidRepository.fetchLegalRepresentantVerification(for: caseId)
     return verification.requestUrl
   }
 
   func getQRCode(for caseId: String) async throws -> (imageData: Data, shareLink: URL) {
-    let verification = try await eIDRequestRepository.fetchLegalRepresentantVerification(for: caseId)
+    let verification = try await sidRepository.fetchLegalRepresentantVerification(for: caseId)
 
     guard let qrCodeData = qrCodeGenerator.generate(from: verification.requestUrl.absoluteString) else {
       throw LegalRepresentantVerificationServiceError.failedToGenerateQRCode
@@ -35,7 +35,7 @@ struct LegalRepresentantVerificationService: LegalRepresentantVerificationServic
   // MARK: Private
 
   @Injected(\.qrCodeGenerator) private var qrCodeGenerator: QRCodeGeneratorProtocol
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
 }
 
 // MARK: - LegalRepresentantVerificationServiceError

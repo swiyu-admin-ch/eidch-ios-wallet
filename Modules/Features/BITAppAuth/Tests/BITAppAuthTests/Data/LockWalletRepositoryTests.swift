@@ -1,96 +1,98 @@
 import Factory
 import Foundation
-import XCTest
+import Testing
 @testable import BITAppAuth
 @testable import BITCore
 @testable import BITTestingCore
 @testable import BITVault
 
-final class LockWalletRepositoryTests: XCTestCase {
+// MARK: - LockWalletRepositoryTests
+
+@Suite
+@MainActor
+struct LockWalletRepositoryTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.reset()
+
+    let secretManagerSpy = SecretManagerProtocolSpy()
+    let keyManagerSpy = KeyManagerProtocolSpy()
+    let processInfoServiceSpy = ProcessInfoServiceProtocolSpy()
+
+    processInfoServiceSpy.systemUptime = Self.timeInterval
+
+    Container.shared.secretManager.register { secretManagerSpy }
+    Container.shared.keyManager.register { keyManagerSpy }
+    Container.shared.processInfoService.register { processInfoServiceSpy }
+
+    self.secretManagerSpy = secretManagerSpy
+    repository = LockWalletRepository()
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    registerMocks()
-    repository = SecretsRepository()
-    success()
-  }
-
-  func testLockWallet_success() throws {
+  @Test
+  func lockWallet_success() throws {
     try repository.lockWallet()
 
-    XCTAssertEqual(secretManagerSpy.setForKeyQueryReceivedArguments?.key, secretsKey)
-    XCTAssertEqual(secretManagerSpy.setForKeyQueryReceivedArguments?.value as? Double, timeInterval)
+    #expect(secretManagerSpy.setForKeyQueryReceivedArguments?.key == Self.secretsKey)
+    #expect(secretManagerSpy.setForKeyQueryReceivedArguments?.value as? Double == Self.timeInterval)
   }
 
-  func testLockWallet_secretManagerThrowsError_throwsError() throws {
+  @Test
+  func lockWallet_secretManagerThrowsError_throwsError() {
     secretManagerSpy.setForKeyQueryThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try repository.lockWallet()) { error in
-      XCTAssertEqual(error as? TestingError, .error)
+    #expect(throws: TestingError.error) {
+      try repository.lockWallet()
     }
   }
 
-  func testUnlockWallet_success() throws {
+  @Test
+  func unlockWallet_success() throws {
     try repository.unlockWallet()
 
-    XCTAssertEqual(secretManagerSpy.removeObjectForKeyQueryReceivedArguments?.key, secretsKey)
+    #expect(secretManagerSpy.removeObjectForKeyQueryReceivedArguments?.key == Self.secretsKey)
   }
 
-  func testUnlockWallet_secretManagerThrowsError_throwsError() throws {
+  @Test
+  func unlockWallet_secretManagerThrowsError_throwsError() {
     secretManagerSpy.removeObjectForKeyQueryThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try repository.unlockWallet()) { error in
-      XCTAssertEqual(error as? TestingError, .error)
+    #expect(throws: TestingError.error) {
+      try repository.unlockWallet()
     }
   }
 
-  func testGetLockedWalletTimeInterval_exists_returnsInterval() throws {
-    secretManagerSpy.doubleForKeyQueryReturnValue = timeInterval
+  @Test
+  func getLockedWalletTimeInterval_exists_returnsInterval() throws {
+    secretManagerSpy.doubleForKeyQueryReturnValue = Self.timeInterval
 
     let result = try repository.getLockedWalletTimeInterval()
 
-    XCTAssertEqual(result, timeInterval)
-    XCTAssertFalse(secretManagerSpy.removeObjectForKeyQueryCalled)
-    XCTAssertFalse(secretManagerSpy.setForKeyQueryCalled)
+    #expect(result == Self.timeInterval)
+    #expect(!secretManagerSpy.removeObjectForKeyQueryCalled)
+    #expect(!secretManagerSpy.setForKeyQueryCalled)
   }
 
-  func testGetLockedWalletTimeInterval_doesNotExist_returnsNil() throws {
+  @Test
+  func getLockedWalletTimeInterval_doesNotExist_returnsNil() throws {
     secretManagerSpy.doubleForKeyQueryReturnValue = nil
 
     let result = try repository.getLockedWalletTimeInterval()
 
-    XCTAssertNil(result)
-    XCTAssertFalse(secretManagerSpy.removeObjectForKeyQueryCalled)
-    XCTAssertFalse(secretManagerSpy.setForKeyQueryCalled)
+    #expect(result == nil)
+    #expect(!secretManagerSpy.removeObjectForKeyQueryCalled)
+    #expect(!secretManagerSpy.setForKeyQueryCalled)
   }
 
   // MARK: Private
 
-  private let timeInterval: TimeInterval = 100
-  private let secretsKey = "lockedWalletUptime"
+  private static let timeInterval: TimeInterval = 100
+  private static let secretsKey = "lockedWalletUptime"
 
-  // swiftlint:disable all
-  private var secretManagerSpy: SecretManagerProtocolSpy!
-  private var keyManagerSpy: KeyManagerProtocolSpy!
-  private var processInfoServiceSpy: ProcessInfoServiceProtocolSpy!
-  private var repository: LockWalletRepositoryProtocol!
-
-  // swiftlint:enable all
-
-  private func registerMocks() {
-    secretManagerSpy = SecretManagerProtocolSpy()
-    keyManagerSpy = KeyManagerProtocolSpy()
-    processInfoServiceSpy = ProcessInfoServiceProtocolSpy()
-
-    Container.shared.secretManager.register { self.secretManagerSpy }
-    Container.shared.keyManager.register { self.keyManagerSpy }
-    Container.shared.processInfoService.register { self.processInfoServiceSpy }
-  }
-
-  private func success() {
-    processInfoServiceSpy.systemUptime = timeInterval
-  }
-
+  private let secretManagerSpy: SecretManagerProtocolSpy
+  private let repository: LockWalletRepositoryProtocol
 }

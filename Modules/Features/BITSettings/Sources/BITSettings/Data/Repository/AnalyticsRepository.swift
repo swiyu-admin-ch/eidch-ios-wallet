@@ -3,17 +3,22 @@ import Factory
 import Foundation
 
 struct AnalyticsRepository: AnalyticsRepositoryProtocol {
-  private let analytics: AnalyticsProtocol
-
-  init(analytics: AnalyticsProtocol = Container.shared.analytics()) {
-    self.analytics = analytics
-  }
 
   func allowAnalytics(_ allow: Bool) async {
+    UserDefaults.standard.set(allow, forKey: analyticsEnabledKey)
+
+    if allow {
+      analytics.register(DynatraceProvider())
+    }
+
     await analytics.applyUserPrivacyPolicy(allow)
   }
 
   func isAnalyticsAllowed() -> Bool {
-    analytics.isAnalyticsEnabled
+    UserDefaults.standard.bool(forKey: analyticsEnabledKey)
   }
+
+  @Injected(\.analytics) private var analytics: AnalyticsProtocol
+
+  private let analyticsEnabledKey = "isAnalyticsUsageAllowed"
 }

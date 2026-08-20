@@ -3,7 +3,6 @@ import BITAppAuth
 import BITAppInfo
 import BITCore
 import BITEIDRequest
-import BITLocalAuthentication
 import BITNetworking
 import BITNonCompliance
 import BITOpenID
@@ -33,6 +32,7 @@ extension EnvironmentAutoRegistering {
     registerFeatureFlags(config.features)
     registerBaseURLs(config.baseURLs)
     registerNetworking(config.networking)
+    registerVersionEnforcementConfiguration(isEnabled: config.features.isVersionEnforcementEnabled)
     registerAttestationConfiguration(config.attestation)
   }
 
@@ -40,6 +40,7 @@ extension EnvironmentAutoRegistering {
 
   private func registerTrustConfiguration(_ config: EnvironmentTrustConfiguration) {
     Container.shared.trustRegistryMapping.register { config.registryMapping }
+    Container.shared.statusRegistryMapping.register { config.statusRegistryMapping }
     Container.shared.trustRegistryTrustedDidsV1.register { config.trustedDidsV1 }
     Container.shared.trustRegistryTrustedDids.register { config.trustedDids }
     Container.shared.trustEnvironmentDidRegex.register { config.trustEnvironmentDidRegex }
@@ -52,6 +53,7 @@ extension EnvironmentAutoRegistering {
     Container.shared.isDPoPEnabled.register { flags.isDPoPEnabled }
     Container.shared.isProximityEnabled.register { flags.isProximityEnabled }
     Container.shared.isBatchIssuanceEnabled.register { flags.isBatchIssuanceEnabled }
+    Container.shared.isActorIdentityValidationEnabled.register { flags.isActorIdentityValidationEnabled }
     Container.shared.isOTPSkipEnabled.register { flags.isOTPSkipEnabled }
     Container.shared.isOTPDebugToggleEnabled.register { flags.isOTPDebugToggleEnabled }
     Container.shared.isLottieViewerEnabled.register { flags.isLottieViewerEnabled }
@@ -83,9 +85,21 @@ extension EnvironmentAutoRegistering {
 
   private func registerNetworking(_ config: EnvironmentNetworkingConfiguration) {
     NetworkContainer.shared.plugins.register { config.plugins }
+    NetworkContainer.shared.userAgent.register { config.userAgent }
   }
 
-  private func registerAttestationConfiguration(_ config: EnvironmentAttestationConfiguration) {
+  private func registerVersionEnforcementConfiguration(isEnabled: Bool) {
+    guard !isEnabled else { return }
+    Container.shared.fetchVersionEnforcementUseCase.register { DisabledVersionEnforcementUseCase() }
+  }
+
+  private func registerAttestationConfiguration(_ config: EnvironmentAttestationConfiguration?) {
+    guard let config else {
+      Container.shared.attestationServiceRepository.register { DisabledAppAttestationRepository() }
+      Container.shared.clientAttestationRepository.register { DisabledClientAttestationRepository() }
+      return
+    }
+
     registerURL(config.serviceURL) { url in
       Container.shared.attestationServiceUrl.register { url }
     }

@@ -1,44 +1,47 @@
 import Factory
-import XCTest
+import Testing
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITTestingCore
 
-final class GetCredentialListUseCaseTests: XCTestCase {
+struct GetCredentialListUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    Container.shared.credentialRepository.register { self.credentialRepository }
+  init() {
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+
+    Container.shared.credentialRepository.register { credentialRepository }
 
     useCase = GetCredentialListUseCase()
+    self.credentialRepository = credentialRepository
   }
+
+  // MARK: Internal
 
   func testExecuteSucces() async throws {
     credentialRepository.getAllReturnValue = mockCredentials
 
-    let credentials = try await useCase.execute()
+    let credentials = try await useCase()
 
-    XCTAssertEqual(credentials.count, mockCredentials.count)
-    XCTAssertTrue(credentialRepository.getAllCalled)
+    #expect(credentials.count == mockCredentials.count)
+    #expect(credentialRepository.getAllCalled == true)
   }
 
   func testExecuteWithRepositoryError() async throws {
     credentialRepository.getAllThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute()
+      _ = try await useCase()
     } catch {
-      XCTAssertTrue(credentialRepository.getAllCalled)
+      #expect(credentialRepository.getAllCalled == true)
     }
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var useCase: GetCredentialListUseCase!
-  private var mockCredentials: [VerifiableCredential] = [.Mock.sample, .Mock.sampleDisplaysAdditional, .Mock.diploma]
-  private var credentialRepository = CredentialRepositoryProcotolSpy()
-  // swiftlint:enable all
+  private let useCase: GetCredentialListUseCase
+  private let mockCredentials: [VerifiableCredential] = [.Mock.sample, .Mock.sampleDisplaysAdditional, .Mock.diploma]
+  private let credentialRepository: CredentialRepositoryProtocolSpy
 
 }

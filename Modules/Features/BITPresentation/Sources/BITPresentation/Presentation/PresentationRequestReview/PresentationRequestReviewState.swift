@@ -14,6 +14,7 @@ enum PresentationRequestReviewState: Equatable {
     let verifierDisplay: VerifierDisplay
     let claimBadges: [ClaimBadgeViewModel]
     let clusters: [CredentialClaimCluster]
+    let hasVerifiedQuery: Bool
   }
 
   struct Processing: Equatable, Changeable {
@@ -32,7 +33,7 @@ extension PresentationRequestReviewState {
       let display = VerifierDisplay(name: "Test", logo: nil, trustInformation: info)
       let credential = VerifiableCredentialViewModel(credential: .Mock.sample)
       let badges = [ClaimBadgeViewModel(name: "key1", isSensitive: true), ClaimBadgeViewModel(name: "Default claim display", isSensitive: false)]
-      let viewState = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: display, claimBadges: badges, clusters: CredentialClaimCluster.Mock.arrayWithDisplay)
+      let viewState = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: display, claimBadges: badges, clusters: CredentialClaimCluster.Mock.arrayWithDisplay, hasVerifiedQuery: true)
       return .result(viewState)
     }
 

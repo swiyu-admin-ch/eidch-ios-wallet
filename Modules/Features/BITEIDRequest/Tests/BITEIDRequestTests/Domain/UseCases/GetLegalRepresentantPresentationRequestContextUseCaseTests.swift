@@ -26,8 +26,8 @@ final class GetLegalRepresentantPresentationRequestContextUseCaseTests: XCTestCa
     XCTAssertEqual(context.requestObject, contextMock.requestObject)
     XCTAssertEqual(verificationService.getURLForReceivedCaseId, caseIdMock)
     XCTAssertEqual(verificationService.getURLForCallsCount, 1)
-    XCTAssertEqual(fetchPresentationRequestUseCase.executeUrlReceivedUrl, verifierLinkMock)
-    XCTAssertEqual(fetchPresentationRequestUseCase.executeUrlCallsCount, 1)
+    XCTAssertEqual(fetchPresentationRequestUseCase.callAsFunctionUrlReceivedUrl, verifierLinkMock)
+    XCTAssertEqual(fetchPresentationRequestUseCase.callAsFunctionUrlCallsCount, 1)
   }
 
   func testExecute_serviceFailure_expectError() async throws {
@@ -41,7 +41,7 @@ final class GetLegalRepresentantPresentationRequestContextUseCaseTests: XCTestCa
   }
 
   func testExecute_requestUseCaseFailure_expectError() async throws {
-    fetchPresentationRequestUseCase.executeUrlThrowableError = TestingError.error
+    fetchPresentationRequestUseCase.callAsFunctionUrlThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: caseIdMock)
@@ -62,7 +62,7 @@ final class GetLegalRepresentantPresentationRequestContextUseCaseTests: XCTestCa
   private var fetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocolSpy!
 
   private func setupSuccessState() {
-    fetchPresentationRequestUseCase.executeUrlReturnValue = contextMock
+    fetchPresentationRequestUseCase.callAsFunctionUrlReturnValue = contextMock
     verificationService.getURLForReturnValue = verifierLinkMock
   }
 

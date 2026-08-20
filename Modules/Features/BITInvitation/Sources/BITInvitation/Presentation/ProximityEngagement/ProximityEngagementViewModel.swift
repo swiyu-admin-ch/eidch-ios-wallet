@@ -5,6 +5,7 @@ import BITPresentation
 import BITQRCode
 import Factory
 import Foundation
+import NavigatorUI
 
 // MARK: - ProximityEngagementViewModel
 
@@ -35,6 +36,7 @@ final class ProximityEngagementViewModel: Vibrating {
   func closeErrorView() {
     error = nil
     isErrorPopupPresented = false
+    destination = nil
   }
 
   // MARK: Private

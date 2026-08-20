@@ -1,30 +1,42 @@
-// swiftlint:disable force_unwrapping
 import BITCore
+import Foundation
 import Moya
-import XCTest
+import Testing
 @testable import BITOpenID
 
-final class TrustStatementEndpointTests: XCTestCase {
+struct TrustStatementEndpointTests {
 
-  func testIdentityTrustStatements() throws {
+  @Test
+  func identityTrustStatements() throws {
     let baseUrl = "https://example.com"
     let did = "did:example:1234"
-    let url = try XCTUnwrap(URL(string: baseUrl))
+    let url = try #require(URL(string: baseUrl))
 
     let endpoint = URL(target: TrustStatementEndpoint.identity(url: url, subjectDid: did))
 
-    XCTAssertEqual("\(baseUrl)/api/v1/truststatements/identity/\(did)", endpoint.absoluteString)
+    #expect(endpoint.absoluteString == "\(baseUrl)/api/v1/truststatements/identity/\(did)")
   }
 
-  func testVcSchemaTrustStatements() throws {
+  @Test
+  func vcSchemaTrustStatements() throws {
     for type in VcSchemaTrustStatementType.allCases {
       let baseUrl = "https://example.com"
       let vcSchemaId = "vcSchemaId"
-      let url = try XCTUnwrap(URL(string: baseUrl))
+      let url = try #require(URL(string: baseUrl))
 
       let endpoint = URL(target: TrustStatementEndpoint.vcSchema(url: url, type: type, vcSchemaId: vcSchemaId))
 
-      XCTAssertEqual("\(baseUrl)/api/v1/truststatements/\(type)", endpoint.absoluteString, "VcSchemaTrustStatementType: \(type)")
+      #expect(endpoint.absoluteString == "\(baseUrl)/api/v1/truststatements/\(type)")
     }
+  }
+
+  @Test
+  func protectedIssuanceTrustListStatement() throws {
+    let baseUrl = "https://example.com"
+    let url = try #require(URL(string: baseUrl))
+
+    let endpoint = URL(target: TrustStatementEndpoint.protectedIssuanceTrustList(url: url))
+
+    #expect(endpoint.absoluteString == "\(baseUrl)/api/v2/protected-issuance-trust-list")
   }
 }

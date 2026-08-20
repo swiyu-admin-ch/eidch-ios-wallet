@@ -73,6 +73,8 @@ struct SettingsItem: View {
           verticalTexts()
         } else if case .toggle = type {
           verticalTexts()
+        } else if case .navigation = type, detail != nil {
+          verticalTexts()
         } else {
           horizontalTexts()
         }

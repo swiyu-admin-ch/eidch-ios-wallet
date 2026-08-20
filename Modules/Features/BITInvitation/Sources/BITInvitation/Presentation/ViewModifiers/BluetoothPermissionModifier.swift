@@ -22,7 +22,7 @@ struct BluetoothPermissionModifier: ViewModifier {
     content
       .fullScreenCover(isPresented: $isPermissionPresented) {
         permissionView
-          .transition(.push)
+          .transition(.push(from: .bottom))
       }
       .animation(.easeInOut, value: state)
       .onAppear {

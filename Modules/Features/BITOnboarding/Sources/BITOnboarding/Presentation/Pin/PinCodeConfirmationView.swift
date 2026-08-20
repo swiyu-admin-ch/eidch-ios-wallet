@@ -32,23 +32,12 @@ struct PinCodeConfirmationView: View {
           .resizable()
           .ignoresSafeArea()
           .accessibilityHidden(true))
-      .task {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          focus = .input
-        }
-      }
-      .accessibilityElement(children: .contain)
       .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private
 
-  private enum Focus: Hashable {
-    case input, inputText, continueButton, error
-  }
-
   @State private var viewModel: PinCodeConfirmationViewModel
-  @AccessibilityFocusState private var focus: Focus?
   @FocusState private var inputFocused: Bool
   @Environment(\.sizeCategory) private var sizeCategory
 
@@ -102,7 +91,6 @@ struct PinCodeConfirmationView: View {
       }
     }
     .padding(.top, sizeCategory.isAccessibilityCategory ? 0 : 100)
-    .accessibilityElement(children: .combine)
 
     Spacer()
   }
@@ -113,7 +101,6 @@ struct PinCodeConfirmationView: View {
 
       continueButton()
         .accessibilitySortPriority(600)
-        .accessibilityFocused($focus, equals: .continueButton)
     }
     .padding(.horizontal, .x6)
     .padding(.vertical, .x2)
@@ -124,7 +111,7 @@ struct PinCodeConfirmationView: View {
       text: $viewModel.pinCode,
       prompt: L10n.tkOnboardingPasswordConfirmationInputPlaceholder,
       textColor: ThemingAssets.Label.primary.light,
-      tintColor: ThemingAssets.Label.tertiary.light)
+      tintColor: ThemingAssets.Label.secondary.light)
     {
       viewModel.validate()
     }
@@ -143,7 +130,6 @@ struct PinCodeConfirmationView: View {
     }
     .accessibilityLabel(L10n.tkOnboardingPasswordConfirmationInputAlt)
     .accessibilitySortPriority(800)
-    .accessibilityFocused($focus, equals: .input)
     .secureTextFieldAccessibilityIdentifier(AccessibilityIdentifier.pinField.rawValue)
   }
 
@@ -156,7 +142,6 @@ struct PinCodeConfirmationView: View {
     .environment(\.colorScheme, .light)
     .buttonStyle(.primary)
     .controlSize(.large)
-    .accessibilityFocused($focus, equals: .continueButton)
     .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)
   }
 
@@ -165,7 +150,6 @@ struct PinCodeConfirmationView: View {
       .font(.custom.footnote)
       .multilineTextAlignment(.leading)
       .accessibilitySortPriority(700)
-      .accessibilityFocused($focus, equals: .inputText)
       .accessibilityIdentifier(AccessibilityIdentifier.wrongPinError.rawValue)
   }
 

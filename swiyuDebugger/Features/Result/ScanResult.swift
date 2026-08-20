@@ -6,17 +6,20 @@ import SwiftUI
 
 // MARK: - ScanResult
 
-enum ScanResult: Hashable {
-  case credential(any CredentialProtocol, TrustInformation?)
+enum ScanResult {
+  case credential(any CredentialProtocol)
   case presentation(PresentationRequestContext)
   case error(Error)
+}
 
-  // MARK: Internal
+// MARK: Hashable
+
+extension ScanResult: Hashable {
 
   static func == (lhs: ScanResult, rhs: ScanResult) -> Bool {
     switch (lhs, rhs) {
-    case (.credential(let leftCredential, let leftTrust), .credential(let rightCredential, let rightTrust)):
-      leftCredential.id == rightCredential.id && leftTrust == rightTrust
+    case (.credential(let leftCredential), .credential(let rightCredential)):
+      leftCredential.id == rightCredential.id
     case (.presentation(let leftContext), .presentation(let rightContext)):
       leftContext == rightContext
     case (.error(let leftError), .error(let rightError)):
@@ -29,10 +32,9 @@ enum ScanResult: Hashable {
 
   func hash(into hasher: inout Hasher) {
     switch self {
-    case .credential(let credential, let trustInformation):
+    case .credential(let credential):
       hasher.combine("credential")
       hasher.combine(credential.id)
-      hasher.combine(trustInformation)
     case .presentation(let context):
       hasher.combine("presentation")
       hasher.combine(context)

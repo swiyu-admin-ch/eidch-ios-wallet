@@ -7,7 +7,7 @@ import Moya
 
 enum PresentationEndpoint {
   case requestObject(url: URL)
-  case submission(url: URL, authorizationResponse: AuthorizationResponseBody)
+  case submission(url: URL, jwe: String)
   case errorSubmission(url: URL, presentationErrorBody: PresentationErrorRequestBody)
 }
 
@@ -45,8 +45,8 @@ extension PresentationEndpoint: TargetType {
     switch self {
     case .requestObject:
       .requestPlain
-    case .submission(_, authorizationResponse: let authorizationResponse):
-      .requestParameters(parameters: authorizationResponse.asDictionary(), encoding: URLEncoding.httpBody)
+    case .submission(_, jwe: let jwe):
+      .requestParameters(parameters: ["response": jwe], encoding: URLEncoding.httpBody)
     case .errorSubmission(_, presentationErrorBody: let presentationErrorBody):
       .requestParameters(parameters: presentationErrorBody.asDictionary(), encoding: URLEncoding.httpBody)
     }

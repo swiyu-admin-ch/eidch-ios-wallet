@@ -24,8 +24,8 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
   func testExecute_parameters_success() async throws {
     let result = try await useCase(scanDocumentOutput: scanDocumentOutput, hasLegalRepresentant: false)
 
-    XCTAssertEqual(eIDRequestRepository.applyWithReceivedBody, mockPayload)
-    XCTAssertEqual(eIDRequestRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestResponse.caseId)
+    XCTAssertEqual(sidRepository.applyWithReceivedBody, mockPayload)
+    XCTAssertEqual(sidRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestResponse.caseId)
     XCTAssertEqual(eIDRequestCaseRepository.createEIDRequestCaseReceivedEIDRequestCase?.id, mockEIDRequestResponse.caseId)
     XCTAssertNotNil(eIDRequestCaseRepository.createEIDRequestCaseReceivedEIDRequestCase?.state)
     XCTAssertEqual(eIDRequestCaseRepository.saveFilesForRequestCaseIdReceivedArguments?.files.count, scanDocumentOutput.files.count)
@@ -36,14 +36,14 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
   func testExecute_count_success() async throws {
     _ = try await useCase(scanDocumentOutput: scanDocumentOutput, hasLegalRepresentant: false)
 
-    XCTAssertEqual(eIDRequestRepository.applyWithCallsCount, 1)
-    XCTAssertEqual(eIDRequestRepository.fetchRequestStatusForCallsCount, 1)
+    XCTAssertEqual(sidRepository.applyWithCallsCount, 1)
+    XCTAssertEqual(sidRepository.fetchRequestStatusForCallsCount, 1)
     XCTAssertEqual(eIDRequestCaseRepository.createEIDRequestCaseCallsCount, 1)
     XCTAssertEqual(eIDRequestCaseRepository.saveFilesForRequestCaseIdCallsCount, 1)
   }
 
   func testExecute_applyFails_throwsError() async throws {
-    eIDRequestRepository.applyWithThrowableError = TestingError.error
+    sidRepository.applyWithThrowableError = TestingError.error
 
     do {
       _ = try await useCase(scanDocumentOutput: scanDocumentOutput, hasLegalRepresentant: false)
@@ -53,7 +53,7 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
   }
 
   func testExecute_fetchRequestStatusThrowsError_returnsNil() async throws {
-    eIDRequestRepository.fetchRequestStatusForThrowableError = TestingError.error
+    sidRepository.fetchRequestStatusForThrowableError = TestingError.error
 
     let result = try await useCase(scanDocumentOutput: scanDocumentOutput, hasLegalRepresentant: false)
 
@@ -79,7 +79,7 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
     do {
       _ = try await useCase(scanDocumentOutput: scanDocumentOutput, hasLegalRepresentant: false)
     } catch {
-      XCTAssertTrue(eIDRequestRepository.applyWithCalled)
+      XCTAssertTrue(sidRepository.applyWithCalled)
       XCTAssertTrue(eIDRequestCaseRepository.createEIDRequestCaseCalled)
       XCTAssertEqual(error as? TestingError, .error)
     }
@@ -95,7 +95,7 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
   private let mockEIDRequestCase: EIDRequestCase = .Mock.sampleWithoutState
   private let mockEIDRequestCaseWithoutState: EIDRequestCase = .Mock.sampleWithoutState
 
-  private var eIDRequestRepository: EIDRequestRepositoryProtocolSpy!
+  private var sidRepository: SIDRepositoryProtocolSpy!
   private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocolSpy!
 
   private var scanDocumentOutput: ScanDocumentOutput {
@@ -105,16 +105,16 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
   }
 
   private func registerMocks() {
-    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
+    sidRepository = SIDRepositoryProtocolSpy()
     eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
 
-    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
+    Container.shared.sidRepository.register { self.sidRepository }
     Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
   }
 
   private func createSuccessState() {
-    eIDRequestRepository.applyWithReturnValue = mockEIDRequestResponse
-    eIDRequestRepository.fetchRequestStatusForReturnValue = mockEIDRequestStatus
+    sidRepository.applyWithReturnValue = mockEIDRequestResponse
+    sidRepository.fetchRequestStatusForReturnValue = mockEIDRequestStatus
     eIDRequestCaseRepository.createEIDRequestCaseReturnValue = mockEIDRequestCase
   }
 

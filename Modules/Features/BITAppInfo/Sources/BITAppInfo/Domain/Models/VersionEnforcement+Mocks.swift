@@ -1,4 +1,5 @@
 #if DEBUG
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
 import Foundation
 @testable import BITCore
 
@@ -43,11 +44,8 @@ extension VersionEnforcement.Response {
     static func make(
       blacklistedDevice: String? = nil,
       minimumOsVersion: String = "16.0",
-      releaseDate: Date = Date(),
       defaultReleaseSupportDays: Int = 90,
-      supportGuaranteedUntil: Date? = Date(),
-      updateType: UpdateType = .forced,
-      version: BITAppInfo.Version = BITAppInfo.Version("1.13.1"))
+      versions: [VersionEnforcement.Response.Version] = [])
       -> VersionEnforcement.Response
     {
       let deviceBlacklist: [String] = if let blacklistedDevice { [blacklistedDevice] } else { [] }
@@ -58,15 +56,55 @@ extension VersionEnforcement.Response {
         deviceBlacklist: deviceBlacklist,
         minimumOsVersion: minimumOsVersion,
         platform: "ios",
+        versions: versions)
+    }
+
+    static func forced(version: BITAppInfo.Version) -> VersionEnforcement.Response {
+      make(versions: [
+        .Mock.make(updateType: .forced, version: version),
+      ])
+    }
+
+    static func optionalSupport(expired: Bool, currentDate: Date = Date(), version: BITAppInfo.Version) -> VersionEnforcement.Response {
+      make(versions: [
+        .Mock.make(
+          supportGuaranteedUntil: currentDate.addingTimeInterval(expired ? -100 : 100),
+          updateType: .optional,
+          version: version),
+      ])
+    }
+
+    static func optionalLifetime(expired: Bool, currentDate: Date = Date(), releaseSupportDays: Int = 30, version: BITAppInfo.Version) -> VersionEnforcement.Response {
+      make(
+        defaultReleaseSupportDays: releaseSupportDays,
         versions: [
-          VersionEnforcement.Response
-            .Version(
-              message: .Mock.make(),
-              releaseDate: releaseDate,
-              supportGuaranteedUntil: supportGuaranteedUntil,
-              updateType: updateType,
-              version: version.rawValue),
+          .Mock.make(
+            releaseDate: Calendar.current
+              .date(byAdding: .day, value: -releaseSupportDays, to: currentDate)!
+              .addingTimeInterval(expired ? -100 : 100),
+            supportGuaranteedUntil: nil,
+            updateType: .optional,
+            version: version),
         ])
+    }
+  }
+}
+
+extension VersionEnforcement.Response.Version {
+  enum Mock {
+    static func make(
+      releaseDate: Date = Date(),
+      supportGuaranteedUntil: Date? = Date(),
+      updateType: VersionEnforcement.Response.UpdateType = .forced,
+      version: BITAppInfo.Version = BITAppInfo.Version("1.13.1"))
+      -> VersionEnforcement.Response.Version
+    {
+      VersionEnforcement.Response.Version(
+        message: .Mock.make(),
+        releaseDate: releaseDate,
+        supportGuaranteedUntil: supportGuaranteedUntil,
+        updateType: updateType,
+        version: version.rawValue)
     }
   }
 }

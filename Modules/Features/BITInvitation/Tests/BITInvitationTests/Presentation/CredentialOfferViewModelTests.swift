@@ -3,9 +3,11 @@ import Factory
 import Foundation
 import NavigatorUI
 import XCTest
+@testable import BITCore
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITInvitation
+@testable import BITNonCompliance
 @testable import BITTestingCore
 
 @MainActor
@@ -18,27 +20,20 @@ final class CredentialOfferViewModelTests: XCTestCase {
     Container.shared.reset()
     registerMocks()
 
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation)
+    viewModel = CredentialOfferViewModel(credential: mockCredential)
+    viewModel.trustInformation = mockTrustInformation
+    viewModel.actorCompliance = mockActorCompliance
   }
 
   func testInit_ValuesWithTrustStatement() {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation)
-
-    XCTAssertEqual(viewModel.credential, mockCredential)
-    XCTAssertEqual(viewModel.state, .loading)
-    XCTAssertEqual(viewModel.trustInformation, mockTrustInformation)
-    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
-    XCTAssertNil(viewModel.credentialViewModel)
-  }
-
-  func testInit_withoutTrustInformation() {
     viewModel = CredentialOfferViewModel(credential: mockCredential)
 
     XCTAssertEqual(viewModel.credential, mockCredential)
     XCTAssertEqual(viewModel.state, .loading)
-    XCTAssertFalse(viewModel.isUnknownIssuerAlertShown)
-    XCTAssertNil(viewModel.credentialViewModel)
     XCTAssertNil(viewModel.trustInformation)
+    XCTAssertEqual(viewModel.actorCompliance, .compliant)
+    XCTAssertNil(viewModel.alert)
+    XCTAssertNil(viewModel.credentialViewModel)
   }
 
   func testOnAppear_withTrustInformation_stateIsResult() async {
@@ -55,6 +50,7 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .result)
     XCTAssertEqual(viewModel.trustInformation, mockTrustInformation)
+    XCTAssertEqual(viewModel.actorCompliance, mockActorCompliance)
     XCTAssertEqual(fetchIssuanceTrustInformationUseCase.callAsFunctionForCallsCount, 1)
     XCTAssertEqual(fetchIssuanceTrustInformationUseCase.callAsFunctionForReceivedCredential, mockCredential)
   }
@@ -79,14 +75,16 @@ final class CredentialOfferViewModelTests: XCTestCase {
   func testConfirmAccept() async {
     await viewModel.confirmAccept()
 
-    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
-    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.credential, mockCredential)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.trustInformation, mockTrustInformation)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.actorCompliance, mockActorCompliance)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceCallsCount, 1)
     XCTAssertEqual(viewModel.state, .loading)
     XCTAssertTrue(viewModel.isOfferAccepted)
   }
 
   func testConfirmAccept_acceptCredentialFails_stateIsError() async {
-    acceptCredentialUseCase.callAsFunctionThrowableError = TestingError.error
+    acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceThrowableError = TestingError.error
 
     await viewModel.confirmAccept()
 
@@ -110,21 +108,43 @@ final class CredentialOfferViewModelTests: XCTestCase {
   }
 
   func testAccept() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: mockTrustInformation)
+    viewModel.actorCompliance = .compliant
 
     await viewModel.accept()
 
-    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionReceivedCredential, mockCredential)
-    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.credential, mockCredential)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.trustInformation, mockTrustInformation)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.actorCompliance, .compliant)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceCallsCount, 1)
     XCTAssertEqual(viewModel.state, .loading)
   }
 
   func testAccept_unknownTrustIdentity_showsAlert() async {
-    viewModel = CredentialOfferViewModel(credential: mockCredential, trustInformation: .Mock.unknownIdentity)
+    viewModel = CredentialOfferViewModel(credential: mockCredential)
+    viewModel.trustInformation = .Mock.unknownIdentity
 
     await viewModel.accept()
 
-    XCTAssertTrue(viewModel.isUnknownIssuerAlertShown)
+    XCTAssertEqual(viewModel.alert, .unknownIssuer)
+    XCTAssertFalse(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceCalled)
+  }
+
+  func testAccept_nonCompliantActor_showsAlert() async {
+    await viewModel.accept()
+
+    XCTAssertEqual(viewModel.alert, .nonCompliantActor)
+    XCTAssertFalse(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceCalled)
+  }
+
+  func testAccept_nonCompliantActorWithForce_accepts() async {
+    await viewModel.accept(force: true)
+
+    XCTAssertNil(viewModel.alert)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.credential, mockCredential)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.trustInformation, mockTrustInformation)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReceivedArguments?.actorCompliance, mockActorCompliance)
+    XCTAssertEqual(acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceCallsCount, 1)
+    XCTAssertEqual(viewModel.state, .loading)
   }
 
   func testDecline_success() {
@@ -139,21 +159,13 @@ final class CredentialOfferViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.state, .result)
   }
 
-  func testOpenWrongData_success() {
-    viewModel.openWrongData()
-    if case .wrongData = viewModel.destination {
-      XCTAssertTrue(true)
-    } else {
-      XCTFail("Expected destination: .wrongData")
-    }
-  }
-
   // MARK: Private
 
   private var viewModel: CredentialOfferViewModel!
 
   private var mockCredential = VerifiableCredential.Mock.sample
   private var mockTrustInformation = TrustInformation.Mock.trustedIdentity
+  private var mockActorCompliance = ActorCompliance.notCompliant(LocalizedDisplay(values: ["en": "reason EN"]))
   private let themeMock = "light"
 
   private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocolSpy!
@@ -163,9 +175,9 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private func registerMocks() {
     deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
     acceptCredentialUseCase = AcceptCredentialUseCaseProtocolSpy()
-    acceptCredentialUseCase.callAsFunctionReturnValue = mockCredential
+    acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReturnValue = mockCredential
     fetchIssuanceTrustInformationUseCase = FetchIssuanceTrustInformationUseCaseProtocolSpy()
-    fetchIssuanceTrustInformationUseCase.callAsFunctionForReturnValue = mockTrustInformation
+    fetchIssuanceTrustInformationUseCase.callAsFunctionForReturnValue = (mockTrustInformation, mockActorCompliance)
 
     Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCase }
     Container.shared.acceptCredentialUseCase.register { @MainActor in self.acceptCredentialUseCase }

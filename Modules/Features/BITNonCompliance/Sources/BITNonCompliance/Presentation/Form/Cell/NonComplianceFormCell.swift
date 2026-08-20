@@ -41,12 +41,18 @@ struct NonComplianceFormCell: View {
   private var text: some View {
     Text(viewModel.fieldText)
       .font(.custom.body)
-      .foregroundStyle(viewModel.value.wrappedValue.isEmpty ? Color(.placeholderText) : ThemingAssets.Label.primary.swiftUIColor)
+      .foregroundStyle(
+        viewModel.value.wrappedValue.isEmpty
+          ? ThemingAssets.Label.secondary.swiftUIColor
+          : ThemingAssets.Label.primary.swiftUIColor)
       .multilineTextAlignment(.leading)
   }
 
   private var emailField: some View {
-    TextField(viewModel.field.placeholder, text: viewModel.value)
+    TextField(
+      viewModel.field.placeholder,
+      text: viewModel.value,
+      placeholderColor: ThemingAssets.Label.secondary.swiftUIColor)
       .font(.custom.body)
       .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
       .keyboardType(.emailAddress)

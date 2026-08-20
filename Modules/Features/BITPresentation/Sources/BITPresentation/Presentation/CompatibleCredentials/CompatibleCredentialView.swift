@@ -24,8 +24,8 @@ struct CompatibleCredentialView: View {
     GeometryReader { reader in
       List {
         Section {} header: {
-          ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { badgeType in
-            navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
+          ActorHeaderView(verifier: viewModel.verifierDisplay, topInset: topInset) { actorInformation in
+            navigator.navigate(to: PresentationDestinations.actorInformation(actorInformation))
           }
           .frame(width: reader.size.width)
         }
@@ -90,6 +90,6 @@ struct CompatibleCredentialView: View {
 
 #if DEBUG
 #Preview {
-  CompatibleCredentialView(context: .Mock.vcSdJwtWithIdentityTrust)
+  CompatibleCredentialView(context: .Mock.vcSdJwtSample)
 }
 #endif

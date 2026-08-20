@@ -1,6 +1,7 @@
 import Foundation
-import JOSESwift
+import JWSETKit
 import XCTest
+@testable import BITCrypto
 @testable import BITJWT
 @testable import BITTestingCore
 @testable import BITVault
@@ -28,12 +29,11 @@ final class JWSEncoderTests: XCTestCase {
     XCTAssertNil(decoded.header.keyIdentifier)
     XCTAssertEqual(decoded.header.type, payload.type)
 
-    guard let keyComponents = try mockKeyPair.publicKey?.ecPublicKeyComponents(), let jwk = decoded.header.jwk else {
+    guard let publicKey = mockKeyPair.publicKey, let jwk = decoded.header.jwk else {
       fatalError("Failed to parse JWK")
     }
-    XCTAssertEqual(jwk.crv, keyComponents.crv)
-    XCTAssertEqual(jwk.x.data(using: .utf8), keyComponents.x.base64URLEncodedData())
-    XCTAssertEqual(jwk.y.data(using: .utf8), keyComponents.y.base64URLEncodedData())
+    XCTAssertEqual(jwk, try JWK(from: publicKey))
+    XCTAssertNoThrow(try JWSSignatureValidator().validate(decoded, with: jwk))
   }
 
   func testEncode_EncodePayloadAndDecodeNoneKeyEncodingStrategy_PayloadAndHeaderFieldsMatch() throws {
@@ -66,31 +66,29 @@ final class JWSEncoderTests: XCTestCase {
     XCTAssertNil(decoded.header.jwk)
   }
 
-  func testEncode_JwkCannotBeCreated_ThrowsError() throws {
-    let payload = RegisteredClaimsJWT.Mock.registeredClaims
-    let privateKey = SecKeyTestsHelper.createPrivateKey(type: kSecAttrKeyTypeRSA as String)
-    let invalidKeyPair = VaultKeyPair(
-      identifier: UUID().uuidString,
-      privateKey: privateKey,
-      algorithm: .eciesEncryptionStandardVariableIVX963SHA512AESGCM)
-
-    XCTAssertThrowsError(try encoder.encode(payload, using: invalidKeyPair)) { error in
-      XCTAssertEqual(error as? JWSEncoderError, .cannotCreateJwk)
-    }
-  }
-
   func testEncode_withAdditionalHeaderParameter_encodes() throws {
     let payload = RegisteredClaimsJWT.Mock.registeredClaims
     let additionalHeaderParameters: [String: Any] = ["key_attestation": "key_attestation_value"]
 
     let jws = try encoder.encode(payload, using: mockKeyPair, additionalHeaderParameters: additionalHeaderParameters)
 
-    let decoded = try JOSESwift.JWS(compactSerialization: jws)
-    let headerData = decoded.header.data()
-    let json = try? JSONSerialization.jsonObject(with: headerData, options: [])
-    let parameters = json as? [String: Any]
+    let decoded = try JSONWebSignaturePlain(from: jws)
+    let parameter: String? = decoded.header["key_attestation"]
 
-    XCTAssertEqual(parameters?["key_attestation"] as? String, "key_attestation_value")
+    XCTAssertEqual(parameter, "key_attestation_value")
+  }
+
+  func testEncodeJWS_withAdditionalHeaderParameter_encodes() throws {
+    let payload = RegisteredClaimsJWT.Mock.registeredClaims
+    let additionalHeaderParameters: [String: Any] = ["key_attestation": "key_attestation_value"]
+
+    let jws = try encoder.encode(payload, keyPair: mockKeyPair, additionalHeaderParameters: additionalHeaderParameters)
+
+    let decoded = try JSONWebSignaturePlain(from: jws.rawJWS)
+    let parameter: String? = decoded.header["key_attestation"]
+
+    XCTAssertEqual(jws.payload, payload)
+    XCTAssertEqual(parameter, "key_attestation_value")
   }
 
   func testEncode_withMultipleAdditionalHeaderParameter_merges() throws {
@@ -102,17 +100,16 @@ final class JWSEncoderTests: XCTestCase {
 
     let jws = try encoder.encode(payload, using: mockKeyPair, additionalHeaderParameters: additionalHeaderParameters)
 
-    let decoded = try JOSESwift.JWS(compactSerialization: jws)
-    let headerData = decoded.header.data()
-    let json = try? JSONSerialization.jsonObject(with: headerData, options: [])
-    let parameters = json as? [String: Any]
+    let decoded = try JSONWebSignaturePlain(from: jws)
+    let keyAttestation: String? = decoded.header["key_attestation"]
+    let foo: Int? = decoded.header["foo"]
 
-    XCTAssertEqual(parameters?["key_attestation"] as? String, "key_attestation_value")
-    XCTAssertEqual(parameters?["foo"] as? Int, 1234)
+    XCTAssertEqual(keyAttestation, "key_attestation_value")
+    XCTAssertEqual(foo, 1234)
   }
 
   // MARK: Private
 
   private var encoder = JWSEncoder()
-  private let mockKeyPair = VaultKeyPair.Mock.ES512
+  private let mockKeyPair = VaultKeyPair.Mock.ES256
 }

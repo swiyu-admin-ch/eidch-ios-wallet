@@ -1,96 +1,99 @@
 import Factory
+import FactoryTesting
+import Foundation
 import LocalAuthentication
-import XCTest
+import Testing
 @testable import BITAppAuth
 @testable import BITLocalAuthentication
 
-final class ChangeBiometricStatusUseCaseTests: XCTestCase {
+@Suite(.container)
+struct ChangeBiometricStatusUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    requestBiometricAuthUseCaseSpy = RequestBiometricAuthUseCaseProtocolSpy()
-    uniquePassphraseManagerSpy = UniquePassphraseManagerProtocolSpy()
-    allowBiometricUsageUseCaseSpy = AllowBiometricUsageUseCaseProtocolSpy()
-    hasBiometricAuthUseCaseSpy = HasBiometricAuthUseCaseProtocolSpy()
-    isBiometricUsageAllowedUseCaseSpy = IsBiometricUsageAllowedUseCaseProtocolSpy()
-    userSession = SessionSpy()
+  init() {
+    let requestBiometricAuthUseCase = RequestBiometricAuthUseCaseProtocolSpy()
+    self.requestBiometricAuthUseCase = requestBiometricAuthUseCase
 
-    Container.shared.requestBiometricAuthUseCase.register { self.requestBiometricAuthUseCaseSpy }
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManagerSpy }
-    Container.shared.allowBiometricUsageUseCase.register { self.allowBiometricUsageUseCaseSpy }
-    Container.shared.hasBiometricAuthUseCase.register { self.hasBiometricAuthUseCaseSpy }
-    Container.shared.isBiometricUsageAllowedUseCase.register { self.isBiometricUsageAllowedUseCaseSpy }
-    Container.shared.userSession.register { self.userSession }
+    let uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    self.uniquePassphraseManager = uniquePassphraseManager
+
+    let updateBiometricUsageUseCase = UpdateBiometricUsageUseCaseProtocolSpy()
+    self.updateBiometricUsageUseCase = updateBiometricUsageUseCase
+
+    let disableBiometricUseCase = DisableBiometricUseCaseProtocolSpy()
+    self.disableBiometricUseCase = disableBiometricUseCase
+
+    let getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    self.getBiometricStateUseCase = getBiometricStateUseCase
+
+    let userSession = SessionSpy()
+    self.userSession = userSession
+
+    Container.shared.requestBiometricAuthUseCase.register { requestBiometricAuthUseCase }
+    Container.shared.uniquePassphraseManager.register { uniquePassphraseManager }
+    Container.shared.updateBiometricUsageUseCase.register { updateBiometricUsageUseCase }
+    Container.shared.disableBiometricUseCase.register { disableBiometricUseCase }
+    Container.shared.getBiometricStateUseCase.register { getBiometricStateUseCase }
+    Container.shared.userSession.register { userSession }
 
     useCase = ChangeBiometricStatusUseCase()
   }
 
-  func testHappyPath_disable() async throws {
-    let mockData = Data()
+  // MARK: Internal
 
+  @Test
+  func callAsFunction_biometricEnabled_disablesBiometrics() async throws {
     userSession.isLoggedIn = true
     userSession.context = LAContextProtocolSpy()
-    isBiometricUsageAllowedUseCaseSpy.executeReturnValue = true
-    hasBiometricAuthUseCaseSpy.executeReturnValue = true
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
 
-    try await useCase.execute(with: mockData)
+    try await useCase(with: mockData)
 
-    XCTAssertTrue(uniquePassphraseManagerSpy.deleteBiometricUniquePassphraseCalled)
-    XCTAssertTrue(allowBiometricUsageUseCaseSpy.executeAllowCalled)
-    XCTAssertEqual(allowBiometricUsageUseCaseSpy.executeAllowReceivedInvocations.first, false)
+    #expect(disableBiometricUseCase.callAsFunctionCalled)
   }
 
-  func testHappyPath_enable() async throws {
-    let mockData = Data()
-
+  @Test
+  func callAsFunction_biometricDisabled_enablesBiometrics() async throws {
     userSession.isLoggedIn = true
     userSession.context = LAContextProtocolSpy()
-    isBiometricUsageAllowedUseCaseSpy.executeReturnValue = false
-    hasBiometricAuthUseCaseSpy.executeReturnValue = true
+    getBiometricStateUseCase.callAsFunctionReturnValue = .disabled
 
-    try await useCase.execute(with: mockData)
+    try await useCase(with: mockData)
 
-    XCTAssertTrue(requestBiometricAuthUseCaseSpy.executeReasonContextCalled)
-    XCTAssertTrue(uniquePassphraseManagerSpy.saveUniquePassphraseForContextCalled)
-    XCTAssertEqual(uniquePassphraseManagerSpy.saveUniquePassphraseForContextReceivedArguments?.authMethod, .biometric)
-    XCTAssertEqual(uniquePassphraseManagerSpy.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase, mockData)
-    XCTAssertTrue(allowBiometricUsageUseCaseSpy.executeAllowCalled)
-    XCTAssertEqual(allowBiometricUsageUseCaseSpy.executeAllowReceivedInvocations.first, true)
+    #expect(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.authMethod == .biometric)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase == mockData)
+    #expect(updateBiometricUsageUseCase.callAsFunctionReceivedUsage == .enabled)
   }
 
-  func testEnableWithBiometricCancelError() async throws {
-    let mockData = Data()
-
+  @Test
+  func callAsFunction_enableCancelled_throwsUserCancelAndKeepsBiometricsDisabled() async {
     userSession.isLoggedIn = true
     userSession.context = LAContextProtocolSpy()
+    getBiometricStateUseCase.callAsFunctionReturnValue = .disabled
+    requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = LAError(LAError.Code.userCancel)
 
-    isBiometricUsageAllowedUseCaseSpy.executeReturnValue = false
-    hasBiometricAuthUseCaseSpy.executeReturnValue = true
-    requestBiometricAuthUseCaseSpy.executeReasonContextThrowableError = LAError(LAError.Code.userCancel)
-
-    do {
-      try await useCase.execute(with: mockData)
-      XCTFail("No error was thrown.")
-    } catch ChangeBiometricStatusError.userCancel {
-      XCTAssertTrue(requestBiometricAuthUseCaseSpy.executeReasonContextCalled)
-      XCTAssertFalse(uniquePassphraseManagerSpy.saveUniquePassphraseForContextCalled)
-      XCTAssertFalse(allowBiometricUsageUseCaseSpy.executeAllowCalled)
-    } catch {
-      XCTFail("Unexpected error type")
+    await #expect(throws: ChangeBiometricStatusError.userCancel) {
+      try await useCase(with: mockData)
     }
+
+    #expect(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    #expect(!uniquePassphraseManager.saveUniquePassphraseForContextCalled)
+    #expect(!updateBiometricUsageUseCase.callAsFunctionCalled)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var requestBiometricAuthUseCaseSpy: RequestBiometricAuthUseCaseProtocolSpy!
-  private var uniquePassphraseManagerSpy: UniquePassphraseManagerProtocolSpy!
-  private var allowBiometricUsageUseCaseSpy: AllowBiometricUsageUseCaseProtocolSpy!
-  private var hasBiometricAuthUseCaseSpy: HasBiometricAuthUseCaseProtocolSpy!
-  private var isBiometricUsageAllowedUseCaseSpy: IsBiometricUsageAllowedUseCaseProtocolSpy!
-  private var userSession: SessionSpy!
-  private var useCase: ChangeBiometricStatusUseCase!
-  // swiftlint:enable all
+  private let useCase: ChangeBiometricStatusUseCase
+  private let requestBiometricAuthUseCase: RequestBiometricAuthUseCaseProtocolSpy
+  private let uniquePassphraseManager: UniquePassphraseManagerProtocolSpy
+  private let updateBiometricUsageUseCase: UpdateBiometricUsageUseCaseProtocolSpy
+  private let disableBiometricUseCase: DisableBiometricUseCaseProtocolSpy
+  private let getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy
+  private let userSession: SessionSpy
+
+  private let mockData = Data()
 
 }

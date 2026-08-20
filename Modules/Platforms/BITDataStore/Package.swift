@@ -17,7 +17,7 @@ let package = Package(
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.4"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.5"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [

@@ -10,7 +10,7 @@ enum OpenIDEndpoint {
   case typeMetadata(url: URL)
   case metadata(fromIssuerUrl: URL)
   case oidConnectMetadata(fromIssuerUrl: URL)
-  case credential(url: URL, body: CredentialRequestBody, accessToken: AccessToken, dpopProof: String?)
+  case credential(url: URL, jwe: String, accessToken: AccessToken, dpopProof: String?)
   case accessToken(fromTokenUrl: URL, preAuthorizedCode: String, dpopProof: String?)
   case refreshAccessToken(fromTokenUrl: URL, refreshToken: String, dpopProof: String?)
   case nonce(url: URL)
@@ -18,7 +18,7 @@ enum OpenIDEndpoint {
   case oidConnectOpenIdConfiguration(fromIssuerUrl: URL)
   case status(url: URL)
   case publicKeyInfo(jwksUrl: URL)
-  case deferredCredential(url: URL, body: DeferredCredentialRequestBody, accessToken: AccessToken, dpopProof: String?)
+  case deferredCredential(url: URL, jwe: String, accessToken: AccessToken, dpopProof: String?)
 }
 
 // MARK: TargetType
@@ -103,15 +103,9 @@ extension OpenIDEndpoint: TargetType {
          .vcSchema:
       .requestPlain
 
-    case .deferredCredential(_, let body, _, _):
-      switch body {
-      case .json(let request):
-        .requestParameters(
-          parameters: request.asDictionary(),
-          encoding: JSONEncoding.default)
-      case .jwe(let token):
-        .requestData(Data(token.utf8))
-      }
+    case .credential(_, let jwe, _, _),
+         .deferredCredential(_, let jwe, _, _):
+      .requestData(Data(jwe.utf8))
 
     case .accessToken(_, let preAuthorizedCode, _):
       .requestParameters(parameters: [
@@ -124,16 +118,6 @@ extension OpenIDEndpoint: TargetType {
         "grant_type": "refresh_token",
         "refresh_token": refreshToken,
       ], encoding: URLEncoding.httpBody)
-
-    case .credential(_, let credentialBody, _, _):
-      switch credentialBody {
-      case .json(let request):
-        .requestParameters(
-          parameters: request.asDictionary(),
-          encoding: JSONEncoding.default)
-      case .jwe(let token):
-        .requestData(Data(token.utf8))
-      }
     }
   }
 
@@ -146,19 +130,19 @@ extension OpenIDEndpoint: TargetType {
     case .metadata,
          .oidConnectMetadata:
       return [
-        NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
+        NetworkHeader.accept("\(ContentType.jwt.rawValue)"),
         NetworkHeader.acceptLanguage(UserLocale.LocaleIdentifier.allCases.map(\.rawValue)),
       ].raw
     case .oidConnectOpenIdConfiguration,
          .openIdConfiguration:
       return [
-        NetworkHeader.accept("\(ContentType.jwt.rawValue), \(ContentType.json.rawValue)"),
+        NetworkHeader.accept("\(ContentType.jwt.rawValue)"),
       ].raw
     case .credential(_, let body, let accessToken, let dpopProof):
       var headers = [
         NetworkHeader.authorization(value: "\(accessToken.tokenType.rawValue) \(accessToken.accessToken)"),
         NetworkHeader.swiyuAPIVersion("2"),
-        NetworkHeader.contentType(body.contentType.rawValue),
+        NetworkHeader.contentType(ContentType.jwt.rawValue),
         NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
       ]
       if let dpopProof {
@@ -187,7 +171,7 @@ extension OpenIDEndpoint: TargetType {
       var headers = [
         NetworkHeader.authorization(value: "\(accessToken.tokenType.rawValue) \(accessToken.accessToken)"),
         NetworkHeader.swiyuAPIVersion("2"),
-        NetworkHeader.contentType(body.contentType.rawValue),
+        NetworkHeader.contentType(ContentType.jwt.rawValue),
         NetworkHeader.accept("\(ContentType.json.rawValue), \(ContentType.jwt.rawValue)"),
       ]
       if let dpopProof {
@@ -211,13 +195,13 @@ extension OpenIDEndpoint: TargetType {
   var sampleData: Data {
     switch self {
     case .oidConnectMetadata:
-      CredentialIssuerMetadata.Mock.sampleData
+      CredentialIssuerMetadataJWT.Mock.sampleData
     case .metadata:
-      CredentialIssuerMetadata.Mock.sampleData
+      CredentialIssuerMetadataJWT.Mock.sampleData
     case .openIdConfiguration:
-      OpenIdConfiguration.Mock.sampleData
+      OpenIdConfigurationJWT.Mock.sampleData
     case .oidConnectOpenIdConfiguration:
-      OpenIdConfiguration.Mock.sampleData
+      OpenIdConfigurationJWT.Mock.sampleData
     case .accessToken:
       AccessToken.Mock.sampleData
     case .credential:

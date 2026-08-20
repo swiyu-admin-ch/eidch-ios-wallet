@@ -1,13 +1,19 @@
 import Foundation
-import JOSESwift
+import JWSETKit
 
-extension SignatureAlgorithm {
+extension JSONWebSignatureAlgorithm {
 
-  init(from jwtAlgorithm: JWTAlgorithm) throws {
-    guard let signatureAlgorithm = SignatureAlgorithm(rawValue: jwtAlgorithm.rawValue) else {
-      throw JWTAlgorithm.AlgorithmError.signatureAlgorithmCreationError
+  init(from jwtAlgorithm: JWTAlgorithm) {
+    switch jwtAlgorithm {
+    case .ES256:
+      self = .ecdsaSignatureP256SHA256
+    case .ES384:
+      self = .ecdsaSignatureP384SHA384
+    case .ES512:
+      self = .ecdsaSignatureP521SHA512
+    case .Ed25519:
+      self = .eddsa25519Signature
     }
-    self = signatureAlgorithm
   }
 
 }

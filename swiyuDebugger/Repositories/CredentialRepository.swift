@@ -2,7 +2,7 @@ import BITCredential
 import BITCredentialShared
 import Foundation
 
-class LocalCredentialRepository: CredentialRepositoryProcotol {
+class LocalCredentialRepository: CredentialRepositoryProtocol {
 
   // MARK: Lifecycle
 

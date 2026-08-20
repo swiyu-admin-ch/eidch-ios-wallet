@@ -10,7 +10,7 @@ final class GetCredentialsCountUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    credentialRepository = CredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProtocolSpy()
 
     Container.shared.credentialRepository.register { self.credentialRepository }
     useCase = GetCredentialsCountUseCase()
@@ -19,7 +19,7 @@ final class GetCredentialsCountUseCaseTests: XCTestCase {
   func testExecuteTrue_Success() async throws {
     credentialRepository.countReturnValue = 1
 
-    let count = try await useCase.execute()
+    let count = try await useCase()
 
     XCTAssertTrue(credentialRepository.countCalled)
     XCTAssertEqual(count, 1)
@@ -28,7 +28,7 @@ final class GetCredentialsCountUseCaseTests: XCTestCase {
   func testExecuteFalse_Success() async throws {
     credentialRepository.countReturnValue = 0
 
-    let count = try await useCase.execute()
+    let count = try await useCase()
 
     XCTAssertTrue(credentialRepository.countCalled)
     XCTAssertEqual(count, 0)
@@ -37,7 +37,7 @@ final class GetCredentialsCountUseCaseTests: XCTestCase {
   // MARK: Private
 
   // swiftlint: disable all
-  private var credentialRepository: CredentialRepositoryProcotolSpy!
+  private var credentialRepository: CredentialRepositoryProtocolSpy!
   private var useCase: GetCredentialsCountUseCase!
   // swiftlint: enable all
 

@@ -13,9 +13,6 @@ let package = Package(
     .library(
       name: "BITAnyCredentialFormat",
       targets: ["BITAnyCredentialFormat"]),
-    .library(
-      name: "BITAnyCredentialFormatMocks",
-      targets: ["BITAnyCredentialFormatMocks"]),
   ],
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
@@ -29,16 +26,9 @@ let package = Package(
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "Spyable", package: "swift-spyable"),
-      ]),
-    .target(
-      name: "BITAnyCredentialFormatMocks",
-      dependencies: [
-        "BITAnyCredentialFormat",
-        .product(name: "BITSdJWT", package: "BITSdJWT"),
-        .product(name: "BITCore", package: "BITCore"),
       ],
       resources: [.process("Resources")]),
     .testTarget(
       name: "BITAnyCredentialFormatTests",
-      dependencies: ["BITAnyCredentialFormat", "BITAnyCredentialFormatMocks"]),
+      dependencies: ["BITAnyCredentialFormat"]),
   ])

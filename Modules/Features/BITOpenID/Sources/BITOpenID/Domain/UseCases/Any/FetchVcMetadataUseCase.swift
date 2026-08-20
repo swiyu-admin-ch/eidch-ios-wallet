@@ -19,7 +19,7 @@ struct FetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol {
   // MARK: Internal
 
   func execute(anyCredential: AnyCredential) async throws -> RawOcaBundle? {
-    guard let credentialFormat = CredentialFormat(rawValue: anyCredential.format), let dispatcherFormat = dispatcher[credentialFormat] else {
+    guard let dispatcherFormat = dispatcher[anyCredential.format] else {
       throw CredentialFormatError.formatNotSupported
     }
 
@@ -35,7 +35,7 @@ struct FetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol {
   }
 
   func execute(metadata: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported) async throws -> RawOcaBundle? {
-    guard let credentialFormat = CredentialFormat(rawValue: metadata.format), let dispatcherFormat = dispatcher[credentialFormat] else {
+    guard let dispatcherFormat = dispatcher[metadata.format] else {
       throw CredentialFormatError.formatNotSupported
     }
 

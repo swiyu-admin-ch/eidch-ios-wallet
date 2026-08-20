@@ -5,7 +5,7 @@ import Spyable
 @Spyable
 public protocol NonComplianceRepositoryProtocol {
   func create(_ report: NonComplianceReport) async throws
-  func fetchNonCompliantActor(for subjectDid: String) async throws -> NonCompliantActor?
+  func fetchActorCompliance(for subjectDid: String) async throws -> ActorCompliance
   func getActivity(_ id: UUID) throws -> NonComplianceActivity
   func getActivityActorDisplay(_ id: UUID) throws -> ActivityActorDisplay?
 }

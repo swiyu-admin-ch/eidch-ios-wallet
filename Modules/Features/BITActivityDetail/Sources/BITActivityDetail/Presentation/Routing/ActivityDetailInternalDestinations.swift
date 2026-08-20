@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - ActivityDetailInternalDestinations
 
 enum ActivityDetailInternalDestinations: NavigationDestination {
-  case badgeDetail(badgeType: BadgeType)
+  case actorInformation(ActorInformation)
 
   // MARK: Internal
 
@@ -15,20 +15,8 @@ enum ActivityDetailInternalDestinations: NavigationDestination {
 
   var body: some View {
     switch self {
-    case .badgeDetail(let badgeType):
-      BadgeDetailDestinationView(badgeType: badgeType)
+    case .actorInformation(let actorInformation):
+      ActorInformationView(actorInformation: actorInformation)
     }
-  }
-}
-
-// MARK: - BadgeDetailDestinationView
-
-private struct BadgeDetailDestinationView: View {
-  let badgeType: BadgeType
-
-  @Environment(\.navigator) private var navigator
-
-  var body: some View {
-    BadgeInformationView(badgeType: badgeType)
   }
 }

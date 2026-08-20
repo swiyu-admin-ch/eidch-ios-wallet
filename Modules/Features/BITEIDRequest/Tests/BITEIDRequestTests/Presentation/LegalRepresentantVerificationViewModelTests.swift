@@ -32,7 +32,7 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
   }
 
   func testStartVerification_notRequiredError_constentStateRouteCalled() async {
-    getLegalRepresentantPresentationRequestContextUseCaseSpy.executeForThrowableError = EIDRequestRepository.Error.legalRepresentantNotRequired
+    getLegalRepresentantPresentationRequestContextUseCaseSpy.executeForThrowableError = SIDRepository.Error.legalRepresentantNotRequired
     let mockRequestCase = EIDRequestCase.Mock.sampleInQueue
     updateEIDRequestCaseStatusUseCaseSpy.executeForReturnValue = mockRequestCase
 

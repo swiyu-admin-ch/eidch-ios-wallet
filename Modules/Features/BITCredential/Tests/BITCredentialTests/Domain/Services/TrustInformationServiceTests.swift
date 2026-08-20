@@ -1,7 +1,8 @@
 import Factory
 import XCTest
+@testable import BITCore
 @testable import BITCredential
-@testable import BITNonCompliance
+@testable import BITJWT
 @testable import BITOpenID
 @testable import BITTestingCore
 
@@ -19,14 +20,13 @@ final class TrustInformationServiceTests: XCTestCase {
     setupSuccessState()
   }
 
-  // MARK: - testFetch identity
+  // MARK: - fetch
 
   func testFetch_validIdentityAndIssuanceStatement_returnsTrusted() async {
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
-    XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
+    XCTAssertEqual(result.identity, .trusted)
     XCTAssertEqual(result.vcSchema, .trusted)
-    XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
   func testFetch_validIdentityAndIssuanceStatement_argumentsPassed() async {
@@ -44,7 +44,7 @@ final class TrustInformationServiceTests: XCTestCase {
   func testFetch_validIdentityAndNoVcSchemaId_returnsIdentityTrusted() async {
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: nil)
 
-    XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
+    XCTAssertEqual(result.identity, .trusted)
     XCTAssertEqual(result.vcSchema, .notProtected)
   }
 
@@ -76,9 +76,8 @@ final class TrustInformationServiceTests: XCTestCase {
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
-    XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
+    XCTAssertEqual(result.identity, .trusted)
     XCTAssertEqual(result.vcSchema, .notProtected)
-    XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
   func testFetch_fetchIdentityThrowsError_returnsUntrustedIdentity() async {
@@ -88,7 +87,6 @@ final class TrustInformationServiceTests: XCTestCase {
 
     XCTAssertEqual(result.identity, .untrusted)
     XCTAssertEqual(result.vcSchema, .trusted)
-    XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
   func testFetch_fetchVcSchemaThrowsValidationError_returnsUntrustedVcSchema() async {
@@ -96,9 +94,8 @@ final class TrustInformationServiceTests: XCTestCase {
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
-    XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
+    XCTAssertEqual(result.identity, .trusted)
     XCTAssertEqual(result.vcSchema, .untrusted)
-    XCTAssertEqual(result.actorCompliance, .compliant)
   }
 
   func testFetch_fetchVcSchemaThrowsError_returnsNotProtectedVcSchema() async {
@@ -106,50 +103,104 @@ final class TrustInformationServiceTests: XCTestCase {
 
     let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
-    XCTAssertEqual(result.identity, .trusted(identityMock.resolvedPayload))
+    XCTAssertEqual(result.identity, .trusted)
     XCTAssertEqual(result.vcSchema, .notProtected)
   }
 
-  func testFetch_notCompliantActor_returnsNotCompliantActor() async {
-    let reasonMock = ["en": "reason EN"]
-    nonComplianceRepositorySpy.fetchNonCompliantActorForReturnValue = NonCompliantActor(reason: reasonMock, did: subjectDidMock)
+  // MARK: - fetchVcSchemaTrust
 
-    let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+  func testFetchVcSchemaTrust_validStatement_returnsTrusted() async {
+    let result = await service.fetchVcSchemaTrust(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
-    XCTAssertEqual(result.actorCompliance, .notCompliant(LocalizedNonComplianceReason(values: reasonMock)))
+    XCTAssertEqual(result, .trusted)
   }
 
-  func testFetch_fetchNonCompliantActorThrowsError_returnsCompliantActorCompliance() async {
-    nonComplianceRepositorySpy.fetchNonCompliantActorForThrowableError = TestingError.error
+  func testFetchVcSchemaTrust_validStatement_argumentsPassed() async {
+    _ = await service.fetchVcSchemaTrust(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
 
-    let result = await service.fetch(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+    XCTAssertEqual(statementServiceSpy.fetchIdentityForCallsCount, 0)
+    XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdCallsCount, 1)
+    XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReceivedArguments?.subjectDid, subjectDidMock)
+    XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReceivedArguments?.type, vcSchemaTypeMock)
+    XCTAssertEqual(statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReceivedArguments?.vcSchemaId, vcSchemaIdMock)
+  }
 
-    XCTAssertEqual(result.actorCompliance, .compliant)
+  func testFetchVcSchemaTrust_fetchVcSchemaReturnsNil_returnsNotProtected() async {
+    statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReturnValue = nil
+
+    let result = await service.fetchVcSchemaTrust(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertEqual(result, .notProtected)
+  }
+
+  func testFetchVcSchemaTrust_fetchVcSchemaThrowsValidationError_returnsUntrusted() async {
+    statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdThrowableError = TrustStatementServiceError.validationFailed
+
+    let result = await service.fetchVcSchemaTrust(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertEqual(result, .untrusted)
+  }
+
+  func testFetchVcSchemaTrust_fetchVcSchemaThrowsError_returnsNotProtected() async {
+    statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdThrowableError = TestingError.error
+
+    let result = await service.fetchVcSchemaTrust(for: subjectDidMock, type: vcSchemaTypeMock, vcSchemaId: vcSchemaIdMock)
+
+    XCTAssertEqual(result, .notProtected)
+  }
+
+  // MARK: - getEntityNames
+
+  func testGetEntityNames_success_returnsEntityNames() async {
+    let result = await service.getEntityNames(for: kidMock)
+
+    XCTAssertEqual(result, identityMock.resolvedPayload.entityNames)
+    XCTAssertEqual(didResolverHelperSpy.getDidFromReceivedKid, kidMock)
+    XCTAssertEqual(statementServiceSpy.fetchIdentityForReceivedSubjectDid, subjectDidMock)
+  }
+
+  func testGetEntityNames_didResolverThrows_returnsNil() async {
+    didResolverHelperSpy.getDidFromThrowableError = TestingError.error
+
+    let result = await service.getEntityNames(for: kidMock)
+
+    XCTAssertNil(result)
+  }
+
+  func testGetEntityNames_statementServiceThrows_returnsNil() async {
+    statementServiceSpy.fetchIdentityForThrowableError = TestingError.error
+
+    let result = await service.getEntityNames(for: kidMock)
+
+    XCTAssertNil(result)
   }
 
   // MARK: Private
 
+  private let kidMock = "did:tdw:mock:identifier-reg.trust-infra.swiyu.admin.ch:example#key-id"
   private let subjectDidMock = "did:tdw:mock:identifier-reg.trust-infra.swiyu.admin.ch:example"
   private let vcSchemaIdMock = "vcSchemaId"
   private let vcSchemaTypeMock = VcSchemaTrustStatementType.issuance
-  private let identityMock = IdentityTrustStatementJWT.Mock.validSample
+  private let identityMock = IdentityTrustStatementV1JWT.Mock.validSample
   private let vcSchemaMock = VcSchemaTrustStatementJWT.Mock.validSample
+  private let metadataJwsMock = CredentialIssuerMetadataJWT.Mock.sample
 
   private var statementServiceSpy: TrustStatementServiceProtocolSpy!
-  private var nonComplianceRepositorySpy: NonComplianceRepositoryProtocolSpy!
+  private var didResolverHelperSpy: DidResolverHelperProtocolSpy!
 
   private var service: TrustInformationService!
 
   private func registerMocks() {
     statementServiceSpy = TrustStatementServiceProtocolSpy()
-    nonComplianceRepositorySpy = NonComplianceRepositoryProtocolSpy()
+    didResolverHelperSpy = DidResolverHelperProtocolSpy()
 
     Container.shared.trustStatementService.register { self.statementServiceSpy }
-    Container.shared.nonComplianceRepository.register { self.nonComplianceRepositorySpy }
+    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
   }
 
   private func setupSuccessState() {
     statementServiceSpy.fetchIdentityForReturnValue = identityMock
     statementServiceSpy.fetchVcSchemaForTypeVcSchemaIdReturnValue = vcSchemaMock
+    didResolverHelperSpy.getDidFromReturnValue = subjectDidMock
   }
 }

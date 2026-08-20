@@ -38,7 +38,6 @@ struct NFCScanResultView: View {
     }
     .defaultEidRequestToolbar()
     .navigate(to: $viewModel.destination)
-    .toolbarBackground(ThemingAssets.Background.secondary.swiftUIColor)
     .navigationBarBackButtonHidden()
     .navigationTitle(L10n.tkEidRequestNfcScanResultTitle)
     .navigationBarTitleDisplayMode(.inline)

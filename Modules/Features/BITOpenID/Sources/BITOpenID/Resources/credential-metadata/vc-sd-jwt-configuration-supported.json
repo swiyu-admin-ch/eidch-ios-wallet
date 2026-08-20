@@ -1,0 +1,81 @@
+{
+   "format":"vc+sd-jwt",
+   "scope":"scope",
+   "vct":"vct",
+   "vct#integrity":"vctIntegrity",
+   "vct_metadata_uri":"vctMetadataUri",
+   "vct_metadata_uri#integrity":"vctMetadataUriIntegrity",
+   "cryptographic_binding_methods_supported":[
+      "jwk"
+   ],
+   "credential_signing_alg_values_supported":[
+      "ES256"
+   ],
+   "protected_issuance_authorization_trust_statement": "eyJ0eXAiOiJzd2l5dS1wcm90ZWN0ZWQtaXNzdWFuY2UtYXV0aG9yaXphdGlvbi10cnVzdC1zdGF0ZW1lbnQrand0IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJkaWQ6ZXhhbXBsZTp0cnVzdC1pc3N1ZXIja2V5LTEiLCJwcm9maWxlX3ZlcnNpb24iOiJzd2lzcy1wcm9maWxlLXRydXN0OjEuMC4wIn0.eyJqdGkiOiIwN2YyODlkNS04YjFmLTQ2MDQtYmY3Mi01M2JkY2I3MWVlMDUiLCJzdWIiOiJkaWQ6ZXhhbXBsZTppc3N1ZXIiLCJpYXQiOjE2OTAzNjA5NjgsImV4cCI6MTc1MzQzMjk2OCwic3RhdHVzIjp7InN0YXR1c19saXN0Ijp7ImlkeCI6MCwidXJpIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9zdGF0dXNsaXN0cy8xIn19LCJjYW5faXNzdWUiOnsidmN0IjoidmN0IiwidmN0X25hbWUiOiJWY3QgbmFtZSIsInJlYXNvbiI6InJlYXNvbiJ9fQ.Fc_yMDBI2jmPKfMEBK-uszTF97DB9VjCUbrw7wBL0i6iTm2kFNx0gt955kg62xBc6jUeRd-zKjemdPvU3u_2Xg",
+   "proof_types_supported":{
+      "jwt":{
+         "proof_signing_alg_values_supported":[
+            "ES256"
+         ],
+         "key_attestations_required": {
+           "key_storage": ["iso_18045_enhanced-basic"]
+         }
+      }
+   },
+   "credential_metadata":{
+      "display":[
+         {
+            "locale":"de-CH",
+            "name":"name (de-CH)",
+            "logo":{
+               "uri":"data:image/png;base64,aW1hZ2UgKGRlLUNIKQ=="
+            },
+            "description":"description (de-CH)",
+            "background_color":"#CCFFCC"
+         },
+         {
+            "locale":"en-US",
+            "name":"name (en-US)",
+            "logo":{
+               "uri":"data:image/png;base64,aW1hZ2UgKGVuLVVTKQ=="
+            },
+            "description":"description (en-US)",
+            "background_color":"#CCFFCC"
+         }
+      ],
+      "claims":[
+         {
+            "path":[
+               "claim_1"
+            ],
+            "mandatory":true,
+            "display":[
+               {
+                  "locale":"de-CH",
+                  "name":"Claim 1 (de-CH)"
+               },
+               {
+                  "locale":"en-US",
+                  "name":"Claim 1 (en-US)"
+               }
+            ]
+         },
+         {
+            "path":[
+               "claim_2"
+            ],
+            "mandatory":false,
+            "display":[
+               {
+                  "locale":"de-CH",
+                  "name":"Claim 2 (de-CH)"
+               },
+               {
+                  "locale":"en-US",
+                  "name":"Claim 2 (en-US)"
+               }
+            ]
+         }
+      ]
+   }
+}

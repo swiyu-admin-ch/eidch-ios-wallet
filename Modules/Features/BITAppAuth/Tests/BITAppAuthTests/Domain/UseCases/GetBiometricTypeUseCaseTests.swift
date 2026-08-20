@@ -22,7 +22,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   }
 
   func testExecute_argumentsPassed() {
-    _ = useCase.execute()
+    _ = useCase()
 
     XCTAssertEqual(policyValidatorSpy.validatePolicyContextReceivedArguments?.policy, .deviceOwnerAuthenticationWithBiometrics)
   }
@@ -30,7 +30,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   func testExecute_faceID_returnsFaceID() {
     contextSpy.biometryType = .faceID
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, .faceID)
   }
@@ -38,7 +38,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   func testExecute_touchID_returnsTouchID() {
     contextSpy.biometryType = .touchID
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, .touchID)
   }
@@ -46,7 +46,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   func testExecute_none_returnsNone() {
     contextSpy.biometryType = .none
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, .none)
   }
@@ -54,7 +54,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   func testExecute_policyIsNotValid_returnsNone() {
     policyValidatorSpy.validatePolicyContextReturnValue = false
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, .none)
   }
@@ -62,7 +62,7 @@ final class GetBiometricTypeUseCaseTests: XCTestCase {
   func testExecute_policyThrowsError_returnsNone() {
     policyValidatorSpy.validatePolicyContextThrowableError = TestingError.error
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertEqual(result, .none)
   }

@@ -15,9 +15,23 @@ extension InvitationError {
       let rawErrorCode = getRawErrorCode(from: openIDError)
       return makeIssuanceErrorDataSet(rawErrorCode: rawErrorCode, errorDescription: openIDError.invitationErrorDescription)
     case .invalidPresentationRequest(let rawErrorCode):
-      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, body: L10n.tkPresentErrorSecondary)
+      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, errorDescription: getPresentationErrorDescription(for: rawErrorCode))
     case .transactionDataNotSupported(let rawErrorCode):
-      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, body: L10n.tkPresentErrorInvalidTransactionDataSecondary)
+      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, errorDescription: L10n.tkPresentErrorInvalidTransactionDataSecondary)
+    case .invalidRedirectUri:
+      return invalidRedirectUriDataSet()
+    case .unverifiedActor:
+      return makeGovernanceErrorDataSet(
+        rawErrorCode: GovernanceError.unverifiedActor.rawValue,
+        errorDescription: L10n.tkCredentialOfferErrorUnverifiedIssuerDescription)
+    case .unknownRegistry:
+      return makeGovernanceErrorDataSet(
+        rawErrorCode: GovernanceError.unknownRegistry.rawValue,
+        errorDescription: L10n.tkGovErrorUnknownRegistryDescription)
+    case .unauthorizedIssuance:
+      return makeGovernanceErrorDataSet(
+        rawErrorCode: GovernanceError.unauthorizedIssuance.rawValue,
+        errorDescription: L10n.tkCredentialOfferErrorUnauthorizedIssuanceDescription)
     default: return nil
     }
   }
@@ -62,12 +76,36 @@ extension InvitationError {
     return ErrorDataset(content)
   }
 
-  private func makePresentationErrorDataset(rawErrorCode: String, body: String) -> ErrorDataset {
+  private func makeGovernanceErrorDataSet(rawErrorCode: String, errorDescription: String) -> ErrorDataset {
+    .governanceError(rawErrorCode: rawErrorCode, errorDescription: errorDescription)
+  }
+
+  private func makePresentationErrorDataset(rawErrorCode: String, errorDescription: String) -> ErrorDataset {
     ErrorDataset([
       .title(L10n.tkPresentErrorPrimary),
       .body(L10n.tkPresentErrorSecondary),
       .caption(rawErrorCode),
-      .caption(body),
+      .caption(errorDescription),
+    ])
+  }
+
+  private func getPresentationErrorDescription(for rawErrorCode: String) -> String {
+    switch rawErrorCode {
+    case GovernanceError.unverifiedActor.rawValue:
+      L10n.tkPresentErrorUnverifiedVerifierSecondary
+    case GovernanceError.unknownRegistry.rawValue:
+      L10n.tkGovErrorUnknownRegistryDescription
+    case GovernanceError.invalidEnvironment.rawValue:
+      L10n.tkGovErrorInvalidEnvironmentDescription
+    default:
+      L10n.tkPresentErrorSecondary
+    }
+  }
+
+  private func invalidRedirectUriDataSet() -> ErrorDataset {
+    ErrorDataset([
+      .title(L10n.tkErrorRedirectUriInvalidPrimary),
+      .body(L10n.tkErrorRedirectUriInvalidSecondary),
     ])
   }
 }

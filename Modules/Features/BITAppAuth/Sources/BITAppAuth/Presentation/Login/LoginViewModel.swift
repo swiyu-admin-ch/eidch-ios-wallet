@@ -90,7 +90,7 @@ public class LoginViewModel {
   func pinCodeAuthentication() {
     if pinCode.isEmpty { return }
 
-    guard (try? useCases.loginPinCode.execute(from: pinCode)) != nil else {
+    guard (try? useCases.loginPinCode(from: pinCode)) != nil else {
       return loginWithPasswordFailed()
     }
 
@@ -165,7 +165,7 @@ public class LoginViewModel {
   }
 
   private func resetAttempts() {
-    try? useCases.resetLoginAttemptCounterUseCase.execute()
+    try? useCases.resetLoginAttemptCounterUseCase()
     attempts = 0
     biometricAttempts = 0
   }
@@ -179,7 +179,7 @@ extension LoginViewModel {
   private func startCountdown() {
     guard timer == nil else { return }
 
-    countdown = useCases.getLockedWalletTimeLeftUseCase.execute()
+    countdown = useCases.getLockedWalletTimeLeftUseCase()
 
     if let countdown, countdown <= 0 {
       state = .loginPassword
@@ -189,7 +189,7 @@ extension LoginViewModel {
     timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
       Task { @MainActor [weak self] in
         guard let self else { return }
-        countdown = useCases.getLockedWalletTimeLeftUseCase.execute()
+        countdown = useCases.getLockedWalletTimeLeftUseCase()
 
         if !isLocked {
           state = .loginPassword
@@ -205,7 +205,7 @@ extension LoginViewModel {
   }
 
   private func evaluateLockedWallet() {
-    countdown = useCases.getLockedWalletTimeLeftUseCase.execute()
+    countdown = useCases.getLockedWalletTimeLeftUseCase()
     let tooManyAttempts = (attempts >= attemptsLimit || biometricAttempts >= attemptsLimit)
 
     if isLocked {
@@ -228,31 +228,31 @@ extension LoginViewModel {
 
   private func unlockApp() {
     do {
-      try useCases.unlockWalletUseCase.execute()
+      try useCases.unlockWalletUseCase()
       resetState()
     } catch {}
   }
 
   private func lockApp() {
     do {
-      try useCases.lockWalletUseCase.execute()
+      try useCases.lockWalletUseCase()
       state = .locked
       startCountdown()
     } catch {}
   }
 
   private func restoreAttempts() {
-    attempts = (try? useCases.getLoginAttemptCounterUseCase.execute(kind: .appPin)) ?? 0
-    biometricAttempts = (try? useCases.getLoginAttemptCounterUseCase.execute(kind: .biometric)) ?? 0
+    attempts = (try? useCases.getLoginAttemptCounterUseCase(kind: .appPin)) ?? 0
+    biometricAttempts = (try? useCases.getLoginAttemptCounterUseCase(kind: .biometric)) ?? 0
   }
 
   private func registerLoginAttempt() {
-    attempts = (try? useCases.registerLoginAttemptCounterUseCase.execute(kind: .appPin)) ?? attempts + 1
+    attempts = (try? useCases.registerLoginAttemptCounterUseCase(kind: .appPin)) ?? attempts + 1
     evaluateAttempts(attempts)
   }
 
   private func registerBiometricAttempt() {
-    if let attempts = try? useCases.registerLoginAttemptCounterUseCase.execute(kind: .biometric) {
+    if let attempts = try? useCases.registerLoginAttemptCounterUseCase(kind: .biometric) {
       biometricAttempts = attempts
     } else {
       biometricAttempts += 1
@@ -297,7 +297,7 @@ extension LoginViewModel {
 
     isBiometricTriggered = true
     do {
-      try await useCases.loginBiometric.execute()
+      try await useCases.loginBiometric()
       didLogin()
     } catch {
       isBiometricTriggered = false
@@ -311,11 +311,10 @@ extension LoginViewModel {
   // MARK: Private
 
   private func updateBiometricContext() {
-    isBiometricAuthenticationAvailable = useCases.isBiometricUsageAllowed.execute()
-      && useCases.hasBiometricAuth.execute()
-      && !useCases.isBiometricInvalidatedUseCase.execute()
+    isBiometricAuthenticationAvailable = useCases.getBiometricStateUseCase() == .enabled
+      && !useCases.isBiometricInvalidatedUseCase()
 
-    biometricType = useCases.getBiometricTypeUseCase.execute()
+    biometricType = useCases.getBiometricTypeUseCase()
 
     if biometricType == .none || !isBiometricAuthenticationAvailable {
       state = .loginPassword

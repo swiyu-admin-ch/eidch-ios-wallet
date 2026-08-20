@@ -1,0 +1,17 @@
+{
+  "sub": "did:tdw:mock=:mock.swiyu.admin.ch:api:v1:did:25c2db14-8dc8-4e58-933f-070048079748",
+  "jti": "ff7fc02f-818d-4f2c-94b6-f8663837c4c5",
+  "iat": 1690360968,
+  "exp": 1753432968,
+  "status": {
+    "status_list": {
+      "idx": 0,
+      "uri": "https://example.com/statuslists/1"
+    }
+  },
+  "can_issue": {
+    "vct": "otherVcSchemaId",
+    "vct_name": "VC",
+    "reason#en": "Authorized issuer"
+  }
+}

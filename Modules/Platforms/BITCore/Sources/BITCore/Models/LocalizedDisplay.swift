@@ -1,3 +1,5 @@
+// MARK: - LocalizedDisplay
+
 /// Data model providing a Hash representation of the localized display
 /// where the  key of the hash is the language in two letters form (ISO-639)
 public struct LocalizedDisplay<T: Codable & Equatable>: Codable, Equatable {
@@ -23,14 +25,11 @@ public struct LocalizedDisplay<T: Codable & Equatable>: Codable, Equatable {
 
   // MARK: Public
 
-  /// Retrieves the preferred display from a set of localized displays, considering the given language codes in their order.
+  /// Retrieves the preferred display from a set of localized displays, considering the given locales in their order.
   ///
   /// - Returns: The best matching display based on the given language codes or a fallback if available. Returns `nil` if no display is found.
-  public func getPreferredDisplay(considering languageCodes: [String]) -> T? {
-    languageCodes
-      .lazy
-      .compactMap { preferredValue(for: $0) }
-      .first ?? values[""]
+  public func getPreferredDisplay(considering locales: [String]) -> T? {
+    getAllDisplays().findValue(considering: locales, fallback: nil)
   }
 
   /// Returns all localized displays keyed by their locale identifier.
@@ -45,14 +44,15 @@ public struct LocalizedDisplay<T: Codable & Equatable>: Codable, Equatable {
   }
 
   private var values = [String: T]()
+}
 
-  private func preferredValue(for languageCode: String) -> T? {
-    if let exactMatch = values[languageCode] {
-      return exactMatch
+// MARK: Hashable
+
+extension LocalizedDisplay: Hashable where T: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    for locale in values.keys {
+      hasher.combine(locale)
+      hasher.combine(values[locale])
     }
-
-    return values.first { key, _ in
-      key.split(separator: "-").first.map(String.init) == languageCode
-    }?.value
   }
 }

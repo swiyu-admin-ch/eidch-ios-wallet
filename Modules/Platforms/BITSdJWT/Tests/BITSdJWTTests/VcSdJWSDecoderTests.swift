@@ -117,7 +117,7 @@ final class VcSdJWSDecoderTests: XCTestCase {
   }
 
   private func assertVcSdJwt(_ jws: VcSdJWS, vct: String = vctUrlMock, vctIntegrity: String? = vctIntegrityMock, vctMetadataUri: String? = nil, vctMetadataUriIntegrity: String? = nil, headerType: String = VcSdJwt.currentType) throws {
-    let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 285, uri: "https://example.com/statuslist/example.jwt"))
+    let expectedStatus = VcSdJwtTokenStatus(statusList: VcSdJwtTokenStatus.StatusList(index: 285, uri: "https://example.com/statuslist/example.jwt"))
     let jwt = jws.payload
     XCTAssertEqual(jws.header.type, headerType)
     XCTAssertEqual(jwt.activatedAt, Date(timeIntervalSince1970: 1722499200))
@@ -126,7 +126,7 @@ final class VcSdJWSDecoderTests: XCTestCase {
     XCTAssertEqual(jwt.vctIntegrity, vctIntegrity)
     XCTAssertEqual(jwt.vctMetadataUri, vctMetadataUri)
     XCTAssertEqual(jwt.vctMetadataUriIntegrity, vctMetadataUriIntegrity)
-    XCTAssertEqual(jwt.statusList, expectedStatusList)
+    XCTAssertEqual(jwt.status, expectedStatus)
     XCTAssertEqual(jwt.issuedAt, Date(timeIntervalSince1970: 1739282713))
   }
 

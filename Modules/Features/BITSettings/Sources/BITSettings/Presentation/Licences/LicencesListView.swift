@@ -1,6 +1,7 @@
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - LicencesListView
@@ -9,8 +10,7 @@ public struct LicencesListView: View {
 
   // MARK: Lifecycle
 
-  public init(path: Binding<NavigationPath>) {
-    _path = path
+  public init() {
     _viewModel = State(initialValue: Container.shared.licencesViewModel())
   }
 
@@ -32,15 +32,12 @@ public struct LicencesListView: View {
     .onFirstAppear {
       Task { await viewModel.send(event: .fetch) }
     }
-    .navigationDestination(for: PackageDependency.self) { package in
-      LicenceDetailView(package: package)
-    }
   }
 
   // MARK: Private
 
+  @Environment(\.navigator) private var navigator
   @State private var viewModel: LicencesListViewModel
-  @Binding private var path: NavigationPath
 
   @ViewBuilder
   private func resultsList() -> some View {
@@ -64,7 +61,7 @@ public struct LicencesListView: View {
         SettingsItem(
           title: package.name,
           detail: package.version ?? L10n.tkSettingsLicencesNoVersion,
-          type: .navigation { path.append(package) },
+          type: .navigation { navigator.navigate(to: SettingsDestinations.licenseDetail(package)) },
           hasDivider: index < viewModel.packages.count - 1)
       }
     }
@@ -72,5 +69,5 @@ public struct LicencesListView: View {
 }
 
 #Preview {
-  LicencesListView(path: .constant(NavigationPath()))
+  LicencesListView()
 }

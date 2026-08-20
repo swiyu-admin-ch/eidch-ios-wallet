@@ -33,7 +33,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   func testGenerate_oneClaimRequested() throws {
     let requestedClaims = [Self.mockPath1]
 
-    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims, withOrigin: nil)
 
     asserts(vpToken, disclosureCount: 1, hasKeyBinding: true)
   }
@@ -41,7 +41,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   func testGenerate_severalClaimsRequested() throws {
     let requestedClaims = [Self.mockPath1, Self.mockPath2]
 
-    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims, withOrigin: nil)
 
     asserts(vpToken, disclosureCount: 2, hasKeyBinding: true)
   }
@@ -49,7 +49,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
   func testGenerate_noClaimsRequested() throws {
     let requestedClaims = [ClaimsPathPointer]()
 
-    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims, withOrigin: nil)
 
     asserts(vpToken, disclosureCount: 0, hasKeyBinding: true)
   }
@@ -58,7 +58,7 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     let mockCredentialNoKeyBinding = VcSdJWS.Mock.noKeyBinding
     let requestedClaims = [Self.mockPath1]
 
-    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredentialNoKeyBinding, keyPair: nil, paths: requestedClaims)
+    let vpToken = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredentialNoKeyBinding, keyPair: nil, paths: requestedClaims, withOrigin: nil)
 
     asserts(vpToken, disclosureCount: 1, hasKeyBinding: false)
   }
@@ -70,10 +70,30 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     ]
 
     do {
-      _ = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims)
+      _ = try generator.generate(requestObject: RequestObjectJWS.Mock.sample.payload, credential: mockCredential, keyPair: mockKeyPair, paths: requestedClaims, withOrigin: nil)
     } catch {
       XCTAssertFalse(sha256HasherSpy.hashCalled)
     }
+  }
+
+  func testGenerate_dcApiWithoutOrigin_throwsMissingDcApiOrigin() throws {
+    let requestedClaims = [Self.mockPath1]
+
+    XCTAssertThrowsError(
+      try generator.generate(
+        requestObject: RequestObjectJWS.Mock.sampleProximity.payload,
+        credential: mockCredential,
+        keyPair: mockKeyPair,
+        paths: requestedClaims,
+        withOrigin: nil))
+    { error in
+      guard case AnyVpTokenGeneratorError.missingDcApiOrigin = error else {
+        return XCTFail("Expected AnyVpTokenGeneratorError.missingDcApiOrigin, got \(error)")
+      }
+    }
+
+    // We must throw before the key binding JWS is encoded.
+    XCTAssertNil(jwsEncoderMock.receivedKeyPair)
   }
 
   // MARK: Private

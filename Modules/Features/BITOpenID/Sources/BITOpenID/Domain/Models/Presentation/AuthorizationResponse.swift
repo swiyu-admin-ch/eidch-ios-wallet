@@ -3,7 +3,7 @@ import Foundation
 // MARK: - AuthorizationResponse
 
 /// https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#name-response
-public struct AuthorizationResponse: DictionarySerializable, Equatable {
+public struct AuthorizationResponse: Equatable {
 
   // MARK: Lifecycle
 

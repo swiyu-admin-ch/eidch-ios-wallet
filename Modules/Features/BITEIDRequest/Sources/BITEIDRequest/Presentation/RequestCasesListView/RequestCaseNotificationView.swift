@@ -42,6 +42,7 @@ struct RequestCaseNotificationView: View {
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(title). \(content)")
     .accessibilityNotificationActions(notificationType)
+    .externalKeyboardDismissActions(notificationType)
   }
 
   // MARK: Private
@@ -85,7 +86,7 @@ struct RequestCaseNotificationView: View {
     Button(action: {
       Task { action() }
     }, label: {
-      ThemingAssets.close.swiftUIImage
+      Image(systemName: "xmark")
     })
     .buttonStyle(.borderless)
     .accessibilityHidden(true)
@@ -98,7 +99,7 @@ struct RequestCaseNotificationView: View {
       Button(action: {
         Task { dismissAction() }
       }, label: {
-        ThemingAssets.close.swiftUIImage
+        Image(systemName: "xmark")
       })
       .accessibilityHidden(true)
     }

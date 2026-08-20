@@ -17,7 +17,7 @@ public struct ApplyEIDRequestUseCase: ApplyEIDRequestUseCaseProtocol {
 
   func callAsFunction(scanDocumentOutput: ScanDocumentOutput, hasLegalRepresentant: Bool) async throws -> EIDRequestCase {
     let payload = EIDRequestPayload(mrz: scanDocumentOutput.mrz.values, hasLegalRepresentant: hasLegalRepresentant)
-    let response = try await eIDRequestRepository.apply(with: payload)
+    let response = try await sidRepository.apply(with: payload)
 
     var eIDRequestCase = EIDRequestCase(
       id: response.caseId,
@@ -27,7 +27,7 @@ public struct ApplyEIDRequestUseCase: ApplyEIDRequestUseCaseProtocol {
       lastName: response.lastName,
       firstName: response.firstName)
 
-    guard let status = try? await eIDRequestRepository.fetchRequestStatus(for: eIDRequestCase.id) else {
+    guard let status = try? await sidRepository.fetchRequestStatus(for: eIDRequestCase.id) else {
       return eIDRequestCase
     }
 
@@ -41,7 +41,7 @@ public struct ApplyEIDRequestUseCase: ApplyEIDRequestUseCaseProtocol {
 
   // MARK: Private
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
 
 }

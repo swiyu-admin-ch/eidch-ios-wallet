@@ -24,7 +24,7 @@ class LegalRepresentantVerificationViewModel: NavigationBackable {
     do {
       let context = try await getLegalRepresentantPresentationRequestContextUseCase.execute(for: caseId)
       destination = .external(.presentation(context))
-    } catch EIDRequestRepository.Error.legalRepresentantNotRequired {
+    } catch SIDRepository.Error.legalRepresentantNotRequired {
       await openConsentState()
     } catch {
       destination = .error(.retry(error) { [weak self] _ in
@@ -72,7 +72,7 @@ class LegalRepresentantVerificationViewModel: NavigationBackable {
 
   private func errorCallback(_ error: Error) {
     switch error {
-    case EIDRequestRepository.Error.unknownError:
+    case SIDRepository.Error.unknownError:
       back()
     default:
       close()

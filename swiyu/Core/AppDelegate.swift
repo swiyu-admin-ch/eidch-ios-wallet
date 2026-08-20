@@ -1,6 +1,7 @@
 import BITActivityDetail
 import BITAnalytics
 import BITAppAuth
+import BITCore
 import BITCredential
 import BITEIDRequest
 import BITInvitation
@@ -37,12 +38,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     registerDefaultEnvironmentValues()
     registerEnvironmentValues()
     registerViewProviders()
+    syncAppLanguageCodes()
+
+    application.registerForRemoteNotifications()
 
     return true
-  }
-
-  func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-    UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
   }
 
   func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
@@ -61,7 +61,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.pushDataSource) private var pushDataSource: PushDataSourceProtocol
+  @Injected(\.appLanguageService) private var appLanguageService: AppLanguageServiceProtocol
   @Injected(\.unlockWalletUseCase) private var unlockWalletUseCase: UnlockWalletUseCaseProtocol
+  @Injected(\.isAnalyticsEnabledUseCase) private var isAnalyticsEnabledUseCase: IsAnalyticsEnabledUseCaseProtocol
   @Injected(\.registerPinCodeUseCase) private var registerPinCodeUseCase: RegisterPinCodeUseCaseProtocol
   @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
 }
@@ -70,8 +72,8 @@ extension AppDelegate {
   func setupAdditionalConfigurationsIfNeeded() {
     #if DEBUG
     if ProcessInfo().arguments.contains("-disable-onboarding") {
-      try? registerPinCodeUseCase.execute(pinCode: "000000")
-      UserDefaults.standard.set(false, forKey: "rootOnboardingIsEnabled")
+      try? registerPinCodeUseCase(pinCode: "000000")
+      UserDefaults.standard.set(false, forKey: UserDefaultsKey.rootOnboardingIsEnabled.rawValue)
     }
     #else
     // nothing
@@ -90,14 +92,14 @@ extension AppDelegate {
   // MARK: Private
 
   private func configureKeychain() {
-    guard UserDefaults.standard.bool(forKey: "rootOnboardingIsEnabled") else { return }
-    try? resetLoginAttemptCounterUseCase.execute()
-    try? unlockWalletUseCase.execute()
+    guard UserDefaults.standard.bool(forKey: UserDefaultsKey.rootOnboardingIsEnabled.rawValue) else { return }
+    try? resetLoginAttemptCounterUseCase()
+    try? unlockWalletUseCase()
   }
 
   private func configureUserDefaults() {
     UserDefaults.standard.register(defaults: [
-      "rootOnboardingIsEnabled": true,
+      UserDefaultsKey.rootOnboardingIsEnabled.rawValue: true,
       "isBiometricUsageAllowed": false,
       "eIDRequestAfterOnboardingEnabled": true,
       "otpEnabled": true,
@@ -112,6 +114,10 @@ extension AppDelegate {
   }
 
   private func configureAnalyticsIfAllowed() {
+    guard isAnalyticsEnabledUseCase() else {
+      return
+    }
+
     let providers = [
       DynatraceProvider(),
     ]
@@ -119,11 +125,19 @@ extension AppDelegate {
     for provider in providers {
       analytics.register(provider)
     }
+
+    Task {
+      await analytics.applyUserPrivacyPolicy(true)
+    }
   }
 
   private func configureOpenIDSchemes() {
     Container.shared.additionalPresentationSchemes.register { ["swiyu-verify"] }
     Container.shared.additionalCredentialOfferSchemes.register { ["swiyu"] }
+  }
+
+  private func syncAppLanguageCodes() {
+    try? appLanguageService.syncAppLanguageCodes()
   }
 
   private func registerViewProviders() {
@@ -172,8 +186,8 @@ extension AppDelegate {
           InvitationDestinations.scan(tab)
         case .deeplink(let url):
           InvitationDestinations.deeplink(url)
-        case .offer(let credential, let trustInformation):
-          InvitationDestinations.offer(credential, trustInformation)
+        case .offer(let credential):
+          InvitationDestinations.offer(credential)
         case .credentialDetail(let input):
           CredentialDestinations.detail(input)
         case .settings:

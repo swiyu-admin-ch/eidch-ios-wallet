@@ -2,8 +2,8 @@ import BITCore
 import BITDataStore
 import BITEntities
 import Factory
-import RealmSwift
 import XCTest
+@testable import BITAnyCredentialFormat
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITTestingCore
@@ -49,6 +49,36 @@ final class CredentialRepositoryTest: XCTestCase {
     }
   }
 
+  func testDeleteCredential_unreferencedImages_removesImages() async throws {
+    let credential = try await repository.create(verifiableCredential: makeVerifiableCredential())
+    let database = Container.shared.dataStore()
+    let entity = try XCTUnwrap(try database.get(CredentialEntity.self, forPrimaryKey: credential.id))
+    let images = entity.displayImages
+
+    try await repository.delete(credential.id)
+
+    for image in images {
+      XCTAssertNil(try database.get(ImageEntity.self, forPrimaryKey: image))
+    }
+  }
+
+  func testDeleteCredential_keepsImagesWhenStillReferenced() async throws {
+    let issuerImage = Data("shared issuer image".utf8)
+    let logoData = Data("shared logo data".utf8)
+    let credential = try await repository.create(verifiableCredential: makeVerifiableCredential(issuerImage: issuerImage, logoData: logoData))
+    _ = try await repository.create(verifiableCredential: makeVerifiableCredential(issuerImage: issuerImage, logoData: logoData))
+    let database = Container.shared.dataStore()
+    let entity = try XCTUnwrap(try database.get(CredentialEntity.self, forPrimaryKey: credential.id))
+    let images = entity.displayImages
+
+    try await repository.delete(credential.id)
+
+    XCTAssertFalse(images.isEmpty)
+    for image in images {
+      XCTAssertNotNil(try database.get(ImageEntity.self, forPrimaryKey: image))
+    }
+  }
+
   func testDeleteCredential_deletesVerifiableCredentialKeyPair() async throws {
     let keyBinding = KeyBinding(
       id: UUID(),
@@ -58,8 +88,8 @@ final class CredentialRepositoryTest: XCTestCase {
     let credential = VerifiableCredential(
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
     let createdCredential = try await repository.create(verifiableCredential: credential)
@@ -79,8 +109,8 @@ final class CredentialRepositoryTest: XCTestCase {
     let credential = DeferredCredential(
       transactionId: "tx-id",
       endpoint: "https://issuer/deferred",
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       keyBindings: [keyBinding],
       authentication: CredentialAuthentication(accessToken: "access-token"))
     let createdCredential = try await repository.create(deferredCredential: credential)
@@ -124,8 +154,8 @@ final class CredentialRepositoryTest: XCTestCase {
     let credential = DeferredCredential(
       transactionId: "tx-id",
       endpoint: "https://issuer/deferred",
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       authentication: authentication)
     let createdCredential = try await repository.create(deferredCredential: credential)
 
@@ -145,8 +175,8 @@ final class CredentialRepositoryTest: XCTestCase {
     let credential = VerifiableCredential(
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
     let createdCredential = try await repository.create(verifiableCredential: credential)
@@ -168,8 +198,8 @@ final class CredentialRepositoryTest: XCTestCase {
     let credential = VerifiableCredential(
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
     let createdCredential = try await repository.create(verifiableCredential: credential)
@@ -184,8 +214,8 @@ final class CredentialRepositoryTest: XCTestCase {
     let deferredCredential = DeferredCredential(
       transactionId: "tx-id",
       endpoint: "https://issuer/deferred",
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       keyBindings: [],
       authentication: CredentialAuthentication(accessToken: "accessToken"))
     let createdDeferredCredential = try await repository.create(deferredCredential: deferredCredential)
@@ -204,12 +234,20 @@ final class CredentialRepositoryTest: XCTestCase {
   }
 
   func testGetAllCredentials() async throws {
-    _ = try await repository.create(verifiableCredential: .Mock.sample)
-    _ = try await repository.create(deferredCredential: .Mock.sample)
+    let readyForActivation = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .unaccepted))
+    let active = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .accepted, status: .valid))
+    let ghost = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .accepted, status: .unknown))
+    let rejected = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .accepted, status: .suspended))
+    let inProgress = try await repository.create(deferredCredential: .Mock.sample)
 
     let credentials = try await repository.getAll()
 
-    XCTAssertEqual(credentials.count, 2)
+    let expectedOrder = [readyForActivation.id, active.id, inProgress.id, ghost.id, rejected.id]
+    XCTAssertEqual(credentials.map(\.id), expectedOrder)
   }
 
   func testGetIssuanceSummary_success() async throws {
@@ -222,8 +260,8 @@ final class CredentialRepositoryTest: XCTestCase {
       progressionState: .accepted,
       bundleItems: [firstBundleItem, secondBundleItem, thirdBundleItem],
       nextPresentableBundleItemId: firstBundleItem.id,
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
     let createdCredential = try await repository.create(verifiableCredential: credential)
@@ -243,8 +281,8 @@ final class CredentialRepositoryTest: XCTestCase {
       progressionState: .accepted,
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
     let createdCredential = try await repository.create(verifiableCredential: credential)
@@ -304,8 +342,8 @@ final class CredentialRepositoryTest: XCTestCase {
       refreshedAt: refreshedAt,
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
-      issuerUrl: "https://issuer.example",
+      format: formatMock,
+      issuerUrl: issuerUrl,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "access-token"))
     let verifiableCredential = try VerifiableCredentialEntity.Mock.create()
@@ -351,23 +389,39 @@ final class CredentialRepositoryTest: XCTestCase {
     XCTAssertEqual(updatedEntity.activities.first?.id, activityId)
   }
 
-  func getAllAcceptedVerifiableCredentials() async throws {
-    _ = try await repository.create(verifiableCredential: .Mock.sample)
-    _ = try await repository.create(verifiableCredential: .Mock.diploma)
+  func testUpdateVerifiableCredential_removesReplacedDisplayImages() async throws {
+    let credential = try await repository.create(verifiableCredential: makeVerifiableCredential(issuerImage: Data("old issuer".utf8), logoData: Data("old logo".utf8)))
+    let database = Container.shared.dataStore()
+    let oldEntity = try XCTUnwrap(try database.get(CredentialEntity.self, forPrimaryKey: credential.id))
+    let oldImages = oldEntity.displayImages
+    let updatedCredential = makeVerifiableCredential(id: credential.id, issuerImage: Data("new issuer".utf8), logoData: Data("new logo".utf8))
+
+    _ = try await repository.update(verifiableCredential: updatedCredential)
+
+    let updatedEntity = try XCTUnwrap(try database.get(CredentialEntity.self, forPrimaryKey: credential.id))
+    for image in oldImages {
+      XCTAssertNil(try database.get(ImageEntity.self, forPrimaryKey: image))
+    }
+    for image in updatedEntity.displayImages {
+      XCTAssertNotNil(try database.get(ImageEntity.self, forPrimaryKey: image))
+    }
+  }
+
+  func testGetAllAcceptedVerifiableCredentials_returnsAcceptedSortedByDisplayOrder() async throws {
+    let active = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .accepted, status: .valid))
+    let rejected = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .accepted, status: .suspended))
+    let ghost = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .accepted, status: .unknown))
+    _ = try await repository.create(
+      verifiableCredential: makeVerifiableCredential(progressionState: .unaccepted))
     _ = try await repository.create(deferredCredential: .Mock.sample)
-    _ = try await repository.create(verifiableCredential: VerifiableCredential(
-      progressionState: .unaccepted,
-      bundleItems: [BundleItem(payload: Data())],
-      nextPresentableBundleItemId: UUID(),
-      format: "format",
-      issuerUrl: "https://issuer",
-      issuer: "issuer",
-      authentication: CredentialAuthentication(accessToken: "accessToken")))
 
-    let credentials = try await repository.getAllVerifiableCredentials()
+    let credentials = try await repository.getAllAcceptedVerifiableCredentials()
 
-    XCTAssertEqual(credentials, [VerifiableCredential.Mock.sample, VerifiableCredential.Mock.diploma])
-    XCTAssertTrue(credentials.allSatisfy({ $0.progressionState == .accepted }))
+    XCTAssertEqual(credentials.map(\.id), [active.id, ghost.id, rejected.id])
+    XCTAssertTrue(credentials.allSatisfy { $0.progressionState == .accepted })
   }
 
   // MARK: - Deferred Credentials
@@ -390,24 +444,62 @@ final class CredentialRepositoryTest: XCTestCase {
     XCTAssertEqual(updated.progressionState, .invalid)
   }
 
-  func testGetAllDeferredCredentials() async throws {
-    _ = try await repository.create(deferredCredential: .Mock.sample)
-    _ = try await repository.create(deferredCredential: .Mock.sampleWithoutMetadata)
+  func testGetAllDeferredCredentials_returnsSortedByDisplayOrder() async throws {
+    let rejected = try await repository.create(
+      deferredCredential: makeDeferredCredential(transactionId: "rejected", progressionState: .invalid))
+    let inProgress = try await repository.create(
+      deferredCredential: makeDeferredCredential(transactionId: "in-progress", progressionState: .inProgress))
     _ = try await repository.create(verifiableCredential: .Mock.sample)
 
     let credentials = try await repository.getAllDeferredCredentials()
 
-    XCTAssertEqual(credentials, [DeferredCredential.Mock.sample, DeferredCredential.Mock.sampleWithoutMetadata])
+    XCTAssertEqual(credentials.map(\.id), [inProgress.id, rejected.id])
+    XCTAssertEqual(credentials.map(\.progressionState), [.inProgress, .invalid])
   }
 
   // MARK: Private
 
-  private var repository: CredentialRepositoryProcotol!
+  private let issuerUrl = URL(string: "https://issuer.domain.ch")!
+  private let formatMock = CredentialFormat.vcSdJwt
+
+  private var repository: CredentialRepositoryProtocol!
   private var keyManagerSpy: KeyManagerProtocolSpy!
 
-  private func createActivity(id: UUID = UUID(), createdAt: Date = Date(), imageHash: String? = nil) throws -> CredentialActivityEntity {
-    let actorDisplay = try ActivityActorDisplayEntity.Mock.create(imageHash: imageHash, createParent: false)
-    return try CredentialActivityEntity.Mock.create(id: id, createdAt: createdAt, actorDisplays: [actorDisplay], createParent: false)
+  private func makeVerifiableCredential(
+    id: UUID = UUID(),
+    issuerImage: Data = Data("issuer image".utf8),
+    logoData: Data = Data("logo data".utf8),
+    progressionState: VerifiableCredential.ProgressState = .accepted,
+    status: CredentialStatus = .valid)
+    -> VerifiableCredential
+  {
+    let bundleItemId = UUID()
+    let bundleItem = BundleItem(id: bundleItemId, payload: Data(), status: status)
+    return VerifiableCredential(
+      id: id,
+      progressionState: progressionState,
+      bundleItems: [bundleItem],
+      nextPresentableBundleItemId: bundleItemId,
+      format: formatMock,
+      issuerUrl: issuerUrl,
+      issuer: "issuer",
+      authentication: CredentialAuthentication(accessToken: "access-token"),
+      issuerDisplays: [CredentialIssuerDisplay(credentialId: id, image: issuerImage)],
+      displays: [CredentialDisplay(locale: "en-US", logoBase64: logoData)])
+  }
+
+  private func makeDeferredCredential(
+    transactionId: String,
+    progressionState: DeferredCredential.ProgressionState)
+    -> DeferredCredential
+  {
+    DeferredCredential(
+      transactionId: transactionId,
+      progressionState: progressionState,
+      endpoint: "https://endpoint",
+      format: formatMock,
+      issuerUrl: issuerUrl,
+      authentication: CredentialAuthentication(accessToken: "accessToken"))
   }
 
   private func XCTAssertCredentialNotFound(id: UUID) async {

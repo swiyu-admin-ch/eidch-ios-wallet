@@ -1,3 +1,4 @@
+import AVFoundation
 import BITCredential
 import BITCredentialShared
 import BITInvitation
@@ -27,13 +28,15 @@ struct ScanCameraView: View {
   var body: some View {
     ManagedNavigationStack {
       VStack {
-        scannerView()
+        Camera(
+          session: viewModel.cameraManager.session,
+          capturedObject: viewModel.cameraManager.capturedObject,
+          isLoading: viewModel.isLoading,
+          didMoveFocusArea: viewModel.didMoveFocusArea(to:))
       }
       .cameraPermission { state in
         Task {
-          if state == .authorized {
-            await viewModel.onAppear()
-          }
+          await viewModel.onCameraPermissionChange(state)
         }
       }
       .toolbar { toolbar }
@@ -77,17 +80,27 @@ struct ScanCameraView: View {
     guard let error = viewModel.currentError else { return nil }
     return String(reflecting: error)
   }
+}
 
-  private func scannerView() -> some View {
+// MARK: - Camera
+
+private struct Camera: View {
+
+  let session: AVCaptureSession
+  let capturedObject: AVMetadataMachineReadableCodeObject?
+  let isLoading: Bool
+  let didMoveFocusArea: (AVMetadataMachineReadableCodeObject) -> Void
+
+  var body: some View {
     ZStack {
-      CameraPreview(session: viewModel.cameraManager.session, object: viewModel.cameraManager.capturedObject, viewModel.didMoveFocusArea(to:))
+      CameraPreview(session: session, object: capturedObject, didMoveFocusArea)
         .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))
         .padding(.top, .x2)
         .ignoresSafeArea(edges: [.bottom])
         .accessibilityLabel(L10n.tkQrscannerScanningTitle)
     }
     .overlay {
-      if viewModel.isLoading {
+      if isLoading {
         Rectangle()
           .fill(.ultraThinMaterial)
           .clipShape(RoundedCorner(radius: .x6, corners: [.topLeft, .topRight]))

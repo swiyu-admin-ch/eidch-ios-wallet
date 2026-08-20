@@ -1,5 +1,4 @@
 import BITCore
-import BITNonCompliance
 import BITOpenID
 import Factory
 import Foundation
@@ -10,6 +9,8 @@ import Spyable
 @Spyable
 public protocol TrustInformationServiceProtocol {
   func fetch(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String?) async -> TrustInformation
+  func fetchVcSchemaTrust(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async -> VcSchemaTrust
+  func getEntityNames(for subjectDid: String?) async -> [String: String]?
 }
 
 // MARK: - TrustInformationService
@@ -30,26 +31,10 @@ struct TrustInformationService: TrustInformationServiceProtocol {
       .notProtected
     }
 
-    let actorCompliance = await fetchActorCompliance(for: subjectDid)
-
-    return TrustInformation(identity: identityTrust, vcSchema: vcSchemaTrust, actorCompliance: actorCompliance)
+    return TrustInformation(identity: identityTrust, vcSchema: vcSchemaTrust)
   }
 
-  // MARK: Private
-
-  @Injected(\.trustStatementService) private var trustStatementService
-  @Injected(\.nonComplianceRepository) private var nonComplianceRepository: NonComplianceRepositoryProtocol
-
-  private func fetchIdentityTrust(for subjectDid: String) async -> IdentityTrust {
-    do {
-      let statement = try await trustStatementService.fetchIdentity(for: subjectDid).resolvedPayload
-      return .trusted(statement)
-    } catch { // errors here should not stop flow of caller
-      return .untrusted
-    }
-  }
-
-  private func fetchVcSchemaTrust(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async -> VcSchemaTrust {
+  func fetchVcSchemaTrust(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async -> VcSchemaTrust {
     do {
       let statement = try await trustStatementService.fetchVcSchema(for: subjectDid, type: type, vcSchemaId: vcSchemaId)
       return statement != nil ? .trusted : .notProtected
@@ -60,9 +45,29 @@ struct TrustInformationService: TrustInformationServiceProtocol {
     }
   }
 
-  private func fetchActorCompliance(for subjectDid: String) async -> ActorCompliance {
-    // errors or empty should not display warning badge
-    guard let actor = try? await nonComplianceRepository.fetchNonCompliantActor(for: subjectDid) else { return .compliant }
-    return .notCompliant(LocalizedNonComplianceReason(values: actor.reason))
+  func getEntityNames(for kid: String?) async -> [String: String]? {
+    do {
+      let issuerDid = try didResolverHelper.getDid(from: kid)
+      let statement = try await trustStatementService.fetchIdentity(for: issuerDid).resolvedPayload
+      return statement.entityNames
+    } catch {
+      // ignore all errors
+      return nil
+    }
   }
+
+  // MARK: Private
+
+  @Injected(\.trustStatementService) private var trustStatementService
+  @Injected(\.didResolverHelper) private var didResolverHelper
+
+  private func fetchIdentityTrust(for subjectDid: String) async -> IdentityTrust {
+    do {
+      _ = try await trustStatementService.fetchIdentity(for: subjectDid).resolvedPayload
+      return .trusted
+    } catch { // errors here should not stop flow of caller
+      return .untrusted
+    }
+  }
+
 }

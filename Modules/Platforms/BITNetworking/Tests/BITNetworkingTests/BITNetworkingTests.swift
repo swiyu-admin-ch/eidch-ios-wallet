@@ -73,11 +73,20 @@ final class Tests: XCTestCase {
     }
   }
 
-  func test_sessionUsesSanitizedUserAgent() {
+  func test_sessionUsesDefaultUserAgent() {
     let session = NetworkContainer.shared.session()
     let userAgent = session.sessionConfiguration.headers["User-Agent"]
 
-    XCTAssertEqual(userAgent, "swiyu")
+    XCTAssertEqual(userAgent, "swiyuWallet")
+  }
+
+  func test_sessionUsesRegisteredUserAgent() {
+    NetworkContainer.shared.userAgent.register { "swiyuSandboxWallet" }
+
+    let session = NetworkContainer.shared.session()
+    let userAgent = session.sessionConfiguration.headers["User-Agent"]
+
+    XCTAssertEqual(userAgent, "swiyuSandboxWallet")
   }
 
 }

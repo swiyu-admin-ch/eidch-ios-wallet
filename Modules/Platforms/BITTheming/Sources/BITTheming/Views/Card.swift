@@ -33,7 +33,8 @@ public struct Card<Content: View>: View {
     }
     .frame(maxWidth: .infinity, minHeight: minHeightCard, idealHeight: idealHeightCard, maxHeight: maxHeightCard)
     .background(background.view)
-    .cornerRadius(.x9)
+    .cornerRadius(cornerRadius)
+    .contentShape(.accessibility, .rect(cornerRadius: cornerRadius))
     .if(((sizeCategory.isAccessibilityCategory && orientation.isPortrait) || orientation.isFlat) && cardAccessibilityMaxHeight != nil) {
       $0.frame(maxHeight: cardAccessibilityMaxHeight)
     }
@@ -61,6 +62,8 @@ public struct Card<Content: View>: View {
   private let minHeightCard: CGFloat = 95
   private let maxHeightCard: CGFloat = 355
   private let idealHeightCard: CGFloat = 355
+
+  private let cornerRadius = CGFloat.x9
 }
 
 extension Card where Content == Image {

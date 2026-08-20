@@ -7,7 +7,7 @@ import Foundation
 // MARK: - CompatibleCredentialViewModel
 
 @Observable
-class CompatibleCredentialViewModel {
+final class CompatibleCredentialViewModel {
 
   // MARK: Lifecycle
 

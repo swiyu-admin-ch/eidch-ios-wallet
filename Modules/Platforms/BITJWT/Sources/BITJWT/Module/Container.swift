@@ -25,6 +25,10 @@ extension Container {
     self { DidResolverHelper() }
   }
 
+  public var supportedSignatureValidationAlgorithms: Factory<[JWTAlgorithm]> {
+    self { [.ES256, .Ed25519] }
+  }
+
   // MARK: Internal
 
   var didResolverRepository: Factory<DidResolverRepositoryProtocol> {

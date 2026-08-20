@@ -26,8 +26,9 @@ final class RefreshAnyVerifiableCredentialUseCaseTests: XCTestCase {
       holderBindings: holderBindings,
       authorization: IssuanceAuthorization(accessToken: accessToken))
 
-    if case .credential(let credential) = execution.credentials {
-      XCTAssertEqual(credential.raw, anyCredential.raw)
+    if case .credential(let credentials) = execution.credentials {
+      XCTAssertEqual(credentials.count, 1)
+      XCTAssertEqual(credentials.first?.raw, anyCredential.raw)
     } else {
       XCTFail("Expected credential response")
     }
@@ -62,7 +63,7 @@ final class RefreshAnyVerifiableCredentialUseCaseTests: XCTestCase {
       }
 
       XCTAssertEqual(context.accessToken, self.refreshedAccessToken)
-      return .credential(self.anyCredential)
+      return .credential([self.anyCredential])
     }
 
     let execution = try await useCase(
@@ -71,7 +72,7 @@ final class RefreshAnyVerifiableCredentialUseCaseTests: XCTestCase {
       authorization: IssuanceAuthorization(accessToken: accessToken))
 
     XCTAssertEqual(repository.fetchOpenIdConfigurationFromCallsCount, 1)
-    XCTAssertEqual(repository.fetchOpenIdConfigurationFromReceivedIssuerURL?.absoluteString, metadataWrapper.credentialIssuerMetadata.credentialIssuer)
+    XCTAssertEqual(repository.fetchOpenIdConfigurationFromReceivedIssuerURL, metadataWrapper.credentialIssuerMetadata.credentialIssuer)
     XCTAssertEqual(repository.refreshAccessTokenFromRefreshTokenDpopKeyPairDpopNonceCallsCount, 1)
     XCTAssertEqual(repository.refreshAccessTokenFromRefreshTokenDpopKeyPairDpopNonceReceivedArguments?.url, openIdConfiguration.tokenEndpoint)
     XCTAssertEqual(repository.refreshAccessTokenFromRefreshTokenDpopKeyPairDpopNonceReceivedArguments?.refreshToken, accessToken.refreshToken)
@@ -103,7 +104,7 @@ final class RefreshAnyVerifiableCredentialUseCaseTests: XCTestCase {
   // MARK: Private
 
   private let anyCredential = AnyCredentialSpy()
-  private let metadataWrapper = CredentialIssuerMetadataWrapper.Mock.sampleChasseralIssuer01
+  private let metadataWrapper = CredentialIssuerMetadataWrapper.Mock.sample
   private let holderBindings = HolderBinding.Mock.softwareKey
   private let accessToken = AccessToken.Mock.sample
   private let refreshedAccessToken = AccessToken(
@@ -136,11 +137,11 @@ final class RefreshAnyVerifiableCredentialUseCaseTests: XCTestCase {
     Container.shared.anyFetchCredentialDispatcher.register { self.dispatcher }
     Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGenerator }
 
-    anyCredential.format = CredentialFormat.vcSdJwt.rawValue
+    anyCredential.format = .vcSdJwt
     anyCredential.raw = "refreshed-any-credential"
     anyCredential.vcSchemaId = "vcSchemaId"
     anyCredential.getClaimsJSONReturnValue = [:]
-    fetchAnyCredentialUseCase.executeForReturnValue = .credential(anyCredential)
+    fetchAnyCredentialUseCase.executeForReturnValue = .credential([anyCredential])
     repository.fetchNonceFromReturnValue = (nonce: nonce, dpopNonce: nil)
     repository.fetchOpenIdConfigurationFromReturnValue = openIdConfiguration
     repository.refreshAccessTokenFromRefreshTokenDpopKeyPairDpopNonceReturnValue = IssuanceAuthorization(accessToken: refreshedAccessToken)

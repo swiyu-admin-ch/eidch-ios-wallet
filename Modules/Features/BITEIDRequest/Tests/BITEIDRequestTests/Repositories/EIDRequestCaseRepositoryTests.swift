@@ -1,30 +1,32 @@
 import Factory
+import FactoryTesting
 import RealmSwift
-import XCTest
+import Testing
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 
-// swiftlint:disable implicitly_unwrapped_optional
+@Suite(.container)
+struct EIDRequestCaseRepositoryTests {
 
-final class EIDRequestCaseRepositoryTests: XCTestCase {
+  // MARK: Lifecycle
 
-  // MARK: Internal
-
-  override func setUp() {
+  init() {
     Container.shared.realmDataStoreConfiguration.register { Realm.Configuration(inMemoryIdentifier: "inMemory") }
     Container.shared.dataStore.reset()
     repository = EIDRequestCaseRepository()
   }
 
-  // MARK: - Metadata
+  // MARK: Internal
 
-  func testCreateEIDRequestCaseSuccess() async throws {
+  @Test
+  func createEIDRequestCaseSuccess() async throws {
     let eIDRequestCase = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
     let savedRequestCase = try await repository.get(id: eIDRequestCase.id)
-    XCTAssertEqual(eIDRequestCase, savedRequestCase)
+    #expect(eIDRequestCase == savedRequestCase)
   }
 
-  func testGetAllEIDRequestCaseSuccess() async throws {
+  @Test
+  func getAllEIDRequestCaseSuccess() async throws {
     _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
     _ = try await repository.create(eIDRequestCase: .Mock.sampleAVReady)
     _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueueNoOnlineSessionStart)
@@ -41,34 +43,34 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
       .Mock.sampleInQueue,
     ]
 
-    XCTAssertEqual(eIDRequestCases, sortedArray)
+    #expect(eIDRequestCases == sortedArray)
   }
 
-  func testUpdateEIDRequestCaseSuccess() async throws {
+  @Test
+  func updateEIDRequestCaseSuccess() async throws {
     var eIDRequestCase = try await repository.create(eIDRequestCase: .Mock.sampleAVReady)
-    eIDRequestCase.state = mockEIDRequestState
+    eIDRequestCase.state = EIDRequestState.Mock.sample
 
     let updatedRequestCase = try await repository.update(eIDRequestCase)
     let savedRequestCase = try await repository.get(id: eIDRequestCase.id)
 
-    XCTAssertEqual(updatedRequestCase, savedRequestCase)
-    XCTAssertEqual(eIDRequestCase, savedRequestCase)
+    #expect(updatedRequestCase == savedRequestCase)
+    #expect(eIDRequestCase == savedRequestCase)
   }
 
-  func testDeleteEIDRequestCaseSuccess() async throws {
+  @Test
+  func deleteEIDRequestCaseSuccess() async throws {
     let expired = try await repository.create(eIDRequestCase: .Mock.sampleExpired)
 
     try await repository.delete(expired.id)
 
-    do {
+    await #expect(throws: EIDRequestCaseRepositoryError.notFound) {
       _ = try await repository.get(id: expired.id)
-      XCTFail("An error was expected")
-    } catch {
-      XCTAssertEqual(error as? EIDRequestCaseRepositoryError, .notFound)
     }
   }
 
-  func testGetAllFiles_returnsAll() async throws {
+  @Test
+  func getAllFiles_returnsAll() async throws {
     let expectedFiles = EIDRequestCaseFile.Mock.sampleArray
     let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
 
@@ -76,54 +78,49 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
 
     let files = try await repository.getAllFiles(forRequestCaseId: eIDRequest.id)
 
-    XCTAssertEqual(expectedFiles.count, files.count)
+    #expect(expectedFiles.count == files.count)
   }
 
-  func testSaveFile() async throws {
-    let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
-
-    try await repository.save(file: EIDRequestCaseFile.Mock.sample, forRequestCaseId: eIDRequest.id)
-
-    let allFiles = try await repository.getAllFiles(forRequestCaseId: eIDRequest.id)
-    XCTAssertEqual(allFiles.count, 1)
-  }
-
-  func testSaveMultipleFileAtOnce() async throws {
+  @Test
+  func saveMultipleFileAtOnce() async throws {
     let expectedFiles = EIDRequestCaseFile.Mock.sampleArray
     let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
 
     try await repository.save(files: expectedFiles, forRequestCaseId: eIDRequest.id)
 
     let allFiles = try await repository.getAllFiles(forRequestCaseId: eIDRequest.id)
-    XCTAssertEqual(expectedFiles.count, allFiles.count)
+    #expect(expectedFiles.count == allFiles.count)
   }
 
-  func testDeleteAllFiles() async throws {
+  @Test
+  func deleteAllFiles() async throws {
     let expectedFiles = EIDRequestCaseFile.Mock.sampleArray
     let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
 
     try await repository.save(files: EIDRequestCaseFile.Mock.sampleArray, forRequestCaseId: eIDRequest.id)
 
     let allFiles = try await repository.getAllFiles(forRequestCaseId: eIDRequest.id)
-    XCTAssertEqual(expectedFiles.count, allFiles.count)
+    #expect(expectedFiles.count == allFiles.count)
 
     try await repository.deleteAllFiles(forRequestCaseId: eIDRequest.id)
 
     let files = try await repository.getAllFiles(forRequestCaseId: eIDRequest.id)
-    XCTAssertEqual(files.count, 0)
+    #expect(files.isEmpty)
   }
 
-  func testGetFilesByCategory() async throws {
+  @Test
+  func getFilesByCategory() async throws {
     let expectedFiles = EIDRequestCaseFile.Mock.sampleArray
     let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
 
     try await repository.save(files: EIDRequestCaseFile.Mock.sampleArray, forRequestCaseId: eIDRequest.id)
 
     let filteredFiles = try await repository.getFiles(forRequestCaseId: eIDRequest.id, matching: .documentScan)
-    XCTAssertEqual(expectedFiles.count, filteredFiles.count)
+    #expect(expectedFiles.count == filteredFiles.count)
   }
 
-  func testGetFilesByNameAndCategory() async throws {
+  @Test
+  func getFilesByNameAndCategory() async throws {
     let expectedFiles = EIDRequestCaseFile.Mock.sampleArray
     let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
 
@@ -131,33 +128,34 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
 
     let file = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample3.jpg", category: .documentScan)
 
-    XCTAssertEqual(file, expectedFiles.last)
+    #expect(file == expectedFiles.last)
   }
 
-  func testGetFilesByNameAndCategory_fileNotExisiting_throwsError() async throws {
+  @Test
+  func getFilesByNameAndCategory_fileNotExisiting_throwsError() async throws {
     let fileToSave = EIDRequestCaseFile.Mock.sample
     let eIDRequest = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
 
     try await repository.save(files: [fileToSave], forRequestCaseId: eIDRequest.id)
 
-    do {
+    await #expect(throws: EIDRequestCaseRepositoryError.notFound) {
       _ = try await repository.getFile(forRequestCaseId: eIDRequest.id, name: "sample3.jpg", category: .documentScan)
-    } catch {
-      XCTAssertEqual(error as? EIDRequestCaseRepositoryError, .notFound)
     }
   }
 
-  func testGetAllPushIds_success() async throws {
+  @Test
+  func getAllPushIds_success() async throws {
     _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueue)
     _ = try await repository.create(eIDRequestCase: .Mock.sampleAVReady)
     _ = try await repository.create(eIDRequestCase: .Mock.sampleInQueueNoOnlineSessionStart)
 
     let result = try await repository.getAllPushIds()
 
-    XCTAssertEqual(result.count, 3)
+    #expect(result.count == 3)
   }
 
-  func testSavePushId_repository() async throws {
+  @Test
+  func savePushId_repository() async throws {
     let mockPushId = "push_id"
     var mockRequestCase = EIDRequestCase.Mock.sampleInQueue
     mockRequestCase.pushId = mockPushId
@@ -167,11 +165,82 @@ final class EIDRequestCaseRepositoryTests: XCTestCase {
 
     let updateRequestCase = try await repository.get(id: mockRequestCase.id)
 
-    XCTAssertEqual(updateRequestCase.pushId, mockPushId)
+    #expect(updateRequestCase.pushId == mockPushId)
+  }
+
+  @Test
+  func savePairingId_success() async throws {
+    let mockPairingId = "pairing_id"
+    let mockRequestCase = EIDRequestCase.Mock.sampleAutoVerification
+
+    try await repository.create(eIDRequestCase: mockRequestCase)
+    try await repository.savePairingId(mockPairingId, forRequestCaseId: mockRequestCase.id)
+
+    let updateRequestCase = try await repository.get(id: mockRequestCase.id)
+
+    #expect(updateRequestCase.pairingIds.contains(mockPairingId))
+  }
+
+  @Test
+  func savePairingId_requestCaseNotFound_throwsError() async throws {
+    await #expect(throws: EIDRequestCaseRepositoryError.notFound) {
+      try await repository.savePairingId("pairing_id", forRequestCaseId: "unknownCaseId")
+    }
+  }
+
+  @Test
+  func getPairingIds_success() async throws {
+    let mockRequestCase = EIDRequestCase.Mock.sampleAutoVerification
+
+    try await repository.create(eIDRequestCase: mockRequestCase)
+    try await repository.savePairingId("pairing_id_1", forRequestCaseId: mockRequestCase.id)
+    try await repository.savePairingId("pairing_id_2", forRequestCaseId: mockRequestCase.id)
+
+    let pairingIds = try await repository.getPairingIds(forRequestCaseId: mockRequestCase.id)
+
+    #expect(pairingIds == ["pairing_id_1", "pairing_id_2"])
+  }
+
+  @Test
+  func getPairingIds_noPairingIds_returnsEmptyArray() async throws {
+    let mockRequestCase = EIDRequestCase.Mock.sampleAutoVerification
+
+    try await repository.create(eIDRequestCase: mockRequestCase)
+
+    let pairingIds = try await repository.getPairingIds(forRequestCaseId: mockRequestCase.id)
+
+    #expect(pairingIds.isEmpty)
+  }
+
+  @Test
+  func getPairingIds_requestCaseNotFound_throwsError() async throws {
+    await #expect(throws: EIDRequestCaseRepositoryError.notFound) {
+      _ = try await repository.getPairingIds(forRequestCaseId: "unknownCaseId")
+    }
+  }
+
+  @Test
+  func deletePairings_success() async throws {
+    let mockRequestCase = EIDRequestCase.Mock.sampleAutoVerification
+
+    try await repository.create(eIDRequestCase: mockRequestCase)
+    try await repository.savePairingId("pairing_id_1", forRequestCaseId: mockRequestCase.id)
+    try await repository.savePairingId("pairing_id_2", forRequestCaseId: mockRequestCase.id)
+
+    try await repository.deletePairings(for: mockRequestCase.id)
+
+    let pairingIds = try await repository.getPairingIds(forRequestCaseId: mockRequestCase.id)
+    #expect(pairingIds.isEmpty)
+  }
+
+  @Test
+  func deletePairings_requestCaseNotFound_throwsError() async throws {
+    await #expect(throws: EIDRequestCaseRepositoryError.notFound) {
+      try await repository.deletePairings(for: "unknownCaseId")
+    }
   }
 
   // MARK: Private
 
-  private var repository: EIDRequestCaseRepositoryProtocol!
-  private let mockEIDRequestState = EIDRequestState.Mock.sample
+  private let repository: EIDRequestCaseRepositoryProtocol
 }

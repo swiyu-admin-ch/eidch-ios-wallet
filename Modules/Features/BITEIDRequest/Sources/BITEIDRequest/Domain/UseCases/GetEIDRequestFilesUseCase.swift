@@ -18,14 +18,13 @@ struct GetEIDRequestCaseFilesUseCase: GetEIDRequestCaseFilesUseCaseProtocol {
   func execute(caseId: String) async throws -> [EIDRequestCaseFile] {
     let files = try await eIDRequestCaseRepository.getAllFiles(forRequestCaseId: caseId)
     let metadataBinaryFile = try generateMetadataBinary(files: files, caseId: caseId)
-    let allFiles = files + [metadataBinaryFile]
-    return allFiles.filter { allowedFiles.contains($0.fileName) }
+
+    return files + [metadataBinaryFile]
   }
 
   // MARK: Private
 
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository
-  @Injected(\.sidAllowedFiles) private var allowedFiles
 
   private func generateMetadataBinary(files: [EIDRequestCaseFile], caseId: String) throws -> EIDRequestCaseFile {
     let metadataJsonFiles = files.filter { $0.mime == .json && $0.fileName.hasPrefix("metadata-") }

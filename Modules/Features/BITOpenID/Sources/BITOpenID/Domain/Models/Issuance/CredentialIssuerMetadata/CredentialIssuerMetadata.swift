@@ -14,22 +14,24 @@ enum CredentialIssuerMetadataError: Error {
 
 // MARK: - CredentialIssuerMetadata
 
-public struct CredentialIssuerMetadata: Decodable {
+public struct CredentialIssuerMetadata: Decodable, Changeable {
 
   // MARK: Lifecycle
 
   init(
-    credentialIssuer: String,
+    credentialIssuer: URL,
+    identityTrustStatement: IdentityTrustStatement? = nil,
     credentialEndpoint: String,
     credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported],
     display: [Display]?,
     batchCredentialIssuance: BatchCredentialIssuance? = nil,
-    credentialRequestEncryption: CredentialRequestEncryption? = nil,
-    credentialResponseEncryption: CredentialResponseEncryption? = nil,
-    nonceEndpoint: URL? = nil,
+    credentialRequestEncryption: CredentialRequestEncryption,
+    credentialResponseEncryption: CredentialResponseEncryption,
+    nonceEndpoint: URL,
     deferredCredentialEndpoint: URL? = nil)
   {
     self.credentialIssuer = credentialIssuer
+    self.identityTrustStatement = identityTrustStatement
     self.credentialEndpoint = credentialEndpoint
     self.credentialConfigurationsSupported = credentialConfigurationsSupported
     self.display = display
@@ -43,26 +45,29 @@ public struct CredentialIssuerMetadata: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    let credentialIssuer = try container.decode(String.self, forKey: .credentialIssuer)
+    let credentialIssuer = try container.decode(URL.self, forKey: .credentialIssuer)
     let credentialEndpoint = try container.decode(String.self, forKey: .credentialEndpoint)
-    let display = try container.decode([Display].self, forKey: .display)
-    var nonceEndpoint: URL?
-    if let endpoint = try container.decodeIfPresent(URL.self, forKey: .nonceEndpoint) {
-      guard endpoint.isValidHttpUrl else {
-        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [CodingKeys.nonceEndpoint], debugDescription: "Nonce endpoint not a valid HTTP URL"))
-      }
-      nonceEndpoint = endpoint
+    let display = try container.decodeIfPresent([Display].self, forKey: .display)
+    let nonceEndpoint = try container.decode(URL.self, forKey: .nonceEndpoint)
+    guard nonceEndpoint.isValidHttpUrl else {
+      throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [CodingKeys.nonceEndpoint], debugDescription: "Nonce endpoint not a valid HTTP URL"))
     }
     let deferredCredentialEndpoint = try container.decodeIfPresent(URL.self, forKey: .deferredCredentialEndpoint)
     let batchCredentialIssuance = try container.decodeIfPresent(BatchCredentialIssuance.self, forKey: .batchCredentialIssuance)
-    let credentialRequestEncryption = try container.decodeIfPresent(CredentialRequestEncryption.self, forKey: .credentialRequestEncryption)
-    let credentialResponseEncryption = try container.decodeIfPresent(CredentialResponseEncryption.self, forKey: .credentialResponseEncryption)
+    let credentialRequestEncryption = try container.decode(CredentialRequestEncryption.self, forKey: .credentialRequestEncryption)
+    let credentialResponseEncryption = try container.decode(CredentialResponseEncryption.self, forKey: .credentialResponseEncryption)
+    let identityTrustStatement: IdentityTrustStatement? = if let idTSString = try container.decodeIfPresent(String.self, forKey: .credentialIssuerIdTS) {
+      try JWSDecoder().decode(IdentityTrustStatementJWT.self, from: Data(idTSString.utf8))
+    } else {
+      nil
+    }
 
     let decodedAnyCredentialConfigurationsSupported = try container.decode([String: CredentialConfigurationSupportedWrapper].self, forKey: .credentialConfigurationsSupported)
     let anyCredentialConfigurationsSupported = decodedAnyCredentialConfigurationsSupported.compactMapValues { $0.anyCredentialConfigurationSupported }
 
     self.init(
       credentialIssuer: credentialIssuer,
+      identityTrustStatement: identityTrustStatement,
       credentialEndpoint: credentialEndpoint,
       credentialConfigurationsSupported: anyCredentialConfigurationsSupported,
       display: display,
@@ -76,16 +81,18 @@ public struct CredentialIssuerMetadata: Decodable {
   // MARK: Public
 
   public let credentialEndpoint: String
-  public let credentialIssuer: String
-  public let display: [Display]?
-  public let deferredCredentialEndpoint: URL?
-  public let batchCredentialIssuance: BatchCredentialIssuance?
-  public let nonceEndpoint: URL?
+  public var credentialIssuer: URL
+  public var identityTrustStatement: IdentityTrustStatement?
+  public var display: [Display]?
+  public var deferredCredentialEndpoint: URL?
+  public var batchCredentialIssuance: BatchCredentialIssuance?
+  public var nonceEndpoint: URL
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
     case credentialIssuer = "credential_issuer"
+    case credentialIssuerIdTS = "credential_issuer_identity_trust_statement"
     case credentialEndpoint = "credential_endpoint"
     case credentialConfigurationsSupported = "credential_configurations_supported"
     case credentialRequestEncryption = "credential_request_encryption"
@@ -97,10 +104,10 @@ public struct CredentialIssuerMetadata: Decodable {
     case batchCredentialIssuance = "batch_credential_issuance"
   }
 
-  let credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported]
+  var credentialConfigurationsSupported: [String: any AnyCredentialConfigurationSupported]
   let preferredDisplay: Display?
-  let credentialRequestEncryption: CredentialRequestEncryption?
-  let credentialResponseEncryption: CredentialResponseEncryption?
+  var credentialRequestEncryption: CredentialRequestEncryption
+  var credentialResponseEncryption: CredentialResponseEncryption
 }
 
 // MARK: CredentialIssuerMetadata.BatchCredentialIssuance
@@ -117,14 +124,12 @@ extension CredentialIssuerMetadata {
     public init(from decoder: any Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       batchSize = try container.decode(Int.self, forKey: CodingKeys.batchSize)
-      guard Self.batchSizeRange.contains(batchSize) else { throw CredentialIssuerMetadataError.invalidBatchSize }
+      guard batchSize >= 10 else { throw CredentialIssuerMetadataError.invalidBatchSize }
     }
 
     enum CodingKeys: String, CodingKey {
       case batchSize = "batch_size"
     }
-
-    private static let batchSizeRange = 10...100
   }
 }
 
@@ -203,6 +208,11 @@ extension CredentialIssuerMetadata {
   public struct JwtProofType: Decodable, Equatable {
 
     // MARK: Lifecycle
+
+    init(supportedAlgorithms: [JWTAlgorithm], keyAttestationRequirements: KeyAttestationRequirements?) {
+      self.supportedAlgorithms = supportedAlgorithms
+      self.keyAttestationRequirements = keyAttestationRequirements
+    }
 
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -361,6 +371,14 @@ extension CredentialIssuerMetadata {
   public struct Logo: Codable, Equatable {
 
     // MARK: Lifecycle
+
+    init(
+      altText: String? = nil,
+      url: URL? = nil)
+    {
+      self.altText = altText
+      self.url = url
+    }
 
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)

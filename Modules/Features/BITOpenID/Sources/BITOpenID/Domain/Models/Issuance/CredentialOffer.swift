@@ -3,7 +3,7 @@ import Foundation
 // MARK: - CredentialOffer
 
 public struct CredentialOffer: Codable, Equatable {
-  public let issuer: String
+  public let issuer: URL
   public let grants: Grants
   public let credentialConfigurationIds: [String]
 

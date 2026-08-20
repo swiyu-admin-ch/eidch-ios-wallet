@@ -14,7 +14,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
     getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
     lockWalletUseCase = LockWalletUseCaseProtocolSpy()
     getLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
-    getLoginAttemptCounterUseCase.executeKindReturnValue = 0
+    getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
 
     Container.shared.getUniquePassphraseUseCase.register { @MainActor in self.getUniquePassphraseUseCase }
     Container.shared.lockWalletUseCase.register { @MainActor in self.lockWalletUseCase }
@@ -43,7 +43,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
   func testInitialState_whenAttemptsAreGreaterThanZero() {
     let router = ChangePinRouterMock()
     let attempts = 4
-    getLoginAttemptCounterUseCase.executeKindReturnValue = attempts
+    getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attempts
 
     let viewModel = CurrentPinCodeViewModel(router: router)
 
@@ -57,7 +57,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
   func testCurrentPinCode_success() {
     let router = ChangePinRouterMock()
 
-    getUniquePassphraseUseCase.executeFromReturnValue = Data()
+    getUniquePassphraseUseCase.callAsFunctionFromReturnValue = Data()
     let viewModel = CurrentPinCodeViewModel(router: router)
 
     viewModel.submit()
@@ -76,7 +76,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
   func testCurrentPinCode_error() {
     let router = ChangePinRouterMock()
 
-    getUniquePassphraseUseCase.executeFromThrowableError = PinCodeError.wrongPinCode
+    getUniquePassphraseUseCase.callAsFunctionFromThrowableError = PinCodeError.wrongPinCode
     let viewModel = CurrentPinCodeViewModel(router: router)
 
     viewModel.submit()
@@ -96,7 +96,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
     let logoutExpectation = XCTNSNotificationExpectation(name: .logout)
     let router = ChangePinRouterMock()
 
-    getUniquePassphraseUseCase.executeFromThrowableError = PinCodeError.wrongPinCode
+    getUniquePassphraseUseCase.callAsFunctionFromThrowableError = PinCodeError.wrongPinCode
 
     Container.shared.attemptsLimit.register { 2 }
     let viewModel = CurrentPinCodeViewModel(router: router)
@@ -114,7 +114,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.router.context.uniquePassphrase)
     XCTAssertNil(viewModel.router.context.newPinCode)
     XCTAssertFalse(router.newPinCodeCalled)
-    XCTAssertTrue(lockWalletUseCase.executeCalled)
+    XCTAssertTrue(lockWalletUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -122,7 +122,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
     let logoutExpectation = XCTNSNotificationExpectation(name: .logout)
     let router = ChangePinRouterMock()
 
-    getUniquePassphraseUseCase.executeFromThrowableError = PinCodeError.wrongPinCode
+    getUniquePassphraseUseCase.callAsFunctionFromThrowableError = PinCodeError.wrongPinCode
 
     Container.shared.attemptsLimit.register { 2 }
     let viewModel = CurrentPinCodeViewModel(router: router)
@@ -140,7 +140,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.router.context.uniquePassphrase)
     XCTAssertNil(viewModel.router.context.newPinCode)
     XCTAssertFalse(router.newPinCodeCalled)
-    XCTAssertTrue(lockWalletUseCase.executeCalled)
+    XCTAssertTrue(lockWalletUseCase.callAsFunctionCalled)
 
     viewModel.onAppear()
 

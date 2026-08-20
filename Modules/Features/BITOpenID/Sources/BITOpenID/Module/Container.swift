@@ -18,10 +18,6 @@ extension Container {
     self { PresentationRequestRepository() }
   }
 
-  public var fetchMetadataUseCase: Factory<FetchMetadataUseCaseProtocol> {
-    self { FetchMetadataUseCase() }
-  }
-
   public var fetchAnyVerifiableCredentialUseCase: Factory<FetchAnyVerifiableCredentialUseCaseProtocol> {
     self { FetchAnyVerifiableCredentialUseCase() }
   }
@@ -40,6 +36,10 @@ extension Container {
 
   public var presentationRequestService: Factory<PresentationRequestServiceProtocol> {
     self { PresentationRequestService() }
+  }
+
+  public var requestObjectValidator: Factory<RequestObjectValidatorProtocol> {
+    self { RequestObjectValidator() }
   }
 
   public var preferredKeyBindingAlgorithmsOrdered: Factory<[JWTAlgorithm]> {
@@ -78,16 +78,28 @@ extension Container {
     self { false }
   }
 
-  public var deferredCredentialRequestBodyGenerator: Factory<DeferredCredentialRequestBodyGeneratorProtocol> {
-    self { DeferredCredentialRequestBodyGenerator() }
+  public var isActorIdentityValidationEnabled: Factory<Bool> {
+    self { false }
+  }
+
+  public var actorIdentityValidator: Factory<ActorIdentityValidatorProtocol> {
+    self { ActorIdentityValidator() }
   }
 
   public var credentialEncryptionContextGenerator: Factory<CredentialEncryptionContextGeneratorProtocol> {
     self { CredentialEncryptionContextGenerator() }
   }
 
+  public var authorizationResponseEncryptionGenerator: Factory<AuthorizationResponseEncryptionGeneratorProtocol> {
+    self { AuthorizationResponseEncryptionGenerator() }
+  }
+
   public var dpopGenerator: Factory<DPoPGeneratorProtocol> {
     self { DPoPGenerator() }
+  }
+
+  public var jwkGenerator: Factory<JWKGeneratorProtocol> {
+    self { JWKGenerator() }
   }
 
   // MARK: Internal
@@ -112,14 +124,6 @@ extension Container {
     self { PresentationRequestUrlParser() }
   }
 
-  var requestObjectValidator: Factory<RequestObjectValidatorProtocol> {
-    self { RequestObjectValidator() }
-  }
-
-  var requestObjectEncryptionValidator: Factory<RequestObjectEncryptionValidatorProtocol> {
-    self { RequestObjectEncryptionValidator() }
-  }
-
   var jsonSchemaValidator: Factory<JsonSchemaValidatorProtocol> {
     self { JsonSchemaValidator() }
   }
@@ -130,14 +134,6 @@ extension Container {
 
   var credentialResponseEncryptionKeyRepository: Factory<CredentialResponseEncryptionKeyRepositoryProtocol> {
     self { CredentialResponseEncryptionKeyRepository() }
-  }
-
-  var credentialEncryptionValidator: Factory<CredentialEncryptionValidatorProtocol> {
-    self { CredentialEncryptionValidator() }
-  }
-
-  var credentialRequestBodyGenerator: Factory<CredentialRequestBodyGeneratorProtocol> {
-    self { CredentialRequestBodyGenerator() }
   }
 
   var sdJwtBatchCredentialConsistencyValidator: Factory<SdJwtBatchCredentialConsistencyValidatorProtocol> {
@@ -168,24 +164,30 @@ extension Container {
 
   var anyFetchCredentialDispatcher: Factory<[CredentialFormat: FetchAnyCredentialUseCaseProtocol]> {
     self {
-      [
-        CredentialFormat.vcSdJwt: FetchVcSdJwtCredentialUseCase(),
+      let fetchVcSdJwtCredentialUseCase = FetchVcSdJwtCredentialUseCase()
+      return [
+        CredentialFormat.vcSdJwt: fetchVcSdJwtCredentialUseCase,
+        CredentialFormat.dcSdJwt: fetchVcSdJwtCredentialUseCase,
       ]
     }
   }
 
   var anyVpTokenGeneratorDispatcher: Factory<[CredentialFormat: AnyVpTokenGeneratorProtocol]> {
     self {
-      [
-        CredentialFormat.vcSdJwt: VcSdJwtVpTokenGenerator(),
+      let vcSdJwtVpTokenGenerator = VcSdJwtVpTokenGenerator()
+      return [
+        CredentialFormat.vcSdJwt: vcSdJwtVpTokenGenerator,
+        CredentialFormat.dcSdJwt: vcSdJwtVpTokenGenerator,
       ]
     }
   }
 
   var fetchVcMetadataForAnyCredentialDispatcher: Factory<[CredentialFormat: FetchVcMetadataForCredentialUseCaseProtocol]> {
     self {
-      [
-        CredentialFormat.vcSdJwt: FetchVcMetadataForVcSdJwtUseCase(),
+      let fetchVcMetadataForVcSdJwtUseCase = FetchVcMetadataForVcSdJwtUseCase()
+      return [
+        CredentialFormat.vcSdJwt: fetchVcMetadataForVcSdJwtUseCase,
+        CredentialFormat.dcSdJwt: fetchVcMetadataForVcSdJwtUseCase,
       ]
     }
   }
@@ -238,8 +240,17 @@ extension Container {
   public var trustRegistryMapping: Factory<[String: String]> {
     self {
       [
-        self.baseRegistryInt(): self.trustRegistryInt(),
         self.baseRegistry(): self.trustRegistry(),
+        self.baseRegistryInt(): self.trustRegistryInt(),
+      ]
+    }
+  }
+
+  public var statusRegistryMapping: Factory<[String: String]> {
+    self {
+      [
+        self.baseRegistry(): self.statusRegistry(),
+        self.baseRegistryInt(): self.statusRegistryInt(),
       ]
     }
   }
@@ -278,10 +289,22 @@ extension Container {
     self { TrustRegistryUrlMapper() }
   }
 
+  public var trustStatementValidator: Factory<TrustStatementValidatorProtocol> {
+    self { TrustStatementValidator() }
+  }
+
+  public var validateVerificationAuthorizationTrustStatementUseCase: Factory<ValidateVerificationAuthorizationTrustStatementUseCaseProtocol> {
+    self { ValidateVerificationAuthorizationTrustStatementUseCase() }
+  }
+
   // MARK: Internal
 
-  var trustStatementValidator: Factory<TrustStatementValidatorProtocol> {
-    self { TrustStatementValidator() }
+  var trustStatementV1Validator: Factory<TrustStatementV1ValidatorProtocol> {
+    self { TrustStatementV1Validator() }
+  }
+
+  var protectedVerificationClaims: Factory<[String]> {
+    self { ["personal_administrative_number"] }
   }
 
   // MARK: Private
@@ -294,12 +317,20 @@ extension Container {
     self { "trust-reg.trust-infra.swiyu-int.admin.ch" }
   }
 
+  private var statusRegistryInt: Factory<String> {
+    self { "status-reg.trust-infra.swiyu-int.admin.ch" }
+  }
+
   private var baseRegistry: Factory<String> {
     self { "identifier-reg.trust-infra.swiyu.admin.ch" }
   }
 
   private var trustRegistry: Factory<String> {
     self { "trust-reg.trust-infra.swiyu.admin.ch" }
+  }
+
+  private var statusRegistry: Factory<String> {
+    self { "status-reg.trust-infra.swiyu.admin.ch" }
   }
 
   private var trustRegistryDidIntProd: Factory<String> {

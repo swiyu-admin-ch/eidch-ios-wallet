@@ -77,18 +77,21 @@ extension EIDRequestStatus {
   }
 
   public struct TargetWallet: Decodable, Equatable {
+
     public struct PairedWallet: Decodable, Equatable {
 
       // MARK: Public
 
       public let pairedAt: Date
       public var collectingAt: Date? = nil
+      public let walletPairingId: String
 
       // MARK: Private
 
       private enum CodingKeys: String, CodingKey {
         case pairedAt = "timestampPairing"
         case collectingAt = "timestampCollecting"
+        case walletPairingId
       }
     }
 

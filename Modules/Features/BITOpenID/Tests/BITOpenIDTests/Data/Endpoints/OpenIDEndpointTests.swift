@@ -62,14 +62,14 @@ final class OpenIDEndpointTests: XCTestCase {
   func testMetadataHeaders() {
     let endpoint = OpenIDEndpoint.metadata(fromIssuerUrl: urlMock)
 
-    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
+    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt")
     XCTAssertEqual(endpoint.headers?["Accept-Language"], "de-CH, fr-CH, it-CH, en, rm")
   }
 
   func testOpenIdConfigurationHeaders() {
     let endpoint = OpenIDEndpoint.openIdConfiguration(fromIssuerUrl: urlMock)
 
-    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt, application/json")
+    XCTAssertEqual(endpoint.headers?["accept"], "application/jwt")
   }
 
   func testAccessToken() {
@@ -95,7 +95,7 @@ final class OpenIDEndpointTests: XCTestCase {
   func testCredential() {
     let token = AccessToken.Mock.sample
 
-    let endpoint = URL(target: OpenIDEndpoint.credential(url: urlMock, body: .json(.Mock.sample), accessToken: token, dpopProof: nil))
+    let endpoint = URL(target: OpenIDEndpoint.credential(url: urlMock, jwe: "token", accessToken: token, dpopProof: nil))
 
     XCTAssertEqual(urlMock, endpoint)
   }
@@ -112,21 +112,10 @@ final class OpenIDEndpointTests: XCTestCase {
     XCTAssertEqual(urlMock, endpoint)
   }
 
-  func testCredentialHeaders_withJSONBody() {
+  func testCredentialHeaders() {
     let token = AccessToken.Mock.sample
 
-    let endpoint = OpenIDEndpoint.credential(url: urlMock, body: .json(.Mock.sample), accessToken: token, dpopProof: nil)
-
-    XCTAssertEqual(endpoint.headers?["SWIYU-API-Version"], "2")
-    XCTAssertEqual(endpoint.headers?["authorization"], "bearer \(token.accessToken)")
-    XCTAssertEqual(endpoint.headers?["Content-Type"], "application/json")
-    XCTAssertEqual(endpoint.headers?["accept"], "application/json, application/jwt")
-  }
-
-  func testCredentialHeaders_withJweBody() {
-    let token = AccessToken.Mock.sample
-
-    let endpoint = OpenIDEndpoint.credential(url: urlMock, body: .jwe("token"), accessToken: token, dpopProof: nil)
+    let endpoint = OpenIDEndpoint.credential(url: urlMock, jwe: "token", accessToken: token, dpopProof: nil)
 
     XCTAssertEqual(endpoint.headers?["SWIYU-API-Version"], "2")
     XCTAssertEqual(endpoint.headers?["authorization"], "bearer \(token.accessToken)")
@@ -137,38 +126,18 @@ final class OpenIDEndpointTests: XCTestCase {
   func testCredentialHeaders_withDPoPTokenAndProof() {
     let token = AccessToken(accessToken: "accessToken", tokenType: .dpop)
 
-    let endpoint = OpenIDEndpoint.credential(url: urlMock, body: .json(.Mock.sample), accessToken: token, dpopProof: "proof")
+    let endpoint = OpenIDEndpoint.credential(url: urlMock, jwe: "token", accessToken: token, dpopProof: "proof")
 
     XCTAssertEqual(endpoint.headers?["authorization"], "dpop \(token.accessToken)")
     XCTAssertEqual(endpoint.headers?["DPoP"], "proof")
   }
 
-  func testDeferredCredentialHeaders_withJSONBody() {
+  func testDeferredCredentialHeaders() {
     let token = AccessToken.Mock.sample
-    let body = DeferredCredentialRequestBody.json(
-      DeferredCredentialRequest(
-        transactionId: "transactionId",
-        credentialResponseEncryption: nil))
 
     let endpoint = OpenIDEndpoint.deferredCredential(
       url: urlMock,
-      body: body,
-      accessToken: token,
-      dpopProof: nil)
-
-    XCTAssertEqual(endpoint.headers?["SWIYU-API-Version"], "2")
-    XCTAssertEqual(endpoint.headers?["authorization"], "bearer \(token.accessToken)")
-    XCTAssertEqual(endpoint.headers?["Content-Type"], "application/json")
-    XCTAssertEqual(endpoint.headers?["accept"], "application/json, application/jwt")
-  }
-
-  func testDeferredCredentialHeaders_withJweBody() {
-    let token = AccessToken.Mock.sample
-    let body = DeferredCredentialRequestBody.jwe("token")
-
-    let endpoint = OpenIDEndpoint.deferredCredential(
-      url: urlMock,
-      body: body,
+      jwe: "token",
       accessToken: token,
       dpopProof: nil)
 
@@ -180,11 +149,10 @@ final class OpenIDEndpointTests: XCTestCase {
 
   func testDeferredCredentialHeaders_withDPoPTokenAndProof() {
     let token = AccessToken(accessToken: "accessToken", tokenType: .dpop)
-    let body = DeferredCredentialRequestBody.jwe("token")
 
     let endpoint = OpenIDEndpoint.deferredCredential(
       url: urlMock,
-      body: body,
+      jwe: "token",
       accessToken: token,
       dpopProof: "proof")
 

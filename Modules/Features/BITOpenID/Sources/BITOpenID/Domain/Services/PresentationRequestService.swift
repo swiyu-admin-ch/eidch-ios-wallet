@@ -8,7 +8,7 @@ import Spyable
 @Spyable
 public protocol PresentationRequestServiceProtocol {
   func fetch(from url: URL) async throws -> RequestObjectJWS
-  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws
+  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse?
 }
 
 // MARK: - PresentationRequestService
@@ -21,14 +21,16 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     do {
       let requestURL = try urlParser.parse(url)
       let jws = try await repository.fetch(from: requestURL.url)
+
       try await validate(jws, for: requestURL)
+
       return jws
     } catch {
       throw mapError(error)
     }
   }
 
-  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws {
+  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
     try await repository.decline(url: url, with: error)
   }
 
@@ -41,7 +43,7 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
   private func validate(_ jws: RequestObjectJWS, for url: PresentationRequestUrl) async throws {
     do {
       try validate(jws.payload, for: url)
-      try await requestObjectValidator.validate(jws)
+      try await requestObjectValidator.validate(jws, transport: .network)
     } catch {
       throw mapValidationError(error, for: jws.payload)
     }
@@ -49,15 +51,16 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
 
   private func validate(_ requestObject: RequestObject, for url: PresentationRequestUrl) throws {
     if case .openID4VP(_, let clientId) = url {
-      guard clientId.normalizedDid() == requestObject.clientId.normalizedDid() else {
+      let urlIdentifier = try ClientIdentifier(rawClientId: clientId)
+      guard urlIdentifier == requestObject.clientIdentifier else {
         throw PresentationRequestValidationError.invalidClientId
       }
     }
   }
 
-  private func mapError(_ error: Error) -> PresentationRequestServiceError {
+  private func mapError(_ error: Error) -> PresentationRequestError {
     switch error {
-    case let error as PresentationRequestServiceError:
+    case let error as PresentationRequestError:
       error
     case PresentationRequestUrlParserError.invalidRequestUrl:
       .invalidRequestUrl
@@ -68,31 +71,16 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     }
   }
 
-  private func mapRepositoryError(_ error: PresentationRequestRepositoryError) -> PresentationRequestServiceError? {
+  private func mapRepositoryError(_ error: PresentationRequestRepositoryError) -> PresentationRequestError? {
     switch error {
     case .presentationRequestExpired: .expired
     case .presentationRequestNotFound: .presentationRequestNotFound
     }
   }
 
-  private func mapValidationError(_ error: Error, for requestObject: RequestObject) -> PresentationRequestServiceError {
-    switch error {
-    case RequestObjectValidationError.transactionDataNotSupported:
-      .transactionDataNotSupported(responseURL: requestObject.responseUri, responseError: .invalidRequest)
-    default:
-      .invalid(responseURL: requestObject.responseUri, responseError: .invalidRequest)
-    }
+  private func mapValidationError(_ error: Error, for requestObject: RequestObject) -> PresentationRequestError {
+    PresentationRequestError(validationError: error, responseURL: requestObject.responseUri)
   }
-}
-
-// MARK: - PresentationRequestServiceError
-
-public enum PresentationRequestServiceError: Error, Equatable {
-  case invalidRequestUrl
-  case expired
-  case presentationRequestNotFound
-  case invalid(responseURL: URL?, responseError: PresentationErrorRequestBody.Code)
-  case transactionDataNotSupported(responseURL: URL?, responseError: PresentationErrorRequestBody.Code)
 }
 
 // MARK: - PresentationRequestValidationError

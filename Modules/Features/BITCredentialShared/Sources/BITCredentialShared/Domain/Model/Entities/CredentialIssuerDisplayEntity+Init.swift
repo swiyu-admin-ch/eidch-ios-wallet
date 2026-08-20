@@ -1,3 +1,4 @@
+import BITCrypto
 import BITEntities
 
 extension CredentialIssuerDisplayEntity {
@@ -15,7 +16,8 @@ extension CredentialIssuerDisplayEntity {
   public func setValues(from issuer: CredentialIssuerDisplay) {
     locale = issuer.locale
     name = issuer.name
-    image = issuer.image
+    imageHash = ImageHasher.hash(from: issuer.image)
+    image = nil
   }
 
 }

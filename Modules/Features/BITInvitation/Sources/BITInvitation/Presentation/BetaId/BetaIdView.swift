@@ -29,12 +29,7 @@ struct BetaIdView: View {
 
   @ToolbarContentBuilder
   private var toolbar: some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: { dismiss() }, label: {
-        ThemingAssets.close.swiftUIImage
-      })
-      .accessibilityLabel(L10n.tkGlobalClose)
-    }
+    CloseButtonToolbar(action: { dismiss() })
   }
 
   private func openBetaIdLink() {

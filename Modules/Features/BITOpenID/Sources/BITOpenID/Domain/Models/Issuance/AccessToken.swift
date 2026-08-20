@@ -40,7 +40,7 @@ public struct AccessToken: Codable, Equatable {
 
   // MARK: Public
 
-  public enum TokenType: String, Codable, Hashable {
+  public enum TokenType: String, Codable, Hashable, Equatable {
     case bearer
     case dpop
   }

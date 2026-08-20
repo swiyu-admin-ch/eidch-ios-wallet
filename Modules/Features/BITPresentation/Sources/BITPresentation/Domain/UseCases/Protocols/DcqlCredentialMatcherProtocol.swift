@@ -6,6 +6,6 @@ import Spyable
 @Spyable
 public protocol DcqlCredentialMatcherProtocol {
 
-  func match(credentials: [VerifiableCredential], with dcqlQuery: DcqlQuery) async throws -> [CompatibleCredential]
+  func match(credentials: [VerifiableCredential], with dcqlQuery: Heidi_dcqlDcqlQuery) async throws -> [CompatibleCredential]
 
 }

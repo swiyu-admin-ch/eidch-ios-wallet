@@ -4,4 +4,6 @@ targetTemplates:
       path: ../../../swiyu/swiyu.entitlements
       properties:
         com.apple.developer.nfc.readersession.formats: ["TAG"]
+        com.apple.security.application-groups:
+          - $(APP_GROUP_IDENTIFIER)
         aps-environment: $(APS_ENVIRONMENT)

@@ -1,3 +1,4 @@
+import BITCrypto
 import BITJWT
 import BITNetworking
 import Factory
@@ -21,20 +22,44 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
     }
   }
 
-  func submit(authorizationResponse: AuthorizationResponseBody, to url: URL) async throws {
-    try await networkService.request(PresentationEndpoint.submission(url: url, authorizationResponse: authorizationResponse))
+  func submit(authorizationResponse: AuthorizationResponse, to url: URL, encryption: AuthorizationResponseEncryption) async throws -> PresentationResponse? {
+    let data = try JSONSerialization.data(withJSONObject: authorizationResponse.asDictionary())
+    let jwe = try jweEncrypter.encrypt(
+      data: data,
+      publicKey: encryption.jwk,
+      encryptionAlgorithm: encryption.algorithm,
+      compressionAlgorithm: nil)
+
+    let response = try await networkService.request(PresentationEndpoint.submission(url: url, jwe: jwe))
+    return try decodePresentationResponse(response)
   }
 
-  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws {
+  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
     let presentationErrorRequestBody = PresentationErrorRequestBody(error: error)
-    try await networkService.request(PresentationEndpoint.errorSubmission(url: url, presentationErrorBody: presentationErrorRequestBody))
+    let response = try await networkService.request(PresentationEndpoint.errorSubmission(url: url, presentationErrorBody: presentationErrorRequestBody))
+    return try decodePresentationResponse(response)
   }
 
   // MARK: Private
 
-  @Injected(\NetworkContainer.service) private var networkService: NetworkService
-  @Injected(\NetworkContainer.decoder) private var decoder: JSONDecoder
-  @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
+  @Injected(\NetworkContainer.service) private var networkService
+  @Injected(\NetworkContainer.decoder) private var decoder
+  @Injected(\.jwsDecoder) private var jwsDecoder
+  @Injected(\.jweEncrypter) private var jweEncrypter
+
+  private func decodePresentationResponse(_ response: Response) throws -> PresentationResponse? {
+    guard response.statusCode == 200, !response.data.isEmpty else {
+      return nil
+    }
+
+    do {
+      return try decoder.decode(PresentationResponse.self, from: response.data)
+    } catch let error as PresentationResponseValidationError {
+      throw error
+    } catch {
+      return nil
+    }
+  }
 }
 
 // MARK: - PresentationRequestRepositoryError

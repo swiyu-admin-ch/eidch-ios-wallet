@@ -1,61 +1,64 @@
 import Factory
+import FactoryTesting
 import Foundation
-import JsonSchemaValidator
-import XCTest
+import Testing
 @testable import BITOpenID
-@testable import BITSdJWT
-@testable import BITTestingCore
 
-final class VcSdJwtSchemaValidatorTests: XCTestCase {
+// MARK: - VcSdJwtSchemaValidatorTests
+
+@Suite(.container)
+struct VcSdJwtSchemaValidatorTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.jsonSchemaValidator.register { [jsonSchemaValidatorSpy] in jsonSchemaValidatorSpy }
+    jsonSchemaValidatorSpy.validateJsonWithReturnValue = true
+    jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = true
+
+    validator = VcSdJwtSchemaValidator()
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    registerMocks()
-    validator = VcSdJwtSchemaValidator()
-    success()
-  }
-
-  func testValidate_argumentsPassed() throws {
+  @Test
+  func validate_argumentsPassed() throws {
     _ = try validator.validate(schema: schemaCredential)
 
-    XCTAssertEqual(jsonSchemaValidatorSpy.validateJsonObjectWithReceivedInvocations.count, 2, "Expected two schema validations to be performed")
+    #expect(jsonSchemaValidatorSpy.validateJsonObjectWithReceivedInvocations.count == 2, "Expected two schema validations to be performed")
   }
 
-  func testValidate_schemaValidationPasses_returnsTrue() throws {
-    XCTAssertTrue(try validator.validate(schema: schemaCredential))
+  @Test
+  func validate_schemaValidationPasses_returnsTrue() throws {
+    #expect(try validator.validate(schema: schemaCredential))
   }
 
-  func testValidate_schemaConformanceFails_returnsFalse() throws {
+  @Test
+  func validate_schemaConformanceFails_returnsFalse() throws {
     jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = false
 
-    XCTAssertFalse(try validator.validate(schema: schemaCredential))
+    #expect(try !validator.validate(schema: schemaCredential))
   }
 
-  func testValidate_schemaValidationFails_returnsFalse() throws {
+  @Test
+  func validate_schemaValidationSucceeds_returnsTrue() throws {
     jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = true
 
-    XCTAssertTrue(try validator.validate(schema: schemaCredential))
+    #expect(try validator.validate(schema: schemaCredential))
+  }
+
+  @Test
+  func validate_schemaWithRegex_rejectedBeforeValidation() throws {
+    #expect(try !validator.validate(schema: schemaWithRegex))
+    #expect(jsonSchemaValidatorSpy.validateJsonObjectWithReceivedInvocations.isEmpty, "Schemas using regular expressions must be rejected before any validation runs")
   }
 
   // MARK: Private
 
-  private var validator = VcSdJwtSchemaValidator()
+  private let validator: VcSdJwtSchemaValidator
 
   private let schemaCredential = String.Mock.schemaCredential
+  private let schemaWithRegex = String.Mock.schemaWithRegex
 
-  private var jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
-
-  private func registerMocks() {
-    jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
-
-    Container.shared.jsonSchemaValidator.register { self.jsonSchemaValidatorSpy }
-  }
-
-  private func success() {
-    jsonSchemaValidatorSpy.validateJsonWithReturnValue = true
-    jsonSchemaValidatorSpy.validateJsonObjectWithReturnValue = true
-  }
+  private let jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
 }

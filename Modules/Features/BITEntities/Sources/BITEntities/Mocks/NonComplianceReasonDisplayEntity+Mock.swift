@@ -1,6 +1,5 @@
 #if DEBUG
 import Foundation
-import RealmSwift
 @testable import BITCore
 
 extension NonComplianceReasonDisplayEntity: Mockable {

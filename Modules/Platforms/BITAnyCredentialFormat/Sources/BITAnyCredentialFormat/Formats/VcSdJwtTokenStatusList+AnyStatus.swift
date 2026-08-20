@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - VcSdJwtTokenStatusList + AnyStatus
 
-extension VcSdJwtTokenStatusList: AnyStatus {
+extension VcSdJwtTokenStatus: AnyStatus {
 
   public var type: AnyStatusType {
     AnyStatusType.tokenStatusList

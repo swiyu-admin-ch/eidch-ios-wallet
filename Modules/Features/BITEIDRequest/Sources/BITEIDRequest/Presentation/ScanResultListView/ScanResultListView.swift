@@ -34,42 +34,48 @@ struct ScanResultListView: View {
   private let maxImageHeight: CGFloat = 120
   private let expendButtonSize = CGFloat.x8
 
+  @ViewBuilder
   private func entryView(_ entry: ScanResultEntryType) -> some View {
-    VStack(alignment: .leading, spacing: 0) {
-      switch entry {
-      case .image(let image):
-        KeyValueCustomCell(key: image.key) {
-          VStack(spacing: .x2) {
-            imageView(for: image)
-          }
-        }
+    switch entry {
+    case .image(let image):
+      imageEntryView(image, isFirstScan: entry == entries.first)
+
+    case .text(let key, let value):
+      KeyValueCell(key: key, value: value)
+        .padding(.trailing, .x4)
+        .frame(minHeight: minHeight)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.trailing, .x2)
-      case .text(let key, let value):
-        KeyValueCell(key: key, value: value)
-          .padding(.trailing, .x4)
-          .frame(minHeight: minHeight)
-          .frame(maxWidth: .infinity, alignment: .leading)
-      }
     }
-    .accessibilityElement(children: .combine)
-    .if(entry == entries.first) { $0.accessibilityPriorityFocus() }
   }
 
-  private func imageView(for image: ScanResultEntryImage) -> some View {
-    Image(data: image.value)?
-      .resizable()
-      .aspectRatio(contentMode: .fit)
-      .clipShape(RoundedCorner(radius: .x3))
-      .frame(
-        maxWidth: resizeImages ? maxImageWidth : nil,
-        minHeight: resizeImages ? minHeight : nil,
-        maxHeight: resizeImages ? maxImageHeight : nil,
-        alignment: resizeImages ? .leading : .center)
-      .overlay(alignment: .bottomTrailing) {
-        imageOverviewButton(for: image)
-      }
-      .accessibilityLabel(image.accessibilityLabel)
+  private func imageEntryView(_ image: ScanResultEntryImage, isFirstScan: Bool) -> some View {
+    let axLabel = [
+      image.accessibilityLabel,
+      L10n.tkEidRequestScanDocumentSubmitScanImageExpandButtonAlt,
+    ].joined(separator: ", ")
+
+    return KeyValueCustomCell(key: image.key) {
+      Image(data: image.value)?
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .clipShape(RoundedCorner(radius: .x3))
+        .frame(
+          maxWidth: resizeImages ? maxImageWidth : nil,
+          minHeight: resizeImages ? minHeight : nil,
+          maxHeight: resizeImages ? maxImageHeight : nil,
+          alignment: resizeImages ? .leading : .center)
+        .accessibilityRemoveTraits(.isImage)
+        .overlay(alignment: .bottomTrailing) {
+          imageOverviewButton(for: image)
+        }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.top, .x1)
+    .padding(.trailing, .x2)
+    .padding(.bottom, .x2)
+    .accessibilityAddTraits(.isButton)
+    .accessibilityLabel(axLabel)
+    .if(isFirstScan) { $0.accessibilityPriorityFocus(delay: .seconds(0)) }
   }
 
   @ViewBuilder
@@ -83,8 +89,8 @@ struct ScanResultListView: View {
           .padding(.x2)
           .background(ThemingAssets.Background.Button.secondary.swiftUIColor, in: .circle)
       }
-      .contentShape(.accessibility, .circle)
       .padding(.x2_5)
+      .accessibilityHidden(true)
     }
   }
 }

@@ -1,18 +1,22 @@
 import BITCrypto
 import BITVault
 import Foundation
-import JOSESwift
+import JWSETKit
 
 // MARK: - JWSEncoderProtocol
 
 public protocol JWSEncoderProtocol {
   func encode(_ value: some JWT, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data
-  func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T>
+  func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> JWS<T>
 }
 
 extension JWSEncoderProtocol {
   public func encode(_ value: some JWT, using keyPair: VaultKeyPair) throws -> Data {
     try encode(value, using: keyPair, additionalHeaderParameters: [:])
+  }
+
+  public func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> {
+    try encode(value, keyPair: keyPair, additionalHeaderParameters: [:])
   }
 }
 
@@ -49,20 +53,20 @@ public struct JWSEncoder: JWSEncoderProtocol {
   public func encode(_ jwt: some JWT, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data {
     let algorithm = try parseAlgorithm(keyPair.algorithm.rawValue)
     let header = try header(using: keyPair, algorithm: algorithm, type: jwt.type, additionalParameters: additionalHeaderParameters)
-    let payload = try createPayload(jwt)
-    guard let signer = Signer(signatureAlgorithm: algorithm, key: keyPair.privateKey) else {
-      throw JWSEncoderError.wrongKeyType
-    }
-    let jws = try JOSESwift.JWS(header: header, payload: payload, signer: signer)
-    return jws.compactSerializedData
+    let payload = try createPayloadData(jwt)
+    var jws = try JSONWebSignaturePlain(
+      signatures: [JSONWebSignatureHeader(protected: header, signature: Data())],
+      payload: ProtectedDataWebContainer(encoded: payload))
+    try jws.updateSignature(using: keyPair.privateKey)
+    return try Data(compact: jws)
   }
 
-  public func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair) throws -> JWS<T> {
-    let data = try encode(value, using: keyPair)
+  public func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> JWS<T> {
+    let data = try encode(value, using: keyPair, additionalHeaderParameters: additionalHeaderParameters)
 
     guard
       let rawJWS = String(data: data, encoding: .utf8),
-      let rawPayload = try? JSONEncoder().encode(value),
+      let rawPayload = try? createPayloadData(value),
       let strRawPayload = String(data: rawPayload, encoding: .utf8),
       let algorithm = JWTAlgorithm(rawValue: keyPair.algorithm.rawValue),
       let publicKey = keyPair.publicKey
@@ -84,37 +88,37 @@ public struct JWSEncoder: JWSEncoderProtocol {
 
   // MARK: Private
 
-  private func parseAlgorithm(_ algorithm: String) throws -> SignatureAlgorithm {
+  private func parseAlgorithm(_ algorithm: String) throws -> JSONWebSignatureAlgorithm {
     guard let jwtAlgorithm = JWTAlgorithm(rawValue: algorithm) else {
       throw JWSEncoderError.algorithmNotFound
     }
-    return try SignatureAlgorithm(from: jwtAlgorithm)
+    return JSONWebSignatureAlgorithm(from: jwtAlgorithm)
   }
 
-  private func header(using keyPair: VaultKeyPair, algorithm: SignatureAlgorithm, type: String?, additionalParameters: [String: Any]) throws -> JOSESwift.JWSHeader {
-    var parameters: [String: Any] = if let typ = type { ["typ": typ] } else { [:] }
+  private func header(using keyPair: VaultKeyPair, algorithm: JSONWebSignatureAlgorithm, type: String?, additionalParameters: [String: Any] = [:]) throws -> JOSEHeader {
+    var header = JOSEHeader()
+    header.algorithm = algorithm
+    header.type = type.map { JSONWebContentType(rawValue: $0) }
+
     switch keyEncodingStrategy {
     case .jwk:
-      parameters["jwk"] = try createJwk(keyPair: keyPair).parameters
+      header.key = keyPair.publicKey
     case .none:
       break
     }
-    parameters[JWKParameter.algorithm.rawValue] = algorithm.rawValue
-    parameters.merge(additionalParameters) { _, new in new }
-    return try JOSESwift.JWSHeader(parameters: parameters)
-  }
 
-  private func createJwk(keyPair: VaultKeyPair) throws -> JOSESwift.JWK {
-    guard let publicKey = keyPair.publicKey, let jwk = try? ECPublicKey(publicKey: publicKey) else {
-      throw JWSEncoderError.cannotCreateJwk
+    guard !additionalParameters.isEmpty else {
+      return header
     }
-    return jwk
+
+    let data = try JSONSerialization.data(withJSONObject: additionalParameters)
+    let additionalHeader = try JSONDecoder().decode(JOSEHeader.self, from: data)
+    return header.merging(additionalHeader) { _, new in new }
   }
 
-  private func createPayload(_ jwt: some Encodable) throws -> Payload {
+  private func createPayloadData(_ jwt: some Encodable) throws -> Data {
     let encoder = JSONEncoder()
     encoder.dateEncodingStrategy = dateEncodingStrategy
-    let payloadData = try encoder.encode(jwt)
-    return Payload(payloadData)
+    return try encoder.encode(jwt)
   }
 }

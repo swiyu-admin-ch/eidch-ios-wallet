@@ -25,10 +25,11 @@ extension View {
 
   public func toast(
     _ toast: Binding<Toast?>,
-    verticalPadding: CGFloat = .x10)
+    verticalPadding: CGFloat = .x10,
+    position: ToastPosition = .bottom)
     -> some View
   {
-    modifier(ToastViewModifier(toast: toast, verticalPadding: verticalPadding))
+    modifier(ToastViewModifier(toast: toast, verticalPadding: verticalPadding, position: position))
   }
 }
 
@@ -41,6 +42,7 @@ private struct ToastViewModifier: ViewModifier {
   @Binding var toast: Toast?
 
   let verticalPadding: CGFloat
+  let position: ToastPosition
 
   func body(content: Content) -> some View {
     let displayedToast = toast ?? lastToast
@@ -58,9 +60,17 @@ private struct ToastViewModifier: ViewModifier {
             .shadow(color: ThemingAssets.Brand.Core.black.swiftUIColor.opacity(0.1), radius: 6, x: 0, y: 2)
         }
       } customize: {
-        $0
+        var parameters = $0
           .type(.floater(verticalPadding: verticalPadding, useSafeAreaInset: true))
-          .position(.bottom)
+
+        switch position {
+        case .top:
+          parameters = parameters.position(.top)
+        case .bottom:
+          parameters = parameters.position(.bottom)
+        }
+
+        return parameters
           .autohideIn(5)
           .dragToDismiss(true)
           .animation(.interpolatingSpring)
@@ -96,6 +106,13 @@ private struct ToastViewModifier: ViewModifier {
     announcement.accessibilitySpeechAnnouncementPriority = .high
     AccessibilityNotification.Announcement(announcement).post()
   }
+}
+
+// MARK: - ToastPosition
+
+public enum ToastPosition {
+  case top
+  case bottom
 }
 
 // MARK: - ToastType

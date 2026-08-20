@@ -2,6 +2,7 @@ import BITCredential
 import BITCredentialShared
 import BITL10n
 import BITNavigation
+import BITNonCompliance
 import BITTheming
 import Factory
 import NavigatorUI
@@ -13,8 +14,8 @@ struct CredentialOfferView: View {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State = .loading) {
-    _viewModel = State(wrappedValue: Container.shared.credentialOfferViewModel((credential, trustInformation, state)))
+  init(credential: VerifiableCredential, state: CredentialOfferViewModel.State = .loading) {
+    _viewModel = State(wrappedValue: Container.shared.credentialOfferViewModel((credential, state)))
   }
 
   // MARK: Internal
@@ -28,40 +29,45 @@ struct CredentialOfferView: View {
     case cancelDeclineButton
     case card
     case claimsList
-    case wrongData
   }
 
   var body: some View {
+    let isAlertPresented = Binding(
+      get: { viewModel.alert != nil },
+      set: { if !$0 { viewModel.alert = nil } })
+
     Content(
       declineAction: viewModel.decline,
       acceptAction: {
         Task { await viewModel.accept() }
       },
-      wrongDataAction: viewModel.openWrongData,
       cancelDeclineAction: viewModel.cancelDecline,
       confirmDeclineAction: {
         Task { await viewModel.confirmDecline() }
       },
-      badgeAction: { badgeType in
-        navigator.navigate(to: InvitationDestinations.badgeInformation(badgeType))
+      actorInformationAction: { actorInformation in
+        navigator.navigate(to: InvitationDestinations.actorInformation(actorInformation))
       },
       clusters: viewModel.credential.resolvedClusters,
       credentialViewModel: viewModel.credentialViewModel,
       state: viewModel.state,
-      trustInformation: viewModel.trustInformation)
+      trustInformation: viewModel.trustInformation,
+      actorCompliance: viewModel.actorCompliance)
       .navigate(to: $viewModel.destination)
       .navigationReturnToCheckpoint(trigger: $viewModel.isOfferAccepted, checkpoint: Checkpoints.home, value: HomeCheckpointsState.acceptCredential)
       .navigationReturnToCheckpoint(trigger: $viewModel.isOfferDeclined, checkpoint: Checkpoints.home, value: HomeCheckpointsState.declineCredential)
-      .confirmationDialog(L10n.tkReceiveCredentialOfferConfirmIssuancePrimary, isPresented: $viewModel.isUnknownIssuerAlertShown, titleVisibility: .visible) {
+      .confirmationDialog(viewModel.alert?.title ?? "", isPresented: isAlertPresented, titleVisibility: .visible) {
         Button(L10n.tkReceiveCredentialOfferConfirmIssuanceButtonSecondary, role: .destructive) {
           Task { await viewModel.confirmDecline() }
         }
         Button(L10n.tkReceiveCredentialOfferConfirmIssuanceButtonPrimary) {
-          Task { await viewModel.confirmAccept() }
+          Task { await viewModel.accept(force: true) }
         }
         Button(L10n.tkGlobalCancel, role: .cancel) {}
       } message: {
-        Text(L10n.tkReceiveCredentialOfferConfirmIssuanceSecondary)
+        if let alert = viewModel.alert {
+          Text(alert.message)
+        }
       }
       .task {
         await viewModel.onAppear()
@@ -91,25 +97,25 @@ extension CredentialOfferView {
     init(
       declineAction: @escaping () -> Void = {},
       acceptAction: @escaping () -> Void = {},
-      wrongDataAction: @escaping () -> Void = {},
       cancelDeclineAction: @escaping () -> Void = {},
       confirmDeclineAction: @escaping () -> Void = {},
-      badgeAction: @escaping (BadgeType) -> Void = { _ in },
+      actorInformationAction: @escaping (ActorInformation) -> Void = { _ in },
       clusters: [CredentialClaimCluster],
       credentialViewModel: VerifiableCredentialViewModel?,
       state: CredentialOfferViewModel.State,
-      trustInformation: TrustInformation?)
+      trustInformation: TrustInformation?,
+      actorCompliance: ActorCompliance = .compliant)
     {
       self.declineAction = declineAction
       self.acceptAction = acceptAction
-      self.wrongDataAction = wrongDataAction
       self.cancelDeclineAction = cancelDeclineAction
       self.confirmDeclineAction = confirmDeclineAction
-      self.badgeAction = badgeAction
+      self.actorInformationAction = actorInformationAction
       self.clusters = clusters
       self.credentialViewModel = credentialViewModel
       self.state = state
       self.trustInformation = trustInformation
+      self.actorCompliance = actorCompliance
     }
 
     // MARK: Internal
@@ -154,14 +160,14 @@ extension CredentialOfferView {
 
     private let declineAction: () -> Void
     private let acceptAction: () -> Void
-    private let wrongDataAction: () -> Void
     private let cancelDeclineAction: () -> Void
     private let confirmDeclineAction: () -> Void
-    private let badgeAction: (BadgeType) -> Void
+    private let actorInformationAction: (ActorInformation) -> Void
     private let clusters: [CredentialClaimCluster]
     private let credentialViewModel: VerifiableCredentialViewModel?
     private let state: CredentialOfferViewModel.State
     private let trustInformation: TrustInformation?
+    private let actorCompliance: ActorCompliance
   }
 }
 
@@ -190,7 +196,6 @@ extension CredentialOfferView.Content {
     VStack(alignment: .leading, spacing: .x6) {
       ClaimClusterList(clusters)
         .accessibilityRespondsToUserInteraction(false)
-      wrongDataSection()
     }
     .padding(.vertical, .x4)
     .background(ThemingAssets.Background.secondary.swiftUIColor)
@@ -222,18 +227,6 @@ extension CredentialOfferView.Content {
     .accessibilityElement(children: .contain)
     .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     .accessibilityRespondsToUserInteraction(false)
-  }
-
-  private func wrongDataSection() -> some View {
-    SectionView {
-      IconCell(
-        image: Assets.warning.swiftUIImage,
-        text: L10n.tkReceiveCredentialOfferWrongDataSectionCellPrimary,
-        disclosureIndicator: .navigation, onTap: wrongDataAction)
-        .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-        .padding(.horizontal, .x6)
-        .accessibilityIdentifier(CredentialOfferView.AccessibilityIdentifier.wrongData.rawValue)
-    }
   }
 
   private func loadingContainer() -> some View {
@@ -307,10 +300,11 @@ extension CredentialOfferView.Content {
       ActorHeaderView(
         issuer: credentialViewModel.issuerDisplay,
         trustInformation: trustInformation,
+        actorCompliance: actorCompliance,
         topInset: topInset,
-        onBadgeTapped: { badgeType in
+        onTapped: { actorInformation in
           guard state != .loading else { return }
-          badgeAction(badgeType)
+          actorInformationAction(actorInformation)
         })
         .disabled(state == .loading)
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)

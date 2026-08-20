@@ -10,7 +10,7 @@ extension DeferredCredentialContext: Mockable {
       transactionId: "83d3824-b550-4b8b-aa75-06328385faed",
       accessToken: .Mock.sample,
       endpoint: "https://mock_endpoint",
-      format: "sd-jwt",
+      format: .vcSdJwt,
       interval: 100)
   }
 }

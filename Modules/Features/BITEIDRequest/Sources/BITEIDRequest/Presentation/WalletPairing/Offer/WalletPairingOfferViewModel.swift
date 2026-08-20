@@ -42,6 +42,8 @@ class WalletPairingOfferViewModel {
 
     do {
       let pairingOffer = try await fetchWalletPairingOfferUseCase.execute(for: caseId)
+      try await saveWalletPairingIdUseCase(pairingOffer.pairingId, forRequestCase: caseId)
+
       setState(.result(pairingOffer.qrCodeImageData))
       walletPairingPollingManager.startPolling(for: caseId, pairingId: pairingOffer.pairingId)
     } catch {
@@ -64,7 +66,8 @@ class WalletPairingOfferViewModel {
   private var didPairWalletHandler: (Void) -> Void
 
   @ObservationIgnored @Injected(\.eidRequestContext) private var context
-  @ObservationIgnored @Injected(\.fetchWalletPairingOfferUseCase) private var fetchWalletPairingOfferUseCase
+  @ObservationIgnored @Injected(\.saveWalletPairingIdUseCase) private var saveWalletPairingIdUseCase: SaveWalletPairingIdUseCaseProtocol
+  @ObservationIgnored @Injected(\.fetchWalletPairingOfferUseCase) private var fetchWalletPairingOfferUseCase: FetchWalletPairingOfferUseCaseProtocol
 
   private var caseId: String? {
     context.caseId

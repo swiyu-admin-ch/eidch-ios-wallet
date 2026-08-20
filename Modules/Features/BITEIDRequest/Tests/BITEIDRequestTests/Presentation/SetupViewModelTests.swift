@@ -74,7 +74,7 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testFetchAttestations_clientAttestationFails_continuesFlow() async {
-    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = EIDRequestRepository.Error.invalidClientAttestation
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = SIDRepository.Error.invalidClientAttestation
     let startTime = Date()
 
     await viewModel.fetchAttestations()
@@ -87,7 +87,7 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testFetchAttestations_keyAttestationFails_continuesFlow() async {
-    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = EIDRequestRepository.Error.invalidKeyAttestation
+    validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = SIDRepository.Error.invalidKeyAttestation
     let startTime = Date()
 
     await viewModel.fetchAttestations()

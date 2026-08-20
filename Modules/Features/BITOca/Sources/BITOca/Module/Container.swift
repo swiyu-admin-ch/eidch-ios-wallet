@@ -24,10 +24,6 @@ extension Container {
 
   // MARK: Internal
 
-  var jsonCanonicalizer: Factory<JsonCanonicalizerProtocol> {
-    self { JsonCanonicalizer() }
-  }
-
   var ocaCESRHashValidator: Factory<OcaCESRHashValidatorProtocol> {
     self { OcaCESRHashValidator() }
   }

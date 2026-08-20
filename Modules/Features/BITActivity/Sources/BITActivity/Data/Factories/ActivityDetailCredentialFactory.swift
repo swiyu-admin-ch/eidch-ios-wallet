@@ -1,12 +1,9 @@
 import BITClaimsPathPointer
-import BITCore
 import BITCredentialShared
 import BITEntities
 import BITOpenID
 import Factory
 import Foundation
-import RealmSwift
-import RegexBuilder
 import Spyable
 
 // MARK: - ActivityDetailCredentialFactoryProtocol

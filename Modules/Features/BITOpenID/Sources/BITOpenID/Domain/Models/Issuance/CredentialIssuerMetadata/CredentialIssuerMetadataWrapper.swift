@@ -1,3 +1,4 @@
+import BITJWT
 import Foundation
 
 // MARK: - CredentialIssuerMetadataWrapperError
@@ -14,19 +15,36 @@ enum CredentialIssuerMetadataWrapperError: Error {
 
 public struct CredentialIssuerMetadataWrapper {
 
-  public var credentialIssuerMetadata: CredentialIssuerMetadata
-  public var selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported
-  public var rawData: Data
-  public var credentialConfigurationId: String
+  // MARK: Lifecycle
 
-  public init(credentialConfigurationId: String, credentialIssuerMetadata: CredentialIssuerMetadata, rawData: Data) throws {
-    self.credentialIssuerMetadata = credentialIssuerMetadata
+  public init(offer: CredentialOffer, metadataJws: JWS<CredentialIssuerMetadataJWT>) throws {
+    guard let configurationId = offer.credentialConfigurationIds.first else {
+      throw CredentialIssuerMetadataWrapperError.selectedCredentialNotFound
+    }
+    try self.init(credentialConfigurationId: configurationId, metadataJws: metadataJws)
+  }
+
+  public init(credentialConfigurationId: String, metadataJws: JWS<CredentialIssuerMetadataJWT>) throws {
+    self.metadataJws = metadataJws
     self.credentialConfigurationId = credentialConfigurationId
-    guard let selectedCredential = credentialIssuerMetadata.credentialConfigurationsSupported.first(where: { $0.key == credentialConfigurationId })?.value else {
+    guard let selectedCredential = metadataJws.payload.credentialIssuerMetadata.credentialConfigurationsSupported.first(where: { $0.key == credentialConfigurationId })?.value else {
       throw CredentialIssuerMetadataWrapperError.selectedCredentialNotFound
     }
     self.selectedCredential = selectedCredential
-    self.rawData = rawData
+  }
+
+  // MARK: Public
+
+  public let metadataJws: JWS<CredentialIssuerMetadataJWT>
+  public let selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported
+  public let credentialConfigurationId: String
+
+  public var credentialIssuerMetadata: CredentialIssuerMetadata {
+    metadataJws.payload.credentialIssuerMetadata
+  }
+
+  public var rawData: Data {
+    Data(metadataJws.rawPayload.utf8)
   }
 
 }

@@ -53,7 +53,8 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
     guard case .request(let rawRequest) = first else {
       return XCTFail("Expected .request update")
     }
-    XCTAssertEqual(rawRequest, rawRequest)
+    XCTAssertEqual(rawRequest.0, rawRequest.0)
+    XCTAssertEqual(rawRequest.1, rawRequest.1)
   }
 
   func testStartEngagement_whenError_throwsFailedError() async {
@@ -109,7 +110,7 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
       ProximityState.SubmittingDocuments(progress: KotlinDouble(value: progress)),
       ProximityState.PresentationCompleted())
 
-    try await repository.submit(presentationRequestBody: DictionarySerializableStub())
+    try await repository.submit(authorizationResponse: authorizationResponse)
       .collectAndAssertEquals([.progress(progress), .success])
 
     XCTAssertTrue(controller.submitDocumentDataCalled)
@@ -120,7 +121,7 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
     controller.stateValuesReturnValue = .just(
       ProximityState.PresentationCompleted())
 
-    try await repository.submit(presentationRequestBody: DictionarySerializableStub())
+    try await repository.submit(authorizationResponse: authorizationResponse)
       .collectAndAssertEquals([.success])
 
     XCTAssertTrue(controller.submitDocumentDataCalled)
@@ -129,7 +130,7 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
   func testSubmit_whenError_throwsFailedError() async {
     controller.stateValuesReturnValue = .just(.Error(error: ProximityErrorUnknown(message: "submit-error")))
 
-    await XCTAssertThrowsErrorAsync(try await repository.submit(presentationRequestBody: DictionarySerializableStub()).collect()) { error in
+    await XCTAssertThrowsErrorAsync(try await repository.submit(authorizationResponse: authorizationResponse).collect()) { error in
       guard case ProximitySubmissionError.failed(let underlyingErrorMessage) = error else {
         return XCTFail("Expected ProximitySubmissionError.failed, got \(error)")
       }
@@ -140,7 +141,7 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
   func testSubmit_whenDisconnected_throwsDisconnectedError() async {
     controller.stateValuesReturnValue = .just(.Disconnected())
 
-    await XCTAssertThrowsErrorAsync(try await repository.submit(presentationRequestBody: DictionarySerializableStub()).collect()) { error in
+    await XCTAssertThrowsErrorAsync(try await repository.submit(authorizationResponse: authorizationResponse).collect()) { error in
       XCTAssertEqual(error as? ProximitySubmissionError, .disconnected)
     }
   }
@@ -148,17 +149,16 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
   func testSubmit_whenStreamTerminatesUnexpectedly_throwsUnexpectedTermination() async {
     controller.stateValuesReturnValue = .just()
 
-    await XCTAssertThrowsErrorAsync(try await repository.submit(presentationRequestBody: DictionarySerializableStub()).collect()) { error in
+    await XCTAssertThrowsErrorAsync(try await repository.submit(authorizationResponse: authorizationResponse).collect()) { error in
       XCTAssertEqual(error as? ProximitySubmissionError, .unexpectedTermination)
     }
   }
 
   func testSubmit_submitsData() async throws {
     controller.stateValuesReturnValue = .just(.PresentationCompleted())
-    let stub = DictionarySerializableStub()
-    let data = try JSONSerialization.data(withJSONObject: stub.asDictionary())
+    let data = try JSONSerialization.data(withJSONObject: authorizationResponse.asDictionary())
 
-    try await repository.submit(presentationRequestBody: DictionarySerializableStub()).collect()
+    try await repository.submit(authorizationResponse: authorizationResponse).collect()
 
     XCTAssertTrue(controller.submitDocumentDataCalled)
     XCTAssertNotNil(controller.submitDocumentDataReceivedData?.toData() == data)
@@ -167,7 +167,7 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
   func testSubmit_whenControllerThrowsError_propagatesError() async throws {
     controller.stateValuesReturnValue = .fail(TestingError.error)
 
-    await XCTAssertThrowsErrorAsync(try await repository.submit(presentationRequestBody: DictionarySerializableStub()).collect()) { error in
+    await XCTAssertThrowsErrorAsync(try await repository.submit(authorizationResponse: authorizationResponse).collect()) { error in
       guard case TestingError.error = error else {
         return XCTFail("Not the expected error")
       }
@@ -184,12 +184,5 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
 
   private var repository: ProximityPresentationRepository!
   private var controller: ProximityPresentationControllerProtocolSpy!
-}
-
-// MARK: - DictionarySerializableStub
-
-private struct DictionarySerializableStub: DictionarySerializable {
-  func asDictionary() -> [String: Any] {
-    ["key": "value"]
-  }
+  private var authorizationResponse = AuthorizationResponse(vpToken: ["key": ["value"]])
 }

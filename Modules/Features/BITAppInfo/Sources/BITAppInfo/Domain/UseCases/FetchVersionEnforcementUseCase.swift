@@ -55,46 +55,68 @@ extension FetchVersionEnforcementUseCase {
       return nil
     }
 
-    let type: VersionEnforcementType = switch preferredVersion.updateType {
-    case .forced: .forced
-    case .optional: .optional
-    }
-
-    return VersionEnforcement(type: type, messages: preferredVersion.message)
+    return VersionEnforcement(
+      type: enforcementType(for: preferredVersion, response),
+      messages: preferredVersion.message)
   }
 
   private func preferredVersion(for response: VersionEnforcement.Response) throws -> VersionEnforcement.Response.Version? {
     let appVersion = try getAppVersionUseCase().rawValue
 
-    return versionForForcedUpgrade(response, appVersion) ??
-      versionForOptionalUpgradeForUngaranteedVersion(response, appVersion, currentDate) ??
-      versionForOptionalUpgradeForExpiredVersion(response, appVersion, currentDate)
+    return preferredForcedVersion(response, appVersion) ??
+      preferredOptionalVersion(response, appVersion)
   }
 
-  private func versionForForcedUpgrade(_ response: VersionEnforcement.Response, _ appVersion: String) -> VersionEnforcement.Response.Version? {
-    response.versions.first(where: { $0.updateType == .forced && $0.version > appVersion })
-  }
-
-  private func versionForOptionalUpgradeForUngaranteedVersion(_ response: VersionEnforcement.Response, _ appVersion: String, _ currentDate: Date) -> VersionEnforcement.Response.Version? {
+  private func preferredForcedVersion(_ response: VersionEnforcement.Response, _ appVersion: String) -> VersionEnforcement.Response.Version? {
     response.versions
+      .filter { $0.updateType == .forced && $0.version > appVersion }
+      .sorted { $0.version > $1.version }
+      .first
+  }
+
+  private func preferredOptionalVersion(_ response: VersionEnforcement.Response, _ appVersion: String) -> VersionEnforcement.Response.Version? {
+    let optionalVersions = response.versions
       .filter { $0.updateType == .optional && $0.version >= appVersion }
-      .first {
-        guard let supportGuaranteedUntil = $0.supportGuaranteedUntil else { return false }
-        return supportGuaranteedUntil <= currentDate
-      }
+
+    return preferredOptionalVersion(expired: true, in: optionalVersions, response) ??
+      preferredOptionalVersion(expired: false, in: optionalVersions, response)
   }
 
-  private func versionForOptionalUpgradeForExpiredVersion(_ response: VersionEnforcement.Response, _ appVersion: String, _ currentDate: Date) -> VersionEnforcement.Response.Version? {
-    response.versions
-      .filter {
-        $0.updateType == .optional && $0.version >= appVersion && $0.supportGuaranteedUntil == nil
-      }
-      .first {
-        let lifetimeDays = response.defaultReleaseSupportDays
-        guard let lifetimeLimitDate = calendar.date(byAdding: .day, value: lifetimeDays, to: $0.releaseDate) else {
-          return false
-        }
-        return lifetimeLimitDate <= currentDate
-      }
+  private func preferredOptionalVersion(expired: Bool, in optionalVersions: [VersionEnforcement.Response.Version], _ response: VersionEnforcement.Response) -> VersionEnforcement.Response.Version? {
+    optionalVersions
+      .filter { hasVersionExpired($0, response: response) == expired }
+      .sorted { $0.version > $1.version }
+      .first
+  }
+
+  private func hasVersionExpired(_ version: VersionEnforcement.Response.Version, response: VersionEnforcement.Response) -> Bool {
+    hasSupportVersionExpired(version) ||
+      hasLifetimeVersionExpired(version, response: response)
+  }
+
+  private func hasSupportVersionExpired(_ enforcement: VersionEnforcement.Response.Version) -> Bool {
+    guard let supportGuaranteedUntil = enforcement.supportGuaranteedUntil else {
+      return false
+    }
+
+    return supportGuaranteedUntil <= currentDate
+  }
+
+  private func hasLifetimeVersionExpired(_ enforcement: VersionEnforcement.Response.Version, response: VersionEnforcement.Response) -> Bool {
+    let lifetimeDays = response.defaultReleaseSupportDays
+    guard let lifetimeLimitDate = calendar.date(byAdding: .day, value: lifetimeDays, to: enforcement.releaseDate) else {
+      return false
+    }
+
+    return lifetimeLimitDate <= currentDate
+  }
+
+  private func enforcementType(for preferredVersion: VersionEnforcement.Response.Version, _ response: VersionEnforcement.Response) -> VersionEnforcementType {
+    switch preferredVersion.updateType {
+    case .forced:
+      .forced
+    case .optional:
+      hasVersionExpired(preferredVersion, response: response) ? .forced : .optional
+    }
   }
 }

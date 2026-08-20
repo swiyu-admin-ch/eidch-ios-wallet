@@ -3,7 +3,6 @@ import BITCore
 import Factory
 import XCTest
 @testable import BITAnyCredentialFormat
-@testable import BITAnyCredentialFormatMocks
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITOpenID
@@ -17,7 +16,7 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
   override func setUp() {
     anyCredentialSpy = AnyCredentialSpy()
     createAnyCredentialSpy = CreateAnyCredentialUseCaseProtocolSpy()
-    credentialRepository = CredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProtocolSpy()
     validatorSpy = AnyStatusCheckValidatorProtocolSpy()
 
     Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialSpy }
@@ -205,14 +204,14 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
   private static let issuer = "issuer"
   private static let buffer = 5.0
 
-  private let issuerUrlMock = "https://issuer"
+  private let issuerUrlMock = URL(string: "https://issuer.domain.ch")!
 
   private var mockCredential = VerifiableCredential.Mock.sample
   private var anyCredentialSpy: AnyCredentialSpy!
 
   private var createAnyCredentialSpy: CreateAnyCredentialUseCaseProtocolSpy!
   private var validatorSpy: AnyStatusCheckValidatorProtocolSpy!
-  private var credentialRepository: CredentialRepositoryProcotolSpy!
+  private var credentialRepository: CredentialRepositoryProtocolSpy!
   private let selectCredentialBundleItemUseCase = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private var useCase = CheckAndUpdateCredentialStatusUseCase()
@@ -225,7 +224,7 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
       progressionState: .accepted,
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
+      format: .vcSdJwt,
       issuerUrl: issuerUrlMock,
       issuer: Self.issuer,
       authentication: CredentialAuthentication(accessToken: "accessToken"))
@@ -279,7 +278,7 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
       progressionState: .accepted,
       bundleItems: [bundleItem],
       nextPresentableBundleItemId: bundleItem.id,
-      format: "vc+sd-jwt",
+      format: .vcSdJwt,
       issuerUrl: issuerUrlMock,
       issuer: Self.issuer,
       authentication: CredentialAuthentication(accessToken: "accessToken"))

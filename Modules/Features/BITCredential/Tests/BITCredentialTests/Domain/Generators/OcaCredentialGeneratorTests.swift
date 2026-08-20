@@ -136,7 +136,7 @@ final class OcaCredentialGeneratorTests: XCTestCase {
 
   // MARK: Private
 
-  private let formatMock = "vc+sd-jwt"
+  private let formatMock = CredentialFormat.vcSdJwt
   private let issuerMock = "issuer"
   private let validFromMock = Date()
   private let validUntilMock = Date()
@@ -183,6 +183,7 @@ final class OcaCredentialGeneratorTests: XCTestCase {
     XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContext.rawCredentialData)
     XCTAssertEqual(credential.format, formatMock)
     XCTAssertEqual(credential.issuerUrl, mockCredentialGeneratorContext.issuerUrl)
+    XCTAssertEqual(credential.selectedConfigurationId, mockCredentialGeneratorContext.credentialConfigurationId)
     XCTAssertEqual(credential.issuer, issuerMock)
     XCTAssertEqual(credential.validFrom, validFromMock)
     XCTAssertEqual(credential.validUntil, validUntilMock)

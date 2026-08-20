@@ -12,12 +12,14 @@ open class JWSHeader: Equatable {
     algorithm: JWTAlgorithm,
     type: String? = nil,
     keyIdentifier: String? = nil,
-    jwk: JWK? = nil)
+    jwk: JWK? = nil,
+    profileVersion: String? = nil)
   {
     self.algorithm = algorithm
     self.type = type
     self.keyIdentifier = keyIdentifier
     self.jwk = jwk
+    self.profileVersion = profileVersion
   }
 
   // MARK: Public
@@ -34,12 +36,16 @@ open class JWSHeader: Equatable {
   /// The key info
   public let jwk: JWK?
 
+  /// Swiss profile trust version
+  public let profileVersion: String?
+
   // MARK: Equatable
 
   public static func == (lhs: JWSHeader, rhs: JWSHeader) -> Bool {
     lhs.algorithm == rhs.algorithm &&
       lhs.type == rhs.type &&
       lhs.keyIdentifier == rhs.keyIdentifier &&
-      lhs.jwk == rhs.jwk
+      lhs.jwk == rhs.jwk &&
+      lhs.profileVersion == rhs.profileVersion
   }
 }

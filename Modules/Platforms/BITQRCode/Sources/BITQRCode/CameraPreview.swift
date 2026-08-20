@@ -171,9 +171,11 @@ public class CameraPreviewView: UIView {
   }
 
   @objc
-  private func handleOrientationChange() {
-    adjustVideoOrientation()
-    setNeedsLayout()
+  nonisolated private func handleOrientationChange() {
+    Task { @MainActor [weak self] in
+      self?.adjustVideoOrientation()
+      self?.setNeedsLayout()
+    }
   }
 
   private func resetFocusAreaIfNeeeded() {

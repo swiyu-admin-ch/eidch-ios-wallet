@@ -28,6 +28,10 @@ extension ButtonStyle where Self == CustomButtonStyle {
   public static var navyBlue: CustomButtonStyle {
     CustomButtonStyle(buttonConfiguration: .navyBlue)
   }
+
+  public static var warning: CustomButtonStyle {
+    CustomButtonStyle(buttonConfiguration: .warning)
+  }
 }
 
 // MARK: - CircleButton
@@ -95,15 +99,10 @@ public struct CustomButton: View {
       .background(configuration.isPressed ? .black.opacity(0.3) : .clear)
       .foregroundColor(isEnabled ? buttonConfiguration.foregroundColor : buttonConfiguration.foregroundColorDisabled)
       .progressViewStyle(CircularProgressViewStyle(tint: isEnabled ? buttonConfiguration.progressViewTint : ThemingAssets.Label.tertiary.swiftUIColor))
-      .if(!sizeCategory.isAccessibilityCategory) {
-        $0
-          .clipShape(.capsule)
-          .contentShape(.accessibility, .capsule)
-      }
-      .if(sizeCategory.isAccessibilityCategory) {
-        $0
-          .clipShape(RoundedRectangle(cornerRadius: .x6))
-          .contentShape(.accessibility, RoundedRectangle(cornerRadius: .x6))
+      .clipShape(shape)
+      .contentShape(.accessibility, shape)
+      .overlay {
+        shape.stroke(buttonConfiguration.borderColor, lineWidth: buttonConfiguration.borderWidth)
       }
       .scaleEffect(configuration.isPressed ? CGSize(width: 0.95, height: 0.95) : CGSize(width: 1.0, height: 1.0))
       .animation(.interactiveSpring, value: configuration.isPressed)
@@ -158,6 +157,14 @@ public struct CustomButton: View {
     @unknown default:
       .custom.body
     }
+  }
+
+  private var shape: RoundedRectangle {
+    RoundedRectangle(cornerRadius: cornerRadius)
+  }
+
+  private var cornerRadius: CGFloat {
+    buttonConfiguration.cornerRadius ?? (sizeCategory.isAccessibilityCategory ? .x6 : .x30)
   }
 
 }

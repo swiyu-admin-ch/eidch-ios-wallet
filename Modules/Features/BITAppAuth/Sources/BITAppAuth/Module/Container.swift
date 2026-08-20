@@ -133,18 +133,6 @@ extension Container {
     self { 64 }
   }
 
-  public var pinCodeManager: Factory<PinCodeManagerProtocol> {
-    self { PinCodeManager() }
-  }
-
-  public var saltService: Factory<SaltServiceProtocol> {
-    self { SaltService() }
-  }
-
-  public var pepperService: Factory<PepperServiceProtocol> {
-    self { PepperService() }
-  }
-
   public var uniquePassphraseManager: Factory<UniquePassphraseManagerProtocol> {
     self { UniquePassphraseManager() }
   }
@@ -170,6 +158,10 @@ extension Container {
   }
 
   // MARK: Internal
+
+  var pinCodeService: Factory<PinCodeServiceProtocol> {
+    self { PinCodeService() }
+  }
 
   var authCredentialType: Factory<LACredentialType> {
     self { .applicationPassword }
@@ -223,30 +215,20 @@ extension Container {
 
   // MARK: Internal
 
-  var saltRepository: Factory<SaltRepositoryProtocol> {
-    self { self.secretsRepository() }
-  }
-
-  var pepperRepository: Factory<PepperRepositoryProtocol> {
-    self { self.secretsRepository() }
+  var pinCodeSecretStore: Factory<PinCodeSecretStoreProtocol> {
+    self { PinCodeRepository() }
   }
 
   var uniquePassphraseRepository: Factory<UniquePassphraseRepositoryProtocol> {
-    self { self.secretsRepository() }
+    self { UniquePassphraseRepository() }
   }
 
   var lockWalletRepository: Factory<LockWalletRepositoryProtocol> {
-    self { self.secretsRepository() }
+    self { LockWalletRepository() }
   }
 
   var loginRepository: Factory<LoginRepositoryProtocol> {
     self { LoginRepository() }
-  }
-
-  // MARK: Private
-
-  private var secretsRepository: Factory<SecretsRepository> {
-    self { SecretsRepository() }.cached
   }
 
 }
@@ -267,14 +249,6 @@ extension Container {
     self { IsUserLoggedInUseCase() }
   }
 
-  public var hasBiometricAuthUseCase: Factory<HasBiometricAuthUseCaseProtocol> {
-    self { HasBiometricAuthUseCase() }
-  }
-
-  public var isBiometricUsageAllowedUseCase: Factory<IsBiometricUsageAllowedUseCaseProtocol> {
-    self { IsBiometricUsageAllowedUseCase() }
-  }
-
   public var registerPinCodeUseCase: Factory<RegisterPinCodeUseCaseProtocol> {
     self { RegisterPinCodeUseCase() }
   }
@@ -283,12 +257,12 @@ extension Container {
     self { GetBiometricTypeUseCase() }
   }
 
-  public var requestBiometricAuthUseCase: Factory<RequestBiometricAuthUseCaseProtocol> {
-    self { RequestBiometricAuthUseCase() }
+  public var hasBiometricAuthUseCase: Factory<HasBiometricAuthUseCaseProtocol> {
+    self { HasBiometricAuthUseCase() }
   }
 
-  public var allowBiometricUsageUseCase: Factory<AllowBiometricUsageUseCaseProtocol> {
-    self { AllowBiometricUsageUseCase() }
+  public var requestBiometricAuthUseCase: Factory<RequestBiometricAuthUseCaseProtocol> {
+    self { RequestBiometricAuthUseCase() }
   }
 
   public var updatePinCodeUseCase: Factory<UpdatePinCodeUseCaseProtocol> {
@@ -306,8 +280,7 @@ extension Container {
   public var loginUseCases: Factory<LoginUseCasesProtocol> {
     self {
       LoginUseCases(
-        isBiometricUsageAllowed: self.isBiometricUsageAllowedUseCase(),
-        hasBiometricAuth: self.hasBiometricAuthUseCase(),
+        getBiometricStateUseCase: self.getBiometricStateUseCase(),
         loginPinCode: self.loginPinCodeUseCase(),
         loginBiometric: self.loginBiometricUseCase(),
         isBiometricInvalidatedUseCase: self.isBiometricInvalidatedUseCase(),
@@ -332,6 +305,14 @@ extension Container {
 
   public var loginPinCodeUseCase: Factory<LoginPinCodeUseCaseProtocol> {
     self { LoginPinCodeUseCase() }
+  }
+
+  public var updateBiometricUsageUseCase: Factory<UpdateBiometricUsageUseCaseProtocol> {
+    self { UpdateBiometricUsageUseCase() }
+  }
+
+  public var getBiometricStateUseCase: Factory<GetBiometricStateUseCaseProtocol> {
+    self { GetBiometricStateUseCase() }
   }
 
   // MARK: Internal
@@ -362,6 +343,10 @@ extension Container {
 
   var registerLoginAttemptCounterUseCase: Factory<RegisterLoginAttemptCounterUseCaseProtocol> {
     self { RegisterLoginAttemptCounterUseCase() }
+  }
+
+  var disableBiometricUseCase: Factory<DisableBiometricUseCaseProtocol> {
+    self { DisableBiometricUseCase() }
   }
 
 }

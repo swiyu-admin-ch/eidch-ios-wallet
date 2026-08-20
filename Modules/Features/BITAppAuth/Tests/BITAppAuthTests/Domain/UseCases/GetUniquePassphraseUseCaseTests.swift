@@ -1,92 +1,86 @@
 import Factory
 import Foundation
 import Spyable
-import XCTest
+import Testing
 @testable import BITAppAuth
 @testable import BITLocalAuthentication
 @testable import BITTestingCore
 
-final class GetUniquePassphraseUseCaseTests: XCTestCase {
+@Suite(.serialized)
+@MainActor
+struct GetUniquePassphraseUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
+  init() {
+    Container.shared.reset()
 
-    context = LAContextProtocolSpy()
-    pinCodeManager = PinCodeManagerProtocolSpy()
-    uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    let context = LAContextProtocolSpy()
+    let pinCodeService = PinCodeServiceProtocolSpy()
+    let uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
 
-    Container.shared.internalContext.register { self.context }
-    Container.shared.pinCodeManager.register { self.pinCodeManager }
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManager }
+    Container.shared.internalContext.register { context }
+    Container.shared.pinCodeService.register { pinCodeService }
+    Container.shared.uniquePassphraseManager.register { uniquePassphraseManager }
 
+    self.context = context
+    self.pinCodeService = pinCodeService
+    self.uniquePassphraseManager = uniquePassphraseManager
     useCase = GetUniquePassphraseUseCase()
   }
 
-  func testStandardPinCode() throws {
-    try testHappyPath(pinCode: "123456")
+  // MARK: Internal
+
+  @Test(arguments: ["123456", "aA#$_0", "12345678901234567890"] as [PinCode])
+  func happyPath(pinCode: PinCode) throws {
+    try testHappyPath(pinCode: pinCode)
   }
 
-  func testSpecialCharsPinCode() throws {
-    try testHappyPath(pinCode: "aA#$_0")
-  }
-
-  func testLongPinCode() throws {
-    try testHappyPath(pinCode: "12345678901234567890")
-  }
-
-  func testFailurePathWithInvalidPin() throws {
+  @Test
+  func uniquePassphraseLookupFails_throwsError() {
     let mockPinCodeData = Data()
     let pinCode = "121221"
 
     context.setCredentialTypeReturnValue = true
-    pinCodeManager.encryptReturnValue = mockPinCodeData
+    pinCodeService.encryptReturnValue = mockPinCodeData
     uniquePassphraseManager.getUniquePassphraseAuthMethodContextThrowableError = TestingError.error
 
-    do {
-      _ = try useCase.execute(from: pinCode)
-      XCTFail("Should fail instead...")
-    } catch TestingError.error {
-      XCTAssertTrue(pinCodeManager.encryptCalled)
-      XCTAssertTrue(context.setCredentialTypeCalled)
-      XCTAssertEqual(context.setCredentialTypeCallsCount, 1)
-      XCTAssertEqual(pinCode, pinCodeManager.encryptReceivedPinCode)
-    } catch {
-      XCTFail("Not the expected error")
+    #expect(throws: TestingError.error) {
+      try useCase(from: pinCode)
     }
+
+    #expect(pinCodeService.encryptCalled)
+    #expect(context.setCredentialTypeCalled)
+    #expect(context.setCredentialTypeCallsCount == 1)
+    #expect(pinCodeService.encryptReceivedPinCode == pinCode)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var useCase: GetUniquePassphraseUseCase!
-  private var pinCodeManager: PinCodeManagerProtocolSpy!
-  private var uniquePassphraseManager: UniquePassphraseManagerProtocolSpy!
-  private var context: LAContextProtocolSpy!
-
-  // swiftlint:enable all
+  private let useCase: GetUniquePassphraseUseCase
+  private let pinCodeService: PinCodeServiceProtocolSpy
+  private let uniquePassphraseManager: UniquePassphraseManagerProtocolSpy
+  private let context: LAContextProtocolSpy
 
   private func testHappyPath(pinCode: PinCode) throws {
     let mockPinCodeData = Data()
     let mockPassphraseData = Data()
 
     context.setCredentialTypeReturnValue = true
-    pinCodeManager.encryptReturnValue = mockPinCodeData
+    pinCodeService.encryptReturnValue = mockPinCodeData
     uniquePassphraseManager.getUniquePassphraseAuthMethodContextReturnValue = mockPassphraseData
 
-    let passphraseData = try useCase.execute(from: pinCode)
+    let passphraseData = try useCase(from: pinCode)
 
-    XCTAssertEqual(passphraseData, mockPassphraseData)
-    XCTAssertTrue(context.setCredentialTypeCalled)
-    XCTAssertEqual(mockPinCodeData, context.setCredentialTypeReceivedArguments?.credential)
+    #expect(passphraseData == mockPassphraseData)
+    #expect(context.setCredentialTypeCalled)
+    #expect(context.setCredentialTypeReceivedArguments?.credential == mockPinCodeData)
 
-    XCTAssertTrue(pinCodeManager.encryptCalled)
-    XCTAssertEqual(pinCode, pinCodeManager.encryptReceivedPinCode)
+    #expect(pinCodeService.encryptCalled)
+    #expect(pinCodeService.encryptReceivedPinCode == pinCode)
 
-    XCTAssertTrue(context.setCredentialTypeCalled)
-    XCTAssertEqual(context.setCredentialTypeCallsCount, 1)
-    XCTAssertEqual(mockPassphraseData, context.setCredentialTypeReceivedArguments?.credential)
+    #expect(context.setCredentialTypeCalled)
+    #expect(context.setCredentialTypeCallsCount == 1)
   }
 
 }

@@ -28,6 +28,9 @@ struct BiometricsView: View {
       backgroundImage: ThemingAssets.Gradient.gradient4.swiftUIImage,
       content: main,
       footer: footer)
+      .onAppear {
+        viewModel.checkBiometricStatus()
+      }
       .popup(isPresented: $viewModel.isErrorPresented) {
         if let error = viewModel.error {
           Notification(
@@ -104,19 +107,15 @@ extension BiometricsView {
   }
 
   private func footer() -> some View {
-    let primaryLabel = viewModel.hasBiometricAuth ?
-      L10n.tkOnboardingBiometricsPermissionButtonPrimary :
-      L10n.tkOnboardingBiometricsPermissionDisabledButtonPrimary
-    let primaryAlt = viewModel.hasBiometricAuth ? nil : primaryLabel
-    let primaryHint = viewModel.hasBiometricAuth ? nil : L10n.tkGlobalExternalLinkHint
-
-    return DefaultInformationFooterView(
-      primaryButtonLabel: primaryLabel,
-      primaryButtonLabelAlt: primaryAlt,
-      primaryButtonLabelHint: primaryHint,
-      primaryButtonAction: { Task { viewModel.hasBiometricAuth ? await viewModel.registerBiometrics() : viewModel.openSettings() } },
-      secondaryButtonLabel: L10n.tkGlobalNo,
-      secondaryButtonAction: viewModel.skip)
+    DefaultInformationFooterView(
+      primaryButtonLabel: L10n.tkGlobalContinue,
+      primaryButtonLabelAlt: L10n.tkGlobalContinue,
+      primaryButtonLabelHint: L10n.tkGlobalExternalLinkHint,
+      primaryButtonAction: {
+        Task {
+          await viewModel.primaryAction()
+        }
+      })
   }
 
 }

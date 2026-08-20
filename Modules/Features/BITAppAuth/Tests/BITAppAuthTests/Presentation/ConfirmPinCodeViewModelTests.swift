@@ -43,8 +43,8 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_success() {
-    validatePinCodeRuleUseCase.executeThrowableError = nil
-    updatePinCodeUseCase.executeWithAndThrowableError = nil
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = nil
+    updatePinCodeUseCase.callAsFunctionWithAndThrowableError = nil
 
     let viewModel = ConfirmPinCodeViewModel(router: router)
     viewModel.pinCode = pinCode
@@ -60,7 +60,7 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_mismatch() {
-    validatePinCodeRuleUseCase.executeThrowableError = nil
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = nil
 
     let viewModel = ConfirmPinCodeViewModel(router: router)
     viewModel.pinCode = "123456789"
@@ -75,7 +75,7 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_error() {
-    validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
 
     let viewModel = ConfirmPinCodeViewModel(router: router)
     viewModel.pinCode = "123"
@@ -92,7 +92,7 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
   func testPinCode_TooManyAttempts() {
     Container.shared.attemptsLimitChangePinCode.register { 2 }
 
-    validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.empty
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.empty
     let viewModel = ConfirmPinCodeViewModel(router: router)
 
     viewModel.submit()

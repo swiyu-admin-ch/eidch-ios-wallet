@@ -53,6 +53,10 @@ extension NetworkContainer {
     ] }
   }
 
+  public var userAgent: Factory<String> {
+    self { NetworkHeader.swiyuWalletUserAgent }
+  }
+
   public var stubClosure: Factory<StubHandler> {
     self { { _ in .never } }
   }
@@ -109,7 +113,7 @@ extension NetworkContainer {
     configuration.headers = [
       .defaultAcceptEncoding,
       .defaultAcceptLanguage,
-      .userAgent(NetworkHeader.swiyuUserAgent),
+      .userAgent(userAgent()),
     ]
     configuration.requestCachePolicy = .useProtocolCachePolicy
     configuration.urlCache = sessionConfigurationCache()

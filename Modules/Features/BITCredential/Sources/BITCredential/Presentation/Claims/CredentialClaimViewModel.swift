@@ -7,8 +7,9 @@ struct CredentialClaimViewModel {
 
   // MARK: Lifecycle
 
-  init(_ claim: CredentialClaim) {
+  init(_ claim: CredentialClaim, isSensitive: Bool) {
     self.claim = claim
+    isClusterSensitive = isSensitive
   }
 
   // MARK: Internal
@@ -27,19 +28,31 @@ struct CredentialClaimViewModel {
   }
 
   var accessibilityValueLabel: String {
-    if valueLabel.isEmpty || valueLabel == "–" {
-      return "\(nameLabel), \(L10n.tkGlobalEmpty)"
+    var labels = [nameLabel]
+
+    let valueLabel = if valueLabel.isEmpty || valueLabel == "–" {
+      L10n.tkGlobalEmpty
+    } else {
+      valueLabel
     }
-    return "\(nameLabel), \(valueLabel)"
+
+    labels.append(valueLabel)
+
+    if isSensitive {
+      labels.append(L10n.tkGlobalSensitiveDataAlt)
+    }
+
+    return labels.joined(separator: ", ")
   }
 
   var isSensitive: Bool {
-    claim.isSensitive
+    isClusterSensitive || claim.isSensitive
   }
 
   // MARK: Private
 
   private let claim: CredentialClaim
+  private let isClusterSensitive: Bool
 
   private var valueType: ValueType? {
     ValueType(rawValue: claim.valueType)

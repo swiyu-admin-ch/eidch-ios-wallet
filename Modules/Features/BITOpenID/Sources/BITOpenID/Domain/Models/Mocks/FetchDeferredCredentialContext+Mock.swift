@@ -9,24 +9,14 @@ import Foundation
 extension FetchDeferredCredentialContext {
   enum Mock {
     static let sample = FetchDeferredCredentialContext(
-      format: "vc+sd-jwt",
+      format: .vcSdJwt,
       authorization: IssuanceAuthorization(
         accessToken: AccessToken(
           accessToken: "accessToken",
           tokenType: .bearer,
           refreshToken: "refreshToken")),
       deferredCredentialEndpoint: URL(string: "https://example.com")!,
-      privateKey: nil)
-
-    static let sampleWithEncryption = FetchDeferredCredentialContext(
-      format: "vc+sd-jwt",
-      authorization: IssuanceAuthorization(
-        accessToken: AccessToken(
-          accessToken: "accessToken",
-          tokenType: .bearer,
-          refreshToken: "refreshToken")),
-      deferredCredentialEndpoint: URL(string: "https://example.com")!,
-      privateKey: VaultKeyPair.Mock.ES256.privateKey)
+      credentialEncryptionContext: .Mock.sample)
   }
 }
 #endif

@@ -8,6 +8,6 @@ import Spyable
 public protocol ProximityPresentationRepositoryProtocol: AnyObject {
   func startEngagement() -> AsyncThrowingStream<ProximityEngagementUpdate, Error>
   func startEngagementReverse(qrCode: String) -> AsyncThrowingStream<ProximityEngagementUpdate, Error>
-  func submit(presentationRequestBody: any DictionarySerializable) -> AsyncThrowingStream<ProximitySubmissionEvent, Error>
+  func submit(authorizationResponse: AuthorizationResponse) -> AsyncThrowingStream<ProximitySubmissionEvent, Error>
   func decline()
 }

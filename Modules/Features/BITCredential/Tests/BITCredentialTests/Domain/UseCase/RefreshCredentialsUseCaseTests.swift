@@ -2,7 +2,6 @@ import Factory
 import XCTest
 @testable import BITActivity
 @testable import BITAnyCredentialFormat
-@testable import BITAnyCredentialFormatMocks
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITOpenID
@@ -103,7 +102,7 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
 
   private var useCase: RefreshCredentialsUseCase!
 
-  private var credentialRepository: CredentialRepositoryProcotolSpy!
+  private var credentialRepository: CredentialRepositoryProtocolSpy!
   private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocolSpy!
   private var refreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseProtocolSpy!
   private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocolSpy!
@@ -113,7 +112,7 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
   private let refreshedVerifiableCredentials = [VerifiableCredential.Mock.sampleDisplaysAdditional]
 
   private func registerMocks() {
-    credentialRepository = CredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProtocolSpy()
     refreshDeferredCredentialUseCase = RefreshDeferredCredentialUseCaseProtocolSpy()
     refreshVerifiableCredentialsUseCase = RefreshVerifiableCredentialsUseCaseProtocolSpy()
     checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()

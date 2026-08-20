@@ -7,7 +7,7 @@ import NavigatorUI
 public enum HomeExternalDestinations: NavigationViews {
   case invitation(InvitationTab)
   case deeplink(URL)
-  case offer(VerifiableCredential, TrustInformation?)
+  case offer(VerifiableCredential)
   case credentialDetail(CredentialDetailInput)
   case settings
   case betaId

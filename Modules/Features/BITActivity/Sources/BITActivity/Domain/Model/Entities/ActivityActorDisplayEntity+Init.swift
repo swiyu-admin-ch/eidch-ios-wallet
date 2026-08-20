@@ -1,4 +1,4 @@
-import BITDataStore
+import BITCrypto
 import BITEntities
 import Foundation
 

@@ -30,7 +30,7 @@ public struct VcSdJwt: JWT, Codable, Equatable {
 
   public var vctIntegrity: String?
 
-  public var statusList: VcSdJwtTokenStatusList?
+  public var status: VcSdJwtTokenStatus?
 
   public var subject: String?
 
@@ -52,7 +52,7 @@ public struct VcSdJwt: JWT, Codable, Equatable {
     case keyBinding = "cnf"
     case vct
     case vctIntegrity = "vct#integrity"
-    case statusList = "status"
+    case status
     case subject = "sub"
     case issuedAt = "iat"
     case vctMetadataUri = "vct_metadata_uri"
@@ -69,6 +69,15 @@ extension VcSdJwt {
 
     // MARK: Lifecycle
 
+
+    /// Creates a key binding by decoding the `cnf` claim, supporting both the standard and legacy structures.
+    ///
+    /// Two CNF structures are intentionally supported:
+    /// - the standard `cnf.jwk`, where the JWK is nested under the `jwk` key;
+    /// - the legacy flat `cnf`, where the JWK fields are held directly.
+    ///
+    /// Keeping both decoding paths is an accepted business decision for the time being. Some early production
+    /// credentials were released with the flat CNF format and we decided to keep managing them to not break usage until further notice.
     public init(from decoder: any Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
 

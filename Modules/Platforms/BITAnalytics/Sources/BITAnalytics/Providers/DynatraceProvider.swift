@@ -13,10 +13,6 @@ public final class DynatraceProvider: AnalyticsProviderProtocol {
 
   // MARK: Public
 
-  public var isAnalyticsEnabled: Bool {
-    Dynatrace.userPrivacyOptions().dataCollectionLevel != .off
-  }
-
   public func log(_ event: AnalyticsEventProtocol) {
     let provider = Self.self
     let name = event.name(provider)

@@ -11,8 +11,7 @@ public struct ClaimCell: View {
   // MARK: Lifecycle
 
   public init(_ claim: CredentialClaim, isSensitive: Bool, showDivider: Bool, showClaimKey: Bool) {
-    viewModel = CredentialClaimViewModel(claim)
-    self.isSensitive = isSensitive
+    viewModel = CredentialClaimViewModel(claim, isSensitive: isSensitive)
     self.showDivider = showDivider
     self.showClaimKey = showClaimKey
   }
@@ -35,10 +34,11 @@ public struct ClaimCell: View {
       } else {
         KeyValueCell(key: viewModel.nameLabel, value: viewModel.valueLabel, showClaimKey: showClaimKey) {
           trailingView
-        }.padding(.trailing, .x6)
-          .frame(minHeight: Defaults.minHeight)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityLabel(viewModel.accessibilityValueLabel)
+        }
+        .padding(.trailing, .x6)
+        .frame(minHeight: Defaults.minHeight)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityLabel(viewModel.accessibilityValueLabel)
       }
       if showDivider {
         Divider()
@@ -55,15 +55,15 @@ public struct ClaimCell: View {
   }
 
   private let viewModel: CredentialClaimViewModel
-  private let isSensitive: Bool
   private let showDivider: Bool
   private let showClaimKey: Bool
 
   @ViewBuilder
   private var trailingView: some View {
-    if isSensitive || viewModel.isSensitive {
+    if viewModel.isSensitive {
       Badge(label: L10n.tkGlobalSensitiveData)
         .badgeStyle(.sensitive)
+        .accessibilityLabel(L10n.tkGlobalSensitiveDataAlt)
     } else {
       EmptyView()
     }

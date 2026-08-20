@@ -1,14 +1,15 @@
 import BITActivity
 import BITCredentialShared
+import BITNonCompliance
 
 extension Activity {
-  init(credential: VerifiableCredential, trustInformation: TrustInformation) {
+  init(credential: VerifiableCredential, trustInformation: TrustInformation, actorCompliance: ActorCompliance) {
     self.init(
       type: .issuance,
       actorTrust: trustInformation.actorTrust,
       vcSchemaTrust: trustInformation.vcSchemaTrust,
-      actorCompliance: trustInformation.actorComplianceStatus,
-      nonComplianceReasonDisplays: trustInformation.nonComplianceReasonDisplays,
+      actorCompliance: actorCompliance.actorComplianceStatus,
+      nonComplianceReasonDisplays: actorCompliance.nonComplianceReasonDisplays,
       actorDisplays: credential.issuerDisplays.map(ActivityActorDisplay.init))
   }
 }

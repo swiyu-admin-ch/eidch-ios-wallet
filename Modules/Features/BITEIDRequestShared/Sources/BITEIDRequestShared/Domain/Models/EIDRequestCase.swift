@@ -19,6 +19,7 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
     files: [EIDRequestCaseFile] = [],
     deferredCredential: DeferredCredential? = nil,
     filesSubmitted: Bool = false,
+    pairingIds: [String] = [],
     pushId: String? = nil)
   {
     self.id = id
@@ -31,6 +32,7 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
     self.state = state
     self.deferredCredential = deferredCredential
     self.filesSubmitted = filesSubmitted
+    self.pairingIds = pairingIds
     self.pushId = pushId
   }
 
@@ -50,6 +52,7 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
       state: entity.state.map(EIDRequestState.init),
       deferredCredential: entity.credential.flatMap(DeferredCredential.init),
       filesSubmitted: entity.filesSubmitted,
+      pairingIds: entity.pairingIds.map(\.pairingId),
       pushId: entity.pushId)
   }
 
@@ -79,15 +82,16 @@ public struct EIDRequestCase: Codable, Identifiable, Equatable {
     case deferredCredential
     case filesSubmitted
     case pushId
+    case pairingIds
   }
 
   let rawMRZ: String
   let documentNumber: String
+  let pairingIds: [String]
 
   // MARK: Private
 
   private static let mrzSeparator = ";"
-
 }
 
 // MARK: Hashable
@@ -104,5 +108,6 @@ extension EIDRequestCase: Hashable {
     hasher.combine(state)
     hasher.combine(filesSubmitted)
     hasher.combine(pushId)
+    hasher.combine(pairingIds)
   }
 }

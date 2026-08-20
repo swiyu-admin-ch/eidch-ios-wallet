@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import Foundation
 
 extension CredentialIssuerMetadata {
@@ -6,8 +7,9 @@ extension CredentialIssuerMetadata {
 
   /// This protocol is needed in order to make the `credential_configurations_supported`property  format agnostic
   public protocol AnyCredentialConfigurationSupported: Equatable {
-    var format: String { get }
+    var format: CredentialFormat { get }
     var scope: String? { get }
+    var protectedIssuanceAuthorizationTrustStatement: ProtectedIssuanceAuthorizationTrustStatement? { get }
     var cryptographicBindingMethodsSupported: [CryptographicBindingMethod]? { get }
     var credentialSigningAlgValuesSupported: [String]? { get }
     var proofTypesSupported: [ProofType] { get }

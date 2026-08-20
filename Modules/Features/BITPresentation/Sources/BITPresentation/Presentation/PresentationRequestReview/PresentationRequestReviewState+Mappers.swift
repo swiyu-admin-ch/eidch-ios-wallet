@@ -6,7 +6,12 @@ extension PresentationRequestReviewState.Result {
 
   // MARK: Lifecycle
 
-  init(credential: CompatibleCredential, verifierDisplay: VerifierDisplay, colorScheme: String) {
+  init(
+    credential: CompatibleCredential,
+    verifierDisplay: VerifierDisplay,
+    colorScheme: String,
+    hasVerifiedQuery: Bool = true)
+  {
     self.credential = VerifiableCredentialViewModel(credential: credential.credential, colorScheme: colorScheme)
     self.verifierDisplay = verifierDisplay
     claimBadges = credential.requestedClaimClusters
@@ -15,6 +20,7 @@ extension PresentationRequestReviewState.Result {
       .uniqued()
       .sorted { $0.isSensitive && !$1.isSensitive }
     clusters = credential.requestedClaimClusters
+    self.hasVerifiedQuery = hasVerifiedQuery
   }
 
   // MARK: Private

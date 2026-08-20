@@ -7,6 +7,7 @@ import XCTest
 @testable import BITLocalAuthentication
 @testable import BITOnboarding
 @testable import BITSettings
+@testable import BITTestingCore
 
 final class BiometricViewModelTests: XCTestCase {
 
@@ -19,18 +20,18 @@ final class BiometricViewModelTests: XCTestCase {
     router = MockOnboardingInternalRoutes()
 
     getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
-    getBiometricTypeUseCase.executeReturnValue = .faceID
+    getBiometricTypeUseCase.callAsFunctionReturnValue = .faceID
     hasBiometricAuthUseCase = HasBiometricAuthUseCaseProtocolSpy()
-    hasBiometricAuthUseCase.executeReturnValue = true
+    hasBiometricAuthUseCase.callAsFunctionReturnValue = true
     requestBiometricAuthUseCase = RequestBiometricAuthUseCaseProtocolSpy()
-    allowBiometricUsageUseCase = AllowBiometricUsageUseCaseProtocolSpy()
+    updateBiometricUsageUseCase = UpdateBiometricUsageUseCaseProtocolSpy()
     context = OnboardingContext()
     internalLAContext = LAContextProtocolSpy()
 
     Container.shared.getBiometricTypeUseCase.register { @MainActor in self.getBiometricTypeUseCase }
     Container.shared.hasBiometricAuthUseCase.register { @MainActor in self.hasBiometricAuthUseCase }
     Container.shared.requestBiometricAuthUseCase.register { @MainActor in self.requestBiometricAuthUseCase }
-    Container.shared.allowBiometricUsageUseCase.register { @MainActor in self.allowBiometricUsageUseCase }
+    Container.shared.updateBiometricUsageUseCase.register { @MainActor in self.updateBiometricUsageUseCase }
     Container.shared.internalLAContext.register { @MainActor in self.internalLAContext }
 
     viewModel = BiometricsViewModel(router: router)
@@ -38,12 +39,11 @@ final class BiometricViewModelTests: XCTestCase {
 
   @MainActor
   func testInit() {
-    XCTAssertTrue(getBiometricTypeUseCase.executeCalled)
-    XCTAssertEqual(getBiometricTypeUseCase.executeCallsCount, 1)
-    XCTAssertTrue(hasBiometricAuthUseCase.executeCalled)
-    XCTAssertEqual(hasBiometricAuthUseCase.executeCallsCount, 1)
-    XCTAssertFalse(requestBiometricAuthUseCase.executeReasonContextCalled)
-    XCTAssertFalse(allowBiometricUsageUseCase.executeAllowCalled)
+    XCTAssertTrue(getBiometricTypeUseCase.callAsFunctionCalled)
+    XCTAssertEqual(getBiometricTypeUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(hasBiometricAuthUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertFalse(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    XCTAssertFalse(updateBiometricUsageUseCase.callAsFunctionCalled)
 
     XCTAssertTrue(viewModel.hasBiometricAuth)
     XCTAssertEqual(viewModel.biometricType, .faceID)
@@ -55,18 +55,75 @@ final class BiometricViewModelTests: XCTestCase {
 
     await viewModel.registerBiometrics()
 
-    XCTAssertTrue(getBiometricTypeUseCase.executeCalled)
-    XCTAssertEqual(getBiometricTypeUseCase.executeCallsCount, 1)
-    XCTAssertTrue(hasBiometricAuthUseCase.executeCalled)
-    XCTAssertEqual(hasBiometricAuthUseCase.executeCallsCount, 1)
-    XCTAssertTrue(requestBiometricAuthUseCase.executeReasonContextCalled)
-    XCTAssertEqual(requestBiometricAuthUseCase.executeReasonContextCallsCount, 1)
-    XCTAssertTrue(allowBiometricUsageUseCase.executeAllowCalled)
-    XCTAssertEqual(allowBiometricUsageUseCase.executeAllowCallsCount, 1)
+    XCTAssertTrue(getBiometricTypeUseCase.callAsFunctionCalled)
+    XCTAssertEqual(getBiometricTypeUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(hasBiometricAuthUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertTrue(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    XCTAssertEqual(requestBiometricAuthUseCase.callAsFunctionReasonContextCallsCount, 1)
+    XCTAssertEqual(updateBiometricUsageUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(updateBiometricUsageUseCase.callAsFunctionReceivedUsage, .enabled)
 
     XCTAssertTrue(router.setupCalled)
     XCTAssertNil(viewModel.error)
     XCTAssertFalse(viewModel.isErrorPresented)
+  }
+
+  @MainActor
+  func testPrimaryActionWithBiometricsUnavailable_continuesWithoutRequestingBiometrics() async {
+    hasBiometricAuthUseCase.callAsFunctionReturnValue = false
+    viewModel.checkBiometricStatus()
+
+    await viewModel.primaryAction()
+
+    XCTAssertTrue(router.setupCalled)
+    XCTAssertFalse(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    XCTAssertFalse(updateBiometricUsageUseCase.callAsFunctionCalled)
+  }
+
+  @MainActor
+  func testPrimaryActionWithBiometricsAvailable_requestsBiometrics() async {
+    await viewModel.primaryAction()
+
+    XCTAssertTrue(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    XCTAssertEqual(updateBiometricUsageUseCase.callAsFunctionReceivedUsage, .enabled)
+    XCTAssertTrue(router.setupCalled)
+  }
+
+  @MainActor
+  func testRegisterBiometricsWithError_presentsErrorWithoutContinuing() async {
+    requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = TestingError.error
+
+    await viewModel.registerBiometrics()
+
+    XCTAssertTrue(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    XCTAssertFalse(updateBiometricUsageUseCase.callAsFunctionCalled)
+    XCTAssertFalse(router.setupCalled)
+    XCTAssertEqual(viewModel.error as? TestingError, .error)
+    XCTAssertTrue(viewModel.isErrorPresented)
+  }
+
+  @MainActor
+  func testRegisterBiometricsWithBiometricNotAvailable_updatesUsageToDeclinedAndContinues() async {
+    requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = AuthError.biometricNotAvailable
+
+    await viewModel.registerBiometrics()
+
+    XCTAssertEqual(updateBiometricUsageUseCase.callAsFunctionReceivedUsage, .declined)
+    XCTAssertTrue(router.setupCalled)
+    XCTAssertNil(viewModel.error)
+    XCTAssertFalse(viewModel.isErrorPresented)
+  }
+
+  @MainActor
+  func testRegisterBiometricsWithUnexpectedError_presentsError() async {
+    requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = TestingError.error
+
+    await viewModel.registerBiometrics()
+
+    XCTAssertFalse(updateBiometricUsageUseCase.callAsFunctionCalled)
+    XCTAssertFalse(router.setupCalled)
+    XCTAssertEqual(viewModel.error as? TestingError, .error)
+    XCTAssertTrue(viewModel.isErrorPresented)
   }
 
   func testWillEnterForeground() async {
@@ -74,12 +131,11 @@ final class BiometricViewModelTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 200_000_000)
 
-    XCTAssertTrue(getBiometricTypeUseCase.executeCalled)
-    XCTAssertEqual(getBiometricTypeUseCase.executeCallsCount, 2)
-    XCTAssertTrue(hasBiometricAuthUseCase.executeCalled)
-    XCTAssertEqual(hasBiometricAuthUseCase.executeCallsCount, 2)
-    XCTAssertFalse(requestBiometricAuthUseCase.executeReasonContextCalled)
-    XCTAssertFalse(allowBiometricUsageUseCase.executeAllowCalled)
+    XCTAssertTrue(getBiometricTypeUseCase.callAsFunctionCalled)
+    XCTAssertEqual(getBiometricTypeUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(hasBiometricAuthUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertFalse(requestBiometricAuthUseCase.callAsFunctionReasonContextCalled)
+    XCTAssertFalse(updateBiometricUsageUseCase.callAsFunctionCalled)
   }
 
   // MARK: Private
@@ -92,7 +148,7 @@ final class BiometricViewModelTests: XCTestCase {
   private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocolSpy!
   private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocolSpy!
   private var requestBiometricAuthUseCase: RequestBiometricAuthUseCaseProtocolSpy!
-  private var allowBiometricUsageUseCase: AllowBiometricUsageUseCaseProtocolSpy!
+  private var updateBiometricUsageUseCase: UpdateBiometricUsageUseCaseProtocolSpy!
   // swiftlint:enable all
 
 }

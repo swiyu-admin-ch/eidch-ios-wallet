@@ -1,5 +1,7 @@
+// swiftlint:disable force_unwrapping
 #if DEBUG
 import Foundation
+@testable import BITAnyCredentialFormat
 @testable import BITCore
 @testable import BITOpenID
 
@@ -15,7 +17,20 @@ extension DeferredCredential: Mockable {
       format: format,
       issuerUrl: issuerUrl,
       selectedConfigurationId: selectedConfigurationId,
-      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
+      keyBindings: [KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)],
+      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadataJWT.Mock.sampleData),
+      authentication: CredentialAuthentication(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        dpopBinding: KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)))
+
+    public static let sampleWithoutKeyBindings = DeferredCredential(
+      transactionId: transactionId,
+      endpoint: endpoint,
+      format: format,
+      issuerUrl: issuerUrl,
+      selectedConfigurationId: selectedConfigurationId,
+      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadataJWT.Mock.sampleData),
       authentication: CredentialAuthentication(
         accessToken: accessToken,
         refreshToken: refreshToken,
@@ -32,7 +47,7 @@ extension DeferredCredential: Mockable {
         format: format,
         issuerUrl: issuerUrl,
         selectedConfigurationId: selectedConfigurationId,
-        rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
+        rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadataJWT.Mock.sampleData),
         authentication: CredentialAuthentication(
           accessToken: authenticationOverrides?.accessToken ?? accessToken,
           refreshToken: authenticationOverrides?.refreshToken ?? refreshToken,
@@ -63,7 +78,7 @@ extension DeferredCredential: Mockable {
       endpoint: endpoint,
       format: format,
       issuerUrl: issuerUrl,
-      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
+      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadataJWT.Mock.sampleData),
       authentication: CredentialAuthentication(accessToken: accessToken, refreshToken: refreshToken))
 
     static let sampleWithoutValidEndpoint = DeferredCredential(
@@ -71,7 +86,7 @@ extension DeferredCredential: Mockable {
       endpoint: "",
       format: format,
       issuerUrl: issuerUrl,
-      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
+      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadataJWT.Mock.sampleData),
       authentication: CredentialAuthentication(accessToken: accessToken, refreshToken: refreshToken))
 
     static let sampleInvalid = DeferredCredential(
@@ -89,24 +104,15 @@ extension DeferredCredential: Mockable {
       format: format,
       issuerUrl: issuerUrl,
       selectedConfigurationId: selectedConfigurationId,
-      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
+      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadataJWT.Mock.sampleData),
       authentication: CredentialAuthentication(accessToken: "accessToken"))
-
-    static let sampleWithoutIssuerUrl = DeferredCredential(
-      transactionId: transactionId,
-      endpoint: endpoint,
-      format: format,
-      issuerUrl: "",
-      selectedConfigurationId: selectedConfigurationId,
-      rawCredentialData: RawCredentialData(rawOIDMetadata: CredentialIssuerMetadata.Mock.sampleData),
-      authentication: CredentialAuthentication(accessToken: accessToken, refreshToken: refreshToken))
 
     static let transactionId = "83d3824-b550-4b8b-aa75-06328385faed"
     static let accessToken = "015bc32f-aa17-4399-b4f9-a9bdcc4058e4"
     static let endpoint = "https://mock_endpoint"
-    static let issuerUrl = "https://issuer"
-    static let format = "sd-jwt"
-    static let selectedConfigurationId = "elfa-sdjwt"
+    static let issuerUrl = URL(string: "https://issuer")!
+    static let format = CredentialFormat.vcSdJwt
+    static let selectedConfigurationId = "sample-credential"
     static let refreshToken = "502b8c3c-5343-4e13-8a72-963fc53d2ea2"
   }
 }

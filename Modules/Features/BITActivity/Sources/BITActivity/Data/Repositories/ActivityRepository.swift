@@ -1,3 +1,4 @@
+import BITCrypto
 import BITDataStore
 import BITEntities
 import Combine

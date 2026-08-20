@@ -115,6 +115,48 @@ final class LocalizableEntityTests: XCTestCase {
     XCTAssertTrue(result.isEmpty)
   }
 
+  func testFindDisplaysWithFallback_WhenEmptyLocaleExists_ReturnsEmptyLocaleBeforeFallback() {
+    let displays = createList([
+      createDisplay(UserLocale.LocaleIdentifier.swissFrench),
+      createDisplay(UserLocale.LocaleIdentifier.swissItalian),
+      createDisplay(""),
+    ])
+
+    let preferred: [UserLanguageCode] = [
+      UserLanguageCode(UserLanguageCode.LanguageIdentifier.german.rawValue),
+    ]
+
+    let result = displays.findDisplaysWithFallback(preferredLanguageCodes: preferred)
+
+    XCTAssertEqual(result.map(\.locale), [""])
+  }
+
+  func testFindDisplaysWithFallback_WhenEmptyLocaleAndMatching_ReturnsMatchBeforeEmptyLocale() {
+    let displays = createList([
+      createDisplay(UserLocale.LocaleIdentifier.swissGerman),
+      createDisplay(""),
+    ])
+
+    let preferred: [UserLanguageCode] = [UserLanguageCode(UserLanguageCode.LanguageIdentifier.german.rawValue)]
+
+    let result = displays.findDisplaysWithFallback(preferredLanguageCodes: preferred)
+
+    XCTAssertEqual(result.map(\.locale), [UserLocale.LocaleIdentifier.swissGerman.rawValue])
+  }
+
+  func testFindDisplaysWithFallback_MultipleEmptyLocales_ReturnsAll() {
+    let displays = createList([
+      createDisplay(""),
+      createDisplay(""),
+    ])
+    let preferred: [UserLanguageCode] = [UserLanguageCode(UserLanguageCode.LanguageIdentifier.german.rawValue)]
+
+    let result = displays.findDisplaysWithFallback(preferredLanguageCodes: preferred)
+
+    XCTAssertEqual(result.count, 2)
+    XCTAssertTrue(result.allSatisfy { $0.locale == "" })
+  }
+
   // MARK: Private
 
   private func createList(_ elements: [MockDisplay]) -> List<MockDisplay> {
@@ -126,6 +168,12 @@ final class LocalizableEntityTests: XCTestCase {
   private func createDisplay(_ locale: UserLocale.LocaleIdentifier) -> MockDisplay {
     let display = MockDisplay()
     display.locale = locale.rawValue
+    return display
+  }
+
+  private func createDisplay(_ locale: String) -> MockDisplay {
+    let display = MockDisplay()
+    display.locale = locale
     return display
   }
 

@@ -269,12 +269,12 @@ extension Container {
     }
   }
 
-  var eIDRequestAfterOnboardingEnabledRepository: Factory<EIDRequestAfterOnboardingEnabledRepositoryProcotol> {
-    self { EIDRequestAfterOnboardingEnabledRepository() }
+  var sidRepository: Factory<SIDRepositoryProtocol> {
+    self { SIDRepository() }
   }
 
-  var eIDRequestRepository: Factory<EIDRequestRepositoryProtocol> {
-    self { EIDRequestRepository() }
+  var avRepository: Factory<AVRepositoryProtocol> {
+    self { AVRepository() }
   }
 
   var eIDRequestCaseRepository: Factory<EIDRequestCaseRepositoryProtocol> {
@@ -376,6 +376,22 @@ extension Container {
 
   var enablePushNotificationsUseCase: Factory<EnablePushNotificationsUseCaseProtocol> {
     self { @MainActor in EnablePushNotificationsUseCase() }
+  }
+
+  var saveWalletPairingIdUseCase: Factory<SaveWalletPairingIdUseCaseProtocol> {
+    self { SaveWalletPairingIdUseCase() }
+  }
+
+  var compareWalletPairingUseCase: Factory<CompareWalletPairingUseCaseProtocol> {
+    self { CompareWalletPairingUseCase() }
+  }
+
+  var cancelRequestCaseUseCase: Factory<CancelRequestCaseUseCaseProtocol> {
+    self { CancelRequestCaseUseCase() }
+  }
+
+  var resetRequestCasePairingUseCase: Factory<ResetRequestCasePairingUseCaseProtocol> {
+    self { ResetRequestCasePairingUseCase() }
   }
 }
 

@@ -39,7 +39,6 @@ protocol OnboardingInternalRoutes: ClosableRoutes {
   func completed()
   func setupError(delegate: SetupDelegate)
 
-  func settings()
   func openExternalLink(url: URL)
 
 }
@@ -103,11 +102,6 @@ extension OnboardingInternalRoutes where Self: RouterProtocol {
   func setup() {
     let viewController = HideBackButtonHostingController(rootView: SetupView(router: self))
     open(viewController, as: NavigationPushOpeningStyle())
-  }
-
-  func settings() {
-    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-    UIApplication.shared.open(url, options: [:], completionHandler: nil)
   }
 
   func openExternalLink(url: URL) {

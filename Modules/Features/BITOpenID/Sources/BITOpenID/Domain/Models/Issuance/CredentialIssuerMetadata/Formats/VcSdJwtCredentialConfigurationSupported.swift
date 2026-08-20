@@ -6,14 +6,14 @@ import Foundation
 
 extension CredentialIssuerMetadata {
 
-  /// `vc+sd-jwt` implementation of the `credential_configurations_supported`
+  /// `vc+sd-jwt` and `dc+sd-jwt` implementation of the `credential_configurations_supported`
   /// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-ID1.html#name-credential-issuer-metadata-6
   public struct VcSdJwtCredentialConfigurationSupported: AnyCredentialConfigurationSupported, Decodable, Equatable {
 
     // MARK: Lifecycle
 
     init(
-      format: String,
+      format: CredentialFormat,
       scope: String? = nil,
       cryptographicBindingMethodsSupported: [CryptographicBindingMethod]? = nil,
       credentialSigningAlgValuesSupported: [String]? = nil,
@@ -21,6 +21,7 @@ extension CredentialIssuerMetadata {
       vctIntegrity: String? = nil,
       vctMetadataUri: String? = nil,
       vctMetadataUriIntegrity: String? = nil,
+      protectedIssuanceAuthorizationTrustStatement: ProtectedIssuanceAuthorizationTrustStatement? = nil,
       proofTypesSupported: [ProofType] = [],
       credentialMetadata: CredentialMetadata? = nil)
     {
@@ -32,6 +33,7 @@ extension CredentialIssuerMetadata {
       self.vctIntegrity = vctIntegrity
       self.vctMetadataUri = vctMetadataUri
       self.vctMetadataUriIntegrity = vctMetadataUriIntegrity
+      self.protectedIssuanceAuthorizationTrustStatement = protectedIssuanceAuthorizationTrustStatement
       self.proofTypesSupported = proofTypesSupported
       self.credentialMetadata = credentialMetadata
     }
@@ -39,17 +41,18 @@ extension CredentialIssuerMetadata {
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
 
-      let format = try container.decode(String.self, forKey: .format)
-      guard format == CredentialFormat.vcSdJwt.rawValue else {
-        throw VcSdJwtCredentialConfigurationSupportedError.invalidVcSdJwtFormat
-      }
-      self.format = format
+      format = try container.decode(CredentialFormat.self, forKey: .format)
 
       vct = try container.decode(String.self, forKey: .vct)
       vctIntegrity = try container.decodeIfPresent(String.self, forKey: .vctIntegrity)
       vctMetadataUri = try container.decodeIfPresent(String.self, forKey: .vctMetadataUri)
       vctMetadataUriIntegrity = try container.decodeIfPresent(String.self, forKey: .vctMetadataUriIntegrity)
       scope = try container.decodeIfPresent(String.self, forKey: .scope)
+      protectedIssuanceAuthorizationTrustStatement = if let statement = try container.decodeIfPresent(String.self, forKey: .protectedIssuanceAuthorizationTrustStatement) {
+        try JWSDecoder().decode(ProtectedIssuanceAuthorizationTrustStatementJWT.self, from: Data(statement.utf8))
+      } else {
+        nil
+      }
 
       let cryptographicBindingMethods = try container.decodeIfPresent([String].self, forKey: .cryptographicBindingMethodsSupported)
       cryptographicBindingMethodsSupported = cryptographicBindingMethods?.compactMap { CryptographicBindingMethod(rawValue: $0) }
@@ -72,7 +75,7 @@ extension CredentialIssuerMetadata {
 
     // MARK: Public
 
-    public let format: String
+    public let format: CredentialFormat
     public let scope: String?
     public let cryptographicBindingMethodsSupported: [CryptographicBindingMethod]?
     public let credentialSigningAlgValuesSupported: [String]?
@@ -81,6 +84,8 @@ extension CredentialIssuerMetadata {
     public let vctIntegrity: String?
     public let vctMetadataUri: String?
     public let vctMetadataUriIntegrity: String?
+    #warning("TODO: is required once TP 2.0 is enforced")
+    public let protectedIssuanceAuthorizationTrustStatement: ProtectedIssuanceAuthorizationTrustStatement?
 
     public let proofTypesSupported: [ProofType]
 
@@ -95,6 +100,7 @@ extension CredentialIssuerMetadata {
       case vctMetadataUriIntegrity = "vct_metadata_uri#integrity"
       case format
       case scope
+      case protectedIssuanceAuthorizationTrustStatement = "protected_issuance_authorization_trust_statement"
       case cryptographicBindingMethodsSupported = "cryptographic_binding_methods_supported"
       case credentialSigningAlgValuesSupported = "credential_signing_alg_values_supported"
       case proofTypesSupported = "proof_types_supported"
@@ -102,7 +108,6 @@ extension CredentialIssuerMetadata {
     }
 
     enum VcSdJwtCredentialConfigurationSupportedError: Error {
-      case invalidVcSdJwtFormat
       case invalidProofType
     }
   }

@@ -29,7 +29,8 @@ public enum NetworkHeader {
 }
 
 extension NetworkHeader {
-  public static let swiyuUserAgent = "swiyu"
+  public static let swiyuWalletUserAgent = "swiyuWallet"
+  public static let swiyuSandboxWalletUserAgent = "swiyuSandboxWallet"
 
   public var raw: [String: String] {
     switch self {

@@ -14,7 +14,7 @@ final class RotateNextPresentableBundleItemUseCaseTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    credentialRepository = CredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProtocolSpy()
     Container.shared.credentialRepository.register { self.credentialRepository }
     useCase = RotateNextPresentableBundleItemUseCase()
   }
@@ -96,14 +96,14 @@ final class RotateNextPresentableBundleItemUseCaseTests: XCTestCase {
   // MARK: Private
 
   private var useCase: RotateNextPresentableBundleItemUseCase!
-  private var credentialRepository: CredentialRepositoryProcotolSpy!
+  private var credentialRepository: CredentialRepositoryProtocolSpy!
 
   private func credential(bundleItems: [BundleItem], nextPresentableBundleItemId: UUID) -> VerifiableCredential {
     VerifiableCredential(
       bundleItems: bundleItems,
       nextPresentableBundleItemId: nextPresentableBundleItemId,
-      format: "format",
-      issuerUrl: "https://issuer",
+      format: .vcSdJwt,
+      issuerUrl: URL(string: "https://issuer.domain.ch")!,
       issuer: "issuer",
       authentication: CredentialAuthentication(accessToken: "accessToken"))
   }

@@ -13,7 +13,7 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
 
   // MARK: Internal
 
-  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer]) throws -> VpToken {
+  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer], withOrigin: String?) throws -> VpToken {
     guard let vcSdJWS = credential as? VcSdJWS else {
       throw AnyVpTokenGeneratorError.invalidFormat
     }
@@ -25,7 +25,8 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
         from: sdJwt,
         digestAlgorithm: vcSdJWS.digestAlgorithm,
         requestObject: requestObject,
-        keyPair: key)
+        keyPair: key,
+        withOrigin: withOrigin)
     else {
       return sdJwt
     }
@@ -42,7 +43,8 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
     from sdJwt: String,
     digestAlgorithm: SdJwtDigestAlgorithm,
     requestObject: RequestObject,
-    keyPair: VaultKeyPair) throws
+    keyPair: VaultKeyPair,
+    withOrigin: String?) throws
     -> String?
   {
     guard let sdJwtData = sdJwt.data(using: .utf8) else {
@@ -50,7 +52,21 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
     }
 
     let sdHash = hash(data: sdJwtData, with: digestAlgorithm)
-    let jwt = KeyBindingJWT(sdHash: sdHash, audience: requestObject.clientId, nonce: requestObject.nonce)
+
+    // If the response mode is dcApiJwt and origin is set, use the origin as the audience as specified in
+    // https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#appendix-A.4-6
+    // else we fail.
+
+    if requestObject.responseMode == .dcApiJWT && withOrigin == nil {
+      throw AnyVpTokenGeneratorError.missingDcApiOrigin
+    }
+
+    let aud = if let originAud = withOrigin, requestObject.responseMode == .dcApiJWT {
+      "origin:\(originAud)"
+    } else {
+      requestObject.clientIdentifier.raw
+    }
+    let jwt = KeyBindingJWT(sdHash: sdHash, audience: aud, nonce: requestObject.nonce)
     let data = try jwsEncoder.encode(jwt, using: keyPair)
     return String(data: data, encoding: .utf8)
   }

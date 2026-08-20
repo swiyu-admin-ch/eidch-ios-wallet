@@ -1,7 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "verified_badge.svg",
+      "filename" : "TrustBadge.svg",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "TrustBadge_dark.svg",
       "idiom" : "universal"
     }
   ],
@@ -10,7 +20,6 @@
     "version" : 1
   },
   "properties" : {
-    "preserves-vector-representation" : true,
-    "template-rendering-intent" : "template"
+    "preserves-vector-representation" : true
   }
 }

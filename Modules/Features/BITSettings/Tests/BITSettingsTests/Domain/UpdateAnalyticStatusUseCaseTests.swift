@@ -1,31 +1,37 @@
+import Factory
+import FactoryTesting
 import Spyable
-import XCTest
-@testable import BITAnalytics
+import Testing
 @testable import BITSettings
 
-final class UpdateAnalyticStatusUseCaseTests: XCTestCase {
+@Suite(.container)
+struct UpdateAnalyticStatusUseCaseTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.reset()
+
+    let analyticsRepository = AnalyticsRepositoryProtocolSpy()
+    Container.shared.analyticsRepository.register { analyticsRepository }
+
+    self.analyticsRepository = analyticsRepository
+    useCase = UpdateAnalyticStatusUseCase()
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    analyticsRepository = AnalyticsRepositoryProtocolSpy()
-
-    useCase = UpdateAnalyticStatusUseCase(analyticsRepository: analyticsRepository)
-  }
-
-  func testExecute_success() async {
+  @Test
+  func executeSuccess() async {
     let mockAllowAnalytics = true
-    await useCase.execute(isAllowed: mockAllowAnalytics)
+    await useCase(isAllowed: mockAllowAnalytics)
 
-    XCTAssertTrue(analyticsRepository.allowAnalyticsCalled)
-    XCTAssertEqual(analyticsRepository.allowAnalyticsReceivedInvocations.first, mockAllowAnalytics)
+    #expect(analyticsRepository.allowAnalyticsCalled)
+    #expect(analyticsRepository.allowAnalyticsReceivedInvocations.first == mockAllowAnalytics)
   }
 
   // MARK: Private
 
-  // swiftlint:disable implicitly_unwrapped_optional
-  private var useCase: UpdateAnalyticStatusUseCaseProtocol!
-  private var analyticsRepository: AnalyticsRepositoryProtocolSpy!
-  // swiftlint:enable implicitly_unwrapped_optional
-
+  private let useCase: UpdateAnalyticStatusUseCaseProtocol
+  private let analyticsRepository: AnalyticsRepositoryProtocolSpy
 }

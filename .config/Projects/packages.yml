@@ -5,7 +5,7 @@ packages:
 
   realm-swift:
     url: https://github.com/realm/realm-swift
-    from: "20.0.4"
+    from: "20.0.5"
 
   swift-spyable:
     url: https://github.com/Matejkob/swift-spyable

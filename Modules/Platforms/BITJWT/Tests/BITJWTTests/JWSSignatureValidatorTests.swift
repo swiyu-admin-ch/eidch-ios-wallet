@@ -71,6 +71,17 @@ final class JWSSignatureValidatorTests: XCTestCase {
     }
   }
 
+  func testValidate_withSuppliedValidJwk_doesNotThrow() throws {
+    XCTAssertNoThrow(try validator.validate(jwsMock, with: .Mock.validSample))
+    XCTAssertNil(didResolverSpy.getJWKFromReceivedKid, "Supplying a JWK should bypass DID resolution")
+  }
+
+  func testValidate_withSuppliedInvalidJwk_throwsInvalidSignature() throws {
+    XCTAssertThrowsError(try validator.validate(jwsMock, with: .Mock.invalidSample)) { error in
+      XCTAssertEqual(error as? JWSSignatureValidatorError, .invalidSignature)
+    }
+  }
+
   // MARK: Private
 
   private let kid = "did:example:123456789#key-01"

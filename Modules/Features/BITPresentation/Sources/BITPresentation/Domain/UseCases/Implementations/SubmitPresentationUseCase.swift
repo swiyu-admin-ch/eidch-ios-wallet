@@ -37,10 +37,10 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
             throw SubmitPresentationUseCaseError.missingSelectedCredential
           }
 
-          let authorizationResponseBody: AuthorizationResponseBody
+          let authorizationResponse: AuthorizationResponse
 
           do {
-            authorizationResponseBody = try authorizationResponseBodyGenerator(for: selectedCredential, requestObject: context.requestObject)
+            authorizationResponse = try authorizationResponseBodyGenerator(for: selectedCredential, requestObject: context.requestObject, withOrigin: context.origin)
           } catch RequestObjectError.invalidPayload, RequestObjectError.invalidQuery {
             throw SubmitPresentationUseCaseError.invalidAuthorizationRequest
           }
@@ -49,7 +49,7 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
 
           try await submit(
             for: context,
-            authorizationResponseBody: authorizationResponseBody,
+            authorizationResponse: authorizationResponse,
             continuation: continuation)
         } catch {
           continuation.finish(throwing: error)
@@ -65,41 +65,42 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
   @Injected(\.proximityPresentationRepository) private var proximityRepository: ProximityPresentationRepositoryProtocol
   @Injected(\.presentationRequestRepository) private var repository
   @Injected(\.authorizationResponseBodyGenerator) private var authorizationResponseBodyGenerator
+  @Injected(\.authorizationResponseEncryptionGenerator) private var authorizationResponseEncryptionGenerator
   @Injected(\.activityService) private var activityService
   @Injected(\.rotateNextPresentableBundleItemUseCase) private var rotateNextPresentableBundleItemUseCase: RotateNextPresentableBundleItemUseCaseProtocol
 
   private func submit(
     for context: PresentationRequestContext,
-    authorizationResponseBody: AuthorizationResponseBody,
+    authorizationResponse: AuthorizationResponse,
     continuation: AsyncThrowingStream<SubmitPresentationEvent, Error>.Continuation) async throws
   {
     switch context.transport {
     case .proximity:
       try await submitOverProximity(
-        authorizationResponseBody: authorizationResponseBody,
+        authorizationResponse: authorizationResponse,
         context: context,
         continuation: continuation)
     case .network:
-      try await submitOverNetwork(
+      let presentationResponse = try await submitOverNetwork(
         context: context,
-        authorizationResponseBody: authorizationResponseBody)
-      continuation.yield(.success)
+        authorizationResponse: authorizationResponse)
+      continuation.yield(.success(presentationResponse))
       continuation.finish()
     }
   }
 
   private func submitOverProximity(
-    authorizationResponseBody: AuthorizationResponseBody,
+    authorizationResponse: AuthorizationResponse,
     context: PresentationRequestContext,
     continuation: AsyncThrowingStream<SubmitPresentationEvent, Error>.Continuation) async throws
   {
-    for try await proximityEvent in proximityRepository.submit(presentationRequestBody: authorizationResponseBody) {
+    for try await proximityEvent in proximityRepository.submit(authorizationResponse: authorizationResponse) {
       switch proximityEvent {
       case .progress(let progress):
         continuation.yield(.progress(progress))
       case .success:
         recordActivity(context: context)
-        continuation.yield(.success)
+        continuation.yield(.success(nil))
         continuation.finish()
         return
       }
@@ -108,14 +109,45 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
 
   private func submitOverNetwork(
     context: PresentationRequestContext,
-    authorizationResponseBody: AuthorizationResponseBody) async throws
+    authorizationResponse: AuthorizationResponse) async throws
+    -> PresentationResponse?
   {
     guard let responseUri = context.requestObject.responseUri else {
       throw SubmitPresentationUseCaseError.missingResponseUri
     }
 
-    try await repository.submit(authorizationResponse: authorizationResponseBody, to: responseUri)
-    recordActivity(context: context)
+    do {
+      let encryption = try authorizationResponseEncryptionGenerator(for: context.requestObject.clientMetadata)
+      let presentationResponse = try await repository.submit(authorizationResponse: authorizationResponse, to: responseUri, encryption: encryption)
+      recordActivity(context: context)
+      return presentationResponse
+    } catch {
+      if shouldRecordPresentationActivity(after: error) {
+        recordActivity(context: context)
+      }
+
+      throw error
+    }
+  }
+
+  private func shouldRecordPresentationActivity(after error: Error) -> Bool {
+    if error is PresentationResponseValidationError {
+      return true
+    }
+
+    guard let networkError = error as? NetworkError else {
+      return false
+    }
+
+    switch networkError.status {
+    case .hostnameNotFound,
+         .noConnection,
+         .timeout,
+         .unknown:
+      return false
+    default:
+      return true
+    }
   }
 
   private func recordActivity(context: PresentationRequestContext) {

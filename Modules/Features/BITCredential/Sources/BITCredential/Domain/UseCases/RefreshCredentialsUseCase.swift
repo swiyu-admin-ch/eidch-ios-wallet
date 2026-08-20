@@ -30,7 +30,7 @@ struct RefreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol {
 
   // MARK: Private
 
-  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
+  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProtocol
   @Injected(\.refreshDeferredCredentialUseCase) private var refreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtocol
   @Injected(\.refreshVerifiableCredentialsUseCase) private var refreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol

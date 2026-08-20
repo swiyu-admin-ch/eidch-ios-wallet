@@ -18,8 +18,9 @@ extension VersionEnforcementRoutes where Self: RouterProtocol {
   public func versionEnforcement(_ versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate) {
     let module = Container.shared.versionEnforcementModule((versionEnforcement, delegate))
     let style = ModalOpeningStyle(animatedWhenPresenting: true, modalPresentationStyle: .fullScreen)
+    style.viewController = viewController
     module.router.current = style
 
-    open(module.viewController, as: style)
+    style.open(module.viewController)
   }
 }

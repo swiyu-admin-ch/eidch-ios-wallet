@@ -62,7 +62,7 @@ final class GetWalletPairingQRCodeUseCaseTests: XCTestCase {
   private var useCase: FetchWalletPairingOfferUseCase!
 
   private var qrCodeGenerator: QRCodeGeneratorProtocolSpy!
-  private var repository: EIDRequestRepositoryProtocolSpy!
+  private var repository: SIDRepositoryProtocolSpy!
 
   private func setupSuccessState() {
     repository.pairWalletCaseIdReturnValue = mockWalletPairingResponse
@@ -70,10 +70,10 @@ final class GetWalletPairingQRCodeUseCaseTests: XCTestCase {
   }
 
   private func registerMocks() {
-    repository = EIDRequestRepositoryProtocolSpy()
+    repository = SIDRepositoryProtocolSpy()
     qrCodeGenerator = QRCodeGeneratorProtocolSpy()
 
-    Container.shared.eIDRequestRepository.register { self.repository }
+    Container.shared.sidRepository.register { self.repository }
     Container.shared.qrCodeGenerator.register { self.qrCodeGenerator }
   }
 

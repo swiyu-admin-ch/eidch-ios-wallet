@@ -12,8 +12,8 @@ protocol FetchEIDRequestStatusUseCaseProtocol {
 
 struct FetchEIDRequestStatusUseCase: FetchEIDRequestStatusUseCaseProtocol {
   func execute(for caseId: String) async throws -> EIDRequestStatus {
-    try await eIDRequestRepository.fetchRequestStatus(for: caseId)
+    try await sidRepository.fetchRequestStatus(for: caseId)
   }
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository
+  @Injected(\.sidRepository) private var sidRepository
 }

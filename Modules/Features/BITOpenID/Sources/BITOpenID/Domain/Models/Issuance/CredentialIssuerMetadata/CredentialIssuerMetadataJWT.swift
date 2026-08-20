@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - CredentialIssuerMetadataJWT
 
-struct CredentialIssuerMetadataJWT: JWT, Codable, Equatable {
+public struct CredentialIssuerMetadataJWT: JWT, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -19,12 +19,23 @@ struct CredentialIssuerMetadataJWT: JWT, Codable, Equatable {
     self.credentialIssuerMetadata = credentialIssuerMetadata
   }
 
-  init(from decoder: Decoder) throws {
+  public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     subject = try container.decode(String.self, forKey: .subject)
     issuedAt = try container.decode(Date.self, forKey: .issuedAt)
     expiredAt = try container.decodeIfPresent(Date.self, forKey: .expiredAt)
     credentialIssuerMetadata = try CredentialIssuerMetadata(from: decoder)
+  }
+
+  // MARK: Public
+
+  public let subject: String?
+  public let issuedAt: Date?
+  public let expiredAt: Date?
+  public let credentialIssuerMetadata: CredentialIssuerMetadata
+
+  public var type: String? {
+    Self.typeIdentifier
   }
 
   // MARK: Internal
@@ -36,28 +47,18 @@ struct CredentialIssuerMetadataJWT: JWT, Codable, Equatable {
   }
 
   static let typeIdentifier = "openidvci-issuer-metadata+jwt"
-
-  let subject: String?
-  let issuedAt: Date?
-  let expiredAt: Date?
-  let credentialIssuerMetadata: CredentialIssuerMetadata
-
-  var type: String? {
-    Self.typeIdentifier
-  }
-
 }
 
 extension CredentialIssuerMetadataJWT {
-  var issuer: String? {
+  public var issuer: String? {
     nil
   }
 
-  var audience: String? {
+  public var audience: String? {
     nil
   }
 
-  var activatedAt: Date? {
+  public var activatedAt: Date? {
     nil
   }
 }

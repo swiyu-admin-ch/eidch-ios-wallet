@@ -2,20 +2,23 @@ import BITCrypto
 import BITLocalAuthentication
 import Factory
 import Foundation
+import Spyable
+
+// MARK: - UniquePassphraseManagerProtocol
+
+@Spyable
+public protocol UniquePassphraseManagerProtocol {
+  func generate() throws -> Data
+  func save(uniquePassphrase: Data, for authMethod: AuthMethod, context: LAContextProtocol) throws
+  func exists(for authMethod: AuthMethod) -> Bool
+  func deleteBiometricUniquePassphrase() throws
+  @discardableResult
+  func getUniquePassphrase(authMethod: AuthMethod, context: LAContextProtocol) throws -> Data
+}
+
+// MARK: - UniquePassphraseManager
 
 struct UniquePassphraseManager: UniquePassphraseManagerProtocol {
-
-  // MARK: Lifecycle
-
-  init(
-    isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocol = Container.shared.isBiometricUsageAllowedUseCase(),
-    uniquePassphraseRepository: UniquePassphraseRepositoryProtocol = Container.shared.uniquePassphraseRepository(),
-    passphraseLength: Int = Container.shared.passphraseLength())
-  {
-    self.isBiometricUsageAllowedUseCase = isBiometricUsageAllowedUseCase
-    self.uniquePassphraseRepository = uniquePassphraseRepository
-    self.passphraseLength = passphraseLength
-  }
 
   // MARK: Internal
 
@@ -25,7 +28,7 @@ struct UniquePassphraseManager: UniquePassphraseManagerProtocol {
 
   func save(uniquePassphrase: Data, context: LAContextProtocol) throws {
     try uniquePassphraseRepository.saveUniquePassphrase(uniquePassphrase, forAuthMethod: .appPin, inContext: context)
-    if isBiometricUsageAllowedUseCase.execute() {
+    if getBiometricStateUseCase() == .enabled {
       try uniquePassphraseRepository.saveUniquePassphrase(uniquePassphrase, forAuthMethod: .biometric, inContext: context)
     }
   }
@@ -48,8 +51,8 @@ struct UniquePassphraseManager: UniquePassphraseManagerProtocol {
 
   // MARK: Private
 
-  private let isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocol
-  private let uniquePassphraseRepository: UniquePassphraseRepositoryProtocol
-  private let passphraseLength: Int
+  @Injected(\.passphraseLength) private var passphraseLength: Int
+  @Injected(\.getBiometricStateUseCase) private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocol
+  @Injected(\.uniquePassphraseRepository) private var uniquePassphraseRepository: UniquePassphraseRepositoryProtocol
 
 }

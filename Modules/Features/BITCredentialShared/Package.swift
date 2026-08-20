@@ -48,7 +48,6 @@ let package = Package(
         "BITCredentialShared",
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITCrypto", package: "BITCrypto"),
-        .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "Factory", package: "Factory"),
       ],

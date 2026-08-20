@@ -28,11 +28,11 @@ final class ProximityPresentationRepository: ProximityPresentationRepositoryProt
     }
   }
 
-  func submit(presentationRequestBody: any DictionarySerializable) -> AsyncThrowingStream<ProximitySubmissionEvent, Error> {
+  func submit(authorizationResponse: AuthorizationResponse) -> AsyncThrowingStream<ProximitySubmissionEvent, Error> {
     AsyncThrowingStream(ProximitySubmissionEvent.self) { continuation in
       let task = Task {
         do {
-          let data = try JSONSerialization.data(withJSONObject: presentationRequestBody.asDictionary())
+          let data = try JSONSerialization.data(withJSONObject: authorizationResponse.asDictionary())
 
           let stream = controller.stateValues()
 
@@ -99,7 +99,7 @@ extension ProximityPresentationRepository {
         case .readyForEngagement(let params):
           continuation.yield(.qrCode(params.qrCodeData))
         case .requestingDocuments(let params):
-          continuation.yield(.request(params.raw))
+          continuation.yield(.request(requestObject: params.raw, origin: params.origin))
           continuation.finish()
           return
         case .error(let params):

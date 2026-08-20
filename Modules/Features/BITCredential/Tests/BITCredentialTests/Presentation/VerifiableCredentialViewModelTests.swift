@@ -1,100 +1,120 @@
+import BITCore
 import Factory
-import XCTest
+import FactoryTesting
+import Foundation
+import Testing
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITL10n
 @testable import BITTheming
 
-final class VerifiableCredentialViewModelTests: XCTestCase {
+@Suite(.container)
+struct VerifiableCredentialViewModelTests {
 
-  override class func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  // MARK: Lifecycle
+
+  init() {
     Container.shared.isBatchIssuanceEnabled.register { true }
+    Container.shared.currentDate.register { Self.currentDate }
   }
 
-  func testInit_withValidStatus_setsCorrectValues() {
-    let viewModel = VerifiableCredentialViewModel(credential: VerifiableCredential.Mock.sample)
+  // MARK: Internal
 
-    XCTAssertEqual(viewModel.environment, .external)
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusValid)
-    XCTAssertEqual(viewModel.statusBadgeAccessibilityText, L10n.tkCredentialStatusValid)
-    XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusValidAlt)
-    XCTAssertEqual(viewModel.statusImage, Assets.statusValid.swiftUIImage)
-    XCTAssertEqual(viewModel.statusColor, ThemingAssets.Label.secondary.swiftUIColor)
-    XCTAssertEqual(viewModel.id, VerifiableCredential.Mock.sample.id)
+  @Test
+  func init_withValidStatus_setsCorrectValues() {
+    let credential = VerifiableCredential.Mock.sample
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.environment == .external)
+    #expect(viewModel.statusText == L10n.tkCredentialStatusValid)
+    #expect(viewModel.statusBadgeAccessibilityText == L10n.tkCredentialStatusValid)
+    #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusValidAlt)
+    #expect(viewModel.statusImage == Assets.statusValid.swiftUIImage)
+    #expect(viewModel.statusColor == ThemingAssets.Label.secondary.swiftUIColor)
+    #expect(viewModel.id == VerifiableCredential.Mock.sample.id)
   }
 
-  func testInit_withExpiredStatus_setsCorrectValues() {
+  @Test
+  func init_withExpiredStatus_setsCorrectValues() {
     var expiredCredential = VerifiableCredential.Mock.sample
     expiredCredential.bundleItems[0].status = .expired
 
     let viewModel = VerifiableCredentialViewModel(credential: expiredCredential)
 
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusInvalid)
-    XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusInvalidAlt)
-    XCTAssertEqual(viewModel.statusImage, Assets.statusInvalid.swiftUIImage)
-    XCTAssertEqual(viewModel.statusColor, ThemingAssets.Brand.Core.swissRed.swiftUIColor)
-    XCTAssertTrue(viewModel.statusBadgeStyle is ErrorBadgeStyle)
+    #expect(viewModel.statusText == L10n.tkCredentialStatusInvalid)
+    #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusInvalidAlt)
+    #expect(viewModel.statusImage == Assets.statusInvalid.swiftUIImage)
+    #expect(viewModel.statusColor == ThemingAssets.Brand.Core.swissRed.swiftUIColor)
+    #expect(viewModel.statusBadgeStyle is ErrorBadgeStyle)
   }
 
-  func testInit_withUnknownStatus_setsCorrectValues() {
+  @Test
+  func init_withUnknownStatus_setsCorrectValues() {
     var unknownCredential = VerifiableCredential.Mock.sample
     unknownCredential.bundleItems[0].status = .unknown
 
     let viewModel = VerifiableCredentialViewModel(credential: unknownCredential)
 
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusUnknown)
-    XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusUnknownAlt)
-    XCTAssertEqual(viewModel.statusImage, Assets.statusUnknown.swiftUIImage)
-    XCTAssertEqual(viewModel.statusColor, ThemingAssets.Label.secondary.swiftUIColor)
-    XCTAssertTrue(viewModel.statusBadgeStyle is OutlineBadgeStyle)
+    #expect(viewModel.statusText == L10n.tkCredentialStatusUnknown)
+    #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusUnknownAlt)
+    #expect(viewModel.statusImage == Assets.statusUnknown.swiftUIImage)
+    #expect(viewModel.statusColor == ThemingAssets.Label.secondary.swiftUIColor)
+    #expect(viewModel.statusBadgeStyle is OutlineBadgeStyle)
   }
 
-  func testInit_withNotYetValid_setsRelativeDayText() {
+  @Test
+  func init_withNotYetValidOnDifferentDay_setsDateText() {
     var notYetValidCredential = VerifiableCredential.Mock.sample
     notYetValidCredential.bundleItems[0].status = .notYetValid
-    notYetValidCredential.validFrom = Calendar.current.date(byAdding: .day, value: 3, to: Date())
+    let validFrom = Date.create(2026, 7, 26, 8, 15, 0)
+    notYetValidCredential.validFrom = validFrom
 
     let viewModel = VerifiableCredentialViewModel(credential: notYetValidCredential)
+    let expectedDate = DateFormatter.shortDateFormatter.string(from: validFrom)
 
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusNotValidYet(3))
-    XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusNotValidYetAlt(3))
+    #expect(viewModel.statusText == L10n.tkCredentialStatusNotYetValid(expectedDate))
+    #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusNotYetValidAlt(expectedDate))
   }
 
-  func testInit_withNotYetValidIn24Hours_setsSoonText() {
+  @Test
+  func init_withNotYetValidOnSameDay_setsTimeText() {
     var notYetValidCredential = VerifiableCredential.Mock.sample
     notYetValidCredential.bundleItems[0].status = .notYetValid
-    notYetValidCredential.validFrom = Calendar.current.date(byAdding: .hour, value: 1, to: Date())
+    let validFrom = Date.create(2026, 7, 23, 13, 13, 0)
+    notYetValidCredential.validFrom = validFrom
 
     let viewModel = VerifiableCredentialViewModel(credential: notYetValidCredential)
+    let expectedTime = DateFormatter.shortHourFormatter.string(from: validFrom)
 
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusSoon)
-    XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusSoonAlt)
+    #expect(viewModel.statusText == L10n.tkCredentialStatusValidAt(expectedTime))
+    #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusValidAtAlt(expectedTime))
   }
 
-  func testInit_withNilValidFrom_fallsBackToUnknownText() {
+  @Test
+  func init_withNilValidFrom_fallsBackToUnknownText() {
     var notYetValidCredential = VerifiableCredential.Mock.sample
     notYetValidCredential.bundleItems[0].status = .notYetValid
     notYetValidCredential.validFrom = nil
 
     let viewModel = VerifiableCredentialViewModel(credential: notYetValidCredential)
 
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusUnknown)
-    XCTAssertEqual(viewModel.statusTextAlt, L10n.tkCredentialStatusUnknown)
+    #expect(viewModel.statusText == L10n.tkCredentialStatusUnknown)
+    #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusUnknownAlt)
   }
 
-  func testInit_withUnacceptedProgressionState_setsBadgeAccessibilityTextToProgressionState() {
+  @Test
+  func init_withUnacceptedProgressionState_setsBadgeAccessibilityTextToProgressionState() {
     var credential = VerifiableCredential.Mock.sample
     credential.progressionState = .unaccepted
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 
-    XCTAssertEqual(viewModel.statusText, L10n.tkCredentialStatusValid)
-    XCTAssertEqual(viewModel.statusBadgeAccessibilityText, L10n.tkCredentialProgressionStateUnaccepted)
+    #expect(viewModel.statusText == L10n.tkCredentialStatusValid)
+    #expect(viewModel.statusBadgeAccessibilityText == L10n.tkCredentialProgressionStateUnaccepted)
   }
 
-  func testIsRefreshable_withRefreshToken_returnsTrue() {
+  @Test
+  func isRefreshable_withRefreshToken_returnsTrue() {
     var credential = VerifiableCredential.Mock.sample
     credential.authentication = CredentialAuthentication(
       accessToken: credential.authentication.accessToken,
@@ -104,10 +124,11 @@ final class VerifiableCredentialViewModelTests: XCTestCase {
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 
-    XCTAssertTrue(viewModel.isRefreshable)
+    #expect(viewModel.isRefreshable)
   }
 
-  func testIsRefreshable_withoutRefreshToken_returnsFalse() {
+  @Test
+  func isRefreshable_withoutRefreshToken_returnsFalse() {
     var credential = VerifiableCredential.Mock.sample
     credential.authentication = CredentialAuthentication(
       accessToken: credential.authentication.accessToken,
@@ -117,10 +138,11 @@ final class VerifiableCredentialViewModelTests: XCTestCase {
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 
-    XCTAssertFalse(viewModel.isRefreshable)
+    #expect(!viewModel.isRefreshable)
   }
 
-  func testIsBatchPrivacyWarningVisible_withExhaustedBatchCredential_returnsTrue() {
+  @Test
+  func isBatchPrivacyWarningVisible_withExhaustedBatchCredential_returnsTrue() {
     var credential = VerifiableCredential.Mock.sample
     credential.batchData = BatchData(batchSize: 2)
     credential.authentication = CredentialAuthentication(
@@ -139,10 +161,11 @@ final class VerifiableCredentialViewModelTests: XCTestCase {
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 
-    XCTAssertTrue(viewModel.isBatchPrivacyWarningVisible)
+    #expect(viewModel.isBatchPrivacyWarningVisible)
   }
 
-  func testIsBatchPrivacyWarningVisible_withoutRefreshToken_returnsFalse() {
+  @Test
+  func isBatchPrivacyWarningVisible_withoutRefreshToken_returnsFalse() {
     var credential = VerifiableCredential.Mock.sample
     credential.batchData = BatchData(batchSize: 2)
     if credential.bundleItems.count == 1 {
@@ -161,6 +184,10 @@ final class VerifiableCredentialViewModelTests: XCTestCase {
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 
-    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
+    #expect(!viewModel.isBatchPrivacyWarningVisible)
   }
+
+  // MARK: Private
+
+  private static let currentDate = Date.create(2026, 7, 23, 10, 13, 0)
 }

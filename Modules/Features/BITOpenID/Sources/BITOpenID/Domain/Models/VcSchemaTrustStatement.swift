@@ -7,7 +7,7 @@ public typealias VcSchemaTrustStatement = SdJWS<VcSchemaTrustStatementJWT>
 
 // MARK: - VcSchemaTrustStatementJWT
 
-public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
+public struct VcSchemaTrustStatementJWT: TrustStatementV1JWT, Codable, Equatable {
 
   // MARK: Lifecycle
 
@@ -16,7 +16,7 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
     vct = try container.decode(String.self, forKey: .vct)
     subject = try container.decodeIfPresent(String.self, forKey: .subject)
     issuedAt = try container.decodeIfPresent(Date.self, forKey: .issuedAt)
-    statusList = try container.decode(VcSdJwtTokenStatusList.self, forKey: .statusList)
+    statusList = try container.decode(VcSdJwtTokenStatus.self, forKey: .statusList)
     activatedAt = try container.decodeIfPresent(Date.self, forKey: .activatedAt)
     expiredAt = try container.decodeIfPresent(Date.self, forKey: .expiredAt)
     vcSchemaId = try Self.decodeVcSchemaId(container: container)
@@ -29,7 +29,7 @@ public struct VcSchemaTrustStatementJWT: TrustStatement, Codable, Equatable {
   public let vct: String
   public let subject: String?
   public let issuedAt: Date?
-  public let statusList: VcSdJwtTokenStatusList
+  public let statusList: VcSdJwtTokenStatus
 
   public let activatedAt: Date?
   public let expiredAt: Date?

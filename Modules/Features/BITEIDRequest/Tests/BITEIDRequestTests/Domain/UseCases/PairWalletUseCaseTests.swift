@@ -25,7 +25,7 @@ final class PairWalletUseCaseTests: XCTestCase {
     let result = try await useCase.execute(for: caseId)
 
     XCTAssertEqual(result, mockWalletPairingResponse.walletPairingId)
-    XCTAssertEqual(eIDRequestRepository.pairWalletCaseIdCallsCount, 1)
+    XCTAssertEqual(sidRepository.pairWalletCaseIdCallsCount, 1)
     XCTAssertEqual(validateCredentialOfferInvitationUrlUseCase.executeCallsCount, 1)
     XCTAssertEqual(fetchCredentialUseCase.executeFromCallsCount, 1)
     XCTAssertEqual(eIDRequestCaseRepository.getIdCallsCount, 1)
@@ -35,17 +35,17 @@ final class PairWalletUseCaseTests: XCTestCase {
   func testExecute_success_assertParameters() async throws {
     _ = try await useCase.execute(for: caseId)
 
-    XCTAssertEqual(eIDRequestRepository.pairWalletCaseIdReceivedCaseId, caseId)
+    XCTAssertEqual(sidRepository.pairWalletCaseIdReceivedCaseId, caseId)
     XCTAssertEqual(validateCredentialOfferInvitationUrlUseCase.executeReceivedUrl, mockWalletPairingResponse.credentialOfferLink)
     XCTAssertEqual(fetchCredentialUseCase.executeFromReceivedOffer, mockCredentialOffer)
 
     XCTAssertEqual(eIDRequestCaseRepository.getIdReceivedId, caseId)
-    XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.deferredCredential, mockFetchCredentialResult.0)
+    XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.deferredCredential, mockDeferredCredential)
 
   }
 
   func testExecute_receiveCredential_throws() async throws {
-    fetchCredentialUseCase.executeFromReturnValue = (VerifiableCredential.Mock.sample, nil)
+    fetchCredentialUseCase.executeFromReturnValue = VerifiableCredential.Mock.sample
 
     do {
       _ = try await useCase.execute(for: caseId)
@@ -56,7 +56,7 @@ final class PairWalletUseCaseTests: XCTestCase {
   }
 
   func testExecute_pairWalletThrowsError_throwsError() async throws {
-    eIDRequestRepository.pairWalletCaseIdThrowableError = TestingError.error
+    sidRepository.pairWalletCaseIdThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: caseId)
@@ -114,34 +114,33 @@ final class PairWalletUseCaseTests: XCTestCase {
 
   private let caseId = "caseId"
   private let mockCredentialOffer = CredentialOffer.Mock.sample
-  private var mockFetchCredentialResult: (DeferredCredential, TrustInformation?)!
+  private var mockDeferredCredential = DeferredCredential.Mock.sample
   private let mockWalletPairingResponse = WalletPairingResponse.Mock.sample
   private let mockEIDRequestCase = EIDRequestCase.Mock.sampleAgentReview
 
   private var useCase: PairWalletUseCase!
 
-  private var eIDRequestRepository: EIDRequestRepositoryProtocolSpy!
+  private var sidRepository: SIDRepositoryProtocolSpy!
   private var fetchCredentialUseCase: FetchCredentialUseCaseProtocolSpy!
   private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocolSpy!
   private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy!
 
   private func registerMocks() {
-    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
+    sidRepository = SIDRepositoryProtocolSpy()
     fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
     eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
     validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
 
-    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
+    Container.shared.sidRepository.register { self.sidRepository }
     Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
     Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
     Container.shared.validateCredentialOfferInvitationUrlUseCase.register { self.validateCredentialOfferInvitationUrlUseCase }
   }
 
   private func createSuccessState() {
-    mockFetchCredentialResult = (DeferredCredential.Mock.sample, nil)
-    eIDRequestRepository.pairWalletCaseIdReturnValue = mockWalletPairingResponse
+    sidRepository.pairWalletCaseIdReturnValue = mockWalletPairingResponse
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = mockCredentialOffer
-    fetchCredentialUseCase.executeFromReturnValue = mockFetchCredentialResult
+    fetchCredentialUseCase.executeFromReturnValue = mockDeferredCredential
     eIDRequestCaseRepository.getIdReturnValue = mockEIDRequestCase
     eIDRequestCaseRepository.updateReturnValue = mockEIDRequestCase
   }

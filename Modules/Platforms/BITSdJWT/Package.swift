@@ -21,7 +21,6 @@ let package = Package(
     .package(path: "../../Platforms/BITAnalytics"),
     .package(path: "../../Platforms/BITClaimsPathPointer"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
-    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "3.0.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
@@ -34,7 +33,6 @@ let package = Package(
         .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "BITClaimsPathPointer", package: "BITClaimsPathPointer"),
         .product(name: "Factory", package: "Factory"),
-        .product(name: "JOSESwift", package: "JOSESwift"),
         .product(name: "Spyable", package: "swift-spyable"),
       ],
       resources: [.process("Resources")]),

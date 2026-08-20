@@ -7,11 +7,11 @@ import Security
 
 /// The Credential Request object as defined in the OID4VCI specification
 /// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-request
-public struct CredentialRequest: Codable {
+public struct CredentialRequest: Codable, Equatable {
 
   let credentialConfigurationId: String
   let proofs: Proofs?
-  let credentialResponseEncryption: CredentialResponseEncryption?
+  let credentialResponseEncryption: CredentialResponseEncryption
 
   // MARK: Internal
 
@@ -25,7 +25,7 @@ public struct CredentialRequest: Codable {
 // MARK: CredentialRequest.Proofs
 
 extension CredentialRequest {
-  struct Proofs: Codable {
+  struct Proofs: Codable, Equatable {
     let jwt: [String]
   }
 }

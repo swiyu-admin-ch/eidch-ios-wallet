@@ -17,7 +17,7 @@ public struct Notification: View {
     contentColor: Color? = nil,
     subtitle: String? = nil,
     subtitleColor: Color? = nil,
-    closeAction: @escaping () -> Void,
+    closeAction: (() -> Void)? = nil,
     subtitleAction: (() -> Void)? = nil,
     background: Color = ThemingAssets.Brand.Core.swissRedLabel.swiftUIColor,
     closeButtonStyle: CustomButtonStyle = .destructive)
@@ -44,7 +44,7 @@ public struct Notification: View {
     contentColor: Color? = nil,
     subtitle: String? = nil,
     subtitleColor: Color? = nil,
-    closeAction: @escaping () -> Void,
+    closeAction: (() -> Void)? = nil,
     subtitleAction: (() -> Void)? = nil,
     background: Color = ThemingAssets.Brand.Core.swissRedLabel.swiftUIColor,
     closeButtonStyle: CustomButtonStyle = .destructive)
@@ -99,10 +99,12 @@ public struct Notification: View {
 
       Spacer()
 
-      CircleButton(action: { closeAction() }, imageSystemName: "xmark")
-        .buttonStyle(closeButtonStyle)
-        .padding(.top, .x2)
-        .accessibilityLabel(L10n.tkGlobalClose)
+      if let closeAction {
+        CircleButton(action: closeAction, imageSystemName: "xmark")
+          .buttonStyle(closeButtonStyle)
+          .padding(.top, .x2)
+          .accessibilityLabel(L10n.tkQrscannerNotificationCloseButtonAlt)
+      }
     }
     .frame(maxWidth: horizontalSizeClass == .regular && verticalSizeClass == .compact ? (sizeCategory.isAccessibilityCategory ? .infinity : 350) : .infinity)
     .background(background)
@@ -125,7 +127,7 @@ public struct Notification: View {
   private var contentColor: Color?
   private var subtitle: String?
   private var subtitleColor: Color?
-  private var closeAction: () -> Void
+  private var closeAction: (() -> Void)?
   private var subtitleAction: (() -> Void)?
   private var background: Color
   private var closeButtonStyle: CustomButtonStyle

@@ -4,7 +4,6 @@ import BITCore
 import BITCredential
 import BITCredentialShared
 import BITOpenID
-import BITPresentation
 import BITQRCode
 import BITTheming
 import Combine
@@ -56,31 +55,44 @@ public class CameraViewModel: Vibrating {
       return await setMetadataUrl(url)
     }
 
+    guard isCameraReady else { return }
+
     try? cameraManager.configure()
     cameraManager.start()
-    isTipPresented = (try? await getCredentialsCountUseCase.execute() == 0) ?? true
+    accessibilityFeedback.announceCameraDidStartRunning()
+
+    guard await (try? getCredentialsCountUseCase() == 0) ?? true else { return }
+    notificationState = .tip
   }
 
   public func onCameraPermissionChange(_ permission: AVAuthorizationStatus) async {
-    let isAuthorized = permission == .authorized
-
-    if isAuthorized {
-      await onAppear()
-    }
-
-    isCameraReady = isAuthorized
+    isCameraReady = permission == .authorized
+    await onAppear()
   }
 
   // MARK: Internal
 
-  var error: Error?
-  var isTipPresented = false
-  var isErrorPopupPresented = false
+  enum NotificationState: Equatable {
+    case tip, failure(error: Error)
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+      switch (lhs, rhs) {
+      case (.tip, .tip):
+        true
+      case (.failure(let lhsError), .failure(let rhsError)):
+        lhsError.localizedDescription == rhsError.localizedDescription
+      default:
+        false
+      }
+    }
+  }
+
+  var notificationState: NotificationState?
   var isScanEnabled = true
   var onDismiss = false
   var isBluetoothPermissionRequired = false
 
-  private(set) var isCameraReady = false
+  private(set) var error: Error?
 
   var isTorchEnabled = false {
     didSet {
@@ -89,6 +101,11 @@ public class CameraViewModel: Vibrating {
   }
 
   func setMetadataUrl(_ url: URL) async {
+    accessibilityFeedback.announceQRCodeDetected()
+    defer {
+      accessibilityFeedback.stopQRCodeLoadingAnnouncements()
+    }
+
     do {
       isLoading = true
       isScanEnabled = false
@@ -127,6 +144,7 @@ public class CameraViewModel: Vibrating {
   @ObservationIgnored nonisolated(unsafe) private var proximityTask: Task<Void, Never>?
   private var previousUrl: String?
   private var hasProcessedInitialURL = false
+  private var isCameraReady = false
 
   @ObservationIgnored @Injected(\.scannerDelay) private var scannerDelay: UInt64
   @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
@@ -139,6 +157,7 @@ public class CameraViewModel: Vibrating {
   @ObservationIgnored @Injected(\.invitationErrorMapper) private var invitationErrorMapper: InvitationErrorMapping
   @ObservationIgnored @Injected(\.startProximityEngagementUseCase) private var startProximityEngagementUseCase: StartProximityEngagementUseCaseProtocol
   @ObservationIgnored @Injected(\.isProximityEnabled) private var isProximityEnabled: Bool
+  @ObservationIgnored @Injected(\.accessibilityFeedback) private var accessibilityFeedback: CameraAccessibilityFeedbackProtocol
 
   private func configureBindings() {
     observeCapturedObject()
@@ -165,20 +184,21 @@ public class CameraViewModel: Vibrating {
   }
 
   private func processPresentation(url: URL) async throws {
-    let context = try await fetchPresentationRequestUseCase.execute(url: url)
+    let context = try await fetchPresentationRequestUseCase(url: url)
 
     isTorchEnabled = false
     cameraManager.stop()
+    accessibilityFeedback.announceCameraDidStopRunning()
 
     destination = .external(.presentation(context))
   }
 
   private func processCredentialOffer(url: URL) async throws {
     let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(url)
-    let (credential, trustInformation) = try await fetchCredentialUseCase.execute(from: credentialOffer)
+    let credential = try await fetchCredentialUseCase.execute(from: credentialOffer)
 
-    if let verifiableCredential = credential as? VerifiableCredential, let trustInformation {
-      openCredentialOffer(credential: verifiableCredential, trustInformation: trustInformation)
+    if let verifiableCredential = credential as? VerifiableCredential {
+      openCredentialOffer(credential: verifiableCredential)
     } else if let deferredCredential = credential as? DeferredCredential {
       try await saveDeferredCredential(deferredCredential)
     }
@@ -237,11 +257,13 @@ public class CameraViewModel: Vibrating {
   }
 
   private func handleError(_ error: Error) {
+    let presentationResponse = (error as? FetchPresentationRequestUseCaseError)?.presentationResponse
+
     vibrate(.error)
     if error as? CheckInvitationTypeError != .wrongScheme {
       analytics.log(error)
     }
-    let mappedError = invitationErrorMapper(error) as? InvitationError ?? .invalidQRCode
+    let mappedError = invitationErrorMapper(error) as? InvitationError ?? .invalidQRCode()
     self.error = mappedError
 
     isLoading = false
@@ -249,19 +271,19 @@ public class CameraViewModel: Vibrating {
 
     // full screen error or toast
     if let errorDataset = mappedError.errorDataset {
-      destination = errorDestination(errorDataset)
+      destination = errorDestination(errorDataset, presentationResponse: presentationResponse)
     } else {
-      isErrorPopupPresented = true
+      notificationState = .failure(error: mappedError)
     }
 
-    if mappedError == .invalidQRCode {
+    if mappedError == .invalidQRCode() {
       invitationURL = nil // Keep the torch enabled
     } else {
       resetTorchAndInvitation()
     }
   }
 
-  private func errorDestination(_ errorDataset: ErrorDataset) -> InvitationDestinations {
+  private func errorDestination(_ errorDataset: ErrorDataset, presentationResponse: PresentationResponse?) -> InvitationDestinations {
     let onClose = Callback<Void> { [weak self] in
       Task { @MainActor [weak self] in
         self?.closeErrorView()
@@ -270,22 +292,18 @@ public class CameraViewModel: Vibrating {
 
     switch errorDestinationStyle {
     case .managedSheet:
-      return .error(errorDataset, onClose)
+      return .error(errorDataset, onClose, presentationResponse)
     case .push:
-      return .deeplinkError(errorDataset, onClose)
+      return .deeplinkError(errorDataset, onClose, presentationResponse)
     }
   }
 
-  private func openCredentialOffer(credential: VerifiableCredential, trustInformation: TrustInformation) {
+  private func openCredentialOffer(credential: VerifiableCredential) {
     isTorchEnabled = false
     cameraManager.stop()
-    destination = .offer(credential, trustInformation)
-  }
-
-  private func resumeScanningAfterPermissionDismiss() {
-    isLoading = false
-    isScanEnabled = true
-    cameraManager.start()
+    accessibilityFeedback.announceCameraDidStopRunning()
+    vibrate(.success)
+    destination = .offer(credential)
   }
 
   private func saveDeferredCredential(_ deferredCredential: DeferredCredential) async throws {
@@ -309,6 +327,7 @@ extension CameraViewModel {
 
     previousUrl = urlString
     vibrate(.success)
+    notificationState = nil
 
     Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
       DispatchQueue.main.async { [weak self] in
@@ -327,14 +346,14 @@ extension CameraViewModel {
 extension CameraViewModel {
   func closeErrorView() {
     error = nil
-    isErrorPopupPresented = false
+    notificationState = nil
     destination = nil
     isScanEnabled = true
     cameraManager.start()
   }
 
   func closeTipView() {
-    isTipPresented = false
+    notificationState = nil
   }
 
   func toggleTorch() {

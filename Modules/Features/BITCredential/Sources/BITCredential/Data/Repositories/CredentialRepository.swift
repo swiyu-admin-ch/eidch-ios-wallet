@@ -1,4 +1,5 @@
 import BITCredentialShared
+import BITCrypto
 import BITDataStore
 import BITEntities
 import BITVault
@@ -6,10 +7,10 @@ import Factory
 import Foundation
 import Spyable
 
-// MARK: - CredentialRepositoryProcotol
+// MARK: - CredentialRepositoryProtocol
 
 @Spyable
-public protocol CredentialRepositoryProcotol {
+public protocol CredentialRepositoryProtocol {
 
   func count() throws -> Int
   func delete(_ id: UUID, deleteKeyPairs: Bool) async throws
@@ -37,7 +38,7 @@ public protocol CredentialRepositoryProcotol {
   func getAllDeferredCredentials() async throws -> [DeferredCredential]
 }
 
-extension CredentialRepositoryProcotol {
+extension CredentialRepositoryProtocol {
   public func delete(_ id: UUID) async throws {
     try await delete(id, deleteKeyPairs: true)
   }
@@ -52,7 +53,7 @@ enum CredentialRepositoryError: Error {
 
 // MARK: - CredentialRepository
 
-struct CredentialRepository: CredentialRepositoryProcotol {
+struct CredentialRepository: CredentialRepositoryProtocol {
 
   // MARK: Internal
 
@@ -71,18 +72,19 @@ struct CredentialRepository: CredentialRepositoryProcotol {
 
   func delete(_ id: UUID, deleteKeyPairs: Bool = true) async throws {
     let entity = try await getEntity(id)
+    let images = entity.displayImages
     if deleteKeyPairs {
       deleteAssociatedKeyPairs(for: entity)
     }
     try database.delete(entity)
+    try database.removeUnreferencedImages(images)
   }
 
   func getAll() async throws -> [any CredentialProtocol] {
-    let results = try database.get(CredentialEntity.self)
-    let entities = results
-      .sorted { $0.createdAt < $1.createdAt }
-
-    return try entities.map(compute(_:))
+    try database
+      .get(CredentialEntity.self)
+      .map(compute(_:))
+      .sortedByDisplayOrder(using: \.self)
   }
 
   // MARK: Private
@@ -127,6 +129,23 @@ struct CredentialRepository: CredentialRepositoryProcotol {
       try? keyManager.deleteKeyPair(withIdentifier: dpopBinding.id.uuidString, algorithm: algorithm)
     }
   }
+
+  private func createImages(from credential: CredentialProtocol) throws {
+    let images = credential.issuerDisplays.compactMap(\.image) + credential.displays.compactMap(\.logoBase64)
+
+    for data in images {
+      let hash = ImageHasher.hash(data)
+
+      if try database.get(ImageEntity.self, forPrimaryKey: hash) != nil {
+        continue
+      }
+
+      let image = ImageEntity()
+      image.imageHash = hash
+      image.data = data
+      try database.save(image)
+    }
+  }
 }
 
 // MARK: - Verifiable Credentials
@@ -134,6 +153,7 @@ struct CredentialRepository: CredentialRepositoryProcotol {
 extension CredentialRepository {
 
   func create(verifiableCredential: VerifiableCredential) async throws -> VerifiableCredential {
+    try createImages(from: verifiableCredential)
     let entity = CredentialEntity(verifiableCredential: verifiableCredential)
     try database.save(entity)
     return try VerifiableCredential(entity)
@@ -142,26 +162,29 @@ extension CredentialRepository {
   @discardableResult
   func update(verifiableCredential: VerifiableCredential) async throws -> VerifiableCredential {
     let entity = try await getEntity(verifiableCredential.id)
+    let images = entity.displayImages
+    try createImages(from: verifiableCredential)
     try database.write {
       entity.setValues(from: verifiableCredential)
     }
+    try database.removeUnreferencedImages(images)
     return try VerifiableCredential(entity)
   }
 
   func getAllVerifiableCredentials() async throws -> [VerifiableCredential] {
-    let results = try database.get(CredentialEntity.self)
-    let entities = results
+    try database
+      .get(CredentialEntity.self)
       .filter { $0.verifiableCredential != nil }
-      .sorted { $0.createdAt < $1.createdAt }
-    return try entities.map { try VerifiableCredential($0) }
+      .map { try VerifiableCredential($0) }
+      .sortedByDisplayOrder(using: \.self)
   }
 
   func getAllAcceptedVerifiableCredentials() async throws -> [VerifiableCredential] {
-    let results = try database.get(CredentialEntity.self)
-    let entities = results
-      .filter { $0.verifiableCredential != nil && $0.verifiableCredential?.progressionState == .accepted }
-      .sorted { $0.createdAt < $1.createdAt }
-    return try entities.map { try VerifiableCredential($0) }
+    try database
+      .get(CredentialEntity.self)
+      .filter { $0.verifiableCredential?.progressionState == .accepted }
+      .map { try VerifiableCredential($0) }
+      .sortedByDisplayOrder(using: \.self)
   }
 
   func count() throws -> Int {
@@ -176,6 +199,7 @@ extension CredentialRepository {
 extension CredentialRepository {
 
   func create(deferredCredential: DeferredCredential) async throws -> DeferredCredential {
+    try createImages(from: deferredCredential)
     let entity = CredentialEntity(deferredCredential: deferredCredential)
     try database.save(entity)
     return try DeferredCredential(entity)
@@ -183,18 +207,21 @@ extension CredentialRepository {
 
   func update(deferredCredential: DeferredCredential) async throws -> DeferredCredential {
     let entity = try await getEntity(deferredCredential.id)
+    let images = entity.displayImages
+    try createImages(from: deferredCredential)
     try database.write {
       entity.setValues(from: deferredCredential)
     }
+    try database.removeUnreferencedImages(images)
     return try DeferredCredential(entity)
   }
 
   func getAllDeferredCredentials() async throws -> [DeferredCredential] {
-    let results = try database.get(CredentialEntity.self)
-    let entities = results
+    try database
+      .get(CredentialEntity.self)
       .filter { $0.deferredCredential != nil }
-      .sorted { $0.createdAt < $1.createdAt }
-    return try entities.map { try DeferredCredential($0) }
+      .map { try DeferredCredential($0) }
+      .sortedByDisplayOrder(using: \.self)
   }
 
 }

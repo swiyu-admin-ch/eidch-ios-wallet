@@ -25,19 +25,19 @@ struct ValidateDeviceSecurityRequirementsUseCase: ValidateDeviceSecurityRequirem
       let clientAttestation = try await clientAttestationRepository.get(using: context)
       let keyPair = try appAttestationKeyRepository.create(for: .key, with: context)
       let requestBody = try KeyAttestationRequestBody(keyPair: keyPair)
-      let keyAttestation = try await appAttestationRepository.fetchKeyAttestation(body: requestBody, clientAttestation: clientAttestation)
+      let keyAttestation = try await attestationServiceRepository.fetchKeyAttestation(body: requestBody, clientAttestation: clientAttestation)
 
       guard await keyAttestationValidator(keyPair: keyPair, with: keyAttestation) else {
-        throw EIDRequestRepository.Error.invalidKeyAttestation
+        throw SIDRepository.Error.invalidKeyAttestation
       }
       try await validateAttestationsUseCase.execute(clientAttestation: clientAttestation, keyAttestation: keyAttestation)
-    } catch AppAttestationRepositoryError.invalidClientAttestation {
-      throw EIDRequestRepository.Error.invalidClientAttestation
-    } catch AppAttestationRepositoryError.invalidKeyAttestation {
-      throw EIDRequestRepository.Error.invalidKeyAttestation
-    } catch AppAttestationRepositoryError.timeout {
+    } catch AttestationServiceRepositoryError.invalidClientAttestation {
+      throw SIDRepository.Error.invalidClientAttestation
+    } catch AttestationServiceRepositoryError.invalidKeyAttestation {
+      throw SIDRepository.Error.invalidKeyAttestation
+    } catch AttestationServiceRepositoryError.timeout {
       throw ValidateDeviceSecurityRequirementsUseCaseError.attestationTimeout
-    } catch AppAttestationRepositoryError.serviceDeactivated {
+    } catch AttestationServiceRepositoryError.serviceDeactivated {
       throw ValidateDeviceSecurityRequirementsUseCaseError.attestationServiceDeactivated
     } catch is NetworkError {
       throw ValidateDeviceSecurityRequirementsUseCaseError.networkError
@@ -49,7 +49,7 @@ struct ValidateDeviceSecurityRequirementsUseCase: ValidateDeviceSecurityRequirem
   // MARK: Private
 
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
-  @Injected(\.appAttestationRepository) private var appAttestationRepository: AppAttestationRepositoryProtocol
+  @Injected(\.attestationServiceRepository) private var attestationServiceRepository: AttestationServiceRepositoryProtocol
   @Injected(\.validateAttestationsUseCase) private var validateAttestationsUseCase: ValidateAttestationsUseCaseProtocol
   @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
   @Injected(\.keyAttestationValidator) private var keyAttestationValidator: KeyAttestationValidatorProtocol

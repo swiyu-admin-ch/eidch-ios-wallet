@@ -11,10 +11,10 @@ struct CredentialSummaryWidget: View {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredentialViewModel, claimBadges: [ClaimBadgeViewModel], badgeAction: @escaping (BadgeType) -> Void) {
+  init(credential: VerifiableCredentialViewModel, claimBadges: [ClaimBadgeViewModel], claimInformationAction: @escaping (Bool, String) -> Void) {
     self.credential = credential
     self.claimBadges = claimBadges
-    self.badgeAction = badgeAction
+    self.claimInformationAction = claimInformationAction
   }
 
   // MARK: Internal
@@ -34,13 +34,13 @@ struct CredentialSummaryWidget: View {
 
   private let credential: VerifiableCredentialViewModel
   private let claimBadges: [ClaimBadgeViewModel]
-  private let badgeAction: (BadgeType) -> Void
+  private let claimInformationAction: (Bool, String) -> Void
 
   private var badges: some View {
     FlowLayout(verticalSpacing: .x3, horizontalSpacing: .x2) {
       ForEach(claimBadges) { badge in
         Button {
-          badgeAction(.sensitiveData(isSensitive: badge.isSensitive, claimName: badge.name))
+          claimInformationAction(badge.isSensitive, badge.name)
         } label: {
           SensitiveDataBadge(isSensitive: badge.isSensitive, claimName: badge.name)
         }
@@ -61,7 +61,7 @@ struct CredentialSummaryWidget: View {
           ClaimBadgeViewModel(name: "Test", isSensitive: true),
           ClaimBadgeViewModel(name: "Another", isSensitive: false),
           ClaimBadgeViewModel(name: "Longer name that is a bit annoying", isSensitive: false),
-        ]) { _ in }
+        ]) { _, _ in }
     }
   }
 }

@@ -43,13 +43,14 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_emptyResult_returnsEmptyArray() async throws {
+  func testExecute_emptyResult_returnsMetadataBinary() async throws {
     eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = []
 
     useCase = GetEIDRequestCaseFilesUseCase()
     let result = try await useCase.execute(caseId: mockCaseId)
 
-    XCTAssertTrue(result.isEmpty)
+    XCTAssertEqual(result.count, 1)
+    XCTAssertEqual(result.first?.fileName, "metadata.bin")
   }
 
   func testExecute_multipleCalls_callsRepositoryEachTime() async throws {
@@ -73,60 +74,10 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
     XCTAssertEqual(eIDRequestCaseRepository.getAllFilesForRequestCaseIdReceivedInvocations[1], caseId2)
   }
 
-  // MARK: - File Filtering Tests
-
-  func testExecute_withAllowedFiles_returnsOnlyAllowedFiles() async throws {
-    let allowedFile1 = EIDRequestCaseFile.Mock.sample(name: "allowed1.pdf")
-    let allowedFile2 = EIDRequestCaseFile.Mock.sample(name: "allowed2.pdf")
-    let notAllowedFile = EIDRequestCaseFile.Mock.sample(name: "notAllowed.pdf")
-
-    allowedFiles = ["allowed1.pdf", "allowed2.pdf"]
-    eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [allowedFile1, allowedFile2, notAllowedFile]
-
-    useCase = GetEIDRequestCaseFilesUseCase()
-    let result = try await useCase.execute(caseId: mockCaseId)
-
-    XCTAssertEqual(result.count, 2)
-    XCTAssertTrue(result.contains(where: { $0.fileName == "allowed1.pdf" }))
-    XCTAssertTrue(result.contains(where: { $0.fileName == "allowed2.pdf" }))
-    XCTAssertFalse(result.contains(where: { $0.fileName == "notAllowed.pdf" }))
-  }
-
-  func testExecute_withNoAllowedFiles_returnsEmptyArray() async throws {
-    let notAllowedFile1 = EIDRequestCaseFile.Mock.sample(name: "notAllowed1.pdf")
-    let notAllowedFile2 = EIDRequestCaseFile.Mock.sample(name: "notAllowed2.pdf")
-
-    allowedFiles = ["allowed1.pdf", "allowed2.pdf"]
-
-    eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [notAllowedFile1, notAllowedFile2]
-
-    useCase = GetEIDRequestCaseFilesUseCase()
-    let result = try await useCase.execute(caseId: mockCaseId)
-
-    XCTAssertTrue(result.isEmpty)
-  }
-
-  func testExecute_withEmptyAllowedFileList_returnsEmptyArray() async throws {
-    let file1 = EIDRequestCaseFile.Mock.sample(name: "file1.pdf")
-    let file2 = EIDRequestCaseFile.Mock.sample(name: "file2.pdf")
-
-    allowedFiles = []
-    Container.shared.sidAllowedFiles.register { self.allowedFiles }
-
-    eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [file1, file2]
-
-    useCase = GetEIDRequestCaseFilesUseCase()
-    let result = try await useCase.execute(caseId: mockCaseId)
-
-    XCTAssertTrue(result.isEmpty)
-  }
-
-  func testExecute_withAllFilesAllowed_returnsAllFiles() async throws {
+  func testExecute_returnsAllStoredFilesAndMetadataBinary() async throws {
     let file1 = EIDRequestCaseFile.Mock.sample(name: "file1.pdf")
     let file2 = EIDRequestCaseFile.Mock.sample(name: "file2.pdf")
     let file3 = EIDRequestCaseFile.Mock.sample(name: "file3.pdf")
-
-    allowedFiles = ["file1.pdf", "file2.pdf", "file3.pdf", "metadata.bin"]
 
     eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [file1, file2, file3]
 
@@ -150,7 +101,6 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
     let metadataFile2 = EIDRequestCaseFile(fileName: "metadata-2.json", mime: .json, data: jsonData2, category: .other)
     let regularFile = EIDRequestCaseFile.Mock.sample(name: "regular.pdf")
 
-    allowedFiles = ["metadata.bin", "regular.pdf"]
     eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [metadataFile1, metadataFile2, regularFile]
 
     useCase = GetEIDRequestCaseFilesUseCase()
@@ -169,7 +119,6 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
     let metadataFile1 = EIDRequestCaseFile(fileName: "metadata-1.json", mime: .json, data: jsonData1, category: .other)
     let metadataFile2 = EIDRequestCaseFile(fileName: "metadata-2.json", mime: .json, data: jsonData2, category: .other)
 
-    allowedFiles = ["metadata.bin"]
     eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [metadataFile1, metadataFile2]
 
     useCase = GetEIDRequestCaseFilesUseCase()
@@ -186,7 +135,6 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
   func testExecute_withNoMetadataFiles_stillGeneratesEmptyMetadataBinary() async throws {
     let regularFile = EIDRequestCaseFile.Mock.sample(name: "regular.pdf")
 
-    allowedFiles = ["metadata.bin", "regular.pdf"]
     eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [regularFile]
 
     useCase = GetEIDRequestCaseFilesUseCase()
@@ -204,7 +152,6 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
     let otherJsonFile = EIDRequestCaseFile(fileName: "other.json", mime: .json, data: jsonData, category: .other)
     let regularFile = EIDRequestCaseFile.Mock.sample(name: "regular.pdf")
 
-    allowedFiles = ["metadata.bin"]
     eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [metadataFile, otherJsonFile, regularFile]
 
     useCase = GetEIDRequestCaseFilesUseCase()
@@ -212,19 +159,6 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
 
     // Should only include metadata-prefixed JSON files in the binary generation
     XCTAssertTrue(result.contains(where: { $0.fileName == "metadata.bin" }))
-  }
-
-  func testExecute_metadataBinaryNotInAllowedFiles_isFiltered() async throws {
-    let file = EIDRequestCaseFile.Mock.sample(name: "file.pdf")
-
-    allowedFiles = ["file.pdf"] // metadata.bin is NOT in allowed files
-    eIDRequestCaseRepository.getAllFilesForRequestCaseIdReturnValue = [file]
-
-    useCase = GetEIDRequestCaseFilesUseCase()
-    let result = try await useCase.execute(caseId: mockCaseId)
-
-    XCTAssertEqual(result.count, 1)
-    XCTAssertFalse(result.contains(where: { $0.fileName == "metadata.bin" }))
   }
 
   // MARK: Private
@@ -256,16 +190,13 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
   private var useCase: GetEIDRequestCaseFilesUseCase!
 
   private let mockCaseId = "mock_case_id"
-  private var allowedFiles: [String]!
 
   // MARK: Helper Methods
 
   private func registerMocks() {
     eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
-    allowedFiles = []
 
     Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
-    Container.shared.sidAllowedFiles.register { self.allowedFiles }
   }
 
   private func success() {

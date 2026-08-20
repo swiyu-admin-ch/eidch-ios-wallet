@@ -159,7 +159,7 @@ class OcaClusterGeneratorTests: XCTestCase {
   private static let item0NestedClaimPath: ClaimsPathPointer = [.string("items"), .index(0), .string("details"), .string("claim")]
   private static let item1NestedClaimPath: ClaimsPathPointer = [.string("items"), .index(1), .string("details"), .string("claim")]
 
-  private let formatMock = "vc+sd-jwt"
+  private let formatMock = CredentialFormat.vcSdJwt
   private let ocaBundleMock = try! OcaBundler().createOcaBundle(OcaBundle.Mock.chasseralData)
 
   private var imageValidatorSpy = ImageValidatorProtocolSpy()

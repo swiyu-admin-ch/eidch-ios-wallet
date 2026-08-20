@@ -21,7 +21,7 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
   func callAsFunction(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool {
     do {
       guard
-        keyAttestation.header.algorithm == .ES256,
+        supportedSignatureValidationAlgorithms.contains(keyAttestation.header.algorithm),
         let did = try? didResolverHelper.getDid(from: keyAttestation.header.keyIdentifier),
         attestationServiceTrustedDids.contains(did)
       else {
@@ -48,6 +48,7 @@ struct KeyAttestationValidator: KeyAttestationValidatorProtocol {
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
   @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
+  @Injected(\.supportedSignatureValidationAlgorithms) private var supportedSignatureValidationAlgorithms: [JWTAlgorithm]
   @Injected(\.supportedKeyStorageSecurityLevel) private var supportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel]
 
   private var now: Date {

@@ -7,7 +7,7 @@ import Spyable
 
 @Spyable
 protocol GetCredentialsCountUseCaseProtocol {
-  func execute() async throws -> Int
+  func callAsFunction() async throws -> Int
 }
 
 // MARK: - GetCredentialsCountUseCase
@@ -15,7 +15,7 @@ protocol GetCredentialsCountUseCaseProtocol {
 struct GetCredentialsCountUseCase: GetCredentialsCountUseCaseProtocol {
 
   /// We async/await the call event though repository.count() is synchronous to avoid DB access crashes
-  func execute() async throws -> Int {
+  func callAsFunction() async throws -> Int {
     try await credentialRepository.count()
   }
 

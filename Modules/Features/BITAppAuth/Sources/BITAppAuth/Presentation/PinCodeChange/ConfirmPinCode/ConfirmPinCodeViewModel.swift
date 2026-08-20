@@ -42,7 +42,7 @@ public class ConfirmPinCodeViewModel: Vibrating {
       userDidRequestValidation = true
       try validatePinCodeRuleCompliance()
       guard let uniquePassphrase = router.context.uniquePassphrase else { throw AuthError.missingUniquePassphrase }
-      try updatePinCode.execute(with: pinCode, and: uniquePassphrase)
+      try updatePinCode(with: pinCode, and: uniquePassphrase)
       reset()
       closeFlow()
     } catch {
@@ -70,7 +70,7 @@ public class ConfirmPinCodeViewModel: Vibrating {
   }
 
   private func validatePinCodeRuleCompliance() throws {
-    try validatePinCode.execute(pinCode)
+    try validatePinCode(pinCode)
     guard pinCode == originPinCode else { throw PinCodeError.mismatch }
   }
 

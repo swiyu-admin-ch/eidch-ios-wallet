@@ -1,135 +1,145 @@
 import Factory
-import XCTest
+import FactoryTesting
+import Testing
 @testable import BITAnalytics
-@testable import BITAnalyticsMocks
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITTestingCore
 
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
-
 // MARK: - CredentialDetailUpdateViewModelTests
 
-@MainActor
-final class CredentialDetailUpdateViewModelTests: XCTestCase {
+@Suite(.container) @MainActor
+struct CredentialDetailUpdateViewModelTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.authentication = CredentialAuthentication(
+      accessToken: credential.authentication.accessToken,
+      tokenType: credential.authentication.tokenType,
+      refreshToken: "refresh-token",
+      dpopBinding: credential.authentication.dpopBinding)
+
+    let analyticsProvider = MockProvider()
+    let analytics = AnalyticsSpy()
+    analytics.register(analyticsProvider)
+
+    let refreshCredentialUseCaseSpy = RefreshVerifiableCredentialUseCaseProtocolSpy()
+    refreshCredentialUseCaseSpy.callAsFunctionReturnValue = refreshedCredential
+
+    Container.shared.analytics.register { @MainActor in analytics }
+    Container.shared.refreshCredentialUseCase.register { @MainActor in refreshCredentialUseCaseSpy }
+
+    self.credential = credential
+    self.analyticsProvider = analyticsProvider
+    self.refreshCredentialUseCaseSpy = refreshCredentialUseCaseSpy
+    viewModel = CredentialDetailUpdateViewModel(credential: credential)
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  @Test
+  func primaryAction_refreshModeSuccess_callsOnSuccess() async {
+    var successCredential: VerifiableCredential?
 
-    credential = VerifiableCredential.Mock.sample
-    credential!.authentication = CredentialAuthentication(
-      accessToken: credential!.authentication.accessToken,
-      tokenType: credential!.authentication.tokenType,
-      refreshToken: "refresh-token",
-      dpopBinding: credential!.authentication.dpopBinding)
-
-    analyticsProvider = MockProvider()
-    analytics = Analytics()
-    analytics.register(analyticsProvider)
-
-    refreshCredentialUseCaseSpy = RefreshVerifiableCredentialUseCaseProtocolSpy()
-    refreshCredentialUseCaseSpy.callAsFunctionReturnValue = refreshedCredential
-
-    Container.shared.analytics.register { @MainActor in self.analytics }
-    Container.shared.refreshCredentialUseCase.register { @MainActor in self.refreshCredentialUseCaseSpy }
-
-    viewModel = CredentialDetailUpdateViewModel(credential: credential!)
-    successCredential = nil
-  }
-
-  func testPrimaryAction_refreshModeSuccess_callsOnSuccess() async {
     await viewModel.primaryAction { credential in
-      self.successCredential = credential
+      successCredential = credential
     }
 
-    XCTAssertEqual(successCredential, refreshedCredential)
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 1)
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionReceivedCredential, credential)
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertFalse(viewModel.isErrorPresented)
+    #expect(successCredential == refreshedCredential)
+    #expect(refreshCredentialUseCaseSpy.callAsFunctionCallsCount == 1)
+    #expect(refreshCredentialUseCaseSpy.callAsFunctionReceivedCredential == credential)
+    #expect(!viewModel.isLoading)
+    #expect(!viewModel.isErrorPresented)
   }
 
-  func testInit_refreshMode_setsIssuerDisplayFromCredential() {
-    XCTAssertEqual(viewModel.issuerDisplay, credential?.issuerDisplays.findDisplayWithFallback())
+  @Test
+  func init_refreshMode_setsIssuerDisplayFromCredential() {
+    #expect(viewModel.issuerDisplay == credential.issuerDisplays.findDisplayWithFallback())
   }
 
-  func testPrimaryAction_refreshModeFailure_showsError() async {
+  @Test
+  func primaryAction_refreshModeFailure_showsError() async {
+    var successCredential: VerifiableCredential?
     refreshCredentialUseCaseSpy.callAsFunctionThrowableError = TestingError.error
 
     await viewModel.primaryAction { credential in
-      self.successCredential = credential
+      successCredential = credential
     }
 
-    XCTAssertNil(successCredential)
-    XCTAssertTrue(viewModel.isErrorPresented)
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertEqual(analyticsProvider.logCounter, 1)
+    #expect(successCredential == nil)
+    #expect(viewModel.isErrorPresented)
+    #expect(!viewModel.isLoading)
+    #expect(analyticsProvider.logCounter == 1)
   }
 
-  func testPrimaryAction_withoutRefreshToken_returnsNil() async throws {
-    var credentialWithoutRefreshToken = try XCTUnwrap(credential)
+  @Test
+  func primaryAction_withoutRefreshToken_returnsNil() async {
+    var successCredential: VerifiableCredential?
+    var credentialWithoutRefreshToken = credential
     credentialWithoutRefreshToken.authentication = CredentialAuthentication(
       accessToken: credentialWithoutRefreshToken.authentication.accessToken,
       tokenType: credentialWithoutRefreshToken.authentication.tokenType,
       refreshToken: nil,
       dpopBinding: credentialWithoutRefreshToken.authentication.dpopBinding)
-    viewModel = CredentialDetailUpdateViewModel(credential: credentialWithoutRefreshToken)
+    let viewModel = CredentialDetailUpdateViewModel(credential: credentialWithoutRefreshToken)
 
     await viewModel.primaryAction { credential in
-      self.successCredential = credential
+      successCredential = credential
     }
 
-    XCTAssertNil(successCredential)
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 0)
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertFalse(viewModel.isErrorPresented)
+    #expect(successCredential == nil)
+    #expect(refreshCredentialUseCaseSpy.callAsFunctionCallsCount == 0)
+    #expect(!viewModel.isLoading)
+    #expect(!viewModel.isErrorPresented)
   }
 
-  func testPrimaryAction_withDeferredCredential_doesNothing() async {
-    viewModel = CredentialDetailUpdateViewModel(credential: DeferredCredential.Mock.sample)
+  @Test
+  func primaryAction_withDeferredCredential_doesNothing() async {
+    var successCredential: VerifiableCredential?
+    let viewModel = CredentialDetailUpdateViewModel(credential: DeferredCredential.Mock.sample)
 
     await viewModel.primaryAction { credential in
-      self.successCredential = credential
+      successCredential = credential
     }
 
-    XCTAssertNil(successCredential)
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 0)
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertFalse(viewModel.isErrorPresented)
+    #expect(successCredential == nil)
+    #expect(refreshCredentialUseCaseSpy.callAsFunctionCallsCount == 0)
+    #expect(!viewModel.isLoading)
+    #expect(!viewModel.isErrorPresented)
   }
 
-  func testHideError_resetsPresentationState() {
+  @Test
+  func hideError_resetsPresentationState() {
     viewModel.isErrorPresented = true
 
     viewModel.hideError()
 
-    XCTAssertFalse(viewModel.isErrorPresented)
+    #expect(!viewModel.isErrorPresented)
   }
 
-  func testPrimaryAction_infoMode_doesNothing() async {
-    viewModel = CredentialDetailUpdateViewModel(issuerDisplay: nil)
+  @Test
+  func primaryAction_infoMode_doesNothing() async {
+    var successCredential: VerifiableCredential?
+    let viewModel = CredentialDetailUpdateViewModel(issuerDisplay: nil)
 
     await viewModel.primaryAction { credential in
-      self.successCredential = credential
+      successCredential = credential
     }
 
-    XCTAssertNil(successCredential)
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 0)
-    XCTAssertFalse(viewModel.isLoading)
-    XCTAssertFalse(viewModel.isErrorPresented)
+    #expect(successCredential == nil)
+    #expect(refreshCredentialUseCaseSpy.callAsFunctionCallsCount == 0)
+    #expect(!viewModel.isLoading)
+    #expect(!viewModel.isErrorPresented)
   }
 
   // MARK: Private
 
-  private var credential: VerifiableCredential!
+  private let credential: VerifiableCredential
   private let refreshedCredential = VerifiableCredential.Mock.diploma
 
-  private var analytics: Analytics!
-  private var analyticsProvider: MockProvider!
-  private var refreshCredentialUseCaseSpy: RefreshVerifiableCredentialUseCaseProtocolSpy!
-  private var successCredential: VerifiableCredential?
-  private var viewModel: CredentialDetailUpdateViewModel!
+  private let analyticsProvider: MockProvider
+  private let refreshCredentialUseCaseSpy: RefreshVerifiableCredentialUseCaseProtocolSpy
+  private let viewModel: CredentialDetailUpdateViewModel
 }

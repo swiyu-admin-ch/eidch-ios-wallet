@@ -29,7 +29,7 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
     -> FetchAnyCredentialResult
   {
     let credentialEndpoint = try getCredentialEndpoint(from: metadataWrapper)
-    let credentialEncryptionContext = try createCredentialEncryptionContext(for: metadataWrapper)
+    let credentialEncryptionContext = try credentialEncryptionContextGenerator(for: metadataWrapper.credentialIssuerMetadata)
 
     do {
       return try await fetchCredentialResult(
@@ -74,7 +74,7 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
     holderBindings: [HolderBinding]?,
     authorization: IssuanceAuthorization,
     credentialEndpoint: URL,
-    credentialEncryptionContext: CredentialEncryptionContext?) async throws
+    credentialEncryptionContext: CredentialEncryptionContext) async throws
     -> FetchAnyCredentialResult
   {
     let credentials = try await fetchCredentials(
@@ -94,7 +94,7 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
     holderBindings: [HolderBinding]?,
     authorization: IssuanceAuthorization,
     credentialEndpoint: URL,
-    credentialEncryptionContext: CredentialEncryptionContext?) async throws
+    credentialEncryptionContext: CredentialEncryptionContext) async throws
     -> FetchAnyCredentialResult.Credentials
   {
     let credentialRequestNonce = try await fetchCredentialRequestNonceIfNeeded(
@@ -117,10 +117,7 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
       credentialEncryptionContext: credentialEncryptionContext,
       deferredCredentialEndpoint: metadataWrapper.credentialIssuerMetadata.deferredCredentialEndpoint)
 
-    guard
-      let credentialFormat = CredentialFormat(rawValue: context.format),
-      let dispatcherFormat = dispatcher[credentialFormat]
-    else {
+    guard let dispatcherFormat = dispatcher[context.format] else {
       throw CredentialFormatError.formatNotSupported
     }
 
@@ -133,7 +130,7 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
     dpopKeyPair: VaultKeyPair?) async throws
     -> IssuanceAuthorization
   {
-    let issuerUrl = try getIssuerUrl(from: metadataWrapper)
+    let issuerUrl = metadataWrapper.credentialIssuerMetadata.credentialIssuer
     let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
     let dpopNonce = try await fetchTokenRequestDPoPNonceIfNeeded(
       from: metadataWrapper,
@@ -143,13 +140,6 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
       refreshToken: refreshToken,
       dpopKeyPair: dpopKeyPair,
       dpopNonce: dpopNonce)
-  }
-
-  private func createCredentialEncryptionContext(
-    for metadataWrapper: CredentialIssuerMetadataWrapper) throws
-    -> CredentialEncryptionContext?
-  {
-    try credentialEncryptionContextGenerator(for: metadataWrapper.credentialIssuerMetadata)
   }
 
   private func getCredentialEndpoint(from metadataWrapper: CredentialIssuerMetadataWrapper) throws -> URL {
@@ -163,24 +153,16 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
     return credentialEndpoint
   }
 
-  private func getIssuerUrl(from metadataWrapper: CredentialIssuerMetadataWrapper) throws -> URL {
-    guard let issuerUrl = URL(string: metadataWrapper.credentialIssuerMetadata.credentialIssuer) else {
-      throw FetchAnyVerifiableCredentialError.unknownIssuer
-    }
-
-    return issuerUrl
-  }
-
   private func fetchTokenRequestDPoPNonceIfNeeded(
     from metadataWrapper: CredentialIssuerMetadataWrapper,
     dpopKeyPair: VaultKeyPair?) async throws
     -> String?
   {
-    guard dpopKeyPair != nil, let nonceEndpoint = metadataWrapper.credentialIssuerMetadata.nonceEndpoint else {
+    guard dpopKeyPair != nil else {
       return nil
     }
 
-    return try await repository.fetchNonce(from: nonceEndpoint).dpopNonce
+    return try await repository.fetchNonce(from: metadataWrapper.credentialIssuerMetadata.nonceEndpoint).dpopNonce
   }
 
   private func fetchCredentialRequestNonceIfNeeded(
@@ -193,10 +175,6 @@ struct RefreshAnyVerifiableCredentialUseCase: RefreshAnyVerifiableCredentialUseC
       return nil
     }
 
-    guard let nonceEndpoint = metadataWrapper.credentialIssuerMetadata.nonceEndpoint else {
-      return nil
-    }
-
-    return try await repository.fetchNonce(from: nonceEndpoint)
+    return try await repository.fetchNonce(from: metadataWrapper.credentialIssuerMetadata.nonceEndpoint)
   }
 }

@@ -13,7 +13,6 @@ struct DeleteEIDRequestCaseUseCase: DeleteEIDRequestCaseUseCaseProtocol {
   // MARK: Internal
 
   func execute(_ id: String) async throws {
-    try await eIDRequestCaseRepository.deleteAllFiles(forRequestCaseId: id)
     try await eIDRequestCaseRepository.delete(id)
   }
 

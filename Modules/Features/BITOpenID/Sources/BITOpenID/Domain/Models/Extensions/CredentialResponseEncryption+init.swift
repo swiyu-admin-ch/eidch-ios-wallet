@@ -1,24 +1,9 @@
 extension CredentialResponseEncryption {
 
-  // MARK: Lifecycle
-
-  init?(from context: CredentialEncryptionContext) throws {
-    guard let keyPair = context.responseKeyPair else { return nil }
-
-    guard let encryptionAlgorithm = context.credentialResponseEncryptionAlgorithm else {
-      throw CredentialResponseEncryptionError.missingEncryptionAlgorithm
-    }
-
+  public init(from context: CredentialEncryptionContext) throws {
     try self.init(
-      keyPair: keyPair,
-      enc: encryptionAlgorithm.rawValue,
+      keyPair: context.responseKeyPair,
+      enc: context.credentialResponseEncryptionAlgorithm.rawValue,
       zip: context.credentialResponseEncryptionZipValue?.rawValue)
   }
-
-  // MARK: Internal
-
-  enum CredentialResponseEncryptionError: Error {
-    case missingEncryptionAlgorithm
-  }
-
 }

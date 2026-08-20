@@ -10,7 +10,7 @@ final class ActivityIssuanceTests: XCTestCase {
   // MARK: Internal
 
   func testInit_mapsDataCorrectly() throws {
-    let activity = Activity(credential: credentialMock, trustInformation: trustInformationMock)
+    let activity = Activity(credential: credentialMock, trustInformation: trustInformationMock, actorCompliance: .compliant)
 
     XCTAssertEqual(activity.type, .issuance)
     XCTAssertEqual(activity.actorTrust, .trusted)

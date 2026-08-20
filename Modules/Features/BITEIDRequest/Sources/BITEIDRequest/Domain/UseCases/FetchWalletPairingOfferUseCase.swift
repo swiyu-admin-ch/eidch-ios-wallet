@@ -15,7 +15,7 @@ protocol FetchWalletPairingOfferUseCaseProtocol {
 struct FetchWalletPairingOfferUseCase: FetchWalletPairingOfferUseCaseProtocol {
 
   func execute(for caseId: String) async throws -> WalletPairingOffer {
-    let pairingResponse = try await eIDRequestRepository.pairWallet(caseId: caseId)
+    let pairingResponse = try await sidRepository.pairWallet(caseId: caseId)
 
     guard let qrCodeImageData = qrCodeGenerator.generate(from: pairingResponse.credentialOfferLink.absoluteString) else {
       throw FetchWalletPairingOfferUseCaseError.QRCodeGenerationFailed
@@ -25,7 +25,7 @@ struct FetchWalletPairingOfferUseCase: FetchWalletPairingOfferUseCaseProtocol {
   }
 
   @Injected(\.qrCodeGenerator) private var qrCodeGenerator
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository
+  @Injected(\.sidRepository) private var sidRepository
 }
 
 // MARK: - FetchWalletPairingOfferUseCaseError

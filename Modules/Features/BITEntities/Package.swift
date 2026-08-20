@@ -18,7 +18,7 @@ let package = Package(
     .package(path: "../../Platforms/BITCore"),
     .package(path: "../../Platforms/BITDataStore"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.4"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.5"),
   ],
   targets: [
     .target(

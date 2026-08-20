@@ -38,7 +38,7 @@ let package = Package(
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/gh123man/SwiftUI-Refresher", exact: "1.1.9"),
-    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.4"),
+    .package(url: "https://github.com/realm/realm-swift", exact: "20.0.5"),
   ],
   targets: [
     .target(
@@ -74,13 +74,12 @@ let package = Package(
         "BITCredential",
         .product(name: "BITAnyCredentialFormat", package: "BITAnyCredentialFormat"),
         .product(name: "BITClaimsPathPointer", package: "BITClaimsPathPointer"),
-        .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
         .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITNonCompliance", package: "BITNonCompliance"),
         .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "BITTestingCore", package: "BITCore"),
-        .product(name: "BITAnalyticsMocks", package: "BITAnalytics"),
         .product(name: "BITNavigation", package: "BITNavigation"),
+        .product(name: "FactoryTesting", package: "Factory"),
         .product(name: "RealmSwift", package: "realm-swift"),
       ]),
   ])

@@ -1,4 +1,5 @@
 import BITActivity
+import BITCore
 import BITNonCompliance
 
 extension TrustInformation {
@@ -7,6 +8,7 @@ extension TrustInformation {
     case .trusted: .trusted
     case .untrusted: .untrusted
     case .unknown: .unknown
+    case .trustedCheckApp: .trustedCheckApp
     }
   }
 
@@ -17,19 +19,20 @@ extension TrustInformation {
     case .untrusted: .untrusted
     }
   }
+}
 
+extension ActorCompliance {
   public var actorComplianceStatus: ActorComplianceStatus {
-    switch actorCompliance {
+    switch self {
     case .compliant: .compliant
     case .notCompliant: .notCompliant
-    case .none: .unknown
     }
   }
 
   public var nonComplianceReasonDisplays: [NonComplianceReasonDisplay] {
-    guard case .notCompliant(let reason) = actorCompliance else { return [] }
-    return reason.localizedValues.map {
+    guard case .notCompliant(let reason) = self else { return [] }
+    return reason?.getAllDisplays().map {
       NonComplianceReasonDisplay(locale: $0.key, value: $0.value)
-    }
+    } ?? []
   }
 }

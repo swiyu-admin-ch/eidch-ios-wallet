@@ -1,0 +1,42 @@
+{
+  "jti": "07f289d5-8b1f-4604-bf72-53bdcb71ee05",
+  "sub": "did:example:verifier",
+  "iat": 1690360968,
+  "exp": 1753432968,
+  "purpose_name": "purpose_name",
+  "purpose_description": "purpose_description",
+  "request": {
+    "type": "DCQL",
+    "scope": "scope",
+    "query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "vc+sd-jwt",
+          "meta": {
+            "vct_values": [
+              "vcSchemaId"
+            ]
+          },
+          "claims": [
+            {
+              "path": [
+                "claim"
+              ]
+            }
+          ],
+          "require_cryptographic_holder_binding": false
+        }
+      ],
+      "credential_sets": [
+        {
+          "options": [
+            [
+              "pid"
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

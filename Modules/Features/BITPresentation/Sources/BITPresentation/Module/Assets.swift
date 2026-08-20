@@ -22,9 +22,12 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 enum Assets {
+  static let errorShield = ImageAsset(name: "errorShield")
   static let presentationDataTransmitted = ImageAsset(name: "presentationDataTransmitted")
   static let presentationDeny = ImageAsset(name: "presentationDeny")
   static let presentationError = ImageAsset(name: "presentationError")
+  static let warningIcon = ImageAsset(name: "warningIcon")
+  static let warningShield = ImageAsset(name: "warningShield")
 }
 
 // MARK: - ImageAsset

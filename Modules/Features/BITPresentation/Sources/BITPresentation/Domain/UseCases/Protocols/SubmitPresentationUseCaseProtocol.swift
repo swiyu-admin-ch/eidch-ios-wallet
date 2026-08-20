@@ -6,7 +6,7 @@ import Spyable
 
 public enum SubmitPresentationEvent: Equatable {
   case progress(Double?)
-  case success
+  case success(PresentationResponse?)
 }
 
 // MARK: - SubmitPresentationUseCaseProtocol

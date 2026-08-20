@@ -1,6 +1,5 @@
 import XCTest
 @testable import BITAnalytics
-@testable import BITAnalyticsMocks
 @testable import BITTestingCore
 
 class AnalyticsTests: XCTestCase {
@@ -10,6 +9,7 @@ class AnalyticsTests: XCTestCase {
   func testInit() {
     let analytics = Analytics()
     XCTAssertTrue(analytics.providers.isEmpty)
+    XCTAssertFalse(analytics.isAnalyticsEnabled)
   }
 
   func testProviderRegistration() {
@@ -18,7 +18,7 @@ class AnalyticsTests: XCTestCase {
   }
 
   func testMultipleProviderRegistration() {
-    let analytics = initAnalytics([dynatraceProvider, mockProvider])
+    let analytics = initAnalytics([mockProvider, otherMockProvider])
     XCTAssertEqual(analytics.providers.count, 2)
   }
 
@@ -27,11 +27,13 @@ class AnalyticsTests: XCTestCase {
     XCTAssertEqual(analytics.providers.count, 1)
   }
 
-  func testFireEvent() {
+  func testFireEvent() async {
     let provider = MockProvider()
 
     let analytics = Analytics()
     analytics.register(provider)
+    await analytics.applyUserPrivacyPolicy(true)
+
     analytics.log(AnalyticsEvent.HelloWorld(parameter1: "Poke"))
     XCTAssertEqual(provider.logCounter, 1)
 
@@ -39,8 +41,11 @@ class AnalyticsTests: XCTestCase {
     XCTAssertEqual(provider.logCounter, 2)
   }
 
-  func testFireEventOnMultipleProviders() {
+  func testFireEventOnMultipleProviders() async {
+    let mockProvider = MockProvider()
+    let otherMockProvider = OtherMockProvider()
     let analytics = initAnalytics([mockProvider, otherMockProvider])
+    await analytics.applyUserPrivacyPolicy(true)
 
     analytics.log(AnalyticsEvent.HelloWorld(parameter1: "Poke"))
     XCTAssertEqual(mockProvider.logCounter, 1)
@@ -51,13 +56,27 @@ class AnalyticsTests: XCTestCase {
     XCTAssertEqual(otherMockProvider.logCounter, 2)
   }
 
-  func testLogError() {
+  func testLogError() async {
+    let provider = MockProvider()
+    let analytics = Analytics()
+    analytics.register(provider)
+    await analytics.applyUserPrivacyPolicy(true)
+
+    analytics.log(TestingError.error)
+    XCTAssertEqual(provider.logCounter, 1)
+  }
+
+  func testLogIsSkippedWhenAnalyticsIsDisabled() async {
     let provider = MockProvider()
     let analytics = Analytics()
     analytics.register(provider)
 
-    analytics.log(TestingError.error)
-    XCTAssertEqual(provider.logCounter, 1)
+    await analytics.applyUserPrivacyPolicy(true)
+    await analytics.applyUserPrivacyPolicy(false)
+
+    analytics.log(AnalyticsEvent.HelloWorld(parameter1: "Poke"))
+
+    XCTAssertEqual(provider.logCounter, 0)
   }
 
   func testApplyUserPrivacyPolicy_enabled() async {
@@ -76,11 +95,9 @@ class AnalyticsTests: XCTestCase {
     XCTAssertFalse(analytics.isAnalyticsEnabled)
   }
 
-  func testIsAnalyticsEnabled_multipleProvider() async {
-    await mockProvider.applyUserPrivacyPolicy(true)
-    await otherMockProvider.applyUserPrivacyPolicy(false)
-
+  func testApplyUserPrivacyPolicy_enabledWithMultipleProviders() async {
     let analytics = initAnalytics([mockProvider, otherMockProvider])
+    await analytics.applyUserPrivacyPolicy(true)
 
     XCTAssertTrue(analytics.isAnalyticsEnabled)
   }
@@ -89,7 +106,6 @@ class AnalyticsTests: XCTestCase {
 
   private let mockProvider = MockProvider()
   private let otherMockProvider = OtherMockProvider()
-  private let dynatraceProvider = DynatraceProvider()
 
   private func initAnalytics(_ providers: [AnalyticsProviderProtocol]) -> Analytics {
     let analytics = Analytics()

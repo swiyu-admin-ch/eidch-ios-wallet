@@ -1,6 +1,7 @@
 import BITCore
 import Factory
 import XCTest
+@testable import BITAnyCredentialFormat
 @testable import BITCredentialShared
 @testable import BITCrypto
 @testable import BITTestingCore
@@ -26,8 +27,8 @@ final class VerifiableCredentialTests: XCTestCase {
         progressionState: .accepted,
         bundleItems: [BundleItem(payload: XCTUnwrap("payload".data(using: .utf8)))],
         nextPresentableBundleItemId: UUID(),
-        format: "format",
-        issuerUrl: "issuerUrl",
+        format: .vcSdJwt,
+        issuerUrl: issuerUrl,
         issuer: issuer,
         authentication: CredentialAuthentication(accessToken: "accessToken"))
 
@@ -43,8 +44,8 @@ final class VerifiableCredentialTests: XCTestCase {
         progressionState: .accepted,
         bundleItems: [BundleItem(payload: XCTUnwrap("payload".data(using: .utf8)))],
         nextPresentableBundleItemId: UUID(),
-        format: "format",
-        issuerUrl: "issuerUrl",
+        format: .vcSdJwt,
+        issuerUrl: issuerUrl,
         issuer: issuer,
         authentication: CredentialAuthentication(accessToken: "accessToken"))
 
@@ -59,8 +60,8 @@ final class VerifiableCredentialTests: XCTestCase {
       progressionState: .accepted,
       bundleItems: [BundleItem(payload: XCTUnwrap("payload".data(using: .utf8)))],
       nextPresentableBundleItemId: UUID(),
-      format: "format",
-      issuerUrl: "issuerUrl",
+      format: .vcSdJwt,
+      issuerUrl: issuerUrl,
       issuer: issuer,
       authentication: CredentialAuthentication(accessToken: "accessToken"))
 
@@ -115,6 +116,8 @@ final class VerifiableCredentialTests: XCTestCase {
   }
 
   // MARK: Private
+
+  private let issuerUrl = URL(string: "https://issuer.domain.ch")!
 
   private func assertDisplays(credential: VerifiableCredential, expectedLanguageCode: UserLanguageCode) {
     let claims = credential.clusters.first?.claims ?? []

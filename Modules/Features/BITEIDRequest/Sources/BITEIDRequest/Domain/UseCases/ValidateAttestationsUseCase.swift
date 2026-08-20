@@ -18,10 +18,10 @@ struct ValidateAttestationsUseCase: ValidateAttestationsUseCaseProtocol {
 
   func execute(clientAttestation: ClientAttestation, keyAttestation: KeyAttestation) async throws {
     let requestBody = ValidateAttestationsRequestBody(clientAttestation: clientAttestation.rawJWS, keyAttestation: keyAttestation.rawJWS)
-    try await eIDRequestRepository.validateAttestations(requestBody)
+    try await sidRepository.validateAttestations(requestBody)
   }
 
   // MARK: Private
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
 }

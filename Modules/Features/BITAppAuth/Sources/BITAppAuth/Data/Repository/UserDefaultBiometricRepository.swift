@@ -1,17 +1,54 @@
 import Foundation
+import Spyable
 
-public struct UserDefaultBiometricRepository: BiometricRepositoryProtocol {
+// MARK: - BiometricRepositoryProtocol
 
-  public init() {}
+@Spyable
+public protocol BiometricRepositoryProtocol {
+  func setBiometricUsage(_ usage: BiometricUsage)
+  func getBiometricUsage() -> BiometricUsage
+}
 
-  let key = "isBiometricUsageAllowed"
+// MARK: - UserDefaultBiometricRepository
 
-  public func allowBiometricUsage(_ allow: Bool) throws {
-    UserDefaults.standard.set(allow, forKey: key)
+struct UserDefaultBiometricRepository: BiometricRepositoryProtocol {
+
+  // MARK: Lifecycle
+
+  init(userDefaults: UserDefaults = .standard) {
+    self.userDefaults = userDefaults
   }
 
-  public func isBiometricUsageAllowed() throws -> Bool {
-    UserDefaults.standard.bool(forKey: key)
+  // MARK: Internal
+
+  func setBiometricUsage(_ usage: BiometricUsage) {
+    userDefaults.set(usage.rawValue, forKey: usageKey)
   }
 
+  func getBiometricUsage() -> BiometricUsage {
+    guard let rawValue = userDefaults.string(forKey: usageKey) else {
+      return migrateFromLegacyKey()
+    }
+
+    return BiometricUsage(rawValue: rawValue) ?? .declined
+  }
+
+  // MARK: Private
+
+  private let usageKey = "biometricUsageKey"
+  private let legacyKey = "isBiometricUsageAllowed"
+  private let userDefaults: UserDefaults
+
+  private func migrateFromLegacyKey() -> BiometricUsage {
+    guard userDefaults.object(forKey: legacyKey) != nil else {
+      return .declined
+    }
+
+    let usage: BiometricUsage = userDefaults.bool(forKey: legacyKey) ? .enabled : .disabled
+
+    userDefaults.set(usage.rawValue, forKey: usageKey)
+    userDefaults.removeObject(forKey: legacyKey)
+
+    return usage
+  }
 }

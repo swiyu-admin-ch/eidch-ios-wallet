@@ -8,6 +8,7 @@ import Spyable
 
 @Spyable
 protocol EIDRequestCaseRepositoryProtocol {
+  @discardableResult
   func create(eIDRequestCase: EIDRequestCase) async throws -> EIDRequestCase
   func get(id: String) async throws -> EIDRequestCase
   func getAll() async throws -> [EIDRequestCase]
@@ -23,9 +24,14 @@ protocol EIDRequestCaseRepositoryProtocol {
   func getFile(forRequestCaseId id: String, name: String, category: EIDRequestCaseFile.Category) async throws -> EIDRequestCaseFile
   func getAllFiles(forRequestCaseId id: String) async throws -> [EIDRequestCaseFile]
   func getFiles(forRequestCaseId id: String, matching category: EIDRequestCaseFile.Category) async throws -> [EIDRequestCaseFile]
-  func save(file: EIDRequestCaseFile, forRequestCaseId id: String) async throws
   func save(files: [EIDRequestCaseFile], forRequestCaseId id: String) async throws
   func deleteAllFiles(forRequestCaseId id: String) async throws
+
+  // MARK: - Pairing ID
+
+  func savePairingId(_ pairingId: String, forRequestCaseId id: String) async throws
+  func getPairingIds(forRequestCaseId id: String) async throws -> [String]
+  func deletePairings(for requestCase: String) async throws
 }
 
 
@@ -67,6 +73,11 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
 
   func delete(_ id: String) async throws {
     let entity = try getEntity(id)
+
+    try database.write {
+      entity.credential = nil
+    }
+
     try database.delete(entity)
   }
 
@@ -94,19 +105,10 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
       .map(EIDRequestCaseFile.init)
   }
 
-  func save(file: EIDRequestCaseFile, forRequestCaseId id: String) async throws {
-    let entity = try getEntity(id)
-    let file = renameFileIfNeeded(file)
-    try database.write {
-      entity.files.append(EIDRequestCaseFileEntity(file))
-    }
-  }
-
   func save(files: [EIDRequestCaseFile], forRequestCaseId id: String) async throws {
     let entity = try getEntity(id)
-    let renamedFiles = renameFilesIfNeeded(files)
     try database.write {
-      entity.files.append(objectsIn: renamedFiles.map(EIDRequestCaseFileEntity.init))
+      entity.files.append(objectsIn: files.map(EIDRequestCaseFileEntity.init))
     }
   }
 
@@ -129,6 +131,27 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
     }
   }
 
+  func savePairingId(_ pairingId: String, forRequestCaseId id: String) async throws {
+    let entity = try getEntity(id)
+    let walletPairing = EIDRequestCaseWalletEntity()
+    walletPairing.pairingId = pairingId
+
+    try database.write {
+      entity.pairingIds.append(walletPairing)
+    }
+  }
+
+  func getPairingIds(forRequestCaseId id: String) async throws -> [String] {
+    try getEntity(id).pairingIds.compactMap(\.pairingId)
+  }
+
+  func deletePairings(for requestCase: String) async throws {
+    let entity = try getEntity(requestCase)
+    try database.write {
+      entity.pairingIds.removeAll()
+    }
+  }
+
   // MARK: Private
 
   @Injected(\.dataStore) private var database
@@ -138,15 +161,6 @@ struct EIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol {
     let results = try database.get(EIDRequestCaseEntity.self, forPrimaryKey: id)
     guard let entity = results else { throw EIDRequestCaseRepositoryError.notFound }
     return entity
-  }
-
-  private func renameFileIfNeeded(_ file: EIDRequestCaseFile) -> EIDRequestCaseFile {
-    guard let filename = filenameMap[file.fileName] ?? nil else { return file }
-    return EIDRequestCaseFile(id: file.id, fileName: filename, mime: file.mime, data: file.data, category: file.category)
-  }
-
-  private func renameFilesIfNeeded(_ files: [EIDRequestCaseFile]) -> [EIDRequestCaseFile] {
-    files.map { renameFileIfNeeded($0) }
   }
 
 }

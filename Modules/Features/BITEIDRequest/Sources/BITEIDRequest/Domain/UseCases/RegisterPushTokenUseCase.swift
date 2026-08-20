@@ -30,7 +30,7 @@ struct RegisterPushTokenUseCase: RegisterPushTokenUseCaseProtocol {
   private static let platform = "ios"
 
   @Injected(\.pushTokenRepository) private var pushTokenRepository: PushTokenRepositoryProtocol
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
   @Injected(\.pushNotificationRepository) private var pushNotificationRepository: PushNotificationRepositoryProtocol
 
@@ -39,7 +39,7 @@ struct RegisterPushTokenUseCase: RegisterPushTokenUseCaseProtocol {
     let pushId = try await pushNotificationRepository.register(body: pushRegistrationBody).pushId
     let body = PushIdRegistrationBody(pushId: pushId)
 
-    try await eIDRequestRepository.registerPushId(body, caseId: caseId)
+    try await sidRepository.registerPushId(body, caseId: caseId)
     try await eIDRequestCaseRepository.savePushId(pushId, for: caseId)
   }
 

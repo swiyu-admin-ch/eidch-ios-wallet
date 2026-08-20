@@ -62,20 +62,17 @@ final class NFCScanViewModel {
         throw EIDRequestError.missingAuthenticationToken
       }
 
-      let config = try await avBeamNFCConfigurator.configure(
-        for: caseId, authenticationToken: authenticationToken)
+      let config = try await avBeamNFCConfigurator.configure(for: caseId, authenticationToken: authenticationToken)
 
       NotificationCenter.default.post(name: .permissionAlertPresented, object: nil)
       try avBeam.startNfcScan(config: config)
     } catch {
       NotificationCenter.default.post(name: .permissionAlertFinished, object: nil)
-      handleError(
-        error,
-        action: { [weak self] in
-          Task {
-            await self?.startNFCScan()
-          }
-        })
+      handleError(error, action: { [weak self] in
+        Task {
+          await self?.startNFCScan()
+        }
+      })
     }
   }
 

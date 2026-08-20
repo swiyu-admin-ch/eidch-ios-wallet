@@ -52,7 +52,9 @@ fileprivate class OrientationManager {
       object: nil,
       queue: .main)
     { [weak self] _ in
-      self?.updateOrientation(with: UIDevice.current.orientation)
+      Task { @MainActor [weak self] in
+        self?.updateOrientation(with: UIDevice.current.orientation)
+      }
     }
     observerTokens.append(token)
   }

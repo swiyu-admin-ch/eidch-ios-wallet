@@ -10,5 +10,5 @@ public typealias VpToken = String
 
 @Spyable
 public protocol AnyVpTokenGeneratorProtocol {
-  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer]) throws -> VpToken
+  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer], withOrigin: String?) throws -> VpToken
 }

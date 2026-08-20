@@ -14,10 +14,12 @@ final class NotificationServiceExtension: UNNotificationServiceExtension {
     self.contentHandler = contentHandler
     bestAttemptContent = request.content.mutableCopy() as? UNMutableNotificationContent
 
+    let appLanguages = getAppLanguages()
+
     guard
       let bestAttemptContent,
       let data = bestAttemptContent.userInfo["data"] as? [String: Any],
-      let localization = notificationLocalizationService.localize(from: data, considering: preferredUserLanguageCodes)
+      let localization = notificationLocalizationService.localize(from: data, considering: appLanguages)
     else {
       return contentHandler(request.content)
     }
@@ -46,6 +48,15 @@ final class NotificationServiceExtension: UNNotificationServiceExtension {
   private var contentHandler: ((UNNotificationContent) -> Void)?
   private var bestAttemptContent: UNMutableNotificationContent?
 
+  @Injected(\.appLanguageService) private var appLanguageService: AppLanguageServiceProtocol
   @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
   @Injected(\.notificationLocalizationService) private var notificationLocalizationService: NotificationLocalizationServiceProtocol
+
+  private func getAppLanguages() -> [UserLanguageCode] {
+    guard let languages = try? appLanguageService.getAppLanguageCodes(), !languages.isEmpty else {
+      return preferredUserLanguageCodes
+    }
+
+    return languages
+  }
 }

@@ -55,7 +55,13 @@ public struct ClaimClusterList: View {
   }
 
   @ViewBuilder
-  private func childClusterView(_ cluster: CredentialClaimCluster, isSensitive: Bool, isFirstInCluster: Bool, showLastDivider: Bool) -> some View {
+  private func childClusterView(
+    _ cluster: CredentialClaimCluster,
+    isSensitive: Bool,
+    isFirstInCluster: Bool,
+    showLastDivider: Bool)
+    -> some View
+  {
     if let title = cluster.displays.findDisplayWithFallback()?.name {
       Text(title)
         .font(.custom.title3Emphasized)

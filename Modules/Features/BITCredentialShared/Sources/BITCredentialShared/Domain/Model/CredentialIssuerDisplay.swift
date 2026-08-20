@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: - CredentialIssuerDisplay
 
-public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable {
+public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, Swift.Hashable {
 
   // MARK: Lifecycle
 
@@ -23,7 +23,7 @@ public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable {
       locale: entity.locale,
       name: entity.name,
       credentialId: entity.credential.first?.id,
-      image: entity.image)
+      image: entity.cachedImage)
   }
 
   public init(from decoder: Decoder) throws {

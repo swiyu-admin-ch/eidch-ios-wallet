@@ -18,14 +18,16 @@ struct ScanDocumentImageOverviewView: View {
       .resizable()
       .scaledToFit()
       .frame(maxWidth: 635)
-      .accessibilityLabel(viewModel.image.accessibilityLabel)
+      .accessibilityRemoveTraits(.isImage)
+      .accessibilityLabel(L10n.tkEidRequestScanDocumentSubmitExpandedImageAlt)
       .zoomable()
       .safeAreaInset(edge: .bottom) {
         closeButton
       }
       .toolbar {
-        CloseButtonToolbar(action: { navigator.dismiss() })
+        CloseButtonToolbar { navigator.dismiss() }
       }
+      .toolbarCloseButtonAccessibilityPriorityFocus()
       .presentationDragIndicator(.visible)
       .navigationTitle(viewModel.image.key)
       .navigationBarTitleDisplayMode(.inline)

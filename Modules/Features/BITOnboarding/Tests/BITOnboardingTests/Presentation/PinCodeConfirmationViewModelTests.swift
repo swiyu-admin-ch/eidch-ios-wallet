@@ -2,6 +2,7 @@ import Factory
 import Foundation
 import Spyable
 import XCTest
+@testable import BITAppAuth
 @testable import BITOnboarding
 
 // MARK: - PinCodeViewModelTests
@@ -18,11 +19,14 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     router = MockOnboardingInternalRoutes()
     router.context.pincode = pincode
     router.context.pinCodeDelegate = spyDelegate
+    getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    getBiometricStateUseCase.callAsFunctionReturnValue = .disabled
+    Container.shared.getBiometricStateUseCase.register { @MainActor in self.getBiometricStateUseCase }
     viewModel = PinCodeConfirmationViewModel(router: router)
   }
 
   @MainActor
-  func testEnterValidPinCode() {
+  func testEnterValidPinCodeWithDisabledBiometrics() {
     viewModel.pinCode = pincode
 
     viewModel.validate()
@@ -30,7 +34,41 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertEqual(viewModel.attempts, 0)
     XCTAssertTrue(router.biometricsCalled)
+    XCTAssertFalse(router.setupCalled)
     XCTAssertEqual(router.context.pincode, pincode)
+  }
+
+  @MainActor
+  func testEnterValidPinCodeWithEnabledBiometrics() {
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    viewModel.pinCode = pincode
+
+    viewModel.validate()
+
+    XCTAssertTrue(router.biometricsCalled)
+    XCTAssertFalse(router.setupCalled)
+  }
+
+  @MainActor
+  func testEnterValidPinCodeWithDeclinedBiometrics() {
+    getBiometricStateUseCase.callAsFunctionReturnValue = .declined
+    viewModel.pinCode = pincode
+
+    viewModel.validate()
+
+    XCTAssertFalse(router.biometricsCalled)
+    XCTAssertTrue(router.setupCalled)
+  }
+
+  @MainActor
+  func testEnterValidPinCodeWithNotEnrolledBiometrics() {
+    getBiometricStateUseCase.callAsFunctionReturnValue = .notEnrolled
+    viewModel.pinCode = pincode
+
+    viewModel.validate()
+
+    XCTAssertFalse(router.biometricsCalled)
+    XCTAssertTrue(router.setupCalled)
   }
 
   @MainActor
@@ -105,6 +143,7 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
   private var router: MockOnboardingInternalRoutes!
   private var spyDelegate: PinCodeDelegateSpy!
   private var context: PinCodeContext!
+  private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy!
 
   private let pincode = "123456789"
   // swiftlint:enable all

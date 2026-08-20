@@ -96,5 +96,6 @@ let package = Package(
         "BITEIDRequest",
         .product(name: "BITPushNotification", package: "BITPushNotification"),
         .product(name: "BITTestingCore", package: "BITCore"),
+        .product(name: "FactoryTesting", package: "Factory"),
       ]),
   ])

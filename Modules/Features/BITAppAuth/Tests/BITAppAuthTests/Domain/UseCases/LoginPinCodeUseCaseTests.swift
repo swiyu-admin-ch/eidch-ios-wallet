@@ -1,85 +1,94 @@
 import BITCore
 import Factory
+import FactoryTesting
 import Foundation
-import Spyable
-import XCTest
+import Testing
 @testable import BITAppAuth
 @testable import BITDataStore
 @testable import BITLocalAuthentication
+@testable import BITTestingCore
 
-final class LoginPinCodeUseCaseTests: XCTestCase {
+@Suite(.container)
+struct LoginPinCodeUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
+  init() {
+    let getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
+    self.getUniquePassphraseUseCase = getUniquePassphraseUseCase
 
-    getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
-    isBiometricInvalidatedUseCase = IsBiometricInvalidatedUseCaseProtocolSpy()
-    uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
-    userSession = SessionSpy()
-    dataStoreConfiguration = DataStoreConfigurationManagerProtocolSpy()
+    let isBiometricInvalidatedUseCase = IsBiometricInvalidatedUseCaseProtocolSpy()
+    self.isBiometricInvalidatedUseCase = isBiometricInvalidatedUseCase
 
-    Container.shared.getUniquePassphraseUseCase.register { self.getUniquePassphraseUseCase }
-    Container.shared.isBiometricInvalidatedUseCase.register { self.isBiometricInvalidatedUseCase }
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManager }
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.dataStoreConfigurationManager.register { self.dataStoreConfiguration }
+    let disableBiometricUseCase = DisableBiometricUseCaseProtocolSpy()
+    self.disableBiometricUseCase = disableBiometricUseCase
+
+    let userSession = SessionSpy()
+    self.userSession = userSession
+
+    let dataStoreConfiguration = DataStoreConfigurationManagerProtocolSpy()
+    self.dataStoreConfiguration = dataStoreConfiguration
+
+    Container.shared.getUniquePassphraseUseCase.register { getUniquePassphraseUseCase }
+    Container.shared.isBiometricInvalidatedUseCase.register { isBiometricInvalidatedUseCase }
+    Container.shared.disableBiometricUseCase.register { disableBiometricUseCase }
+    Container.shared.userSession.register { userSession }
+    Container.shared.dataStoreConfigurationManager.register { dataStoreConfiguration }
+
+    userSession.startSessionPassphraseCredentialTypeReturnValue = LAContextProtocolSpy()
+    getUniquePassphraseUseCase.callAsFunctionFromReturnValue = mockUniquePassphrase
 
     useCase = LoginPinCodeUseCase()
   }
 
-  func testHappyPath_biometricsValid() throws {
-    let mockPinCode = "123456"
-    userSession.startSessionPassphraseCredentialTypeReturnValue = LAContextProtocolSpy()
-    getUniquePassphraseUseCase.executeFromReturnValue = Data()
-    isBiometricInvalidatedUseCase.executeReturnValue = false
+  // MARK: Internal
 
-    let didLoginNotification = expectation(forNotification: .didLogin, object: nil)
+  @Test
+  func login_biometricsValid_keepsBiometricsUntouched() throws {
+    isBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
 
-    try useCase.execute(from: mockPinCode)
-    XCTAssertTrue(getUniquePassphraseUseCase.executeFromCalled)
-    XCTAssertEqual(mockPinCode, getUniquePassphraseUseCase.executeFromReceivedPinCode)
-    XCTAssertTrue(isBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
+    try useCase(from: mockPinCode)
 
-    XCTAssertTrue(dataStoreConfiguration.setEncryptionKeyCalled)
-    XCTAssertEqual(dataStoreConfiguration.setEncryptionKeyCallsCount, 1)
-    XCTAssertTrue(userSession.startSessionPassphraseCredentialTypeCalled)
-    XCTAssertEqual(userSession.startSessionPassphraseCredentialTypeCallsCount, 1)
-
-    wait(for: [didLoginNotification])
+    #expect(getUniquePassphraseUseCase.callAsFunctionFromReceivedPinCode == mockPinCode)
+    #expect(isBiometricInvalidatedUseCase.callAsFunctionCalled)
+    #expect(!disableBiometricUseCase.callAsFunctionCalled)
+    #expect(dataStoreConfiguration.setEncryptionKeyCallsCount == 1)
+    #expect(userSession.startSessionPassphraseCredentialTypeCallsCount == 1)
   }
 
-  func testHappyPath_biometricsInValid() throws {
-    let mockPinCode = "123456"
-    let mockUniquePassphrase = Data()
-    userSession.startSessionPassphraseCredentialTypeReturnValue = LAContextProtocolSpy()
+  @Test
+  func login_biometricsInvalidated_disablesBiometrics() throws {
+    isBiometricInvalidatedUseCase.callAsFunctionReturnValue = true
 
-    getUniquePassphraseUseCase.executeFromReturnValue = mockUniquePassphrase
-    isBiometricInvalidatedUseCase.executeReturnValue = true
+    try useCase(from: mockPinCode)
 
-    try useCase.execute(from: mockPinCode)
-    XCTAssertTrue(getUniquePassphraseUseCase.executeFromCalled)
-    XCTAssertEqual(mockPinCode, getUniquePassphraseUseCase.executeFromReceivedPinCode)
-    XCTAssertTrue(isBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertTrue(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
-    XCTAssertEqual(mockUniquePassphrase, uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase)
-    XCTAssertEqual(AuthMethod.biometric, uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.authMethod)
-    XCTAssertTrue(dataStoreConfiguration.setEncryptionKeyCalled)
-    XCTAssertTrue(userSession.startSessionPassphraseCredentialTypeCalled)
-    XCTAssertEqual(userSession.startSessionPassphraseCredentialTypeCallsCount, 1)
+    #expect(isBiometricInvalidatedUseCase.callAsFunctionCalled)
+    #expect(disableBiometricUseCase.callAsFunctionCalled)
+    #expect(dataStoreConfiguration.setEncryptionKeyCallsCount == 1)
+    #expect(userSession.startSessionPassphraseCredentialTypeCallsCount == 1)
+  }
+
+  @Test
+  func login_biometricsInvalidated_disableThrows_isIgnoredAndLoginSucceeds() throws {
+    isBiometricInvalidatedUseCase.callAsFunctionReturnValue = true
+    disableBiometricUseCase.callAsFunctionThrowableError = TestingError.error
+
+    try useCase(from: mockPinCode)
+
+    #expect(disableBiometricUseCase.callAsFunctionCalled)
+    #expect(dataStoreConfiguration.setEncryptionKeyCallsCount == 1)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var useCase: LoginPinCodeUseCase!
-  private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocolSpy!
-  private var isBiometricInvalidatedUseCase: IsBiometricInvalidatedUseCaseProtocolSpy!
-  private var uniquePassphraseManager: UniquePassphraseManagerProtocolSpy!
-  private var userSession: SessionSpy!
-  private var dataStoreConfiguration: DataStoreConfigurationManagerProtocolSpy!
-  // swiftlint:enable all
+  private let useCase: LoginPinCodeUseCase
+  private let getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocolSpy
+  private let isBiometricInvalidatedUseCase: IsBiometricInvalidatedUseCaseProtocolSpy
+  private let disableBiometricUseCase: DisableBiometricUseCaseProtocolSpy
+  private let userSession: SessionSpy
+  private let dataStoreConfiguration: DataStoreConfigurationManagerProtocolSpy
+
+  private let mockPinCode = "123456"
+  private let mockUniquePassphrase = Data()
 
 }

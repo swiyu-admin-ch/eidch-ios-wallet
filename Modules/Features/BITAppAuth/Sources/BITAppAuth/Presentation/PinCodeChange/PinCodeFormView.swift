@@ -37,22 +37,12 @@ struct PinCodeFormView: View {
 
   var body: some View {
     content()
-      .task {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          focus = .input
-        }
-      }
   }
 
   // MARK: Private
 
-  private enum Focus: Hashable {
-    case input, inputText, loginButton, error
-  }
-
   @Binding private var pinCode: String
   @FocusState private var inputFocused: Bool
-  @AccessibilityFocusState private var focus: Focus?
   @Environment(\.sizeCategory) private var sizeCategory
 
   private var attempts = 0
@@ -113,7 +103,6 @@ struct PinCodeFormView: View {
           .padding(.horizontal, .x3)
       }
     }
-    .accessibilityElement(children: .combine)
 
     Spacer()
   }
@@ -124,7 +113,6 @@ struct PinCodeFormView: View {
 
       nextButton()
         .accessibilitySortPriority(600)
-        .accessibilityFocused($focus, equals: .loginButton)
     }
     .padding(.horizontal, .x6)
     .padding(.bottom, .x4)
@@ -135,7 +123,7 @@ struct PinCodeFormView: View {
       Text(fieldTitle)
         .font(.footnote)
         .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-      SecureField(text: $pinCode, prompt: L10n.tkLoginPasswordNote, onSubmit: onPressNext, tintColor: ThemingAssets.Label.tertiary.color)
+      SecureField(text: $pinCode, prompt: L10n.tkLoginPasswordNote, onSubmit: onPressNext, tintColor: ThemingAssets.Label.secondary.color)
         .overlay(
           RoundedRectangle(cornerRadius: .x2)
             .inset(by: 1)
@@ -149,7 +137,6 @@ struct PinCodeFormView: View {
           }
         }
         .accessibilitySortPriority(800)
-        .accessibilityFocused($focus, equals: .input)
     }
   }
 
@@ -161,7 +148,6 @@ struct PinCodeFormView: View {
     }
     .buttonStyle(.primary)
     .controlSize(.large)
-    .accessibilityFocused($focus, equals: .loginButton)
     .disabled(!isSubmitEnabled)
   }
 
@@ -171,7 +157,6 @@ struct PinCodeFormView: View {
       .foregroundStyle(inputFieldState == .error ? ThemingAssets.Brand.Core.swissRed.swiftUIColor : ThemingAssets.Label.primary.swiftUIColor)
       .multilineTextAlignment(.leading)
       .accessibilitySortPriority(700)
-      .accessibilityFocused($focus, equals: .inputText)
   }
 
 }

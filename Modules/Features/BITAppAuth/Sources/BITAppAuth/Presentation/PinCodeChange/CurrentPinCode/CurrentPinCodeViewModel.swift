@@ -37,7 +37,7 @@ public class CurrentPinCodeViewModel: Vibrating {
   func submit() {
     do {
       userDidRequestValidation = true
-      router.context.uniquePassphrase = try getUniquePassphraseUseCase.execute(from: pinCode)
+      router.context.uniquePassphrase = try getUniquePassphraseUseCase(from: pinCode)
       reset()
       router.newPinCode()
     } catch {
@@ -65,13 +65,13 @@ public class CurrentPinCodeViewModel: Vibrating {
   }
 
   private func reset() {
-    try? resetLoginAttemptCounterUseCase.execute()
+    try? resetLoginAttemptCounterUseCase()
     inputFieldMessage = nil
     attempts = 0
   }
 
   private func evaluateAttempts() {
-    attempts = (try? getLoginAttemptCounterUseCase.execute(kind: .appPin)) ?? 0
+    attempts = (try? getLoginAttemptCounterUseCase(kind: .appPin)) ?? 0
 
     var message: String? = nil
     if attemptLeft < attemptsLimit {
@@ -88,7 +88,7 @@ public class CurrentPinCodeViewModel: Vibrating {
 
   private func handleError(_ error: Error) {
     inputFieldState = .error
-    attempts = (try? registerLoginAttemptCounterUseCase.execute(kind: .appPin)) ?? attempts + 1
+    attempts = (try? registerLoginAttemptCounterUseCase(kind: .appPin)) ?? attempts + 1
 
     if attempts >= attemptsLimit {
       return lockWallet()
@@ -102,7 +102,7 @@ public class CurrentPinCodeViewModel: Vibrating {
   }
 
   private func lockWallet() {
-    try? lockWalletUseCase.execute()
+    try? lockWalletUseCase()
     NotificationCenter.default.post(name: .logout, object: nil)
   }
 

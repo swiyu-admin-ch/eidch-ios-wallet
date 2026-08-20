@@ -1,5 +1,6 @@
 import BITCredential
 import BITCredentialShared
+import BITOpenID
 import BITPresentation
 import BITTheming
 import NavigatorUI
@@ -8,19 +9,18 @@ import SwiftUI
 public enum InvitationDestinations: NavigationDestination {
   case deeplink(URL)
   case external(InvitationExternalDestinations)
-  case offer(VerifiableCredential, TrustInformation?)
-  case badgeInformation(BadgeType)
-  case wrongData
+  case offer(VerifiableCredential)
+  case actorInformation(ActorInformation)
   case scan(InvitationTab)
   case betaId
-  case deeplinkError(ErrorDataset, Callback<Void>)
-  case error(ErrorDataset, Callback<Void>)
+  case deeplinkError(ErrorDataset, Callback<Void>, PresentationResponse?)
+  case error(ErrorDataset, Callback<Void>, PresentationResponse?)
 
   // MARK: Public
 
   public var method: NavigationMethod {
     switch self {
-    case .badgeInformation,
+    case .actorInformation,
          .deeplink,
          .error:
       .managedSheet
@@ -28,8 +28,7 @@ public enum InvitationDestinations: NavigationDestination {
          .deeplinkError,
          .external,
          .offer,
-         .scan,
-         .wrongData:
+         .scan:
       .push
     }
   }

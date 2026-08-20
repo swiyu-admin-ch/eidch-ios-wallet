@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import BITClaimsPathPointer
 import BITCore
 import BITCredentialShared
@@ -11,7 +12,7 @@ import Spyable
 protocol OcaClusterGeneratorProtocol {
   func generate(
     from payload: JSON,
-    credentialFormat: String,
+    credentialFormat: CredentialFormat,
     ocaBundle: OcaBundle) throws
     -> [CredentialClaimCluster]
 }
@@ -24,7 +25,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
 
   func generate(
     from payload: JSON,
-    credentialFormat: String,
+    credentialFormat: CredentialFormat,
     ocaBundle: OcaBundle) throws
     -> [CredentialClaimCluster]
   {
@@ -67,7 +68,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
 
   private func createCluster(
     credentialClaims: inout [ClaimsPathPointer: Any],
-    credentialFormat: String,
+    credentialFormat: CredentialFormat,
     ocaBundle: OcaBundle,
     captureBaseDigest: String,
     ocaAttribute: OverlayBundleAttribute? = nil,
@@ -78,7 +79,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
     var childClusters = [CredentialClaimCluster]()
 
     for ocaAttribute in ocaBundle.getAttributes(digest: captureBaseDigest) {
-      if let dataSource = ocaAttribute.dataSources[credentialFormat] {
+      if let dataSource = ocaAttribute.dataSources[credentialFormat.rawValue] {
         let elementPath = dataSource.resolveNullElement(with: path.allIndices)
         let element = try createElement(
           attributeType: ocaAttribute.attributeType,
@@ -98,7 +99,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
         continue
       }
 
-      if ocaAttribute.dataSources[credentialFormat] == nil, case .reference(let digest) = ocaAttribute.attributeType {
+      if ocaAttribute.dataSources[credentialFormat.rawValue] == nil, case .reference(let digest) = ocaAttribute.attributeType {
         let cluster = try createCluster(
           credentialClaims: &credentialClaims,
           credentialFormat: credentialFormat,
@@ -123,7 +124,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
     attributeType: AttributeType,
     ocaAttribute: OverlayBundleAttribute?,
     credentialClaims: inout [ClaimsPathPointer: Any],
-    credentialFormat: String,
+    credentialFormat: CredentialFormat,
     ocaBundle: OcaBundle,
     path: ClaimsPathPointer) throws
     -> GeneratedElement?
@@ -186,7 +187,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
     nestedAttributeType: AttributeType,
     from array: [Any],
     credentialClaims: inout [ClaimsPathPointer: Any],
-    credentialFormat: String,
+    credentialFormat: CredentialFormat,
     ocaBundle: OcaBundle,
     ocaAttribute: OverlayBundleAttribute?,
     path: ClaimsPathPointer) throws

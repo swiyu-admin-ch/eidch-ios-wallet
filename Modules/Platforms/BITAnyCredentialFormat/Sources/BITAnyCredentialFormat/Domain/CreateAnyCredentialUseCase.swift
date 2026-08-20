@@ -7,7 +7,7 @@ import Spyable
 
 @Spyable
 public protocol CreateAnyCredentialUseCaseProtocol {
-  func execute(from payload: CredentialPayload, format: String) throws -> AnyCredential
+  func execute(from payload: CredentialPayload, format: CredentialFormat) throws -> AnyCredential
 }
 
 // MARK: - CreateAnyCredentialUseCase
@@ -16,17 +16,14 @@ struct CreateAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol {
 
   // MARK: Internal
 
-  func execute(from payload: CredentialPayload, format: String) throws -> AnyCredential {
+  func execute(from payload: CredentialPayload, format: CredentialFormat) throws -> AnyCredential {
     guard let rawCredential = String(data: payload, encoding: .utf8) else {
       throw CreateAnyCredentialUseCaseError.credentialPayloadInvalid
     }
 
-    guard let credentialFormat = CredentialFormat(rawValue: format) else {
-      throw CreateAnyCredentialUseCaseError.credentialFormatNotSupported
-    }
-
-    switch credentialFormat {
-    case .vcSdJwt:
+    switch format {
+    case .dcSdJwt,
+         .vcSdJwt:
       let data = rawCredential.data(using: .utf8) ?? Data()
       return try vcSdJwsDecoder.decode(VcSdJwt.self, from: data)
     }
@@ -43,6 +40,5 @@ struct CreateAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol {
 extension CreateAnyCredentialUseCase {
   enum CreateAnyCredentialUseCaseError: Error {
     case credentialPayloadInvalid
-    case credentialFormatNotSupported
   }
 }

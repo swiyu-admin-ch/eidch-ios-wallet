@@ -19,7 +19,7 @@ struct HomeView: View {
           NavigationLink {
             DetailView(credential: credential)
           } label: {
-            credentialRow(credential)
+            CredentialRow(credential)
           }
         }
         .onDelete(perform: deleteCredentials)
@@ -42,10 +42,8 @@ struct HomeView: View {
     .refreshable {
       await fetchCredentials()
     }
-    .onAppear {
-      Task {
-        await fetchCredentials()
-      }
+    .task {
+      await fetchCredentials()
     }
     .onOpenURL { url in
       guard (try? deeplinkManager.dispatchFirst(url)) != nil else { return }
@@ -67,24 +65,7 @@ struct HomeView: View {
 
   private let deeplinkManager = DeeplinkManager(allowedRoutes: RootDeeplinkRoute.allCases)
 
-  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
-
-  private func credentialRow(_ credential: any CredentialProtocol) -> some View {
-    HStack {
-      Text(credential.displays.first?.name ?? "Unknown")
-      if credential is DeferredCredential {
-        Text("Deferred")
-          .font(.custom.caption2)
-          .padding(.horizontal, 6)
-          .padding(.vertical, 2)
-          .background(.secondary.opacity(0.15))
-          .clipShape(Capsule())
-      }
-      Spacer()
-      Text(credential.createdAt, style: .time)
-        .font(.custom.footnote)
-    }
-  }
+  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProtocol
 
   @MainActor
   private func fetchCredentials() async {

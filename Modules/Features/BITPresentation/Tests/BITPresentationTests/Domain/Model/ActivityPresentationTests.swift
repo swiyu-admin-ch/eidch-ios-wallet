@@ -36,7 +36,7 @@ final class ActivityPresentationTests: XCTestCase {
 
   private static let rawRequestObjectMock = "rawRequestObject".data(using: .utf8)!
 
-  private let contextMock = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
+  private let contextMock = PresentationRequestContext.Mock.vcSdJwtSample
   private let jwtContextMock = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
 
   private func assertActivity(_ activity: Activity, type: ActivityType, verifierDisplays: [VerifierDisplay]) {

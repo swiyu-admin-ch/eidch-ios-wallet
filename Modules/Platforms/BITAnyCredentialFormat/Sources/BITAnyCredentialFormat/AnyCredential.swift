@@ -9,7 +9,7 @@ public typealias CredentialPayload = Data
 
 @Spyable
 public protocol AnyCredential {
-  var format: String { get }
+  var format: CredentialFormat { get }
   var raw: String { get }
   var issuer: String { get }
   var status: (any AnyStatus)? { get }

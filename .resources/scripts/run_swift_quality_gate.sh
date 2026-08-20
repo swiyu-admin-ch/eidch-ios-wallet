@@ -13,6 +13,6 @@ if [ ! -x "$MISE" ]; then
   exit 1
 fi
 echo "[${CONTEXT}] Running mise quality:pre-commit..."
-mise quality:pre-commit
+"$MISE" quality:pre-commit
 
 echo "[${CONTEXT}] Checks passed."

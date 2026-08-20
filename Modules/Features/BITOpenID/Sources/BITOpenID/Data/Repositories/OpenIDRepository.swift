@@ -25,7 +25,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     try await networkService.request(OpenIDEndpoint.typeMetadata(url: url))
   }
 
-  func fetchMetadata(from issuerUrl: URL) async throws -> CredentialIssuerMetadataResponse {
+  func fetchMetadata(from issuerUrl: URL) async throws -> JWS<CredentialIssuerMetadataJWT> {
     do {
       let response = try await networkService.request(OpenIDEndpoint.metadata(fromIssuerUrl: issuerUrl))
       return try await parseMetadataResponse(response, from: issuerUrl)
@@ -59,16 +59,8 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     dpopKeyAttestationJWS: String?) async throws
     -> IssuanceAuthorization
   {
-    try await fetchTokenAuthorization(
-      from: url,
-      dpopKeyPair: dpopKeyPair,
-      initialNonce: dpopNonce,
-      keyAttestationJWS: dpopKeyAttestationJWS)
-    { proof in
-      OpenIDEndpoint.accessToken(
-        fromTokenUrl: url,
-        preAuthorizedCode: preAuthorizedCode,
-        dpopProof: proof)
+    try await fetchTokenAuthorization(from: url, dpopKeyPair: dpopKeyPair, initialNonce: dpopNonce, keyAttestationJWS: dpopKeyAttestationJWS) { proof in
+      OpenIDEndpoint.accessToken(fromTokenUrl: url, preAuthorizedCode: preAuthorizedCode, dpopProof: proof)
     }
   }
 
@@ -79,16 +71,8 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     dpopNonce: String?) async throws
     -> IssuanceAuthorization
   {
-    try await fetchTokenAuthorization(
-      from: url,
-      dpopKeyPair: dpopKeyPair,
-      initialNonce: dpopNonce,
-      keyAttestationJWS: nil)
-    { proof in
-      OpenIDEndpoint.refreshAccessToken(
-        fromTokenUrl: url,
-        refreshToken: refreshToken,
-        dpopProof: proof)
+    try await fetchTokenAuthorization(from: url, dpopKeyPair: dpopKeyPair, initialNonce: dpopNonce, keyAttestationJWS: nil) { proof in
+      OpenIDEndpoint.refreshAccessToken(fromTokenUrl: url, refreshToken: refreshToken, dpopProof: proof)
     }
   }
 
@@ -97,14 +81,15 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     return (nonce, response.response?.value(forHTTPHeaderField: Self.dpopNonceHeaderField))
   }
 
-  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequestBody) async throws -> FetchAnyCredentialResult.Credentials {
+  func fetchCredential(with context: FetchCredentialContext, credentialRequest: CredentialRequest) async throws -> FetchAnyCredentialResult.Credentials {
+    let jwe = try encryptCredentialRequest(credentialRequest, with: context.credentialEncryptionContext)
     let (response, authorization) = try await fetchProtectedResource(
       from: context.credentialEndpoint,
       authorization: context.authorization)
     { accessToken, dpopProof in
       OpenIDEndpoint.credential(
         url: context.credentialEndpoint,
-        body: credentialRequest,
+        jwe: jwe,
         accessToken: accessToken,
         dpopProof: dpopProof)
     }
@@ -113,18 +98,19 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
       response: response,
       authorization: authorization,
       format: context.format,
-      privateKey: context.credentialEncryptionContext?.responseKeyPair?.privateKey,
+      privateKey: context.credentialEncryptionContext.responseKeyPair.privateKey,
       deferredCredentialEndpoint: context.deferredCredentialEndpoint)
   }
 
-  func fetchCredential(with context: FetchDeferredCredentialContext, requestBody: DeferredCredentialRequestBody) async throws -> FetchAnyCredentialResult.Credentials {
+  func fetchCredential(with context: FetchDeferredCredentialContext, deferredCredentialRequest: DeferredCredentialRequest) async throws -> FetchAnyCredentialResult.Credentials {
+    let jwe = try encryptCredentialRequest(deferredCredentialRequest, with: context.credentialEncryptionContext)
     let (response, authorization) = try await fetchProtectedResource(
       from: context.deferredCredentialEndpoint,
       authorization: context.authorization)
     { accessToken, dpopProof in
       OpenIDEndpoint.deferredCredential(
         url: context.deferredCredentialEndpoint,
-        body: requestBody,
+        jwe: jwe,
         accessToken: accessToken,
         dpopProof: dpopProof)
     }
@@ -133,7 +119,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
       response: response,
       authorization: authorization,
       format: context.format,
-      privateKey: context.privateKey,
+      privateKey: context.credentialEncryptionContext.responseKeyPair.privateKey,
       deferredCredentialEndpoint: context.deferredCredentialEndpoint)
   }
 
@@ -146,28 +132,28 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
 
   private static let dpopNonceHeaderField = "DPoP-Nonce"
 
+  private let baseDPoPAdditionalHeaderParameters = ["profile_version": "swiss-profile-issuance:1.0.0"]
+
   @Injected(\NetworkContainer.service) private var networkService: NetworkService
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\.vcSdJwsDecoder) private var vcSdJwsDecoder: VcSdJWSDecoderProtocol
   @Injected(\NetworkContainer.decoder) private var jsonDecoder: JSONDecoder
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
+  @Injected(\.jweEncrypter) private var jweEncrypter: JWEEncrypterProtocol
   @Injected(\.jweDecrypter) private var jweDecrypter: JWEDecrypterProtocol
   @Injected(\.dpopGenerator) private var dpopGenerator: DPoPGeneratorProtocol
   @Injected(\.isBatchIssuanceEnabled) private var isBatchIssuanceEnabled
   @Injected(\.oAuthErrorParser) private var oAuthErrorParser: OAuthErrorParserProtocol
   @Injected(\.openID4VCIErrorParser) private var openID4VCIErrorParser: OpenID4VCIErrorParserProtocol
 
-  private func createDPoPProof(
-    method: String,
-    url: URL,
-    keyPair: VaultKeyPair?,
-    nonce: String?,
-    accessToken: String?,
-    keyAttestationJWS: String? = nil) throws
-    -> String?
-  {
+  private func createDPoP(method: String, url: URL, keyPair: VaultKeyPair?, nonce: String?, accessToken: String?, keyAttestationJWS: String? = nil) throws -> DPoP? {
     guard let keyPair else {
       return nil
+    }
+
+    var additionalHeaderParameters = baseDPoPAdditionalHeaderParameters
+    if let keyAttestationJWS {
+      additionalHeaderParameters[ProofJWT.AdditionalHeaderParameter.keyAttestation.rawValue] = keyAttestationJWS
     }
 
     return try dpopGenerator.generate(
@@ -176,7 +162,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
       keyPair: keyPair,
       nonce: nonce,
       accessToken: accessToken,
-      keyAttestationJWS: keyAttestationJWS)
+      additionalHeaderParameters: additionalHeaderParameters)
   }
 
   /// Sends the token request and retries once if the authorization server challenges with
@@ -221,6 +207,15 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
         throw oAuthErrorParser.parse(error)
       }
     }
+  }
+
+  private func encryptCredentialRequest(_ credentialRequest: Encodable, with context: CredentialEncryptionContext) throws -> String {
+    let data = try JSONEncoder().encode(credentialRequest)
+    return try jweEncrypter.encrypt(
+      data: data,
+      publicKey: context.issuerPublicKey,
+      encryptionAlgorithm: context.credentialRequestEncryptionAlgorithm,
+      compressionAlgorithm: context.credentialRequestEncryptionZipValue)
   }
 
   /// Sends the protected-resource request and retries once if the resource server
@@ -272,14 +267,14 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     endpoint: (String?) -> OpenIDEndpoint) async throws
     -> IssuanceAuthorization
   {
-    let dpopProof = try createDPoPProof(
+    let dpopProof = try createDPoP(
       method: Moya.Method.post.rawValue.uppercased(),
       url: url,
       keyPair: dpopKeyPair,
       nonce: nonce,
       accessToken: nil,
       keyAttestationJWS: keyAttestationJWS)
-    let accessToken: AccessToken = try await networkService.request(endpoint(dpopProof))
+    let accessToken: AccessToken = try await networkService.request(endpoint(dpopProof?.rawJWS))
     return IssuanceAuthorization(
       accessToken: accessToken,
       dpopKeyPair: dpopKeyPair)
@@ -293,13 +288,13 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     -> (response: Response, authorization: IssuanceAuthorization)
   {
     let accessToken = authorization.accessToken
-    let dpopProof = try createDPoPProof(
+    let dpopProof = try createDPoP(
       method: Moya.Method.post.rawValue.uppercased(),
       url: url,
       keyPair: authorization.dpopKeyPair,
       nonce: nonce,
       accessToken: authorization.dpopKeyPair == nil ? nil : accessToken.accessToken)
-    let response = try await networkService.request(endpoint(accessToken, dpopProof))
+    let response = try await networkService.request(endpoint(accessToken, dpopProof?.rawJWS))
     return (
       response,
       IssuanceAuthorization(
@@ -308,69 +303,44 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
         resourceServerDPoPNonce: response.response?.value(forHTTPHeaderField: Self.dpopNonceHeaderField)))
   }
 
-  private func parseMetadataResponse(_ response: Response, from endpoint: URL) async throws -> CredentialIssuerMetadataResponse {
-    switch ContentType(response.response) {
-    case .json:
-      let metadata = try jsonDecoder.decode(CredentialIssuerMetadata.self, from: response.data)
-      return CredentialIssuerMetadataResponse(metadata: metadata, raw: response.data)
-    case .jwt:
-      let jws = try jwsDecoder.decode(CredentialIssuerMetadataJWT.self, from: response.data)
-      try await jwsValidator.validate(jws)
-      guard jws.payload.subject == endpoint.absoluteString else {
-        throw OpenIdRepositoryError.invalidCredentialIssuerMetadataJWT
-      }
-      let metadata = jws.payload.credentialIssuerMetadata
-
-      guard let rawPayloadData = jws.rawPayload.data(using: .utf8) else {
-        throw OpenIdRepositoryError.invalidCredentialIssuerMetadata
-      }
-      return CredentialIssuerMetadataResponse(metadata: metadata, raw: rawPayloadData)
+  private func parseMetadataResponse(_ response: Response, from endpoint: URL) async throws -> JWS<CredentialIssuerMetadataJWT> {
+    let jws = try jwsDecoder.decode(CredentialIssuerMetadataJWT.self, from: response.data)
+    try await jwsValidator.validate(jws)
+    guard
+      jws.payload.subject == endpoint.absoluteString,
+      endpoint == jws.payload.credentialIssuerMetadata.credentialIssuer
+    else {
+      throw OpenIdRepositoryError.invalidCredentialIssuerMetadataJWT
     }
+    return jws
   }
 
   private func parseOpenIdConfigurationResponse(_ response: Response, from endpoint: URL) async throws -> OpenIdConfiguration {
-    switch ContentType(response.response) {
-    case .json:
-      return try jsonDecoder.decode(OpenIdConfiguration.self, from: response.data)
-    case .jwt:
-      let jws = try jwsDecoder.decode(OpenIdConfigurationJWT.self, from: response.data)
-      try await jwsValidator.validate(jws)
-      guard jws.payload.subject == endpoint.absoluteString else {
-        throw OpenIdRepositoryError.invalidOpenIdConfigurationJWT
-      }
-      return jws.payload.openIdConfiguration
+    let jws = try jwsDecoder.decode(OpenIdConfigurationJWT.self, from: response.data)
+    try await jwsValidator.validate(jws)
+    guard jws.payload.subject == endpoint.absoluteString else {
+      throw OpenIdRepositoryError.invalidOpenIdConfigurationJWT
     }
+    return jws.payload.openIdConfiguration
   }
 
   private func fetchCredential(
     response: Response,
     authorization: IssuanceAuthorization,
-    format: String,
-    privateKey: SecKey? = nil,
+    format: CredentialFormat,
+    privateKey: SecKey,
     deferredCredentialEndpoint: URL?) async throws
     -> FetchAnyCredentialResult.Credentials
   {
     do {
-      switch ContentType(response.response) {
-      case .json:
-        return try getAnyCredentialResult(
-          from: response.statusCode,
-          data: response.data,
-          authorization: authorization,
-          format: format,
-          deferredCredentialEndpoint: deferredCredentialEndpoint)
-      case .jwt:
-        guard let privateKey else {
-          throw OpenIdRepositoryError.missingCredentialResponsePrivateKey
-        }
-        let decryptedPayload = try jweDecrypter.decrypt(payload: response.data, privateKey: privateKey)
-        return try getAnyCredentialResult(
-          from: response.statusCode,
-          data: decryptedPayload,
-          authorization: authorization,
-          format: format,
-          deferredCredentialEndpoint: deferredCredentialEndpoint)
-      }
+      guard ContentType(response.response) == .jwt else { throw OpenIdRepositoryError.unencryptedCredentialResponse }
+      let decryptedPayload = try jweDecrypter.decrypt(payload: response.data, privateKey: privateKey)
+      return try getAnyCredentialResult(
+        from: response.statusCode,
+        data: decryptedPayload,
+        authorization: authorization,
+        format: format,
+        deferredCredentialEndpoint: deferredCredentialEndpoint)
     } catch {
       throw openID4VCIErrorParser.parse(error)
     }
@@ -380,7 +350,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
     from statusCode: Int,
     data: Data,
     authorization: IssuanceAuthorization,
-    format: String,
+    format: CredentialFormat,
     deferredCredentialEndpoint: URL?) throws
     -> FetchAnyCredentialResult.Credentials
   {
@@ -397,10 +367,8 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
       let immediate = try JSONDecoder().decode(CredentialResponseImmediate.self, from: data)
       let credentials = try getAnyCredentials(from: immediate.credentials)
 
-      if credentials.count > 1, isBatchIssuanceEnabled {
-        credential = .batch(credentials: credentials)
-      } else if let firstCredential = credentials.first {
-        credential = .credential(firstCredential)
+      if !credentials.isEmpty {
+        credential = .credential(credentials)
       } else {
         throw OpenIdRepositoryError.missingImmediateCredentialData
       }
@@ -413,7 +381,7 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
   private func getDeferredCredential(
     from credentialResponse: CredentialResponseDeferred,
     authorization: IssuanceAuthorization,
-    format: String,
+    format: CredentialFormat,
     deferredCredentialEndpoint: URL?) throws
     -> DeferredCredentialContext
   {
@@ -474,4 +442,5 @@ public enum OpenIdRepositoryError: Error, Equatable {
   case invalidCredentialIssuerMetadataJWT
   case invalidOpenIdConfigurationJWT
   case missingCredentialResponsePrivateKey
+  case unencryptedCredentialResponse
 }

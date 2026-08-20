@@ -38,8 +38,8 @@ struct AVBeamNFCConfigurator: AVBeamNFCConfiguratorProtocol {
 
   // MARK: Private
 
-  private static let scanResultXmlFileName = "mobile-result.xml"
-  private static let scanResultJsonFileName = "mobile-result.json"
+  private static let scanResultXmlFileName = "result.xml"
+  private static let scanResultJsonFileName = "result.json"
 
   @Injected(\.avSocketUrl) private var avSocketUrl
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol

@@ -26,6 +26,7 @@ extension BITAppearance {
     UINavigationBar.appearance().scrollEdgeAppearance = appearance
     UINavigationBar.appearance().compactAppearance = appearance
     UINavigationBar.appearance().compactScrollEdgeAppearance = appearance
+    UINavigationBar.appearance().tintColor = ThemingAssets.navigationAccent.color
   }
 
   // MARK: Private

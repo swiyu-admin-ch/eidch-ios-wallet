@@ -21,7 +21,7 @@ enum AuthorizationResponseBodyGeneratorError: Error {
 
 @Spyable
 public protocol AuthorizationResponseBodyGeneratorProtocol {
-  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject) throws -> AuthorizationResponseBody
+  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, withOrigin: String?) throws -> AuthorizationResponse
 }
 
 // MARK: - AuthorizationResponseBodyGenerator
@@ -30,9 +30,20 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
 
   // MARK: Internal
 
-  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject) throws -> AuthorizationResponseBody {
-    let payload = try generate(for: compatibleCredential, requestObject: requestObject)
-    return try buildResponseBody(for: payload, requestObject: requestObject)
+  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, withOrigin: String?) throws -> AuthorizationResponse {
+    guard let queryId = compatibleCredential.dcqlQueryId else {
+      throw RequestObjectError.invalidQuery
+    }
+
+    let credential = compatibleCredential.credential
+    let paths = compatibleCredential.presentingPaths
+
+    let vpToken = try createVpToken(credential: credential, requestObject: requestObject, paths: paths, withOrigin: withOrigin)
+
+    return AuthorizationResponse(
+      vpToken: [queryId: [vpToken]],
+      responseMode: requestObject.responseMode,
+      state: requestObject.state)
   }
 
   // MARK: Private
@@ -42,32 +53,9 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
   @Injected(\.anyVpTokenGenerator) private var anyVpTokenGenerator: AnyVpTokenGeneratorProtocol
   @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
-  @Injected(\.jweEncrypter) private var jweEncrypter: JWEEncrypterProtocol
   @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
 
-  private func generate(
-    for compatibleCredential: CompatibleCredential,
-    requestObject: RequestObject)
-    throws -> AuthorizationResponse
-  {
-    guard
-      let queryId = compatibleCredential.dcqlQueryId
-    else {
-      throw RequestObjectError.invalidQuery
-    }
-
-    let credential = compatibleCredential.credential
-    let paths = compatibleCredential.presentingPaths
-
-    let vpToken = try createVpToken(credential: credential, requestObject: requestObject, paths: paths)
-
-    return AuthorizationResponse(
-      vpToken: [queryId: [vpToken]],
-      responseMode: requestObject.responseMode,
-      state: requestObject.state)
-  }
-
-  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, paths: [ClaimsPathPointer]) throws -> VpToken {
+  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, paths: [ClaimsPathPointer], withOrigin: String?) throws -> VpToken {
     guard
       userSession.isLoggedIn,
       let context = userSession.context
@@ -96,32 +84,6 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
       }
     }
 
-    return try anyVpTokenGenerator.generate(requestObject: requestObject, credential: anyCredential, keyPair: keyPair, paths: paths)
-  }
-
-  private func buildResponseBody(
-    for payload: DictionarySerializable,
-    requestObject: RequestObject) throws
-    -> AuthorizationResponseBody
-  {
-    guard requestObject.responseMode == .directPostJWT else {
-      return .json(payload)
-    }
-
-    guard let jwk = requestObject.clientMetadata?.jwks?.keys.first else {
-      throw AuthorizationResponseBodyGeneratorError.payloadEncryptionFailed
-    }
-
-    let data = try JSONSerialization.data(withJSONObject: payload.asDictionary())
-    let firstSupportedEncAlgorithmRaw = requestObject.clientMetadata?.encryptedResponseEncValuesSupported?.first(
-      where: { EncryptionAlgorithm(rawValue: $0) != nil })
-    let encryptionAlgorithm = EncryptionAlgorithm(rawValue: firstSupportedEncAlgorithmRaw ?? "") ?? .A128GCM
-    let jwe = try jweEncrypter.encrypt(
-      data: data,
-      publicKey: jwk,
-      encryptionAlgorithm: encryptionAlgorithm,
-      compressionAlgorithm: nil)
-
-    return .jwe(jwe)
+    return try anyVpTokenGenerator.generate(requestObject: requestObject, credential: anyCredential, keyPair: keyPair, paths: paths, withOrigin: withOrigin)
   }
 }

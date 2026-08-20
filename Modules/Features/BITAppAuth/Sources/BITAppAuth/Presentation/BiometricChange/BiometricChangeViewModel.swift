@@ -5,14 +5,14 @@ import SwiftUI
 
 @MainActor
 @Observable
-class BiometricChangeViewModel: Vibrating {
+final class BiometricChangeViewModel: Vibrating {
 
   // MARK: Lifecycle
 
   init(router: BiometricChangeRouterRoutes) {
     self.router = router
 
-    biometricType = getBiometricTypeUseCase.execute()
+    biometricType = getBiometricTypeUseCase()
     evaluateBiometrics()
     evaluateAttempts()
   }
@@ -31,8 +31,6 @@ class BiometricChangeViewModel: Vibrating {
   var inputFieldState = InputFieldState.normal
   var biometricType = BiometricType.none
   var state = State.password
-
-  var isBiometricEnabled = false
 
   var title: String {
     isBiometricEnabled ? L10n.tkSettingsSecurityPrivacyBiometricsDisablePrimary(biometricType.text) : L10n.tkSettingsSecurityPrivacyBiometricsEnablePrimary(biometricType.text)
@@ -53,8 +51,8 @@ class BiometricChangeViewModel: Vibrating {
   func submit() async {
     do {
       userDidRequestValidation = true
-      let uniquePassphrase = try getUniquePassphraseUseCase.execute(from: pinCode)
-      try await changeBiometricStatusUseCase.execute(with: uniquePassphrase)
+      let uniquePassphrase = try getUniquePassphraseUseCase(from: pinCode)
+      try await changeBiometricStatusUseCase(with: uniquePassphrase)
       reset()
 
       evaluateBiometrics()
@@ -79,17 +77,17 @@ class BiometricChangeViewModel: Vibrating {
 
   // MARK: Private
 
+  private var isBiometricEnabled = false
   private var userDidRequestValidation = false
+
   @ObservationIgnored @Injected(\.getUniquePassphraseUseCase) private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocol
   @ObservationIgnored @Injected(\.lockWalletUseCase) private var lockWalletUseCase: LockWalletUseCaseProtocol
   @ObservationIgnored @Injected(\.registerLoginAttemptCounterUseCase) private var registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocol
   @ObservationIgnored @Injected(\.getLoginAttemptCounterUseCase) private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocol
   @ObservationIgnored @Injected(\.resetLoginAttemptCounterUseCase) private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocol
   @ObservationIgnored @Injected(\.attemptsLimit) private var attemptsLimit: Int
-
-  @ObservationIgnored @Injected(\.hasBiometricAuthUseCase) private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocol
   @ObservationIgnored @Injected(\.changeBiometricStatusUseCase) private var changeBiometricStatusUseCase: ChangeBiometricStatusUseCaseProtocol
-  @ObservationIgnored @Injected(\.isBiometricUsageAllowedUseCase) private var isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocol
+  @ObservationIgnored @Injected(\.getBiometricStateUseCase) private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocol
   @ObservationIgnored @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
   @ObservationIgnored @Injected(\.pinCodeMinimumSize) private var pinCodeMinimumSize: Int
 
@@ -98,22 +96,28 @@ class BiometricChangeViewModel: Vibrating {
   }
 
   private func reset() {
-    try? resetLoginAttemptCounterUseCase.execute()
+    try? resetLoginAttemptCounterUseCase()
     inputFieldMessage = nil
     attempts = 0
   }
 
   private func evaluateBiometrics() {
-    let hasBiometricAuth = hasBiometricAuthUseCase.execute()
-    let isBiometricUsageAllowed = isBiometricUsageAllowedUseCase.execute()
-    isBiometricEnabled = isBiometricUsageAllowed && hasBiometricAuth
+    let biometricState = getBiometricStateUseCase()
+    isBiometricEnabled = biometricState == .enabled
+
     withAnimation {
-      state = hasBiometricAuth ? .password : .disabledBiometrics
+      state = switch biometricState {
+      case .disabled,
+           .enabled:
+        .password
+      default:
+        .disabledBiometrics
+      }
     }
   }
 
   private func evaluateAttempts() {
-    attempts = (try? getLoginAttemptCounterUseCase.execute(kind: .appPin)) ?? 0
+    attempts = (try? getLoginAttemptCounterUseCase(kind: .appPin)) ?? 0
 
     var message: String? = nil
     if attemptLeft < attemptsLimit {
@@ -130,7 +134,7 @@ class BiometricChangeViewModel: Vibrating {
 
   private func handleError(_ error: Error) {
     inputFieldState = .error
-    attempts = (try? registerLoginAttemptCounterUseCase.execute(kind: .appPin)) ?? attempts + 1
+    attempts = (try? registerLoginAttemptCounterUseCase(kind: .appPin)) ?? attempts + 1
 
     if attempts >= attemptsLimit {
       return lockWallet()
@@ -144,7 +148,7 @@ class BiometricChangeViewModel: Vibrating {
   }
 
   private func lockWallet() {
-    try? lockWalletUseCase.execute()
+    try? lockWalletUseCase()
     NotificationCenter.default.post(name: .logout, object: nil)
   }
 

@@ -259,7 +259,7 @@ extension LoginView {
       text: $viewModel.pinCode,
       prompt: L10n.tkLoginPasswordNote,
       textColor: ThemingAssets.Label.primary.light,
-      tintColor: ThemingAssets.Label.tertiary.light)
+      tintColor: ThemingAssets.Label.secondary.light)
     {
       viewModel.pinCodeAuthentication()
     }

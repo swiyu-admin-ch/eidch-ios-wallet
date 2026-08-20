@@ -19,7 +19,7 @@ final class HasDevicePinUseCaseTests: XCTestCase {
   func testExecute_argumentsArePassed() {
     policyValidatorSpy.validatePolicyContextReturnValue = true
 
-    _ = useCase.execute()
+    _ = useCase()
 
     XCTAssertEqual(policyValidatorSpy.validatePolicyContextReceivedArguments?.policy, .deviceOwnerAuthentication)
   }
@@ -27,7 +27,7 @@ final class HasDevicePinUseCaseTests: XCTestCase {
   func testExecute_policyIsValid_returnsTrue() {
     policyValidatorSpy.validatePolicyContextReturnValue = true
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertTrue(result)
   }
@@ -35,7 +35,7 @@ final class HasDevicePinUseCaseTests: XCTestCase {
   func testExecute_policyIsNotValid_returnsFalse() {
     policyValidatorSpy.validatePolicyContextReturnValue = false
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertFalse(result)
   }
@@ -43,7 +43,7 @@ final class HasDevicePinUseCaseTests: XCTestCase {
   func testExecute_policyThrowsError_returnsFalse() {
     policyValidatorSpy.validatePolicyContextThrowableError = TestingError.error
 
-    let result = useCase.execute()
+    let result = useCase()
 
     XCTAssertFalse(result)
   }

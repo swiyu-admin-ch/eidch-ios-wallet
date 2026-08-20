@@ -13,7 +13,7 @@ class PushPermissionViewModelTests {
 
   init() {
     let enablePushNotificationsUseCase = EnablePushNotificationsUseCaseProtocolSpy()
-    let coordinator = PushPermissionCoordinatorMock()
+    let coordinator = EIDRequestFlowCoordinatorProtocolSpy()
 
     Container.shared.enablePushNotificationsUseCase.register { @MainActor in enablePushNotificationsUseCase }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in coordinator }
@@ -34,9 +34,11 @@ class PushPermissionViewModelTests {
 
   @Test
   func continueNavigation_withoutPush_routesToQueueInformation() async throws {
-    await viewModel.continueNavigation(withPush: false)
-
     if case .inQueue(let state) = try RequestCaseViewState(mockRequestCase) {
+      coordinator.getNextDestinationAfterApplyForReturnValue = .queueInformation(state.onlineSessionStartOpenAt)
+
+      await viewModel.continueNavigation(withPush: false)
+
       #expect(!enablePushNotificationsUseCase.callAsFunctionForCalled)
       #expect(viewModel.destination == .queueInformation(state.onlineSessionStartOpenAt))
     }
@@ -44,9 +46,11 @@ class PushPermissionViewModelTests {
 
   @Test
   func continueNavigation_withPush_registersPushTokenAndRoutesToQueueInformation() async throws {
-    await viewModel.continueNavigation(withPush: true)
-
     if case .inQueue(let state) = try RequestCaseViewState(mockRequestCase) {
+      coordinator.getNextDestinationAfterApplyForReturnValue = .queueInformation(state.onlineSessionStartOpenAt)
+
+      await viewModel.continueNavigation(withPush: true)
+
       #expect(enablePushNotificationsUseCase.callAsFunctionForCallsCount == 1)
       #expect(enablePushNotificationsUseCase.callAsFunctionForReceivedCaseId == mockRequestCase.id)
       #expect(viewModel.destination == .queueInformation(state.onlineSessionStartOpenAt))
@@ -56,6 +60,7 @@ class PushPermissionViewModelTests {
   @Test
   func continueNavigation_withoutPush_routesToLegalRepresentantConsent() async {
     let requestCase = EIDRequestCase.Mock.sampleInQueueNotVerified
+    coordinator.getNextDestinationAfterApplyForReturnValue = .legalRepresentantConsent(caseId: requestCase.id)
     viewModel = PushPermissionViewModel(requestCase)
 
     await viewModel.continueNavigation(withPush: false)
@@ -66,6 +71,7 @@ class PushPermissionViewModelTests {
 
   @Test
   func continueNavigation_withoutPush_routesToWalletPairing() async {
+    coordinator.getNextDestinationAfterApplyForReturnValue = .walletPairing
     viewModel = PushPermissionViewModel(EIDRequestCase.Mock.sampleAVReady)
 
     await viewModel.continueNavigation(withPush: false)
@@ -85,8 +91,8 @@ class PushPermissionViewModelTests {
   }
 
   @Test
-  func continueNavigation_withCoordinatorError_closesNavigation() async {
-    coordinator.throwableError = TestingError.error
+  func continueNavigation_withoutCoordinatorDestination_closesNavigation() async {
+    coordinator.getNextDestinationAfterApplyForReturnValue = nil
 
     await viewModel.continueNavigation(withPush: false)
 
@@ -116,40 +122,5 @@ class PushPermissionViewModelTests {
   private let mockRequestCase = EIDRequestCase.Mock.sampleInQueue
 
   private let enablePushNotificationsUseCase: EnablePushNotificationsUseCaseProtocolSpy
-  private let coordinator: PushPermissionCoordinatorMock
-
-}
-
-// MARK: - PushPermissionCoordinatorMock
-
-@MainActor
-private final class PushPermissionCoordinatorMock: EIDRequestFlowCoordinatorProtocol {
-  var throwableError: Error?
-
-  func getNextDestination(for requestCase: EIDRequestCase) async throws -> EIDRequestDestinations? {
-    try getNextDestinationAfterApply(for: requestCase)
-  }
-
-  func getNextDestinationAfterApply(for requestCase: EIDRequestCase) throws -> EIDRequestDestinations? {
-    if let throwableError {
-      throw throwableError
-    }
-
-    let viewState = try RequestCaseViewState(requestCase)
-
-    if !viewState.isLegalRepresentantConsentVerified {
-      return .legalRepresentantConsent(caseId: requestCase.id)
-    }
-
-    switch viewState {
-    case .inQueue(let state):
-      return .queueInformation(state.onlineSessionStartOpenAt)
-    case .readyForOnlineSession:
-      return .walletPairing
-    default:
-      return nil
-    }
-  }
-
-  func cleanup() {}
+  private let coordinator: EIDRequestFlowCoordinatorProtocolSpy
 }

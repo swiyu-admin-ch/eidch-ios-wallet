@@ -1,161 +1,114 @@
 // swiftlint:disable force_unwrapping force_cast
-import BITCore
-import XCTest
+
+import Foundation
+import Testing
+@testable import BITCore
 @testable import BITOpenID
 @testable import BITTestingCore
 
-final class CredentialIssuerMetadataTests: XCTestCase {
+struct CredentialIssuerMetadataTests {
 
-  func testDecodeMetadata() throws {
-    let credentialIssuerMetadata = CredentialIssuerMetadata.Mock.sample
+  // MARK: Internal
 
-    XCTAssertFalse(credentialIssuerMetadata.credentialConfigurationsSupported.isEmpty)
-    XCTAssertFalse(credentialIssuerMetadata.display?.isEmpty == true)
+  @Test
+  func decode_success_returnsMetadata() throws {
+    let data = CredentialIssuerMetadata.Mock.sampleData
 
-    let credentialSupported = try XCTUnwrap(credentialIssuerMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value)
+    let metadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
 
-    XCTAssertNotNil(credentialSupported.cryptographicBindingMethodsSupported)
-    XCTAssertNotNil(credentialSupported.credentialMetadata?.display)
-    XCTAssertNotNil(credentialSupported.credentialSigningAlgValuesSupported)
-    XCTAssertNotNil(credentialSupported.proofTypesSupported)
-    XCTAssertFalse(try XCTUnwrap(credentialSupported.cryptographicBindingMethodsSupported?.isEmpty))
-    XCTAssertFalse(try XCTUnwrap(credentialSupported.credentialMetadata?.display?.isEmpty))
-    XCTAssertFalse(try XCTUnwrap(credentialSupported.credentialSigningAlgValuesSupported?.isEmpty))
-    XCTAssertEqual(credentialSupported.proofTypesSupported.count, 1)
-    if case .jwt(let type) = credentialSupported.proofTypesSupported.first {
-      XCTAssertEqual(type.supportedAlgorithms.count, 2)
-    }
+    #expect(metadata.credentialIssuer.absoluteString == "https://example.com/issuer")
+    #expect(metadata.credentialEndpoint == "https://example.com/credential")
+    #expect(metadata.nonceEndpoint.absoluteString == "https://example.com/nonce")
+    #expect(metadata.deferredCredentialEndpoint?.absoluteString == "https://example.com/deferred")
 
-    XCTAssertFalse(try XCTUnwrap(credentialSupported.credentialMetadata?.claims?.isEmpty))
-    XCTAssertEqual(credentialIssuerMetadata.credentialIssuer, "https://issuer.domain.ch")
-    XCTAssertEqual(credentialIssuerMetadata.credentialEndpoint, "https://issuer.domain.ch/credential")
-    XCTAssertEqual(credentialIssuerMetadata.credentialConfigurationsSupported.count, 3)
-    XCTAssertNil(credentialIssuerMetadata.nonceEndpoint)
-    XCTAssertNil(credentialIssuerMetadata.deferredCredentialEndpoint)
+    #expect(metadata.credentialRequestEncryption.supportedEncryptionAlgorithms == [.A256GCM])
+    #expect(metadata.credentialRequestEncryption.supportedZipValues == [.deflate])
+    #expect(metadata.credentialRequestEncryption.encryptionRequired == true)
+    #expect(metadata.credentialRequestEncryption.jwks.keys.count == 1)
 
-    let responseEncryption = try XCTUnwrap(credentialIssuerMetadata.credentialResponseEncryption)
-    XCTAssertFalse(responseEncryption.encryptionRequired)
-    XCTAssertEqual(responseEncryption.supportedAlgorithmValues.map(\.rawValue), ["ECDH-ES"])
-    XCTAssertEqual(responseEncryption.supportedEncryptionAlgorithms.map(\.rawValue), ["A128GCM"])
-    XCTAssertNil(responseEncryption.supportedZipValues)
+    #expect(metadata.credentialResponseEncryption.supportedEncryptionAlgorithms == [.A256GCM])
+    #expect(metadata.credentialResponseEncryption.supportedZipValues == [.deflate])
+    #expect(metadata.credentialResponseEncryption.supportedAlgorithmValues == [.ECDH_ES])
+    #expect(metadata.credentialResponseEncryption.encryptionRequired == false)
 
-    let credentialSupportedVcSdJwt = try XCTUnwrap(credentialSupported as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported)
-    XCTAssertEqual(credentialSupportedVcSdJwt.vct, "elfa-sdjwt")
+    #expect(metadata.batchCredentialIssuance?.batchSize == 10)
+    #expect(metadata.display?.count == 2)
 
-    let metadataDisplay = try XCTUnwrap(credentialSupportedVcSdJwt.credentialMetadata?.display)
-    XCTAssertEqual(metadataDisplay.count, 2)
-    let germanMetadataDisplay = try XCTUnwrap(metadataDisplay.first(where: { $0.locale == "de-CH" }))
-    XCTAssertEqual(germanMetadataDisplay.description, "Kategorie B")
-    XCTAssertEqual(germanMetadataDisplay.backgroundColor, "#ff69b4")
-    XCTAssertEqual(germanMetadataDisplay.logo?.url?.scheme, "data")
+    let displayDe = metadata.display?.first { $0.locale == "de-CH" }
+    #expect(displayDe?.name == "issuer name (de-CH)")
+    #expect(displayDe?.logo?.url?.absoluteString == "data:image/png;base64,aXNzdWVyIGltYWdlIChkZS1DSCk=")
 
-    let metadataClaims = try XCTUnwrap(credentialSupportedVcSdJwt.credentialMetadata?.claims)
-    XCTAssertEqual(metadataClaims.count, 18)
+    let displayEn = metadata.display?.first { $0.locale == "en-US" }
+    #expect(displayEn?.name == "issuer name (en-US)")
+    #expect(displayEn?.logo?.url?.absoluteString == "data:image/png;base64,aXNzdWVyIGltYWdlIChlbi1VUyk=")
 
-    let idClaim = try XCTUnwrap(metadataClaims.first(where: { $0.path.compactMap { $0 } == [.string("id")] }))
-    XCTAssertEqual(idClaim.mandatory, true)
-    XCTAssertEqual(idClaim.display?.count, 4)
-    XCTAssertEqual(idClaim.display?.first(where: { $0.locale == "en-US" })?.name, "Holder binding key")
+    #expect(metadata.credentialConfigurationsSupported.count == 1)
 
-    let credentialNumberClaim = try XCTUnwrap(metadataClaims.first(where: { $0.path.compactMap { $0 } == [.string("credentialNumber")] }))
-    XCTAssertEqual(credentialNumberClaim.mandatory, true)
-    XCTAssertEqual(credentialNumberClaim.display?.first(where: { $0.locale == "de-CH" })?.name, "Credentialnummer")
+    #expect(metadata.credentialConfigurationsSupported.first?.key == "sample-credential")
+    let vcSdJwt = metadata.credentialConfigurationsSupported.first?.value as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported
+    #expect(vcSdJwt != nil)
   }
 
-  func testDecodeMetadata_WithoutProofTypes_ReturnsMetadataWithoutProofTypes() throws {
-    let credentialIssuerMetadata = CredentialIssuerMetadata.Mock.sampleWithoutProofTypes
-    let credentialSupported = try XCTUnwrap(credentialIssuerMetadata.credentialConfigurationsSupported.first(where: { $0.key == "elfa-sdjwt" })?.value)
+  @Test
+  func decodeMetadataWithUnsupportedNonceEndpointThrowsError() throws {
+    let payload = [CredentialIssuerMetadata.CodingKeys.nonceEndpoint.rawValue: "ftp://chasseral-r.infra.swiyu.admin.ch/issuer01/oid4vci/api/nonce"]
+    let data = try CredentialIssuerMetadata.Mock.sampleData.changeJsonPayload(with: payload)
 
-    XCTAssertTrue(credentialSupported.proofTypesSupported.isEmpty)
-  }
-
-  func testDecodeMetadata_WithVctUrl_ReturnsMetadataWithVctUrl() throws {
-    let credentialIssuerMetadata = CredentialIssuerMetadata.Mock.vctUrl
-    let credentialSupported = try XCTUnwrap(credentialIssuerMetadata.credentialConfigurationsSupported.first?.value as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported)
-
-    XCTAssertEqual(credentialSupported.vct, "https://vct.example.com")
-    XCTAssertEqual(credentialSupported.vctIntegrity, "vctIntegrity")
-  }
-
-  func testDecodeMetadata_WithVctMetadataUri_ReturnsMetadataWithVctMetadataUri() throws {
-    let credentialIssuerMetadata = CredentialIssuerMetadata.Mock.vctMetadataUri
-    let credentialSupported = try XCTUnwrap(credentialIssuerMetadata.credentialConfigurationsSupported.first?.value as? CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported)
-
-    XCTAssertEqual(credentialSupported.vct, "vct")
-    XCTAssertNil(credentialSupported.vctIntegrity)
-    XCTAssertEqual(credentialSupported.vctMetadataUri, "https://vct-metadata.example.com")
-    XCTAssertEqual(credentialSupported.vctMetadataUriIntegrity, "vctMetadataUriIntegrity")
-  }
-
-  func testDecodeMetadata_WithUnsupportedProofTypeAlgorithm_ThrowsError() throws {
-    let credentialIssuerMetadataData = CredentialIssuerMetadata.Mock.sampleUnsupportedProofTypeAlgorithmData
-    XCTAssertThrowsError(try JSONDecoder().decode(CredentialIssuerMetadata.self, from: credentialIssuerMetadataData)) { error in
-      XCTAssertEqual(error as? CredentialIssuerMetadata.AnyCredentialConfigurationSupportedError, .invalidProofType)
+    #expect(throws: DecodingError.self) {
+      try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
     }
   }
 
-  func testDecodeMetadata_WithUnsupportedCryptographicBindingMethod_ThrowsError() throws {
-    let credentialIssuerMetadataData = CredentialIssuerMetadata.Mock.sampleUnsupportedCryptographicBindingMethodData
-    XCTAssertThrowsError(try JSONDecoder().decode(CredentialIssuerMetadata.self, from: credentialIssuerMetadataData)) { error in
-      XCTAssertEqual(error as? CredentialIssuerMetadata.AnyCredentialConfigurationSupportedError, .invalidCryptographicBindingMethod)
+  @Test
+  func decodeUnknownMetadataFormat_ignoresUnknown() throws {
+    let vcSdJwtConfig = try JSONSerialization.jsonObject(with: CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported.Mock.sampleData)
+    let data = try CredentialIssuerMetadata.Mock.sampleData.changeJsonPayload(with: [CredentialIssuerMetadata.CodingKeys.credentialConfigurationsSupported.rawValue: ["unknown": "config", "vc+sd-jwt": vcSdJwtConfig]])
+
+    let metadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
+
+    #expect(metadata.credentialConfigurationsSupported.count == 1)
+  }
+
+  @Test
+  func decode_lowerBoundBatchSize_returnsBatchSize() throws {
+    let data = try createIssuerMetadata(batchSize: 10)
+
+    let metadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
+
+    #expect(metadata.batchCredentialIssuance?.batchSize == 10)
+  }
+
+  @Test
+  func decode_bigBatchSize_returnsBatchSize() throws {
+    let data = try createIssuerMetadata(batchSize: 100)
+
+    let metadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
+
+    #expect(metadata.batchCredentialIssuance?.batchSize == 100)
+  }
+
+  @Test
+  func decode_tooSmallBatchSize_throwsError() throws {
+    let data = try createIssuerMetadata(batchSize: 9)
+
+    #expect(throws: CredentialIssuerMetadataError.invalidBatchSize) {
+      try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
     }
   }
 
-  func testDecodeMetadata_WithUnsupportedNonceEndpoint_ThrowsError() throws {
-    let credentialIssuerMetadataData = CredentialIssuerMetadata.Mock.chasseralIssuerUnsupportedNonceData
-    XCTAssertThrowsError(try JSONDecoder().decode(CredentialIssuerMetadata.self, from: credentialIssuerMetadataData)) { error in
-      XCTAssertNotNil(error as? DecodingError)
+  @Test
+  func decode_negativeBatchSize_throwsError() throws {
+    let data = try createIssuerMetadata(batchSize: -1)
+
+    #expect(throws: CredentialIssuerMetadataError.invalidBatchSize) {
+      try JSONDecoder().decode(CredentialIssuerMetadata.self, from: data)
     }
   }
 
-  func testDecodeUnknownMetadataFormat() throws {
-    let credentialIssuerMetadataData = CredentialIssuerMetadata.Mock.sampleWithUnknownFormatData
-    let credentialIssuerMetadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: credentialIssuerMetadataData)
-    XCTAssertFalse(credentialIssuerMetadata.credentialConfigurationsSupported.isEmpty)
+  // MARK: Private
 
-    guard let jsonObject = try JSONSerialization.jsonObject(with: credentialIssuerMetadataData, options: []) as? [String: Any] else {
-      XCTFail("can not decode Data in to [String: Any]")
-      return
-    }
-    guard let credentialConfigurations = jsonObject["credential_configurations_supported"] as? [String: Any] else {
-      XCTFail("can not parse credential_configurations_supported")
-      return
-    }
-    XCTAssertTrue(credentialIssuerMetadata.credentialConfigurationsSupported.count == credentialConfigurations.count - 1, "There should be an unknown format that has been ignored")
-  }
-
-  func testDecodeMetadata_WithLowerBoundBatchSize_ReturnsBatchSize() throws {
-    let metadataData = CredentialIssuerMetadata.Mock.sampleWithBatchSizeLowerBoundData
-    let metadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: metadataData)
-
-    XCTAssertEqual(metadata.batchCredentialIssuance?.batchSize, 10)
-  }
-
-  func testDecodeMetadata_WithUpperBoundBatchSize_ReturnsBatchSize() throws {
-    let metadataData = CredentialIssuerMetadata.Mock.sampleWithBatchSizeUpperBoundData
-    let metadata = try JSONDecoder().decode(CredentialIssuerMetadata.self, from: metadataData)
-
-    XCTAssertEqual(metadata.batchCredentialIssuance?.batchSize, 100)
-  }
-
-  func testDecodeMetadata_WithTooSmallBatchSize_throwsError() throws {
-    let metadataData = CredentialIssuerMetadata.Mock.sampleWithTooSmallBatchSizeData
-    XCTAssertThrowsError(try JSONDecoder().decode(CredentialIssuerMetadata.self, from: metadataData)) { error in
-      XCTAssertEqual(error as? CredentialIssuerMetadataError, .invalidBatchSize)
-    }
-  }
-
-  func testDecodeMetadata_WithTooBigBatchSize_throwsError() throws {
-    let metadataData = CredentialIssuerMetadata.Mock.sampleWithTooBigBatchSizeData
-    XCTAssertThrowsError(try JSONDecoder().decode(CredentialIssuerMetadata.self, from: metadataData)) { error in
-      XCTAssertEqual(error as? CredentialIssuerMetadataError, .invalidBatchSize)
-    }
-  }
-
-  func testDecodeMetadata_WithNegativeBatchSize_throwsError() throws {
-    let metadataData = CredentialIssuerMetadata.Mock.sampleWithNegativeBatchSizeData
-    XCTAssertThrowsError(try JSONDecoder().decode(CredentialIssuerMetadata.self, from: metadataData)) { error in
-      XCTAssertEqual(error as? CredentialIssuerMetadataError, .invalidBatchSize)
-    }
+  private func createIssuerMetadata(batchSize: Int) throws -> Data {
+    let payload = [CredentialIssuerMetadata.CodingKeys.batchCredentialIssuance.rawValue: [CredentialIssuerMetadata.BatchCredentialIssuance.CodingKeys.batchSize.rawValue: batchSize]]
+    return try CredentialIssuerMetadata.Mock.sampleData.changeJsonPayload(with: payload)
   }
 }

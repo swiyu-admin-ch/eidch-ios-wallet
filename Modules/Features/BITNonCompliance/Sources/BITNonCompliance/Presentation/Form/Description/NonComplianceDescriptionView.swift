@@ -36,7 +36,7 @@ struct NonComplianceDescriptionView: View {
     .toolbar {
       ToolbarItem(placement: .topBarLeading) {
         Button(action: navigateBack) {
-          ThemingAssets.back.swiftUIImage
+          Image(systemName: "chevron.backward")
         }
         .accessibilityLabel(Text(L10n.tkGlobalBack))
       }
@@ -57,7 +57,11 @@ struct NonComplianceDescriptionView: View {
     Form {
       Section {
         VStack(alignment: .leading, spacing: .x1) {
-          TextField(L10n.tkNonComplianceReportFormDescriptionPlaceholder, text: $viewModel.value, axis: .vertical)
+          TextField(
+            L10n.tkNonComplianceReportFormDescriptionPlaceholder,
+            text: $viewModel.value,
+            placeholderColor: ThemingAssets.Label.secondary.swiftUIColor,
+            axis: .vertical)
             .focused($focusField)
             .font(.custom.body)
             .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)

@@ -4,7 +4,6 @@ import NavigatorUI
 import XCTest
 @testable import BITActivity
 @testable import BITAnalytics
-@testable import BITAnalyticsMocks
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITL10n
@@ -151,52 +150,6 @@ final class CredentialDetailViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
   }
 
-  func testBatchPrivacyWarningVisible_withoutBatchesWithUnpresentedBundleItem_returnsFalse() {
-    viewModel.credential = mockVerifiableCredential
-
-    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
-  }
-
-  func testBatchPrivacyWarningVisible_withoutBatchesWithPresentedBundleItem_returnsFalse() {
-    var credential = mockVerifiableCredential
-    credential.bundleItems = credential.bundleItems.map {
-      var item = $0
-      item.presented = true
-      return item
-    }
-    viewModel.credential = credential
-
-    XCTAssertFalse(viewModel.isBatchPrivacyWarningVisible)
-  }
-
-  func testRefreshBatchCredential_success_updatesCredentialAndShowsToast() async {
-    let exhaustedBatchCredential = makeBatchCredential(allBundleItemsPresented: true)
-    refreshCredentialUseCaseSpy.callAsFunctionReturnValue = updatemockVerifiableCredential
-    viewModel.credential = exhaustedBatchCredential
-
-    await viewModel.refreshBatchCredential()
-
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 1)
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionReceivedCredential, exhaustedBatchCredential)
-    XCTAssertEqual(viewModel.credential as? VerifiableCredential, updatemockVerifiableCredential)
-    XCTAssertEqual(viewModel.toast, Toast(L10n.tkDisplayrefreshNotificationSuccess))
-    XCTAssertFalse(viewModel.isRefreshLoading)
-    XCTAssertFalse(viewModel.isRefreshErrorPresented)
-  }
-
-  func testRefreshBatchCredential_failure_showsErrorNotification() async {
-    let exhaustedBatchCredential = makeBatchCredential(allBundleItemsPresented: true)
-    refreshCredentialUseCaseSpy.callAsFunctionThrowableError = TestingError.error
-    viewModel.credential = exhaustedBatchCredential
-
-    await viewModel.refreshBatchCredential()
-
-    XCTAssertEqual(refreshCredentialUseCaseSpy.callAsFunctionCallsCount, 1)
-    XCTAssertTrue(viewModel.isRefreshErrorPresented)
-    XCTAssertFalse(viewModel.isRefreshLoading)
-    XCTAssertEqual(analyticsProvider.logCounter, 1)
-  }
-
   func testUpdateCredentialViewModel_argumentsPassed() {
     viewModel.credential = mockVerifiableCredential
 
@@ -245,7 +198,6 @@ final class CredentialDetailViewModelTests: XCTestCase {
   private var deleteCredentialUseCaseSpy = DeleteCredentialUseCaseProtocolSpy()
   private var checkAndUpdateCredentialStatusUseCaseSpy = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
   private var getCredentialUseCaseSpy = GetCredentialUseCaseProtocolSpy()
-  private var refreshCredentialUseCaseSpy = RefreshVerifiableCredentialUseCaseProtocolSpy()
   private var getCredentialDisplayUseCaseSpy = GetCredentialDisplayUseCaseProtocolSpy()
   private var getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
   private var getActivityHistoryEnabledSubjectUseCaseSpy = GetActivityHistoryEnabledSubjectUseCaseProtocolSpy()
@@ -264,7 +216,7 @@ final class CredentialDetailViewModelTests: XCTestCase {
   private func registerMocks() {
     subjectMock = CurrentValueSubject(false)
     analyticsProvider = MockProvider()
-    analytics = Analytics()
+    analytics = AnalyticsSpy()
     analytics.register(analyticsProvider)
     guard let analytics else {
       fatalError("analytics should be initialized in registerMocks")
@@ -275,7 +227,6 @@ final class CredentialDetailViewModelTests: XCTestCase {
     Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCaseSpy }
     Container.shared.checkAndUpdateCredentialStatusUseCase.register { @MainActor in self.checkAndUpdateCredentialStatusUseCaseSpy }
     Container.shared.getCredentialUseCase.register { @MainActor in self.getCredentialUseCaseSpy }
-    Container.shared.refreshCredentialUseCase.register { @MainActor in self.refreshCredentialUseCaseSpy }
     Container.shared.getCredentialDisplayUseCase.register { @MainActor in self.getCredentialDisplayUseCaseSpy }
     Container.shared.getCredentialActivitiesUseCase.register { @MainActor in self.getCredentialActivitiesUseCaseSpy }
     Container.shared.getActivityHistoryEnabledSubjectUseCase.register { @MainActor in self.getActivityHistoryEnabledSubjectUseCaseSpy }

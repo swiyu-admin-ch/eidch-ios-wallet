@@ -17,6 +17,10 @@ extension Container {
     self { DeletePushIdUseCase() }
   }
 
+  public var resetApplicationBadgeUseCase: Factory<ResetApplicationBadgeUseCaseProtocol> {
+    self { ResetApplicationBadgeUseCase() }
+  }
+
   public var pushNotificationUrl: Factory<URL> {
     self {
       guard let url = URL(string: "https://push-api.trust-infra.swiyu.admin.ch") else {

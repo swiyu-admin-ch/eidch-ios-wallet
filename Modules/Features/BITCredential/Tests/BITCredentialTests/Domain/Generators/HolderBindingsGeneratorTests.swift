@@ -1,7 +1,6 @@
 import Factory
 import XCTest
 @testable import BITAnalytics
-@testable import BITAnalyticsMocks
 @testable import BITAppAttestation
 @testable import BITAppAuth
 @testable import BITCredential
@@ -10,6 +9,8 @@ import XCTest
 @testable import BITOpenID
 @testable import BITTestingCore
 @testable import BITVault
+
+// MARK: - HolderBindingsGeneratorTests
 
 final class HolderBindingsGeneratorTests: XCTestCase {
 
@@ -24,14 +25,14 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     success()
 
     analyticsProvider = MockProvider()
-    analytics = Analytics()
+    analytics = AnalyticsSpy()
     analytics.register(analyticsProvider)
 
     generator = HolderBindingsGenerator()
   }
 
   func testGenerate_metadataWithoutProofTypes_returnsEmpty() async throws {
-    let bindings = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleWithoutProofTypes)
+    let bindings = try await generator(batchSize: nil, proofTypes: [])
 
     XCTAssertFalse(credentialKeyRepository.createAlgorithmIsHardwareBoundCalled)
     XCTAssert(bindings.isEmpty)
@@ -43,22 +44,53 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = softwareBoundKeyPair
     generator = HolderBindingsGenerator()
 
-    let bindings = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sample)
+    let bindings = try await generator(batchSize: nil, proofTypes: [.Mock.jwtSoftware256])
+    XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 1)
+    XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.isHardwareBound, false)
+    XCTAssertEqual(analyticsProvider.logCounter, 0)
+
+    XCTAssertEqual(bindings.count, 1)
+    XCTAssertEqual(bindings.first?.keyPair, softwareBoundKeyPair)
+    XCTAssertNil(bindings.first?.keyAttestationJWS)
+  }
+
+  func testGenerate_withoutKeyAttestationRequired_withDisabledClientAttestationRepository_returnsValidContext() async throws {
+    let softwareBoundKeyPair = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
+    credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = softwareBoundKeyPair
+    Container.shared.clientAttestationRepository.register { DisabledClientAttestationRepository() }
+    generator = HolderBindingsGenerator()
+
+    let bindings = try await generator(batchSize: nil, proofTypes: [.Mock.jwtSoftware256])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.isHardwareBound, false)
     XCTAssertEqual(bindings.first?.keyPair, softwareBoundKeyPair)
     XCTAssertNil(bindings.first?.keyAttestationJWS)
-    XCTAssertEqual(analyticsProvider.logCounter, 0)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 0)
   }
 
   func testGenerate_metadataWithKeyAttestationRequired_returnsValidContext() async throws {
-    let bindings = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleKeyAttestationRequired)
+    let bindings = try await generator(batchSize: nil, proofTypes: [.Mock.jwtHardwareHigh256])
 
-    XCTAssertEqual(appAttestationRepository.fetchKeyAttestationBodyClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.isHardwareBound, true)
     XCTAssertEqual(bindings.first?.keyPair, mockKeyPair)
     XCTAssertEqual(bindings.first?.keyAttestationJWS, mockKeyAttestation.rawJWS)
     XCTAssertEqual(analyticsProvider.logCounter, 0)
+  }
+
+  func testGenerate_withKeyAttestationRequired_withDisabledClientAttestationRepository_throwsServiceDeactivated() async throws {
+    Container.shared.clientAttestationRepository.register { DisabledClientAttestationRepository() }
+    generator = HolderBindingsGenerator()
+
+    do {
+      _ = try await generator(batchSize: nil, proofTypes: [.Mock.jwtHardwareHigh256])
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? AttestationServiceRepositoryError, .serviceDeactivated)
+      XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 0)
+      XCTAssertEqual(credentialKeyRepository.deleteCallsCount, 1)
+      XCTAssertEqual(credentialKeyRepository.deleteReceivedKeyPair, mockKeyPair)
+    }
   }
 
   func testGenerate_incorrectPreferredAlgorithms_throwsUnsupportedAlgorithm() async throws {
@@ -80,13 +112,15 @@ final class HolderBindingsGeneratorTests: XCTestCase {
   }
 
   func testGenerate_keyAttestationUseCaseThrowsError_throwsError() async {
-    appAttestationRepository.fetchKeyAttestationBodyClientAttestationThrowableError = TestingError.error
+    attestationServiceRepository.fetchKeyAttestationBodyClientAttestationThrowableError = TestingError.error
 
     do {
-      _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleKeyAttestationRequired)
+      _ = try await generator(batchSize: nil, proofTypes: [.Mock.jwtHardwareHigh256])
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(credentialKeyRepository.deleteCallsCount, 1)
+      XCTAssertEqual(credentialKeyRepository.deleteReceivedKeyPair, mockKeyPair)
     }
   }
 
@@ -94,10 +128,12 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     keyAttestationValidator.callAsFunctionKeyPairWithReturnValue = false
 
     do {
-      _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleKeyAttestationRequired)
+      _ = try await generator(batchSize: nil, proofTypes: [.Mock.jwtHardwareHigh256])
       XCTFail("Expected an error")
     } catch {
-      XCTAssertEqual(error as? AppAttestationRepositoryError, .invalidKeyAttestation)
+      XCTAssertEqual(error as? AttestationServiceRepositoryError, .invalidKeyAttestation)
+      XCTAssertEqual(credentialKeyRepository.deleteCallsCount, 1)
+      XCTAssertEqual(credentialKeyRepository.deleteReceivedKeyPair, mockKeyPair)
     }
   }
 
@@ -107,7 +143,7 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     generator = HolderBindingsGenerator()
 
     do {
-      _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleKeyAttestationRequired)
+      _ = try await generator(batchSize: nil, proofTypes: [.Mock.jwtHardwareHigh256])
       XCTFail("Expected an error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -116,23 +152,20 @@ final class HolderBindingsGeneratorTests: XCTestCase {
   }
 
   func testGenerate_preferredKeyBindingAlgorithmPriorisation_receivesHighesPrioAlgorithm() async throws {
-    let preferredAlgorithms: [JWTAlgorithm] = [.ES512, .ES384, .ES512]
+    let proofType = CredentialIssuerMetadata.ProofType.Mock.createJwt(supportedAlgorithms: [.ES256, .ES512])
+    let preferredAlgorithms: [JWTAlgorithm] = [.ES512, .ES384, .ES256]
     Container.shared.preferredKeyBindingAlgorithmsOrdered.register { preferredAlgorithms }
-
-    guard let supportedAlgos = mockMetadataWrapper.selectedCredential.proofTypesSupported.first?.algorithms else {
-      fatalError("Cannot extract supported algorithms")
-    }
-
     generator = HolderBindingsGenerator()
 
-    _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleKeyAttestationRequired)
+    _ = try await generator(batchSize: nil, proofTypes: [proofType])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.algorithm, JWTAlgorithm.ES512.rawValue)
-    XCTAssertTrue(supportedAlgos.contains { self.mockpreferredKeyBindingAlgorithmsOrdered.map(\.rawValue).contains($0) })
   }
 
   func testGenerate_metadataWithEmptyKeyStorage_keyPairGeneratedWithSecureEnclave() async throws {
-    _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleEmptyKeyStorage)
+    let proofType = CredentialIssuerMetadata.ProofType.Mock.createJwt(keyStorageLevels: [])
+
+    _ = try await generator(batchSize: nil, proofTypes: [proofType])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.isHardwareBound, true)
   }
@@ -141,51 +174,131 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     Container.shared.supportedKeyStorageSecurityLevel.register { [.iso18045Moderate, .iso18045High] }
 
     generator = HolderBindingsGenerator()
+    let proofType = CredentialIssuerMetadata.ProofType.Mock.createJwt(keyStorageLevels: [.iso18045Moderate, .iso18045High])
 
-    _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleMultipleKeyStorage)
+    _ = try await generator(batchSize: nil, proofTypes: [proofType])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.isHardwareBound, true)
   }
 
   func testExecute_mixedSupportedKeyStorages_keyPairGeneratedWithSecureEnclave() async throws {
     Container.shared.supportedKeyStorageSecurityLevel.register { [.iso18045Moderate] }
-
+    let proofType = CredentialIssuerMetadata.ProofType.Mock.createJwt(keyStorageLevels: [.iso18045Moderate, .iso18045High])
     generator = HolderBindingsGenerator()
 
-    _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sampleMultipleKeyStorage)
+    _ = try await generator(batchSize: nil, proofTypes: [proofType])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundReceivedArguments?.isHardwareBound, true)
   }
 
-  func testGenerate_batchMetadata_generatesDefaultOne() async throws {
-    let metadataWrapper = CredentialIssuerMetadataWrapper.Mock.sample
-
-    let bindings = try await generator(from: metadataWrapper)
-
-    XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 1)
-    XCTAssertEqual(bindings.count, 1)
-  }
-
   func testGenerate_batchMetadata_generatesMultipleBindings() async throws {
     Container.shared.isBatchIssuanceEnabled.register { true }
+    credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
     generator = HolderBindingsGenerator()
-    let metadataWrapper = CredentialIssuerMetadataWrapper.Mock.sampleBatch
 
-    let bindings = try await generator(from: metadataWrapper)
+    let bindings = try await generator(batchSize: 10, proofTypes: [.Mock.jwtSoftware256])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 10)
     XCTAssertEqual(bindings.count, 10)
   }
 
+  func testGenerate_batchMetadataUpperBound_generatesMultipleBindingsAsSpecified() async throws {
+    Container.shared.isBatchIssuanceEnabled.register { true }
+    credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
+    generator = HolderBindingsGenerator()
+
+    let bindings = try await generator(batchSize: 100, proofTypes: [.Mock.jwtSoftware256])
+
+    XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 100)
+    XCTAssertEqual(bindings.count, 100)
+  }
+
+  func testGenerate_batchMetadataOverUpperBound_generatesMultipleBindingsUpToUpperBound() async throws {
+    Container.shared.isBatchIssuanceEnabled.register { true }
+    credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
+    generator = HolderBindingsGenerator()
+
+    let bindings = try await generator(batchSize: 101, proofTypes: [.Mock.jwtSoftware256])
+
+    XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 100)
+    XCTAssertEqual(bindings.count, 100)
+  }
+
+  func testGenerate_batchKeyCreationThrows_deletesKeys() async {
+    let firstKeyPair = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
+    var createCallCount = 0
+    credentialKeyRepository.createAlgorithmIsHardwareBoundClosure = { _, _ in
+      createCallCount += 1
+      guard createCallCount == 1 else {
+        throw TestingError.error
+      }
+      return firstKeyPair
+    }
+    Container.shared.isBatchIssuanceEnabled.register { true }
+    generator = HolderBindingsGenerator()
+
+    do {
+      _ = try await generator(batchSize: 2, proofTypes: [.Mock.jwtSoftware256])
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? TestingError, .error)
+      XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 2)
+      XCTAssertEqual(credentialKeyRepository.deleteReceivedInvocations, [firstKeyPair])
+    }
+  }
+
   func testGenerate_batchMetadata_whenBatchIssuanceDisabled_generatesSingleBinding() async throws {
     Container.shared.isBatchIssuanceEnabled.register { false }
+    credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
     generator = HolderBindingsGenerator()
-    let metadataWrapper = CredentialIssuerMetadataWrapper.Mock.sampleBatch
 
-    let bindings = try await generator(from: metadataWrapper)
+    let bindings = try await generator(batchSize: 10, proofTypes: [.Mock.jwtSoftware256])
 
     XCTAssertEqual(credentialKeyRepository.createAlgorithmIsHardwareBoundCallsCount, 1)
     XCTAssertEqual(bindings.count, 1)
+  }
+
+  func testGenerate_batchMetadataWithZeroBatchSize_returnsEmpty() async throws {
+    Container.shared.isBatchIssuanceEnabled.register { true }
+    generator = HolderBindingsGenerator()
+
+    let bindings = try await generator(batchSize: 0, proofTypes: [.Mock.jwtSoftware256])
+
+    XCTAssertFalse(credentialKeyRepository.createAlgorithmIsHardwareBoundCalled)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 0)
+    XCTAssertEqual(attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationCallsCount, 0)
+    XCTAssertTrue(bindings.isEmpty)
+  }
+
+  func testGenerate_batchMetadataWithKeyAttestationRequired_fetchesBatchKeyAttestation() async throws {
+    Container.shared.isBatchIssuanceEnabled.register { true }
+    generator = HolderBindingsGenerator()
+
+    let bindings = try await generator(batchSize: 2, proofTypes: [.Mock.jwtHardwareHigh256])
+
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 0)
+    XCTAssertEqual(attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationCallsCount, 1)
+    XCTAssertEqual(attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationReceivedArguments?.body.count, 2)
+    XCTAssertEqual(attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationReceivedArguments?.clientAttestation, mockClientAttestation)
+    XCTAssertEqual(bindings.count, 2)
+    XCTAssertEqual(bindings.map(\.keyAttestationJWS), [mockKeyAttestation.rawJWS, mockKeyAttestation.rawJWS])
+  }
+
+  func testGenerate_batchMetadataWithKeyAttestationRequired_whenBatchKeyAttestationCountDoesNotMatch_throwsInvalidKeyAttestation() async {
+    Container.shared.isBatchIssuanceEnabled.register { true }
+    attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationReturnValue = [mockKeyAttestation]
+    generator = HolderBindingsGenerator()
+
+    do {
+      _ = try await generator(batchSize: 2, proofTypes: [.Mock.jwtHardwareHigh256])
+      XCTFail("Expected an error")
+    } catch {
+      XCTAssertEqual(error as? AttestationServiceRepositoryError, .invalidKeyAttestation)
+      XCTAssertEqual(attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationCallsCount, 1)
+      XCTAssertEqual(attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationReceivedArguments?.body.count, 2)
+      XCTAssertEqual(credentialKeyRepository.deleteCallsCount, 2)
+      XCTAssertEqual(credentialKeyRepository.deleteReceivedInvocations, [mockKeyPair, mockKeyPair])
+    }
   }
 
   // MARK: Private
@@ -200,7 +313,7 @@ final class HolderBindingsGeneratorTests: XCTestCase {
   private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
   private let mockClientAttestation = ClientAttestationJWT.Mock.sample
 
-  private var appAttestationRepository = AppAttestationRepositoryProtocolSpy()
+  private var attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
   private var clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
   private var keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
   private var credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()
@@ -217,14 +330,15 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     Container.shared.preferredKeyBindingAlgorithmsOrdered.register { self.mockpreferredKeyBindingAlgorithmsOrdered }
     Container.shared.credentialKeyRepository.register { self.credentialKeyRepository }
     Container.shared.supportedKeyStorageSecurityLevel.register { self.mockSupportedKeyStorageSecurityLevel }
-    Container.shared.appAttestationRepository.register { self.appAttestationRepository }
+    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
     Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
     Container.shared.keyAttestationValidator.register { self.keyAttestationValidator }
     Container.shared.analytics.register { self.analytics }
   }
 
   private func success() {
-    appAttestationRepository.fetchKeyAttestationBodyClientAttestationReturnValue = mockKeyAttestation
+    attestationServiceRepository.fetchKeyAttestationBodyClientAttestationReturnValue = mockKeyAttestation
+    attestationServiceRepository.fetchBatchKeyAttestationBodyClientAttestationReturnValue = [mockKeyAttestation, mockKeyAttestation]
     clientAttestationRepository.getUsingReturnValue = mockClientAttestation
     keyAttestationValidator.callAsFunctionKeyPairWithReturnValue = true
     credentialKeyRepository.createAlgorithmIsHardwareBoundReturnValue = mockKeyPair
@@ -236,7 +350,7 @@ final class HolderBindingsGeneratorTests: XCTestCase {
     }
 
     do {
-      _ = try await generator(from: CredentialIssuerMetadataWrapper.Mock.sample)
+      _ = try await generator(batchSize: nil, proofTypes: [.Mock.jwtSoftware256])
       XCTFail("An error was expected")
     } catch FetchAnyVerifiableCredentialError.unsupportedAlgorithm {
       XCTAssertFalse(supportedAlgos.contains { preferredAlgos.map(\.rawValue).contains($0) })

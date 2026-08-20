@@ -106,6 +106,12 @@ fastlane/profile.plist
 
 iOSInjectionProject/
 
+### XcodeGen ###
+.xcodegen.cache
+
+### SwiftFormat ###
+.swiftformat.cache
+
 ### Danger ###
 .build/*
 Modules/**/.build/*

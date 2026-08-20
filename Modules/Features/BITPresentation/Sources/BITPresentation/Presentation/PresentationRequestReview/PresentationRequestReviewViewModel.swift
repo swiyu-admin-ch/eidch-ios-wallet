@@ -3,7 +3,9 @@ import BITAnalytics
 import BITCore
 import BITCredential
 import BITCredentialShared
+import BITL10n
 import BITNetworking
+import BITNonCompliance
 import BITOpenID
 import Factory
 import Foundation
@@ -30,6 +32,7 @@ public class PresentationRequestReviewViewModel {
   enum Event {
     case submit(PresentationRequestReviewState.Result, Bool)
     case deny
+    case onAppear
   }
 
   private(set) var state = PresentationRequestReviewState.loading
@@ -44,13 +47,19 @@ public class PresentationRequestReviewViewModel {
       await deny()
     case .submit(let result, let force):
       await submit(result, force: force)
+    case .onAppear:
+      await validateProtectedClaims()
     }
   }
 
   func updateCredential(with colorScheme: String) {
     switch state {
     case .loading:
-      let viewState = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: colorScheme)
+      let viewState = PresentationRequestReviewState.Result(
+        credential: credential,
+        verifierDisplay: verifierDisplay,
+        colorScheme: colorScheme,
+        hasVerifiedQuery: context.hasVerifiedQuery)
       state = .result(viewState)
     case .result(let viewState):
       let credential = VerifiableCredentialViewModel(credential: viewState.credential.credential, colorScheme: colorScheme)
@@ -72,8 +81,17 @@ public class PresentationRequestReviewViewModel {
   @ObservationIgnored @Injected(\.preferredUserLanguageCodes) private var preferredUserLanguageCodes: [UserLanguageCode]
   @ObservationIgnored @Injected(\.loadingMessageDelay) private var loadingMessageDelay: Double
   @ObservationIgnored @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
+  @ObservationIgnored @Injected(\.validateVerificationAuthorizationTrustStatementUseCase) private var validateVerificationAuthorizationTrustStatementUseCase
 
-  private var credentialStatusAlert: PresentationRequestReviewAlert? {
+  private var reviewAlert: PresentationRequestReviewAlert? {
+    if case .notCompliant = context.actorCompliance {
+      return .nonCompliantActor
+    }
+
+    if !context.hasVerifiedQuery {
+      return .unregisteredRequest
+    }
+
     guard let bundleItem = try? selectCredentialBundleItemUseCase(credential.credential) else { return nil }
     switch bundleItem.status {
     case .businessExpired:
@@ -89,11 +107,30 @@ public class PresentationRequestReviewViewModel {
     context.getPreferredVerifierDisplay(considering: preferredUserLanguageCodes)
   }
 
+  private func validateProtectedClaims() async {
+    do {
+      try await validateVerificationAuthorizationTrustStatementUseCase(requestObject: context.requestObject, requestedClaims: credential.presentingPaths)
+    } catch let error as ValidateVerificationAuthorizationTrustStatementUseCaseError {
+      switch error {
+      case .unauthorizedVerification(let presentationResponse):
+        destination = .error(
+          .governanceError(
+            rawErrorCode: GovernanceError.unauthorizedVerification.rawValue,
+            errorDescription: L10n.tkPresentErrorUnauthorizedVerificationSecondary),
+          presentationResponse)
+      }
+    } catch is PresentationResponseValidationError {
+      destination = .error(.invalidRedirectUri, nil)
+    } catch {
+      destination = .resultState(.error, context)
+    }
+  }
+
   private func submit(_ result: PresentationRequestReviewState.Result, force: Bool = false) async {
     alert = nil
 
-    if !force, let credentialStatusAlert {
-      alert = credentialStatusAlert
+    if !force, let reviewAlert {
+      alert = reviewAlert
       return
     }
 
@@ -107,8 +144,8 @@ public class PresentationRequestReviewViewModel {
           case .progress(let progress):
             guard case .processing(let currentState) = state else { continue }
             state = .processing(currentState.changing(\.progress, to: progress))
-          case .success:
-            destination = .resultState(.dataTransmitted, context)
+          case .success(let presentationResponse):
+            destination = .resultState(.dataTransmitted(presentationResponse), context)
             return
           }
         }
@@ -134,7 +171,9 @@ public class PresentationRequestReviewViewModel {
 
   private func handleSubmitError(_ error: Error, processing: PresentationRequestReviewState.Processing) {
     analytics.log(error)
-    if let networkError = error as? NetworkError {
+    if error is PresentationResponseValidationError {
+      destination = .error(.invalidRedirectUri, nil)
+    } else if let networkError = error as? NetworkError {
       switch networkError.status {
       case .hostnameNotFound,
            .noConnection,
@@ -142,21 +181,28 @@ public class PresentationRequestReviewViewModel {
            .unknown:
         destination = .resultState(.error, context)
       default:
-        destination = .resultState(.dataTransmitted, context)
+        destination = .resultState(.dataTransmitted(nil), context)
       }
     } else {
       destination = .resultState(.error, context)
     }
-    let viewModel = PresentationRequestReviewState.Result(credential: credential, verifierDisplay: verifierDisplay, colorScheme: processing.credential.colorScheme)
+    let viewModel = PresentationRequestReviewState.Result(
+      credential: credential,
+      verifierDisplay: verifierDisplay,
+      colorScheme: processing.credential.colorScheme,
+      hasVerifiedQuery: context.hasVerifiedQuery)
     state = .result(viewModel)
   }
 
+  @MainActor
   private func deny() async {
-    denyTask = Task.detached(priority: .background) { [weak self] in
-      guard let self else { return }
-      try? await declinePresentationUseCase(context: context)
+    do {
+      let presentationResponse = try await declinePresentationUseCase(context: context)
+      destination = .resultState(.deny(presentationResponse), context)
+    } catch is PresentationResponseValidationError {
+      destination = .error(.invalidRedirectUri, nil)
+    } catch {
+      destination = .resultState(.deny(nil), context)
     }
-
-    destination = .resultState(.deny, context)
   }
 }

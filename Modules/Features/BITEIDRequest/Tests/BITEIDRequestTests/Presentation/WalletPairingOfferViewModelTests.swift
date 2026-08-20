@@ -14,10 +14,12 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
 
     pollingManager = WalletPairingPollingProtocolSpy()
     fetchWalletPairingOfferUseCase = FetchWalletPairingOfferUseCaseProtocolSpy()
+    saveWalletPairingIdUseCase = SaveWalletPairingIdUseCaseProtocolSpy()
     context = EIDRequestContext()
 
     Container.shared.walletPairingPollingManager.register { @MainActor in self.pollingManager }
     Container.shared.fetchWalletPairingOfferUseCase.register { @MainActor in self.fetchWalletPairingOfferUseCase }
+    Container.shared.saveWalletPairingIdUseCase.register { @MainActor in self.saveWalletPairingIdUseCase }
     Container.shared.eidRequestContext.register { @MainActor in self.context }
 
     sut = WalletPairingOfferViewModel({ _ in self.didCallHandler = true })
@@ -27,6 +29,7 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
     sut = nil
     pollingManager = nil
     fetchWalletPairingOfferUseCase = nil
+    saveWalletPairingIdUseCase = nil
     Container.shared.reset()
     super.tearDown()
   }
@@ -61,6 +64,29 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
 
     XCTAssertEqual(fetchWalletPairingOfferUseCase.executeForCallsCount, 1)
     XCTAssertEqual(fetchWalletPairingOfferUseCase.executeForReceivedCaseId, expectedCaseId)
+
+    XCTAssertEqual(saveWalletPairingIdUseCase.callAsFunctionForRequestCaseCallsCount, 1)
+    XCTAssertEqual(saveWalletPairingIdUseCase.callAsFunctionForRequestCaseReceivedArguments?.pairingId, expectedPairingId)
+    XCTAssertEqual(saveWalletPairingIdUseCase.callAsFunctionForRequestCaseReceivedArguments?.forRequestCase, expectedCaseId)
+  }
+
+  func testFetchPairingQRCode_WhenSaveWalletPairingIdFails_ShouldSetErrorState() async throws {
+    let expectedCaseId = "test-case-id"
+    context.caseId = expectedCaseId
+
+    let mockPairingOffer = try WalletPairingOffer(
+      pairingId: "test-pairing-id",
+      credentialOfferLink: XCTUnwrap(URL(string: "https://example.com")),
+      qrCodeImageData: Data("test".utf8))
+    fetchWalletPairingOfferUseCase.executeForReturnValue = mockPairingOffer
+    saveWalletPairingIdUseCase.callAsFunctionForRequestCaseThrowableError = TestingError.error
+
+    await sut.fetchPairingQRCode()
+
+    XCTAssertEqual(sut.state, .error)
+    XCTAssertEqual(pollingManager.resetCallsCount, 2)
+    XCTAssertEqual(pollingManager.startPollingForPairingIdCallsCount, 0)
+    XCTAssertEqual(saveWalletPairingIdUseCase.callAsFunctionForRequestCaseCallsCount, 1)
   }
 
   func testFetchPairingQRCode_WhenCaseIdIsNil_ShouldSetErrorState() async {
@@ -181,6 +207,7 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
   private var context: EIDRequestContext!
   private var pollingManager: WalletPairingPollingProtocolSpy!
   private var fetchWalletPairingOfferUseCase: FetchWalletPairingOfferUseCaseProtocolSpy!
+  private var saveWalletPairingIdUseCase: SaveWalletPairingIdUseCaseProtocolSpy!
 
   private var didCallHandler = false
 }

@@ -1,4 +1,3 @@
-import BITOpenID
 import BITSwiyuSharedKMP
 import Factory
 
@@ -15,6 +14,10 @@ extension Container {
     self { @MainActor in CompatibleCredentialViewModel(context: $0) }
   }
 
+  var unregisteredRequestViewModel: ParameterFactory<PresentationRequestContext, UnregisteredRequestViewModel> {
+    self { @MainActor in UnregisteredRequestViewModel(context: $0) }
+  }
+
   var presentationRequestResultStateViewModel: ParameterFactory<(state: PresentationRequestResultState, context: PresentationRequestContext), PresentationRequestResultStateViewModel> {
     self { @MainActor in PresentationRequestResultStateViewModel(state: $0, context: $1) }
   }
@@ -27,9 +30,9 @@ extension Container {
     self { @MainActor in SubmitPresentationUseCase() }
   }
 
-  var declinePresentationViewModel: ParameterFactory<PresentationRequestContext, DeclinePresentationViewModel> {
+  var noCompatibleCredentialViewModel: ParameterFactory<PresentationRequestContext, NoCompatibleCredentialViewModel> {
     self { @MainActor in
-      DeclinePresentationViewModel(context: $0)
+      NoCompatibleCredentialViewModel(context: $0)
     }
   }
 }

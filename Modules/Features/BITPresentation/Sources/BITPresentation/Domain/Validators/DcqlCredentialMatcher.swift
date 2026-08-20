@@ -24,7 +24,7 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
 
   /// Returns compatible credentials for the given DCQL query.
   ///
-  func match(credentials: [VerifiableCredential], with dcqlQuery: DcqlQuery) async throws -> [CompatibleCredential] {
+  func match(credentials: [VerifiableCredential], with dcqlQuery: Heidi_dcqlDcqlQuery) async throws -> [CompatibleCredential] {
     // 1. Extract raw payloads
     let rawCredentials: [String: VerifiableCredential] = try credentials.compactGroupBy { credential in
       let selectedBundleItem = try selectCredentialBundleItemUseCase(credential)
@@ -77,7 +77,7 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
     }
   }
 
-  private func getPresentingPaths(for requestedPaths: [ClaimsPathPointer], payload: String, format: String) throws -> [ClaimsPathPointer] {
+  private func getPresentingPaths(for requestedPaths: [ClaimsPathPointer], payload: String, format: CredentialFormat) throws -> [ClaimsPathPointer] {
     let anyCredential = try createAnyCredentialUseCase.execute(from: Data(payload.utf8), format: format)
     return anyCredential.getPresentingPaths(for: requestedPaths)
   }

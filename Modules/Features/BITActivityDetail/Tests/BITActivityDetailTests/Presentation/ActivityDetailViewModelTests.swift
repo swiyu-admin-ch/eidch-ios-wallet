@@ -29,7 +29,20 @@ final class ActivityDetailViewModelTests: XCTestCase {
       XCTAssertEqual(result.activity.id, activityDetailMock.id)
       XCTAssertEqual(result.credential.name, activityDetailMock.credential.displays.first?.name)
       XCTAssertEqual(result.credential.clusters.count, 1)
-      XCTAssertEqual(result.actor.name, activityDetailMock.actorDisplay?.name)
+      XCTAssertEqual(result.actor.viewModel.name, activityDetailMock.actorDisplay?.name)
+      XCTAssertTrue(result.actor.isReportAllowed)
+    } else {
+      XCTFail("Expected result state")
+    }
+  }
+
+  func testOnColorScheme_checkAppActor_reportActorNotAllowed() async {
+    getActivityDetailUseCaseSpy.callAsFunctionReturnValue = ActivityDetail.Mock.make(actorTrust: .trustedCheckApp)
+
+    await viewModel.send(.onColorSchemeChange(colorScheme: colorSchemeMock))
+
+    if case .result(let result) = viewModel.state {
+      XCTAssertFalse(result.actor.isReportAllowed)
     } else {
       XCTFail("Expected result state")
     }

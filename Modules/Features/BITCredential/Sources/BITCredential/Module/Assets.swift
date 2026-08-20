@@ -23,7 +23,6 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 enum Assets {
   static let batchCredential = ImageAsset(name: "BatchCredential")
-  static let closeAlt = ImageAsset(name: "CloseAlt")
   static let credentialDemoPattern = ImageAsset(name: "CredentialDemoPattern")
   static let credentialDemoPatternSmall = ImageAsset(name: "CredentialDemoPatternSmall")
   static let credentialFallbackBackground = ImageAsset(name: "CredentialFallbackBackground")
@@ -43,10 +42,8 @@ enum Assets {
   static let trustBadge = ImageAsset(name: "TrustBadge")
   static let unknownIcon = ImageAsset(name: "UnknownIcon")
   static let unknownTrustBadge = ImageAsset(name: "UnknownTrustBadge")
-  static let warning = ImageAsset(name: "Warning")
   static let warningBadge = ImageAsset(name: "WarningBadge")
   static let federalLogo = ImageAsset(name: "federal-logo")
-  static let xmarkCircle = ImageAsset(name: "xmark-circle")
 }
 
 // MARK: - ImageAsset

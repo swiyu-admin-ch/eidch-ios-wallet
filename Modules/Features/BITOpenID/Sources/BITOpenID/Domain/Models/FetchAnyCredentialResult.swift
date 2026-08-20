@@ -35,8 +35,7 @@ public struct FetchAnyCredentialResult {
   // MARK: Public
 
   public enum Credentials {
-    case credential(AnyCredential)
-    case batch(credentials: [AnyCredential])
+    case credential([AnyCredential])
     case deferred(DeferredCredentialContext)
   }
 

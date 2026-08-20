@@ -28,7 +28,7 @@ class NewPinCodeViewModel: Vibrating {
     didSet {
       guard userDidRequestValidation else { return }
       do {
-        try validatePinCodeRuleUseCase.execute(pinCode)
+        try validatePinCodeRuleUseCase(pinCode)
         inputFieldState = .normal
         inputFieldMessage = L10n.tkOnboardingCharactersSubtitle
       } catch {
@@ -44,7 +44,7 @@ class NewPinCodeViewModel: Vibrating {
   func submit() {
     do {
       userDidRequestValidation = true
-      try validatePinCodeRuleUseCase.execute(pinCode)
+      try validatePinCodeRuleUseCase(pinCode)
       inputFieldState = .normal
       router.context.newPinCode = pinCode
       router.confirmNewPinCode()

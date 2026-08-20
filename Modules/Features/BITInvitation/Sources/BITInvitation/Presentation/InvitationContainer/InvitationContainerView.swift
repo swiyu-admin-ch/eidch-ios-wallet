@@ -16,12 +16,7 @@ struct InvitationContainerView: View {
 
   var body: some View {
     content()
-      .onAppear {
-        announceSelectedTab()
-      }
-      .onChange(of: selectedTab) { _, _ in
-        announceSelectedTab()
-      }
+      .onChange(of: selectedTab, initial: true, announceSelectedTab)
       .toolbar { toolbarContent }
       .navigationBarBackButtonHidden()
       .navigationBarTitleDisplayMode(.inline)
@@ -36,15 +31,15 @@ struct InvitationContainerView: View {
 
   @Orientation private var orientation
   @Injected(\.isProximityEnabled) private var isProximityEnabled: Bool
+  @Injected(\.accessibilityFeedback) private var accessibilityFeedback: CameraAccessibilityFeedbackProtocol
 
   @ToolbarContentBuilder
   private var toolbarContent: some ToolbarContent {
     ToolbarItem(placement: .primaryAction) {
       Button(action: { navigator.dismiss() }, label: {
-        Assets.close.swiftUIImage
+        Image(systemName: "xmark")
       })
-      .colorScheme(.light)
-      .accessibilityLabel(L10n.tkQrscannerButtonCloseAlt)
+      .accessibilityLabel(L10n.tkGlobalClose)
       .contentShape(.accessibility, Circle().inset(by: .x1))
     }
   }
@@ -79,6 +74,10 @@ struct InvitationContainerView: View {
   }
 
   private func announceSelectedTab() {
+    if selectedTab != .scan {
+      accessibilityFeedback.announceCameraDidStopRunning()
+    }
+
     let announcement = selectedTab == .scan ? L10n.tkQrscannerScanningTitle : L10n.tkProximityEngagementTitle
     UIAccessibility.post(notification: .screenChanged, argument: announcement)
   }

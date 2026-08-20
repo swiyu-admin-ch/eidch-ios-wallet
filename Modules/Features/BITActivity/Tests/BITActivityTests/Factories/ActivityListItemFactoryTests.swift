@@ -1,6 +1,5 @@
 // swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import RealmSwift
 import XCTest
 @testable import BITActivity
 @testable import BITEntities

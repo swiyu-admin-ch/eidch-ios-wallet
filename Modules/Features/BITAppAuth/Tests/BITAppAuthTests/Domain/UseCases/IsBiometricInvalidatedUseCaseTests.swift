@@ -1,82 +1,53 @@
 import BITCore
 import Factory
 import Foundation
-import XCTest
+import Testing
 @testable import BITAppAuth
 
-// MARK: - ValidateBiometricUseCaseTests
+struct IsBiometricInvalidatedUseCaseTests {
 
-final class IsBiometricInvalidatedUseCaseTests: XCTestCase {
+  // MARK: Lifecycle
 
-  // MARK: Internal
+  init() {
+    let uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    self.uniquePassphraseManager = uniquePassphraseManager
 
-  override func setUp() {
-    isBiometricUsageAllowed = IsBiometricUsageAllowedUseCaseProtocolSpy()
-    hasBiometricAuth = HasBiometricAuthUseCaseProtocolSpy()
-    uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    let getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    self.getBiometricStateUseCase = getBiometricStateUseCase
 
-    Container.shared.isBiometricUsageAllowedUseCase.register { self.isBiometricUsageAllowed }
-    Container.shared.hasBiometricAuthUseCase.register { self.hasBiometricAuth }
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManager }
+    Container.shared.getBiometricStateUseCase.register { getBiometricStateUseCase }
+    Container.shared.uniquePassphraseManager.register { uniquePassphraseManager }
 
     useCase = IsBiometricInvalidatedUseCase()
   }
 
-  func testBiometricAreValid() {
-    uniquePassphraseManager.existsForReturnValue = true
-    isBiometricUsageAllowed.executeReturnValue = true
-    hasBiometricAuth.executeReturnValue = true
+  // MARK: Internal
 
-    let isInvalidated = useCase.execute()
-    XCTAssertFalse(isInvalidated)
-    XCTAssertTrue(uniquePassphraseManager.existsForCalled)
-    XCTAssertTrue(isBiometricUsageAllowed.executeCalled)
-    XCTAssertTrue(hasBiometricAuth.executeCalled)
+  @Test(arguments: [true, false])
+  func callAsFunction_biometricsEnabled(_ passphraseExists: Bool) {
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    uniquePassphraseManager.existsForReturnValue = passphraseExists
+
+    #expect(useCase() == !passphraseExists)
+    #expect(getBiometricStateUseCase.callAsFunctionCallsCount == 1)
+    #expect(uniquePassphraseManager.existsForCallsCount == 1)
+    #expect(uniquePassphraseManager.existsForReceivedAuthMethod == .biometric)
   }
 
-  func testBiometricInvalid_uniquePassphraseMissing() {
+  @Test(arguments: [BiometricState.disabled, .declined, .notEnrolled])
+  func callAsFunction_biometricsNotEnabled_returnsFalse(_ biometricState: BiometricState) {
+    getBiometricStateUseCase.callAsFunctionReturnValue = biometricState
     uniquePassphraseManager.existsForReturnValue = false
-    isBiometricUsageAllowed.executeReturnValue = true
-    hasBiometricAuth.executeReturnValue = true
 
-    let isInvalidated = useCase.execute()
-    XCTAssertTrue(isInvalidated)
-    XCTAssertTrue(uniquePassphraseManager.existsForCalled)
-    XCTAssertTrue(isBiometricUsageAllowed.executeCalled)
-    XCTAssertTrue(hasBiometricAuth.executeCalled)
-  }
-
-  func testBiometricAreValid_isBiometricUsageForbidden() {
-    uniquePassphraseManager.existsForReturnValue = true
-    isBiometricUsageAllowed.executeReturnValue = false
-    hasBiometricAuth.executeReturnValue = true
-
-    let isInvalidated = useCase.execute()
-    XCTAssertFalse(isInvalidated)
-    XCTAssertTrue(uniquePassphraseManager.existsForCalled)
-    XCTAssertTrue(isBiometricUsageAllowed.executeCalled)
-    XCTAssertFalse(hasBiometricAuth.executeCalled)
-  }
-
-  func testBiometricAreValid_hasNoBiometricAuth() {
-    uniquePassphraseManager.existsForReturnValue = true
-    isBiometricUsageAllowed.executeReturnValue = true
-    hasBiometricAuth.executeReturnValue = false
-
-    let isInvalidated = useCase.execute()
-    XCTAssertFalse(isInvalidated)
-    XCTAssertTrue(uniquePassphraseManager.existsForCalled)
-    XCTAssertTrue(isBiometricUsageAllowed.executeCalled)
-    XCTAssertTrue(hasBiometricAuth.executeCalled)
+    #expect(useCase() == false)
+    #expect(getBiometricStateUseCase.callAsFunctionCallsCount == 1)
+    #expect(uniquePassphraseManager.existsForCallsCount == 1)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var useCase: IsBiometricInvalidatedUseCase!
-  private var isBiometricUsageAllowed: IsBiometricUsageAllowedUseCaseProtocolSpy!
-  private var hasBiometricAuth: HasBiometricAuthUseCaseProtocolSpy!
-  private var uniquePassphraseManager: UniquePassphraseManagerProtocolSpy!
-  // swiftlint:enable all
+  private let useCase: IsBiometricInvalidatedUseCase
+  private let uniquePassphraseManager: UniquePassphraseManagerProtocolSpy
+  private let getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy
 
 }

@@ -4,7 +4,7 @@ import UIKit
 
 // MARK: - ApplicationServiceProtocol
 
-@Spyable @MainActor
+@Spyable
 public protocol ApplicationServiceProtocol {
   @discardableResult
   func open(_ url: URL, options: [UIApplication.OpenExternalURLOptionsKey: Any]) async -> Bool
@@ -12,7 +12,7 @@ public protocol ApplicationServiceProtocol {
 }
 
 extension ApplicationServiceProtocol {
-  @MainActor
+  @MainActor @discardableResult
   public func open(_ url: URL) async -> Bool {
     await open(url, options: [:])
   }

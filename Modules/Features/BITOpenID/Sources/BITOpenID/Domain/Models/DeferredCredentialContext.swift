@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import Foundation
 
 public struct DeferredCredentialContext: Equatable {
@@ -8,7 +9,7 @@ public struct DeferredCredentialContext: Equatable {
     transactionId: String,
     authorization: IssuanceAuthorization,
     endpoint: String,
-    format: String,
+    format: CredentialFormat,
     interval: Int)
   {
     self.transactionId = transactionId
@@ -22,7 +23,7 @@ public struct DeferredCredentialContext: Equatable {
     transactionId: String,
     accessToken: AccessToken,
     endpoint: String,
-    format: String,
+    format: CredentialFormat,
     interval: Int)
   {
     self.init(
@@ -38,7 +39,7 @@ public struct DeferredCredentialContext: Equatable {
   public let transactionId: String
   public let authorization: IssuanceAuthorization
   public let endpoint: String
-  public let format: String
+  public let format: CredentialFormat
   public let interval: Int
 
   public var accessToken: AccessToken {

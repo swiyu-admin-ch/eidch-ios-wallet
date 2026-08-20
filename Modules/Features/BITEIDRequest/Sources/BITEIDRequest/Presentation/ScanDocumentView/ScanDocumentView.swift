@@ -35,6 +35,8 @@ struct ScanDocumentView: View {
         }
         .toolbar { toolbarContent() }
         .navigationBarBackButtonHidden()
+        .navigationTitle(viewModel.state == .camera ? viewModel.title : "")
+        .navigationBarTitleDisplayMode(.inline)
         .navigate(to: $viewModel.destination)
         .transparentToolbarBackground(isActive: true, topInset: geo.safeAreaInsets.top)
         .onChange(of: orientation, initial: true) {
@@ -165,24 +167,7 @@ extension ScanDocumentView {
 
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
-    if viewModel.state == .camera {
-      ToolbarItem(placement: .principal) {
-        Text(viewModel.title)
-          .font(.custom.body)
-          .fontWeight(.semibold)
-          .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
-          .colorScheme(.light)
-          .lineLimit(1)
-      }
-    }
-
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: close, label: {
-        viewModel.state == .camera ? Assets.closeCamera.swiftUIImage : ThemingAssets.close.swiftUIImage
-      })
-      .accessibilityLabel(L10n.tkGlobalClose)
-      .accessibilityIdentifier("closeButton")
-    }
+    CloseButtonToolbar(action: close)
   }
 
   private func close() {

@@ -7,14 +7,14 @@ import Spyable
 
 @Spyable
 public protocol GetCredentialListUseCaseProtocol {
-  func execute() async throws -> [CredentialProtocol]
+  func callAsFunction() async throws -> [CredentialProtocol]
 }
 
 // MARK: - GetCredentialListUseCase
 
 struct GetCredentialListUseCase: GetCredentialListUseCaseProtocol {
 
-  func execute() async throws -> [CredentialProtocol] {
+  func callAsFunction() async throws -> [CredentialProtocol] {
     try await credentialRepository.getAll()
   }
 

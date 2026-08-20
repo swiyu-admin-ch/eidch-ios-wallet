@@ -13,10 +13,10 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
     eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
-    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
+    sidRepository = SIDRepositoryProtocolSpy()
 
     Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
-    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
+    Container.shared.sidRepository.register { self.sidRepository }
 
     registerMocks()
     useCase = UpdateEIDRequestCaseStatusUseCase()
@@ -27,7 +27,7 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
     let result = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
 
     XCTAssertEqual(result.state, mockEIDRequestCase.state)
-    XCTAssertEqual(eIDRequestRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
+    XCTAssertEqual(sidRepository.fetchRequestStatusForReceivedCaseId, mockEIDRequestCaseInQueue.id)
     XCTAssertEqual(eIDRequestCaseRepository.updateReceivedEIDRequestCase?.state?.state, mockStatus.state)
     XCTAssertEqual(eIDRequestCaseRepository.getIdReceivedId, mockEIDRequestCaseInQueue.id)
   }
@@ -35,7 +35,7 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
   func testExecute_assertCount_success() async throws {
     _ = try await useCase.execute(for: mockEIDRequestCaseInQueue.id)
 
-    XCTAssertEqual(eIDRequestRepository.fetchRequestStatusForCallsCount, 1)
+    XCTAssertEqual(sidRepository.fetchRequestStatusForCallsCount, 1)
     XCTAssertEqual(eIDRequestCaseRepository.updateCallsCount, 1)
     XCTAssertEqual(eIDRequestCaseRepository.getIdCallsCount, 1)
   }
@@ -51,7 +51,7 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
   }
 
   func testExecute_fetchStatusFails_throwsError() async throws {
-    eIDRequestRepository.fetchRequestStatusForThrowableError = TestingError.error
+    sidRepository.fetchRequestStatusForThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: mockEIDRequestCase.id)
@@ -75,7 +75,7 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
   private var useCase: UpdateEIDRequestCaseStatusUseCase!
 
   private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocolSpy!
-  private var eIDRequestRepository: EIDRequestRepositoryProtocolSpy!
+  private var sidRepository: SIDRepositoryProtocolSpy!
 
   private let mockStatus = EIDRequestStatus.Mock.readyForAVSample
   private let mockEIDRequestCaseInQueue: EIDRequestCase = .Mock.sampleInQueue
@@ -84,16 +84,16 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
 
   private func registerMocks() {
     eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
-    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
+    sidRepository = SIDRepositoryProtocolSpy()
 
     Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
-    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
+    Container.shared.sidRepository.register { self.sidRepository }
   }
 
   private func createSuccessState() {
     eIDRequestCaseRepository.updateReturnValue = mockEIDRequestCase
     eIDRequestCaseRepository.getIdReturnValue = mockEIDRequestCase
-    eIDRequestRepository.fetchRequestStatusForReturnValue = mockStatus
+    sidRepository.fetchRequestStatusForReturnValue = mockStatus
   }
 
 }

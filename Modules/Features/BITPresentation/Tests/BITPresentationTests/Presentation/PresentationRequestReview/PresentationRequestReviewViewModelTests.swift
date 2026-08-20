@@ -5,6 +5,7 @@ import XCTest
 @testable import BITCredential
 @testable import BITCredentialShared
 @testable import BITNetworking
+@testable import BITNonCompliance
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITTestingCore
@@ -16,10 +17,11 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
+  override func setUp() async throws {
     Container.shared.reset()
     registerMocks()
 
+    context = makeContext()
     viewModel = PresentationRequestReviewViewModel(context: context)
     viewModel.updateCredential(with: colorSchemeMock)
   }
@@ -85,6 +87,61 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
+  @MainActor
+  func testOnAppear_pvaTSValid_justRuns() async {
+    await viewModel.send(.onAppear)
+
+    XCTAssertNil(viewModel.destination)
+  }
+
+  @MainActor
+  func testOnAppear_unauthorizedVerification_navigatesToError() async {
+    validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError =
+      ValidateVerificationAuthorizationTrustStatementUseCaseError.unauthorizedVerification()
+
+    await viewModel.send(.onAppear)
+
+    guard case .error(_, nil) = viewModel.destination else {
+      return XCTFail("Expected error destination")
+    }
+  }
+
+  @MainActor
+  func testOnAppear_unauthorizedVerificationWithRedirect_navigatesToErrorWithPresentationResponse() async {
+    let presentationResponse = PresentationResponse(redirectUri: redirectUri)
+    validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError =
+      ValidateVerificationAuthorizationTrustStatementUseCaseError.unauthorizedVerification(
+        presentationResponse: presentationResponse)
+
+    await viewModel.send(.onAppear)
+
+    guard case .error(_, let destinationResponse) = viewModel.destination else {
+      return XCTFail("Expected error destination")
+    }
+    XCTAssertEqual(destinationResponse, presentationResponse)
+  }
+
+  @MainActor
+  func testOnAppear_invalidRedirect_navigatesToRedirectErrorView() async {
+    validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError =
+      PresentationResponseValidationError.invalidRedirectUri
+
+    await viewModel.send(.onAppear)
+
+    guard case .error(.invalidRedirectUri, nil) = viewModel.destination else {
+      return XCTFail("Expected error destination")
+    }
+  }
+
+  @MainActor
+  func testOnAppear_pvaTSValidatorThrowsError_navigatesToError() async {
+    validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError = TestingError.error
+
+    await viewModel.send(.onAppear)
+
+    XCTAssertEqual(viewModel.destination, .resultState(.error, context))
+  }
+
   func testSubmit_Success_stateIsProcessingAndNavigatesToDataTransmitted() async {
     if case .result(let oldViewState) = viewModel.state {
 
@@ -96,7 +153,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
         XCTAssertEqual(viewState.isMessagePresented, false)
         switch viewModel.destination {
         case .resultState(let state, let destinationContext):
-          XCTAssertEqual(state, .dataTransmitted)
+          XCTAssertEqual(state, .dataTransmitted(nil))
           XCTAssertEqual(destinationContext, context)
         default:
           XCTFail("Expected result state destination")
@@ -122,10 +179,26 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
+  func testSubmit_redirect_navigatesToDataTransmitted() async {
+    let presentationResponse = PresentationResponse(redirectUri: redirectUri)
+    submitPresentationUseCase.executeContextReturnValue = .just(.success(presentationResponse))
+    guard case .result(let oldViewState) = viewModel.state else {
+      return XCTFail("Wrong state: \(viewModel.state)")
+    }
+
+    await viewModel.send(.submit(oldViewState, false))
+
+    guard case .resultState(let state, let destinationContext) = viewModel.destination else {
+      return XCTFail("Expected result state destination")
+    }
+    XCTAssertEqual(state, .dataTransmitted(presentationResponse))
+    XCTAssertEqual(destinationContext, context)
+  }
+
   func testSubmit_progressEvent_updatesProcessingProgress() async {
     if case .result(let oldViewState) = viewModel.state {
       let progress = 0.42
-      submitPresentationUseCase.executeContextReturnValue = .just(.progress(0.42), .success)
+      submitPresentationUseCase.executeContextReturnValue = .just(.progress(0.42), .success(nil))
 
       await viewModel.send(.submit(oldViewState, false))
 
@@ -133,7 +206,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
         XCTAssertEqual(viewState.progress, progress)
         switch viewModel.destination {
         case .resultState(let state, let destinationContext):
-          XCTAssertEqual(state, .dataTransmitted)
+          XCTAssertEqual(state, .dataTransmitted(nil))
           XCTAssertEqual(destinationContext, context)
         default:
           XCTFail("Expected result state destination")
@@ -175,7 +248,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
         XCTAssertEqual(viewState.isMessagePresented, false)
         switch viewModel.destination {
         case .resultState(let state, let destinationContext):
-          XCTAssertEqual(state, .dataTransmitted)
+          XCTAssertEqual(state, .dataTransmitted(nil))
           XCTAssertEqual(destinationContext, .Mock.vcSdJwtWithUnknownIdentityTrust)
         default:
           XCTFail("Expected result state destination")
@@ -207,6 +280,43 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
+  func testSubmit_nonCompliantActor_showsAlert() async {
+    context = makeContext(actorCompliance: .notCompliant(nil))
+    viewModel = PresentationRequestReviewViewModel(context: context)
+    viewModel.updateCredential(with: colorSchemeMock)
+
+    if case .result(let oldViewState) = viewModel.state {
+      await viewModel.send(.submit(oldViewState, false))
+
+      if case .result = viewModel.state {
+        XCTAssertEqual(viewModel.alert, .nonCompliantActor)
+        XCTAssertNil(viewModel.destination)
+        XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
+        return
+      }
+    }
+
+    XCTFail("Wrong state: \(viewModel.state)")
+  }
+
+  func testSubmit_nonCompliantActorWithForce_submits() async {
+    context = makeContext(actorCompliance: .notCompliant(nil))
+    viewModel = PresentationRequestReviewViewModel(context: context)
+    viewModel.updateCredential(with: colorSchemeMock)
+
+    if case .result(let oldViewState) = viewModel.state {
+      await viewModel.send(.submit(oldViewState, true))
+
+      if case .processing = viewModel.state {
+        XCTAssertNil(viewModel.alert)
+        XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
+        return
+      }
+    }
+
+    XCTFail("Wrong state: \(viewModel.state)")
+  }
+
   func testSubmit_businessExpiredCredentialWithForce_submits() async {
     selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
       guard var bundleItem = credential.bundleItems.first else { throw CredentialError.noBundleItem }
@@ -220,6 +330,25 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
       if case .processing = viewModel.state {
         XCTAssertNil(viewModel.alert)
         XCTAssertTrue(submitPresentationUseCase.executeContextCalled)
+        return
+      }
+    }
+
+    XCTFail("Wrong state: \(viewModel.state)")
+  }
+
+  func testSubmit_unregisteredRequest_showsAlert() async {
+    context = makeContext(hasVerifiedQuery: false)
+    viewModel = PresentationRequestReviewViewModel(context: context)
+    viewModel.updateCredential(with: colorSchemeMock)
+
+    if case .result(let oldViewState) = viewModel.state {
+      await viewModel.send(.submit(oldViewState, false))
+
+      if case .result = viewModel.state {
+        XCTAssertEqual(viewModel.alert, .unregisteredRequest)
+        XCTAssertNil(viewModel.destination)
+        XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
         return
       }
     }
@@ -256,7 +385,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
       switch viewModel.destination {
       case .resultState(let state, let destinationContext):
-        XCTAssertEqual(state, .dataTransmitted)
+        XCTAssertEqual(state, .dataTransmitted(nil))
         XCTAssertEqual(destinationContext, context)
       default:
         XCTFail("Expected result state destination")
@@ -333,7 +462,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
     switch viewModel.destination {
     case .resultState(let state, let destinationContext):
-      XCTAssertEqual(state, .deny)
+      XCTAssertEqual(state, .deny(nil))
       XCTAssertEqual(destinationContext, context)
     default:
       XCTFail("Expected result state destination")
@@ -341,6 +470,27 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextCallsCount, 1)
     XCTAssertEqual(declinePresentationUseCase.callAsFunctionContextReceivedContext?.requestObject, context.requestObject)
     XCTAssertFalse(submitPresentationUseCase.executeContextCalled)
+  }
+
+  func testDeny_responseWithRedirect_navigatesToDeny() async {
+    let presentationResponse = PresentationResponse(redirectUri: redirectUri)
+    declinePresentationUseCase.callAsFunctionContextReturnValue = presentationResponse
+
+    await viewModel.send(.deny)
+
+    guard case .resultState(let state, let destinationContext) = viewModel.destination else {
+      return XCTFail("Expected result state destination")
+    }
+    XCTAssertEqual(state, .deny(presentationResponse))
+    XCTAssertEqual(destinationContext, context)
+  }
+
+  func testDeny_invalidRedirect_navigatesToRedirectErrorView() async {
+    declinePresentationUseCase.callAsFunctionContextThrowableError = PresentationResponseValidationError.invalidRedirectUri
+
+    await viewModel.send(.deny)
+
+    XCTAssertEqual(viewModel.destination, .error(.invalidRedirectUri, nil))
   }
 
   func testDeny_useCaseThrowsError_navigatesToDeny() async throws {
@@ -351,7 +501,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
 
     switch viewModel.destination {
     case .resultState(let state, let destinationContext):
-      XCTAssertEqual(state, .deny)
+      XCTAssertEqual(state, .deny(nil))
       XCTAssertEqual(destinationContext, context)
     default:
       XCTFail("Expected result state destination")
@@ -361,17 +511,29 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
   // MARK: Private
 
   private let colorSchemeMock = "colorScheme"
+  private let redirectUri = URL(string: "https://verifier.ch")!
 
   private var viewModel: PresentationRequestReviewViewModel!
-  private let context: PresentationRequestContext = .Mock.vcSdJwtWithIdentityTrust
+  private var context: PresentationRequestContext!
   private var submitPresentationUseCase: SubmitPresentationUseCaseProtocolSpy!
   private var declinePresentationUseCase: DeclinePresentationUseCaseProtocolSpy!
   private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocolSpy!
+  private var validateVerificationAuthorizationTrustStatementUseCase: ValidateVerificationAuthorizationTrustStatementUseCaseProtocolSpy!
+
+  private func makeContext(hasVerifiedQuery: Bool = true, actorCompliance: ActorCompliance = .compliant) -> PresentationRequestContext {
+    let jws = hasVerifiedQuery ? RequestObjectJWS.Mock.sample : RequestObjectJWS.Mock.identityTrustedWithoutVerifiedQuery
+    return PresentationRequestContext(
+      requestObjectJWS: jws,
+      compatibleCredentials: [CompatibleCredential.Mock.BIT],
+      trustInformation: .Mock.trustedIdentity,
+      actorCompliance: actorCompliance)
+  }
 
   private func registerMocks() {
     submitPresentationUseCase = SubmitPresentationUseCaseProtocolSpy()
     declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
     selectCredentialBundleItemUseCase = SelectCredentialBundleItemUseCaseProtocolSpy()
+    validateVerificationAuthorizationTrustStatementUseCase = ValidateVerificationAuthorizationTrustStatementUseCaseProtocolSpy()
     selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
       guard let first = credential.bundleItems.first else { throw CredentialError.noBundleItem }
       return first
@@ -379,7 +541,8 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     Container.shared.submitPresentationUseCase.register { @MainActor in self.submitPresentationUseCase }
     Container.shared.declinePresentationUseCase.register { @MainActor in self.declinePresentationUseCase }
     Container.shared.selectCredentialBundleItemUseCase.register { @MainActor in self.selectCredentialBundleItemUseCase }
+    Container.shared.validateVerificationAuthorizationTrustStatementUseCase.register { @MainActor in self.validateVerificationAuthorizationTrustStatementUseCase }
 
-    submitPresentationUseCase.executeContextReturnValue = .just(.success)
+    submitPresentationUseCase.executeContextReturnValue = .just(.success(nil))
   }
 }

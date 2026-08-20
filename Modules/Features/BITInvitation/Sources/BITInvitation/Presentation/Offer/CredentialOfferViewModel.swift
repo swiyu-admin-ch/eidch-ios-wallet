@@ -1,6 +1,7 @@
 import BITCredential
 import BITCredentialShared
 import BITNavigation
+import BITNonCompliance
 import Factory
 import NavigatorUI
 import SwiftUI
@@ -11,9 +12,8 @@ final class CredentialOfferViewModel {
 
   // MARK: Lifecycle
 
-  init(credential: VerifiableCredential, trustInformation: TrustInformation? = nil, state: CredentialOfferViewModel.State = .loading) {
+  init(credential: VerifiableCredential, state: CredentialOfferViewModel.State = .loading) {
     self.credential = credential
-    self.trustInformation = trustInformation
     self.state = state
   }
 
@@ -28,10 +28,11 @@ final class CredentialOfferViewModel {
 
   let credential: VerifiableCredential
   var trustInformation: TrustInformation?
+  var actorCompliance = ActorCompliance.compliant
 
   var state: State
   var credentialViewModel: VerifiableCredentialViewModel?
-  var isUnknownIssuerAlertShown = false
+  var alert: CredentialOfferAlert?
   var destination: InvitationDestinations?
 
   var isOfferAccepted = false
@@ -40,7 +41,9 @@ final class CredentialOfferViewModel {
   func onAppear() async {
     do {
       if trustInformation == nil {
-        trustInformation = try await fetchIssuanceTrustInformationUseCase(for: credential)
+        let (trustInformation, actorCompliance) = try await fetchIssuanceTrustInformationUseCase(for: credential)
+        self.trustInformation = trustInformation
+        self.actorCompliance = actorCompliance
       }
 
       state = .result
@@ -54,10 +57,14 @@ final class CredentialOfferViewModel {
   }
 
   func confirmAccept() async {
+    guard let trustInformation else {
+      state = .error
+      return
+    }
     do {
       state = .loading
 
-      try await acceptCredentialUseCase(credential)
+      try await acceptCredentialUseCase(credential, trustInformation: trustInformation, actorCompliance: actorCompliance)
       isOfferAccepted = true
     } catch {
       state = .error
@@ -73,11 +80,15 @@ final class CredentialOfferViewModel {
     }
   }
 
-  func accept() async {
-    if trustInformation?.identity != .unknown {
+  func accept(force: Bool = false) async {
+    alert = nil
+
+    if !force, case .notCompliant = actorCompliance {
+      alert = .nonCompliantActor
+    } else if force || trustInformation?.identity != .unknown {
       await confirmAccept()
     } else {
-      isUnknownIssuerAlertShown = true
+      alert = .unknownIssuer
     }
   }
 
@@ -87,10 +98,6 @@ final class CredentialOfferViewModel {
 
   func cancelDecline() {
     state = .result
-  }
-
-  func openWrongData() {
-    destination = .wrongData
   }
 
   // MARK: Private

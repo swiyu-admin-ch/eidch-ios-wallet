@@ -23,9 +23,6 @@ typealias AssetImageTypeAlias = ImageAsset.Image
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 enum HomeAssets {
   static let emptyWalletIcon = ImageAsset(name: "EmptyWalletIcon")
-  static let menuButton = ImageAsset(name: "MenuButton")
-  static let menuButtonSmall = ImageAsset(name: "MenuButtonSmall")
-  static let scannerButton = ImageAsset(name: "ScannerButton")
   static let menuHelp = ImageAsset(name: "menuHelp")
   static let menuID = ImageAsset(name: "menuID")
   static let menuSettings = ImageAsset(name: "menuSettings")

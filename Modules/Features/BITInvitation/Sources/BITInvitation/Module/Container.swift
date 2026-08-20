@@ -9,8 +9,8 @@ import NavigatorUI
 extension Container {
   // MARK: - Credential offer
 
-  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, trustInformation: TrustInformation?, state: CredentialOfferViewModel.State), CredentialOfferViewModel> {
-    self { @MainActor in CredentialOfferViewModel(credential: $0, trustInformation: $1, state: $2) }
+  var credentialOfferViewModel: ParameterFactory<(credential: VerifiableCredential, state: CredentialOfferViewModel.State), CredentialOfferViewModel> {
+    self { @MainActor in CredentialOfferViewModel(credential: $0, state: $1) }
   }
 
   // MARK: - Camera
@@ -26,6 +26,10 @@ extension Container {
   var proximityEngagementViewModel: Factory<ProximityEngagementViewModel> {
     self { @MainActor in ProximityEngagementViewModel() }
   }
+
+  var accessibilityFeedback: Factory<CameraAccessibilityFeedbackProtocol> {
+    self { @MainActor in CameraAccessibilityFeedback() }
+  }
 }
 
 extension Container {
@@ -34,10 +38,6 @@ extension Container {
 
   public var fetchPresentationRequestUseCase: Factory<FetchPresentationRequestUseCaseProtocol> {
     self { @MainActor in FetchPresentationRequestUseCase() }
-  }
-
-  public var invitationErrorMapper: Factory<InvitationErrorMapping> {
-    self { @MainActor in InvitationErrorMapper() }
   }
 
   public var invitationRouter: Factory<InvitationRouter> {
@@ -53,6 +53,10 @@ extension Container {
   }
 
   // MARK: Internal
+
+  var invitationErrorMapper: Factory<InvitationErrorMapping> {
+    self { @MainActor in InvitationErrorMapper() }
+  }
 
   var requestBluetoothPermissionUseCase: Factory<RequestBluetoothPermissionUseCaseProtocol> {
     self { @MainActor in RequestBluetoothPermissionUseCase() }

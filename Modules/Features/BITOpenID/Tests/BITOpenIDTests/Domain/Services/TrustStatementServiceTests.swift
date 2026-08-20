@@ -2,7 +2,6 @@ import BITSdJWT
 import Factory
 import XCTest
 @testable import BITAnyCredentialFormat
-@testable import BITAnyCredentialFormatMocks
 @testable import BITJWT
 @testable import BITOpenID
 @testable import BITTestingCore
@@ -46,8 +45,8 @@ final class TrustStatementServiceTests: XCTestCase {
 
   func testFetchIdentity_thirdTrustStatementIsValid_returnsThirdTrustStatement() async throws {
     repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [
-      IdentityTrustStatementJWT.Mock.invalidVct,
-      IdentityTrustStatementJWT.Mock.allFields,
+      IdentityTrustStatementV1JWT.Mock.invalidVct,
+      IdentityTrustStatementV1JWT.Mock.allFields,
       identityTrustStatementMock,
     ]
     var count = 0
@@ -81,8 +80,8 @@ final class TrustStatementServiceTests: XCTestCase {
 
   func testFetchIdentity_multipleTrustStatementsWithOtherVct_throwsValidationError() async throws {
     repositorySpy.fetchIdentityTrustStatementsFromForReturnValue = [
-      IdentityTrustStatementJWT.Mock.invalidVct,
-      IdentityTrustStatementJWT.Mock.invalidVct,
+      IdentityTrustStatementV1JWT.Mock.invalidVct,
+      IdentityTrustStatementV1JWT.Mock.invalidVct,
     ]
 
     do {
@@ -309,13 +308,13 @@ final class TrustStatementServiceTests: XCTestCase {
   private var subjectDidMock = "subjectDid"
   private var vcSchemaTypeMock = VcSchemaTrustStatementType.issuance
   private var vcSchemaIdMock = "vcSchemaId"
-  private let identityTrustStatementMock = IdentityTrustStatementJWT.Mock.validSample
+  private let identityTrustStatementMock = IdentityTrustStatementV1JWT.Mock.validSample
   private let vcSchemaTrustStatementMock = VcSchemaTrustStatementJWT.Mock.validSample
 
   private var mapperSpy: TrustRegistryUrlMapperProtocolSpy!
   private var repositorySpy: TrustStatementRepositoryProtocolSpy!
-  private var identityValidatorSpy: TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>!
-  private var vcSchemaValidatorSpy: TrustStatementValidatorProtocolSpy<VcSchemaTrustStatementJWT>!
+  private var identityValidatorSpy: TrustStatementV1ValidatorProtocolSpy<IdentityTrustStatementV1JWT>!
+  private var vcSchemaValidatorSpy: TrustStatementV1ValidatorProtocolSpy<VcSchemaTrustStatementJWT>!
   private var didResolverSpy: DidResolverHelperProtocolSpy!
 
   private var service: TrustStatementService!
@@ -323,12 +322,12 @@ final class TrustStatementServiceTests: XCTestCase {
   private func registerMocks() {
     mapperSpy = TrustRegistryUrlMapperProtocolSpy()
     repositorySpy = TrustStatementRepositoryProtocolSpy()
-    identityValidatorSpy = TrustStatementValidatorProtocolSpy()
+    identityValidatorSpy = TrustStatementV1ValidatorProtocolSpy()
     didResolverSpy = DidResolverHelperProtocolSpy()
 
     Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
     Container.shared.trustStatementRepository.register { self.repositorySpy }
-    Container.shared.trustStatementValidator.register { self.identityValidatorSpy }
+    Container.shared.trustStatementV1Validator.register { self.identityValidatorSpy }
     Container.shared.trustRegistryTrustedDidsV1.register { self.trustedDidsV1 }
     Container.shared.didResolverHelper.register { self.didResolverSpy }
   }
@@ -341,8 +340,8 @@ final class TrustStatementServiceTests: XCTestCase {
   }
 
   private func setupVcSchemaTrustStatement() {
-    vcSchemaValidatorSpy = TrustStatementValidatorProtocolSpy()
-    Container.shared.trustStatementValidator.register { self.vcSchemaValidatorSpy }
+    vcSchemaValidatorSpy = TrustStatementV1ValidatorProtocolSpy()
+    Container.shared.trustStatementV1Validator.register { self.vcSchemaValidatorSpy }
 
     service = TrustStatementService()
 

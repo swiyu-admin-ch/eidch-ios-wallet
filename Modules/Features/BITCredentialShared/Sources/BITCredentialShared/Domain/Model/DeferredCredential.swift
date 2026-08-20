@@ -1,3 +1,4 @@
+import BITAnyCredentialFormat
 import BITEntities
 import BITOpenID
 import Foundation
@@ -14,8 +15,8 @@ public struct DeferredCredential: Codable, CredentialProtocol {
     createdAt: Date = Date(),
     progressionState: ProgressionState = .inProgress,
     endpoint: String,
-    format: String,
-    issuerUrl: String,
+    format: CredentialFormat,
+    issuerUrl: URL,
     selectedConfigurationId: String? = nil,
     issuerDisplays: [CredentialIssuerDisplay] = [],
     displays: [CredentialDisplay] = [],
@@ -45,7 +46,8 @@ public struct DeferredCredential: Codable, CredentialProtocol {
   public init(_ entity: CredentialEntity) throws {
     guard
       let deferredCredential = entity.deferredCredential,
-      let progressState = DeferredCredential.ProgressionState(rawValue: deferredCredential.progressState)
+      let progressState = DeferredCredential.ProgressionState(rawValue: deferredCredential.progressState),
+      let issuerUrl = URL(string: entity.issuerUrl)
     else {
       throw CredentialError.invalidEntity
     }
@@ -59,8 +61,8 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       createdAt: entity.createdAt,
       progressionState: progressState,
       endpoint: deferredCredential.endpoint,
-      format: entity.format,
-      issuerUrl: entity.issuerUrl,
+      format: CredentialFormat(rawValue: entity.format) ?? .vcSdJwt,
+      issuerUrl: issuerUrl,
       selectedConfigurationId: entity.selectedConfigurationId,
       issuerDisplays: issuerDisplays,
       displays: displays,
@@ -81,8 +83,8 @@ public struct DeferredCredential: Codable, CredentialProtocol {
 
   public static let defaultPollingInterval = 5
 
-  public let format: String
-  public let issuerUrl: String
+  public let format: CredentialFormat
+  public let issuerUrl: URL
   public let selectedConfigurationId: String?
   public let createdAt: Date
   public let issuerDisplays: [CredentialIssuerDisplay]

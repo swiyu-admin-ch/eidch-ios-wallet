@@ -1,28 +1,28 @@
+import BITAnyCredentialFormat
+import BITCore
 import Foundation
 import Security
 
-public struct FetchDeferredCredentialContext {
+public struct FetchDeferredCredentialContext: Changeable {
 
   // MARK: Lifecycle
 
   public init(
-    format: String,
+    format: CredentialFormat,
     authorization: IssuanceAuthorization,
     deferredCredentialEndpoint: URL,
-    privateKey: SecKey?)
+    credentialEncryptionContext: CredentialEncryptionContext)
   {
     self.format = format
     self.authorization = authorization
     self.deferredCredentialEndpoint = deferredCredentialEndpoint
-    self.privateKey = privateKey
+    self.credentialEncryptionContext = credentialEncryptionContext
   }
 
   // MARK: Public
 
-  public let authorization: IssuanceAuthorization
-  public let format: String
+  public var authorization: IssuanceAuthorization
+  public let format: CredentialFormat
   public let deferredCredentialEndpoint: URL
-  public let privateKey: SecKey?
-
-  // MARK: Internal
+  public let credentialEncryptionContext: CredentialEncryptionContext
 }

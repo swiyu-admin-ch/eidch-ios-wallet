@@ -79,7 +79,7 @@ final class LegalRepresentantVerificationServiceTests: XCTestCase {
   private var service: LegalRepresentantVerificationService!
 
   private var qrCodeGeneratorSpy: QRCodeGeneratorProtocolSpy!
-  private var repositorySpy: EIDRequestRepositoryProtocolSpy!
+  private var repositorySpy: SIDRepositoryProtocolSpy!
 
   private func setupSuccessState() {
     repositorySpy.fetchLegalRepresentantVerificationForReturnValue = legalRepresentantVerificationMock
@@ -87,10 +87,10 @@ final class LegalRepresentantVerificationServiceTests: XCTestCase {
   }
 
   private func registerMocks() {
-    repositorySpy = EIDRequestRepositoryProtocolSpy()
+    repositorySpy = SIDRepositoryProtocolSpy()
     qrCodeGeneratorSpy = QRCodeGeneratorProtocolSpy()
 
-    Container.shared.eIDRequestRepository.register { self.repositorySpy }
+    Container.shared.sidRepository.register { self.repositorySpy }
     Container.shared.qrCodeGenerator.register { self.qrCodeGeneratorSpy }
   }
 

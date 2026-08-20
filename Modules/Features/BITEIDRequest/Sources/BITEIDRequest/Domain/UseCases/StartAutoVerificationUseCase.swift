@@ -16,10 +16,10 @@ struct StartAutoVerificationUseCase: StartAutoVerificationUseCaseProtocol {
   // MARK: Internal
 
   func execute(for caseId: String) async throws -> AutoVerificationResponse {
-    try await eIDRequestRepository.startAutoVerification(caseId: caseId, autoVerificationType: .av1, isNFCAvailable: NFCTagReaderSession.readingAvailable)
+    try await sidRepository.startAutoVerification(caseId: caseId, autoVerificationType: .av1, isNFCAvailable: NFCTagReaderSession.readingAvailable)
   }
 
   // MARK: Private
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
 }

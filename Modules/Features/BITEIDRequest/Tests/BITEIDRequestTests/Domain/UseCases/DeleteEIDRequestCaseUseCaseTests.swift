@@ -1,58 +1,44 @@
 import Factory
-import XCTest
+import Testing
 @testable import BITEIDRequest
-@testable import BITEIDRequestShared
 @testable import BITTestingCore
 
-// swiftlint:disable implicitly_unwrapped_optional
+struct DeleteEIDRequestCaseUseCaseTests {
 
-final class DeleteEIDRequestCaseUseCaseTests: XCTestCase {
+  // MARK: Lifecycle
 
-  // MARK: Internal
+  init() {
+    let requestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    self.requestCaseRepository = requestCaseRepository
 
-  override func setUp() {
-    repository = EIDRequestCaseRepositoryProtocolSpy()
-
-    Container.shared.eIDRequestCaseRepository.register { self.repository }
+    Container.shared.eIDRequestCaseRepository.register { requestCaseRepository }
 
     useCase = DeleteEIDRequestCaseUseCase()
   }
 
-  func testExecute_success() async throws {
+  // MARK: Internal
+
+  @Test
+  func execute_success() async throws {
     try await useCase.execute(mockCaseId)
 
-    XCTAssertEqual(repository.deleteAllFilesForRequestCaseIdCallsCount, 1)
-    XCTAssertEqual(repository.deleteAllFilesForRequestCaseIdReceivedId, mockCaseId)
-    XCTAssertEqual(repository.deleteCallsCount, 1)
-    XCTAssertEqual(repository.deleteReceivedId, mockCaseId)
+    #expect(requestCaseRepository.deleteCallsCount == 1)
+    #expect(requestCaseRepository.deleteReceivedId == mockCaseId)
   }
 
-  func testExecute_deleteFilesFails_throws() async throws {
-    repository.deleteAllFilesForRequestCaseIdThrowableError = TestingError.error
+  @Test
+  func execute_deleteRequestCaseFails_throws() async {
+    requestCaseRepository.deleteThrowableError = TestingError.error
 
-    do {
-      _ = try await useCase.execute(mockCaseId)
-      XCTFail("An error was expected")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertFalse(repository.deleteCalled)
-    }
-  }
-
-  func testExecute_deleteRequestCaseFails_throws() async throws {
-    repository.deleteThrowableError = TestingError.error
-
-    do {
-      _ = try await useCase.execute(mockCaseId)
-      XCTFail("An error was expected")
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
+    await #expect(throws: TestingError.error) {
+      try await useCase.execute(mockCaseId)
     }
   }
 
   // MARK: Private
 
-  private var useCase: DeleteEIDRequestCaseUseCase!
+  private let useCase: DeleteEIDRequestCaseUseCase
+
   private let mockCaseId = "caseId"
-  private var repository: EIDRequestCaseRepositoryProtocolSpy!
+  private let requestCaseRepository: EIDRequestCaseRepositoryProtocolSpy
 }

@@ -7,7 +7,7 @@ import Foundation
 
 @MainActor
 @Observable
-class SubmitEIDRequestFilesViewModel {
+final class SubmitEIDRequestFilesViewModel {
 
   // MARK: Internal
 
@@ -53,10 +53,12 @@ class SubmitEIDRequestFilesViewModel {
 
     do {
       let files = try await getEIDRequestFilesUseCase.execute(caseId: caseId)
-      await sendFiles(files)
+      let renamedFiles = renameFiles(files).filter { allowedFiles.contains($0.fileName) }
+
+      await sendFiles(renamedFiles)
 
       if areAllFilesCompleted {
-        await submitEidRequest()
+        await submitEidRequest(renamedFiles)
       }
     } catch {
       destination = .error(.retry(error, { [weak self] _ in
@@ -76,22 +78,7 @@ class SubmitEIDRequestFilesViewModel {
     await sendFiles(failedFileInfos.map(\.file))
   }
 
-  func retryFileUpload(_ fileId: UUID) async {
-    guard
-      let uploadInfo = fileUploads[fileId],
-      case .failed = uploadInfo.state else { return }
-
-    guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else { return }
-
-    fileUploads[fileId]?.state = .pending
-    await upload(uploadInfo.file, caseId: caseId, authJwt: authJwt)
-
-    if areAllFilesCompleted {
-      await submitEidRequest()
-    }
-  }
-
-  func submitEidRequest() async {
+  func submitEidRequest(_ files: [EIDRequestCaseFile]) async {
     guard let caseId = context.caseId, let authJwt = context.autoVerificationResponse?.jwt else {
       return destination = .error(.retry(EidRequestError.missingContextInformations, { [weak self] _ in
         self?.retryAction()
@@ -99,7 +86,7 @@ class SubmitEIDRequestFilesViewModel {
     }
 
     do {
-      try await submitEIDRequestUseCase(caseId: caseId, authJwt: authJwt)
+      try await submitEIDRequestUseCase(caseId: caseId, authJwt: authJwt, files: files)
       try await deleteEIDRequestCaseFileUseCase.execute(forRequestCaseId: caseId)
 
       Container.shared.eidRequestContext.reset()
@@ -107,7 +94,7 @@ class SubmitEIDRequestFilesViewModel {
     } catch {
       destination = .error(.retry(error, { [weak self] _ in
         Task {
-          await self?.submitEidRequest()
+          await self?.submitEidRequest(files)
         }
       }))
     }
@@ -122,10 +109,12 @@ class SubmitEIDRequestFilesViewModel {
   // MARK: Private
 
   @ObservationIgnored @Injected(\.eidRequestContext) private var context
+  @ObservationIgnored @Injected(\.sidFilenameMap) private var filenameMap
+  @ObservationIgnored @Injected(\.sidAllowedFiles) private var allowedFiles
 
-  @ObservationIgnored @Injected(\.getEIDRequestCaseFilesUseCase) private var getEIDRequestFilesUseCase
-  @ObservationIgnored @Injected(\.submitEIDRequestFileUseCase) private var submitEIDRequestFileUseCase
-  @ObservationIgnored @Injected(\.submitEIDRequestUseCase) private var submitEIDRequestUseCase
+  @ObservationIgnored @Injected(\.getEIDRequestCaseFilesUseCase) private var getEIDRequestFilesUseCase: GetEIDRequestCaseFilesUseCaseProtocol
+  @ObservationIgnored @Injected(\.submitEIDRequestFileUseCase) private var submitEIDRequestFileUseCase: SubmitEIDRequestFileUseCaseProtocol
+  @ObservationIgnored @Injected(\.submitEIDRequestUseCase) private var submitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocol
   @ObservationIgnored @Injected(\.deleteEIDRequestCaseFileUseCase) private var deleteEIDRequestCaseFileUseCase: DeleteEIDRequestCaseFileUseCaseProtocol
 
   private func sendFiles(_ files: [EIDRequestCaseFile]) async {
@@ -157,11 +146,7 @@ class SubmitEIDRequestFilesViewModel {
     updateProgress(file.id, progress: 0.0)
 
     do {
-      try await submitEIDRequestFileUseCase.execute(
-        caseId: caseId,
-        file: file,
-        authJwt: authJwt,
-        progressHandler)
+      try await submitEIDRequestFileUseCase.execute(caseId: caseId, file: file, authJwt: authJwt, progressHandler)
       fileUploads[file.id]?.state = .completed
     } catch {
       fileUploads[file.id]?.state = .failed(error)
@@ -173,6 +158,17 @@ class SubmitEIDRequestFilesViewModel {
     fileUploads[id]?.state = .uploading(progress: progress)
   }
 
+  private func renameFiles(_ files: [EIDRequestCaseFile]) -> [EIDRequestCaseFile] {
+    let uniqueFiles = Dictionary(grouping: files, by: \.fileName).values.compactMap { $0.max(by: { $0.createdAt < $1.createdAt }) }
+
+    return uniqueFiles.map { file in
+      guard let filename = filenameMap[file.fileName] ?? nil else {
+        return file
+      }
+
+      return EIDRequestCaseFile(id: file.id, fileName: filename, mime: file.mime, data: file.data, category: file.category)
+    }
+  }
 }
 
 // MARK: - FileUploadState

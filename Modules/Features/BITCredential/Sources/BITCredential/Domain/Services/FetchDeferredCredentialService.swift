@@ -1,4 +1,6 @@
+import BITCore
 import BITCredentialShared
+import BITJWT
 import BITOpenID
 import BITVault
 import Factory
@@ -8,7 +10,6 @@ import Spyable
 // MARK: - FetchDeferredCredentialServiceError
 
 enum FetchDeferredCredentialServiceError: Error {
-  case invalidIssuerUrl
   case missingDeferredCredentialURL
   case missingRefreshToken
 }
@@ -17,7 +18,7 @@ enum FetchDeferredCredentialServiceError: Error {
 
 @Spyable
 protocol FetchDeferredCredentialServiceProtocol {
-  func callAsFunction(for deferredCredential: DeferredCredential) async throws -> (CredentialIssuerMetadataResponse, FetchAnyCredentialResult.Credentials)
+  func callAsFunction(for deferredCredential: DeferredCredential) async throws -> (JWS<CredentialIssuerMetadataJWT>, FetchAnyCredentialResult.Credentials)
 }
 
 // MARK: - FetchDeferredCredentialService
@@ -26,27 +27,22 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
 
   // MARK: Internal
 
-  func callAsFunction(for deferredCredential: DeferredCredential) async throws -> (CredentialIssuerMetadataResponse, FetchAnyCredentialResult.Credentials) {
-    let metadataResponse = try await fetchMetadata(for: deferredCredential)
-    let result = try await fetchCredential(for: deferredCredential, metadata: metadataResponse.metadata)
-    return (metadataResponse, result)
+  func callAsFunction(for deferredCredential: DeferredCredential) async throws -> (JWS<CredentialIssuerMetadataJWT>, FetchAnyCredentialResult.Credentials) {
+    let metadataJws = try await openIDRepository.fetchMetadata(from: deferredCredential.issuerUrl)
+
+    try await actorIdentityValidator.validate(metadataJws)
+
+    let result = try await fetchCredential(for: deferredCredential, metadata: metadataJws.payload.credentialIssuerMetadata)
+    return (metadataJws, result)
   }
 
   // MARK: Private
 
-  @Injected(\.openIDRepository) private var openIDRepository: OpenIDRepositoryProtocol
-  @Injected(\.credentialEncryptionContextGenerator) private var credentialEncryptionContextGenerator: CredentialEncryptionContextGeneratorProtocol
-  @Injected(\.deferredCredentialRequestBodyGenerator) private var deferredCredentialRequestBodyGenerator: DeferredCredentialRequestBodyGeneratorProtocol
-  @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
-  @Injected(\.isDPoPEnabled) private var isDPoPEnabled: Bool
-
-  private func fetchMetadata(for deferredCredential: DeferredCredential) async throws -> CredentialIssuerMetadataResponse {
-    guard let issuerUrl = URL(string: deferredCredential.issuerUrl) else {
-      throw FetchDeferredCredentialServiceError.invalidIssuerUrl
-    }
-
-    return try await openIDRepository.fetchMetadata(from: issuerUrl)
-  }
+  @Injected(\.credentialEncryptionContextGenerator) private var credentialEncryptionContextGenerator
+  @Injected(\.isDPoPEnabled) private var isDPoPEnabled
+  @Injected(\.keyManager) private var keyManager
+  @Injected(\.openIDRepository) private var openIDRepository
+  @Injected(\.actorIdentityValidator) private var actorIdentityValidator
 
   private func fetchCredential(for deferredCredential: DeferredCredential, metadata: CredentialIssuerMetadata) async throws -> FetchAnyCredentialResult.Credentials {
     guard let endpoint = metadata.deferredCredentialEndpoint else {
@@ -55,9 +51,10 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
 
     let credentialEncryptionContext = try credentialEncryptionContextGenerator(for: metadata)
 
-    let requestBody = try deferredCredentialRequestBodyGenerator.generate(
+    let responseEncryption = try CredentialResponseEncryption(from: credentialEncryptionContext)
+    let request = DeferredCredentialRequest(
       transactionId: deferredCredential.transactionId,
-      credentialEncryptionContext: credentialEncryptionContext)
+      credentialResponseEncryption: responseEncryption)
 
     let authentication = deferredCredential.authentication
     let dpopKeyPair = try resolveDPoPKeyPair(for: deferredCredential)
@@ -75,15 +72,15 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
       format: deferredCredential.format,
       authorization: authorization,
       deferredCredentialEndpoint: endpoint,
-      privateKey: credentialEncryptionContext?.responseKeyPair?.privateKey)
+      credentialEncryptionContext: credentialEncryptionContext)
 
     do {
-      return try await openIDRepository.fetchCredential(with: context, requestBody: requestBody)
+      return try await openIDRepository.fetchCredential(with: context, deferredCredentialRequest: request)
     } catch OpenIdRepositoryError.expiredAccessToken {
       return try await refreshAccessTokenAndFetchCredential(
         deferredCredential,
         metadata: metadata,
-        requestBody: requestBody,
+        request: request,
         context: context,
         dpopKeyPair: dpopKeyPair)
     } catch {
@@ -94,7 +91,7 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
   private func refreshAccessTokenAndFetchCredential(
     _ deferredCredential: DeferredCredential,
     metadata: CredentialIssuerMetadata,
-    requestBody: DeferredCredentialRequestBody,
+    request: DeferredCredentialRequest,
     context: FetchDeferredCredentialContext,
     dpopKeyPair: VaultKeyPair?) async throws
     -> FetchAnyCredentialResult.Credentials
@@ -103,11 +100,7 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
       throw FetchDeferredCredentialServiceError.missingRefreshToken
     }
 
-    guard let issuerURL = URL(string: deferredCredential.issuerUrl) else {
-      throw FetchDeferredCredentialServiceError.invalidIssuerUrl
-    }
-
-    let configuration = try await openIDRepository.fetchOpenIdConfiguration(from: issuerURL)
+    let configuration = try await openIDRepository.fetchOpenIdConfiguration(from: deferredCredential.issuerUrl)
     let dpopNonce = try await fetchDPoPNonceIfNeeded(
       metadata: metadata,
       dpopKeyPair: dpopKeyPair)
@@ -127,13 +120,9 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
       accessToken: mergedAccessToken,
       dpopKeyPair: refreshedAuthorization.dpopKeyPair,
       resourceServerDPoPNonce: credentialDPoPNonce)
-    let refreshedContext = FetchDeferredCredentialContext(
-      format: context.format,
-      authorization: mergedAuthorization,
-      deferredCredentialEndpoint: context.deferredCredentialEndpoint,
-      privateKey: context.privateKey)
+    let refreshedContext = context.changing(\.authorization, to: mergedAuthorization)
 
-    return try await openIDRepository.fetchCredential(with: refreshedContext, requestBody: requestBody)
+    return try await openIDRepository.fetchCredential(with: refreshedContext, deferredCredentialRequest: request)
   }
 
   private func resolveDPoPKeyPair(for deferredCredential: DeferredCredential) throws -> VaultKeyPair? {
@@ -159,11 +148,11 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
     // OpenID4VCI 1.0 Section 7 allows the Credential Issuer nonce endpoint to proactively return
     // a `DPoP-Nonce` header for the next protected-resource request.
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
-    guard dpopKeyPair != nil, let nonceEndpoint = metadata.nonceEndpoint else {
+    guard dpopKeyPair != nil else {
       return nil
     }
 
-    return try await openIDRepository.fetchNonce(from: nonceEndpoint).dpopNonce
+    return try await openIDRepository.fetchNonce(from: metadata.nonceEndpoint).dpopNonce
   }
 
   private func fetchDPoPNonceIfNeeded(
@@ -171,10 +160,10 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
     dpopKeyPair: VaultKeyPair?) async throws
     -> String?
   {
-    guard dpopKeyPair != nil, let nonceEndpoint = metadata.nonceEndpoint else {
+    guard dpopKeyPair != nil else {
       return nil
     }
 
-    return try await openIDRepository.fetchNonce(from: nonceEndpoint).dpopNonce
+    return try await openIDRepository.fetchNonce(from: metadata.nonceEndpoint).dpopNonce
   }
 }

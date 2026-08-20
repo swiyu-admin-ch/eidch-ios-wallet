@@ -23,26 +23,26 @@ final class SubmitEIDRequestFileUseCaseTests: XCTestCase {
   func testExecute_validParameters_callsRepository() async throws {
     try await useCase.execute(caseId: mockCaseId, file: mockFile, authJwt: mockAuthJwt, mockProgressBlock)
 
-    XCTAssertEqual(eidRequestRepository.submitFileCaseIdAuthJwtCallsCount, 1)
+    XCTAssertEqual(avRepository.submitFileCaseIdAuthJwtCallsCount, 1)
   }
 
   func testExecute_validParameters_passesCorrectArguments() async throws {
     try await useCase.execute(caseId: mockCaseId, file: mockFile, authJwt: mockAuthJwt, mockProgressBlock)
 
-    XCTAssertEqual(eidRequestRepository.submitFileCaseIdAuthJwtReceivedArguments?.caseId, mockCaseId)
-    XCTAssertEqual(eidRequestRepository.submitFileCaseIdAuthJwtReceivedArguments?.file, mockFile)
-    XCTAssertEqual(eidRequestRepository.submitFileCaseIdAuthJwtReceivedArguments?.authJwt, mockAuthJwt)
-    XCTAssertNotNil(eidRequestRepository.submitFileCaseIdAuthJwtReceivedArguments?.progress)
+    XCTAssertEqual(avRepository.submitFileCaseIdAuthJwtReceivedArguments?.caseId, mockCaseId)
+    XCTAssertEqual(avRepository.submitFileCaseIdAuthJwtReceivedArguments?.file, mockFile)
+    XCTAssertEqual(avRepository.submitFileCaseIdAuthJwtReceivedArguments?.authJwt, mockAuthJwt)
+    XCTAssertNotNil(avRepository.submitFileCaseIdAuthJwtReceivedArguments?.progress)
   }
 
   func testExecute_withoutProgressBlock_passesNil() async throws {
     try await useCase.execute(caseId: mockCaseId, file: mockFile, authJwt: mockAuthJwt, nil)
 
-    XCTAssertNil(eidRequestRepository.submitFileCaseIdAuthJwtReceivedArguments?.progress)
+    XCTAssertNil(avRepository.submitFileCaseIdAuthJwtReceivedArguments?.progress)
   }
 
   func testExecute_repositoryThrowsError_propagatesError() async throws {
-    eidRequestRepository.submitFileCaseIdAuthJwtThrowableError = TestingError.error
+    avRepository.submitFileCaseIdAuthJwtThrowableError = TestingError.error
 
     do {
       try await useCase.execute(caseId: mockCaseId, file: mockFile, authJwt: mockAuthJwt, mockProgressBlock)
@@ -56,12 +56,12 @@ final class SubmitEIDRequestFileUseCaseTests: XCTestCase {
     try await useCase.execute(caseId: mockCaseId, file: mockFile, authJwt: mockAuthJwt, mockProgressBlock)
     try await useCase.execute(caseId: "another_case_id", file: mockFile, authJwt: "another_jwt", nil)
 
-    XCTAssertEqual(eidRequestRepository.submitFileCaseIdAuthJwtCallsCount, 2)
+    XCTAssertEqual(avRepository.submitFileCaseIdAuthJwtCallsCount, 2)
   }
 
   // MARK: Private
 
-  private var eidRequestRepository: EIDRequestRepositoryProtocolSpy!
+  private var avRepository: AVRepositoryProtocolSpy!
   private var useCase: SubmitEIDRequestFileUseCase!
 
   private let mockCaseId = "mock_case_id"
@@ -70,8 +70,8 @@ final class SubmitEIDRequestFileUseCaseTests: XCTestCase {
   private let mockProgressBlock: ProgressBlock = { _ in }
 
   private func registerMocks() {
-    eidRequestRepository = EIDRequestRepositoryProtocolSpy()
+    avRepository = AVRepositoryProtocolSpy()
 
-    Container.shared.eIDRequestRepository.register { self.eidRequestRepository }
+    Container.shared.avRepository.register { self.avRepository }
   }
 }

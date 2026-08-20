@@ -1,14 +1,16 @@
-import JOSESwift
+import JWSETKit
 
-extension ContentEncryptionAlgorithm {
+extension JSONWebContentEncryptionAlgorithm {
 
   // MARK: Lifecycle
 
   init(from encryptionAlgorithm: EncryptionAlgorithm) throws {
-    guard let algorithm = ContentEncryptionAlgorithm(rawValue: encryptionAlgorithm.rawValue) else {
-      throw ContentEncryptionAlgorithmError.creationError
+    switch encryptionAlgorithm {
+    case .A128GCM:
+      self = .aesEncryptionGCM128
+    case .A256GCM:
+      self = .aesEncryptionGCM256
     }
-    self = algorithm
   }
 
   // MARK: Internal

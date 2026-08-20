@@ -30,8 +30,9 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
     let execution = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: mockHolderBindings)
 
-    if case .credential(let credential) = execution.credentials {
-      XCTAssertEqual(mockAnyCredential.raw, credential.raw)
+    if case .credential(let credentials) = execution.credentials {
+      XCTAssertEqual(credentials.count, 1)
+      XCTAssertEqual(mockAnyCredential.raw, credentials.first?.raw)
     }
     XCTAssertEqual(execution.authorization.accessToken.accessToken, mockAccessToken.accessToken)
     XCTAssertEqual(execution.authorization.accessToken.tokenType, .bearer)
@@ -49,7 +50,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSReceivedArguments?.dpopNonce, Self.mockTokenRequestDPoPNonce)
     XCTAssertEqual(repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSReceivedArguments?.dpopKeyAttestationJWS, mockKeyAttestation.rawJWS)
     XCTAssertEqual(clientAttestationRepository.getUsingCallsCount, 1)
-    XCTAssertEqual(appAttestationRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 1)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 1)
 
     guard let receivedContext = spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext else {
       XCTFail("receivedContext must not be nil")
@@ -78,19 +79,6 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     try await testCredentialEndpointInvalid(endpoint: "")
     try await testCredentialEndpointInvalid(endpoint: "1234")
     try await testCredentialEndpointInvalid(endpoint: "abc/cde")
-  }
-
-  func testExecute_offerInvalidIssuer_throws() async {
-    let offer = CredentialOffer(issuer: "", grants: Grants(urn: Urn(preAuthorizedCode: "")), credentialConfigurationIds: [])
-
-    do {
-      _ = try await useCase(from: offer, metadataWrapper: mockMetadataWrapper, holderBindings: [])
-      XCTFail("Expected error")
-    } catch FetchAnyVerifiableCredentialError.unknownIssuer {
-      XCTAssertEqual(repository.fetchOpenIdConfigurationFromCallsCount, 0)
-    } catch {
-      XCTFail("Expected unknownIssuer, but got \(error)")
-    }
   }
 
   func testExecute_fetchOpenIDConfigurationThrows_throws() async {
@@ -193,6 +181,21 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(clientAttestationRepository.getUsingCallsCount, 0)
   }
 
+  func testExecute_openIdConfigurationWithoutDPoP_withDisabledClientAttestationRepository_fetchesCredential() async throws {
+    repository.fetchOpenIdConfigurationFromReturnValue = try makeOpenIdConfiguration(dpopSigningAlgValuesSupported: nil)
+    repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSReturnValue = IssuanceAuthorization(accessToken: mockAccessToken)
+    Container.shared.clientAttestationRepository.register { DisabledClientAttestationRepository() }
+    useCase = FetchAnyVerifiableCredentialUseCase()
+
+    let execution = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: mockHolderBindings)
+
+    XCTAssertNil(execution.authorization.dpopKeyPair)
+    XCTAssertEqual(repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSCallsCount, 1)
+    XCTAssertNil(repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSReceivedArguments?.dpopKeyAttestationJWS)
+    XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 0)
+    XCTAssertEqual(spyFetchCredentialVcSdJwtUseCase.executeForCallsCount, 1)
+  }
+
   func testExecute_openIdConfigurationWithoutSupportedDPoPAlgorithm_doesNotCreateIssuanceDPoPKey() async throws {
     repository.fetchOpenIdConfigurationFromReturnValue = try makeOpenIdConfiguration(dpopSigningAlgValuesSupported: [JWTAlgorithm.ES384.rawValue])
     repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSReturnValue = IssuanceAuthorization(accessToken: mockAccessToken)
@@ -234,11 +237,19 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(issuanceDPoPKeyRepository.createIsHardwareBoundReceivedIsHardwareBound, true)
   }
 
-  func testExecute_missingNonceEndpoint_contextNonceNil() async throws {
-    _ = try await useCase(from: mockCredentialOffer, metadataWrapper: CredentialIssuerMetadataWrapper.Mock.sample, holderBindings: mockHolderBindings)
+  func testExecute_hardwareBoundDPoP_withDisabledClientAttestationRepository_throwsServiceDeactivated() async throws {
+    Container.shared.clientAttestationRepository.register { DisabledClientAttestationRepository() }
+    useCase = FetchAnyVerifiableCredentialUseCase()
 
-    XCTAssertEqual(repository.fetchNonceFromCallsCount, 0)
-    XCTAssertNil(spyFetchCredentialVcSdJwtUseCase.executeForReceivedContext?.nonce)
+    do {
+      _ = try await useCase(from: mockCredentialOffer, metadataWrapper: mockMetadataWrapper, holderBindings: mockHolderBindings)
+      XCTFail("An error was expected")
+    } catch {
+      XCTAssertEqual(error as? AttestationServiceRepositoryError, .serviceDeactivated)
+      XCTAssertEqual(attestationServiceRepository.fetchKeyAttestationBodyClientAttestationCallsCount, 0)
+      XCTAssertEqual(spyFetchCredentialVcSdJwtUseCase.executeForCallsCount, 0)
+      XCTAssertEqual(issuanceDPoPKeyRepository.deleteCallsCount, 1)
+    }
   }
 
   // MARK: Private
@@ -250,7 +261,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private let mockAnyCredential = AnyCredentialSpy()
   private let mockOpenIdConfiguration = OpenIdConfiguration.Mock.sample
   private let mockMetadata = CredentialIssuerMetadata.Mock.sample
-  private let mockMetadataWrapper = CredentialIssuerMetadataWrapper.Mock.sampleChasseralIssuer01
+  private let mockMetadataWrapper = CredentialIssuerMetadataWrapper.Mock.sample
   private let mockCredentialOffer = CredentialOffer.Mock.sample
   private let mockAccessToken = AccessToken.Mock.sample
   private let mockNonce = Nonce.Mock.default
@@ -266,7 +277,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
 
   private var repository = OpenIDRepositoryProtocolSpy()
   private var issuanceDPoPKeyRepository: IssuanceDPoPKeyRepositoryProtocolSpy!
-  private var appAttestationRepository: AppAttestationRepositoryProtocolSpy!
+  private var attestationServiceRepository: AttestationServiceRepositoryProtocolSpy!
   private var clientAttestationRepository: ClientAttestationRepositoryProtocolSpy!
   private var keyAttestationValidator: KeyAttestationValidatorProtocolSpy!
   private var userSession: SessionSpy!
@@ -283,7 +294,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private func registerMocks() {
     repository = OpenIDRepositoryProtocolSpy()
     issuanceDPoPKeyRepository = IssuanceDPoPKeyRepositoryProtocolSpy()
-    appAttestationRepository = AppAttestationRepositoryProtocolSpy()
+    attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
     clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
     keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
     userSession = SessionSpy()
@@ -295,7 +306,7 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     Container.shared.anyFetchCredentialDispatcher.register { self.mockDispatcher }
     Container.shared.openIDRepository.register { self.repository }
     Container.shared.issuanceDPoPKeyRepository.register { self.issuanceDPoPKeyRepository }
-    Container.shared.appAttestationRepository.register { self.appAttestationRepository }
+    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
     Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
     Container.shared.keyAttestationValidator.register { self.keyAttestationValidator }
     Container.shared.userSession.register { self.userSession }
@@ -305,14 +316,14 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   }
 
   private func success() {
-    spyFetchCredentialVcSdJwtUseCase.executeForReturnValue = .credential(mockAnyCredential)
+    spyFetchCredentialVcSdJwtUseCase.executeForReturnValue = .credential([mockAnyCredential])
     credentialEncryptionContextGeneratorSpy.callAsFunctionForReturnValue = mockCredentialEncryptionContext
     repository.fetchOpenIdConfigurationFromReturnValue = mockOpenIdConfiguration
     issuanceDPoPKeyRepository.createIsHardwareBoundReturnValue = VaultKeyPair.Mock.ES256
     repository.fetchAccessTokenFromPreAuthorizedCodeDpopKeyPairDpopNonceDpopKeyAttestationJWSReturnValue = IssuanceAuthorization(
       accessToken: mockAccessToken,
       dpopKeyPair: issuanceDPoPKeyRepository.createIsHardwareBoundReturnValue)
-    appAttestationRepository.fetchKeyAttestationBodyClientAttestationReturnValue = mockKeyAttestation
+    attestationServiceRepository.fetchKeyAttestationBodyClientAttestationReturnValue = mockKeyAttestation
     clientAttestationRepository.getUsingReturnValue = mockClientAttestation
     keyAttestationValidator.callAsFunctionKeyPairWithReturnValue = true
     userSession.context = mockContext
@@ -324,8 +335,16 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   }
 
   private func testCredentialEndpointInvalid(endpoint: String) async throws {
-    let metadata = CredentialIssuerMetadata(credentialIssuer: mockMetadata.credentialIssuer, credentialEndpoint: endpoint, credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported, display: mockMetadata.display)
-    let metadataWrapper = try CredentialIssuerMetadataWrapper(credentialConfigurationId: mockCredentialOffer.credentialConfigurationIds[0], credentialIssuerMetadata: metadata, rawData: Data())
+    let metadata = CredentialIssuerMetadata(
+      credentialIssuer: mockMetadata.credentialIssuer,
+      credentialEndpoint: endpoint,
+      credentialConfigurationsSupported: mockMetadata.credentialConfigurationsSupported,
+      display: mockMetadata.display,
+      credentialRequestEncryption: .Mock.sample,
+      credentialResponseEncryption: .Mock.sample,
+      nonceEndpoint: URL(string: "https://example.com/nonce")!)
+    let metadataJws = CredentialIssuerMetadataJWT.Mock.createJWS(from: metadata)
+    let metadataWrapper = try CredentialIssuerMetadataWrapper(credentialConfigurationId: mockCredentialOffer.credentialConfigurationIds[0], metadataJws: metadataJws)
     do {
       _ = try await useCase(from: mockCredentialOffer, metadataWrapper: metadataWrapper, holderBindings: [])
       XCTFail("Expected a `FetchAnyVerifiableCredentialError.credentialEndpointCreationError`")
@@ -351,5 +370,3 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   }
 
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

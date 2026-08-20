@@ -3,6 +3,23 @@ import Foundation
 
 extension Data {
 
+  // MARK: Lifecycle
+
+  public init?(base64URLEncoded string: String) {
+    var base64 = string
+      .replacingOccurrences(of: "-", with: "+")
+      .replacingOccurrences(of: "_", with: "/")
+
+    switch base64.count % 4 {
+    case 0: break
+    case 2: base64.append("==")
+    case 3: base64.append("=")
+    default: return nil
+    }
+
+    self.init(base64Encoded: base64)
+  }
+
   // MARK: Public
 
   public var hexString: String {

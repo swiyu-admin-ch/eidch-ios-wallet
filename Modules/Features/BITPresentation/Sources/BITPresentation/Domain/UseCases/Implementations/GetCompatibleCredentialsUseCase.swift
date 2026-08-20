@@ -8,7 +8,7 @@ import Spyable
 
 @Spyable
 public protocol GetCompatibleCredentialsUseCaseProtocol {
-  func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential]
+  func callAsFunction(using requestObject: RequestObject) async throws -> [CompatibleCredential]
 }
 
 // MARK: - GetCompatibleCredentialsUseCase
@@ -17,18 +17,14 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
 
   // MARK: Internal
 
-  func execute(using requestObject: RequestObject) async throws -> [CompatibleCredential] {
-    guard let dcqlQuery = requestObject.dcqlQuery else {
-      throw RequestObjectError.missingQuery
-    }
-
+  func callAsFunction(using requestObject: RequestObject) async throws -> [CompatibleCredential] {
     let allAcceptedCredentials = try await credentialRepository.getAllAcceptedVerifiableCredentials()
     let credentials = filterStatus(of: allAcceptedCredentials)
     guard !credentials.isEmpty else {
       return []
     }
 
-    let compatibleCredentials = try await dcqlCredentialMatcher.match(credentials: credentials, with: dcqlQuery)
+    let compatibleCredentials = try await dcqlCredentialMatcher.match(credentials: credentials, with: requestObject.dcqlQuery)
 
     guard !compatibleCredentials.isEmpty else {
       return []

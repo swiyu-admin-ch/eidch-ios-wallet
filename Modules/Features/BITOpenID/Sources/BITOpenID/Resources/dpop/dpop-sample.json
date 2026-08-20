@@ -1,0 +1,8 @@
+{
+  "htm": "http_method",
+  "htu": "http_uri",
+  "iat": 1311280970,
+  "jti": "unique-jwt-id",
+  "ath": "example.com",
+  "req": "hash of the HTTP request body"
+}

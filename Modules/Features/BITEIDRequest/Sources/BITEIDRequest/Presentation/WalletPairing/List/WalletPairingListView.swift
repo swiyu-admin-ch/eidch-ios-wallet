@@ -1,4 +1,5 @@
 import BITL10n
+import BITNavigation
 import BITTheming
 import Factory
 import Foundation
@@ -16,10 +17,6 @@ struct WalletPairingListView: View {
   }
 
   // MARK: Internal
-
-  enum AccessibilityIdentifier: String {
-    case closeButton
-  }
 
   var body: some View {
     List {
@@ -65,7 +62,7 @@ struct WalletPairingListView: View {
       await viewModel.fetchStatus()
     }
     .navigate(to: $viewModel.destination)
-    .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)
+    .navigationReturnToCheckpoint(trigger: $viewModel.isNavigationCloseTriggered, checkpoint: Checkpoints.home)
   }
 
   // MARK: Private
@@ -181,14 +178,7 @@ struct WalletPairingListView: View {
 
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: viewModel.close, label: {
-        ThemingAssets
-          .close.swiftUIImage
-      })
-      .accessibilityLabel(L10n.tkGlobalClose)
-      .accessibilityIdentifier(AccessibilityIdentifier.closeButton.rawValue)
-    }
+    CloseButtonToolbar(action: viewModel.close)
   }
 
 }

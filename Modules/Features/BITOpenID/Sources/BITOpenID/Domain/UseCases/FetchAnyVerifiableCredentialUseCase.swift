@@ -48,11 +48,10 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     -> FetchAnyCredentialResult
   {
     let credentialEndpoint = try getCredentialEndpoint(from: metadataWrapper)
-    let issuerUrl = try getIssuerUrl(from: offer)
-    let configuration = try await repository.fetchOpenIdConfiguration(from: issuerUrl)
-    let issuanceDPoPKeyPair = isDPoPEnabled ? try createIssuanceDPoPKeyPair(
+    let configuration = try await repository.fetchOpenIdConfiguration(from: offer.issuer)
+    let issuanceDPoPKeyPair = try createIssuanceDPoPKeyPair(
       from: configuration,
-      holderBindings: holderBindings) : nil
+      holderBindings: holderBindings)
 
     do {
       let firstHolderBinding = holderBindings?.first
@@ -89,7 +88,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
         credentialEncryptionContext: credentialEncryptionContext,
         deferredCredentialEndpoint: metadataWrapper.credentialIssuerMetadata.deferredCredentialEndpoint)
 
-      guard let credentialFormat = CredentialFormat(rawValue: context.format), let dispatcherFormat = dispatcher[credentialFormat] else {
+      guard let dispatcherFormat = dispatcher[context.format] else {
         throw CredentialFormatError.formatNotSupported
       }
 
@@ -111,7 +110,7 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
   @Injected(\.anyFetchCredentialDispatcher) private var dispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol]
   @Injected(\.credentialEncryptionContextGenerator) private var credentialEncryptionContextGenerator: CredentialEncryptionContextGeneratorProtocol
   @Injected(\.issuanceDPoPKeyRepository) private var issuanceDPoPKeyRepository: IssuanceDPoPKeyRepositoryProtocol
-  @Injected(\.appAttestationRepository) private var appAttestationRepository: AppAttestationRepositoryProtocol
+  @Injected(\.attestationServiceRepository) private var attestationServiceRepository: AttestationServiceRepositoryProtocol
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
   @Injected(\.keyAttestationValidator) private var keyAttestationValidator: KeyAttestationValidatorProtocol
   @Injected(\.userSession) private var userSession: Session
@@ -127,13 +126,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     }
 
     return credentialEndpoint
-  }
-
-  private func getIssuerUrl(from offer: CredentialOffer) throws -> URL {
-    guard let issuerUrl = URL(string: offer.issuer) else {
-      throw FetchAnyVerifiableCredentialError.unknownIssuer
-    }
-    return issuerUrl
   }
 
   private func fetchAccessToken(
@@ -185,11 +177,11 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     dpopKeyPair: VaultKeyPair?) async throws
     -> String?
   {
-    guard dpopKeyPair != nil, let nonceEndpoint = metadataWrapper.credentialIssuerMetadata.nonceEndpoint else {
+    guard dpopKeyPair != nil else {
       return nil
     }
 
-    return try? await repository.fetchNonce(from: nonceEndpoint).dpopNonce
+    return try? await repository.fetchNonce(from: metadataWrapper.credentialIssuerMetadata.nonceEndpoint).dpopNonce
   }
 
   private func fetchDPoPKeyAttestationIfNeeded(for keyPair: VaultKeyPair?) async throws -> String? {
@@ -203,12 +195,12 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
 
     let clientAttestation = try await clientAttestationRepository.get(using: context)
     let requestBody = try KeyAttestationRequestBody(keyPair: keyPair)
-    let keyAttestation = try await appAttestationRepository.fetchKeyAttestation(
+    let keyAttestation = try await attestationServiceRepository.fetchKeyAttestation(
       body: requestBody,
       clientAttestation: clientAttestation)
 
     guard await keyAttestationValidator(keyPair: keyPair, with: keyAttestation) else {
-      throw AppAttestationRepositoryError.invalidKeyAttestation
+      throw AttestationServiceRepositoryError.invalidKeyAttestation
     }
 
     return keyAttestation.rawJWS
@@ -225,9 +217,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
       return nil
     }
 
-    if let nonceEndpoint = metadataWrapper.credentialIssuerMetadata.nonceEndpoint {
-      return try await repository.fetchNonce(from: nonceEndpoint)
-    }
-    return nil
+    return try await repository.fetchNonce(from: metadataWrapper.credentialIssuerMetadata.nonceEndpoint)
   }
 }

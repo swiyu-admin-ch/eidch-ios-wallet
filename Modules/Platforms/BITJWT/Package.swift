@@ -22,7 +22,7 @@ let package = Package(
     .package(path: "../../Platforms/BITNetworking"),
     .package(url: "https://github.com/swiyu-admin-ch/didresolver-swift.git", exact: "2.8.2"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
-    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "3.0.0"),
+    .package(url: "https://github.com/amosavian/JWSETKit", exact: "2.2.0"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
   ],
   targets: [
@@ -36,7 +36,7 @@ let package = Package(
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "DidResolver", package: "didresolver-swift"),
         .product(name: "Factory", package: "Factory"),
-        .product(name: "JOSESwift", package: "JOSESwift"),
+        .product(name: "JWSETKit", package: "JWSETKit"),
         .product(name: "Spyable", package: "swift-spyable"),
       ],
       resources: [.process("Resources")],
@@ -49,7 +49,7 @@ let package = Package(
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITVault", package: "BITVault"),
         .product(name: "Factory", package: "Factory"),
-        .product(name: "JOSESwift", package: "JOSESwift"),
+        .product(name: "JWSETKit", package: "JWSETKit"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

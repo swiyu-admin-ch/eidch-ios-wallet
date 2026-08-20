@@ -9,8 +9,13 @@ import Security
 /// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-deferred-credential-request
 public struct DeferredCredentialRequest: Codable, Equatable {
 
+  public init(transactionId: String, credentialResponseEncryption: CredentialResponseEncryption) {
+    self.transactionId = transactionId
+    self.credentialResponseEncryption = credentialResponseEncryption
+  }
+
   let transactionId: String
-  let credentialResponseEncryption: CredentialResponseEncryption?
+  let credentialResponseEncryption: CredentialResponseEncryption
 
   // MARK: Internal
 

@@ -5,8 +5,7 @@ import Spyable
 
 @Spyable
 public protocol LoginUseCasesProtocol {
-  var isBiometricUsageAllowed: IsBiometricUsageAllowedUseCaseProtocol { get }
-  var hasBiometricAuth: HasBiometricAuthUseCaseProtocol { get }
+  var getBiometricStateUseCase: GetBiometricStateUseCaseProtocol { get }
   var loginPinCode: LoginPinCodeUseCaseProtocol { get }
   var loginBiometric: LoginBiometricUseCaseProtocol { get }
   var isBiometricInvalidatedUseCase: IsBiometricInvalidatedUseCaseProtocol { get }
@@ -23,8 +22,7 @@ public protocol LoginUseCasesProtocol {
 // MARK: - LoginUseCases
 
 struct LoginUseCases: LoginUseCasesProtocol {
-  let isBiometricUsageAllowed: IsBiometricUsageAllowedUseCaseProtocol
-  let hasBiometricAuth: HasBiometricAuthUseCaseProtocol
+  let getBiometricStateUseCase: GetBiometricStateUseCaseProtocol
   let loginPinCode: LoginPinCodeUseCaseProtocol
   let loginBiometric: LoginBiometricUseCaseProtocol
   let isBiometricInvalidatedUseCase: IsBiometricInvalidatedUseCaseProtocol

@@ -18,7 +18,7 @@ class SetupSDKErrorViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_insufficientKeyStorageResistanceError() {
-    let error = ErrorWrapper(EIDRequestRepository.Error.insufficientKeyStorageResistance)
+    let error = ErrorWrapper(SIDRepository.Error.insufficientKeyStorageResistance)
     viewModel = SetupSDKErrorViewModel(error: error, callback: { _ in })
 
     XCTAssertFalse(viewModel.isRetryEnabled)

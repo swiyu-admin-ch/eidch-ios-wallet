@@ -19,7 +19,12 @@ extension Container {
   }
 
   public var attestationServiceTrustedDids: Factory<[String]> {
-    self { ["did:tdw:QmVxp7q4pFKRp8zf7KftJBRroNRF6dVzHns3Sq7EdjxQep:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:9f94645c-2b23-4f7d-9c8c-21c77e9995a5"] }
+    self {
+      [
+        "did:tdw:QmVxp7q4pFKRp8zf7KftJBRroNRF6dVzHns3Sq7EdjxQep:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:9f94645c-2b23-4f7d-9c8c-21c77e9995a5",
+        "did:webvh:QmSnE8nCxzoFuXcJS9GoowDjX8rG3vsWy4fYbpvYEZpKEa:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:0e547c8b-64bd-467e-a21f-8b959a1d38b4",
+      ]
+    }
   }
 
   public var clientAttestationRepository: Factory<ClientAttestationRepositoryProtocol> {
@@ -38,15 +43,11 @@ extension Container {
     self { KeyAttestationValidator() }
   }
 
-  public var appAttestationRepository: Factory<AppAttestationRepositoryProtocol> {
-    self { AppAttestationRepository() }
+  public var attestationServiceRepository: Factory<AttestationServiceRepositoryProtocol> {
+    self { AttestationServiceRepository() }
   }
 
   // MARK: Internal
-
-  var jsonCanonicalizer: Factory<JsonCanonicalizerProtocol> {
-    self { JsonCanonicalizer() }
-  }
 
   var appAttestationProvider: Factory<AppAttestationProviderProtocol> {
     self { AppAttestationProvider() }

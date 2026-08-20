@@ -19,13 +19,13 @@ struct RegisterPushTokenUseCaseTests {
     let eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
     self.eIDRequestCaseRepository = eIDRequestCaseRepository
 
-    let eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
-    self.eIDRequestRepository = eIDRequestRepository
+    let sidRepository = SIDRepositoryProtocolSpy()
+    self.sidRepository = sidRepository
 
     Container.shared.pushTokenRepository.register { pushTokenRepository }
     Container.shared.pushNotificationRepository.register { pushNotificationRepository }
     Container.shared.eIDRequestCaseRepository.register { eIDRequestCaseRepository }
-    Container.shared.eIDRequestRepository.register { eIDRequestRepository }
+    Container.shared.sidRepository.register { sidRepository }
 
     useCase = RegisterPushTokenUseCase()
   }
@@ -69,7 +69,7 @@ struct RegisterPushTokenUseCaseTests {
 
   @Test
   func callAsFunction_registerPushIdFails_throwsError() async throws {
-    eIDRequestRepository.registerPushIdCaseIdThrowableError = TestingError.error
+    sidRepository.registerPushIdCaseIdThrowableError = TestingError.error
 
     await #expect(throws: TestingError.error) {
       try await useCase(mockPushToken, caseId: caseId)
@@ -95,7 +95,7 @@ struct RegisterPushTokenUseCaseTests {
   private let useCase: RegisterPushTokenUseCase
 
   private let pushTokenRepository: PushTokenRepositoryProtocolSpy
-  private let eIDRequestRepository: EIDRequestRepositoryProtocolSpy
+  private let sidRepository: SIDRepositoryProtocolSpy
   private let eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocolSpy
   private let pushNotificationRepository: PushNotificationRepositoryProtocolSpy
 
@@ -104,9 +104,9 @@ struct RegisterPushTokenUseCaseTests {
     #expect(pushNotificationRepository.registerBodyReceivedBody?.platform == platform)
     #expect(pushNotificationRepository.registerBodyReceivedBody?.pushDeviceToken == mockPushToken)
 
-    #expect(eIDRequestRepository.registerPushIdCaseIdCallsCount == 1)
-    #expect(eIDRequestRepository.registerPushIdCaseIdReceivedArguments?.caseId == caseId)
-    #expect(eIDRequestRepository.registerPushIdCaseIdReceivedArguments?.body.pushId == mockPushId)
+    #expect(sidRepository.registerPushIdCaseIdCallsCount == 1)
+    #expect(sidRepository.registerPushIdCaseIdReceivedArguments?.caseId == caseId)
+    #expect(sidRepository.registerPushIdCaseIdReceivedArguments?.body.pushId == mockPushId)
 
     #expect(eIDRequestCaseRepository.savePushIdForCallsCount == 1)
     #expect(eIDRequestCaseRepository.savePushIdForReceivedArguments?.pushId == mockPushId)

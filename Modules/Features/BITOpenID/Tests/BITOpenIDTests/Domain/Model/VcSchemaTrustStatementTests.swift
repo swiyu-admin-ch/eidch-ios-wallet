@@ -36,11 +36,11 @@ final class VcSchemaTrustStatementTests: XCTestCase {
   private var decoder = VcSdJWSDecoder()
 
   private func assertTrustStatement(_ trustStatement: VcSchemaTrustStatementJWT, vct: String) {
-    let expectedStatusList = VcSdJwtTokenStatusList(statusList: VcSdJwtTokenStatusList.StatusList(index: 30, uri: "status_list_uri"))
+    let expectedStatus = VcSdJwtTokenStatus(statusList: VcSdJwtTokenStatus.StatusList(index: 30, uri: "status_list_uri"))
     XCTAssertEqual(trustStatement.vct, vct)
     XCTAssertEqual(trustStatement.subject, "subject")
     XCTAssertEqual(trustStatement.issuedAt, Date(timeIntervalSince1970: 1742453211))
-    XCTAssertEqual(trustStatement.statusList, expectedStatusList)
+    XCTAssertEqual(trustStatement.statusList, expectedStatus)
 
     XCTAssertEqual(trustStatement.activatedAt, Date(timeIntervalSince1970: 1742453210))
     XCTAssertEqual(trustStatement.expiredAt, Date(timeIntervalSince1970: 2209014000))

@@ -13,9 +13,7 @@ public protocol SelectCredentialBundleItemUseCaseProtocol {
 struct SelectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol {
 
   func callAsFunction(_ credential: VerifiableCredential) throws -> BundleItem {
-    guard
-      let bundleItem = credential.bundleItems.first(where: { $0.id == credential.nextPresentableBundleItemId })
-    else {
+    guard let bundleItem = credential.presentableBundleItem else {
       throw CredentialError.noBundleItem
     }
     return bundleItem

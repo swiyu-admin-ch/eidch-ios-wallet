@@ -1,3 +1,4 @@
+import BITCore
 import BITCredentialShared
 import BITL10n
 import BITOpenID
@@ -138,9 +139,11 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
 
   // MARK: Private
 
+  @Injected(\.calendar) private var calendar: Calendar
+  @Injected(\.currentDate) private var currentDate: Date
+  @Injected(\.isBatchIssuanceEnabled) private var isBatchIssuanceEnabled: Bool
   @Injected(\.getCredentialDisplayUseCase) private var getCredentialDisplayUseCase: GetCredentialDisplayUseCaseProtocol
   @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
-  @Injected(\.isBatchIssuanceEnabled) private var isBatchIssuanceEnabled: Bool
 
   private var selectedCredentialStatus: CredentialStatus {
     (try? selectCredentialBundleItemUseCase(credential).status) ?? CredentialStatus.unknown
@@ -148,23 +151,19 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
 
   private func getNotYetValidText() -> String {
     guard let date = credential.validFrom else { return L10n.tkCredentialStatusUnknown }
-    return if date.isWithinNext24Hours {
-      L10n.tkCredentialStatusSoon
-    } else if let days = date.numberOfDaysSince(Date()) {
-      L10n.tkCredentialStatusNotValidYet(days)
+    return if calendar.isDate(date, inSameDayAs: currentDate) {
+      L10n.tkCredentialStatusValidAt(DateFormatter.shortHourFormatter.string(from: date))
     } else {
-      L10n.tkCredentialStatusUnknown
+      L10n.tkCredentialStatusNotYetValid(DateFormatter.shortDateFormatter.string(from: date))
     }
   }
 
   private func getNotYetValidAltText() -> String {
-    guard let date = credential.validFrom else { return L10n.tkCredentialStatusUnknown }
-    return if date.isWithinNext24Hours {
-      L10n.tkCredentialStatusSoonAlt
-    } else if let days = date.numberOfDaysSince(Date()) {
-      L10n.tkCredentialStatusNotValidYetAlt(days)
+    guard let date = credential.validFrom else { return L10n.tkCredentialStatusUnknownAlt }
+    return if calendar.isDate(date, inSameDayAs: currentDate) {
+      L10n.tkCredentialStatusValidAtAlt(DateFormatter.shortHourFormatter.string(from: date))
     } else {
-      L10n.tkCredentialStatusUnknownAlt
+      L10n.tkCredentialStatusNotYetValidAlt(DateFormatter.shortDateFormatter.string(from: date))
     }
   }
 }

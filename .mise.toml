@@ -4,11 +4,13 @@ _.file = '.env'
 [tools]
 xcodegen = '2.44.1'
 swiftlint = '0.63.2'
-"asdf:mise-plugins/mise-swiftformat" = "0.59.1"
+swiftformat = "0.59.1"
+swift-package-list = "4.10.0"
 swiftgen = '6.6.3'
 danger-swift = '3.22.0'
 ruby = '3.4.7'
 'gem:bundler' = '2.7'
+snyk = '1.1304.1'
 
 # ── Project ──────────────────────────────────────────────────────────
 
@@ -24,20 +26,16 @@ run = ['open swiyu.xcodeproj']
 
 [tasks."project:build"]
 description = 'Build xcode project'
-run = [
-    'mise quality:gen',
-    'mise quality:format',
-    'mise setup:xcode',
-    'mise project:xcodegen',
-]
+depends = ['quality:gen']
+run = ['mise run quality:format', 'mise run project:xcodegen']
 
 [tasks."project:rebuild"]
 description = 'Re-Build xcode project without applying swiftgen, swiftformat'
-run = ['mise setup:xcode', 'mise project:xcodegen']
+depends = ['project:xcodegen']
 
 [tasks."project:xcodegen"]
 description = 'Build xcodeproj file'
-run = 'xcodegen'
+run = 'xcodegen generate --use-cache --cache-path .xcodegen.cache'
 
 # ── Quality ──────────────────────────────────────────────────────────
 
@@ -47,10 +45,26 @@ run = 'swiftlint --strict'
 
 [tasks."quality:format"]
 description = 'Format the project to expected code standards'
-run = 'swiftformat .'
+run = 'swiftformat . --cache .swiftformat.cache'
 
 [tasks."quality:gen"]
 description = 'Generate assets files'
+sources = [
+    'swiftgen.yml',
+    'Modules/**/swiftgen*.yml',
+    'Modules/**/*.stencil',
+    'swiyu/Info.plist',
+    'swiyu/Resources/Assets.xcassets/**/*',
+    'Modules/**/Resources/**/*.xcassets/**/*',
+    'Modules/**/Resources/Lottie/**/*',
+    'Modules/**/Resources/*.lproj/**/*',
+]
+outputs = [
+    'swiyu/Resources/Assets.swift',
+    'swiyu/Resources/Plist.swift',
+    'Modules/**/Module/*.swift',
+    'Modules/Platforms/BITL10n/Sources/BITL10n/Strings.swift',
+]
 run = [
     'swiftgen',
     'swiftgen --config Modules/Platforms/BITCore/swiftgen.yml',
@@ -135,9 +149,16 @@ run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:sandbo
 run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:debugger'
 
 [tasks."profiles:refresh-appstore"]
-description = 'Refresh AppStore provisioning profiles (all envs, parallel)'
+description = 'Refresh AppStore provisioning profiles (all envs)'
 depends = ['setup:bundler']
-run = 'mise run -j 6 profiles:appstore-dev profiles:appstore-ref profiles:appstore-abn profiles:appstore-prod profiles:appstore-sandbox profiles:appstore-debugger'
+run = [
+    'mise run profiles:appstore-dev',
+    'mise run profiles:appstore-ref',
+    'mise run profiles:appstore-abn',
+    'mise run profiles:appstore-prod',
+    'mise run profiles:appstore-sandbox',
+    'mise run profiles:appstore-debugger',
+]
 
 [tasks."profiles:development-dev"]
 run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:dev'
@@ -153,9 +174,16 @@ run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:san
 run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:debugger'
 
 [tasks."profiles:refresh-development"]
-description = 'Refresh development provisioning profiles (all envs, parallel)'
+description = 'Refresh development provisioning profiles (all envs)'
 depends = ['setup:bundler']
-run = 'mise run -j 6 profiles:development-dev profiles:development-ref profiles:development-abn profiles:development-prod profiles:development-sandbox profiles:development-debugger'
+run = [
+    'mise run profiles:development-dev',
+    'mise run profiles:development-ref',
+    'mise run profiles:development-abn',
+    'mise run profiles:development-prod',
+    'mise run profiles:development-sandbox',
+    'mise run profiles:development-debugger',
+]
 
 # ── CI ───────────────────────────────────────────────────────────────
 
@@ -168,6 +196,11 @@ run = ['bundle install', 'bundle exec fastlane ios pipeline_sonar env:dev']
 description = 'Run CI lane (dev)'
 depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:dev']
+
+[tasks."ci:run-ref"]
+description = 'Run CI lane (dev)'
+depends = ['setup:xcode-ci']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:ref']
 
 [tasks."ci:build-ref"]
 description = 'Run build lane (ref)'
@@ -241,3 +274,7 @@ run = [
 [tasks."setup:bundler"]
 description = 'Install bundler dependencies'
 run = 'bundle install'
+
+[tasks.snyk-configuration]
+description = 'Configure Snyk'
+run = ['snyk config environment SNYK-EU-01 --no-check']

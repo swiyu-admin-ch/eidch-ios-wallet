@@ -1,3 +1,4 @@
+import BITL10n
 import Factory
 import XCTest
 @testable import BITAppAuth
@@ -8,6 +9,7 @@ import XCTest
 @testable import BITHome
 @testable import BITInvitation
 @testable import BITOTP
+@testable import BITPushNotification
 @testable import BITTestingCore
 
 // MARK: - HomeViewModelTests
@@ -24,7 +26,7 @@ final class HomeViewModelTests: XCTestCase {
 
     registerMocks()
     viewModel = HomeViewModel()
-    createSuccesState()
+    createSuccessState()
   }
 
   func testInitialValues() {
@@ -41,7 +43,7 @@ final class HomeViewModelTests: XCTestCase {
   func testOnAppear_everythingEnabled_containResults() async {
     await viewModel.onAppear()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
@@ -49,7 +51,7 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(updatePushTokenUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(viewModel.state, .results)
-    XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
+    XCTAssertEqual(Set(viewModel.credentials.map(\.id)), Set(mockCredentials.map(\.id)))
   }
 
   func testOnAppear_updatePushTokenFails_silentFails() async {
@@ -58,13 +60,13 @@ final class HomeViewModelTests: XCTestCase {
     await viewModel.onAppear()
 
     XCTAssertEqual(updatePushTokenUseCase.callAsFunctionCallsCount, 1)
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
     XCTAssertEqual(viewModel.state, .results)
   }
 
   func testOnAppear_noCredential_stateEmpty() async {
-    getCredentialListUseCase.executeReturnValue = []
+    getCredentialListUseCase.callAsFunctionReturnValue = []
     refreshCredentialsUseCase.callAsFunctionReturnValue = []
 
     await viewModel.onAppear()
@@ -74,7 +76,7 @@ final class HomeViewModelTests: XCTestCase {
   }
 
   func testOnAppear_credentialThrowError_stateError() async {
-    getCredentialListUseCase.executeThrowableError = TestingError.error
+    getCredentialListUseCase.callAsFunctionThrowableError = TestingError.error
 
     await viewModel.onAppear()
 
@@ -87,7 +89,7 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.onAppear()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
     XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
 
@@ -114,7 +116,7 @@ final class HomeViewModelTests: XCTestCase {
 
   func testOnAppear_noData_stateEmpty() async {
     getEIDRequestCaseListUseCase.callAsFunctionReturnValue = []
-    getCredentialListUseCase.executeReturnValue = []
+    getCredentialListUseCase.callAsFunctionReturnValue = []
     refreshCredentialsUseCase.callAsFunctionReturnValue = []
 
     await viewModel.onAppear()
@@ -128,27 +130,50 @@ final class HomeViewModelTests: XCTestCase {
   func testRefresh_containResults() async {
     await viewModel.refresh()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 1)
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
 
     XCTAssertEqual(viewModel.state, .results)
-    XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
+    XCTAssertEqual(Set(viewModel.credentials.map(\.id)), Set(mockCredentials.map(\.id)))
     XCTAssertEqual(viewModel.requestCases.map(\.id), mockEIDRequestCases.map(\.id))
+  }
+
+  func testRefresh_eIDRequestCasesRefreshSucceeds_resetsApplicationBadge() async {
+    await viewModel.refresh()
+
+    XCTAssertEqual(resetApplicationBadgeUseCase.callAsFunctionCallsCount, 1)
+  }
+
+  func testRefresh_eIDRequestCasesRefreshFails_doesNotResetApplicationBadge() async {
+    updateEIDRequestCaseStatusUseCase.executeThrowableError = TestingError.error
+
+    await viewModel.refresh()
+
+    XCTAssertEqual(resetApplicationBadgeUseCase.callAsFunctionCallsCount, 0)
+  }
+
+  func testDidLoginRefreshesHome() async {
+    await viewModel.didLogin()
+
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
   }
 
   func testRefresh_afterOnAppear_noData() async {
     await viewModel.onAppear()
 
     getEIDRequestCaseListUseCase.callAsFunctionReturnValue = []
-    getCredentialListUseCase.executeReturnValue = []
+    getCredentialListUseCase.callAsFunctionReturnValue = []
     refreshCredentialsUseCase.callAsFunctionReturnValue = []
 
     await viewModel.refresh()
 
-    XCTAssertEqual(getCredentialListUseCase.executeCallsCount, 2)
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 2)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 4)
@@ -196,15 +221,15 @@ final class HomeViewModelTests: XCTestCase {
         progressionState: .unaccepted,
         bundleItems: [BundleItem(payload: Data())],
         nextPresentableBundleItemId: UUID(),
-        format: "format",
-        issuerUrl: "issuerUrl",
+        format: .vcSdJwt,
+        issuerUrl: mockIssuerUrl,
         issuer: "issuer",
         authentication: CredentialAuthentication(accessToken: "accessToken")))
 
     viewModel.openCredential(credentialViewModel)
 
     if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.offer(credentialViewModel.credential, nil))
+      XCTAssertEqual(destination, HomeExternalDestinations.offer(credentialViewModel.credential))
     }
   }
 
@@ -251,6 +276,33 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(isOTPEnabledUseCase.callAsFunctionCallsCount, 1)
   }
 
+  func testOpenHelp_setsHelpLinkAsExternalURL() {
+    viewModel.openHelp()
+
+    XCTAssertEqual(viewModel.externalURL, URL(string: L10n.tkSettingsGeneralHelpLinkValue))
+    XCTAssertNil(viewModel.destination)
+  }
+
+  func testOpenHelp_thenConsumed_resetsExternalURL() {
+    viewModel.openHelp()
+
+    viewModel.didConsumeExternalURL()
+
+    XCTAssertNil(viewModel.externalURL)
+  }
+
+  func testIsProximityEnabled_whenDisabled_isFalse() {
+    Container.shared.isProximityEnabled.register { false }
+
+    XCTAssertFalse(HomeViewModel().isProximityEnabled)
+  }
+
+  func testIsProximityEnabled_whenEnabled_isTrue() {
+    Container.shared.isProximityEnabled.register { true }
+
+    XCTAssertTrue(HomeViewModel().isProximityEnabled)
+  }
+
   func testDidStartAutoVerification() {
     viewModel.didStartAutoVerification(caseId: mockCaseId)
 
@@ -284,15 +336,18 @@ final class HomeViewModelTests: XCTestCase {
 
   func testUpdateCredentialViewModels_argumentsPassed() async {
     let credentialMocks: [VerifiableCredential] = [.Mock.diploma, .Mock.sample]
-    getCredentialListUseCase.executeReturnValue = credentialMocks
+    getCredentialListUseCase.callAsFunctionReturnValue = credentialMocks
     refreshCredentialsUseCase.callAsFunctionReturnValue = credentialMocks
 
     await viewModel.onAppear() // set up credentials which will already trigger an updateCredentialViewModels
 
     viewModel.updateCredentialViewModels(with: themeMock)
 
-    XCTAssertEqual(viewModel.credentials[0].credential.displays, credentialMocks[0].displays)
-    XCTAssertEqual(viewModel.credentials[1].credential.displays, credentialMocks[1].displays)
+    // Closure (not key path): a `\.credential.displays` key path through the existential's associated type crashes SILGen.
+    // swiftformat:disable:next preferKeyPath
+    let credentialDisplays = viewModel.credentials.map { $0.credential.displays }
+    XCTAssertTrue(credentialDisplays.contains(credentialMocks[0].displays))
+    XCTAssertTrue(credentialDisplays.contains(credentialMocks[1].displays))
   }
 
   func testOnAppear_refreshThrowsError_silentFails() async {
@@ -300,28 +355,28 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.onAppear()
 
-    XCTAssertEqual(viewModel.credentials.map(\.id), mockCrendentials.map(\.id))
+    XCTAssertEqual(Set(viewModel.credentials.map(\.id)), Set(mockCredentials.map(\.id)))
   }
 
-  func testDidSavedCredential_success() {
-    viewModel.didSaveCredential()
+  func testDidSavedCredential_success() async {
+    await viewModel.handleNavigationCheckpoint(state: .acceptCredential)
 
     XCTAssertNotNil(viewModel.toast)
+    assertRefresh()
   }
 
-  func testDidDeclineCredential_success() {
-    viewModel.didDeclineCredential()
+  func testDidDeclineCredential_success() async {
+    await viewModel.handleNavigationCheckpoint(state: .declineCredential)
 
     XCTAssertNotNil(viewModel.toast)
+    assertRefresh()
   }
 
   func testDidDeleteCredential_success() async {
-    viewModel.didDeleteCredential()
-
-    await Task.yield()
+    await viewModel.handleNavigationCheckpoint(state: .deletedCredential)
 
     XCTAssertNotNil(viewModel.toast)
-    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
+    assertRefresh()
   }
 
   func testDidTapWalletPairing() {
@@ -340,11 +395,12 @@ final class HomeViewModelTests: XCTestCase {
     }
   }
 
-  func testStartRequestCasePolling_callsPollingManager() {
-    viewModel.startRequestCasePolling(for: mockCaseId)
+  func testStartRequestCasePolling_callsPollingManager() async {
+    await viewModel.handleNavigationCheckpoint(state: .startRequestCasePolling(caseId: mockCaseId))
 
     XCTAssertEqual(requestCasePollingManager.startPollingForCallsCount, 1)
     XCTAssertEqual(requestCasePollingManager.startPollingForReceivedCaseId, mockCaseId)
+    assertRefresh()
   }
 
   func testStopRefresh_stopsPollingManager() {
@@ -362,10 +418,19 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
   }
 
+  func testNavigationCheckpoint_withoutState_doesRefresh() async {
+    await viewModel.handleNavigationCheckpoint(state: nil)
+
+    XCTAssertNil(viewModel.toast)
+    XCTAssertEqual(requestCasePollingManager.startPollingForCallsCount, 0)
+    assertRefresh()
+  }
+
   // MARK: Private
 
   private let mockCaseId = "caseId"
-  private let mockCrendentials = VerifiableCredential.Mock.array
+  private let mockIssuerUrl = URL(string: "https://issuer.domain.ch")!
+  private let mockCredentials = VerifiableCredential.Mock.array
   private let themeMock = "light"
   private var getCredentialListUseCase: GetCredentialListUseCaseProtocolSpy!
   private var refreshCredentialsUseCase: RefreshCredentialsUseCaseProtocolSpy!
@@ -373,11 +438,12 @@ final class HomeViewModelTests: XCTestCase {
   private var viewModel: HomeViewModel!
   private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocolSpy!
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
-  private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
+  private let mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
   private var isOTPEnabledUseCase: IsOTPEnabledUseCaseProtocolSpy!
   private var requestCasePollingManager: RequestCasePollingProtocolSpy!
   private var updatePushTokenUseCase: UpdatePushTokenUseCaseProtocolSpy!
+  private var resetApplicationBadgeUseCase: ResetApplicationBadgeUseCaseProtocolSpy!
 
   private func registerMocks() {
     getCredentialListUseCase = GetCredentialListUseCaseProtocolSpy()
@@ -389,6 +455,7 @@ final class HomeViewModelTests: XCTestCase {
     isOTPEnabledUseCase = IsOTPEnabledUseCaseProtocolSpy()
     requestCasePollingManager = RequestCasePollingProtocolSpy()
     updatePushTokenUseCase = UpdatePushTokenUseCaseProtocolSpy()
+    resetApplicationBadgeUseCase = ResetApplicationBadgeUseCaseProtocolSpy()
 
     Container.shared.getEIDRequestCaseListUseCase.register { @MainActor in self.getEIDRequestCaseListUseCase }
     Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
@@ -398,16 +465,27 @@ final class HomeViewModelTests: XCTestCase {
     Container.shared.refreshCredentialsUseCase.register { @MainActor in self.refreshCredentialsUseCase }
     Container.shared.requestCasePollingManager.register { @MainActor in self.requestCasePollingManager }
     Container.shared.isEIDRequestFeatureEnabled.register { @MainActor in true }
+    Container.shared.isProximityEnabled.register { false }
     Container.shared.isOTPEnabledUseCase.register { @MainActor in self.isOTPEnabledUseCase }
     Container.shared.updatePushTokenUseCase.register { @MainActor in self.updatePushTokenUseCase }
+    Container.shared.resetApplicationBadgeUseCase.register { @MainActor in self.resetApplicationBadgeUseCase }
   }
 
-  private func createSuccesState() {
-    isUserLoggedInUseCase.executeReturnValue = true
-    getCredentialListUseCase.executeReturnValue = mockCrendentials
+  private func createSuccessState() {
+    isUserLoggedInUseCase.callAsFunctionReturnValue = true
+    getCredentialListUseCase.callAsFunctionReturnValue = mockCredentials
     getEIDRequestCaseListUseCase.callAsFunctionReturnValue = mockEIDRequestCases
-    refreshCredentialsUseCase.callAsFunctionReturnValue = mockCrendentials
+    refreshCredentialsUseCase.callAsFunctionReturnValue = mockCredentials
     isOTPEnabledUseCase.callAsFunctionReturnValue = true
+  }
+
+  private func assertRefresh() {
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(viewModel.state, .results)
+    XCTAssertEqual(refreshCredentialsUseCase?.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(getEIDRequestCaseListUseCase?.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase?.executeCallsCount, 1)
+    XCTAssertEqual(updatePushTokenUseCase?.callAsFunctionCallsCount, 1)
   }
 }
 

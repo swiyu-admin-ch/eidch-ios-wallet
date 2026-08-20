@@ -25,7 +25,7 @@ final class ClientAttestationRepositoryTests: XCTestCase {
     let result = try await repository.get(using: context)
 
     XCTAssertEqual(result, mockClientAttestation)
-    XCTAssertEqual(appAttestationRepository.fetchChallengeCallsCount, 1)
+    XCTAssertEqual(attestationServiceRepository.fetchChallengeCallsCount, 1)
     XCTAssertEqual(appAttestationProvider.generateAttestedKeyWithCallsCount, 1)
     XCTAssertEqual(appAttestationProvider.generateAppAssertionForWithCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 1)
@@ -40,7 +40,7 @@ final class ClientAttestationRepositoryTests: XCTestCase {
     let result = try await repository.get(using: context)
 
     XCTAssertEqual(result, mockClientAttestation)
-    XCTAssertEqual(appAttestationRepository.fetchChallengeCallsCount, 0)
+    XCTAssertEqual(attestationServiceRepository.fetchChallengeCallsCount, 0)
     XCTAssertEqual(appAttestationProvider.generateAttestedKeyWithCallsCount, 0)
     XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 0)
   }
@@ -51,7 +51,7 @@ final class ClientAttestationRepositoryTests: XCTestCase {
     let result = try await repository.get(using: context)
 
     XCTAssertEqual(result, mockClientAttestation)
-    XCTAssertEqual(appAttestationRepository.fetchChallengeCallsCount, 1)
+    XCTAssertEqual(attestationServiceRepository.fetchChallengeCallsCount, 1)
     XCTAssertEqual(appAttestationProvider.generateAttestedKeyWithCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 1)
   }
@@ -65,13 +65,13 @@ final class ClientAttestationRepositoryTests: XCTestCase {
     let result = try await repository.get(using: context)
 
     XCTAssertEqual(result, mockClientAttestation)
-    XCTAssertEqual(appAttestationRepository.fetchChallengeCallsCount, 1)
+    XCTAssertEqual(attestationServiceRepository.fetchChallengeCallsCount, 1)
     XCTAssertEqual(appAttestationProvider.generateAttestedKeyWithCallsCount, 1)
     XCTAssertEqual(appAttestationKeyRepository.createForWithCallsCount, 1)
   }
 
   func testGet_fetchFails_propagatesError() async throws {
-    appAttestationRepository.fetchChallengeThrowableError = TestingError.error
+    attestationServiceRepository.fetchChallengeThrowableError = TestingError.error
 
     do {
       _ = try await repository.get(using: context)
@@ -93,26 +93,26 @@ final class ClientAttestationRepositoryTests: XCTestCase {
   private var repository: ClientAttestationRepositoryProtocol!
   private var context: LAContextProtocolSpy!
   private var appAttestationProvider: AppAttestationProviderProtocolSpy!
-  private var appAttestationRepository: AppAttestationRepositoryProtocolSpy!
+  private var attestationServiceRepository: AttestationServiceRepositoryProtocolSpy!
   private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy!
   private var clientAttestationValidator: ClientAttestationValidatorProtocolSpy!
 
   private func registerMocks() {
     context = LAContextProtocolSpy()
     appAttestationProvider = AppAttestationProviderProtocolSpy()
-    appAttestationRepository = AppAttestationRepositoryProtocolSpy()
+    attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
     appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
     clientAttestationValidator = ClientAttestationValidatorProtocolSpy()
 
     Container.shared.appAttestationProvider.register { self.appAttestationProvider }
-    Container.shared.appAttestationRepository.register { self.appAttestationRepository }
+    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
     Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
     Container.shared.clientAttestationValidator.register { self.clientAttestationValidator }
   }
 
   private func createSuccessState() {
-    appAttestationRepository.fetchChallengeReturnValue = mockChallengeResponse.challenge
-    appAttestationRepository.fetchClientAttestationReturnValue = mockClientAttestation
+    attestationServiceRepository.fetchChallengeReturnValue = mockChallengeResponse.challenge
+    attestationServiceRepository.fetchClientAttestationReturnValue = mockClientAttestation
     appAttestationProvider.generateAttestedKeyWithReturnValue = mockAttestedKey
     appAttestationProvider.generateAppAssertionForWithReturnValue = mockAppAssertion
     appAttestationKeyRepository.createForWithReturnValue = mockKeyPair

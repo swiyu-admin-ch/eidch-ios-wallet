@@ -23,7 +23,7 @@ class SetupSDKErrorViewModel: NavigationBackable {
 
   var primaryText: String {
     switch error {
-    case EIDRequestRepository.Error.insufficientKeyStorageResistance:
+    case SIDRepository.Error.insufficientKeyStorageResistance:
       L10n.tkEidRequestClientAttestationInsufficientKeyStorageTitle
     case DCError.serverUnavailable:
       L10n.tkEidRequestClientAttestationDeviceCheckTimeoutTitle
@@ -38,7 +38,7 @@ class SetupSDKErrorViewModel: NavigationBackable {
 
   var secondaryText: String {
     switch error {
-    case EIDRequestRepository.Error.insufficientKeyStorageResistance:
+    case SIDRepository.Error.insufficientKeyStorageResistance:
       L10n.tkEidRequestClientAttestationInsufficientKeyStorageBody
     case DCError.serverUnavailable:
       L10n.tkEidRequestClientAttestationDeviceCheckTimeoutBody
@@ -54,10 +54,10 @@ class SetupSDKErrorViewModel: NavigationBackable {
   var isRetryEnabled: Bool {
     switch error {
     case DCError.serverUnavailable,
-         EIDRequestRepository.Error.unknownError:
+         SIDRepository.Error.unknownError:
       true
     case is DCError,
-         EIDRequestRepository.Error.insufficientKeyStorageResistance:
+         SIDRepository.Error.insufficientKeyStorageResistance:
       false
     default:
       true

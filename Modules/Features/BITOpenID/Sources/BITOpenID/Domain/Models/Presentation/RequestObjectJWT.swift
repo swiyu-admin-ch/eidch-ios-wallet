@@ -25,7 +25,7 @@ public class RequestObjectJWT: RequestObject, JWT {
     expiredAt = try container.decodeIfPresent(Date.self, forKey: .expiredAt)
     activatedAt = try container.decodeIfPresent(Date.self, forKey: .activatedAt)
     issuedAt = try container.decodeIfPresent(Date.self, forKey: .issuedAt)
-    jwtIdentifier = try container.decodeIfPresent(String.self, forKey: .jwtIdentifier)
+    jwtId = try container.decodeIfPresent(String.self, forKey: .jwtId)
 
     try super.init(from: decoder)
   }
@@ -39,7 +39,7 @@ public class RequestObjectJWT: RequestObject, JWT {
   public let expiredAt: Date?
   public let activatedAt: Date?
   public let issuedAt: Date?
-  public let jwtIdentifier: String?
+  public let jwtId: String?
 
   public override func isEqual(to other: RequestObject) -> Bool {
     guard super.isEqual(to: other) else { return false }
@@ -50,7 +50,7 @@ public class RequestObjectJWT: RequestObject, JWT {
       expiredAt == other?.expiredAt &&
       activatedAt == other?.activatedAt &&
       issuedAt == other?.issuedAt &&
-      jwtIdentifier == other?.jwtIdentifier
+      jwtId == other?.jwtId
   }
 
   // MARK: Private
@@ -62,7 +62,7 @@ public class RequestObjectJWT: RequestObject, JWT {
     case expiredAt = "exp"
     case activatedAt = "nbf"
     case issuedAt = "iat"
-    case jwtIdentifier = "jti"
+    case jwtId = "jti"
   }
 
 }

@@ -40,6 +40,9 @@ public enum ThemingAssets {
     public enum Button {
       public static let primaryDisabled = ColorAsset(name: "Background/Button/Primary Disabled")
       public static let secondary = ColorAsset(name: "Background/Button/Secondary")
+      public static let warningBorder = ColorAsset(name: "Background/Button/Warning Border")
+      public static let warningLabel = ColorAsset(name: "Background/Button/Warning Label")
+      public static let warning = ColorAsset(name: "Background/Button/Warning")
     }
 
     public enum ButtonSheet {
@@ -101,6 +104,8 @@ public enum ThemingAssets {
   public enum Component {
     public enum Callout {
       public enum Alert {
+        public static let background = ColorAsset(name: "Component/Callout/Alert/Background")
+        public static let border = ColorAsset(name: "Component/Callout/Alert/Border")
         public static let button = ColorAsset(name: "Component/Callout/Alert/Button")
         public static let symbol = ColorAsset(name: "Component/Callout/Alert/Symbol")
       }
@@ -143,21 +148,14 @@ public enum ThemingAssets {
     public static let chrome = ColorAsset(name: "Materials/Chrome")
   }
 
-  public static let back = ImageAsset(name: "Back")
   public static let closeCircle = ImageAsset(name: "CloseCircle")
   public static let camera = ImageAsset(name: "Camera")
-  public static let close = ImageAsset(name: "Close")
   public static let noInternet = ImageAsset(name: "NoInternet")
   public static let unknownIcon = ImageAsset(name: "UnknownIcon")
-  public static let backIndicatorBackgroundDark = ImageAsset(name: "back-indicator-background-dark")
-  public static let backIndicatorBackground = ImageAsset(name: "back-indicator-background")
-  public static let backIndicatorDark = ImageAsset(name: "back-indicator-dark")
-  public static let backIndicator = ImageAsset(name: "back-indicator")
   public static let chevronRight = ImageAsset(name: "chevronRight")
-  public static let elipsis = ImageAsset(name: "elipsis")
-  public static let federalOfficeLogo = ImageAsset(name: "federal-office-logo")
   public static let inAppLogo = ImageAsset(name: "in-app-logo")
   public static let xmark = ImageAsset(name: "xmark")
+  public static let information = ImageAsset(name: "Information")
   public static let qrCodeIcon = ImageAsset(name: "QRCodeIcon")
   public static let scanIcon = ImageAsset(name: "ScanIcon")
   public static let navigationAccent = ColorAsset(name: "navigationAccent")

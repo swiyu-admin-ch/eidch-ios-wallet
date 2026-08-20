@@ -51,11 +51,7 @@ public struct SecureTextField: UIViewRepresentable {
     func togglePasswordVisibility() {
       isSecure.toggle()
       textField?.isSecureTextEntry = isSecure
-
-      let button = textField?.rightView as? UIButton
-      let imageName = isSecure ? "eye.slash" : "eye"
-      button?.setImage(UIImage(systemName: imageName), for: .normal)
-      button?.accessibilityLabel = isSecure ? L10n.tkGlobalInvisibleAlt : L10n.tkGlobalVisibleAlt
+      textField?.updateToggleButtonState()
     }
 
     // MARK: Private
@@ -98,6 +94,7 @@ public struct SecureTextField: UIViewRepresentable {
     let toggleButton = toggleButton(context: context)
 
     textField.rightView = toggleButton
+    textField.updateToggleButtonState(tintColor: tintColor)
     textField.rightViewMode = .always
     textField.shouldGroupAccessibilityChildren = false
 
@@ -158,7 +155,6 @@ public struct SecureTextField: UIViewRepresentable {
 
   private func toggleButton(context: Context) -> UIButton {
     let toggleButton = UIButton(type: .custom)
-    toggleButton.setImage(UIImage(systemName: "eye.slash")?.withTintColor(tintColor, renderingMode: .alwaysOriginal), for: .normal)
     toggleButton.addTarget(context.coordinator, action: #selector(Coordinator.togglePasswordVisibility), for: .touchUpInside)
     toggleButton.isAccessibilityElement = true
 
@@ -177,4 +173,23 @@ extension View {
 
 extension EnvironmentValues {
   @Entry var secureTextFieldAccessibilityIdentifier: String?
+}
+
+// MARK: - TextField Toggle Button State
+
+extension UITextField {
+  fileprivate func updateToggleButtonState(tintColor: UIColor? = nil) {
+    guard let button = rightView as? UIButton else { return }
+
+    if let tintColor {
+      button.tintColor = tintColor
+    }
+
+    if let iconColor = button.tintColor {
+      let imageName = isSecureTextEntry ? "eye.slash" : "eye"
+      button.setImage(UIImage(systemName: imageName)?.withTintColor(iconColor, renderingMode: .alwaysOriginal), for: .normal)
+    }
+
+    button.accessibilityLabel = isSecureTextEntry ? L10n.tkGlobalInvisibleAlt : L10n.tkGlobalVisibleAlt
+  }
 }

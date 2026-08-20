@@ -77,12 +77,7 @@ extension NFCScanView {
 
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
-    ToolbarItemGroup(placement: .topBarTrailing) {
-      Button(action: close, label: {
-        ThemingAssets.close.swiftUIImage
-      })
-      .accessibilityLabel(L10n.tkGlobalClose)
-    }
+    CloseButtonToolbar(action: close)
   }
 
   private func close() {

@@ -1,4 +1,3 @@
-import AnyCodable
 import BITCore
 import BITCrypto
 import BITJWT
@@ -10,13 +9,23 @@ import Foundation
 public enum RequestObjectError: Error, Equatable {
   case invalidPayload(_ underlyingError: Error? = nil)
   case invalidQuery
-  case missingQuery
+  case missingDcqlQuery
+  case duplicateTrustStatement
+  case missingVQPS
+  case verifiedAndNotVerifiedQueryPresent
+  case noQueryFoundOnVQPS
+
+  // MARK: Public
 
   public static func == (lhs: RequestObjectError, rhs: RequestObjectError) -> Bool {
     switch (lhs, rhs) {
-    case (.invalidPayload, .invalidPayload),
+    case (.duplicateTrustStatement, .duplicateTrustStatement),
+         (.invalidPayload, .invalidPayload),
          (.invalidQuery, .invalidQuery),
-         (.missingQuery, .missingQuery):
+         (.missingDcqlQuery, .missingDcqlQuery),
+         (.missingVQPS, .missingVQPS),
+         (.noQueryFoundOnVQPS, .noQueryFoundOnVQPS),
+         (.verifiedAndNotVerifiedQueryPresent, .verifiedAndNotVerifiedQueryPresent):
       true
     default:
       false
@@ -33,7 +42,7 @@ public class RequestObject: Codable {
   // MARK: Lifecycle
 
   init(
-    dcqlQuery: DcqlQuery?,
+    dcqlQuery: Heidi_dcqlDcqlQuery,
     state: String? = nil,
     nonce: String?,
     responseUri: URL?,
@@ -41,7 +50,11 @@ public class RequestObject: Codable {
     responseType: String,
     clientId: String,
     responseMode: ResponseMode,
-    transactionData: [String]?)
+    scope: String?,
+    identityTrustStatement: IdentityTrustStatement? = nil,
+    verificationQueryPublicStatement: VerificationQueryPublicStatement? = nil,
+    protectedVerificationAuthorizationTrustStatement: ProtectedVerificationAuthorizationTrustStatement? = nil,
+    transactionData: [String]?) throws
   {
     self.dcqlQuery = dcqlQuery
     self.state = state
@@ -49,8 +62,12 @@ public class RequestObject: Codable {
     self.responseUri = responseUri
     self.clientMetadata = clientMetadata
     self.responseType = responseType
-    self.clientId = clientId
+    clientIdentifier = try ClientIdentifier(rawClientId: clientId)
     self.responseMode = responseMode
+    self.scope = scope
+    self.identityTrustStatement = identityTrustStatement
+    self.verificationQueryPublicStatement = verificationQueryPublicStatement
+    self.protectedVerificationAuthorizationTrustStatement = protectedVerificationAuthorizationTrustStatement
     self.transactionData = transactionData
   }
 
@@ -62,21 +79,15 @@ public class RequestObject: Codable {
     responseUri = try container.decodeIfPresent(URL.self, forKey: .responseUri)
     clientMetadata = try container.decodeIfPresent(ClientMetadata.self, forKey: .clientMetadata)
     responseType = try container.decode(String.self, forKey: .responseType)
-    clientId = try container.decode(String.self, forKey: .clientId)
+    clientIdentifier = try container.decode(ClientIdentifier.self, forKey: .clientId)
     responseMode = try container.decode(ResponseMode.self, forKey: .responseMode)
+    let dcqlQuery = try container.decodeIfPresent(DcqlQuery.self, forKey: .dcqlQuery)
+    scope = try container.decodeIfPresent(String.self, forKey: .scope)
+    identityTrustStatement = try container.decodeTrustStatement(IdentityTrustStatementJWT.self)
+    verificationQueryPublicStatement = try container.decodeTrustStatement(VerificationQueryPublicStatementJWT.self)
+    protectedVerificationAuthorizationTrustStatement = try container.decodeTrustStatement(ProtectedVerificationAuthorizationTrustStatementJWT.self)
+    self.dcqlQuery = try Self.getVerifiedQuery(for: scope, vqPS: verificationQueryPublicStatement?.payload, dcqlQuery: dcqlQuery).query
     transactionData = try container.decodeIfPresent([String].self, forKey: .transactionData)
-
-    guard let query = try container.decodeIfPresent(AnyCodable.self, forKey: .dcqlQuery) else {
-      dcqlQuery = nil
-      return
-    }
-
-    let data = try JSONEncoder().encode(query)
-    guard let json = String(data: data, encoding: .utf8) else {
-      throw RequestObjectError.invalidQuery
-    }
-
-    dcqlQuery = try DcqlSupport().decodeDcqlQuery(json: json)
   }
 
   // MARK: Public
@@ -85,10 +96,14 @@ public class RequestObject: Codable {
   public let nonce: String?
   public let responseUri: URL?
   public let clientMetadata: ClientMetadata?
+  public let clientIdentifier: ClientIdentifier
   public let responseType: String
-  public let clientId: String
-  public let dcqlQuery: DcqlQuery?
+  public let dcqlQuery: Heidi_dcqlDcqlQuery
   public let responseMode: ResponseMode
+  public let scope: String?
+  public let identityTrustStatement: IdentityTrustStatement?
+  public let verificationQueryPublicStatement: VerificationQueryPublicStatement?
+  public let protectedVerificationAuthorizationTrustStatement: ProtectedVerificationAuthorizationTrustStatement?
   public let transactionData: [String]?
   public var raw: Data?
 
@@ -99,22 +114,27 @@ public class RequestObject: Codable {
     try container.encodeIfPresent(nonce, forKey: .nonce)
     try container.encodeIfPresent(responseUri, forKey: .responseUri)
     try container.encodeIfPresent(clientMetadata, forKey: .clientMetadata)
-    try container.encodeIfPresent(responseType, forKey: .responseType)
-    try container.encodeIfPresent(clientId, forKey: .clientId)
+    try container.encode(responseType, forKey: .responseType)
+    try container.encode(clientIdentifier, forKey: .clientId)
     try container.encode(responseMode, forKey: .responseMode)
+    try container.encodeIfPresent(scope, forKey: .scope)
     try container.encodeIfPresent(transactionData, forKey: .transactionData)
   }
 
   public func isEqual(to other: RequestObject) -> Bool {
     guard type(of: self) == type(of: other) else { return false }
     return responseMode == other.responseMode &&
-      clientId == other.clientId &&
+      clientIdentifier == other.clientIdentifier &&
       responseType == other.responseType &&
       responseUri == other.responseUri &&
       state == other.state &&
       nonce == other.nonce &&
       clientMetadata == other.clientMetadata &&
-      dcqlQuery?.isEqual(other.dcqlQuery) ?? false &&
+      dcqlQuery == other.dcqlQuery &&
+      scope == other.scope &&
+      identityTrustStatement == other.identityTrustStatement &&
+      verificationQueryPublicStatement == other.verificationQueryPublicStatement &&
+      protectedVerificationAuthorizationTrustStatement == other.protectedVerificationAuthorizationTrustStatement &&
       transactionData == other.transactionData
   }
 
@@ -127,22 +147,74 @@ public class RequestObject: Codable {
     case responseType = "response_type"
     case clientId = "client_id"
     case responseMode = "response_mode"
+    case scope
+    case verifierInfo = "verifier_info"
     case transactionData = "transaction_data"
     case dcqlQuery = "dcql_query"
   }
+
+  // MARK: Private
+
+  private static func getVerifiedQuery(for scope: String?, vqPS: VerificationQueryPublicStatementJWT?, dcqlQuery: DcqlQuery?) throws -> DcqlQuery {
+    if let scope {
+      guard dcqlQuery == nil else { throw RequestObjectError.verifiedAndNotVerifiedQueryPresent }
+      guard let vqPS else { throw RequestObjectError.missingVQPS }
+      guard vqPS.request.scope == scope else { throw RequestObjectError.noQueryFoundOnVQPS }
+      return vqPS.request.dcqlQuery
+    }
+    guard let dcqlQuery else { throw RequestObjectError.missingDcqlQuery }
+    return dcqlQuery
+  }
+
 }
 
-// MARK: RequestObject.ResponseMode
+extension KeyedDecodingContainer<RequestObject.CodingKeys> {
+  fileprivate func decodeTrustStatement<T: Decodable, U: JWS<T>>(_ type: T.Type) throws -> U? {
+    guard var container = try? nestedUnkeyedContainer(forKey: RequestObject.CodingKeys.verifierInfo) else {
+      return nil
+    }
+
+    let decoder = JWSDecoder()
+    var result: U?
+    while !container.isAtEnd {
+      let info = try container.decode(RequestObject.VerifierInfo.self)
+      let data = Data(info.data.utf8)
+      guard let decoded = try? decoder.decode(T.self, from: data) else { continue }
+      guard result == nil else { throw RequestObjectError.duplicateTrustStatement }
+      result = decoded as? U
+    }
+    return result
+  }
+}
+
+// MARK: - RequestObject.ResponseMode
 
 extension RequestObject {
   public enum ResponseMode: String, Codable {
-    case directPost = "direct_post"
     case directPostJWT = "direct_post.jwt"
     case dcApiJWT = "dc_api.jwt"
   }
 }
 
-// MARK: Equatable
+// MARK: - RequestObject.VerifierInfo
+
+extension RequestObject {
+  public struct VerifierInfo: Codable, Equatable {
+    public init(format: Format, data: String) {
+      self.format = format
+      self.data = data
+    }
+
+    public let format: Format
+    public let data: String
+
+    public enum Format: String, Codable, Equatable {
+      case jwt
+    }
+  }
+}
+
+// MARK: - RequestObject + Equatable
 
 extension RequestObject: Equatable {
   public static func == (lhs: RequestObject, rhs: RequestObject) -> Bool {
@@ -156,15 +228,15 @@ public typealias Verifier = ClientMetadata
 
 /// Implementation of Human-Readable Client Metadata as of
 /// https://datatracker.ietf.org/doc/html/rfc7591#section-2.2
-public struct ClientMetadata: Codable, Equatable {
+public struct ClientMetadata: Codable, Equatable, Changeable {
 
   // MARK: Lifecycle
 
   public init(
     clientName: LocalizedDisplay<String>?,
     logoUri: LocalizedDisplay<URL>?,
-    jwks: JWKs? = nil,
-    encryptedResponseEncValuesSupported: [String]? = nil) throws
+    jwks: JWKs?,
+    encryptedResponseEncValuesSupported: [String]?)
   {
     self.clientName = clientName
     self.logoUri = logoUri
@@ -186,8 +258,8 @@ public struct ClientMetadata: Codable, Equatable {
 
   public let clientName: LocalizedDisplay<String>?
   public let logoUri: LocalizedDisplay<URL>?
-  public let jwks: JWKs?
-  public let encryptedResponseEncValuesSupported: [String]?
+  public var jwks: JWKs?
+  public var encryptedResponseEncValuesSupported: [String]?
 
   // MARK: Private
 

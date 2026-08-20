@@ -30,6 +30,8 @@ struct RecordSelfieView: View {
         .animation(.easeInOut(duration: 0.4), value: viewModel.state)
         .toolbar { toolbarContent() }
         .navigationBarBackButtonHidden()
+        .navigationTitle(viewModel.state == .camera ? L10n.tkEidRequestRecordSelfieTitle : "")
+        .navigationBarTitleDisplayMode(.inline)
         .navigate(to: $viewModel.destination)
         .transparentToolbarBackground(isActive: true, topInset: geo.safeAreaInsets.top)
     }
@@ -129,24 +131,7 @@ extension RecordSelfieView {
 
   @ToolbarContentBuilder
   private func toolbarContent() -> some ToolbarContent {
-    if viewModel.state == .camera {
-      ToolbarItem(placement: .principal) {
-        Text(L10n.tkEidRequestRecordSelfieTitle)
-          .font(.custom.body)
-          .fontWeight(.semibold)
-          .foregroundStyle(ThemingAssets.Brand.Core.white.swiftUIColor)
-          .colorScheme(.light)
-          .lineLimit(1)
-      }
-    }
-
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(action: close, label: {
-        viewModel.state == .camera ? Assets.closeCamera.swiftUIImage : ThemingAssets.close.swiftUIImage
-      })
-      .accessibilityLabel(L10n.tkGlobalClose)
-      .accessibilityIdentifier("closeButton")
-    }
+    CloseButtonToolbar(action: close)
   }
 
   private func close() {

@@ -13,9 +13,6 @@ let package = Package(
     .library(
       name: "BITAnalytics",
       targets: ["BITAnalytics"]),
-    .library(
-      name: "BITAnalyticsMocks",
-      targets: ["BITAnalyticsMocks"]),
   ],
   dependencies: [
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
@@ -31,16 +28,10 @@ let package = Package(
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "Dynatrace", package: "swift-mobile-sdk"),
       ]),
-    .target(
-      name: "BITAnalyticsMocks",
-      dependencies: [
-        "BITAnalytics",
-      ]),
     .testTarget(
       name: "BITAnalyticsTests",
       dependencies: [
         "BITAnalytics",
-        "BITAnalyticsMocks",
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),
   ])

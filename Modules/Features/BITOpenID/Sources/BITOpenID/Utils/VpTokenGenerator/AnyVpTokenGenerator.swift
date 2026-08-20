@@ -7,6 +7,7 @@ import Factory
 
 enum AnyVpTokenGeneratorError: Error {
   case invalidFormat
+  case missingDcApiOrigin
 }
 
 // MARK: - AnyVpTokenGenerator
@@ -16,12 +17,12 @@ struct AnyVpTokenGenerator: AnyVpTokenGeneratorProtocol {
     dispatcher = anyVpTokenGeneratorDispatcher
   }
 
-  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer]) throws -> VpToken {
-    guard let credentialFormat = CredentialFormat(rawValue: credential.format), let dispatcherFormat = dispatcher[credentialFormat] else {
+  func generate(requestObject: RequestObject, credential: any AnyCredential, keyPair: VaultKeyPair?, paths: [ClaimsPathPointer], withOrigin: String?) throws -> VpToken {
+    guard let dispatcherFormat = dispatcher[credential.format] else {
       throw CredentialFormatError.formatNotSupported
     }
 
-    return try dispatcherFormat.generate(requestObject: requestObject, credential: credential, keyPair: keyPair, paths: paths)
+    return try dispatcherFormat.generate(requestObject: requestObject, credential: credential, keyPair: keyPair, paths: paths, withOrigin: withOrigin)
   }
 
   private let dispatcher: [CredentialFormat: AnyVpTokenGeneratorProtocol]

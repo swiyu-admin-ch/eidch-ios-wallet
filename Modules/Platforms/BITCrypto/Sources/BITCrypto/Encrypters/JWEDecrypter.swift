@@ -1,5 +1,8 @@
+import BITAnalytics
+import BITCore
+import Factory
 import Foundation
-import JOSESwift
+import JWSETKit
 import Security
 import Spyable
 
@@ -7,6 +10,8 @@ import Spyable
 
 public enum JWEDecrypterError: Error {
   case decrypterCreationFailed
+  case maxCompressedCipherTextLengthExceeded
+  case maxDecompressedSizeExceeded
 }
 
 // MARK: - JWEDecrypterProtocol
@@ -20,21 +25,32 @@ public protocol JWEDecrypterProtocol {
 
 public struct JWEDecrypter: JWEDecrypterProtocol {
 
-  public func decrypt(payload: Data, privateKey: SecKey) throws -> Data {
-    let jwe = try JWE(compactSerialization: payload)
-    let keyPair = try ECKeyPair(privateKey: privateKey)
+  // MARK: Public
 
-    guard
-      let keyManagementAlgorithm = jwe.header.keyManagementAlgorithm,
-      let contentEncryptionAlgorithm = jwe.header.contentEncryptionAlgorithm,
-      let decrypter = Decrypter(
-        keyManagementAlgorithm: keyManagementAlgorithm,
-        contentEncryptionAlgorithm: contentEncryptionAlgorithm,
-        decryptionKey: keyPair)
-    else {
+  public func decrypt(payload: Data, privateKey: SecKey) throws -> Data {
+    guard String(decoding: payload, as: UTF8.self).count <= Self.maxCompressedCipherTextLength else {
+      analytics.log(JWEDecrypterError.maxCompressedCipherTextLengthExceeded)
+      throw JWEDecrypterError.maxCompressedCipherTextLengthExceeded
+    }
+    let jwe = try JSONWebEncryption(from: payload)
+    var error: Unmanaged<CFError>?
+    guard let keyData = SecKeyCopyExternalRepresentation(privateKey, &error) as Data? else {
       throw JWEDecrypterError.decrypterCreationFailed
     }
+    let decryptionKey = try JSONWebECPrivateKey(importing: keyData, format: .raw)
 
-    return try jwe.decrypt(using: decrypter).data()
+    let result = try jwe.decrypt(using: decryptionKey)
+    guard result.count <= Self.maxDecompressedSize else {
+      analytics.log(JWEDecrypterError.maxDecompressedSizeExceeded)
+      throw JWEDecrypterError.maxDecompressedSizeExceeded
+    }
+    return result
   }
+
+  // MARK: Private
+
+  private static let maxDecompressedSize = 20 * 1024 * 1024 // 20MB
+  private static let maxCompressedCipherTextLength = 6_000_000 // credentials containing large images etc. have max 5.5mio for now so use 6mio
+
+  @Injected(\.analytics) private var analytics
 }

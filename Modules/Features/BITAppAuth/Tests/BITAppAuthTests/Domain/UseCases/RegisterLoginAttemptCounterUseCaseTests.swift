@@ -24,7 +24,7 @@ final class RegisterLoginAttemptCounterUseCaseTests: XCTestCase {
     repository.getAttemptsKindReturnValue = attempt
     repository.registerAttemptKindReturnValue = expectation
 
-    let result = try useCase.execute(kind: .biometric)
+    let result = try useCase(kind: .biometric)
 
     XCTAssertEqual(repository.getAttemptsKindReceivedKind, .biometric)
     XCTAssertTrue(repository.registerAttemptKindCalled)
@@ -38,7 +38,7 @@ final class RegisterLoginAttemptCounterUseCaseTests: XCTestCase {
     repository.getAttemptsKindReturnValue = attempt
     repository.registerAttemptKindReturnValue = expectation
 
-    let result = try useCase.execute(kind: .appPin)
+    let result = try useCase(kind: .appPin)
 
     XCTAssertEqual(repository.getAttemptsKindReceivedKind, .appPin)
     XCTAssertTrue(repository.registerAttemptKindCalled)

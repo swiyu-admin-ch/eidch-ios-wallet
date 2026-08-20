@@ -1,4 +1,5 @@
 import BITCore
+import Factory
 import Foundation
 import XCTest
 @testable import BITAppAuth
@@ -12,12 +13,12 @@ final class UniquePassphraseManagerTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    spyIsBiometricUsageAllowedUseCase = IsBiometricUsageAllowedUseCaseProtocolSpy()
+    getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
     spyUniquePassphraseRepository = UniquePassphraseRepositoryProtocolSpy()
-    uniquePassphraseManager = UniquePassphraseManager(
-      isBiometricUsageAllowedUseCase: spyIsBiometricUsageAllowedUseCase,
-      uniquePassphraseRepository: spyUniquePassphraseRepository,
-      passphraseLength: Self.passphraseLength)
+    Container.shared.getBiometricStateUseCase.register { self.getBiometricStateUseCase }
+    Container.shared.uniquePassphraseRepository.register { self.spyUniquePassphraseRepository }
+    Container.shared.passphraseLength.register { Self.passphraseLength }
+    uniquePassphraseManager = UniquePassphraseManager()
   }
 
   func testGenerate() throws {
@@ -26,12 +27,12 @@ final class UniquePassphraseManagerTests: XCTestCase {
   }
 
   func testSaveWithBiometrics() throws {
-    spyIsBiometricUsageAllowedUseCase.executeReturnValue = true
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
     try testSave(withBiometrics: true)
   }
 
   func testSaveWithoutBiometrics() throws {
-    spyIsBiometricUsageAllowedUseCase.executeReturnValue = false
+    getBiometricStateUseCase.callAsFunctionReturnValue = .disabled
     try testSave(withBiometrics: false)
   }
 
@@ -71,7 +72,7 @@ final class UniquePassphraseManagerTests: XCTestCase {
   private static let passphraseLength = 64
 
   // swiftlint:disable all
-  private var spyIsBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocolSpy!
+  private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy!
   private var spyUniquePassphraseRepository: UniquePassphraseRepositoryProtocolSpy!
   private var spyEncrypter: EncryptableSpy!
   private var uniquePassphraseManager: UniquePassphraseManager!
@@ -86,7 +87,7 @@ extension UniquePassphraseManagerTests {
 
     try uniquePassphraseManager.save(uniquePassphrase: uniquePassphrase, context: context)
     XCTAssertTrue(spyUniquePassphraseRepository.saveUniquePassphraseForAuthMethodInContextCalled)
-    XCTAssertTrue(spyIsBiometricUsageAllowedUseCase.executeCalled)
+    XCTAssertTrue(getBiometricStateUseCase.callAsFunctionCalled)
 
     if withBiometrics {
       XCTAssertEqual(2, spyUniquePassphraseRepository.saveUniquePassphraseForAuthMethodInContextCallsCount)

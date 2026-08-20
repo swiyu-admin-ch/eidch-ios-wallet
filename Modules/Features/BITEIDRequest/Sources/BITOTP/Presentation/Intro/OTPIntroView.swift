@@ -18,9 +18,7 @@ struct OTPIntroView: View {
       actions: actions)
       .navigationBarBackButtonHidden()
       .toolbar {
-        CloseButtonToolbar(accessibilityIdentifier: "closeButton") {
-          navigator.dismiss()
-        }
+        CloseButtonToolbar { navigator.dismiss() }
       }
   }
 

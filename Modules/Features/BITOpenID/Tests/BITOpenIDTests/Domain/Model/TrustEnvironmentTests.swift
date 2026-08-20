@@ -49,8 +49,12 @@ final class TrustEnvironmentTests: XCTestCase {
   ]
 
   private let unknownDids: [String] = [
+    "did:tdw:mock:identifier-reg-d.trust-infra.swiyu.admin.ch:example",
+    "did:webvh:mock:identifier-reg-d.trust-infra.swiyu.admin.ch:example",
     "did:tdw:mock:identifier-reg-a.trust-infra.swiyu.admin.ch:example",
     "did:webvh:mock:identifier-reg-a.trust-infra.swiyu.admin.ch:example",
+    "did:tdw:mock:identifier-reg-a.trust-infra.swiyu-int.admin.ch:example",
+    "did:webvh:mock:identifier-reg-a.trust-infra.swiyu-int.admin.ch:example",
     "did:tdw:mock:identifier-reg-r.trust-infra.swiyu.admin.ch:example",
     "did:webvh:mock:identifier-reg-r.trust-infra.swiyu.admin.ch:example",
     "other:tdw:mock:identifier-reg.trust-infra.swiyu-int.admin.ch:example",

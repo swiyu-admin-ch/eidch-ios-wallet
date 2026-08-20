@@ -1,5 +1,6 @@
 import BITActivity
 import BITCredentialShared
+import BITNonCompliance
 import BITOpenID
 import Foundation
 
@@ -9,9 +10,9 @@ extension Activity {
       type: type,
       actorTrust: context.trustInformation.actorTrust,
       vcSchemaTrust: context.trustInformation.vcSchemaTrust,
-      actorCompliance: context.trustInformation.actorComplianceStatus,
+      actorCompliance: context.actorCompliance.actorComplianceStatus,
       nonComplianceData: context.requestObjectJWS.rawJWS,
-      nonComplianceReasonDisplays: context.trustInformation.nonComplianceReasonDisplays,
+      nonComplianceReasonDisplays: context.actorCompliance.nonComplianceReasonDisplays,
       claims: credential.uniqueClaimIds.map(ActivityClaim.init),
       actorDisplays: context.verifierDisplays.map(ActivityActorDisplay.init))
   }

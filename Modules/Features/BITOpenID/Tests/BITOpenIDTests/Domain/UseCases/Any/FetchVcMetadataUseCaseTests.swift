@@ -92,17 +92,6 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
     }
   }
 
-  func testExecute_unsupportedFormat_throwsError() async throws {
-    anyCredentialSpy.format = "invalid"
-
-    do {
-      _ = try await useCase.execute(anyCredential: anyCredentialSpy)
-      XCTFail("An error was expected")
-    } catch {
-      XCTAssertEqual(error as? CredentialFormatError, .formatNotSupported)
-    }
-  }
-
   // MARK: Private
 
   private var useCase = FetchVcMetadataUseCase()
@@ -127,12 +116,15 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
   private func success(format: CredentialFormat) {
     switch format {
     case .vcSdJwt:
-      anyCredentialSpy.format = CredentialFormat.vcSdJwt.rawValue
+      anyCredentialSpy.format = .vcSdJwt
       anyCredentialSpy.raw = "vcSdJwtPayload"
-      anyCredentialSpy.getClaimsJSONReturnValue = [keyMock: "testValue"]
-      fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReturnValue = (vcSdJwtJsonSchemaMock, vcSdJwtOcaBundleMock)
-      jsonSchemaValidatorSpy.validateJsonWithReturnValue = true
+    case .dcSdJwt:
+      anyCredentialSpy.format = .dcSdJwt
+      anyCredentialSpy.raw = "dcSdJwtPayload"
     }
+    anyCredentialSpy.getClaimsJSONReturnValue = [keyMock: "testValue"]
+    fetchVcMetadataForVcSdJwtUseCaseSpy.executeAnyCredentialReturnValue = (vcSdJwtJsonSchemaMock, vcSdJwtOcaBundleMock)
+    jsonSchemaValidatorSpy.validateJsonWithReturnValue = true
   }
 }
 

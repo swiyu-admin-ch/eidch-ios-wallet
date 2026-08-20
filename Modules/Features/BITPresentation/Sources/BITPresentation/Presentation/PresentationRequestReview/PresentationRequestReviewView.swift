@@ -22,6 +22,7 @@ struct PresentationRequestReviewView: View {
     case content = "presentationRequestReviewContent"
     case acceptButton
     case denyButton
+    case unregisteredWarning
   }
 
   var body: some View {
@@ -29,9 +30,17 @@ struct PresentationRequestReviewView: View {
       state: viewModel.state,
       alert: $viewModel.alert,
       eventAction: { event in Task { await viewModel.send(event) } },
-      badgeAction: { badgeType in
-        navigator.navigate(to: PresentationDestinations.badgeInformation(badgeType))
+      actorInformationAction: { actorInformation in
+        navigator.navigate(to: PresentationDestinations.actorInformation(actorInformation))
+      },
+      claimInformationAction: { isSensitive, claimName in
+        navigator.navigate(to: PresentationDestinations.claimInformation(isSensitive: isSensitive, claimName: claimName))
       })
+      .onFirstAppear {
+        Task {
+          await viewModel.send(.onAppear)
+        }
+      }
       .onColorSchemeChange { scheme in
         viewModel.updateCredential(with: scheme.rawValue)
       }
@@ -55,12 +64,14 @@ extension PresentationRequestReviewView {
       state: PresentationRequestReviewState,
       alert: Binding<PresentationRequestReviewAlert?>,
       eventAction: @escaping (PresentationRequestReviewViewModel.Event) -> Void = { _ in },
-      badgeAction: @escaping (BadgeType) -> Void = { _ in })
+      actorInformationAction: @escaping (ActorInformation) -> Void = { _ in },
+      claimInformationAction: @escaping (Bool, String) -> Void = { _, _ in })
     {
       self.state = state
       self.alert = alert
       self.eventAction = eventAction
-      self.badgeAction = badgeAction
+      self.actorInformationAction = actorInformationAction
+      self.claimInformationAction = claimInformationAction
     }
 
     // MARK: Internal
@@ -72,7 +83,6 @@ extension PresentationRequestReviewView {
         .readSafeAreaInsets(onChange: { insets in
           topInset = insets.top
         })
-        .navigationBarHidden(true)
         .frame(maxWidth: .infinity)
         .background(ThemingAssets.Background.secondary.swiftUIColor)
         .accessibilityElement(children: .contain)
@@ -83,10 +93,14 @@ extension PresentationRequestReviewView {
 
     @State private var topInset: CGFloat = 0
 
+    @ScaledMetric(relativeTo: .footnote) private var warningIconWidth: CGFloat = 11
+    @ScaledMetric(relativeTo: .footnote) private var warningIconHeight: CGFloat = 14
+
     private let state: PresentationRequestReviewState
     private let alert: Binding<PresentationRequestReviewAlert?>
     private let eventAction: (PresentationRequestReviewViewModel.Event) -> Void
-    private let badgeAction: (BadgeType) -> Void
+    private let actorInformationAction: (ActorInformation) -> Void
+    private let claimInformationAction: (Bool, String) -> Void
 
     @ViewBuilder
     private var stateView: some View {
@@ -110,7 +124,7 @@ extension PresentationRequestReviewView {
     }
 
     private func actorHeader(_ verifierDisplay: VerifierDisplay) -> some View {
-      ActorHeaderView(verifier: verifierDisplay, topInset: topInset, onBadgeTapped: badgeAction)
+      ActorHeaderView(verifier: verifierDisplay, topInset: topInset, onTapped: actorInformationAction)
     }
   }
 }
@@ -128,7 +142,13 @@ extension PresentationRequestReviewView.Content {
         .accessibilitySortPriority(AccessibilityPriority.x1.rawValue)
 
       SectionView(title: L10n.tkPresentReviewCredentialDataSectionPrimary) {
-        CredentialSummaryWidget(credential: viewState.credential, claimBadges: viewState.claimBadges, badgeAction: badgeAction)
+        if !viewState.hasVerifiedQuery {
+          unregisteredRequestWarning()
+            .padding(.horizontal, .x4)
+            .padding(.top, .x2)
+        }
+
+        CredentialSummaryWidget(credential: viewState.credential, claimBadges: viewState.claimBadges, claimInformationAction: claimInformationAction)
       }
       .accessibilitySortPriority(AccessibilityPriority.x2.rawValue)
 
@@ -159,6 +179,33 @@ extension PresentationRequestReviewView.Content {
     }
   }
 
+  private func unregisteredRequestWarning() -> some View {
+    HStack(alignment: .top, spacing: .x2) {
+      Assets.warningIcon.swiftUIImage
+        .resizable()
+        .scaledToFit()
+        .frame(width: warningIconWidth, height: warningIconHeight, alignment: .top)
+        .padding(.top, .x1)
+        .accessibilityHidden(true)
+
+      Text(L10n.tkPresentUnregisteredRequestWarning)
+        .font(.custom.footnote)
+    }
+    .foregroundStyle(ThemingAssets.Component.Callout.Alert.symbol.swiftUIColor)
+    .padding(.x4)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(ThemingAssets.Component.Callout.Alert.background.swiftUIColor)
+    .clipShape(.rect(cornerRadius: .x2))
+    .contentShape(.accessibility, .rect(cornerRadius: .x2))
+    .overlay {
+      RoundedRectangle(cornerRadius: .x2)
+        .stroke(ThemingAssets.Component.Callout.Alert.border.swiftUIColor, lineWidth: 1)
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(L10n.tkPresentUnregisteredRequestWarning)
+    .accessibilityIdentifier(PresentationRequestReviewView.AccessibilityIdentifier.unregisteredWarning.rawValue)
+  }
+
   private func footerButtons(submitAction: @escaping (Bool) -> Void, denyAction: @escaping () -> Void) -> some View {
     ButtonSheet(colorConfig: .secondary) {
       AdaptiveButtonStack {
@@ -166,7 +213,6 @@ extension PresentationRequestReviewView.Content {
           Label(L10n.tkPresentReviewPrimaryButton, systemImage: "checkmark")
             .frame(maxWidth: .infinity)
             .lineLimit(1)
-            .accessibilityLabel(L10n.tkPresentReviewPrimaryButtonAlt)
         }
         .buttonStyle(.tertiary)
         .controlSize(.large)
@@ -177,7 +223,6 @@ extension PresentationRequestReviewView.Content {
           Label(L10n.tkPresentReviewSecondaryButton, systemImage: "xmark")
             .frame(maxWidth: .infinity)
             .lineLimit(1)
-            .accessibilityLabel(L10n.tkPresentReviewSecondaryButtonAlt)
         }
         .buttonStyle(.primary)
         .controlSize(.large)

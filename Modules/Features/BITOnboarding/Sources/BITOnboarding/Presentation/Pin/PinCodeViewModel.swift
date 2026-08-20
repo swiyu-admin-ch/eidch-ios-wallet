@@ -34,7 +34,7 @@ class PinCodeViewModel: Vibrating {
     didSet {
       guard userDidRequestValidation else { return }
       do {
-        try validatePinCodeRuleUseCase.execute(pinCode)
+        try validatePinCodeRuleUseCase(pinCode)
         inputFieldMessage = L10n.tkOnboardingPasswordInputSubtitle
       } catch {
         handleError(error)
@@ -46,7 +46,7 @@ class PinCodeViewModel: Vibrating {
     do {
       userDidRequestValidation = true
       pinCode = pinCode.trimmingCharacters(in: .whitespacesAndNewlines)
-      try validatePinCodeRuleUseCase.execute(pinCode)
+      try validatePinCodeRuleUseCase(pinCode)
       router.context.pincode = pinCode
       reset()
       router.pinCodeConfirmation()

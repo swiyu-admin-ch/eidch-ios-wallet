@@ -1,5 +1,6 @@
 import BITAnalytics
 import BITAVWrapper
+import BITCore
 import BITL10n
 import BITTheming
 import Factory
@@ -178,6 +179,7 @@ class ScanDocumentViewModel {
   }
 
   private func handleScanDocumentOutput(_ output: ScanDocumentOutput) async throws {
+    vibrate(.success)
     try? await Task.sleep(nanoseconds: scanDelay)
     await showSuccessButtonState()
     destination = .scanDocumentSubmit(output)
@@ -222,6 +224,7 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
 
       case .idNeedSecondPageForMatching:
         destination = .scanDocumentSecondPageInstructions(Callback(handler: { self.startScanSecondPage() }))
+        vibrate(.success)
 
       default:
         isNotificationPresented = true
@@ -296,3 +299,7 @@ extension ScanDocumentViewModel {
     }
   }
 }
+
+// MARK: Vibrating
+
+extension ScanDocumentViewModel: Vibrating {}

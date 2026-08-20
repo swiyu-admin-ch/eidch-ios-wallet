@@ -7,6 +7,7 @@ import UserNotifications
 protocol PushNotificationCenterRepositoryProtocol {
   func notificationSettings() async -> UNNotificationSettings
   func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+  func setBadgeCount(_ count: Int) async throws
 }
 
 // MARK: - UNUserNotificationCenter + PushNotificationCenterRepositoryProtocol

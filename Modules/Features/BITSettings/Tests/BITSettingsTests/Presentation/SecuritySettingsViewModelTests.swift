@@ -2,6 +2,7 @@ import Factory
 import Spyable
 import XCTest
 @testable import BITAppAuth
+@testable import BITCore
 @testable import BITSettings
 
 final class SecuritySettingsViewModelTests: XCTestCase {
@@ -25,9 +26,8 @@ final class SecuritySettingsViewModelTests: XCTestCase {
   }
 
   func testOnAppear_faceIDAllowedAndEnabled_faceIDIsEnabled() {
-    isBiometricUsageAllowedUseCase.executeReturnValue = true
-    hasBiometricAuthUseCase.executeReturnValue = true
-    getBiometricTypeUseCase.executeReturnValue = .faceID
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    getBiometricTypeUseCase.callAsFunctionReturnValue = .faceID
 
     viewModel.onAppear()
 
@@ -38,15 +38,13 @@ final class SecuritySettingsViewModelTests: XCTestCase {
   func testOnAppear_useCasesCalled() {
     viewModel.onAppear()
 
-    XCTAssertEqual(isBiometricUsageAllowedUseCase.executeCallsCount, 1)
-    XCTAssertEqual(hasBiometricAuthUseCase.executeCallsCount, 1)
-    XCTAssertEqual(getBiometricTypeUseCase.executeCallsCount, 1)
-    XCTAssertEqual(fetchAnalyticStatusUseCase.executeCallsCount, 1)
+    XCTAssertEqual(getBiometricStateUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(getBiometricTypeUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(isAnalyticsEnabledUseCase.callAsFunctionCallsCount, 1)
   }
 
   func testOnAppear_biometricNotAllowed_biometricIsDisabled() {
-    isBiometricUsageAllowedUseCase.executeReturnValue = false
-    hasBiometricAuthUseCase.executeReturnValue = true
+    getBiometricStateUseCase.callAsFunctionReturnValue = .disabled
 
     viewModel.onAppear()
 
@@ -54,8 +52,7 @@ final class SecuritySettingsViewModelTests: XCTestCase {
   }
 
   func testOnAppear_biometricDisabled_biometricIsDisabled() {
-    isBiometricUsageAllowedUseCase.executeReturnValue = true
-    hasBiometricAuthUseCase.executeReturnValue = false
+    getBiometricStateUseCase.callAsFunctionReturnValue = .declined
 
     viewModel.onAppear()
 
@@ -63,7 +60,7 @@ final class SecuritySettingsViewModelTests: XCTestCase {
   }
 
   func testOnAppear_analyticsEnabled_correctState() {
-    fetchAnalyticStatusUseCase.executeReturnValue = true
+    isAnalyticsEnabledUseCase.callAsFunctionReturnValue = true
 
     viewModel.onAppear()
 
@@ -72,7 +69,7 @@ final class SecuritySettingsViewModelTests: XCTestCase {
   }
 
   func testOnAppear_analyticsDisabled_correctState() {
-    fetchAnalyticStatusUseCase.executeReturnValue = false
+    isAnalyticsEnabledUseCase.callAsFunctionReturnValue = false
 
     viewModel.onAppear()
 
@@ -85,7 +82,7 @@ final class SecuritySettingsViewModelTests: XCTestCase {
 
     await viewModel.updateAnalyticsStatus()
 
-    XCTAssertEqual(updateAnalyticsStatusUseCase.executeIsAllowedCallsCount, 1)
+    XCTAssertEqual(updateAnalyticsStatusUseCase.callAsFunctionIsAllowedCallsCount, 1)
     XCTAssertEqual(viewModel.isAnalyticsEnabled, !isAnalyticsEnabbled)
   }
 
@@ -93,33 +90,33 @@ final class SecuritySettingsViewModelTests: XCTestCase {
 
   // swiftlint:disable all
   private var viewModel: SecuritySettingsViewModel!
-  private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocolSpy!
-  private var isBiometricUsageAllowedUseCase: IsBiometricUsageAllowedUseCaseProtocolSpy!
-  private var fetchAnalyticStatusUseCase: FetchAnalyticStatusUseCaseProtocolSpy!
+  private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy!
+  private var isAnalyticsEnabledUseCase: IsAnalyticsEnabledUseCaseProtocolSpy!
   private var updateAnalyticsStatusUseCase: UpdateAnalyticStatusUseCaseProtocolSpy!
   private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocolSpy!
+  private var applicationService: ApplicationServiceProtocolSpy!
 
   // swiftlint:enable all
 
   private func setupMocks() {
-    hasBiometricAuthUseCase = HasBiometricAuthUseCaseProtocolSpy()
+    getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
     getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
-    isBiometricUsageAllowedUseCase = IsBiometricUsageAllowedUseCaseProtocolSpy()
     updateAnalyticsStatusUseCase = UpdateAnalyticStatusUseCaseProtocolSpy()
-    fetchAnalyticStatusUseCase = FetchAnalyticStatusUseCaseProtocolSpy()
+    isAnalyticsEnabledUseCase = IsAnalyticsEnabledUseCaseProtocolSpy()
+    applicationService = ApplicationServiceProtocolSpy()
 
-    Container.shared.hasBiometricAuthUseCase.register { self.hasBiometricAuthUseCase }
+    Container.shared.getBiometricStateUseCase.register { self.getBiometricStateUseCase }
     Container.shared.getBiometricTypeUseCase.register { self.getBiometricTypeUseCase }
-    Container.shared.isBiometricUsageAllowedUseCase.register { self.isBiometricUsageAllowedUseCase }
     Container.shared.updateAnalyticsStatusUseCase.register { self.updateAnalyticsStatusUseCase }
-    Container.shared.fetchAnalyticStatusUseCase.register { self.fetchAnalyticStatusUseCase }
+    Container.shared.isAnalyticsEnabledUseCase.register { self.isAnalyticsEnabledUseCase }
+    Container.shared.applicationService.register { self.applicationService }
   }
 
   private func success() {
-    hasBiometricAuthUseCase.executeReturnValue = true
-    getBiometricTypeUseCase.executeReturnValue = .touchID
-    isBiometricUsageAllowedUseCase.executeReturnValue = true
-    fetchAnalyticStatusUseCase.executeReturnValue = true
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    getBiometricTypeUseCase.callAsFunctionReturnValue = .touchID
+    isAnalyticsEnabledUseCase.callAsFunctionReturnValue = true
+    applicationService.openOptionsReturnValue = true
   }
 
 }

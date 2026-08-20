@@ -11,6 +11,9 @@ public struct CustomButtonConfiguration {
     foregroundColorDisabled: Color = ThemingAssets.Label.tertiary.swiftUIColor,
     backgroundColor: Color = ThemingAssets.accentColor.swiftUIColor,
     backgroundColorDisabled: Color = ThemingAssets.petrol2.swiftUIColor,
+    borderColor: Color = .clear,
+    borderWidth: CGFloat = 0,
+    cornerRadius: CGFloat? = nil,
     progressViewTint: Color = .white,
     isMaterialEnabled: Bool = false)
   {
@@ -18,6 +21,9 @@ public struct CustomButtonConfiguration {
     self.foregroundColorDisabled = foregroundColorDisabled
     self.backgroundColor = backgroundColor
     self.backgroundColorDisabled = backgroundColorDisabled
+    self.borderColor = borderColor
+    self.borderWidth = borderWidth
+    self.cornerRadius = cornerRadius
     self.progressViewTint = progressViewTint
     self.isMaterialEnabled = isMaterialEnabled
   }
@@ -28,6 +34,9 @@ public struct CustomButtonConfiguration {
   var foregroundColorDisabled: Color = ThemingAssets.Label.tertiary.swiftUIColor
   var backgroundColor = Color.clear
   var backgroundColorDisabled = Color.clear
+  var borderColor = Color.clear
+  var borderWidth: CGFloat = 0
+  var cornerRadius: CGFloat?
   var progressViewTint: Color = ThemingAssets.Label.primary.swiftUIColor
   var isMaterialEnabled = false
 }
@@ -74,4 +83,13 @@ extension CustomButtonConfiguration {
     backgroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
+
+  public static var warning = CustomButtonConfiguration(
+    foregroundColor: ThemingAssets.Background.Button.warningLabel.swiftUIColor,
+    backgroundColor: ThemingAssets.Background.Button.warning.swiftUIColor,
+    backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
+    borderColor: ThemingAssets.Background.Button.warningBorder.swiftUIColor,
+    borderWidth: 1,
+    cornerRadius: .x4,
+    progressViewTint: ThemingAssets.Background.Button.warningLabel.swiftUIColor)
 }

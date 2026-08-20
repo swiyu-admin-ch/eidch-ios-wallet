@@ -56,12 +56,12 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
     XCTAssertTrue(router.confirmNewPinCodeCalled)
     XCTAssertEqual(router.context.newPinCode, viewModel.pinCode)
-    XCTAssertTrue(validatePinCodeRuleUseCase.executeCalled)
+    XCTAssertTrue(validatePinCodeRuleUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testPinCode_error() {
-    validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
     let viewModel = NewPinCodeViewModel(router: router)
 
     viewModel.submit()
@@ -72,12 +72,12 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
     XCTAssertNil(viewModel.router.context.newPinCode)
     XCTAssertFalse(router.confirmNewPinCodeCalled)
-    XCTAssertTrue(validatePinCodeRuleUseCase.executeCalled)
+    XCTAssertTrue(validatePinCodeRuleUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testPinCode_didRequestValidation() {
-    validatePinCodeRuleUseCase.executeThrowableError = PinCodeError.tooShort
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
     let viewModel = Container.shared.newPinCodeViewModel(router)
 
     viewModel.submit()
@@ -98,7 +98,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.router.context.newPinCode)
     XCTAssertFalse(router.confirmNewPinCodeCalled)
 
-    validatePinCodeRuleUseCase.executeThrowableError = nil
+    validatePinCodeRuleUseCase.callAsFunctionThrowableError = nil
 
     viewModel.pinCode = "12345"
 

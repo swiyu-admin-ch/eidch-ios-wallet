@@ -1,3 +1,4 @@
+// swiftlint:disable force_unwrapping
 #if DEBUG
 import Foundation
 @testable import BITCore
@@ -8,7 +9,7 @@ extension CredentialGeneratorContext {
   struct Mock {
     static let sample = CredentialGeneratorContext(
       credentialId: UUID(),
-      issuerUrl: "https://issuer",
+      issuerUrl: URL(string: "https://issuer")!,
       credentialConfigurationId: "elfa-sdjwt",
       batchData: nil,
       authentication: CredentialAuthentication(accessToken: "accessToken"),

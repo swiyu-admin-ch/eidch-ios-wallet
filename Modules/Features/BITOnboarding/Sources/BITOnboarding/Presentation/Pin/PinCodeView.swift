@@ -32,12 +32,6 @@ struct PinCodeView: View {
           .resizable()
           .ignoresSafeArea()
           .accessibilityHidden(true))
-      .task {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          focus = .input
-        }
-      }
-      .accessibilityElement(children: .contain)
       .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
@@ -47,13 +41,8 @@ struct PinCodeView: View {
     static let errorAnimation = Animation.interpolatingSpring(stiffness: 500, damping: 30)
   }
 
-  private enum Focus: Hashable {
-    case input, inputText, continueButton, error
-  }
-
   @State private var viewModel: PinCodeViewModel
   @FocusState private var inputFocused: Bool
-  @AccessibilityFocusState private var focus: Focus?
   @Environment(\.sizeCategory) private var sizeCategory
 
   @Orientation private var orientation
@@ -101,7 +90,6 @@ struct PinCodeView: View {
         .padding(.horizontal, .x3)
     }
     .padding(.top, sizeCategory.isAccessibilityCategory ? 0 : 100)
-    .accessibilityElement(children: .combine)
 
     Spacer()
   }
@@ -122,7 +110,7 @@ struct PinCodeView: View {
       text: $viewModel.pinCode,
       prompt: L10n.tkOnboardingPasswordInputPlaceholder,
       textColor: ThemingAssets.Label.primary.light,
-      tintColor: ThemingAssets.Label.tertiary.light)
+      tintColor: ThemingAssets.Label.secondary.light)
     {
       viewModel.validate()
     }
@@ -141,7 +129,6 @@ struct PinCodeView: View {
     }
     .accessibilityLabel(L10n.tkOnboardingPasswordInputAlt)
     .accessibilitySortPriority(800)
-    .accessibilityFocused($focus, equals: .input)
     .secureTextFieldAccessibilityIdentifier(AccessibilityIdentifier.pinField.rawValue)
   }
 
@@ -154,7 +141,6 @@ struct PinCodeView: View {
     .environment(\.colorScheme, .light)
     .buttonStyle(.primary)
     .controlSize(.large)
-    .accessibilityFocused($focus, equals: .continueButton)
     .accessibilityIdentifier(AccessibilityIdentifier.continueButton.rawValue)
   }
 
@@ -163,7 +149,6 @@ struct PinCodeView: View {
       .font(.custom.footnote)
       .multilineTextAlignment(.leading)
       .accessibilitySortPriority(700)
-      .accessibilityFocused($focus, equals: .inputText)
       .accessibilityIdentifier(AccessibilityIdentifier.errorMessage.rawValue)
   }
 

@@ -8,6 +8,7 @@ targets:
     info:
       path: ../../../swiyuNotificationExtension/Info.plist
       properties:
+        AppGroupIdentifier: $(APP_GROUP_IDENTIFIER)
         CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
         CFBundleDisplayName: $(PRODUCT_NAME)
         CFBundleExecutable: $(EXECUTABLE_NAME)
@@ -20,6 +21,11 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.usernotifications.service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationServiceExtension
+    entitlements:
+      path: ../../../swiyuNotificationExtension/swiyuNotificationExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP_IDENTIFIER)
     settings:
       base:
         DEVELOPMENT_TEAM: 2NG6YF3PM2
@@ -34,14 +40,17 @@ targets:
         SKIP_INSTALL: YES
       configs:
         Dev (debug):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.dev
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev.notification-extension
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.dev.notification-extension
         Ref (debug):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.ref
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref.notification-extension
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.ref.notification-extension
         Abn (debug):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.abn
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abn.notification-extension
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.abn.notification-extension
@@ -50,18 +59,27 @@ targets:
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.sandbox.notification-extension
         Prod (debug):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.notification-extension
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.notification-extension
+        Sandbox (debug):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.sandbox
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.sandbox.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Developer
+          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.sandbox.notification-extension
         Dev (release):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.dev
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev.notification-extension
           CODE_SIGN_IDENTITY: iPhone Distribution
           PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.dev.notification-extension
         Ref (release):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.ref
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref.notification-extension
           CODE_SIGN_IDENTITY: iPhone Distribution
           PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.ref.notification-extension
         Abn (release):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.abn
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.abn.notification-extension
           CODE_SIGN_IDENTITY: iPhone Distribution
           PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.abn.notification-extension
@@ -70,9 +88,15 @@ targets:
           CODE_SIGN_IDENTITY: iPhone Distribution
           PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.sandbox.notification-extension
         Prod (release):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.notification-extension
           CODE_SIGN_IDENTITY: iPhone Distribution
           PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.notification-extension
+        Sandbox (release):
+          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.sandbox
+          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.sandbox.notification-extension
+          CODE_SIGN_IDENTITY: iPhone Distribution
+          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.sandbox.notification-extension
     dependencies:
       - package: BITCore
       - package: BITPushNotification

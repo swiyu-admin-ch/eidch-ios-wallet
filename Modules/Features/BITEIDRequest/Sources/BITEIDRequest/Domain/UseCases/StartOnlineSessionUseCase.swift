@@ -12,8 +12,8 @@ protocol StartOnlineSessionUseCaseProtocol {
 
 struct StartOnlineSessionUseCase: StartOnlineSessionUseCaseProtocol {
   func execute(for caseId: String) async throws {
-    try await eIDRequestRepository.startOnlineSession(caseId: caseId)
+    try await sidRepository.startOnlineSession(caseId: caseId)
   }
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
 }

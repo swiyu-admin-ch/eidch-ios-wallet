@@ -8,7 +8,7 @@
   "jti": "jwtIdentifier",
   "client_id": "not-a-did",
   "response_uri": "https://eid.admin.ch/response",
-  "response_mode": "direct_post",
+  "response_mode": "direct_post.jwt",
   "response_type": "vp_token",
   "nonce": "1234",
   "dcql_query": {

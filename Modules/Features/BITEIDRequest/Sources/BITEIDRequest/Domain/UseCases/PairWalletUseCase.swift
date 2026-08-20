@@ -20,9 +20,9 @@ struct PairWalletUseCase: PairWalletUseCaseProtocol {
   // MARK: Internal
 
   func execute(for caseId: String) async throws -> String {
-    let walletPairingResponse = try await eIDRequestRepository.pairWallet(caseId: caseId)
+    let walletPairingResponse = try await sidRepository.pairWallet(caseId: caseId)
     let credentialOffer = try validateCredentialOfferInvitationUrlUseCase.execute(walletPairingResponse.credentialOfferLink)
-    let (credential, _) = try await fetchCredentialUseCase.execute(from: credentialOffer)
+    let credential = try await fetchCredentialUseCase.execute(from: credentialOffer)
 
     guard let deferredCredential = credential as? DeferredCredential else {
       throw FetchCredentialUseCaseError.invalidCredential // Expect only a deferred credential here
@@ -38,7 +38,7 @@ struct PairWalletUseCase: PairWalletUseCaseProtocol {
 
   // MARK: Private
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
   @Injected(\.fetchCredentialUseCase) private var fetchCredentialUseCase: FetchCredentialUseCaseProtocol
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
   @Injected(\.validateCredentialOfferInvitationUrlUseCase) private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocol

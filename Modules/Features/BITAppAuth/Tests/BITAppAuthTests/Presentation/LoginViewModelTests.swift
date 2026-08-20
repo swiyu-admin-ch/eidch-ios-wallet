@@ -19,8 +19,7 @@ final class LoginViewModelTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    mockHasBiometricAuthUseCase = HasBiometricAuthUseCaseProtocolSpy()
-    mockIsBiometricUsageAllowedUseCase = IsBiometricUsageAllowedUseCaseProtocolSpy()
+    mockGetBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
     mockLoginPinCodeUseCase = LoginPinCodeUseCaseProtocolSpy()
     mockLoginBiometricUseCase = LoginBiometricUseCaseProtocolSpy()
     mockIsBiometricInvalidatedUseCase = IsBiometricInvalidatedUseCaseProtocolSpy()
@@ -33,17 +32,15 @@ final class LoginViewModelTests: XCTestCase {
     mockResetLoginAttemptCounterUseCase = ResetLoginAttemptCounterUseCaseProtocolSpy()
     mockFetchVersionEnforcementUseCase = FetchVersionEnforcementUseCaseProtocolSpy()
 
-    mockHasBiometricAuthUseCase.executeReturnValue = false
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = false
-    mockIsBiometricInvalidatedUseCase.executeReturnValue = false
-    mockGetBiometricTypeUseCase.executeReturnValue = .faceID
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .disabled
+    mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
+    mockGetBiometricTypeUseCase.callAsFunctionReturnValue = .faceID
 
-    mockGetLoginAttemptCounterUseCase.executeKindReturnValue = 0
+    mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
     mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
     mockUseCases = LoginUseCasesProtocolSpy()
-    mockUseCases.hasBiometricAuth = mockHasBiometricAuthUseCase
-    mockUseCases.isBiometricUsageAllowed = mockIsBiometricUsageAllowedUseCase
+    mockUseCases.getBiometricStateUseCase = mockGetBiometricStateUseCase
     mockUseCases.loginPinCode = mockLoginPinCodeUseCase
     mockUseCases.loginBiometric = mockLoginBiometricUseCase
     mockUseCases.isBiometricInvalidatedUseCase = mockIsBiometricInvalidatedUseCase
@@ -78,9 +75,8 @@ final class LoginViewModelTests: XCTestCase {
 
   @MainActor
   func testWithInitialData_withBiometricsTypeNone() {
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
-    mockHasBiometricAuthUseCase.executeReturnValue = true
-    mockGetBiometricTypeUseCase.executeReturnValue = BiometricType.none
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    mockGetBiometricTypeUseCase.callAsFunctionReturnValue = BiometricType.none
 
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
@@ -95,19 +91,18 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.state, .loginPassword)
     XCTAssertEqual(viewModel.biometricType, .none)
 
-    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindCallsCount, 2)
+    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 2)
 
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockLockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testWithInitialData_withBiometricsAvailable() {
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
-    mockHasBiometricAuthUseCase.executeReturnValue = true
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
 
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
@@ -121,25 +116,23 @@ final class LoginViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .loginBiometrics)
 
-    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindCallsCount, 2)
+    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 2)
 
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockLockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
 
-    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertEqual(mockIsBiometricInvalidatedUseCase.executeCallsCount, 1)
-    XCTAssertTrue(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertEqual(mockHasBiometricAuthUseCase.executeCallsCount, 1)
+    XCTAssertEqual(mockIsBiometricInvalidatedUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(mockGetBiometricStateUseCase.callAsFunctionCallsCount, 1)
   }
 
   @MainActor
   func testInitLockWithExceededAttempts() {
     let attemptLimit = 2
-    mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
-    mockGetLockedWalletTimeLeftUseCase.executeReturnValue = 10
+    mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attemptLimit
+    mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = 10
     viewModel = LoginViewModel(router: mockRouter)
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertEqual(viewModel.pinCodeState, PinCodeState.normal)
@@ -152,21 +145,21 @@ final class LoginViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .locked)
 
-    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindCallsCount, 2)
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindReceivedInvocations, [.appPin, .biometric])
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockLockWalletUseCase.executeCalled)
+    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 2)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindReceivedInvocations, [.appPin, .biometric])
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
     XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testInitLockWithExceededAttemptsButLockTimeIsDone() {
     let attemptLimit = 2
-    mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
-    mockGetLockedWalletTimeLeftUseCase.executeReturnValue = -10
+    mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attemptLimit
+    mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = -10
 
     Container.shared.attemptsLimit.register { @MainActor in attemptLimit }
     viewModel = LoginViewModel(router: mockRouter)
@@ -181,13 +174,13 @@ final class LoginViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .loginPassword)
 
-    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.executeKindCalled)
+    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
     // 2 call in the configure
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindCallsCount, 2)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 2)
 
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertTrue(mockResetLoginAttemptCounterUseCase.executeCalled)
-    XCTAssertFalse(mockLockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertTrue(mockResetLoginAttemptCounterUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
     XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
@@ -195,9 +188,9 @@ final class LoginViewModelTests: XCTestCase {
   func testRestartTimerAfterRebootWithTooManyAttempts() {
     let attemptLimit = 2
     let lockDelay: TimeInterval = 10
-    mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
-    mockGetLockedWalletTimeLeftUseCase.executeClosure = {
-      self.mockGetLockedWalletTimeLeftUseCase.executeCallsCount == 1 ? 100000 : lockDelay
+    mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attemptLimit
+    mockGetLockedWalletTimeLeftUseCase.callAsFunctionClosure = {
+      self.mockGetLockedWalletTimeLeftUseCase.callAsFunctionCallsCount == 1 ? 100000 : lockDelay
       // 100000 simulates a reboot value. So the first call on getLockedWallet (in configure will return 100000 aka a reboot)
     }
 
@@ -214,22 +207,22 @@ final class LoginViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .locked)
 
-    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.executeKindCalled)
+    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
     // 2 call in the configure
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindCallsCount, 2)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 2)
 
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
-    XCTAssertTrue(mockLockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockLockWalletUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testRestartTimerAfterReboot() {
     let attemptLimit = 2
     let lockDelay: TimeInterval = 10
-    mockGetLoginAttemptCounterUseCase.executeKindReturnValue = attemptLimit
-    mockGetLockedWalletTimeLeftUseCase.executeClosure = {
-      self.mockGetLockedWalletTimeLeftUseCase.executeCallsCount == 1 ? 100000 : lockDelay
+    mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attemptLimit
+    mockGetLockedWalletTimeLeftUseCase.callAsFunctionClosure = {
+      self.mockGetLockedWalletTimeLeftUseCase.callAsFunctionCallsCount == 1 ? 100000 : lockDelay
       // 100000 simulates a reboot value. So the first call on getLockedWallet (in configure will return 100000 aka a reboot)
     }
 
@@ -248,13 +241,13 @@ final class LoginViewModelTests: XCTestCase {
 
     XCTAssertEqual(viewModel.state, .locked)
 
-    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.executeKindCalled)
+    XCTAssertTrue(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCalled)
     // 2 call in the configure
-    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.executeKindCallsCount, 2)
+    XCTAssertEqual(mockGetLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 2)
 
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.executeCalled)
-    XCTAssertTrue(mockLockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertFalse(mockResetLoginAttemptCounterUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockLockWalletUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -274,20 +267,18 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.pinCode.isEmpty)
 
     XCTAssertFalse(viewModel.isBiometricAuthenticationAvailable)
-    XCTAssertFalse(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertTrue(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertEqual(mockLoginPinCodeUseCase.executeFromCallsCount, 1)
-    XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
-    XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
-    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
+    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertEqual(mockLoginPinCodeUseCase.callAsFunctionFromCallsCount, 1)
+    XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
+    XCTAssertEqual(1, mockGetBiometricStateUseCase.callAsFunctionCallsCount)
+    XCTAssertFalse(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testPinCodeAttemptFailure() async {
-    mockRegisterLoginAttemptCounterUseCase.executeKindReturnValue = 1
+    mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
     Container.shared.lockDelay.register { 0 }
     let viewModel = LoginViewModel(router: mockRouter)
     await attemptWithFailure(viewModel: viewModel)
@@ -295,8 +286,8 @@ final class LoginViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCodeAttemptFailure_thenSuccess() async {
-    mockRegisterLoginAttemptCounterUseCase.executeKindReturnValue = 1
-    mockGetLoginAttemptCounterUseCase.executeKindReturnValue = 1
+    mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
+    mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
     Container.shared.loadingDelay.register { 0 }
     let viewModel = LoginViewModel(router: mockRouter)
     await attemptWithFailure(viewModel: viewModel)
@@ -304,7 +295,7 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertEqual(viewModel.attempts, 1)
 
-    mockLoginPinCodeUseCase.executeFromThrowableError = nil
+    mockLoginPinCodeUseCase.callAsFunctionFromThrowableError = nil
 
     viewModel.pinCode = "123456"
 
@@ -318,20 +309,17 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockRouter.closeWithCompletionCalled)
     XCTAssertFalse(viewModel.isBiometricAuthenticationAvailable)
 
-    XCTAssertFalse(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertTrue(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertEqual(2, mockLoginPinCodeUseCase.executeFromCallsCount)
-    XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
-    XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
+    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertEqual(2, mockLoginPinCodeUseCase.callAsFunctionFromCallsCount)
+    XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
+    XCTAssertEqual(1, mockGetBiometricStateUseCase.callAsFunctionCallsCount)
   }
 
   @MainActor
   func testBiometricAuthHappyPath() async {
-    mockHasBiometricAuthUseCase.executeReturnValue = true
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
-    mockIsBiometricInvalidatedUseCase.executeReturnValue = false
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
 
     Container.shared.loadingDelay.register { 0 }
     viewModel = LoginViewModel(router: mockRouter)
@@ -345,20 +333,18 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isBiometricAuthenticationAvailable)
     XCTAssertFalse(viewModel.isBiometricTriggered)
 
-    XCTAssertTrue(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertTrue(mockLoginBiometricUseCase.executeCalled)
-    XCTAssertEqual(1, mockLoginBiometricUseCase.executeCallsCount) // because of the configure in init
+    XCTAssertTrue(mockGetBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertTrue(mockLoginBiometricUseCase.callAsFunctionCalled)
+    XCTAssertEqual(1, mockLoginBiometricUseCase.callAsFunctionCallsCount) // because of the configure in init
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testBiometricAttemptFailure_deviceHasBiometric() async {
-    mockHasBiometricAuthUseCase.executeReturnValue = false
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
-    mockIsBiometricInvalidatedUseCase.executeReturnValue = false
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .declined
+    mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
 
     viewModel = LoginViewModel(router: mockRouter)
     await viewModel.promptBiometricAuthentication()
@@ -368,18 +354,15 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockRouter.closeCalled)
     XCTAssertFalse(viewModel.isBiometricAuthenticationAvailable)
 
-    XCTAssertTrue(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
+    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testBiometricAttemptFailure_biometricNotAllowed() async {
-    mockHasBiometricAuthUseCase.executeReturnValue = true
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = false
-    mockIsBiometricInvalidatedUseCase.executeReturnValue = false
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .disabled
+    mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
 
     viewModel = LoginViewModel(router: mockRouter)
     await viewModel.promptBiometricAuthentication()
@@ -389,41 +372,17 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockRouter.closeCalled)
     XCTAssertFalse(viewModel.isBiometricAuthenticationAvailable)
 
-    XCTAssertFalse(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
-  }
-
-  @MainActor
-  func testBiometricAttemptFailure_invalidatedData() async {
-    mockHasBiometricAuthUseCase.executeReturnValue = true
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
-    mockIsBiometricInvalidatedUseCase.executeReturnValue = true
-
-    viewModel = LoginViewModel(router: mockRouter)
-    await viewModel.promptBiometricAuthentication()
-
-    XCTAssertTrue(viewModel.pinCode.isEmpty)
-    XCTAssertEqual(viewModel.attempts, 0)
-    XCTAssertFalse(mockRouter.closeCalled)
-    XCTAssertFalse(viewModel.isBiometricAuthenticationAvailable)
-
-    XCTAssertTrue(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
+    XCTAssertTrue(mockGetBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   func testBiometricAttemptFailure() async {
-    mockHasBiometricAuthUseCase.executeReturnValue = true
-    mockIsBiometricUsageAllowedUseCase.executeReturnValue = true
-    mockIsBiometricInvalidatedUseCase.executeReturnValue = false
-    mockLoginBiometricUseCase.executeThrowableError = TestingError.error
-    mockRegisterLoginAttemptCounterUseCase.executeKindReturnValue = 1
+    mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
+    mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
+    mockLoginBiometricUseCase.callAsFunctionThrowableError = TestingError.error
+    mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
 
     viewModel = LoginViewModel(router: mockRouter)
     await viewModel.promptBiometricAuthentication()
@@ -437,13 +396,12 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isBiometricAuthenticationAvailable)
     XCTAssertFalse(viewModel.isBiometricTriggered)
 
-    XCTAssertTrue(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertTrue(mockLoginBiometricUseCase.executeCalled)
-    XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertTrue(mockRegisterLoginAttemptCounterUseCase.executeKindCalled)
-    XCTAssertEqual(mockRegisterLoginAttemptCounterUseCase.executeKindCallsCount, 1)
+    XCTAssertTrue(mockGetBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockLoginBiometricUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertTrue(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCalled)
+    XCTAssertEqual(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 1)
   }
 
   @MainActor
@@ -452,12 +410,12 @@ final class LoginViewModelTests: XCTestCase {
     let delay: TimeInterval = 5
     await lockedState(maxAttempts: maxAttempts, delay: delay)
 
-    XCTAssertTrue(mockLockWalletUseCase.executeCalled)
-    XCTAssertEqual(mockLockWalletUseCase.executeCallsCount, 1)
+    XCTAssertTrue(mockLockWalletUseCase.callAsFunctionCalled)
+    XCTAssertEqual(mockLockWalletUseCase.callAsFunctionCallsCount, 1)
     XCTAssertTrue(viewModel.isLocked)
     XCTAssertEqual(viewModel.biometricAttempts, 0)
     XCTAssertEqual(viewModel.attempts, maxAttempts)
-    XCTAssertEqual(mockRegisterLoginAttemptCounterUseCase.executeKindCallsCount, maxAttempts)
+    XCTAssertEqual(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, maxAttempts)
   }
 
   @MainActor
@@ -470,11 +428,11 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.biometricAttempts, 0)
     XCTAssertEqual(viewModel.attempts, maxAttempts)
 
-    XCTAssertTrue(mockLockWalletUseCase.executeCalled)
-    XCTAssertEqual(mockLockWalletUseCase.executeCallsCount, 1)
-    XCTAssertTrue(mockGetLockedWalletTimeLeftUseCase.executeCalled)
-    XCTAssertEqual(mockGetLockedWalletTimeLeftUseCase.executeCallsCount, 2)
-    XCTAssertFalse(mockUnlockWalletUseCase.executeCalled)
+    XCTAssertTrue(mockLockWalletUseCase.callAsFunctionCalled)
+    XCTAssertEqual(mockLockWalletUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertTrue(mockGetLockedWalletTimeLeftUseCase.callAsFunctionCalled)
+    XCTAssertEqual(mockGetLockedWalletTimeLeftUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertFalse(mockUnlockWalletUseCase.callAsFunctionCalled)
   }
 
   @MainActor
@@ -545,8 +503,7 @@ final class LoginViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private var mockHasBiometricAuthUseCase = HasBiometricAuthUseCaseProtocolSpy()
-  private var mockIsBiometricUsageAllowedUseCase = IsBiometricUsageAllowedUseCaseProtocolSpy()
+  private var mockGetBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
   private var mockLoginPinCodeUseCase = LoginPinCodeUseCaseProtocolSpy()
   private var mockLoginBiometricUseCase = LoginBiometricUseCaseProtocolSpy()
   private var mockIsBiometricInvalidatedUseCase = IsBiometricInvalidatedUseCaseProtocolSpy()
@@ -568,21 +525,21 @@ final class LoginViewModelTests: XCTestCase {
 
   @MainActor
   private func lockedState(maxAttempts: Int, delay: TimeInterval) async {
-    mockGetLockedWalletTimeLeftUseCase.executeReturnValue = nil
+    mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = nil
     Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
     viewModel = LoginViewModel(router: mockRouter)
-    XCTAssertFalse(mockLockWalletUseCase.executeCalled)
-    XCTAssertFalse(mockUnlockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockUnlockWalletUseCase.callAsFunctionCalled)
 
     for i in 1...maxAttempts {
-      mockRegisterLoginAttemptCounterUseCase.executeKindReturnValue = i
+      mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = i
       if i == maxAttempts {
         let timeInterval = delay
-        mockGetLockedWalletTimeLeftUseCase.executeReturnValue = timeInterval
+        mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = timeInterval
         Task { @MainActor in
           let duration = UInt64(timeInterval * 1_000_000_000)
           try? await Task.sleep(nanoseconds: duration)
-          mockGetLockedWalletTimeLeftUseCase.executeReturnValue = 0
+          mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = 0
         }
       }
       await attemptWithFailure(viewModel: viewModel)
@@ -592,21 +549,21 @@ final class LoginViewModelTests: XCTestCase {
 
   @MainActor
   private func biometricLockedState(maxAttempts: Int, delay: TimeInterval) async {
-    mockGetLockedWalletTimeLeftUseCase.executeReturnValue = nil
+    mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = nil
     Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
     viewModel = LoginViewModel(router: mockRouter)
-    XCTAssertFalse(mockLockWalletUseCase.executeCalled)
-    XCTAssertFalse(mockUnlockWalletUseCase.executeCalled)
+    XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockUnlockWalletUseCase.callAsFunctionCalled)
 
     for i in 1...maxAttempts {
-      mockRegisterLoginAttemptCounterUseCase.executeKindReturnValue = i
+      mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = i
       if i == maxAttempts {
         let timeInterval = delay
-        mockGetLockedWalletTimeLeftUseCase.executeReturnValue = timeInterval
+        mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = timeInterval
         Task { @MainActor in
           let duration = UInt64(timeInterval * 1_000_000_000)
           try? await Task.sleep(nanoseconds: duration)
-          mockGetLockedWalletTimeLeftUseCase.executeReturnValue = 0
+          mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = 0
         }
       }
       await biometricAttemptFailure(viewModel: viewModel)
@@ -616,22 +573,21 @@ final class LoginViewModelTests: XCTestCase {
 
   @MainActor
   private func biometricAttemptFailure(viewModel: LoginViewModel) async {
-    mockLoginBiometricUseCase.executeThrowableError = TestingError.error
+    mockLoginBiometricUseCase.callAsFunctionThrowableError = TestingError.error
 
     await viewModel.promptBiometricAuthentication()
 
     XCTAssertTrue(viewModel.isBiometricAuthenticationAvailable)
 
-    XCTAssertTrue(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.executeCalled)
-    XCTAssertFalse(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertTrue(mockLoginBiometricUseCase.executeCalled)
+    XCTAssertTrue(mockGetBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertTrue(mockLoginBiometricUseCase.callAsFunctionCalled)
   }
 
   @MainActor
   private func attemptWithFailure(viewModel: LoginViewModel) async {
-    mockLoginPinCodeUseCase.executeFromThrowableError = TestingError.error
+    mockLoginPinCodeUseCase.callAsFunctionFromThrowableError = TestingError.error
 
     viewModel.pinCode = inputPinCode
 
@@ -643,12 +599,11 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockRouter.closeCalled)
     XCTAssertFalse(viewModel.isBiometricAuthenticationAvailable)
 
-    XCTAssertFalse(mockHasBiometricAuthUseCase.executeCalled)
-    XCTAssertTrue(mockIsBiometricUsageAllowedUseCase.executeCalled)
-    XCTAssertTrue(mockLoginPinCodeUseCase.executeFromCalled)
-    XCTAssertFalse(mockLoginBiometricUseCase.executeCalled)
-    XCTAssertEqual(1, mockIsBiometricUsageAllowedUseCase.executeCallsCount)
-    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.executeCalled)
+    XCTAssertTrue(mockGetBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertFalse(mockIsBiometricInvalidatedUseCase.callAsFunctionCalled)
+    XCTAssertTrue(mockLoginPinCodeUseCase.callAsFunctionFromCalled)
+    XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
+    XCTAssertEqual(1, mockGetBiometricStateUseCase.callAsFunctionCallsCount)
     XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 }

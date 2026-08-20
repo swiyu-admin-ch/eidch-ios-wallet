@@ -1,6 +1,5 @@
 // swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import JOSESwift
 import XCTest
 @testable import BITAppAttestation
 @testable import BITAppInfo
@@ -18,7 +17,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
   override func setUp() {
     registerMocks()
     validator = ClientAttestationValidator()
-    try? createSuccessState()
+    createSuccessState()
   }
 
   func testValidate_parameters_success() async {
@@ -44,7 +43,11 @@ final class ClientAttestationValidatorTests: XCTestCase {
     XCTAssertFalse(result)
   }
 
-  func testValidate_notTrustedIssuerWithTrustedKid_returnsTrue() async {
+  func testValidate_notTrustedIssuerWithTrustedKid_returnsTrue() async throws {
+    let key = SecKeyTestsHelper.createStaticPrivateKey()
+    appAttestationKeyRepository.getForReturnValue = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
+    jsonCanonicalizer.canonicalizeDataReturnValue = try XCTUnwrap(Data(base64URLEncoded: "eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6InFNTGxPUjVYVjgtQ1dTQ045UzNIUU9mUG1ZTWhrWnhLMUZKT2Jpa3pZZTgiLCJ5Ijoidm1OMS0yS2dQSUFWM1Z1cmFYWmhBdWhyNnJyMjdITDNtUExTYVRvLUhkYyJ9"))
+
     let result = await validator(ClientAttestationJWT.Mock.sampleNotTrusted)
 
     XCTAssertTrue(result)
@@ -113,9 +116,7 @@ final class ClientAttestationValidatorTests: XCTestCase {
 
   // MARK: Private
 
-  private let mockJWK = JWK(kty: "EC", crv: "P-256", x: "18wHLeIgW9wVN6VD1Txgpqy2LszYkMf6J8njVAibvhM", y: "-V4dS4UaLMgP_4fY4j8ir7cl1TXlFdAgcx55o7TkcSA")
   private var trustedDids: [String]!
-  private var supportedAlgorithms: [JWTAlgorithm]!
   private var mockClientAttestation: ClientAttestation!
   private var validator: ClientAttestationValidator!
   private var jwsValidator: JWSValidatorMock<ClientAttestationJWT>!
@@ -124,10 +125,8 @@ final class ClientAttestationValidatorTests: XCTestCase {
   private var jsonCanonicalizer: JsonCanonicalizerProtocolSpy!
   private var appIdentifierRepository: AppIdentifierRepositoryProtocolSpy!
 
-  private func createSuccessState() throws {
-    let key = try ECPublicKey.getSecKey(curve: mockJWK.crv, x: mockJWK.x, y: mockJWK.y)!
-    let keyPair = VaultKeyPair(identifier: UUID().uuidString, privateKey: key, algorithm: .eciesEncryptionStandardVariableIVX963SHA256AESGCM)
-    appAttestationKeyRepository.getForReturnValue = keyPair
+  private func createSuccessState() {
+    appAttestationKeyRepository.getForReturnValue = VaultKeyPair.Mock.attestedKey
     jsonCanonicalizer.canonicalizeDataReturnValue = Data(base64URLEncoded: "eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6IjE4d0hMZUlnVzl3Vk42VkQxVHhncHF5MkxzellrTWY2SjhualZBaWJ2aE0iLCJ5IjoiLVY0ZFM0VWFMTWdQXzRmWTRqOGlyN2NsMVRYbEZkQWdjeDU1bzdUa2NTQSJ9")!
     appIdentifierRepository.getReturnValue = "ch.mock.identifier"
     didResolverSpy.getDidFromReturnValue = "did:tdw:example.com"
@@ -136,7 +135,6 @@ final class ClientAttestationValidatorTests: XCTestCase {
   private func registerMocks() {
     mockClientAttestation = ClientAttestationJWT.Mock.sample
     trustedDids = [ "did:tdw:example.com" ]
-    supportedAlgorithms = [ .ES256 ]
     jwsValidator = JWSValidatorMock()
     didResolverSpy = DidResolverHelperProtocolSpy()
     appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()

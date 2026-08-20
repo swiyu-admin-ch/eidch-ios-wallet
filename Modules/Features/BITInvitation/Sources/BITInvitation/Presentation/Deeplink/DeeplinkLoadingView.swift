@@ -82,7 +82,7 @@ extension DeeplinkLoadingView {
 
   @ViewBuilder
   private func errorView(_ error: Error) -> some View {
-    let invitationError = error as? InvitationError ?? .invalidQRCode
+    let invitationError = error as? InvitationError ?? .invalidQRCode()
     VStack(spacing: .x1) {
       Spacer()
 

@@ -1,4 +1,3 @@
-import BITActivity
 import BITAnyCredentialFormat
 import BITCredentialShared
 import BITJWT
@@ -28,14 +27,12 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     }
 
     do {
-      let (metadataResponse, anyCredentialResult) = try await fetchDeferredCredentialService(for: deferredCredential)
+      let (metadataJws, anyCredentialResult) = try await fetchDeferredCredentialService(for: deferredCredential)
       switch anyCredentialResult {
-      case .credential(let anyCredential):
-        try await generateCredential(from: anyCredential, deferredCredential: deferredCredential, metadataResponse: metadataResponse)
-      case .batch(let credentials):
-        try await generateBatchCredential(from: credentials, deferredCredential: deferredCredential, metadataResponse: metadataResponse)
+      case .credential(let credentials):
+        try await generateCredential(from: credentials, deferredCredential: deferredCredential, metadataJws: metadataJws)
       case .deferred(let deferredCredentialContext):
-        try await updateDeferredCredential(deferredCredential, metadataResponse: metadataResponse, context: deferredCredentialContext)
+        try await updateDeferredCredential(deferredCredential, metadataJws: metadataJws, context: deferredCredentialContext)
       }
     } catch OpenIdRepositoryError.invalidCredential {
       return try await updateState(for: deferredCredential, to: .invalid)
@@ -59,14 +56,14 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
   // MARK: Private
 
   @Injected(\.fetchDeferredCredentialService) private var fetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol
-  @Injected(\.activityService) private var activityService: ActivityServiceProtocol
-  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
+  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProtocol
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase: FetchVcMetadataUseCaseProtocol
   @Injected(\.credentialGenerator) private var credentialGenerator: CredentialGeneratorProtocol
-  @Injected(\.trustInformationService) private var trustInformationService: TrustInformationServiceProtocol
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @Injected(\.mapCredentialsToKeyBindingsUseCase) private var mapCredentialsToKeyBindingsUseCase: MapCredentialsToKeyBindingsUseCaseProtocol
   @Injected(\.jwsSignatureValidator) private var jwsSignatureValidator: JWSSignatureValidatorProtocol
+  @Injected(\.actorIdentityValidator) private var actorIdentityValidator
+  @Injected(\.protectedIssuanceValidator) private var protectedIssuanceValidator: ProtectedIssuanceValidatorProtocol
 
   private func canRefreshCredential(_ credential: DeferredCredential) -> Bool {
     guard let polledAt = credential.polledAt else {
@@ -78,29 +75,19 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
   }
 
   private func generateCredential(
-    from anyCredential: AnyCredential,
+    from credentials: [AnyCredential],
     deferredCredential: DeferredCredential,
-    metadataResponse: CredentialIssuerMetadataResponse) async throws
+    metadataJws: JWS<CredentialIssuerMetadataJWT>) async throws
   {
-    let credentialWithKeyBinding = CredentialWithKeyBinding(
-      credential: anyCredential,
-      keyBinding: deferredCredential.keyBindings.first)
-    try await generateCredential(
-      from: [credentialWithKeyBinding],
-      deferredCredential: deferredCredential,
-      metadataResponse: metadataResponse)
-  }
-
-  private func generateCredential(
-    from credentialsWithKeyBindings: [CredentialWithKeyBinding],
-    deferredCredential: DeferredCredential,
-    metadataResponse: CredentialIssuerMetadataResponse) async throws
-  {
+    let credentialsWithKeyBindings = try mapBatchCredentialsToKeyBindings(
+      credentials,
+      deferredKeyBindings: deferredCredential.keyBindings)
     guard let firstCredentialWithKeyBinding = credentialsWithKeyBindings.first else {
       throw RefreshDeferredCredentialUseCaseError.invalidBatchCredentials
     }
 
     let anyCredential = firstCredentialWithKeyBinding.credential
+    try actorIdentityValidator.validate(issuerDid: anyCredential.issuer, metadataJws: metadataJws)
 
     guard let vcSdJWS = anyCredential as? VcSdJWS else {
       throw FetchAnyVerifiableCredentialError.validationFailed
@@ -108,43 +95,21 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 
     try await jwsSignatureValidator.validate(vcSdJWS)
 
+    let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataJws: metadataJws)
+    try await protectedIssuanceValidator.validate(anyCredential: anyCredential, metadataWrapper: metadataWrapper)
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(anyCredential: anyCredential)
-    let trustInformation = await trustInformationService.fetch(for: anyCredential.issuer, type: .issuance, vcSchemaId: anyCredential.vcSchemaId)
-    var trustStatement: IdentityTrustStatementJWT?
-    if case .trusted(let statement) = trustInformation.identity {
-      trustStatement = statement
-    }
 
-    let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataResponse: metadataResponse)
-
-    var credential = try credentialGenerator.generate(
+    var credential = try await credentialGenerator.generate(
       for: credentialsWithKeyBindings,
       rawOcaBundle: rawOcaBundle,
       metadataWrapper: metadataWrapper,
-      trustStatement: trustStatement,
       authentication: deferredCredential.authentication)
 
     credential.progressionState = .unaccepted
 
     let savedCredential = try await credentialRepository.create(verifiableCredential: credential)
     try await credentialRepository.delete(deferredCredential.id, deleteKeyPairs: false)
-    try await saveActivity(for: savedCredential, trustInformation: trustInformation)
     _ = try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)
-  }
-
-  private func generateBatchCredential(
-    from credentials: [AnyCredential],
-    deferredCredential: DeferredCredential,
-    metadataResponse: CredentialIssuerMetadataResponse) async throws
-  {
-    let credentialsWithKeyBindings = try mapBatchCredentialsToKeyBindings(
-      credentials,
-      deferredKeyBindings: deferredCredential.keyBindings)
-
-    try await generateCredential(
-      from: credentialsWithKeyBindings,
-      deferredCredential: deferredCredential,
-      metadataResponse: metadataResponse)
   }
 
   private func mapBatchCredentialsToKeyBindings(_ credentials: [AnyCredential], deferredKeyBindings: [KeyBinding]) throws -> [CredentialWithKeyBinding] {
@@ -152,14 +117,14 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
       throw RefreshDeferredCredentialUseCaseError.invalidBatchCredentials
     }
 
-    return try mapCredentialsToKeyBindingsUseCase.execute(
+    return try mapCredentialsToKeyBindingsUseCase(
       credentials: credentials,
       keyBindings: deferredKeyBindings)
   }
 
   private func updateDeferredCredential(
     _ deferredCredential: DeferredCredential,
-    metadataResponse: CredentialIssuerMetadataResponse,
+    metadataJws: JWS<CredentialIssuerMetadataJWT>,
     context: DeferredCredentialContext) async throws
   {
     guard deferredCredential.transactionId == context.transactionId else {
@@ -170,7 +135,7 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
       return
     }
 
-    let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataResponse: metadataResponse)
+    let metadataWrapper = try createMetadataWrapper(for: deferredCredential, metadataJws: metadataJws)
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(metadata: metadataWrapper.selectedCredential)
     let authentication = CredentialAuthentication(
       accessToken: context.accessToken.accessToken,
@@ -178,7 +143,7 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
       refreshToken: context.accessToken.refreshToken,
       dpopBinding: deferredCredential.authentication.dpopBinding)
 
-    var credential = try credentialGenerator.generateDeferred(
+    var credential = try await credentialGenerator.generateDeferred(
       context,
       keyBindings: deferredCredential.keyBindings,
       rawOcaBundle: rawOcaBundle,
@@ -191,24 +156,16 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
     try await credentialRepository.update(deferredCredential: credential)
   }
 
-  private func createMetadataWrapper(for deferredCredential: DeferredCredential, metadataResponse: CredentialIssuerMetadataResponse) throws -> CredentialIssuerMetadataWrapper {
+  private func createMetadataWrapper(for deferredCredential: DeferredCredential, metadataJws: JWS<CredentialIssuerMetadataJWT>) throws -> CredentialIssuerMetadataWrapper {
     guard let selectedConfigurationId = deferredCredential.selectedConfigurationId else {
       throw RefreshDeferredCredentialUseCaseError.invalidConfigurationId
     }
 
     do {
-      return try CredentialIssuerMetadataWrapper(
-        credentialConfigurationId: selectedConfigurationId,
-        credentialIssuerMetadata: metadataResponse.metadata,
-        rawData: metadataResponse.raw)
+      return try CredentialIssuerMetadataWrapper(credentialConfigurationId: selectedConfigurationId, metadataJws: metadataJws)
     } catch {
       throw RefreshDeferredCredentialUseCaseError.invalidCredentialIssuerMetadata
     }
-  }
-
-  private func saveActivity(for credential: VerifiableCredential, trustInformation: TrustInformation) async throws {
-    let activity = Activity(credential: credential, trustInformation: trustInformation)
-    _ = try? activityService.create(activity, credentialId: credential.id)
   }
 
   private func updateState(for deferredCredential: DeferredCredential, to state: DeferredCredential.ProgressionState) async throws {
@@ -225,4 +182,5 @@ enum RefreshDeferredCredentialUseCaseError: Error {
   case invalidBatchCredentials
   case invalidConfigurationId
   case invalidCredentialIssuerMetadata
+  case invalidCredentialDid
 }

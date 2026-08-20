@@ -4,11 +4,19 @@ import Factory
 import Foundation
 import Spyable
 
+// MARK: - CredentialEncryptionContextGeneratorError
+
+enum CredentialEncryptionContextGeneratorError: Error {
+  case noSupportedEncryptionAlgorithm
+  case missingIssuerEncryptionKeys
+  case noSuitableEncryptionKey
+}
+
 // MARK: - CredentialEncryptionContextGeneratorProtocol
 
 @Spyable
 public protocol CredentialEncryptionContextGeneratorProtocol {
-  func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext?
+  func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext
 }
 
 // MARK: - CredentialEncryptionContextGenerator
@@ -17,30 +25,42 @@ struct CredentialEncryptionContextGenerator: CredentialEncryptionContextGenerato
 
   // MARK: Internal
 
-  func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext? {
-    guard let requestEncryption = metadata.credentialRequestEncryption else { return nil }
-    try credentialEncryptionValidator.validate(metadata)
+  func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext {
+    guard
+      let requestEncryptionAlgorithm = metadata.credentialRequestEncryption.supportedEncryptionAlgorithms.first,
+      let responseEncryptionAlgorithm = metadata.credentialResponseEncryption.supportedEncryptionAlgorithms.first
+    else { throw CredentialEncryptionContextGeneratorError.noSupportedEncryptionAlgorithm }
 
-    var responseKeyPair: VaultKeyPair?
-    if let responseEncryption = metadata.credentialResponseEncryption {
-      responseKeyPair = try keyRepository.create(using: responseEncryption)
+    guard metadata.credentialRequestEncryption.jwks.keys.isEmpty == false else {
+      throw CredentialEncryptionContextGeneratorError.missingIssuerEncryptionKeys
     }
 
-    guard
-      let issuerPublicKey = requestEncryption.jwks.keys.first,
-      let credentialRequestEncryptionAlgorithm = requestEncryption.supportedEncryptionAlgorithms.first else { return nil }
+    guard let publicKey = metadata.credentialRequestEncryption.jwks.keys.first(where: isSupported) else {
+      throw CredentialEncryptionContextGeneratorError.noSuitableEncryptionKey
+    }
 
-    return CredentialEncryptionContext(
-      issuerPublicKey: issuerPublicKey,
-      credentialRequestEncryptionAlgorithm: credentialRequestEncryptionAlgorithm,
-      credentialRequestEncryptionZipValue: requestEncryption.supportedZipValues?.first,
-      responseKeyPair: responseKeyPair,
-      credentialResponseEncryptionAlgorithm: metadata.credentialResponseEncryption?.supportedEncryptionAlgorithms.first,
-      credentialResponseEncryptionZipValue: metadata.credentialResponseEncryption?.supportedZipValues?.first)
+    return try CredentialEncryptionContext(
+      issuerPublicKey: publicKey,
+      credentialRequestEncryptionAlgorithm: requestEncryptionAlgorithm,
+      credentialRequestEncryptionZipValue: metadata.credentialRequestEncryption.supportedZipValues?.first,
+      responseKeyPair: keyRepository.create(using: metadata.credentialResponseEncryption),
+      credentialResponseEncryptionAlgorithm: responseEncryptionAlgorithm,
+      credentialResponseEncryptionZipValue: metadata.credentialResponseEncryption.supportedZipValues?.first)
   }
 
   // MARK: Private
 
-  @Injected(\.credentialEncryptionValidator) private var credentialEncryptionValidator: CredentialEncryptionValidatorProtocol
-  @Injected(\.credentialResponseEncryptionKeyRepository) private var keyRepository: CredentialResponseEncryptionKeyRepositoryProtocol
+  @Injected(\.credentialResponseEncryptionKeyRepository) private var keyRepository
+  @Injected(\.encryptionSupportedCurves) private var supportedCurves: [String]
+
+  private func isSupported(_ jwk: JWK) -> Bool {
+    guard
+      let alg = jwk.alg,
+      supportedCurves.contains(jwk.crv)
+    else {
+      return false
+    }
+
+    return KeyManagementAlgorithm(rawValue: alg) != nil
+  }
 }

@@ -1,6 +1,6 @@
-import JOSESwift
+import JWSETKit
 
-extension JOSESwift.KeyManagementAlgorithm {
+extension JSONWebKeyEncryptionAlgorithm {
 
   // MARK: Lifecycle
 
@@ -9,7 +9,8 @@ extension JOSESwift.KeyManagementAlgorithm {
       throw KeyManagementAlgorithmError.notFound
     }
 
-    guard let algorithm = JOSESwift.KeyManagementAlgorithm(rawValue: alg) else {
+    let algorithm = JSONWebKeyEncryptionAlgorithm(rawValue: alg)
+    guard algorithm.keyType != nil else {
       throw KeyManagementAlgorithmError.creationError
     }
     self = algorithm

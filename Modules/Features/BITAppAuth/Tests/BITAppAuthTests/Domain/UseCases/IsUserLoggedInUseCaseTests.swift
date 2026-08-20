@@ -18,13 +18,13 @@ final class IsUserLoggedInUseCaseTests: XCTestCase {
   func testIsLoggedIn() {
     userSession.isLoggedIn = true
 
-    XCTAssertTrue(useCase.execute())
+    XCTAssertTrue(useCase())
   }
 
   func testIsLoggedOut() {
     userSession.isLoggedIn = false
 
-    XCTAssertFalse(useCase.execute())
+    XCTAssertFalse(useCase())
   }
 
   // MARK: Private

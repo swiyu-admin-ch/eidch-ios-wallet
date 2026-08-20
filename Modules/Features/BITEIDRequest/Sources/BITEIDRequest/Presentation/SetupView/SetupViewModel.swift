@@ -89,9 +89,9 @@ class SetupViewModel {
     await applyMinimumDelay(startTime: startTime)
 
     switch error {
-    case EIDRequestRepository.Error.invalidClientAttestation:
+    case SIDRepository.Error.invalidClientAttestation:
       return destination = .error(.Setup.clientAttestation)
-    case EIDRequestRepository.Error.invalidKeyAttestation:
+    case SIDRepository.Error.invalidKeyAttestation:
       return destination = .error(.Setup.keyAttestation)
     case ValidateDeviceSecurityRequirementsUseCaseError.attestationServiceDeactivated,
          ValidateDeviceSecurityRequirementsUseCaseError.attestationTimeout:

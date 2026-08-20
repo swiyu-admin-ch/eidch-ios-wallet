@@ -1,173 +1,272 @@
-// swiftlint:disable implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional force_try
+import BITAppAttestation
+import BITCrypto
 import Factory
-import XCTest
+import Foundation
+import Testing
 @testable import BITJWT
 @testable import BITOpenID
 @testable import BITTestingCore
 
-final class RequestObjectValidatorTests: XCTestCase {
+@Suite(.serialized)
+struct RequestObjectValidatorTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.reset()
+
+    let jwsValidatorMock = JWSValidatorMock<RequestObjectJWT>()
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    let trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy<VerificationQueryPublicStatementJWT>()
+    let jwsSignatureValidatorMock = JWSSignatureValidatorMock<RequestObjectJWT>()
+
+    self.jwsValidatorMock = jwsValidatorMock
+    self.didResolverSpy = didResolverSpy
+    self.trustStatementValidatorSpy = trustStatementValidatorSpy
+    self.jwsSignatureValidatorMock = jwsSignatureValidatorMock
+
+    Container.shared.jwsValidator.register { jwsValidatorMock }
+    Container.shared.didResolverHelper.register { didResolverSpy }
+    Container.shared.trustStatementValidator.register { trustStatementValidatorSpy }
+    Container.shared.trustEnvironmentDidRegex.register { #/^did:example:.*/# }
+
+    validator = RequestObjectValidator()
+
+    createSuccessState()
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    registerMocks()
-    success()
-    validator = RequestObjectValidator()
+  struct ValidationCase: Sendable {
+    let build: @Sendable () -> RequestObjectJWS
+    let expected: RequestObjectValidationError
   }
 
-  func testValidate_validJws_validates() async throws {
-    let jws = RequestObjectJWS.Mock.sample
+  // MARK: - decentralized_identifier prefix (network)
 
-    do {
-      try await validator.validate(jws)
-    } catch {
-      XCTFail("Expected no throw, but got: \(error)")
-    }
-    XCTAssertEqual(requestObjectEncryptionValidatorSpy.validateCallsCount, 1)
-    XCTAssertEqual(jwsValidatorMock.validateActivationBufferCallsCount, 1)
+  @Test(arguments: [
+    RequestObjectJWS.Mock.sample,
+    RequestObjectJWS.Mock.clientIdDIDPrefix,
+    RequestObjectJWS.Mock.noAudience,
+  ])
+  func validate_validCases_validates(jws: RequestObjectJWS) async throws {
+    try await validator.validate(jws, transport: .network)
+
+    #expect(jwsValidatorMock.validateActivationBufferCallsCount == 1)
+    #expect(trustStatementValidatorSpy.validateForCallsCount == 1)
   }
 
-  func testValidate_withoutHolderBindingAndWithState_validates() async throws {
-    let jws = RequestObjectJWS.Mock.sample
+  @Test
+  func validate_validJwsWithoutVerifiedQuery_validates() async throws {
+    let jws = RequestObjectJWS.Mock.sampleWithoutVerifiedQuery
 
-    do {
-      try await validator.validate(jws)
-    } catch {
-      XCTFail("Expected no throw, but got: \(error)")
-    }
+    try await validator.validate(jws, transport: .network)
+
+    #expect(jwsValidatorMock.validateActivationBufferCallsCount == 1)
+    #expect(trustStatementValidatorSpy.validateForCallsCount == 0)
   }
 
-  func testValidate_didPrefixClientIdMatchesKid_validates() async {
-    let jws = RequestObjectJWS.Mock.clientIdDIDPrefix
+  @Test(arguments: [
+    ValidationCase(build: { RequestObjectJWS.Mock.unsupportedAlgorithm }, expected: .invalidJWSSignatureAlgorithm),
+    ValidationCase(build: { RequestObjectJWS.Mock.clientIdMismatch }, expected: .invalidClientId),
+    ValidationCase(build: { RequestObjectJWS.Mock.unsupportedResponseType }, expected: .invalidResponseType),
+    ValidationCase(build: { RequestObjectJWS.Mock.transactionData }, expected: .transactionDataNotSupported),
+    ValidationCase(build: { RequestObjectJWS.Mock.missingState }, expected: .invalidState),
+    ValidationCase(build: { RequestObjectJWS.Mock.audienceIssuerMismatch }, expected: .invalidAudience),
+  ])
+  func validate_knownValidationErrors(testCase: ValidationCase) async {
+    let jws = testCase.build()
 
-    do {
-      try await validator.validate(jws)
-    } catch {
-      XCTFail("Expected no throw, but got: \(error)")
-    }
-  }
-
-  func testValidateJWS_noAudience_validates() async {
-    let jws = RequestObjectJWS.Mock.noAudience
-
-    do {
-      try await validator.validate(jws)
-    } catch {
-      XCTFail("Expected no throw, but got: \(error)")
+    await #expect(throws: testCase.expected) {
+      try await validator.validate(jws, transport: .network)
     }
   }
 
-  func testValidate_withUnsupportedAlgorithm_throwsInvalidJWSSignatureAlgorithm() async {
-    let jws = RequestObjectJWS.Mock.unsupportedAlgorithm
-
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidJWSSignatureAlgorithm)
-    }
-  }
-
-  func testValidate_withClientIdMismatch_throwsInvalidClientId() async {
-    let jws = RequestObjectJWS.Mock.clientIdMismatch
-
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
-    }
-  }
-
-  func testValidate_kidMismatch_throwsInvalidClientId() async {
+  @Test
+  func validate_kidMismatch_throwsInvalidClientId() async {
     didResolverSpy.getDidFromReturnValue = "did:example:mismatch"
-    let jws = RequestObjectJWS.Mock.kidMismatch
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    await #expect(throws: RequestObjectValidationError.invalidClientId) {
+      try await validator.validate(RequestObjectJWS.Mock.sample, transport: .network)
     }
   }
 
-  func testValidate_clientIdNotADid_throwsInvalidClientId() async {
-    let jws = RequestObjectJWS.Mock.clientIdNotADid
+  @Test
+  func validate_didResolverThrows_throws() async {
+    didResolverSpy.getDidFromThrowableError = TestingError.error
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    await #expect(throws: TestingError.error) {
+      try await validator.validate(RequestObjectJWS.Mock.sample, transport: .network)
     }
   }
 
-  func testValidate_jwsValidatorThrows_rethrowsError() async {
-    let jws = RequestObjectJWS.Mock.sample
+  @Test
+  func validate_jwsValidatorThrows_rethrowsError() async {
     jwsValidatorMock.validateThrowableError = TestingError.error
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? TestingError, .error)
+    await #expect(throws: TestingError.error) {
+      try await validator.validate(RequestObjectJWS.Mock.sample, transport: .network)
     }
   }
 
-  func testValidate_requestObjectEncryptionValidatorThrows_rethrowsError() async {
-    let jws = RequestObjectJWS.Mock.sample
-    requestObjectEncryptionValidatorSpy.validateThrowableError = RequestObjectEncryptionError.missingClientMetadata
-
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectEncryptionError, .missingClientMetadata)
+  @Test
+  func validate_decentralizedIdentifierOnProximity_throwsNotSupported() async {
+    await #expect(throws: RequestObjectValidationError.decentralizedIdentifierNotSupported) {
+      try await validator.validate(RequestObjectJWS.Mock.clientIdDIDPrefix, transport: .proximity)
     }
   }
 
-  func testValidate_withUnsupportedResponseType_throwsInvalidResponseType() async throws {
-    let jws = RequestObjectJWS.Mock.unsupportedResponseType
+  // MARK: - verifier_attestation prefix (proximity)
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidResponseType)
+  @Test
+  func validate_verifierAttestationTrustedIssuer_succeeds() async throws {
+    let validator = configureVerifierAttestation()
+
+    try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
+
+    #expect(jwsSignatureValidatorMock.validateWithJwkCallsCount == 1)
+    #expect(jwsSignatureValidatorMock.validateWithJwkReceivedJwk == attestationBoundJwk)
+  }
+
+  @Test
+  func validate_verifierAttestationUntrustedIssuer_throwsDidNotTrusted() async {
+    let validator = configureVerifierAttestation(trustedDids: ["did:example:someoneElse"])
+
+    await #expect(throws: RequestObjectValidationError.verifierAttestationDidNotTrusted) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
+    }
+    // Outer JWS signature is verified using the bound key even before the trust check.
+    #expect(jwsSignatureValidatorMock.validateWithJwkCallsCount == 1)
+  }
+
+  @Test
+  func validate_verifierAttestationMissingHeaderJwt_throwsInvalidVerifierAttestation() async {
+    let validator = configureVerifierAttestation()
+
+    await #expect(throws: RequestObjectValidationError.invalidVerifierAttestation) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationMissingHeader, transport: .proximity)
     }
   }
 
-  func testValidate_withUnsupportedClientId_throwsInvalidClientId() async throws {
-    let jws = RequestObjectJWS.Mock.unsupportedClientId
+  @Test
+  func validate_verifierAttestationSubjectMismatch_throwsInvalidVerifierAttestation() async {
+    let validator = configureVerifierAttestation(attestationSubject: "not-the-client-id")
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidClientId)
+    await #expect(throws: RequestObjectValidationError.invalidVerifierAttestation) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
     }
   }
 
-  func testValidate_withTransactionData_throwsTransactionDataNotSupported() async throws {
-    let jws = RequestObjectJWS.Mock.transactionData
+  @Test
+  func validate_verifierAttestationWrongType_throwsInvalidVerifierAttestation() async {
+    let validator = configureVerifierAttestation(headerType: "something-else+jwt")
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .transactionDataNotSupported)
+    await #expect(throws: RequestObjectValidationError.invalidVerifierAttestation) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
     }
   }
 
-  func testValidate_withoutHolderBindingAndWithoutState_throwsInvalidState() async throws {
-    let jws = RequestObjectJWS.Mock.missingState
+  @Test
+  func validate_verifierAttestationRequestObjectSignatureInvalid_throwsInvalidVerifierAttestation() async {
+    let validator = configureVerifierAttestation()
+    jwsSignatureValidatorMock.validateWithJwkThrowableError = JWSSignatureValidatorError.invalidSignature
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidState)
+    await #expect(throws: JWSSignatureValidatorError.invalidSignature) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
     }
   }
 
-  func testValidate_audienceIssuerMismatch_throwsInvalidAudience() async {
-    let jws = RequestObjectJWS.Mock.audienceIssuerMismatch
+  @Test
+  func validate_verifierAttestationInnerSignatureInvalid_rethrowsError() async {
+    let validator = configureVerifierAttestation()
+    jwsValidatorMock.validateThrowableError = TestingError.error
 
-    await XCTAssertThrowsErrorAsync(try await validator.validate(jws)) { error in
-      XCTAssertEqual(error as? RequestObjectValidationError, .invalidAudience)
+    await #expect(throws: TestingError.error) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
+    }
+  }
+
+  @Test
+  func validate_verifierAttestationIssuerDidResolutionFails_throwsDidNotFound() async {
+    let validator = configureVerifierAttestation()
+    didResolverSpy.getDidFromThrowableError = TestingError.error
+
+    await #expect(throws: TestingError.error) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .proximity)
+    }
+  }
+
+  @Test
+  func validate_verifierAttestationOnNetwork_throwsNotSupported() async {
+    await #expect(throws: RequestObjectValidationError.verifierAttestationNotSupported) {
+      try await validator.validate(RequestObjectJWS.Mock.verifierAttestationPrefix, transport: .network)
     }
   }
 
   // MARK: Private
 
-  private var validator = RequestObjectValidator()
-  private var jwsValidatorMock: JWSValidatorMock<RequestObjectJWT>!
-  private var didResolverSpy: DidResolverHelperProtocolSpy!
-  private var requestObjectEncryptionValidatorSpy: RequestObjectEncryptionValidatorProtocolSpy!
+  private var validator: RequestObjectValidator
+  private var jwsValidatorMock: JWSValidatorMock<RequestObjectJWT>
+  private var didResolverSpy: DidResolverHelperProtocolSpy
+  private var trustStatementValidatorSpy: TrustStatementValidatorProtocolSpy<VerificationQueryPublicStatementJWT>
+  private var jwsSignatureValidatorMock: JWSSignatureValidatorMock<RequestObjectJWT>
 
-  private func registerMocks() {
-    jwsValidatorMock = JWSValidatorMock()
-    didResolverSpy = DidResolverHelperProtocolSpy()
-    requestObjectEncryptionValidatorSpy = RequestObjectEncryptionValidatorProtocolSpy()
-
-    Container.shared.jwsValidator.register { self.jwsValidatorMock }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
-    Container.shared.requestObjectEncryptionValidator.register { self.requestObjectEncryptionValidatorSpy }
+  private var attestationBoundJwk: JWK {
+    JWK.Mock.validSample
   }
 
-  private func success() {
+  private func createSuccessState() {
     didResolverSpy.getDidFromReturnValue = "did:example:12345"
+  }
+
+  private func configureVerifierAttestation(
+    attestationSubject: String = "did:example:verifier-subject",
+    headerType: String = VerifierAttestationJWT.expectedType,
+    trustedDids: [String] = ["did:example:trustedAttestationIssuer"])
+    -> RequestObjectValidator
+  {
+    let attestationJWT = makeVerifierAttestationJWT(subject: attestationSubject, jwk: attestationBoundJwk)
+    let attestationHeader = JWSHeader(
+      algorithm: JWTAlgorithm.ES256,
+      type: headerType,
+      keyIdentifier: "did:example:trustedAttestationIssuer#key-1")
+
+    let decoderMock = JWSDecoderMock<VerifierAttestationJWT>(
+      jwt: attestationJWT,
+      header: attestationHeader)
+
+    Container.shared.jwsDecoder.register { decoderMock }
+    Container.shared.jwsSignatureValidator.register { jwsSignatureValidatorMock }
+    Container.shared.attestationServiceTrustedDids.register { trustedDids }
+
+    didResolverSpy.getDidFromReturnValue = "did:example:trustedAttestationIssuer"
+
+    return RequestObjectValidator()
+  }
+
+  private func makeVerifierAttestationJWT(subject: String, jwk: JWK) -> VerifierAttestationJWT {
+    var jwkDict: [String: Any] = [
+      "kty": jwk.kty,
+      "crv": jwk.crv,
+      "x": jwk.x,
+      "y": jwk.y,
+    ]
+    if let alg = jwk.alg { jwkDict["alg"] = alg }
+    if let kid = jwk.kid { jwkDict["kid"] = kid }
+
+    let json: [String: Any] = [
+      "iss": "did:example:trustedAttestationIssuer",
+      "sub": subject,
+      "iat": 1722499200,
+      "nbf": 1722499200,
+      "exp": 1767168000,
+      "cnf": ["jwk": jwkDict],
+    ]
+
+    let data = try! JSONSerialization.data(withJSONObject: json)
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .secondsSince1970
+    return try! decoder.decode(VerifierAttestationJWT.self, from: data)
   }
 }

@@ -17,12 +17,12 @@ struct CompareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtoco
 
   func callAsFunction(for caseId: String, with output: ScanDocumentOutput) async -> Bool {
     do {
-      let previousScanResultFile = try await eIDRequestCaseRepository.getFile(forRequestCaseId: caseId, name: Self.previousScanFilename, category: .documentScan)
+      let previousScanResultFile = try await eIDRequestCaseRepository.getFile(forRequestCaseId: caseId, name: Self.filename, category: .documentScan)
 
       guard
         let previousScanExtractedData = try? JSONDecoder().decode(ScanDocumentOutput.ExtractedData.self, from: previousScanResultFile.data),
         let previousScanDocumentNumber = previousScanExtractedData.steps.first?.summary.documentNumber,
-        let currentScanResultFile = output.files.first(where: { $0.category == .documentScan && $0.fileName == Self.currentScanFilename }),
+        let currentScanResultFile = output.files.first(where: { $0.category == .documentScan && $0.fileName == Self.filename }),
         let currentScanExtractedData = try? JSONDecoder().decode(ScanDocumentOutput.ExtractedData.self, from: currentScanResultFile.data),
         let currentScanDocumentNumber = currentScanExtractedData.steps.first?.summary.documentNumber
       else {
@@ -37,8 +37,7 @@ struct CompareScanDocumentOutputUseCase: CompareScanDocumentOutputUseCaseProtoco
 
   // MARK: Private
 
-  private static let currentScanFilename = "result.json"
-  private static let previousScanFilename = "mobile-result.json"
+  private static let filename = "result.json"
 
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
 }

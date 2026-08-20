@@ -21,5 +21,5 @@ struct SaveDeferredCredentialUseCase: SaveDeferredCredentialUseCaseProtocol {
 
   // MARK: Private
 
-  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProcotol
+  @Injected(\.credentialRepository) private var credentialRepository: CredentialRepositoryProtocol
 }

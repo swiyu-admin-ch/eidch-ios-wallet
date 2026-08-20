@@ -2,6 +2,7 @@
 import Factory
 import XCTest
 @testable import BITActivity
+@testable import BITNetworking
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITTestingCore
@@ -24,8 +25,12 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
   }
 
   func testExecute_passesArguments() async throws {
-    try await useCase(context: contextMock)
+    let redirect = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
+    presentationRequestServiceSpy.declineUrlWithReturnValue = redirect
 
+    let response = try await useCase(context: contextMock)
+
+    XCTAssertEqual(response, redirect)
     XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithCallsCount, 1)
     XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url, contextMock.requestObject.responseUri)
     XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error, .accessDenied)
@@ -36,8 +41,9 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
   }
 
   func testExecuteWithUrl_success() async throws {
-    try await useCase(url: XCTUnwrap(contextMock.responseUri))
+    let response = try await useCase(url: XCTUnwrap(contextMock.responseUri))
 
+    XCTAssertNil(response)
     XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithCallsCount, 1)
     XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url, contextMock.requestObject.responseUri)
     XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error, .accessDenied)
@@ -47,10 +53,45 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
 
     do {
-      try await useCase(context: contextMock)
+      _ = try await useCase(context: contextMock)
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 0)
+    }
+  }
+
+  func testExecute_serviceThrowsNoConnection_DoesNotCreateActivity() async throws {
+    presentationRequestServiceSpy.declineUrlWithThrowableError = NetworkError(status: .noConnection)
+
+    do {
+      _ = try await useCase(context: contextMock)
+    } catch {
+      XCTAssertEqual((error as? NetworkError)?.status, .noConnection)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 0)
+    }
+  }
+
+  func testExecute_serviceThrowsHttpNetworkError_CreatesActivity() async throws {
+    presentationRequestServiceSpy.declineUrlWithThrowableError = NetworkError(status: .badRequest)
+
+    do {
+      _ = try await useCase(context: contextMock)
+    } catch {
+      XCTAssertEqual((error as? NetworkError)?.status, .badRequest)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
+    }
+  }
+
+  func testExecute_serviceThrowsPresentationResponseValidationError_CreatesActivity() async throws {
+    presentationRequestServiceSpy.declineUrlWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
+
+    await XCTAssertThrowsErrorAsync(try await useCase(context: contextMock)) { error in
+      XCTAssertEqual(error as? PresentationResponseValidationError, .invalidRedirectUri)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
+      XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
     }
   }
 
@@ -61,8 +102,9 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
       transport: .proximity)
     proximityContext.selectedCredential = contextMock.selectedCredential
 
-    try await useCase(context: proximityContext)
+    let response = try await useCase(context: proximityContext)
 
+    XCTAssertNil(response)
     XCTAssertTrue(proximityRepository.declineCalled)
     XCTAssertFalse(presentationRequestServiceSpy.declineUrlWithCalled)
     XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
@@ -74,7 +116,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
 
     do {
-      try await useCase(url: XCTUnwrap(contextMock.responseUri))
+      _ = try await useCase(url: XCTUnwrap(contextMock.responseUri))
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
     }
@@ -82,7 +124,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
 
   // MARK: Private
 
-  private let contextMock = PresentationRequestContext.Mock.vcSdJwtWithIdentityTrust
+  private let contextMock = PresentationRequestContext.Mock.vcSdJwtSample
 
   private var presentationRequestServiceSpy: PresentationRequestServiceProtocolSpy!
   private var activityServiceSpy: ActivityServiceProtocolSpy!

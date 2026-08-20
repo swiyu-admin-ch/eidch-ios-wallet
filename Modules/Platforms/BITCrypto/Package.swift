@@ -16,18 +16,20 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
+    .package(path: "../../Platforms/BITAnalytics"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/krzyzanowskim/CryptoSwift", exact: "1.8.4"),
-    .package(url: "https://github.com/airsidemobile/JOSESwift.git", exact: "3.0.0"),
+    .package(url: "https://github.com/amosavian/JWSETKit", exact: "2.2.0"),
   ],
   targets: [
     .target(
       name: "BITCrypto",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITAnalytics", package: "BITAnalytics"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "CryptoSwift", package: "CryptoSwift"),
-        .product(name: "JOSESwift", package: "JOSESwift"),
+        .product(name: "JWSETKit", package: "JWSETKit"),
       ],
       resources: [.process("Resources")],
       swiftSettings: [
@@ -38,7 +40,7 @@ let package = Package(
       dependencies: [
         "BITCrypto",
         .product(name: "BITTestingCore", package: "BITCore"),
-        .product(name: "JOSESwift", package: "JOSESwift"),
+        .product(name: "JWSETKit", package: "JWSETKit"),
       ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),

@@ -133,6 +133,10 @@ extension Container {
 
   // MARK: Internal
 
+  var protectedIssuanceValidator: Factory<ProtectedIssuanceValidatorProtocol> {
+    self { ProtectedIssuanceValidator() }
+  }
+
   var getCredentialIssuanceSummaryUseCase: Factory<GetCredentialIssuanceSummaryUseCaseProtocol> {
     self { GetCredentialIssuanceSummaryUseCase() }
   }
@@ -171,7 +175,7 @@ extension Container {
 
 extension Container {
 
-  public var credentialRepository: Factory<CredentialRepositoryProcotol> {
+  public var credentialRepository: Factory<CredentialRepositoryProtocol> {
     self { CredentialRepository() }
   }
 

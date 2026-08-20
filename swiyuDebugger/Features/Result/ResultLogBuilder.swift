@@ -1,16 +1,18 @@
+import BITCore
 import BITCredential
 import BITCredentialShared
 import BITNetworking
 import BITNonCompliance
 import BITPresentation
+import Factory
 import Foundation
 
 struct ResultLogBuilder {
 
   // MARK: Internal
 
-  static func buildLogURL(mode: ScanResult, invitationURL: URL?) -> URL? {
-    let logText = buildLogText(mode: mode, invitationURL: invitationURL)
+  static func buildLogURL(mode: ScanResult, invitationURL: URL?, trustInformation: TrustInformation?, actorCompliance: ActorCompliance? = nil) -> URL? {
+    let logText = buildLogText(mode: mode, invitationURL: invitationURL, trustInformation: trustInformation, actorCompliance: actorCompliance)
     let timestamp = logDateFormatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
     let fileName = "scan-result-\(timestamp).log"
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
@@ -22,7 +24,7 @@ struct ResultLogBuilder {
     }
   }
 
-  static func buildLogText(mode: ScanResult, invitationURL: URL?) -> String {
+  static func buildLogText(mode: ScanResult, invitationURL: URL?, trustInformation: TrustInformation?, actorCompliance: ActorCompliance? = nil) -> String {
     var lines = [String]()
     lines.append("---- Scan Result Log ----")
     lines.append("Timestamp: \(logDateFormatter.string(from: Date()))")
@@ -30,8 +32,8 @@ struct ResultLogBuilder {
     lines.append("")
 
     switch mode {
-    case .credential(let credential, let trustInformation):
-      lines.append(contentsOf: credentialLogLines(credential: credential, trustInformation: trustInformation))
+    case .credential(let credential):
+      lines.append(contentsOf: credentialLogLines(credential: credential, trustInformation: trustInformation, actorCompliance: actorCompliance))
     case .presentation(let context):
       lines.append(contentsOf: presentationLogLines(context: context))
     case .error(let error):
@@ -85,7 +87,7 @@ struct ResultLogBuilder {
     return formatter
   }()
 
-  private static func credentialLogLines(credential: any CredentialProtocol, trustInformation: TrustInformation?) -> [String] {
+  private static func credentialLogLines(credential: any CredentialProtocol, trustInformation: TrustInformation?, actorCompliance: ActorCompliance?) -> [String] {
     var lines = [String]()
     lines.append("Credential ID: \(credential.id)")
     lines.append("Format: \(credential.format)")
@@ -97,7 +99,7 @@ struct ResultLogBuilder {
     }
     lines.append("")
     lines.append("Trust information:")
-    lines.append(contentsOf: trustInformationLogLines(trustInformation))
+    lines.append(contentsOf: trustInformationLogLines(trustInformation, actorCompliance: actorCompliance))
     if let verifiableCredential = credential as? VerifiableCredential {
       lines.append("")
       lines.append("Raw credentials:")
@@ -133,7 +135,7 @@ struct ResultLogBuilder {
     }
     lines.append("")
     lines.append("Trust information:")
-    lines.append(contentsOf: trustInformationLogLines(context.trustInformation))
+    lines.append(contentsOf: trustInformationLogLines(context.trustInformation, actorCompliance: context.actorCompliance))
     lines.append("")
     lines.append("Requested claims:")
     for credential in context.compatibleCredentials {
@@ -147,23 +149,22 @@ struct ResultLogBuilder {
     return lines
   }
 
-  private static func trustInformationLogLines(_ trustInformation: TrustInformation?) -> [String] {
+  private static func trustInformationLogLines(_ trustInformation: TrustInformation?, actorCompliance: ActorCompliance?) -> [String] {
     guard let trustInformation else { return ["Unavailable"] }
     var lines = [String]()
     switch trustInformation.identity {
-    case .trusted(let trustStatement):
-      let name = trustStatement.getLocalizedEntityName(considering: Locale.preferredLanguages)
+    case .trusted:
       lines.append("Identity: trusted")
-      if !name.isEmpty {
-        lines.append("Identity name: \(name)")
-      }
     case .untrusted:
       lines.append("Identity: untrusted")
     case .unknown:
       lines.append("Identity: unknown")
+    case .trustedCheckApp:
+      lines.append("Identity: trustedCheckApp")
     }
+    lines.append("Actor trust: \(trustInformation.actorTrust.rawValue)")
     lines.append("VC Schema: \(trustInformation.vcSchema.rawValue)")
-    switch trustInformation.actorCompliance {
+    switch actorCompliance {
     case .compliant?:
       lines.append("Actor compliance: compliant")
     case .notCompliant?:
@@ -172,8 +173,8 @@ struct ResultLogBuilder {
       lines.append("Actor compliance: unknown")
     }
     if
-      case .notCompliant(let reason) = trustInformation.actorCompliance,
-      let localizedReason = reason.localized()
+      case .notCompliant(let reason) = actorCompliance,
+      let localizedReason = reason?.getPreferredDisplay(considering: Container.shared.preferredUserLanguageCodes())
     {
       lines.append("Non-compliance reason: \(localizedReason)")
     }

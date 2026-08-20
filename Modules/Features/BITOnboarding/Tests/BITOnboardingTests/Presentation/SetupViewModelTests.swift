@@ -6,6 +6,7 @@ import SwiftUI
 import XCTest
 @testable import BITActivity
 @testable import BITAppAuth
+@testable import BITCore
 @testable import BITOnboarding
 @testable import BITSettings
 @testable import BITTestingCore
@@ -14,7 +15,7 @@ final class SetupViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @AppStorage("rootOnboardingIsEnabled") var isOnboardingEnabled = true
+  @AppStorage(UserDefaultsKey.rootOnboardingIsEnabled.rawValue) var isOnboardingEnabled = true
 
   @MainActor
   override func setUp() {
@@ -32,11 +33,11 @@ final class SetupViewModelTests: XCTestCase {
 
     await viewModel.run()
 
-    XCTAssertEqual(registerPinCodeUseCase.executePinCodeCallsCount, 1)
-    XCTAssertEqual(registerPinCodeUseCase.executePinCodeReceivedPinCode, router.context.pincode)
+    XCTAssertEqual(registerPinCodeUseCase.callAsFunctionPinCodeCallsCount, 1)
+    XCTAssertEqual(registerPinCodeUseCase.callAsFunctionPinCodeReceivedPinCode, router.context.pincode)
 
-    XCTAssertEqual(updateAnalyticsStatusUseCase.executeIsAllowedCallsCount, 1)
-    XCTAssertEqual(updateAnalyticsStatusUseCase.executeIsAllowedReceivedIsAllowed, router.context.analyticsOptIn)
+    XCTAssertEqual(updateAnalyticsStatusUseCase.callAsFunctionIsAllowedCallsCount, 1)
+    XCTAssertEqual(updateAnalyticsStatusUseCase.callAsFunctionIsAllowedReceivedIsAllowed, router.context.analyticsOptIn)
 
     XCTAssertEqual(setActivityHistoryEnabledUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(setActivityHistoryEnabledUseCase.callAsFunctionReceivedIsEnabled, true)
@@ -51,8 +52,8 @@ final class SetupViewModelTests: XCTestCase {
 
     await viewModel.run()
 
-    XCTAssertFalse(registerPinCodeUseCase.executePinCodeCalled)
-    XCTAssertFalse(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+    XCTAssertFalse(registerPinCodeUseCase.callAsFunctionPinCodeCalled)
+    XCTAssertFalse(updateAnalyticsStatusUseCase.callAsFunctionIsAllowedCalled)
     XCTAssertFalse(setActivityHistoryEnabledUseCase.callAsFunctionCalled)
 
     XCTAssertFalse(router.completedCalled)
@@ -62,14 +63,14 @@ final class SetupViewModelTests: XCTestCase {
 
   @MainActor
   func testRunSetupError() async {
-    registerPinCodeUseCase.executePinCodeThrowableError = TestingError.error
+    registerPinCodeUseCase.callAsFunctionPinCodeThrowableError = TestingError.error
     router.context.pincode = "123456"
 
     await viewModel.run()
 
-    XCTAssertTrue(registerPinCodeUseCase.executePinCodeCalled)
-    XCTAssertEqual(registerPinCodeUseCase.executePinCodeCallsCount, 1)
-    XCTAssertFalse(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+    XCTAssertTrue(registerPinCodeUseCase.callAsFunctionPinCodeCalled)
+    XCTAssertEqual(registerPinCodeUseCase.callAsFunctionPinCodeCallsCount, 1)
+    XCTAssertFalse(updateAnalyticsStatusUseCase.callAsFunctionIsAllowedCalled)
     XCTAssertFalse(setActivityHistoryEnabledUseCase.callAsFunctionCalled)
     XCTAssertFalse(router.completedCalled)
     XCTAssertTrue(router.setupErrorCalled)
@@ -84,8 +85,8 @@ final class SetupViewModelTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 3_000_000_000)
 
-    XCTAssertTrue(registerPinCodeUseCase.executePinCodeCalled)
-    XCTAssertTrue(updateAnalyticsStatusUseCase.executeIsAllowedCalled)
+    XCTAssertTrue(registerPinCodeUseCase.callAsFunctionPinCodeCalled)
+    XCTAssertTrue(updateAnalyticsStatusUseCase.callAsFunctionIsAllowedCalled)
     XCTAssertTrue(setActivityHistoryEnabledUseCase.callAsFunctionCalled)
 
     XCTAssertFalse(viewModel.isOnboardingEnabled)

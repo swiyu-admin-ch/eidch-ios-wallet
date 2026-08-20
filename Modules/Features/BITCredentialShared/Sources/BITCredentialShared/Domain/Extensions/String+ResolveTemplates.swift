@@ -1,7 +1,6 @@
 import BITClaimsPathPointer
 import BITEntities
 import Foundation
-import RealmSwift
 import RegexBuilder
 
 extension String {

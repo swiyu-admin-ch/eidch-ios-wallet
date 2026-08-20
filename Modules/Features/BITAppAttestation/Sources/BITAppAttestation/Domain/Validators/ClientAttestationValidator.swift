@@ -22,7 +22,7 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
   func callAsFunction(_ clientAttestation: ClientAttestation) async -> Bool {
     do {
       guard
-        clientAttestationSupportedAlgorithms.contains(clientAttestation.header.algorithm),
+        supportedSignatureValidationAlgorithms.contains(clientAttestation.header.algorithm),
         let did = try? didResolverHelper.getDid(from: clientAttestation.header.keyIdentifier),
         attestationServiceTrustedDids.contains(did)
       else {
@@ -50,12 +50,11 @@ struct ClientAttestationValidator: ClientAttestationValidatorProtocol {
 
   private static let didJwk = "did:jwk:"
 
-  private let clientAttestationSupportedAlgorithms: [JWTAlgorithm] = [.ES256]
-
   @Injected(\.jsonCanonicalizer) private var jsonCanonicalizer: JsonCanonicalizerProtocol
   @Injected(\.attestationServiceTrustedDids) private var attestationServiceTrustedDids: [String]
   @Injected(\.jwsValidator) private var jwsValidator: JWSValidatorProtocol
   @Injected(\.didResolverHelper) private var didResolverHelper: DidResolverHelperProtocol
+  @Injected(\.supportedSignatureValidationAlgorithms) private var supportedSignatureValidationAlgorithms: [JWTAlgorithm]
   @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
   @Injected(\.appIdentifierRepository) private var appIdentifierRepository: AppIdentifierRepositoryProtocol
 

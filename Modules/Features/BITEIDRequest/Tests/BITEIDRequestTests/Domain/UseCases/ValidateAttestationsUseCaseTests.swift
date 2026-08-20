@@ -31,11 +31,11 @@ final class ValidateAttestationsUseCaseTests: XCTestCase {
   private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
   private let mockClientAttestation = ClientAttestationJWT.Mock.sample
 
-  private var repository: EIDRequestRepositoryProtocolSpy!
+  private var repository: SIDRepositoryProtocolSpy!
 
   private func registerMocks() {
-    repository = EIDRequestRepositoryProtocolSpy()
-    Container.shared.eIDRequestRepository.register { self.repository }
+    repository = SIDRepositoryProtocolSpy()
+    Container.shared.sidRepository.register { self.repository }
   }
 
 }

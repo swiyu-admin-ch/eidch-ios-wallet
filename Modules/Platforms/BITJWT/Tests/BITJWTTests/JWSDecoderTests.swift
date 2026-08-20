@@ -1,5 +1,4 @@
 import Foundation
-import JOSESwift
 import XCTest
 @testable import BITJWT
 
@@ -59,7 +58,7 @@ final class JWSDecoderTests: XCTestCase {
     let data = "invalid".data(using: .utf8)!
 
     XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
-      XCTAssertTrue(error is JOSESwiftError)
+      XCTAssertTrue(error is DecodingError)
     }
   }
 
@@ -67,7 +66,11 @@ final class JWSDecoderTests: XCTestCase {
     let data = RegisteredClaimsJWT.Mock.noneAlgorithmData
 
     XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
-      XCTAssertTrue(error is JOSESwiftError)
+      let decodingError = error as? DecodingError
+      guard let decodingError, case .dataCorrupted = decodingError else {
+        XCTFail("Wrong error thrown: \(error)")
+        return
+      }
     }
   }
 

@@ -28,8 +28,8 @@ extension ScanCameraDestination {
 
   init?(invitationDestination: InvitationDestinations, invitationURL: URL?) {
     switch invitationDestination {
-    case .offer(let credential, let trustInformation):
-      self = .result(.credential(credential, trustInformation), invitationURL)
+    case .offer(let credential):
+      self = .result(.credential(credential), invitationURL)
     case .external(.presentation(let context)):
       self = .result(.presentation(context), invitationURL)
     default:

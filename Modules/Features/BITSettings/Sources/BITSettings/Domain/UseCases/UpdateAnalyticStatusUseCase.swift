@@ -1,15 +1,21 @@
 import Factory
 import Foundation
+import Spyable
 
-public struct UpdateAnalyticStatusUseCase: UpdateAnalyticStatusUseCaseProtocol {
+// MARK: - UpdateAnalyticStatusUseCaseProtocol
 
-  public init(analyticsRepository: AnalyticsRepositoryProtocol = Container.shared.analyticsRepository()) {
-    self.analyticsRepository = analyticsRepository
-  }
+@Spyable
+public protocol UpdateAnalyticStatusUseCaseProtocol {
+  func callAsFunction(isAllowed: Bool) async
+}
 
-  public func execute(isAllowed: Bool) async {
+// MARK: - UpdateAnalyticStatusUseCase
+
+struct UpdateAnalyticStatusUseCase: UpdateAnalyticStatusUseCaseProtocol {
+
+  func callAsFunction(isAllowed: Bool) async {
     await analyticsRepository.allowAnalytics(isAllowed)
   }
 
-  private let analyticsRepository: AnalyticsRepositoryProtocol
+  @Injected(\.analyticsRepository) private var analyticsRepository: AnalyticsRepositoryProtocol
 }

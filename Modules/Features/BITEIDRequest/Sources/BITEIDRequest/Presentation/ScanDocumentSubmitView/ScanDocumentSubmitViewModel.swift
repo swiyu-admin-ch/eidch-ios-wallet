@@ -103,7 +103,7 @@ final class ScanDocumentSubmitViewModel {
 
       guard
         requestCase.state != nil,
-        let destination = try await coordinator.getNextDestination(for: requestCase)
+        let destination = await coordinator.getNextDestination(for: requestCase)
       else {
         return close()
       }
@@ -120,16 +120,18 @@ final class ScanDocumentSubmitViewModel {
       self.destination = destination
     } catch {
       destination = .error(ErrorDataset(
-        primary: L10n.tkEidRequestSubmitErrorPrimary,
-        secondary: L10n.tkEidRequestSubmitErrorSecondary,
-        tertiary: L10n.tkEidRequestSubmitErrorTertiary,
-        primaryAction: {
-          Task {
-            await self.submit()
-          }
-        },
-        primaryActionLabel: L10n.tkEidRequestSubmitErrorPrimaryButton,
-        tertiaryAction: openHelp))
+        [
+          .title(L10n.tkEidRequestSubmitErrorPrimary),
+          .body(L10n.tkEidRequestSubmitErrorSecondary),
+          .captionButton(L10n.tkEidRequestSubmitErrorTertiary, { _ in
+            self.openHelp()
+          }),
+        ],
+        actions: [
+          .primary(L10n.tkEidRequestSubmitErrorPrimaryButton) { navigator in
+            navigator.pop()
+          },
+        ]))
     }
   }
 

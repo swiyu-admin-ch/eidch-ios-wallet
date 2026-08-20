@@ -30,7 +30,6 @@ class CredentialDetailViewModel {
     case checkStatusFailed
     case deleteCredentialError(_ error: Error)
     case fetchCredentialError(_ error: Error)
-    case refreshCredentialError(_ error: Error)
   }
 
   var credentialViewModel: (any CredentialViewModelProtocol & CredentialCardViewModelProtocol)?
@@ -38,8 +37,6 @@ class CredentialDetailViewModel {
   var isCredentialDeleted = false
   var isLoading = true
   var error: Error?
-  var isRefreshLoading = false
-  var isRefreshErrorPresented = false
   var toast: Toast?
   var activities = [ActivityCellViewModel]()
   var isActivityHistoryEnabled = true
@@ -100,32 +97,6 @@ class CredentialDetailViewModel {
     toast = Toast(L10n.tkDisplayrefreshNotificationSuccess)
   }
 
-  func refreshBatchCredential() async {
-    guard
-      !isRefreshLoading,
-      isBatchPrivacyWarningVisible,
-      let credential = actionableBatchCredential
-    else {
-      return
-    }
-
-    isRefreshErrorPresented = false
-    isRefreshLoading = true
-    defer { isRefreshLoading = false }
-
-    do {
-      let refreshedCredential = try await refreshCredentialUseCase(credential)
-      handleCredentialRefreshed(refreshedCredential)
-    } catch {
-      analytics.log(AnalyticsEvent.refreshCredentialError(error))
-      isRefreshErrorPresented = true
-    }
-  }
-
-  func hideRefreshError() {
-    isRefreshErrorPresented = false
-  }
-
   // MARK: Private
 
   private let credentialId: UUID
@@ -135,15 +106,9 @@ class CredentialDetailViewModel {
   @ObservationIgnored @Injected(\.deleteCredentialUseCase) private var deleteCredentialUseCase: DeleteCredentialUseCaseProtocol
   @ObservationIgnored @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseCaseProtocol
   @ObservationIgnored @Injected(\.getCredentialUseCase) private var getCredentialUseCase
-  @ObservationIgnored @Injected(\.refreshCredentialUseCase) private var refreshCredentialUseCase: RefreshVerifiableCredentialUseCaseProtocol
   @ObservationIgnored @Injected(\.getCredentialActivitiesUseCase) private var getCredentialActivitiesUseCase
 
   @ObservationIgnored private var cancellables = Set<AnyCancellable>()
-
-  private var actionableBatchCredential: VerifiableCredential? {
-    guard isBatchPrivacyWarningVisible else { return nil }
-    return credential as? VerifiableCredential
-  }
 
   private func fetchCredential() async -> Bool {
     do {

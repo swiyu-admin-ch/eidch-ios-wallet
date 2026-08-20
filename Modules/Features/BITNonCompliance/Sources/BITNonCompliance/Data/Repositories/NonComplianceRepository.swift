@@ -2,6 +2,7 @@ import BITActivity
 import BITAppAttestation
 import BITAppAuth
 import BITEntities
+import BITJWT
 import BITLocalAuthentication
 import BITNetworking
 import BITOpenID
@@ -21,11 +22,16 @@ struct NonComplianceRepository: NonComplianceRepositoryProtocol {
     try await networkService.request(NonComplianceEndpoint.report(body), plugins: [clientAttestationPlugin])
   }
 
-  func fetchNonCompliantActor(for subjectDid: String) async throws -> NonCompliantActor? {
+  func fetchActorCompliance(for subjectDid: String) async throws -> ActorCompliance {
     let trustRegistryURL = try trustRegistryUrlMapper.map(did: subjectDid)
-    let response: NonCompliantActorsResponse = try await networkService.request(NonComplianceEndpoint.nonCompliantActors(url: trustRegistryURL))
-    let actors = response.nonCompliantActors.map(NonCompliantActor.init)
-    return actors.first { $0.did == subjectDid }
+    let response = try await networkService.request(NonComplianceEndpoint.nonComplianceTrustList(url: trustRegistryURL))
+    let statement = try jwsDecoder.decode(NonComplianceTrustListStatementJWT.self, from: response.data)
+    try await trustStatementValidator.validate(statement)
+
+    guard let actor = statement.payload.nonCompliantActors.first(where: { $0.actor == subjectDid }) else {
+      return .compliant
+    }
+    return .notCompliant(actor.reason)
   }
 
   func getActivity(_ id: UUID) throws -> NonComplianceActivity {
@@ -41,17 +47,19 @@ struct NonComplianceRepository: NonComplianceRepositoryProtocol {
 
   // MARK: Private
 
-  @Injected(\NetworkContainer.service) private var networkService: NetworkService
-  @Injected(\.nonComplianceBaseURL) private var baseURL
-  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol
-  @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
-  @Injected(\.userSession) private var userSession: Session
-  @Injected(\.nonComplianceReportRequestBodyGenerator) private var reportBodyGenerator: NonComplianceReportRequestBodyGeneratorProtocol
-  @Injected(\.trustRegistryUrlMapper) private var trustRegistryUrlMapper: TrustRegistryUrlMapperProtocol
-  @Injected(\.dataStore) private var database
   @Injected(\.activityActorDisplayFactory) private var activityActorDisplayFactory
+  @Injected(\.clientAttestationRepository) private var clientAttestationRepository
+  @Injected(\.dataStore) private var database
+  @Injected(\.jwsDecoder) private var jwsDecoder
+  @Injected(\NetworkContainer.service) private var networkService
   @Injected(\.nonComplianceActivityFactory) private var nonComplianceActivityFactory
-  @Injected(\.nonComplianceJsonEncoder) private var nonComplianceJsonEncoder: JSONEncoder
+  @Injected(\.nonComplianceBaseURL) private var baseURL
+  @Injected(\.nonComplianceJsonEncoder) private var nonComplianceJsonEncoder
+  @Injected(\.nonComplianceReportRequestBodyGenerator) private var reportBodyGenerator
+  @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator
+  @Injected(\.trustRegistryUrlMapper) private var trustRegistryUrlMapper
+  @Injected(\.trustStatementValidator) private var trustStatementValidator
+  @Injected(\.userSession) private var userSession
 
   private func generateClientAttestationPlugin(for body: Encodable) async throws -> ClientAttestationPlugin {
     let clientAttestation = try await clientAttestationRepository.get(using: userContext())

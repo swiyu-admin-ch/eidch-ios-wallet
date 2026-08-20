@@ -1,6 +1,8 @@
-import BITCore
-import JOSESwift
+import Foundation
+import JWSETKit
 import Security
+
+// MARK: - JWK
 
 public struct JWK: Codable, Equatable {
 
@@ -23,16 +25,12 @@ public struct JWK: Codable, Equatable {
   }
 
   public init(from secKey: SecKey) throws {
-    guard let ecPublicKey = try? ECPublicKey(publicKey: secKey) else {
+    do {
+      let data = try secKey.publicKey.exportKey(format: .jwk)
+      self = try JSONDecoder().decode(Self.self, from: data)
+    } catch {
       throw JWKError.invalidSecKey
     }
-
-    self = JWK(
-      kty: ecPublicKey.keyType.rawValue,
-      kid: ecPublicKey["kid"],
-      crv: ecPublicKey.crv.rawValue,
-      x: ecPublicKey.x,
-      y: ecPublicKey.y)
   }
 
   // MARK: Public
@@ -48,4 +46,11 @@ public struct JWK: Codable, Equatable {
   public let kid: String?
   public let kty: String
 
+}
+
+extension JWK {
+  public func jsonWebKey() throws -> any JSONWebKey {
+    let data = try JSONEncoder().encode(self)
+    return try AnyJSONWebKey.deserialize(data, format: .jwk)
+  }
 }

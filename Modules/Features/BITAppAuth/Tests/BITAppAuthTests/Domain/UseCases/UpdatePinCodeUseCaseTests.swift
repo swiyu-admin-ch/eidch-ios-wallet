@@ -3,67 +3,74 @@ import Factory
 import Foundation
 import LocalAuthentication
 import Spyable
-import XCTest
+import Testing
 @testable import BITAppAuth
 @testable import BITLocalAuthentication
 
-final class UpdatePinCodeUseCaseTests: XCTestCase {
+@Suite(.serialized)
+@MainActor
+struct UpdatePinCodeUseCaseTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
+  init() {
+    Container.shared.reset()
 
-    context = LAContextProtocolSpy()
-    pinCodeManager = PinCodeManagerProtocolSpy()
-    userSession = SessionSpy()
-    uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    let context = LAContextProtocolSpy()
+    let pinCodeService = PinCodeServiceProtocolSpy()
+    let userSession = SessionSpy()
+    let uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
 
-    Container.shared.internalContext.register { self.context }
-    Container.shared.pinCodeManager.register { self.pinCodeManager }
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManager }
+    Container.shared.internalContext.register { context }
+    Container.shared.pinCodeService.register { pinCodeService }
+    Container.shared.userSession.register { userSession }
+    Container.shared.uniquePassphraseManager.register { uniquePassphraseManager }
 
+    self.context = context
+    self.pinCodeService = pinCodeService
+    self.userSession = userSession
+    self.uniquePassphraseManager = uniquePassphraseManager
     useCase = UpdatePinCodeUseCase()
   }
 
-  func testHappyPath() throws {
+  // MARK: Internal
+
+  @Test
+  func happyPath() throws {
     let pinCodeMockData = Data()
     let uniquePassphraseMockData = Data()
     let pinCode = "123456"
 
     userSession.startSessionPassphraseCredentialTypeReturnValue = LAContextProtocolSpy()
 
-    pinCodeManager.encryptReturnValue = pinCodeMockData
+    pinCodeService.encryptReturnValue = pinCodeMockData
     uniquePassphraseManager.generateReturnValue = uniquePassphraseMockData
 
-    try useCase.execute(with: pinCode, and: uniquePassphraseMockData)
+    try useCase(with: pinCode, and: uniquePassphraseMockData)
 
-    XCTAssertTrue(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
-    XCTAssertEqual(uniquePassphraseMockData, uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase)
-    XCTAssertEqual(AuthMethod.appPin, uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.authMethod)
-    XCTAssertEqual(uniquePassphraseManager.saveUniquePassphraseForContextCallsCount, 1)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextCalled)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.uniquePassphrase == uniquePassphraseMockData)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextReceivedArguments?.authMethod == AuthMethod.appPin)
+    #expect(uniquePassphraseManager.saveUniquePassphraseForContextCallsCount == 1)
 
-    XCTAssertTrue(pinCodeManager.encryptCalled)
-    XCTAssertEqual(pinCode, pinCodeManager.encryptReceivedPinCode)
+    #expect(pinCodeService.encryptCalled)
+    #expect(pinCodeService.encryptReceivedPinCode == pinCode)
 
-    XCTAssertTrue(userSession.startSessionPassphraseCredentialTypeCalled)
-    XCTAssertEqual(userSession.startSessionPassphraseCredentialTypeCallsCount, 2)
+    #expect(userSession.startSessionPassphraseCredentialTypeCalled)
+    #expect(userSession.startSessionPassphraseCredentialTypeCallsCount == 2)
     let invocations: [(passphrase: Data, credentialType: LACredentialType)] = [
       (pinCodeMockData, .applicationPassword),
       (uniquePassphraseMockData, .applicationPassword),
     ]
-    XCTAssertEqual(invocations[0].passphrase, userSession.startSessionPassphraseCredentialTypeReceivedInvocations[0].passphrase)
-    XCTAssertEqual(invocations[1].passphrase, userSession.startSessionPassphraseCredentialTypeReceivedInvocations[1].passphrase)
+    #expect(userSession.startSessionPassphraseCredentialTypeReceivedInvocations[0].passphrase == invocations[0].passphrase)
+    #expect(userSession.startSessionPassphraseCredentialTypeReceivedInvocations[1].passphrase == invocations[1].passphrase)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var useCase: UpdatePinCodeUseCase!
-  private var pinCodeManager: PinCodeManagerProtocolSpy!
-  private var uniquePassphraseManager: UniquePassphraseManagerProtocolSpy!
-  private var userSession: SessionSpy!
-  private var context: LAContextProtocolSpy!
-  // swiftlint:enable all
+  private let useCase: UpdatePinCodeUseCase
+  private let pinCodeService: PinCodeServiceProtocolSpy
+  private let uniquePassphraseManager: UniquePassphraseManagerProtocolSpy
+  private let userSession: SessionSpy
+  private let context: LAContextProtocolSpy
 }

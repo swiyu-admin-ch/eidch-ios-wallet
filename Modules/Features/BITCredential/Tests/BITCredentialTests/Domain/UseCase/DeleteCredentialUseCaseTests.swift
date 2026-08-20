@@ -9,7 +9,7 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    credentialRepository = CredentialRepositoryProcotolSpy()
+    credentialRepository = CredentialRepositoryProtocolSpy()
 
     Container.shared.credentialRepository.register { self.credentialRepository }
 
@@ -39,5 +39,5 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
 
   private var mockCredential = VerifiableCredential.Mock.sample
   private var useCase = DeleteCredentialUseCase()
-  private var credentialRepository = CredentialRepositoryProcotolSpy()
+  private var credentialRepository = CredentialRepositoryProtocolSpy()
 }

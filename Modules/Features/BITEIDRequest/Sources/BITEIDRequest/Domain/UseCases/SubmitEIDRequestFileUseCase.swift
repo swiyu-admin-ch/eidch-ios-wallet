@@ -13,8 +13,8 @@ protocol SubmitEIDRequestFileUseCaseProtocol {
 
 struct SubmitEIDRequestFileUseCase: SubmitEIDRequestFileUseCaseProtocol {
   func execute(caseId: String, file: EIDRequestCaseFile, authJwt: String, _ progress: ProgressHandler?) async throws {
-    try await eidRequestRepository.submitFile(file, caseId: caseId, authJwt: authJwt, progress)
+    try await avRepository.submitFile(file, caseId: caseId, authJwt: authJwt, progress)
   }
 
-  @Injected(\.eIDRequestRepository) private var eidRequestRepository
+  @Injected(\.avRepository) private var avRepository: AVRepositoryProtocol
 }

@@ -1,15 +1,17 @@
 import BITAnalytics
 import BITAppAuth
+import BITCore
 import BITCredential
 import BITCredentialShared
 import BITEIDRequest
 import BITEIDRequestShared
 import BITInvitation
 import BITL10n
+import BITNavigation
 import BITOTP
+import BITPushNotification
 import BITTheming
 import Factory
-import NavigatorUI
 import SwiftUI
 
 // MARK: - HomeViewModel
@@ -22,6 +24,11 @@ final class HomeViewModel {
 
   init() {
     requestCasePollingManager.delegate = self
+    registerNotificationListeners()
+  }
+
+  deinit {
+    notificationTasks.forEach { $0.cancel() }
   }
 
   // MARK: Internal
@@ -39,16 +46,20 @@ final class HomeViewModel {
   var destination: HomeDestinations?
   var externalURL: URL?
 
-  @ObservationIgnored @Injected(\.isEIDRequestFeatureEnabled) var isEIDRequestFeatureEnabled: Bool
+  @ObservationIgnored @Injected(\.isProximityEnabled) var isProximityEnabled: Bool
 
   func onAppear() async {
-    if isUserLoggedInUseCase.execute() {
+    if isUserLoggedInUseCase() {
       await fetchData()
     }
   }
 
   func refresh() async {
     await fetchData()
+  }
+
+  func didLogin() async {
+    await refresh()
   }
 
   func stopRefresh() {
@@ -58,6 +69,7 @@ final class HomeViewModel {
   // MARK: Private
 
   private var colorScheme = String()
+  @ObservationIgnored private var notificationTasks = [Task<Void, Never>]()
   @ObservationIgnored @Injected(\.getCredentialListUseCase) private var getCredentialListUseCase: GetCredentialListUseCaseProtocol
   @ObservationIgnored @Injected(\.isUserLoggedInUseCase) private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocol
   @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
@@ -67,6 +79,7 @@ final class HomeViewModel {
   @ObservationIgnored @Injected(\.isOTPEnabledUseCase) private var isOTPEnabledUseCase: IsOTPEnabledUseCaseProtocol
   @ObservationIgnored @Injected(\.requestCasePollingManager) private var requestCasePollingManager: RequestCasePollingProtocol
   @ObservationIgnored @Injected(\.updatePushTokenUseCase) private var updatePushTokenUseCase: UpdatePushTokenUseCaseProtocol
+  @ObservationIgnored @Injected(\.resetApplicationBadgeUseCase) private var resetApplicationBadgeUseCase: ResetApplicationBadgeUseCaseProtocol
 
   private func fetchData() async {
     await withTaskGroup(of: Void.self) { group in
@@ -75,6 +88,15 @@ final class HomeViewModel {
 
       await group.waitForAll()
     }
+  }
+
+  private func registerNotificationListeners() {
+    notificationTasks.append(
+      Task { [weak self] in
+        for await _ in NotificationCenter.default.notifications(named: .didLogin) {
+          await self?.didLogin()
+        }
+      })
   }
 
   @MainActor
@@ -121,8 +143,8 @@ extension HomeViewModel {
     }
   }
 
-  func startRequestCasePolling(for caseId: String) {
-    requestCasePollingManager.startPolling(for: caseId)
+  func openHelp() {
+    externalURL = URL(string: L10n.tkSettingsGeneralHelpLinkValue)
   }
 
   func didConsumeExternalURL() {
@@ -136,7 +158,7 @@ extension HomeViewModel {
     case .accepted:
       destination = .external(.credentialDetail(CredentialDetailInput(credential: verifiableCredential)))
     case .unaccepted:
-      destination = .external(.offer(verifiableCredential, nil))
+      destination = .external(.offer(verifiableCredential))
     }
   }
 
@@ -160,8 +182,10 @@ extension HomeViewModel {
 
   private func fetchCredentials() async {
     do {
-      let allCredentials = try await getCredentialListUseCase.execute()
-      updateView(with: allCredentials)
+      if credentials.isEmpty {
+        let allCredentials = try await getCredentialListUseCase()
+        updateView(with: allCredentials)
+      }
 
       await refreshCredentials()
     } catch {
@@ -224,6 +248,7 @@ extension HomeViewModel {
       try await updateEIDRequestCaseStatusUseCase.execute(requestCases.map(\.id))
       let requestCases = try await getEIDRequestCaseListUseCase()
       updateView(with: requestCases)
+      try await resetApplicationBadgeUseCase()
     } catch {
       // Request cases list is not updated if error
     }
@@ -278,25 +303,48 @@ extension HomeViewModel: RequestCaseViewStateDelegate {
   }
 }
 
+// MARK: Navigation Checkpoint
+
 extension HomeViewModel {
-  func didSaveCredential() {
+
+  // MARK: Internal
+
+  func handleNavigationCheckpoint(state: HomeCheckpointsState?) async {
+    if let state {
+      switch state {
+      case .acceptCredential:
+        didSaveCredential()
+
+      case .declineCredential:
+        didDeclineCredential()
+
+      case .deletedCredential:
+        didDeleteCredential()
+
+      case .startRequestCasePolling(let caseId):
+        startRequestCasePolling(for: caseId)
+      }
+    }
+
+    await refresh()
+  }
+
+  // MARK: Private
+
+  private func didSaveCredential() {
     toast = Toast(L10n.tkHomeNotificationCredentialAccepted)
   }
 
-  func didDeclineCredential() {
+  private func didDeclineCredential() {
     toast = Toast(L10n.tkHomeNotificationCredentialDeclined)
   }
-}
 
-// MARK: - Credential Detail Checkpoint
-
-extension HomeViewModel {
-  func didDeleteCredential() {
+  private func didDeleteCredential() {
     toast = Toast(L10n.tkHomeNotificationCredentialDeleted)
+  }
 
-    Task {
-      await refreshCredentials()
-    }
+  private func startRequestCasePolling(for caseId: String) {
+    requestCasePollingManager.startPolling(for: caseId)
   }
 }
 

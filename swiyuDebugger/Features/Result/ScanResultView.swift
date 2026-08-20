@@ -1,3 +1,4 @@
+import BITCore
 import BITCredential
 import BITCredentialShared
 import BITInvitation
@@ -5,10 +6,12 @@ import BITNetworking
 import BITNonCompliance
 import BITPresentation
 import BITTheming
+import Factory
 import Foundation
 import NavigatorUI
 import SwiftUI
-import UIKit
+
+// MARK: - ScanResultView
 
 struct ScanResultView: View {
 
@@ -19,16 +22,16 @@ struct ScanResultView: View {
 
   var body: some View {
     List {
-      header(title: mode.title)
+      ScanResultHeader(
+        title: mode.title,
+        symbolName: mode.headerSymbolName,
+        color: mode.headerColor)
 
-      switch mode {
-      case .credential(let credential, let trustInformation):
-        credentialSections(credential: credential, trustInformation: trustInformation)
-      case .presentation(let context):
-        presentationSections(context: context)
-      case .error(let error):
-        errorSections(error: error)
-      }
+      ScanResultContent(
+        mode: mode,
+        invitationURL: invitationURL,
+        trustInformation: trustInformation,
+        actorCompliance: actorCompliance)
     }
     .toolbar {
       if let logURL {
@@ -47,130 +50,237 @@ struct ScanResultView: View {
         }
       }
     }
-    .task {
-      logURL = ResultLogBuilder.buildLogURL(mode: mode, invitationURL: invitationURL)
+    .task(id: mode) {
+      await updateTrustInformationAndLogURL()
     }
     .navigationBarBackButtonHidden()
   }
 
   // MARK: Private
 
-  @Environment(\.colorScheme) private var colorScheme
   @Environment(\.navigator) private var navigator
 
   @State private var logURL: URL?
+  @State private var trustInformation: TrustInformation? = nil
+  @State private var actorCompliance: ActorCompliance? = nil
+
+  @Injected(\.fetchIssuanceTrustInformationUseCase) private var fetchIssuanceTrustInformationUseCase
+
+  private func updateTrustInformationAndLogURL() async {
+    var fetchedTrustInformation: TrustInformation?
+    var fetchedActorCompliance: ActorCompliance?
+
+    if
+      case .credential(let credential) = mode,
+      let verifiableCredential = credential as? VerifiableCredential
+    {
+      let result = try? await fetchIssuanceTrustInformationUseCase(for: verifiableCredential)
+      fetchedTrustInformation = result?.0
+      fetchedActorCompliance = result?.1
+    }
+
+    guard !Task.isCancelled else { return }
+
+    trustInformation = fetchedTrustInformation
+    actorCompliance = fetchedActorCompliance
+    logURL = ResultLogBuilder.buildLogURL(
+      mode: mode,
+      invitationURL: invitationURL,
+      trustInformation: trustInformation,
+      actorCompliance: actorCompliance)
+  }
+
+}
+
+// MARK: - ScanResultContent
+
+private struct ScanResultContent: View {
+
+  let mode: ScanResult
+  let invitationURL: URL?
+  let trustInformation: TrustInformation?
+  let actorCompliance: ActorCompliance?
+
+  var body: some View {
+    switch mode {
+    case .credential(let credential):
+      CredentialResultSections(
+        credential: credential,
+        invitationURL: invitationURL,
+        trustInformation: trustInformation,
+        actorCompliance: actorCompliance)
+    case .presentation(let context):
+      PresentationResultSections(context: context, invitationURL: invitationURL)
+    case .error(let error):
+      ScanErrorSection(error: error)
+    }
+  }
+}
+
+// MARK: - CredentialResultSections
+
+private struct CredentialResultSections: View {
+
+  let credential: any CredentialProtocol
+  let invitationURL: URL?
+  let trustInformation: TrustInformation?
+  let actorCompliance: ActorCompliance?
+
+  var body: some View {
+    if let verifiableCredential = credential as? VerifiableCredential {
+      VerifiableCredentialResultSections(
+        credential: verifiableCredential,
+        invitationURL: invitationURL,
+        trustInformation: trustInformation,
+        actorCompliance: actorCompliance)
+    } else if let deferredCredential = credential as? DeferredCredential {
+      DeferredCredentialResultSections(
+        credential: deferredCredential,
+        invitationURL: invitationURL,
+        trustInformation: trustInformation,
+        actorCompliance: actorCompliance)
+    } else {
+      UnavailableCredentialResultSections(
+        invitationURL: invitationURL,
+        trustInformation: trustInformation,
+        actorCompliance: actorCompliance)
+    }
+  }
+}
+
+// MARK: - VerifiableCredentialResultSections
+
+private struct VerifiableCredentialResultSections: View {
+
+  // MARK: Internal
+
+  let credential: VerifiableCredential
+  let invitationURL: URL?
+  let trustInformation: TrustInformation?
+  let actorCompliance: ActorCompliance?
+
+  var body: some View {
+    ClaimLanguageSection(
+      locales: CredentialLocalizationSupport.availableClaimLocales(for: credential.resolvedClusters),
+      selectedLanguage: $selectedClaimLanguage)
+
+    CredentialUISection(
+      credential: credential,
+      selectedLanguage: selectedClaimLanguage,
+      useDarkCredentialCard: $useDarkCredentialCard)
+
+    CredentialClaimsSection(
+      clusters: credential.resolvedClusters,
+      selectedLanguage: selectedClaimLanguage,
+      isExpanded: $isClaimsExpanded)
+
+    TrustInformationSection(trustInformation: trustInformation, actorCompliance: actorCompliance)
+
+    InvitationURLSection(invitationURL: invitationURL)
+
+    RawCredentialSection(bundleItems: credential.bundleItems)
+  }
+
+  // MARK: Private
+
   @State private var selectedClaimLanguage: String?
   @State private var isClaimsExpanded = false
   @State private var useDarkCredentialCard = false
 
-  private var cardColorScheme: ColorScheme {
-    useDarkCredentialCard ? .dark : .light
-  }
+}
 
-  @ViewBuilder
-  private func credentialSections(credential: any CredentialProtocol, trustInformation: TrustInformation?) -> some View {
-    if let verifiableCredential = credential as? VerifiableCredential {
-      ClaimLanguageSection(
-        locales: CredentialLocalizationSupport.availableClaimLocales(for: verifiableCredential.resolvedClusters),
-        selectedLanguage: $selectedClaimLanguage)
+// MARK: - DeferredCredentialResultSections
 
-      Section("Credential UI") {
-        Toggle("Dark mode", isOn: $useDarkCredentialCard)
-        VStack(spacing: .x6) {
-          credentialCard(verifiableCredential, controlSize: .large, colorScheme: cardColorScheme)
-          credentialCard(verifiableCredential, controlSize: .regular, colorScheme: cardColorScheme)
-          credentialCard(verifiableCredential, controlSize: .small, colorScheme: cardColorScheme)
-          credentialCard(verifiableCredential, controlSize: .mini, colorScheme: cardColorScheme)
-        }
-      }
+private struct DeferredCredentialResultSections: View {
 
-      Section("Claims") {
-        DisclosureGroup(isExpanded: $isClaimsExpanded) {
-          compactClaimList(CredentialLocalizationSupport.localizedClusters(verifiableCredential.resolvedClusters, selectedLanguage: selectedClaimLanguage))
-        } label: {
-          Text("Show claims")
-        }
-      }
+  let credential: DeferredCredential
+  let invitationURL: URL?
+  let trustInformation: TrustInformation?
+  let actorCompliance: ActorCompliance?
 
-      trustInformationSection(trustInformation)
-
-      invitationUrlSection(invitationURL)
-
-      Section("Raw credential") {
-        ForEach(verifiableCredential.bundleItems) { bundleItem in
-          if let rawCredential = String(data: bundleItem.payload, encoding: .utf8) {
-            Text(truncated(rawCredential))
-              .copyShareMenu(text: rawCredential, shareItem: rawCredential)
-          }
-        }
-      }
-    } else if let deferredCredential = credential as? DeferredCredential {
-      Section("Deferred credential") {
-        Text("Transaction ID: \(deferredCredential.transactionId)")
-        Text("Format: \(deferredCredential.format)")
-        Text("Progression: \(deferredCredential.progressionState.rawValue)")
-        Text("Polling interval: \(deferredCredential.pollingInterval)s")
-      }
-
-      trustInformationSection(trustInformation)
-
-      invitationUrlSection(invitationURL)
-    } else {
-      Section("Credential") {
-        Text("Unavailable")
-      }
-
-      trustInformationSection(trustInformation)
-
-      invitationUrlSection(invitationURL)
+  var body: some View {
+    Section("Deferred credential") {
+      Text("Transaction ID: \(credential.transactionId)")
+      Text("Format: \(credential.format)")
+      Text("Progression: \(credential.progressionState.rawValue)")
+      Text("Polling interval: \(credential.pollingInterval)s")
     }
-  }
 
-  @ViewBuilder
-  private func presentationSections(context: PresentationRequestContext) -> some View {
+    TrustInformationSection(trustInformation: trustInformation, actorCompliance: actorCompliance)
+
+    InvitationURLSection(invitationURL: invitationURL)
+  }
+}
+
+// MARK: - UnavailableCredentialResultSections
+
+private struct UnavailableCredentialResultSections: View {
+
+  // MARK: Internal
+
+  let invitationURL: URL?
+  let trustInformation: TrustInformation?
+  let actorCompliance: ActorCompliance?
+
+  var body: some View {
+    Section("Credential") {
+      Text("Unavailable")
+    }
+
+    TrustInformationSection(trustInformation: trustInformation, actorCompliance: actorCompliance)
+
+    InvitationURLSection(invitationURL: invitationURL)
+  }
+}
+
+// MARK: - PresentationResultSections
+
+private struct PresentationResultSections: View {
+
+  // MARK: Internal
+
+  let context: PresentationRequestContext
+  let invitationURL: URL?
+
+  var body: some View {
     ClaimLanguageSection(
       locales: CredentialLocalizationSupport.availableClaimLocales(for: context.compatibleCredentials.flatMap(\.requestedClaimClusters)),
       selectedLanguage: $selectedClaimLanguage)
 
-    Section("Credential UI") {
-      if let credential = context.compatibleCredentials.first {
-        credentialCard(credential.credential, controlSize: .regular, colorScheme: colorScheme)
-      } else {
-        Text("Unavailable")
-      }
-    }
+    PresentationCredentialUISection(
+      credential: context.compatibleCredentials.first?.credential,
+      selectedLanguage: selectedClaimLanguage)
 
-    Section("Claims") {
-      DisclosureGroup(isExpanded: $isClaimsExpanded) {
-        ForEach(context.compatibleCredentials) { credential in
-          VStack(alignment: .leading, spacing: .x2) {
-            Text(credential.credentialName)
-              .font(.custom.bodyEmphasized)
-            if credential.requestedClaimClusters.isEmpty {
-              Text("None")
-                .font(.custom.footnote)
-            } else {
-              compactClaimList(CredentialLocalizationSupport.localizedClusters(credential.requestedClaimClusters, selectedLanguage: selectedClaimLanguage))
-            }
-          }
-          .padding(.vertical, .x1)
-        }
-      } label: {
-        Text("Show claims")
-      }
-    }
+    PresentationClaimsSection(
+      compatibleCredentials: context.compatibleCredentials,
+      selectedLanguage: selectedClaimLanguage,
+      isExpanded: $isClaimsExpanded)
 
-    trustInformationSection(context.trustInformation)
+    TrustInformationSection(trustInformation: context.trustInformation, actorCompliance: context.actorCompliance)
 
-    invitationUrlSection(invitationURL)
+    InvitationURLSection(invitationURL: invitationURL)
 
     Section("Raw credential") {
       Text("Unavailable")
     }
   }
 
-  @ViewBuilder
-  private func errorSections(error: Error) -> some View {
+  // MARK: Private
+
+  @State private var selectedClaimLanguage: String?
+  @State private var isClaimsExpanded = false
+
+}
+
+// MARK: - ScanErrorSection
+
+private struct ScanErrorSection: View {
+
+  // MARK: Internal
+
+  let error: Error
+
+  var body: some View {
     let description = error.localizedDescription
     let recovery = (error as NSError).localizedRecoverySuggestion
     let message = String(reflecting: error)
@@ -183,14 +293,29 @@ struct ScanResultView: View {
         Text("Suggested recovery: \(recovery)")
       }
 
-      if let networkErr = error as? NetworkError {
-        networkError(networkErr)
+      if let networkErr = unwrapped as? NetworkError {
+        NetworkErrorDetails(error: networkErr)
       }
     }
   }
 
-  @ViewBuilder
-  private func networkError(_ error: NetworkError) -> some View {
+  // MARK: Private
+
+  private var unwrapped: Error {
+    if case .invalidQRCode(let underlying) = error as? InvitationError, let underlying {
+      return underlying
+    }
+    return error
+  }
+}
+
+// MARK: - NetworkErrorDetails
+
+private struct NetworkErrorDetails: View {
+
+  let error: NetworkError
+
+  var body: some View {
     Text("Network error status: \(error.status)")
     if let response = error.response {
       Text("HTTP status code: \(response.statusCode)")
@@ -208,52 +333,24 @@ struct ScanResultView: View {
       }
     }
   }
+}
 
-  private func trustInformationSection(_ trustInformation: TrustInformation?) -> some View {
-    Section("Trust information") {
-      if let trustInformation {
-        switch trustInformation.identity {
-        case .trusted(let trustStatement):
-          let name = trustStatement.getLocalizedEntityName(considering: Locale.preferredLanguages)
-          if name.isEmpty {
-            Text("Identity: trusted")
-          } else {
-            Text("Identity: trusted (\(name))")
-          }
-        case .untrusted:
-          Text("Identity: untrusted")
-        case .unknown:
-          Text("Identity: unknown")
-        }
-        Text("VC Schema: \(trustInformation.vcSchema.rawValue)")
-        switch trustInformation.actorCompliance {
-        case .compliant?:
-          Text("Actor compliance: compliant")
-        case .notCompliant?:
-          Text("Actor compliance: notCompliant")
-        case nil:
-          Text("Actor compliance: unknown")
-        }
-        if
-          case .notCompliant(let reason) = trustInformation.actorCompliance,
-          let localizedReason = reason.localized()
-        {
-          Text("Reason: \(localizedReason)")
-        }
-      } else {
-        Text("Unavailable")
-      }
-    }
-  }
+// MARK: - ScanResultHeader
 
-  private func header(title: String) -> some View {
+private struct ScanResultHeader: View {
+
+  let title: String
+  let symbolName: String
+  let color: Color
+
+  var body: some View {
     Section {
       HStack {
         Spacer()
         VStack(alignment: .center) {
-          Image(systemName: mode.headerSymbolName)
+          Image(systemName: symbolName)
             .resizable()
-            .foregroundStyle(mode.headerColor)
+            .foregroundStyle(color)
             .frame(width: 64, height: 64)
 
           Text(title)
@@ -262,8 +359,17 @@ struct ScanResultView: View {
       }
     }
   }
+}
 
-  private func invitationUrlSection(_ invitationURL: URL?) -> some View {
+// MARK: - InvitationURLSection
+
+private struct InvitationURLSection: View {
+
+  // MARK: Internal
+
+  let invitationURL: URL?
+
+  var body: some View {
     Section("Invitation URL") {
       if let invitationURL {
         Text(invitationURL.absoluteString)
@@ -273,23 +379,81 @@ struct ScanResultView: View {
       }
     }
   }
+}
 
-  private func compactClaimList(_ clusters: [CredentialClaimCluster]) -> some View {
-    ClaimClusterList(clusters)
-      .padding(.leading, -.x6)
+// MARK: - CredentialUISection
+
+private struct CredentialUISection: View {
+
+  // MARK: Internal
+
+  let credential: VerifiableCredential
+  let selectedLanguage: String?
+
+  @Binding var useDarkCredentialCard: Bool
+
+  var body: some View {
+    Section("Credential UI") {
+      Toggle("Dark mode", isOn: $useDarkCredentialCard)
+      VStack(spacing: .x6) {
+        CredentialCardPreview(credential: credential, selectedLanguage: selectedLanguage, controlSize: .large, colorScheme: cardColorScheme)
+        CredentialCardPreview(credential: credential, selectedLanguage: selectedLanguage, controlSize: .regular, colorScheme: cardColorScheme)
+        CredentialCardPreview(credential: credential, selectedLanguage: selectedLanguage, controlSize: .small, colorScheme: cardColorScheme)
+        CredentialCardPreview(credential: credential, selectedLanguage: selectedLanguage, controlSize: .mini, colorScheme: cardColorScheme)
+      }
+    }
   }
 
-  @ViewBuilder
-  private func credentialCard(
-    _ credential: VerifiableCredential,
-    controlSize: ControlSize,
-    colorScheme: ColorScheme)
-    -> some View
-  {
+  // MARK: Private
+
+  private var cardColorScheme: ColorScheme {
+    useDarkCredentialCard ? .dark : .light
+  }
+}
+
+// MARK: - PresentationCredentialUISection
+
+private struct PresentationCredentialUISection: View {
+
+  // MARK: Internal
+
+  let credential: VerifiableCredential?
+  let selectedLanguage: String?
+
+  var body: some View {
+    Section("Credential UI") {
+      if let credential {
+        CredentialCardPreview(
+          credential: credential,
+          selectedLanguage: selectedLanguage,
+          controlSize: .regular,
+          colorScheme: colorScheme)
+      } else {
+        Text("Unavailable")
+      }
+    }
+  }
+
+  // MARK: Private
+
+  @Environment(\.colorScheme) private var colorScheme
+}
+
+// MARK: - CredentialCardPreview
+
+private struct CredentialCardPreview: View {
+
+  let credential: VerifiableCredential
+  let selectedLanguage: String?
+  let controlSize: ControlSize
+  let colorScheme: ColorScheme
+
+  var body: some View {
     let viewModel = CredentialLocalizationSupport.credentialCardViewModel(
       for: credential,
-      selectedLanguage: selectedClaimLanguage,
+      selectedLanguage: selectedLanguage,
       colorSchemeName: CredentialLocalizationSupport.colorSchemeName(for: colorScheme))
+
     CredentialCard(
       name: viewModel.credentialDisplay?.name,
       summary: viewModel.credentialDisplay?.summary,
@@ -303,10 +467,110 @@ struct ScanResultView: View {
       .padding(.vertical, .x4)
       .controlSize(controlSize)
   }
+}
+
+// MARK: - CredentialClaimsSection
+
+private struct CredentialClaimsSection: View {
+
+  // MARK: Internal
+
+  let clusters: [CredentialClaimCluster]
+  let selectedLanguage: String?
+  @Binding var isExpanded: Bool
+
+  var body: some View {
+    Section("Claims") {
+      DisclosureGroup(isExpanded: $isExpanded) {
+        ClaimClusterList(CredentialLocalizationSupport.localizedClusters(clusters, selectedLanguage: selectedLanguage))
+          .padding(.leading, -.x6)
+      } label: {
+        Text("Show claims")
+      }
+    }
+  }
+}
+
+// MARK: - PresentationClaimsSection
+
+private struct PresentationClaimsSection: View {
+
+  // MARK: Internal
+
+  let compatibleCredentials: [CompatibleCredential]
+  let selectedLanguage: String?
+  @Binding var isExpanded: Bool
+
+  var body: some View {
+    Section("Claims") {
+      DisclosureGroup(isExpanded: $isExpanded) {
+        ForEach(compatibleCredentials) { credential in
+          PresentationCredentialClaimsRow(credential: credential, selectedLanguage: selectedLanguage)
+        }
+      } label: {
+        Text("Show claims")
+      }
+    }
+  }
+}
+
+// MARK: - PresentationCredentialClaimsRow
+
+private struct PresentationCredentialClaimsRow: View {
+
+  let credential: CompatibleCredential
+  let selectedLanguage: String?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: .x2) {
+      Text(credential.credentialName)
+        .font(.custom.bodyEmphasized)
+      if credential.requestedClaimClusters.isEmpty {
+        Text("None")
+          .font(.custom.footnote)
+      } else {
+        ClaimClusterList(CredentialLocalizationSupport.localizedClusters(credential.requestedClaimClusters, selectedLanguage: selectedLanguage))
+          .padding(.leading, -.x6)
+      }
+    }
+    .padding(.vertical, .x1)
+  }
+}
+
+// MARK: - RawCredentialSection
+
+private struct RawCredentialSection: View {
+
+  // MARK: Internal
+
+  let bundleItems: [BundleItem]
+
+  var body: some View {
+    Section("Raw credential") {
+      ForEach(bundleItems) { bundleItem in
+        RawCredentialRow(bundleItem: bundleItem)
+      }
+    }
+  }
+}
+
+// MARK: - RawCredentialRow
+
+private struct RawCredentialRow: View {
+
+  // MARK: Internal
+
+  let bundleItem: BundleItem
+
+  var body: some View {
+    if let rawCredential = String(data: bundleItem.payload, encoding: .utf8) {
+      Text(truncated(rawCredential))
+        .copyShareMenu(text: rawCredential, shareItem: rawCredential)
+    }
+  }
 
   private func truncated(_ text: String, limit: Int = 100) -> String {
     guard text.count > limit else { return text }
     return String(text.prefix(limit)) + "..."
   }
-
 }

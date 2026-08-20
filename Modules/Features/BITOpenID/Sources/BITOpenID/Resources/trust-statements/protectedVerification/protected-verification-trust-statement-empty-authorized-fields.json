@@ -1,0 +1,14 @@
+{
+  "sub": "did:example:verifier",
+  "iat": 1690360968,
+  "exp": 1753432968,
+  "jti": "07f289d5-8b1f-4604-bf72-53bdcb71ee05",
+  "authorized_fields": [],
+  "status": {
+    "status_list": {
+      "uri": "https://status.domain.ch/api/v1/statuslist/example.jwt",
+      "idx": 285,
+      "type": "SwissTokenStatusList-1.0"
+    }
+  }
+}

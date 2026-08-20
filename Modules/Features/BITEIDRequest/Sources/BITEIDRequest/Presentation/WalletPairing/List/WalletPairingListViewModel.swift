@@ -12,7 +12,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-class WalletPairingListViewModel {
+final class WalletPairingListViewModel {
 
   // MARK: Lifecycle
 
@@ -153,6 +153,7 @@ class WalletPairingListViewModel {
   @ObservationIgnored @Injected(\.eidRequestContext) private var context
   @ObservationIgnored @Injected(\.fetchEIDRequestCaseUseCase) private var fetchEIDRequestCaseUseCase
   @ObservationIgnored @Injected(\.eidRequestFlowCoordinator) private var coordinator
+  @ObservationIgnored @Injected(\.saveWalletPairingIdUseCase) private var saveWalletPairingIdUseCase: SaveWalletPairingIdUseCaseProtocol
 
   private func handleStatus(_ status: EIDRequestStatus) {
     switch status.state {
@@ -183,6 +184,7 @@ class WalletPairingListViewModel {
       setState(.loading)
 
       let pairingId = try await pairWalletUseCase.execute(for: caseId)
+      try await saveWalletPairingIdUseCase(pairingId, forRequestCase: caseId)
       walletPairingPollingManager.startPolling(for: caseId, pairingId: pairingId)
     } catch {
       setState(.initial)

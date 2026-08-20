@@ -56,7 +56,7 @@ struct ClientAttestationRepository: ClientAttestationRepositoryProtocol {
 
   @Injected(\.dataStore) private var database: RealmDataStoreProtocol
   @Injected(\.appAttestationProvider) private var appAttestationProvider: AppAttestationProviderProtocol
-  @Injected(\.appAttestationRepository) private var appAttestationRepository: AppAttestationRepositoryProtocol
+  @Injected(\.attestationServiceRepository) private var attestationServiceRepository: AttestationServiceRepositoryProtocol
   @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
   @Injected(\.clientAttestationValidator) private var clientAttestationValidator: ClientAttestationValidatorProtocol
 
@@ -91,7 +91,7 @@ struct ClientAttestationRepository: ClientAttestationRepositoryProtocol {
   }
 
   private func fetchClientAttestation(_ context: LAContextProtocol) async throws -> ClientAttestation {
-    let challenge = try await appAttestationRepository.fetchChallenge()
+    let challenge = try await attestationServiceRepository.fetchChallenge()
     let appAttestedKey = try await appAttestationProvider.generateAttestedKey(with: challenge)
     let keyPair = try appAttestationKeyRepository.create(for: .client, with: context)
 
@@ -103,7 +103,7 @@ struct ClientAttestationRepository: ClientAttestationRepositoryProtocol {
       appAssertion: appAssertion.base64EncodedString(),
       clientData: clientData)
 
-    return try await appAttestationRepository.fetchClientAttestation(requestBody)
+    return try await attestationServiceRepository.fetchClientAttestation(requestBody)
   }
 
   private func createClientData(challenge: AttestationChallenge, keyPair: VaultKeyPair) throws -> ClientDataObject {

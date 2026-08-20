@@ -13,7 +13,7 @@ import Spyable
 
 @Spyable
 protocol HolderBindingsGeneratorProtocol {
-  func callAsFunction(from metadataWrapper: CredentialIssuerMetadataWrapper) async throws -> [HolderBinding]
+  func callAsFunction(batchSize: Int?, proofTypes: [CredentialIssuerMetadata.ProofType]) async throws -> [HolderBinding]
 }
 
 // MARK: - HolderBindingsGenerator
@@ -22,55 +22,52 @@ struct HolderBindingsGenerator: HolderBindingsGeneratorProtocol {
 
   // MARK: Internal
 
-  func callAsFunction(from metadataWrapper: CredentialIssuerMetadataWrapper) async throws -> [HolderBinding] {
+  func callAsFunction(batchSize: Int?, proofTypes: [CredentialIssuerMetadata.ProofType]) async throws -> [HolderBinding] {
     guard let context = userSession.context else { return [] }
-    let batchSize = if isBatchIssuanceEnabled {
-      metadataWrapper.credentialIssuerMetadata.batchCredentialIssuance?.batchSize ?? 1
-    } else {
-      1
-    }
+    var batchSize = isBatchIssuanceEnabled ? batchSize ?? 1 : 1
+    batchSize = min(batchSize, Self.maxBatchSize)
 
-    var bindings = [HolderBinding]()
-    bindings.reserveCapacity(batchSize)
+    guard batchSize > 0 else { return [] }
+    guard let proofType = proofTypes.first else { return [] }
 
-    for _ in 1...batchSize {
-      if let nextBinding = try await generateHolderBinding(for: metadataWrapper, context: context) {
-        bindings.append(nextBinding)
-      } else {
-        return []
+    var keyPairs = [VaultKeyPair]()
+    keyPairs.reserveCapacity(batchSize)
+
+    do {
+      for _ in 0..<batchSize {
+        try keyPairs.append(generateHolderBindingKeyPair(proofType: proofType))
       }
-    }
 
-    return bindings
+      return try await generateHolderBindings(for: keyPairs, context: context)
+    } catch {
+      deleteKeyPairs(keyPairs)
+      throw error
+    }
   }
 
   // MARK: Private
 
+  private static let maxBatchSize = 100
+
   @Injected(\.preferredKeyBindingAlgorithmsOrdered) private var preferredKeyBindingAlgorithmsOrdered: [JWTAlgorithm]
   @Injected(\.credentialKeyRepository) private var credentialKeyRepository: CredentialKeyRepositoryProtocol
   @Injected(\.supportedKeyStorageSecurityLevel) private var supportedKeyStorageSecurityLevel: [KeyStorageSecurityLevel]
-  @Injected(\.appAttestationRepository) private var appAttestationRepository: AppAttestationRepositoryProtocol
+  @Injected(\.attestationServiceRepository) private var attestationServiceRepository: AttestationServiceRepositoryProtocol
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository: ClientAttestationRepositoryProtocol
   @Injected(\.keyAttestationValidator) private var keyAttestationValidator: KeyAttestationValidatorProtocol
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.userSession) private var userSession: Session
   @Injected(\.isBatchIssuanceEnabled) private var isBatchIssuanceEnabled
 
-  private func generateHolderBinding(for metadataWrapper: CredentialIssuerMetadataWrapper, context: any LAContextProtocol) async throws -> HolderBinding? {
-    guard let keyPair = try generateHolderBindingKeyPair(from: metadataWrapper) else { return nil }
-    let keyAttestation: KeyAttestation? = try await {
-      guard keyPair.options?.contains(.secureEnclave) == true else { return nil }
-      return try await fetchKeyAttestation(for: keyPair, context: context)
-    }()
+  private func generateHolderBindings(for keyPairs: [VaultKeyPair], context: LAContextProtocol) async throws -> [HolderBinding] {
+    let keyAttestations = try await fetchKeyAttestationBatch(for: keyPairs, context: context)
 
-    return HolderBinding(keyPair: keyPair, keyAttestationJWS: keyAttestation?.rawJWS)
+    return zip(keyPairs, keyAttestations).map { keyPair, keyAttestation in
+      HolderBinding(keyPair: keyPair, keyAttestationJWS: keyAttestation?.rawJWS)
+    }
   }
 
-  private func generateHolderBindingKeyPair(from metadataWrapper: CredentialIssuerMetadataWrapper) throws -> VaultKeyPair? {
-    guard let proofType = metadataWrapper.selectedCredential.proofTypesSupported.first else {
-      return nil
-    }
-
+  private func generateHolderBindingKeyPair(proofType: CredentialIssuerMetadata.ProofType) throws -> VaultKeyPair {
     let supportedAlgorithms = proofType.algorithms
     let preferredAlgorithms = preferredKeyBindingAlgorithmsOrdered.map(\.rawValue)
     guard let algorithm = preferredAlgorithms.first(where: { supportedAlgorithms.contains($0) }) else {
@@ -82,26 +79,70 @@ struct HolderBindingsGenerator: HolderBindingsGeneratorProtocol {
       throw FetchAnyVerifiableCredentialError.unsupportedKeyStorage
     }
 
-    let keyAttestationRequired = proofType.keyAttestationRequirements != nil
+    let isKeyAttestationRequired = proofType.keyAttestationRequirements != nil
 
     do {
-      return try credentialKeyRepository.create(algorithm: algorithm, isHardwareBound: keyAttestationRequired)
+      return try credentialKeyRepository.create(algorithm: algorithm, isHardwareBound: isKeyAttestationRequired)
     } catch {
       analytics.log(error)
       throw error
     }
   }
 
-  private func fetchKeyAttestation(for keyPair: VaultKeyPair, context: LAContextProtocol) async throws -> KeyAttestation {
-    let clientAttestation = try await clientAttestationRepository.get(using: context)
+  private func fetchKeyAttestation(for keyPair: VaultKeyPair, clientAttestation: ClientAttestation) async throws -> KeyAttestation {
     let requestBody = try KeyAttestationRequestBody(keyPair: keyPair)
-    let keyAttestation = try await appAttestationRepository.fetchKeyAttestation(body: requestBody, clientAttestation: clientAttestation)
+    let keyAttestation = try await attestationServiceRepository.fetchKeyAttestation(body: requestBody, clientAttestation: clientAttestation)
 
-    // Credential issuance requires locally validated key attestation before binding.
     guard await keyAttestationValidator(keyPair: keyPair, with: keyAttestation) else {
-      throw AppAttestationRepositoryError.invalidKeyAttestation
+      throw AttestationServiceRepositoryError.invalidKeyAttestation
     }
 
     return keyAttestation
+  }
+
+  private func fetchKeyAttestationBatch(for keyPairs: [VaultKeyPair], context: LAContextProtocol) async throws -> [KeyAttestation?] {
+    var keyAttestations = [KeyAttestation?](repeating: nil, count: keyPairs.count)
+    let hardwareBoundedKeyPairs = keyPairs.indices.filter {
+      keyPairs[$0].options?.contains(.secureEnclave) == true
+    }
+
+    if hardwareBoundedKeyPairs.isEmpty {
+      return keyAttestations
+    }
+
+    let clientAttestation = try await clientAttestationRepository.get(using: context)
+
+    if hardwareBoundedKeyPairs.count == 1, let index = hardwareBoundedKeyPairs.first {
+      keyAttestations[index] = try await fetchKeyAttestation(for: keyPairs[index], clientAttestation: clientAttestation)
+      return keyAttestations
+    }
+
+    let requestBody = try hardwareBoundedKeyPairs.map { index in
+      try KeyAttestationRequestBody(keyPair: keyPairs[index])
+    }
+
+    let fetchedKeyAttestations = try await attestationServiceRepository.fetchBatchKeyAttestation(body: requestBody, clientAttestation: clientAttestation)
+
+    guard fetchedKeyAttestations.count == hardwareBoundedKeyPairs.count else {
+      throw AttestationServiceRepositoryError.invalidKeyAttestation
+    }
+
+    for (index, keyAttestation) in zip(hardwareBoundedKeyPairs, fetchedKeyAttestations) {
+      guard await keyAttestationValidator(keyPair: keyPairs[index], with: keyAttestation) else {
+        throw AttestationServiceRepositoryError.invalidKeyAttestation
+      }
+
+      keyAttestations[index] = keyAttestation
+    }
+
+    return keyAttestations
+  }
+
+  private func deleteKeyPairs(_ keyPairs: [VaultKeyPair]) {
+    do {
+      try keyPairs.forEach { try credentialKeyRepository.delete($0) }
+    } catch {
+      analytics.log(error)
+    }
   }
 }

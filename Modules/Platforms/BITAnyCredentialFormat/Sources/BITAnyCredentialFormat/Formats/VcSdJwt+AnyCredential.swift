@@ -10,8 +10,8 @@ extension VcSdJWS: AnyCredential {
     rawSdJWS
   }
 
-  public var format: String {
-    CredentialFormat.vcSdJwt.rawValue
+  public var format: CredentialFormat {
+    CredentialFormat.vcSdJwt
   }
 
   public var issuer: String {
@@ -19,7 +19,7 @@ extension VcSdJWS: AnyCredential {
   }
 
   public var status: (any AnyStatus)? {
-    payload.statusList
+    payload.status
   }
 
   public var validFrom: Date? {

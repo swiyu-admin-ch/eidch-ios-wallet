@@ -1,20 +1,22 @@
+import BITEIDRequestShared
 import Factory
 import Spyable
 
 
 @Spyable
 protocol SubmitEIDRequestUseCaseProtocol {
-  func callAsFunction(caseId: String, authJwt: String) async throws
+  func callAsFunction(caseId: String, authJwt: String, files: [EIDRequestCaseFile]) async throws
 }
 
 
 struct SubmitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocol {
-  func callAsFunction(caseId: String, authJwt: String) async throws {
-    try await eIDRequestRepository.submitRequest(caseId: caseId, authJwt: authJwt)
+
+  func callAsFunction(caseId: String, authJwt: String, files: [EIDRequestCaseFile]) async throws {
+    try await avRepository.submitRequest(caseId: caseId, authJwt: authJwt, files: files)
     try? await updateRequestCaseFileSubmission(caseId)
   }
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository
+  @Injected(\.avRepository) private var avRepository
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository
 
   private func updateRequestCaseFileSubmission(_ caseId: String) async throws {

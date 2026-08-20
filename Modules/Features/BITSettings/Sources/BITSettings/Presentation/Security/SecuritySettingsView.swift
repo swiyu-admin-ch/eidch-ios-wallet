@@ -2,29 +2,27 @@ import BITAppAuth
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - SecuritySettingsView
 
 struct SecuritySettingsView: View {
 
-  // MARK: Lifecycle
-
-  init(path: Binding<NavigationPath>) {
-    _path = path
-    _viewModel = State(initialValue: Container.shared.securitySettingsViewModel())
-  }
-
   // MARK: Internal
 
   var body: some View {
     SettingsPage(title: L10n.tkSettingsSecurityPrivacyTitle) {
       SettingsSection(title: L10n.tkSettingsSecurityPrivacySecuritySectionTitle) {
-        SettingsItem(image: Assets.lock.swiftUIImage, title: L10n.tkSettingsSecurityPrivacySecurityChangePassword, type: .navigation { path.append(SecuritySettings.password) })
+        SettingsItem(
+          image: Assets.lock.swiftUIImage,
+          title: L10n.tkSettingsSecurityPrivacySecurityChangePassword,
+          type: .navigation { navigator.navigate(to: SettingsDestinations.changePassword(viewModel)) })
         SettingsItem(
           image: viewModel.biometricType.image,
           title: L10n.tkSettingsSecurityPrivacySecurityUnlock(viewModel.biometricType.text),
-          type: .toggle(isOn: $viewModel.isBiometricEnabled) { path.append(SecuritySettings.biometrics) },
+          detail: viewModel.biometricItemDetail,
+          type: viewModel.biometricItemType,
           hasDivider: false)
       }
 
@@ -38,11 +36,14 @@ struct SecuritySettingsView: View {
               await viewModel.updateAnalyticsStatus()
             }
           })
-        SettingsItem(icon: .empty, title: L10n.tkSettingsSecurityPrivacyDataProtectionDiagnosticData, type: .navigation { path.append(SecuritySettings.diagnosticData) })
+        SettingsItem(
+          icon: .empty,
+          title: L10n.tkSettingsSecurityPrivacyDataProtectionDiagnosticData,
+          type: .navigation { navigator.navigate(to: SettingsDestinations.diagnosticData) })
         SettingsItem(
           image: Assets.activityHistory.swiftUIImage,
           title: L10n.tkSettingsSecurityPrivacyDataProtectionActivityHistory,
-          type: .navigation { path.append(SecuritySettings.activityHistory) })
+          type: .navigation { navigator.navigate(to: SettingsDestinations.activityHistory) })
         SettingsItem(
           image: Assets.privacy.swiftUIImage,
           title: L10n.tkSettingsSecurityPrivacyDataProtectionPrivacyPolicyLinkText,
@@ -51,36 +52,17 @@ struct SecuritySettingsView: View {
       }
     }
     .onAppear(perform: viewModel.onAppear)
-    .navigationDestination(for: SecuritySettings.self) { setting in
-      switch setting {
-      case .password:
-        ChangePinCodeModuleWrapper(delegate: viewModel)
-          .edgesIgnoringSafeArea(.all)
-      case .biometrics:
-        BiometricChangeModuleWrapper(delegate: viewModel)
-          .edgesIgnoringSafeArea(.all)
-      case .activityHistory: ActivityHistorySettingsView()
-      case .diagnosticData: DiagnosticDataSettingsView()
-      }
-    }
     .toast($viewModel.toast)
+    .navigate(to: $viewModel.destination)
   }
 
   // MARK: Private
 
-  @Binding private var path: NavigationPath
-  @State private var viewModel: SecuritySettingsViewModel
-}
+  @Environment(\.navigator) private var navigator
 
-// MARK: - SecuritySettings
-
-enum SecuritySettings: Hashable {
-  case password
-  case biometrics
-  case diagnosticData
-  case activityHistory
+  @InjectedObservable(\.securitySettingsViewModel) private var viewModel: SecuritySettingsViewModel
 }
 
 #Preview {
-  SecuritySettingsView(path: .constant(NavigationPath()))
+  SecuritySettingsView()
 }

@@ -1,3 +1,4 @@
+import BITL10n
 import BITTheming
 import SwiftUI
 
@@ -13,6 +14,7 @@ public struct SensitiveDataBadge: View {
   public var body: some View {
     Badge(label: claimName, image: isSensitive ? Assets.sensitiveBadge.swiftUIImage : nil)
       .badgeStyle(isSensitive ? .sensitive : .info)
+      .if(isSensitive) { $0.accessibilityHint(L10n.tkGlobalSensitiveDataHint) }
   }
 
   private let isSensitive: Bool

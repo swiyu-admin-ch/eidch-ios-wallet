@@ -21,6 +21,8 @@ targetTemplates:
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 100.0 # avoids version enforcement for local builds
         PRODUCT_NAME: swiyu
+        APP_NAME: swiyu
+        DYNATRACE_AUTO_START: false
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
         DEBUG_INFORMATION_FORMAT: dwarf-with-dsym

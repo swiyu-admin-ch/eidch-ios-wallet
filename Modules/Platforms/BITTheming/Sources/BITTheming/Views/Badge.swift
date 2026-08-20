@@ -6,16 +6,14 @@ public struct Badge: View {
 
   // MARK: Lifecycle
 
-  public init(label: String, accessibilityLabel: String? = nil, image: Image? = nil) {
+  public init(label: String, image: Image? = nil) {
     self.label = label
-    self.accessibilityLabel = accessibilityLabel ?? label
     self.image = image
   }
 
   // MARK: Public
 
   public let label: String
-  public let accessibilityLabel: String
   public let image: Image?
 
   public var body: some View {
@@ -26,7 +24,7 @@ public struct Badge: View {
   // MARK: Internal
 
   var configuration: BadgeStyleConfiguration {
-    BadgeStyleConfiguration(label: label, accessibilityLabel: accessibilityLabel, image: image)
+    BadgeStyleConfiguration(label: label, image: image)
   }
 
   // MARK: Private
@@ -55,26 +53,12 @@ extension BadgeStyle {
 
 public struct BadgeStyleConfiguration {
   public let label: String
-  public let accessibilityLabel: String
   public let image: Image?
 }
 
 extension EnvironmentValues {
 
-  // MARK: Internal
-
-  var badgeStyle: any BadgeStyle {
-    get { self[BadgeStyleKey.self] }
-    set { self[BadgeStyleKey.self] = newValue }
-  }
-
-  // MARK: Private
-
-  private enum BadgeStyleKey: EnvironmentKey {
-    static var defaultValue: any BadgeStyle {
-      DefaultBadgeStyle()
-    }
-  }
+  @Entry var badgeStyle: any BadgeStyle = DefaultBadgeStyle()
 
 }
 
@@ -110,7 +94,6 @@ public struct DefaultBadgeStyle: BadgeStyle {
       Text(configuration.label)
         .font(.custom.footnote)
         .lineLimit(1)
-        .accessibilityLabel(configuration.accessibilityLabel)
     }
     .padding(.vertical, .x2)
   }

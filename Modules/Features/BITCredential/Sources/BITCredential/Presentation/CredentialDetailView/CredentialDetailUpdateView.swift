@@ -61,7 +61,7 @@ struct CredentialDetailUpdateView: View {
   private func toolbarContent() -> some ToolbarContent {
     ToolbarItem(placement: .topBarLeading) {
       Button(action: { navigator.pop() }, label: {
-        ThemingAssets.back.swiftUIImage
+        Image(systemName: "chevron.backward")
       })
       .accessibilityLabel(L10n.tkGlobalBack)
       .accessibilityIdentifier(viewModel.closeButtonAccessibilityIdentifier)
@@ -115,7 +115,7 @@ extension CredentialDetailUpdateView {
           isPresented: isLoading,
           message: L10n.tkDisplayrefreshLoadingTitle,
           accessibility: .voiceOver())
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: .top) {
           errorNotificationView()
         }
         .animation(.easeInOut(duration: 0.2), value: isErrorPresented)
@@ -225,10 +225,10 @@ extension CredentialDetailUpdateView {
           background: ThemingAssets.Brand.Bright.swissRed.swiftUIColor,
           closeButtonStyle: .secondary)
           .padding(.horizontal, .x4)
-          .padding(.bottom, .x4)
+          .padding(.top, .x4)
           .accessibilityElement(children: .combine)
           .accessibilityIdentifier(errorAccessibilityIdentifier)
-          .transition(.move(edge: .bottom).combined(with: .opacity))
+          .transition(.move(edge: .top).combined(with: .opacity))
       }
     }
   }

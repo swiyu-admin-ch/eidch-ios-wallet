@@ -12,7 +12,7 @@ final class GetCredentialIssuanceSummaryUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-    repositorySpy = CredentialRepositoryProcotolSpy()
+    repositorySpy = CredentialRepositoryProtocolSpy()
     Container.shared.credentialRepository.register { self.repositorySpy }
     useCase = GetCredentialIssuanceSummaryUseCase()
   }
@@ -20,7 +20,7 @@ final class GetCredentialIssuanceSummaryUseCaseTests: XCTestCase {
   func testExecute_success_returnsRepositorySummary() async throws {
     repositorySpy.getIssuanceSummaryIdReturnValue = summary
 
-    let result = try await useCase.execute(for: credentialId)
+    let result = try await useCase(for: credentialId)
 
     XCTAssertEqual(result, summary)
     XCTAssertEqual(repositorySpy.getIssuanceSummaryIdCallsCount, 1)
@@ -31,7 +31,7 @@ final class GetCredentialIssuanceSummaryUseCaseTests: XCTestCase {
     repositorySpy.getIssuanceSummaryIdThrowableError = CredentialRepositoryError.unsupportedCredential
 
     do {
-      _ = try await useCase.execute(for: credentialId)
+      _ = try await useCase(for: credentialId)
       XCTFail("Expecting GetCredentialIssuanceSummaryUseCaseError.unsupportedCredential error")
     } catch {
       XCTAssertEqual(error as? GetCredentialIssuanceSummaryUseCaseError, .unsupportedCredential)
@@ -42,7 +42,7 @@ final class GetCredentialIssuanceSummaryUseCaseTests: XCTestCase {
     repositorySpy.getIssuanceSummaryIdThrowableError = TestingError.error
 
     do {
-      _ = try await useCase.execute(for: credentialId)
+      _ = try await useCase(for: credentialId)
       XCTFail("Expecting TestingError.error")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
@@ -54,6 +54,6 @@ final class GetCredentialIssuanceSummaryUseCaseTests: XCTestCase {
   private let credentialId = UUID()
   private let summary = CredentialIssuanceSummary(issuedAt: Date(timeIntervalSince1970: 1_234_567), available: 2, total: 3)
 
-  private var repositorySpy: CredentialRepositoryProcotolSpy!
+  private var repositorySpy: CredentialRepositoryProtocolSpy!
   private var useCase: GetCredentialIssuanceSummaryUseCase!
 }

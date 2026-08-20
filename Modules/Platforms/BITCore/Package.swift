@@ -36,7 +36,10 @@ let package = Package(
       ]),
     .target(
       name: "BITTestingCore",
-      dependencies: ["BITCore"],
+      dependencies: [
+        "BITCore",
+        .product(name: "FactoryTesting", package: "Factory"),
+      ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),
       ]),

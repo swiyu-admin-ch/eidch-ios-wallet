@@ -1,4 +1,7 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
+import BITActivity
+import BITCredential
+import BITNonCompliance
 import BITOpenID
 import Factory
 import XCTest
@@ -33,9 +36,9 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_withQrCode_callsRepository() async throws {
     proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = try .just(
-      .request(XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))))
+      .request(requestObject: XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8)), origin: nil))
 
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = []
+    getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingReturnValue = []
 
     useCase = StartProximityEngagementUseCase()
 
@@ -52,7 +55,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_returnsCompatibleCredentials() async throws {
     proximityPresentationRepository.startEngagementReturnValue = try .just(
-      .request(XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))))
+      .request(requestObject: XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8)), origin: nil))
 
     try await assert_returns_compatible_credentials {
       useCase()
@@ -63,7 +66,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_withQrCode_returns_compatible_credentials() async throws {
     proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = try .just(
-      .request(XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))))
+      .request(requestObject: XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8)), origin: nil))
 
     try await assert_returns_compatible_credentials {
       useCase(qrCode: "qr-code")
@@ -75,7 +78,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
   func testCallAsFunction_decodesJwt() async throws {
     let requestString = try XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))
     proximityPresentationRepository.startEngagementReturnValue = try .just(
-      .request(XCTUnwrap(requestString)))
+      .request(requestObject: XCTUnwrap(requestString), origin: nil))
 
     try await assert_decodesJwt(requestString: requestString) {
       useCase()
@@ -87,7 +90,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
   func testCallAsFunction_withQrCode_decodesJwt() async throws {
     let requestString = try XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8))
     proximityPresentationRepository.startEngagementReverseQrCodeReturnValue = try .just(
-      .request(XCTUnwrap(requestString)))
+      .request(requestObject: XCTUnwrap(requestString), origin: nil))
 
     try await assert_decodesJwt(requestString: requestString) {
       useCase(qrCode: "qr-code")
@@ -98,15 +101,57 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
   func testCallAsFunction_throwsInvalidPayload_whenJwtDecodingFails() async throws {
     jwsDecoderSpy.throwingError = TestingError.error
-    proximityPresentationRepository.startEngagementReturnValue = .just(.request("not-a-valid-jwt"))
+    proximityPresentationRepository.startEngagementReturnValue = .just(.request(requestObject: "not-a-valid-jwt", origin: nil))
     useCase = StartProximityEngagementUseCase()
 
     do {
       _ = try await useCase().collect()
       XCTFail("Expected callAsFunction to throw")
     } catch {
-      XCTAssertEqual(error as? RequestObjectError, .invalidPayload())
+      XCTAssertEqual(error as? StartProximityEngagementUseCaseError, .invalidRequest("invalid_request"))
     }
+  }
+
+  func testCallAsFunction_callsRequestObjectValidatorForProximity() async throws {
+    proximityPresentationRepository.startEngagementReturnValue = try .just(
+      .request(requestObject: XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8)), origin: nil))
+    getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingReturnValue = []
+    useCase = StartProximityEngagementUseCase()
+
+    _ = try await useCase().collect()
+
+    XCTAssertEqual(requestObjectValidatorSpy.validateTransportCallsCount, 1)
+    XCTAssertEqual(requestObjectValidatorSpy.validateTransportReceivedArguments?.transport, .proximity)
+  }
+
+  func testCallAsFunction_setsTrustedCheckAppContext() async throws {
+    proximityPresentationRepository.startEngagementReturnValue = try .just(
+      .request(requestObject: XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8)), origin: nil))
+    getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingReturnValue = []
+    useCase = StartProximityEngagementUseCase()
+
+    let events = try await useCase().collect()
+    guard case .request(let context) = events.first else {
+      return XCTFail("Expected .request event")
+    }
+    XCTAssertEqual(context.trustInformation.identity, .trustedCheckApp)
+    XCTAssertEqual(context.trustInformation.vcSchema, .trusted)
+    XCTAssertEqual(context.actorCompliance, .compliant)
+  }
+
+  func testCallAsFunction_throwsInvalidRequest_whenRequestObjectValidationFails() async throws {
+    proximityPresentationRepository.startEngagementReturnValue = try .just(
+      .request(requestObject: XCTUnwrap(String(data: RequestObjectJWS.Mock.sampleData, encoding: .utf8)), origin: nil))
+    requestObjectValidatorSpy.validateTransportThrowableError = TestingError.error
+    useCase = StartProximityEngagementUseCase()
+
+    do {
+      _ = try await useCase().collect()
+      XCTFail("Expected callAsFunction to throw")
+    } catch {
+      XCTAssertEqual(error as? StartProximityEngagementUseCaseError, .invalidRequest("invalid_request"))
+    }
+    XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingCallsCount, 0)
   }
 
   // MARK: Private
@@ -114,11 +159,12 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
   private var proximityPresentationRepository: ProximityPresentationRepositoryProtocolSpy!
   private var getCompatibleCredentialsUseCaseSpy: GetCompatibleCredentialsUseCaseProtocolSpy!
   private var jwsDecoderSpy: JWSDecoderMock<RequestObjectJWT>!
+  private var requestObjectValidatorSpy: RequestObjectValidatorProtocolSpy!
   private var useCase: StartProximityEngagementUseCase!
 
   private func assert_returns_compatible_credentials(stream: () -> AsyncThrowingStream<ProximityEngagementEvent, Error>) async throws {
     let mockCredentials = [CompatibleCredential.Mock.BIT]
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = mockCredentials
+    getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingReturnValue = mockCredentials
 
     useCase = StartProximityEngagementUseCase()
 
@@ -126,7 +172,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
 
     if case .request(let request) = events.first {
       XCTAssertEqual(request.transport, .proximity)
-      XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.executeUsingCallsCount, 1)
+      XCTAssertEqual(getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingCallsCount, 1)
       XCTAssertEqual(request.compatibleCredentials, mockCredentials)
     } else {
       XCTFail("unexpected event")
@@ -137,7 +183,7 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
     requestString: String,
     stream: () -> AsyncThrowingStream<ProximityEngagementEvent, Error>) async throws
   {
-    getCompatibleCredentialsUseCaseSpy.executeUsingReturnValue = []
+    getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingReturnValue = []
 
     let decoder = JWSDecoderMock<RequestObjectJWT>(
       jwt: RequestObjectJWS.Mock.sampleJWT,
@@ -161,9 +207,11 @@ final class StartProximityEngagementUseCaseTests: XCTestCase {
     proximityPresentationRepository = ProximityPresentationRepositoryProtocolSpy()
     getCompatibleCredentialsUseCaseSpy = GetCompatibleCredentialsUseCaseProtocolSpy()
     jwsDecoderSpy = JWSDecoderMock(jwt: RequestObjectJWS.Mock.sampleJWT, rawPayload: "rawPayload")
+    requestObjectValidatorSpy = RequestObjectValidatorProtocolSpy()
 
     Container.shared.proximityPresentationRepository.register { @MainActor in self.proximityPresentationRepository }
     Container.shared.getCompatibleCredentialsUseCase.register { @MainActor in self.getCompatibleCredentialsUseCaseSpy }
     Container.shared.jwsDecoder.register { @MainActor in self.jwsDecoderSpy }
+    Container.shared.requestObjectValidator.register { @MainActor in self.requestObjectValidatorSpy }
   }
 }

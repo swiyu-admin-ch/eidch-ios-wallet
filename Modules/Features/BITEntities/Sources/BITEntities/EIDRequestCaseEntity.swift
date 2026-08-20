@@ -11,6 +11,7 @@ public class EIDRequestCaseEntity: Object {
   @Persisted public var selectedDocumentType: String
   @Persisted public var state: EIDRequestStateEntity?
   @Persisted public var files = List<EIDRequestCaseFileEntity>()
+  @Persisted public var pairingIds = List<EIDRequestCaseWalletEntity>()
 
   @Persisted public var createdAt: Date
   @Persisted public var credential: CredentialEntity?

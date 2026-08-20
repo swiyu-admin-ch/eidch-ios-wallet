@@ -89,6 +89,15 @@ public struct ErrorDataset {
 }
 
 extension ErrorDataset {
+  public static func governanceError(rawErrorCode: String, errorDescription: String) -> Self {
+    ErrorDataset([
+      .title(L10n.tkErrorGovernanceErrorPrimary),
+      .body(L10n.tkErrorGovernanceErrorSecondary),
+      .caption(rawErrorCode),
+      .caption(errorDescription),
+    ])
+  }
+
   public static func retry(_ error: Error, _ action: @escaping (Navigator) -> Void) -> Self {
     ErrorDataset(error, [.primary(L10n.tkErrorGenericButtonPrimary, action)])
   }

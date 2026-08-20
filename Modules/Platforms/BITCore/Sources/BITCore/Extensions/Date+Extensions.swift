@@ -2,11 +2,6 @@ import Foundation
 
 extension Date {
 
-  public var isWithinNext24Hours: Bool {
-    let now = Date()
-    return self > now && timeIntervalSince(now) < 60 * 60 * 24
-  }
-
   public var longDateFormat: String {
     formatted(date: .long, time: .omitted)
   }
@@ -56,10 +51,6 @@ extension Date {
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "EEEE"
     return dateFormatter.string(from: self)
-  }
-
-  public func numberOfDaysSince(_ date: Date, using calendar: Calendar = Calendar.current) -> Int? {
-    calendar.numberOfDaysBetween(date, and: self)
   }
 
 }

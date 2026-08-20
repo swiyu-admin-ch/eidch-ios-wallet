@@ -1,4 +1,5 @@
 import BITAppAuth
+import BITCore
 import BITSettings
 import Combine
 import Factory
@@ -19,7 +20,7 @@ class SetupViewModel {
 
   // MARK: Internal
 
-  @ObservationIgnored @AppStorage("rootOnboardingIsEnabled") var isOnboardingEnabled = true
+  @ObservationIgnored @AppStorage(UserDefaultsKey.rootOnboardingIsEnabled.rawValue) var isOnboardingEnabled = true
 
   var isAnimating = true
 
@@ -30,8 +31,8 @@ class SetupViewModel {
       }
       try await Task.sleep(nanoseconds: 2_000_000_000)
       guard let pincode = router.context.pincode else { throw SetupError.missingPinCode }
-      try registerPinCodeUseCase.execute(pinCode: pincode)
-      await updateAnalyticsStatusUseCase.execute(isAllowed: router.context.analyticsOptIn)
+      try registerPinCodeUseCase(pinCode: pincode)
+      await updateAnalyticsStatusUseCase(isAllowed: router.context.analyticsOptIn)
       try setActivityHistoryEnabledUseCase(true)
       isOnboardingEnabled = false
       try await Task.sleep(nanoseconds: 2_000_000_000)

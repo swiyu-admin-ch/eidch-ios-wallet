@@ -14,8 +14,8 @@ protocol FetchWalletPairingStateUseCaseProtocol {
 struct FetchWalletPairingStateUseCase: FetchWalletPairingStateUseCaseProtocol {
 
   func execute(for caseId: String, pairingId: String) async throws -> WalletPairingState {
-    try await eIDRequestRepository.getPairingState(caseId: caseId, pairingId: pairingId)
+    try await sidRepository.getPairingState(caseId: caseId, pairingId: pairingId)
   }
 
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository
+  @Injected(\.sidRepository) private var sidRepository
 }

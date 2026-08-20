@@ -56,7 +56,7 @@ struct ProofOfPossessionGenerator: ProofOfPossessionGeneratorProtocol {
     let jwt = ClientAttestationProofOfPossessionJWT(
       expiredAt: Date().addingTimeInterval(300), // Must be current time + 5 min (cf. specifications)
       issuer: clientAttestation.payload.subject,
-      jwtIdentifier: UUID().uuidString,
+      jwtId: UUID().uuidString,
       audience: audience,
       requestBody: bodyHash,
       nonce: challenge,

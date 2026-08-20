@@ -31,7 +31,7 @@ struct UpdateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProto
   func execute(for requestCaseId: String) async throws -> EIDRequestCase {
     var requestCase = try await eIDRequestCaseRepository.get(id: requestCaseId)
 
-    let status = try await eIDRequestRepository.fetchRequestStatus(for: requestCaseId)
+    let status = try await sidRepository.fetchRequestStatus(for: requestCaseId)
     requestCase.state = EIDRequestState(status: status)
     return try await eIDRequestCaseRepository.update(requestCase)
   }
@@ -39,7 +39,7 @@ struct UpdateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProto
   // MARK: Private
 
   @Injected(\.requestCasePriorityOrder) private var requestCasePriorityOrder: [EIDRequestStatus.State]
-  @Injected(\.eIDRequestRepository) private var eIDRequestRepository: EIDRequestRepositoryProtocol
+  @Injected(\.sidRepository) private var sidRepository: SIDRepositoryProtocol
   @Injected(\.eIDRequestCaseRepository) private var eIDRequestCaseRepository: EIDRequestCaseRepositoryProtocol
 
 }

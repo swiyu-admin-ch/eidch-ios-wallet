@@ -20,44 +20,10 @@ public struct VerifiableCredentialCellV1: View {
 
   public var body: some View {
     HStack(alignment: .center) {
-      HStack(alignment: alignment, spacing: .x3) {
-        if sizeCategory <= .accessibilityLarge {
-          CredentialCard(
-            name: viewModel.credentialDisplay?.name,
-            summary: viewModel.credentialDisplay?.summary,
-            background: viewModel.credentialDisplay?.backgroundColor,
-            logoBase64: viewModel.credentialDisplay?.logoBase64,
-            environment: viewModel.environment,
-            statusBadgeLabel: viewModel.statusText,
-            statusBadgeImage: viewModel.statusImage,
-            statusBadgeStyle: viewModel.statusBadgeStyle)
-            .controlSize(.small)
-        }
-
-        VStack(alignment: .leading, spacing: 0) {
-          Text(viewModel.credentialDisplay?.name ?? L10n.tkCredentialFallbackTitle)
-            .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
-            .font(.custom.body)
-          if let summary = viewModel.credentialDisplay?.summary {
-            Text(summary)
-              .font(.custom.callout)
-              .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-          }
-
-          badges
-        }
-      }
-
-      Spacer()
-
-      if let disclosureIndicatorImage = disclosureIndicator.image {
-        disclosureIndicatorImage
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 6)
-          .fontWeight(.bold)
-          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
-          .padding(.trailing, .x3)
+      if dynamicTypeSize.isLargeAccessibilitySize {
+        largeAccessibilitySizeContent
+      } else {
+        defaultSizeContent
       }
     }
     .accessibilityElement(children: .ignore)
@@ -69,7 +35,7 @@ public struct VerifiableCredentialCellV1: View {
 
   // MARK: Private
 
-  @Environment(\.sizeCategory) private var sizeCategory
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
   @State private var alignment = VerticalAlignment.center
 
@@ -89,6 +55,71 @@ public struct VerifiableCredentialCellV1: View {
     }
     parts.append(viewModel.statusBadgeAccessibilityText)
     return parts.joined(separator: ", ")
+  }
+
+  @ViewBuilder
+  private var defaultSizeContent: some View {
+    HStack(alignment: alignment, spacing: .x3) {
+      CredentialCard(
+        name: viewModel.credentialDisplay?.name,
+        summary: viewModel.credentialDisplay?.summary,
+        background: viewModel.credentialDisplay?.backgroundColor,
+        logoBase64: viewModel.credentialDisplay?.logoBase64,
+        environment: viewModel.environment,
+        statusBadgeLabel: viewModel.statusText,
+        statusBadgeImage: viewModel.statusImage,
+        statusBadgeStyle: viewModel.statusBadgeStyle)
+        .controlSize(.small)
+
+      VStack(alignment: .leading, spacing: 0) {
+        content
+      }
+    }
+
+    Spacer()
+
+    if let disclosureIndicatorImage = disclosureIndicator.image {
+      disclosureIndicatorImage
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .frame(width: 6)
+        .fontWeight(.bold)
+        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+        .padding(.trailing, .x3)
+    } else {
+      batchPrivacyWarningIcon
+    }
+  }
+
+  private var largeAccessibilitySizeContent: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      batchPrivacyWarningIcon
+      content
+    }
+  }
+
+  @ViewBuilder
+  private var content: some View {
+    Text(viewModel.credentialDisplay?.name ?? L10n.tkCredentialFallbackTitle)
+      .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
+      .font(.custom.body)
+
+    if let summary = viewModel.credentialDisplay?.summary {
+      Text(summary)
+        .font(.custom.callout)
+        .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
+    }
+
+    badges
+  }
+
+  @ViewBuilder
+  private var batchPrivacyWarningIcon: some View {
+    if viewModel.isBatchPrivacyWarningVisible {
+      Image(systemName: "exclamationmark.triangle")
+        .fontWeight(.semibold)
+        .foregroundStyle(ThemingAssets.Component.Callout.Alert.symbol.swiftUIColor)
+    }
   }
 
 }

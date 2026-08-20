@@ -37,9 +37,11 @@ public class NoDevicePinCodeViewModel {
 
   private func configureObservers() {
     NotificationCenter.default.addObserver(forName: .willEnterForeground, object: nil, queue: .main) { [weak self] _ in
-      guard let self, hasDevicePinUseCase.execute() else { return }
-      router.close(onComplete: nil)
-      delegate?.didCompleteNoDevicePinCode()
+      Task { @MainActor [weak self] in
+        guard let self, hasDevicePinUseCase() else { return }
+        router.close(onComplete: nil)
+        delegate?.didCompleteNoDevicePinCode()
+      }
     }
   }
 

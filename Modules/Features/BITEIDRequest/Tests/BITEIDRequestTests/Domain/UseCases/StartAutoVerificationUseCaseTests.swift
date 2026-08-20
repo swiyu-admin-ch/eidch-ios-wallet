@@ -12,9 +12,9 @@ final class StartAutoVerificationUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    eIDRequestRepository = EIDRequestRepositoryProtocolSpy()
-    eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReturnValue = mockAutoVerificationResponse
-    Container.shared.eIDRequestRepository.register { self.eIDRequestRepository }
+    sidRepository = SIDRepositoryProtocolSpy()
+    sidRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReturnValue = mockAutoVerificationResponse
+    Container.shared.sidRepository.register { self.sidRepository }
 
     useCase = StartAutoVerificationUseCase()
   }
@@ -23,13 +23,13 @@ final class StartAutoVerificationUseCaseTests: XCTestCase {
     let result = try await useCase.execute(for: mockCaseId)
 
     XCTAssertEqual(result, mockAutoVerificationResponse)
-    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableCallsCount, 1)
-    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReceivedArguments?.caseId, mockCaseId)
-    XCTAssertEqual(eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReceivedArguments?.autoVerificationType, .av1)
+    XCTAssertEqual(sidRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableCallsCount, 1)
+    XCTAssertEqual(sidRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReceivedArguments?.caseId, mockCaseId)
+    XCTAssertEqual(sidRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReceivedArguments?.autoVerificationType, .av1)
   }
 
   func testExecute_failure() async throws {
-    eIDRequestRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableThrowableError = TestingError.error
+    sidRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableThrowableError = TestingError.error
 
     do {
       _ = try await useCase.execute(for: mockCaseId)
@@ -45,7 +45,7 @@ final class StartAutoVerificationUseCaseTests: XCTestCase {
   private let mockAutoVerificationResponse = AutoVerificationResponse.Mock.nfcSample
 
   private var useCase: StartAutoVerificationUseCase!
-  private var eIDRequestRepository: EIDRequestRepositoryProtocolSpy!
+  private var sidRepository: SIDRepositoryProtocolSpy!
 }
 
 // swiftlint:enable implicitly_unwrapped_optional force_unwrapping

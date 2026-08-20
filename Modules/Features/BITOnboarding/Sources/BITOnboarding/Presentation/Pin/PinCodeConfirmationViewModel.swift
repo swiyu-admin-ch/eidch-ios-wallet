@@ -61,6 +61,7 @@ public class PinCodeConfirmationViewModel {
   @ObservationIgnored @Injected(\.attemptsLimit) private var attemptsLimit: Int
   @ObservationIgnored @Injected(\.pinCodeObserverDelay) private var pinCodeObserverDelay: CGFloat
 
+  @ObservationIgnored @Injected(\.getBiometricStateUseCase) private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocol
   @ObservationIgnored @Injected(\.validatePinCodeRuleUseCase) private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol
 
   private var attemptLeft: Int {
@@ -68,13 +69,21 @@ public class PinCodeConfirmationViewModel {
   }
 
   private func validatePinCodeRuleCompliance() throws {
-    try validatePinCodeRuleUseCase.execute(pinCode)
+    try validatePinCodeRuleUseCase(pinCode)
     guard pinCode == originPinCode else { throw PinCodeError.mismatch }
   }
 
   private func nextOnboardingStep() {
     reset()
-    router.biometrics()
+
+    switch getBiometricStateUseCase() {
+    case .declined,
+         .notEnrolled:
+      router.setup()
+    case .disabled,
+         .enabled:
+      router.biometrics()
+    }
   }
 
   private func reset() {

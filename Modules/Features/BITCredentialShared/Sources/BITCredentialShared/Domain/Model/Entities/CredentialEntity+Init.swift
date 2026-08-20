@@ -48,8 +48,8 @@ extension CredentialEntity {
   // MARK: Private
 
   private func setBaseValues(from credential: CredentialProtocol) {
-    format = credential.format
-    issuerUrl = credential.issuerUrl
+    format = credential.format.rawValue
+    issuerUrl = credential.issuerUrl.absoluteString
     selectedConfigurationId = credential.selectedConfigurationId
     createdAt = credential.createdAt
     if let currentAuthentication = authentication {

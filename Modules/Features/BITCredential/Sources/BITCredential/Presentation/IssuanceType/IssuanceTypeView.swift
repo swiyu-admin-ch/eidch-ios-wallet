@@ -2,6 +2,7 @@ import BITCredentialShared
 import BITL10n
 import BITTheming
 import Foundation
+import PopupView
 import SwiftUI
 
 // MARK: - IssuanceTypeView
@@ -19,12 +20,19 @@ struct IssuanceTypeView: View {
   var body: some View {
     Content(
       state: viewModel.state,
+      refreshBatchCredential: viewModel.refreshBatchCredential,
       openLearnMoreLink: openLearnMoreLink)
       .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .disabled(viewModel.isRefreshing)
+      .loadingOverlay(
+        isPresented: viewModel.isRefreshing,
+        accessibility: .voiceOver())
+      .animation(.easeInOut(duration: 0.5), value: viewModel.isRefreshing)
       .background(ThemingAssets.Background.secondary.swiftUIColor)
       .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
       .navigationTitle(L10n.tkCredentialIssuanceTypeTitle)
       .navigationBarTitleDisplayMode(.inline)
+      .popup(item: $viewModel.notificationState, itemView: notificationView, customize: customizeNotification)
       .task {
         await viewModel.onAppear()
       }
@@ -51,9 +59,11 @@ extension IssuanceTypeView {
 
     init(
       state: IssuanceTypeViewModel.State,
+      refreshBatchCredential: @escaping () async -> Void,
       openLearnMoreLink: @escaping () -> Void = {})
     {
       self.state = state
+      self.refreshBatchCredential = refreshBatchCredential
       self.openLearnMoreLink = openLearnMoreLink
     }
 
@@ -65,7 +75,10 @@ extension IssuanceTypeView {
 
     // MARK: Private
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private let state: IssuanceTypeViewModel.State
+    private let refreshBatchCredential: () async -> Void
     private let openLearnMoreLink: () -> Void
 
     @ViewBuilder
@@ -117,15 +130,38 @@ extension IssuanceTypeView {
 
     private func batchUsageDetailsSection(batchViewModel: IssuanceTypeViewModel.BatchViewModel, timeStamp: String) -> some View {
       Section {
-        KeyValueCustomCell(key: L10n.tkCredentialIssuanceTypeAvailableCredentialsKey, trailingContent: { EmptyView() }) {
-          VStack(alignment: .leading, spacing: .zero) {
-            Text(L10n.tkCredentialIssuanceTypeAvailableCredentialsValue(batchViewModel.available, batchViewModel.total))
+        KeyValueCustomCell(key: L10n.tkCredentialIssuanceTypeAvailableCredentialsKey, trailingContent: {
+          if !dynamicTypeSize.isLargeAccessibilitySize {
+            batchUsageWarningIcon(batchViewModel)
+          }
+        }) {
+          VStack(alignment: .leading, spacing: .x1) {
+            if dynamicTypeSize.isLargeAccessibilitySize {
+              batchUsageWarningIcon(batchViewModel)
+            }
+
+            Text("\(batchViewModel.available)")
               .font(.custom.body)
 
-            Text(L10n.tkCredentialIssuanceTypeRefreshHint(batchViewModel.refreshThreshold))
+            Text(
+              batchViewModel.isBatchPrivacyWarningVisible ?
+                L10n.tkCredentialIssuanceTypeRenewUsagesHint :
+                L10n.tkCredentialIssuanceTypeRefreshHint(batchViewModel.refreshThreshold))
               .font(.custom.caption1)
               .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
           }
+        }
+
+        if batchViewModel.isBatchPrivacyWarningVisible {
+          Button {
+            Task {
+              await refreshBatchCredential()
+            }
+          } label: {
+            Text(L10n.tkCredentialIssuanceTypeRenewUsagesButton)
+              .padding(.vertical, .x2)
+          }
+          .tint(ThemingAssets.Brand.Accent.link.swiftUIColor)
         }
 
         KeyValueCell(key: L10n.tkCredentialIssuanceTypeLastRefreshKey, value: timeStamp)
@@ -136,23 +172,77 @@ extension IssuanceTypeView {
       }
       .textCase(nil)
     }
+
+    @ViewBuilder
+    private func batchUsageWarningIcon(_ viewModel: IssuanceTypeViewModel.BatchViewModel) -> some View {
+      if viewModel.isBatchPrivacyWarningVisible {
+        Image(systemName: "exclamationmark.triangle")
+          .foregroundStyle(ThemingAssets.Component.Callout.Alert.symbol.swiftUIColor)
+          .accessibilityHidden(true)
+      }
+    }
   }
+}
+
+// MARK: - Notification Popups
+
+extension IssuanceTypeView {
+  private func notificationView(_ notification: IssuanceTypeViewModel.NotificationState) -> some View {
+    let iconSystemName = switch notification {
+    case .failure: "exclamationmark.circle"
+    case .success: "checkmark.circle"
+    }
+
+    let accentColor: Color = switch notification {
+    case .failure: ThemingAssets.Brand.Bright.swissRedLabel.swiftUIColor
+    case .success: ThemingAssets.Brand.Bright.firGreenLabel.swiftUIColor
+    }
+
+    let content: String = switch notification {
+    case .failure: L10n.tkCredentialIssuanceTypeRenewUsagesFailureToastTitle
+    case .success: L10n.tkCredentialIssuanceTypeRenewUsagesSuccessToastTitle
+    }
+
+    let background: Color = switch notification {
+    case .failure: ThemingAssets.Brand.Bright.swissRed.swiftUIColor
+    case .success: ThemingAssets.Brand.Bright.firGreen.swiftUIColor
+    }
+
+    return Notification(
+      image: Image(systemName: iconSystemName),
+      imageColor: accentColor,
+      content: content,
+      contentColor: accentColor,
+      background: background)
+      .safeAreaPadding(.horizontal, .x6)
+  }
+
+  private func customizeNotification<PopupContent: View>(_ parameters: Popup<PopupContent>.PopupParameters) -> Popup<PopupContent>.PopupParameters {
+    guard viewModel.notificationState != nil else { return parameters }
+    return parameters
+      .type(.floater(useSafeAreaInset: true))
+      .position(.top)
+      .appearFrom(.topSlide)
+      .disappearTo(.topSlide)
+      .autohideIn(7)
+  }
+
 }
 
 #if DEBUG
 #Preview("Single") {
   NavigationStack {
     IssuanceTypeView.Content(
-      state: .result(type: .single, timeStamp: "04/02/2026 | 03:07 PM"))
+      state: .result(type: .single, timeStamp: "04/02/2026 | 03:07 PM"), refreshBatchCredential: {})
   }
 }
 
 #Preview("Batch") {
-  let batchViewModel = IssuanceTypeViewModel.BatchViewModel(available: 10, total: 10, refreshThreshold: 2)
+  let batchViewModel = IssuanceTypeViewModel.BatchViewModel(available: 10, refreshThreshold: 2)
 
   NavigationStack {
     IssuanceTypeView.Content(
-      state: .result(type: .batch(batchViewModel), timeStamp: "04/02/2026 | 03:07 PM"))
+      state: .result(type: .batch(batchViewModel), timeStamp: "04/02/2026 | 03:07 PM"), refreshBatchCredential: {})
   }
 }
 #endif

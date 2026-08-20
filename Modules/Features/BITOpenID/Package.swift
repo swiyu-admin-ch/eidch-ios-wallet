@@ -69,10 +69,9 @@ let package = Package(
         .product(name: "BITClaimsPathPointer", package: "BITClaimsPathPointer"),
         .product(name: "BITSdJWT", package: "BITSdJWT"),
         .product(name: "BITJWT", package: "BITJWT"),
-        .product(name: "BITAnyCredentialFormatMocks", package: "BITAnyCredentialFormat"),
         .product(name: "BITSwiyuSharedKMP", package: "BITSwiyuSharedKMP"),
-        .product(name: "BITAnalyticsMocks", package: "BITAnalytics"),
         .product(name: "JsonSchemaValidator", package: "jsonschema-swift"),
+        .product(name: "FactoryTesting", package: "Factory"),
       ],
       swiftSettings: [.define("DEBUG", .when(configuration: .debug))]),
   ])

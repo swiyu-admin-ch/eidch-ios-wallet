@@ -16,7 +16,6 @@ final class MockOnboardingInternalRoutes: OnboardingInternalRoutes {
   var pinCodeInformationCalled = false
   var biometricsCalled = false
   var setupCalled = false
-  var settingsCalled = false
   var linkCalled = false
   var popCalled = false
   var completedCalled = false
@@ -75,10 +74,6 @@ final class MockOnboardingInternalRoutes: OnboardingInternalRoutes {
 
   func setupError(delegate: SetupDelegate) {
     setupErrorCalled = true
-  }
-
-  func settings() {
-    settingsCalled = true
   }
 
   func openExternalLink(url: URL) {

@@ -115,10 +115,9 @@ extension ActivityDetailView {
 
     private func actorInfo(actor: ActivityDetailState.Actor, activityType: ActivityType) -> some View {
       SectionView(title: actor.title, footer: activityType.actorTrustFooter, minHeight: nil, hasContentPadding: false) {
-        ActorHeaderView(name: actor.name, badgeTypes: actor.badges, imageData: actor.image) { badgeType in
+        ActorHeaderView(viewModel: actor.viewModel) { actorInformation in
           navigator.navigate(
-            to: ActivityDetailInternalDestinations.badgeDetail(
-              badgeType: badgeType))
+            to: ActivityDetailInternalDestinations.actorInformation(actorInformation))
         }
         .padding(.bottom, .x1)
       }
@@ -137,7 +136,7 @@ extension ActivityDetailView {
           ClaimClusterList(result.credential.clusters)
         }
         SectionView(minHeight: nil, hasContentPadding: false) {
-          if isNonComplianceEnabled {
+          if isNonComplianceEnabled, result.actor.isReportAllowed {
             ButtonCell(
               icon: Assets.flag.swiftUIImage,
               title: result.activity.type.reportActorButtonTitle,

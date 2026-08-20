@@ -4,6 +4,8 @@ import UIKit
 
 extension Container {
 
+  // MARK: Public
+
   public var processInfoService: Factory<ProcessInfoServiceProtocol> {
     self { ProcessInfoService() }
   }
@@ -19,6 +21,10 @@ extension Container {
 
   public var preferredUserLocales: Factory<[UserLocale]> {
     self { Locale.preferredLanguages }
+  }
+
+  public var appLanguageService: Factory<AppLanguageServiceProtocol> {
+    self { AppLanguageService() }
   }
 
   public var userTimeZone: Factory<TimeZone> {
@@ -48,4 +54,26 @@ extension Container {
   public var applicationService: Factory<ApplicationServiceProtocol> {
     self { UIApplication.shared }.singleton
   }
+
+  /// Maximum execution time for regex-based validators evaluating untrusted input.
+  public var regexEvaluationTimeout: Factory<TimeInterval> {
+    self { 0.3 }
+  }
+
+  /// Maximum accepted length for an HTTP URL, in characters (ReDoS mitigation).
+  public var maxHttpUrlLength: Factory<Int> {
+    self { 2048 }
+  }
+
+  // MARK: Internal
+
+  var appGroupIdentifier: Factory<String> {
+    self {
+      guard let appGroupIdentifier = Bundle.main.object(forInfoDictionaryKey: "AppGroupIdentifier") as? String else {
+        fatalError("Missing AppGroupIdentifier in Info.plist")
+      }
+      return appGroupIdentifier
+    }
+  }
+
 }

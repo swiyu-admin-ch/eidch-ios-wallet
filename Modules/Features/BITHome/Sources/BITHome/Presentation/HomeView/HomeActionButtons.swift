@@ -8,7 +8,7 @@ struct HomeActionButtons: View {
 
   // MARK: Lifecycle
 
-  init(onScanAction: @escaping () -> Void, onQRCodeAction: @escaping () -> Void) {
+  init(onScanAction: @escaping () -> Void, onQRCodeAction: (() -> Void)? = nil) {
     self.onScanAction = onScanAction
     self.onQRCodeAction = onQRCodeAction
   }
@@ -34,6 +34,8 @@ struct HomeActionButtons: View {
 
   // MARK: Private
 
+  @Environment(\.sizeCategory) private var sizeCategory
+
   private let shadowOpacity: CGFloat = 0.1
   private let iconSize: CGFloat = 20
   private let landscapeIconSize: CGFloat = 24
@@ -42,24 +44,36 @@ struct HomeActionButtons: View {
   @Orientation private var orientation
 
   private let onScanAction: () -> Void
-  private let onQRCodeAction: () -> Void
+  private let onQRCodeAction: (() -> Void)?
 
   @ViewBuilder
   private var content: some View {
     if orientation.isLandscape {
-      VStack(spacing: .x2) {
-        scanIconButton()
-        qrCodeIconButton()
-      }
+      VStack(spacing: .x2) { iconOnlyButtons }
+    } else if sizeCategory.isAccessibilityCategory {
+      HStack(spacing: .x3) { iconOnlyButtons }
     } else {
-      HStack(spacing: .x3) {
-        scanButton()
-        qrCodeButton()
-      }
+      HStack(spacing: .x3) { labeledButtons }
     }
   }
 
-  private func scanButton() -> some View {
+  @ViewBuilder
+  private var labeledButtons: some View {
+    scanButton
+    if let onQRCodeAction {
+      qrCodeButton(action: onQRCodeAction)
+    }
+  }
+
+  @ViewBuilder
+  private var iconOnlyButtons: some View {
+    scanIconButton
+    if let onQRCodeAction {
+      qrCodeIconButton(action: onQRCodeAction)
+    }
+  }
+
+  private var scanButton: some View {
     Button(action: onScanAction) {
       HStack(spacing: .x2) {
         ThemingAssets.scanIcon.swiftUIImage
@@ -80,7 +94,7 @@ struct HomeActionButtons: View {
     .accessibilityLabel(L10n.tkGlobalScanPrimarybuttonAlt)
   }
 
-  private func scanIconButton() -> some View {
+  private var scanIconButton: some View {
     Button(action: onScanAction) {
       ThemingAssets.scanIcon.swiftUIImage
         .renderingMode(.template)
@@ -95,8 +109,8 @@ struct HomeActionButtons: View {
     .accessibilityLabel(L10n.tkGlobalScanPrimarybuttonAlt)
   }
 
-  private func qrCodeButton() -> some View {
-    Button(action: onQRCodeAction) {
+  private func qrCodeButton(action: @escaping () -> Void) -> some View {
+    Button(action: action) {
       ThemingAssets.qrCodeIcon.swiftUIImage
         .renderingMode(.template)
         .resizable()
@@ -107,11 +121,11 @@ struct HomeActionButtons: View {
     }
     .buttonBackground(tint: ThemingAssets.Background.Button.secondary.swiftUIColor)
     .contentShape(.accessibility, .capsule)
-    .accessibilityLabel(L10n.tkProximityEngagementTitle)
+    .accessibilityLabel(L10n.tkProximityEngagementTitleAlt)
   }
 
-  private func qrCodeIconButton() -> some View {
-    Button(action: onQRCodeAction) {
+  private func qrCodeIconButton(action: @escaping () -> Void) -> some View {
+    Button(action: action) {
       ThemingAssets.qrCodeIcon.swiftUIImage
         .renderingMode(.template)
         .resizable()
@@ -122,11 +136,12 @@ struct HomeActionButtons: View {
     }
     .buttonBackground(tint: ThemingAssets.Background.Button.secondary.swiftUIColor)
     .contentShape(.accessibility, .capsule)
-    .accessibilityLabel(L10n.tkProximityEngagementTitle)
+    .accessibilityLabel(L10n.tkProximityEngagementTitleAlt)
   }
 }
 
 extension View {
+
   @ViewBuilder
   fileprivate func buttonBackground(tint: Color) -> some View {
     if #available(iOS 26, *) {
@@ -137,13 +152,4 @@ extension View {
           .fill(tint))
     }
   }
-}
-
-// MARK: - Preview
-
-#Preview {
-  HomeActionButtons(
-    onScanAction: {},
-    onQRCodeAction: {})
-    .padding()
 }

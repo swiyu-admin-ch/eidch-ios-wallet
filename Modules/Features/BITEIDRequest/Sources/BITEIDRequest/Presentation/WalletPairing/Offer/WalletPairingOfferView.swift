@@ -33,7 +33,6 @@ struct WalletPairingOfferView: View {
       .toolbar {
         CloseButtonToolbar(action: { navigator.returnToHomeSafely() })
       }
-      .toolbarBackground(ThemingAssets.Background.primary.swiftUIColor, for: .navigationBar)
       .navigate(to: $viewModel.destination)
       .navigationCheckpoint(EIDRequestCheckpoints.walletPairingOffer)
       .navigationDismiss(trigger: $viewModel.isNavigationCloseTriggered)

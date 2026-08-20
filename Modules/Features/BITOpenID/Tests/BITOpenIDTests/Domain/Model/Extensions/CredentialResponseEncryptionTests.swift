@@ -12,23 +12,8 @@ class CredentialResponseEncryptionTests: XCTestCase {
     let contextMock = Self.createEnrcyptionContext()
     let responseEnryption = try? CredentialResponseEncryption(from: contextMock)
     XCTAssertEqual(responseEnryption?.jwk, responseJWKMock)
-    XCTAssertEqual(responseEnryption?.enc, contextMock.credentialResponseEncryptionAlgorithm?.rawValue)
+    XCTAssertEqual(responseEnryption?.enc, contextMock.credentialResponseEncryptionAlgorithm.rawValue)
     XCTAssertEqual(responseEnryption?.zip, contextMock.credentialResponseEncryptionZipValue?.rawValue)
-  }
-
-  func testInit_noResponseKeyPair_returnsNil() {
-    do {
-      let responseEncryption = try CredentialResponseEncryption(from: Self.createEnrcyptionContext(responseKeyPair: nil))
-      XCTAssertNil(responseEncryption)
-    } catch {
-      XCTFail("Should not throw")
-    }
-  }
-
-  func testInit_noResponseEncryptionAlgorithm_throws() {
-    XCTAssertThrowsError(try CredentialResponseEncryption(from: Self.createEnrcyptionContext(responseEnrcryptionAlgorithm: nil))) { error in
-      XCTAssertEqual(error as? CredentialResponseEncryption.CredentialResponseEncryptionError, .missingEncryptionAlgorithm)
-    }
   }
 
   // MARK: Private
@@ -39,8 +24,8 @@ class CredentialResponseEncryptionTests: XCTestCase {
   }()
 
   private static func createEnrcyptionContext(
-    responseKeyPair: VaultKeyPair? = VaultKeyPair.Mock.ES256,
-    responseEnrcryptionAlgorithm: EncryptionAlgorithm? = .A128GCM)
+    responseKeyPair: VaultKeyPair = VaultKeyPair.Mock.ES256,
+    responseEnrcryptionAlgorithm: EncryptionAlgorithm = .A128GCM)
     -> CredentialEncryptionContext
   {
     CredentialEncryptionContext(
