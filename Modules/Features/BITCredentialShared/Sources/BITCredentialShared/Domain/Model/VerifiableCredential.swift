@@ -53,7 +53,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public init(_ entity: CredentialEntity) throws {
     guard
       let verifiableCredential = entity.verifiableCredential,
-      let issuerUrl = URL(string: entity.issuerUrl)
+      let issuerUrl = URL(string: entity.issuerUrl) ?? URL(string: "file://") // Fallback url is a hotfix (1.17.1) for pre-metadata enforcement of the issuerUrl in a credential metadata
     else {
       throw CredentialError.invalidEntity
     }
