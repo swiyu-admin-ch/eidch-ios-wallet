@@ -20,7 +20,7 @@ This repository is part of the ecosystem developed for the future official Swiss
 The goal of this repository is to engage with the community and collaborate on developing the Swiss ecosystem for E-ID and other credentials.
 We warmly encourage you to engage with us by creating an issue in the repository.
 
-For more information about the project please visit the [introduction into Public Beta](https://www.eid.admin.ch/en/public-beta-e). The technical documentation of the swiyu Public Beta Trust Infrastructure can be found [here](https://swiyu-admin-ch.github.io/).
+For more information about the project please visit the [introduction into Public Beta](https://www.eid.admin.ch/en/public-beta-e). The technical documentation of the swiyu Sandbox Trust Infrastructure can be found [here](https://swiyu-admin-ch.github.io/).
 
 ## Installation and building
 
@@ -76,7 +76,7 @@ The sandbox wallet currently registers only the following URI schemes:
 
 ## Missing Features and Known Issues
 
-The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. The [feature roadmap](https://github.com/orgs/swiyu-admin-ch/projects/1/views/7) shows the current discrepancies between Public Beta and the targeted productive Trust Infrastructure. There may still be minor bugs or security vulnerabilities in the test system. These are marked as [‘KnownIssues’](https://github.com/swiyu-admin-ch/eidch-ios-wallet/issues) in each repository.
+The swiyu Sandbox Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. The [feature roadmap](https://github.com/orgs/swiyu-admin-ch/projects/1/views/7) shows the current discrepancies between Sandbox and the targeted productive Trust Infrastructure. There may still be minor bugs or security vulnerabilities in the test system. These are marked as [‘KnownIssues’](https://github.com/swiyu-admin-ch/eidch-ios-wallet/issues) in each repository.
 
 ## Contributions and feedback
 
