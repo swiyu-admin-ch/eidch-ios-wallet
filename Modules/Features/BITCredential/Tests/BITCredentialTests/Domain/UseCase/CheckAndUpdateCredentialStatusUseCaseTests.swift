@@ -153,6 +153,17 @@ final class CheckAndUpdateCredentialStatusUseCaseTests: XCTestCase {
     XCTAssertFalse(credentialRepository.updateVerifiableCredentialCalled)
   }
 
+  func testCheckCredentialStatus_statusUnchanged_isNotSavedInRepository() async throws {
+    success(status: .valid)
+    setStatus(.valid, on: &mockCredential)
+
+    let credential = try await useCase.execute(for: mockCredential)
+
+    XCTAssertEqual(status(of: credential), .valid)
+    XCTAssertEqual(credential, mockCredential)
+    XCTAssertFalse(credentialRepository.updateVerifiableCredentialCalled)
+  }
+
   func testCheckCredentialStatus_noStatus_returnsUnknown() async throws {
     anyCredentialSpy.status = nil
     setStatus(.unknown, on: &mockCredential)

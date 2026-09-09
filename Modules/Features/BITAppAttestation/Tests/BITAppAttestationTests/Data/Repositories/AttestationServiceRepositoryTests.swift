@@ -181,6 +181,21 @@ final class AttestationServiceRepositoryTests: XCTestCase {
     }
   }
 
+  func testFetchKeyAttestation_unauthorized_deletesClientAttestation() async throws {
+    let clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
+    Container.shared.clientAttestationRepository.register { clientAttestationRepository }
+    mockResponse(code: 401)
+
+    do {
+      _ = try await repository.fetchKeyAttestation(body: mockKeyAttestationRequestBody, clientAttestation: mockClientAttestation)
+      XCTFail("Should have thrown an error")
+    } catch {
+      XCTAssertEqual((error as? NetworkError)?.status, .unauthorized)
+    }
+
+    XCTAssertEqual(clientAttestationRepository.deleteCallsCount, 1)
+  }
+
   func testFetchKeyAttestation_timeout_throwsTimeout() async throws {
     mockResponse(code: 408)
 

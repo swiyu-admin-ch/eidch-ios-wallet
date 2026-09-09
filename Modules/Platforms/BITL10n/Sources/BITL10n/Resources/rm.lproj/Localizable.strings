@@ -320,7 +320,7 @@
 "tk_eidRequest_nfcScan_errorFailed_button_retry" = "Empruvar puspè da scannar il document";
 "tk_eidRequest_nfcScan_errorFailed_primary" = "Scan da document betg reussì";
 "tk_eidRequest_nfcScan_errorFailed_secondary" = "La scansiun dal document è ida a mal pliras giadas. Ti pos cuntinuar senza scansiun.\n\nEventualmain vegns ti dumandà pli tard da confermar il possess dal document.";
-"tk_eidRequest_nfcScan_error_button_retry" = "Empruvai anc ina giada.";
+"tk_eidRequest_nfcScan_error_button_retry" = "Empruvar anc ina giada";
 "tk_eidRequest_nfcScan_error_primary" = "Il document d’identitad n’ha betg pudì vegnir legì cumplettamain.";
 "tk_eidRequest_nfcScan_error_secondary" = "Il document d’identitad n’ha betg pudì vegnir legì.\n\nTegnai per plaschair il document quietamain vi dal apparat ed empruvai anc ina giada.";
 "tk_eidRequest_nfcScan_helpFailure_primary" = "Problems durant la lectura?";
@@ -444,7 +444,7 @@
 "tk_eidRequest_walletPairing_offer_rejected_tertiary" = "Agid & FAQ";
 "tk_eidRequest_walletPairing_primary" = "Daco vuls ti memorisar l’e-ID?";
 "tk_eidRequest_walletPairing_secondary" = "Configurescha tia e-ID sin quest apparat u sin auters apparats. Questa configuraziun na po betg vegnir midada pli tard.";
-"tk_errorView_default_primaryButton" = "Empruvai anc ina giada.";
+"tk_errorView_default_primaryButton" = "Empruvar anc ina giada";
 "tk_error_connectionproblem_body" = "Empruvai puspè.";
 "tk_error_connectionproblem_title" = "Configurai Vossa e-ID sin quest apparat u sin ulteriurs apparats. Quai na po betg vegnir midà pli tard.";
 "tk_error_generic_button_primary" = "Empruvai anc ina giada.";
@@ -462,8 +462,8 @@
 "tk_error_notregistered_title" = "Emittent nunenconuschent";
 "tk_error_notusable_body" = "Quest code QR n'è betg pli valaivel, per plaschair creai da nov.";
 "tk_error_notusable_title" = "Il code QR n’è betg pli valaivel";
-"tk_getBetaId_create_body" = "Il link suandant guida tar ina pagina-web externa. Sur questa pagina-web pudais vus crear ina Beta-ID.\n\nSuandant pudais vus impurtar la Beta-ID e testar la swiyu app cun ella.";
-"tk_getBetaId_create_title" = "Crear ina Beta-ID";
+"getBetaId_body" = "Il link suandant guida tar ina pagina-web externa. Sur questa pagina-web pudais vus crear ina Beta-ID.\n\nSuandant pudais vus impurtar la Beta-ID e testar la swiyu app cun ella.";
+"getBetaId_title" = "Crear ina Beta-ID";
 "tk_getBetaId_firstUse_body" = "Agiuntar ina Beta-ID per testar la swiyu app.";
 "tk_getBetaId_firstUse_title" = "Wallet vida";
 "tk_global_back" = "Enavos";
@@ -476,7 +476,7 @@
 "tk_global_delete" = "Stizzar";
 "tk_global_empty" = "Vid";
 "tk_global_finish" = "Finir";
-"tk_global_getbetaid_primarybutton" = "Crear ina Beta-ID";
+"getBetaId_button" = "Crear ina Beta-ID";
 "tk_global_invisible_alt" = "Il pled-clav è zuppà. Mussar il pled-clav.";
 "tk_global_login_primarybutton" = "Login";
 "tk_global_loginfaceid_primarybutton" = "Annunziar cun %@";
@@ -517,10 +517,10 @@
 "tk_login_passwordfailed_ios_subtitle" = "Vus avais anc %@ emprova(s)";
 "tk_login_passwordfailed_notification" = "Il pled-clav è sbaglià. Per plaschair empruvai da nov.";
 "tk_login_variant_body" = "La swiyu app è bloccada";
-"tk_menu_homeList_add" = "Crear ina Beta-ID";
-"tk_menu_homeList_help" = "Agid & Contact";
-"tk_menu_homeList_orderEid" = "Ordinaziun d’e-ID";
-"tk_menu_homeList_settings" = "Configuraziuns";
+"menu_orderBetaId_body" = "Crear ina Beta-ID";
+"menu_help_body" = "Agid & Contact";
+"menu_orderEid_body" = "Ordinaziun d’e-ID";
+"menu_settings_body" = "Configuraziuns";
 "tk_nonCompliance_list_footer" = "Attenziun: Enfin al lantschament uffizial da swiyu na vegnan communicaziuns betg examinadas; perquai na vegnan verificaturs betg sancziunads per in cumportament incorrect.\nLas categorias n’èn anc betg definitivlas.";
 "tk_nonCompliance_reportExcessiveData_title" = "Annunziar ina dumonda eccessiva da datas";
 "tk_nonCompliance_report_form_actor_footer" = "Vus annunziais questa organisaziun";
@@ -593,7 +593,7 @@
 "tk_present_result_data_transmitted_body" = "Tia cumprova è vegnida transmess cun success e vegn verifitgada.";
 "tk_present_result_data_transmitted_title" = "Tias datas èn vegnidas transmessas";
 "tk_present_result_declined_primary" = "Las datas n’èn betg vegnidas transmessas";
-"tk_present_result_error_button_retry" = "Empruvai anc ina giada.";
+"tk_present_result_error_button_retry" = "Empruvar anc ina giada";
 "tk_present_result_error_primary" = "Up, là è ì in pau en malura!";
 "tk_present_result_error_secondary" = "Emprova anc ina giada.";
 "tk_present_result_invalidCredential_primary" = "La verificaziun da las datas transferidas n’è betg stada reussida.";
@@ -667,11 +667,11 @@
 "tk_settings_diagnosticData_title" = "Datas diagnostic";
 "tk_settings_general_feedback_link_text" = "Communitgar il feedback";
 "tk_settings_general_feedback_link_value" = "https://findmind.ch/c/feedback_public_beta_en";
-"tk_settings_general_help_link_text" = "Agid e contact";
-"tk_settings_general_help_link_value" = "https://www.eid.admin.ch/de/hilfe";
-"tk_settings_general_imprint" = "Infurmaziuns legalas";
-"tk_settings_general_licences" = "Licenzas";
-"tk_settings_general_sectionTitle" = "General";
+"settings_help_contact_linkText" = "Agid e contact";
+"settings_help_contact_linkValue" = "https://www.eid.admin.ch/de/hilfe";
+"settings_legal_legalNotice_body" = "Infurmaziuns legalas";
+"settings_legal_licences_body" = "Licenzas";
+"settings_legal_sectionTitle" = "General";
 "tk_settings_imprint_appInformation_appVersion" = "Versiun da l’app";
 "tk_settings_imprint_appInformation_body" = "L’app swiyu è open source. Il code da funtauna po vegnir consultà sin GitHub.";
 "tk_settings_imprint_appInformation_buildNumber" = "Numer da build";
@@ -682,8 +682,6 @@
 "tk_settings_imprint_legal_sectionTitle" = "Aspectas legals";
 "tk_settings_imprint_legal_termsOfUse_link_text" = "Cundiziuns d’utilisaziun";
 "tk_settings_imprint_legal_termsOfUse_link_value" = "https://www.eid.admin.ch/de/swiyu-terms";
-"tk_settings_imprint_publisher_link_text" = "www.bj.admin.ch";
-"tk_settings_imprint_publisher_link_value" = "https://www.bj.admin.ch/de";
 "tk_settings_imprint_publisher_sectionTitle" = "Emettur, realisaziun ed exploitaziun";
 "tk_settings_imprint_title" = "Infurmaziuns legalas";
 "tk_settings_licences_body" = "Qua chatta Vus ina survista da las licenzas da software utilisadas da l’app swiyu.\nLas licenzas correspundan a las directivas da protecziun da datas da l’UFIT ed als pli novs standards da segirezza. Cun questa glista vulain nus crear transparenza per las persunas che fan diever da l’app.";
@@ -706,10 +704,10 @@
 "tk_settings_securityPrivacy_status_disabled" = "%@ è vegnì deactivà cun success";
 "tk_settings_securityPrivacy_status_enabled" = "%@ è vegnì activà cun success";
 "tk_settings_securityPrivacy_title" = "Segirezza e protecziun da datas";
-"tk_settings_title" = "Configuraziuns";
-"tk_settings_wallet_language" = "Lingua";
-"tk_settings_wallet_sectionTitle" = "Wallet";
-"tk_settings_wallet_securityPrivacy" = "Segirezza e protecziun da datas";
+"settings_screenTitle" = "Configuraziuns";
+"settings_general_language_body" = "Lingua";
+"settings_general_sectionTitle" = "Wallet";
+"settings_general_securityPrivacy_body" = "Segirezza & protecziun da datas";
 "tk_unsecuredDevice_button_settings" = "Tar ils parameters.";
 "tk_unsecuredDevice_primary" = "Messadi da segirezza";
 "tk_unsecuredDevice_secondary" = "Per pudair utilisar questa app sto tes apparat vegnir protegì cun in pled-clav. Activescha en ils parameters da tes telefonin in serrament da la scherm (p.ex. PIN, pled-clav u Face/Touch ID).";
@@ -730,7 +728,7 @@
 "tk_eidRequest_notification_readyForFinalEntitlementCheck_secondary" = "Tia identitad vegn verifitgada cun grond quità. Quai po cuzzar plirs dis da lavur. Ti vegns infurmà uschespert che il process è terminà.";
 "tk_nonCompliance_report_form_description_save_button" = "Memorisar";
 "tk_eidRequest_documentScan_rotateCamera_hint" = "Turnai per plaschair Voss apparat en posiziun orizontala.";
-"tk_eidRequest_documentScan_wrongDocument_button" = "Empruvai anc ina giada.";
+"tk_eidRequest_documentScan_wrongDocument_button" = "Empruvar anc ina giada";
 "tk_eidRequest_recordDocument_information_secondary" = "• Tegna il document d’identitad pront\n• Evita glisch directa e reflexs\n• Aligna el entaifer il rom\n• Muventa e inclina levamain il document d’identitad\n• Repeta per la pagina 2\n• Smatga il buttun cotschen";
 "tk_eidRequest_submitError_primary" = "Ier ha capità in putg.";
 "tk_credentialOffer_error_invalidClient_description" = "Client betg valaivel";
@@ -810,7 +808,7 @@
 "tk_settings_accessibility_reportIssue_link_value" = "https://forms.eid.admin.ch/";
 "tk_settings_accessibility_declaration_link_value" = "https://www.eid.admin.ch/de/barrierefreiheit-in-der-bundesverwaltung";
 "tk_eidRequest_scanDocumentOverview_closeButtonTitle" = "Serrar";
-"tk_settings_general_accessibility" = "Accessibilitad senza barrieras";
+"settings_legal_accessibility_body" = "Accessibilitad senza barrieras";
 "tk_displaybatchPrivacyWarning_body" = "Vossas novitads pon eventualmain vegnir colliadas cun quest cumprova. Actualisai quel per proteger meglier Vossa sfera privata.";
 "tk_displaybatchPrivacyWarning_button" = "Actualisar cumprova.";
 "tk_displaybatchPrivacyWarning_title" = "La protecziun da Vossa sfera privata è restrenschida.";
@@ -843,3 +841,5 @@
 "tk_proximity_engagement_qrCode_altText" = "Tes code QR";
 "tk_settings_imprint_publisher_name" = "Eidgenössisches Justiz- und Polizeidepartement EJPD\nBundesamt für Justiz BJ";
 "tk_credential_issuanceType_renewUsages_hint" = "Tut las utilisaziuns èn vegnidas consumadas. Vossas activitads pon vegnir colliadas cun questa cumprova. Renovei ella per restabilir ina protecziun pli ferma da Vossa sfera privata.";
+"settings_legalNotice_publisher_linkText" = "www.bj.admin.ch";
+"settings_legalNotice_publisher_linkValue" = "https://www.bj.admin.ch/de";

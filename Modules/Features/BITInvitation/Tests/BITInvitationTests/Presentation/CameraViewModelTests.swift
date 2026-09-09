@@ -513,7 +513,7 @@ final class CameraViewModelTests: XCTestCase {
     viewModel = createViewModel(mode: .deeplink(url: url))
     await viewModel.onAppear()
 
-    let expectedError = InvitationError.invalidPresentationRequest(GovernanceError.unknownRegistry.rawValue)
+    let expectedError = InvitationError.unknownRegistry
     XCTAssertNil(viewModel.notificationState)
     XCTAssertEqual(viewModel.error as? InvitationError, expectedError)
 

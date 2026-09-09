@@ -4,6 +4,8 @@ import Factory
 import NavigatorUI
 import SwiftUI
 
+// MARK: - InvitationContainerView
+
 struct InvitationContainerView: View {
 
   // MARK: Lifecycle
@@ -15,7 +17,7 @@ struct InvitationContainerView: View {
   // MARK: Internal
 
   var body: some View {
-    content()
+    content
       .onChange(of: selectedTab, initial: true, announceSelectedTab)
       .toolbar { toolbarContent }
       .navigationBarBackButtonHidden()
@@ -26,6 +28,7 @@ struct InvitationContainerView: View {
   // MARK: Private
 
   @State private var selectedTab: InvitationTab
+  @State private var tabBarHeight: CGFloat = 0
 
   @Environment(\.navigator) private var navigator: Navigator
 
@@ -44,7 +47,7 @@ struct InvitationContainerView: View {
     }
   }
 
-  private func content() -> some View {
+  private var content: some View {
     ZStack {
       switch selectedTab {
       case .scan:
@@ -55,7 +58,7 @@ struct InvitationContainerView: View {
           .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .trailing)))
       }
     }
-    .safeAreaInset(edge: .bottom) {
+    .overlay(alignment: .bottom) {
       if isProximityEnabled {
         HStack {
           if orientation.isLandscape {
@@ -69,8 +72,10 @@ struct InvitationContainerView: View {
               }
             })
         }
+        .readSize { tabBarHeight = $0.height }
       }
     }
+    .environment(\.invitationTabBarInset, tabBarHeight)
   }
 
   private func announceSelectedTab() {
@@ -82,4 +87,10 @@ struct InvitationContainerView: View {
     UIAccessibility.post(notification: .screenChanged, argument: announcement)
   }
 
+}
+
+// MARK: - Environment
+
+extension EnvironmentValues {
+  @Entry var invitationTabBarInset: CGFloat = 0
 }

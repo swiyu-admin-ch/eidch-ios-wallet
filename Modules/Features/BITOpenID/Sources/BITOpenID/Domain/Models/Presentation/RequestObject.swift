@@ -192,7 +192,22 @@ extension KeyedDecodingContainer<RequestObject.CodingKeys> {
 extension RequestObject {
   public enum ResponseMode: String, Codable {
     case directPostJWT = "direct_post.jwt"
+    /// Unsigned Digital Credentials API response used by the proximity flow.
+    case dcApi = "dc_api"
+    /// Kept for the proximity (check app) flow during the migration to ``dcApi``. The OID4VP
+    /// response isn't JWE-encrypted for this mode either way, since the BLE proximity transport
+    /// already provides end-to-end encryption at the transport level.
+    ///
+    /// support for the browser with an encrypted container arrives.
     case dcApiJWT = "dc_api.jwt"
+  }
+}
+
+extension RequestObject.ResponseMode {
+  /// Whether this mode belongs to the Digital Credentials API family (`dc_api` / `dc_api.jwt`),
+  /// as opposed to `direct_post.jwt`.
+  var isDigitalCredentialsApi: Bool {
+    self == .dcApi || self == .dcApiJWT
   }
 }
 

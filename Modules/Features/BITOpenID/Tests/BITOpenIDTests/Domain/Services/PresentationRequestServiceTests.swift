@@ -48,7 +48,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
         error as? PresentationRequestError,
-        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
+        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
@@ -70,7 +70,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
         error as? PresentationRequestError,
-        .invalid(responseURL: verifierAttestationMock.payload.responseUri, responseError: .invalidRequest))
+        .invalid(responseURL: verifierAttestationMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
@@ -80,7 +80,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
         error as? PresentationRequestError,
-        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
+        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
@@ -90,7 +90,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
         error as? PresentationRequestError,
-        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
+        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
@@ -100,7 +100,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
         error as? PresentationRequestError,
-        .transactionDataNotSupported(responseURL: self.requestObjectJWSMock.payload.responseUri, responseError: .invalidRequest))
+        .transactionDataNotSupported(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
@@ -135,7 +135,7 @@ final class PresentationRequestServiceTests: XCTestCase {
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
         error as? PresentationRequestError,
-        .invalid(responseURL: nil, responseError: .invalidRequest))
+        .invalid(responseURL: nil, state: nil, responseError: .invalidRequest))
     }
   }
 
@@ -143,21 +143,22 @@ final class PresentationRequestServiceTests: XCTestCase {
     let error = PresentationErrorRequestBody.Code.accessDenied
     let responseUri = try XCTUnwrap(requestObjectJWSMock.payload.responseUri)
     let expectedResponse = PresentationResponse(redirectUri: urlMock)
-    repositorySpy.declineUrlWithReturnValue = expectedResponse
+    repositorySpy.declineUrlStateWithReturnValue = expectedResponse
 
-    let response = try await service.decline(url: responseUri, with: error)
+    let response = try await service.decline(url: responseUri, state: stateMock, with: error)
 
-    XCTAssertEqual(repositorySpy.declineUrlWithCallsCount, 1)
-    XCTAssertEqual(repositorySpy.declineUrlWithReceivedArguments?.url, urlMock)
-    XCTAssertEqual(repositorySpy.declineUrlWithReceivedArguments?.error, error)
+    XCTAssertEqual(repositorySpy.declineUrlStateWithCallsCount, 1)
+    XCTAssertEqual(repositorySpy.declineUrlStateWithReceivedArguments?.url, urlMock)
+    XCTAssertEqual(repositorySpy.declineUrlStateWithReceivedArguments?.error, error)
+    XCTAssertEqual(repositorySpy.declineUrlStateWithReceivedArguments?.state, stateMock)
     XCTAssertEqual(response, expectedResponse)
   }
 
   func testDecline_repositoryThrowsError_rethrowsError() async throws {
-    repositorySpy.declineUrlWithThrowableError = TestingError.error
+    repositorySpy.declineUrlStateWithThrowableError = TestingError.error
     let responseUri = try XCTUnwrap(requestObjectJWSMock.payload.responseUri)
 
-    await XCTAssertThrowsErrorAsync(try await service.decline(url: responseUri, with: .accessDenied)) { error in
+    await XCTAssertThrowsErrorAsync(try await service.decline(url: responseUri, state: stateMock, with: .accessDenied)) { error in
       XCTAssertEqual(error as? TestingError, .error)
     }
   }
@@ -166,6 +167,7 @@ final class PresentationRequestServiceTests: XCTestCase {
 
   private let urlMock = URL(string: "https://eid.admin.ch/response")!
   private let clientIdMock = "did:example:12345"
+  private let stateMock = "1234"
   private let requestObjectJWSMock = RequestObjectJWS.Mock.sample
 
   private var urlParserSpy: PresentationRequestUrlParserProtocolSpy!

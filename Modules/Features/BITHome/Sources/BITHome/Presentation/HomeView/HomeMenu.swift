@@ -1,26 +1,13 @@
+import BITEIDRequest
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - HomeMenu
 
 struct HomeMenu: View {
-
-  // MARK: Lifecycle
-
-  init(
-    onAddCredential: @escaping () -> Void,
-    onOrderEID: @escaping () -> Void,
-    onOpenSettings: @escaping () -> Void,
-    onOpenHelp: @escaping () -> Void)
-  {
-    isEIDRequestEnabled = Container.shared.isEIDRequestFeatureEnabled()
-    self.onAddCredential = onAddCredential
-    self.onOrderEID = onOrderEID
-    self.onOpenSettings = onOpenSettings
-    self.onOpenHelp = onOpenHelp
-  }
 
   // MARK: Internal
 
@@ -30,7 +17,9 @@ struct HomeMenu: View {
 
   var body: some View {
     Menu {
-      credentialSection
+      if isBetaIdEnabled || isEIDRequestEnabled {
+        credentialSection
+      }
       applicationSection
     } label: {
       Image(systemName: "ellipsis")
@@ -46,38 +35,58 @@ struct HomeMenu: View {
 
   // MARK: Private
 
-  private let isEIDRequestEnabled: Bool
-  private let onAddCredential: () -> Void
-  private let onOrderEID: () -> Void
-  private let onOpenSettings: () -> Void
-  private let onOpenHelp: () -> Void
+  @Environment(\.navigator) private var navigator
+  @Environment(\.openURL) private var openURL
+
+  @Injected(\.isEIDRequestFeatureEnabled) private var isEIDRequestEnabled
+  @Injected(\.isBetaIdEnabled) private var isBetaIdEnabled
 
   private var credentialSection: some View {
     Section {
-      Button(action: onAddCredential, label: {
-        Label(title: { Text(L10n.tkMenuHomeListAdd) }) { HomeAssets.menuID.swiftUIImage }
-      })
+      if isBetaIdEnabled {
+        Button(
+          action: { navigator.navigate(to: HomeDestinations.external(.betaId)) },
+          label: {
+            Label(title: { Text(L10n.menuOrderBetaIdBody) }) { HomeAssets.menuID.swiftUIImage }
+          })
+      }
 
       if isEIDRequestEnabled {
-        Button(action: onOrderEID, label: {
-          Label(title: { Text(L10n.tkMenuHomeListOrderEid) }) { HomeAssets.menuID.swiftUIImage }
-        })
+        Button(
+          action: { navigator.navigate(to: HomeDestinations.external(.eIDRequest)) },
+          label: {
+            Label(title: { Text(L10n.menuOrderEidBody) }) { HomeAssets.menuID.swiftUIImage }
+          })
       }
     }
   }
 
   private var applicationSection: some View {
     Section {
-      Button(action: onOpenSettings, label: {
-        Label(title: { Text(L10n.tkMenuHomeListSettings) }) { HomeAssets.menuSettings.swiftUIImage }
-      })
-      .accessibilityHint(L10n.tkGlobalExternalLinkHint)
+      Button(
+        action: {
+          navigator.navigate(to: HomeDestinations.external(.settings))
+        },
+        label: {
+          Label(title: { Text(L10n.menuSettingsBody) }) { HomeAssets.menuSettings.swiftUIImage }
+        })
+        .accessibilityHint(L10n.tkGlobalExternalLinkHint)
 
-      Button(action: onOpenHelp, label: {
-        Label(title: { Text(L10n.tkMenuHomeListHelp) }) { HomeAssets.menuHelp.swiftUIImage }
-      })
-      .accessibilityAddTraits(.isLink)
-      .accessibilityHint(L10n.tkGlobalExternalLinkHint)
+      Button(
+        action: {
+          openExternalURL(URL(string: L10n.settingsHelpContactLinkValue))
+        },
+        label: {
+          Label(title: { Text(L10n.menuHelpBody) }) { HomeAssets.menuHelp.swiftUIImage }
+        })
+        .accessibilityAddTraits(.isLink)
+        .accessibilityHint(L10n.tkGlobalExternalLinkHint)
     }
+  }
+
+  private func openExternalURL(_ url: URL?) {
+    guard let url else { return }
+
+    openURL(url)
   }
 }

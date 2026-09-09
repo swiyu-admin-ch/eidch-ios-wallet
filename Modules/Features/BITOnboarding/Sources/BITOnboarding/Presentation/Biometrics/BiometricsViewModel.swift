@@ -64,7 +64,7 @@ final class BiometricsViewModel {
       router.setup()
     } catch {
       if let authError = error as? AuthError, authError == .biometricNotAvailable {
-        updateBiometricUsageUseCase(.declined)
+        updateBiometricUsageUseCase(.disabled)
         return router.setup()
       }
 
@@ -109,7 +109,7 @@ final class BiometricsViewModel {
     self.error = error
 
     if let authError = error as? AuthError, authError == .biometricNotAvailable {
-      updateBiometricUsageUseCase(.declined)
+      updateBiometricUsageUseCase(.disabled)
     }
 
     isErrorPresented = true

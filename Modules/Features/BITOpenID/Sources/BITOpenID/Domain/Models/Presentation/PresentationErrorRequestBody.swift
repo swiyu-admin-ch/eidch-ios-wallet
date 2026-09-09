@@ -6,9 +6,10 @@ public struct PresentationErrorRequestBody: Codable {
 
   // MARK: Lifecycle
 
-  public init(error: Code, errorDescription: String? = nil) {
+  public init(error: Code, errorDescription: String? = nil, state: String? = nil) {
     self.error = error
     self.errorDescription = errorDescription
+    self.state = state
   }
 
   // MARK: Public
@@ -21,11 +22,13 @@ public struct PresentationErrorRequestBody: Codable {
 
   public let error: Code
   public let errorDescription: String?
+  public let state: String?
 
   // MARK: Internal
 
   enum CodingKeys: String, CodingKey {
     case error
     case errorDescription = "error_description"
+    case state
   }
 }

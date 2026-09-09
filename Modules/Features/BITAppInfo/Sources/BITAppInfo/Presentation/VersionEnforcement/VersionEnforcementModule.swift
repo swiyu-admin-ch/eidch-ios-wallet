@@ -9,8 +9,7 @@ public class VersionEnforcementModule {
 
   public init(versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate, router: VersionEnforcementRouter = Container.shared.versionEnforcementRouter()) {
     let router = router
-    let viewModel = Container.shared.versionEnforcementViewModel((router, versionEnforcement, delegate))
-    let viewController = UIHostingController(rootView: VersionEnforcementView(viewModel: viewModel))
+    let viewController = UIHostingController(rootView: VersionEnforcementView(router: router, versionEnforcement: versionEnforcement, delegate: delegate))
     router.viewController = viewController
 
     self.router = router

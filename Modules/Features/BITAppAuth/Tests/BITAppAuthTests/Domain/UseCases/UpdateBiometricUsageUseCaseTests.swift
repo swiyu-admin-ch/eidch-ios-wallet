@@ -1,7 +1,9 @@
 import Factory
+import FactoryTesting
 import Testing
 @testable import BITAppAuth
 
+@Suite(.container)
 struct UpdateBiometricUsageUseCaseTests {
 
   // MARK: Lifecycle
@@ -16,7 +18,7 @@ struct UpdateBiometricUsageUseCaseTests {
 
   // MARK: Internal
 
-  @Test(arguments: [BiometricUsage.enabled, .disabled, .declined])
+  @Test(arguments: [BiometricUsage.enabled, .disabled])
   func callAsFunction_persistsUsage(_ usage: BiometricUsage) {
     useCase(usage)
 

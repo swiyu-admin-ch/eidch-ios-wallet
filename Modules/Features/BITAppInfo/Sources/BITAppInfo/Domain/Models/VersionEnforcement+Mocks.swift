@@ -6,14 +6,14 @@ import Foundation
 extension VersionEnforcement: Mockable {
   public struct Mock {
 
-    static let forced = make(type: .forced)
+    static let forced = make()
     static let optional = make(type: .optional, title: "Optional Update")
     static let outdatedOsVersion = make(type: .outdatedOsVersion, title: "Unsupported OS")
     static let blacklistedDevice = make(type: .blacklistedDevice, title: "Unauthorized Device")
     static let noDisplay = make(type: .optional, title: nil, body: nil)
 
     private static func make(
-      type: VersionEnforcementType = .forced,
+      type: VersionEnforcementType = .forced(storeURL: URL(string: "store_url")!),
       title: String? = "Update Required",
       body: String? = "Some body")
       -> VersionEnforcement
@@ -45,7 +45,8 @@ extension VersionEnforcement.Response {
       blacklistedDevice: String? = nil,
       minimumOsVersion: String = "16.0",
       defaultReleaseSupportDays: Int = 90,
-      versions: [VersionEnforcement.Response.Version] = [])
+      versions: [VersionEnforcement.Response.Version] = [],
+      swissProfiles: [SwissProfile] = [SwissProfile(type: .verifiableCredential, status: .current, version: "1.0.0")])
       -> VersionEnforcement.Response
     {
       let deviceBlacklist: [String] = if let blacklistedDevice { [blacklistedDevice] } else { [] }
@@ -56,7 +57,9 @@ extension VersionEnforcement.Response {
         deviceBlacklist: deviceBlacklist,
         minimumOsVersion: minimumOsVersion,
         platform: "ios",
-        versions: versions)
+        versions: versions,
+        swissProfiles: swissProfiles,
+        storeURL: URL(string: "store_url")!)
     }
 
     static func forced(version: BITAppInfo.Version) -> VersionEnforcement.Response {

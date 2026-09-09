@@ -11,7 +11,6 @@ public enum HomeExternalDestinations: NavigationViews {
   case credentialDetail(CredentialDetailInput)
   case settings
   case betaId
-  case otp
   case eIDRequest
   case autoVerification(String)
   case obtainConsent(String)

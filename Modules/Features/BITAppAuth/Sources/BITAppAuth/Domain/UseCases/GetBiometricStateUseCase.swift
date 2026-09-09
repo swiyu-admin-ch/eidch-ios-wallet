@@ -20,14 +20,12 @@ struct GetBiometricStateUseCase: GetBiometricStateUseCaseProtocol {
   func callAsFunction() -> BiometricState {
     switch biometricAvailability() {
     case .notEnrolled:
-      return .notEnrolled
-    case .available:
-      break
+      .notEnrolled
     case .unavailable:
-      return .declined
+      .declined
+    case .available:
+      biometricRepository.getBiometricUsage().toBiometricState()
     }
-
-    return biometricRepository.getBiometricUsage().toBiometricState()
   }
 
   // MARK: Private

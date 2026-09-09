@@ -22,7 +22,10 @@ public struct AuthorizationResponse: Equatable {
 
       var dictionary = [String: Any]()
 
-      if responseMode == .dcApiJWT {
+      // dc_api/dc_api.jwt responses aren't JWE-encrypted at the OID4VP level: the proximity
+      // transport (BLE) they're used over already provides end-to-end encryption, so the vp_token
+      // is returned as a plain object rather than being stringified into a JWE payload.
+      if responseMode?.isDigitalCredentialsApi == true {
         dictionary["vp_token"] = vpToken
         return dictionary
       }

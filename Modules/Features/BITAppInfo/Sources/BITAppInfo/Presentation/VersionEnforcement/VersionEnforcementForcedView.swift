@@ -1,10 +1,12 @@
 import BITL10n
+import Foundation
 import SwiftUI
 
 struct VersionEnforcementForcedView: View {
 
   // MARK: Internal
 
+  let appStoreUrl: URL
   let message: VersionEnforcement.Message?
 
   var body: some View {
@@ -22,9 +24,6 @@ struct VersionEnforcementForcedView: View {
 
   private func updateButton() -> some View {
     Button {
-      guard let appStoreUrl = URL(string: L10n.tkGlobalStoreLink) else {
-        return
-      }
       openURL(appStoreUrl)
     } label: {
       Text(L10n.tkVersionEnforcementButton)

@@ -86,7 +86,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public var nextPresentableBundleItemId: UUID
 
   public var validFrom: Date?
-  public let validUntil: Date?
+  public var validUntil: Date?
 
   public var format: CredentialFormat
   public var issuerUrl: URL
@@ -114,6 +114,14 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   /// The bundle item that would be presented next.
   public var presentableBundleItem: BundleItem? {
     bundleItems.first { $0.id == nextPresentableBundleItemId }
+  }
+
+  public var status: CredentialStatus {
+    presentableBundleItem?.status ?? .unknown
+  }
+
+  public var isRevoked: Bool {
+    status == .revoked
   }
 
   public var resolvedClusters: [CredentialClaimCluster] {

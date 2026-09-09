@@ -13,21 +13,13 @@ public enum CredentialDisplayOrder: CaseIterable {
 
 extension VerifiableCredential {
 
-  // MARK: Public
-
   public var displayOrder: CredentialDisplayOrder {
     switch progressionState {
     case .unaccepted:
       .readyForActivation
     case .accepted:
-      selectedStatus.displayOrder
+      status.displayOrder
     }
-  }
-
-  // MARK: Private
-
-  private var selectedStatus: CredentialStatus {
-    presentableBundleItem?.status ?? .unknown
   }
 }
 

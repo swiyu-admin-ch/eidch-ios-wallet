@@ -7,7 +7,7 @@ struct FetchVersionEnforcementUseCaseTests {
 
   // MARK: Lifecycle
 
-  init() {
+  init() throws {
     let versionEnforcementRepository = VersionEnforcementRepositoryProtocolSpy()
     versionEnforcementRepository.fetchVersionEnforcementReturnValue = .Mock.make()
 
@@ -17,6 +17,9 @@ struct FetchVersionEnforcementUseCaseTests {
     let deviceInfoProvider = DeviceInfoProviderProtocolSpy()
     deviceInfoProvider.systemVersion = Self.iOS16
     deviceInfoProvider.modelDescription = device1Description
+
+    let storeURL = try #require(URL(string: "store_url"))
+    self.storeURL = storeURL
 
     Container.shared.currentDate.register { Date() }
     Container.shared.versionEnforcementRepository.register { versionEnforcementRepository }
@@ -78,7 +81,7 @@ struct FetchVersionEnforcementUseCaseTests {
 
     let enforcement = try await useCase()
 
-    #expect(enforcement?.type == .forced)
+    #expect(enforcement?.type == .forced(storeURL: storeURL))
   }
 
   @Test
@@ -120,7 +123,7 @@ struct FetchVersionEnforcementUseCaseTests {
 
     let enforcement = try await useCase()
 
-    #expect(enforcement?.type == .forced)
+    #expect(enforcement?.type == .forced(storeURL: storeURL))
   }
 
   @Test(arguments: [
@@ -146,6 +149,7 @@ struct FetchVersionEnforcementUseCaseTests {
   private static let appVersion1 = Version("1.0.0")
   private static let appVersion2 = Version("2.0.0")
 
+  private let storeURL: URL
   private let device1Description = "Device 1"
   private let device2Description = "Device 2"
 

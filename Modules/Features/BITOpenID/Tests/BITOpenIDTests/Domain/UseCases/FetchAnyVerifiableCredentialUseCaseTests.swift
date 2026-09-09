@@ -312,7 +312,6 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
     Container.shared.userSession.register { self.userSession }
     Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGeneratorSpy }
     Container.shared.supportedDPoPSigningAlgorithms.register { [.ES256] }
-    Container.shared.isDPoPEnabled.register { true }
   }
 
   private func success() {

@@ -103,7 +103,8 @@ struct GetCompatibleCredentialsUseCaseTests {
     let matchedCredentials = try await useCase(using: RequestObjectJWS.Mock.sample.payload)
     let returnedStatuses = try matchedCredentials.map { try selectCredentialBundleItemUseCaseSpy($0.credential).status }
 
-    #expect(returnedStatuses == statuses)
+    let expectedOrderedStatuses: [CredentialStatus] = [.valid, .unsupported, .unknown, .suspended, .businessExpired]
+    #expect(returnedStatuses == expectedOrderedStatuses)
   }
 
   @Test

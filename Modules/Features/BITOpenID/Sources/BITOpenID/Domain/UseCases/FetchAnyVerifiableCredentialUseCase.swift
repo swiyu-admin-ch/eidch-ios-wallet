@@ -115,7 +115,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
   @Injected(\.keyAttestationValidator) private var keyAttestationValidator: KeyAttestationValidatorProtocol
   @Injected(\.userSession) private var userSession: Session
   @Injected(\.supportedDPoPSigningAlgorithms) private var supportedDPoPSigningAlgorithms: [JWTAlgorithm]
-  @Injected(\.isDPoPEnabled) private var isDPoPEnabled: Bool
 
   private func getCredentialEndpoint(from metadata: CredentialIssuerMetadataWrapper) throws -> URL {
     guard
@@ -159,10 +158,6 @@ struct FetchAnyVerifiableCredentialUseCase: FetchAnyVerifiableCredentialUseCaseP
     holderBindings: [HolderBinding]?) throws
     -> VaultKeyPair?
   {
-    guard isDPoPEnabled else {
-      return nil
-    }
-
     let supportedAlgorithms = supportedDPoPSigningAlgorithms.map(\.rawValue)
     guard configuration.supportsDPoP(for: supportedAlgorithms) else {
       return nil

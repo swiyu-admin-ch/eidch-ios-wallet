@@ -1,3 +1,4 @@
+import BITCore
 import Factory
 import Foundation
 
@@ -42,14 +43,28 @@ extension Container {
     self { AppIdentifierRepository() }
   }
 
+  public var swissProfileLifecycleRepository: Factory<SwissProfileLifecycleRepositoryProtocol> {
+    self { self.enforcementRepository() }
+  }
+
   // MARK: Internal
 
   var versionEnforcementRepository: Factory<VersionEnforcementRepositoryProtocol> {
-    self { VersionEnforcementRepository() }
+    self { self.enforcementRepository() }
+  }
+
+  var versionEnforcementCache: Factory<CacheManager<VersionEnforcement.Response>> {
+    self { CacheManager() }
   }
 
   var deviceInfoProvider: Factory<DeviceInfoProviderProtocol> {
     self { DeviceInfoProvider() }
+  }
+
+  // MARK: Private
+
+  private var enforcementRepository: Factory<VersionEnforcementRepository> {
+    self { VersionEnforcementRepository() }.singleton
   }
 }
 

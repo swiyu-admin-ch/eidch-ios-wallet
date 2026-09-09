@@ -26,31 +26,23 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
 
   func testExecute_passesArguments() async throws {
     let redirect = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
-    presentationRequestServiceSpy.declineUrlWithReturnValue = redirect
+    presentationRequestServiceSpy.declineUrlStateWithReturnValue = redirect
 
     let response = try await useCase(context: contextMock)
 
     XCTAssertEqual(response, redirect)
-    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithCallsCount, 1)
-    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url, contextMock.requestObject.responseUri)
-    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error, .accessDenied)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlStateWithCallsCount, 1)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlStateWithReceivedArguments?.url, contextMock.requestObject.responseUri)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlStateWithReceivedArguments?.error, .accessDenied)
+    XCTAssertEqual(presentationRequestServiceSpy.declineUrlStateWithReceivedArguments?.state, "1234")
 
     XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
   }
 
-  func testExecuteWithUrl_success() async throws {
-    let response = try await useCase(url: XCTUnwrap(contextMock.responseUri))
-
-    XCTAssertNil(response)
-    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithCallsCount, 1)
-    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url, contextMock.requestObject.responseUri)
-    XCTAssertEqual(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error, .accessDenied)
-  }
-
   func testExecute_serviceThrows_throwsError() async throws {
-    presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
+    presentationRequestServiceSpy.declineUrlStateWithThrowableError = TestingError.error
 
     do {
       _ = try await useCase(context: contextMock)
@@ -61,7 +53,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
   }
 
   func testExecute_serviceThrowsNoConnection_DoesNotCreateActivity() async throws {
-    presentationRequestServiceSpy.declineUrlWithThrowableError = NetworkError(status: .noConnection)
+    presentationRequestServiceSpy.declineUrlStateWithThrowableError = NetworkError(status: .noConnection)
 
     do {
       _ = try await useCase(context: contextMock)
@@ -72,7 +64,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
   }
 
   func testExecute_serviceThrowsHttpNetworkError_CreatesActivity() async throws {
-    presentationRequestServiceSpy.declineUrlWithThrowableError = NetworkError(status: .badRequest)
+    presentationRequestServiceSpy.declineUrlStateWithThrowableError = NetworkError(status: .badRequest)
 
     do {
       _ = try await useCase(context: contextMock)
@@ -85,7 +77,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
   }
 
   func testExecute_serviceThrowsPresentationResponseValidationError_CreatesActivity() async throws {
-    presentationRequestServiceSpy.declineUrlWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
+    presentationRequestServiceSpy.declineUrlStateWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
 
     await XCTAssertThrowsErrorAsync(try await useCase(context: contextMock)) { error in
       XCTAssertEqual(error as? PresentationResponseValidationError, .invalidRedirectUri)
@@ -106,20 +98,10 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
 
     XCTAssertNil(response)
     XCTAssertTrue(proximityRepository.declineCalled)
-    XCTAssertFalse(presentationRequestServiceSpy.declineUrlWithCalled)
+    XCTAssertFalse(presentationRequestServiceSpy.declineUrlStateWithCalled)
     XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
-  }
-
-  func testExecuteWithUrl_serviceThrows_throwsError() async throws {
-    presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
-
-    do {
-      _ = try await useCase(url: XCTUnwrap(contextMock.responseUri))
-    } catch {
-      XCTAssertEqual(error as? TestingError, .error)
-    }
   }
 
   // MARK: Private

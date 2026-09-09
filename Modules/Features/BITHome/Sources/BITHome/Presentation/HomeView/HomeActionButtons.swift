@@ -1,5 +1,7 @@
 import BITL10n
 import BITTheming
+import Factory
+import NavigatorUI
 import SwiftUI
 
 // MARK: - HomeActionButtons
@@ -8,9 +10,8 @@ struct HomeActionButtons: View {
 
   // MARK: Lifecycle
 
-  init(onScanAction: @escaping () -> Void, onQRCodeAction: (() -> Void)? = nil) {
-    self.onScanAction = onScanAction
-    self.onQRCodeAction = onQRCodeAction
+  init(axis: Axis = .horizontal) {
+    self.axis = axis
   }
 
   // MARK: Internal
@@ -34,21 +35,21 @@ struct HomeActionButtons: View {
 
   // MARK: Private
 
+  @Environment(\.navigator) private var navigator
   @Environment(\.sizeCategory) private var sizeCategory
+
+  @Injected(\.isProximityEnabled) private var isProximityEnabled: Bool
+
+  private let axis: Axis
 
   private let shadowOpacity: CGFloat = 0.1
   private let iconSize: CGFloat = 20
-  private let landscapeIconSize: CGFloat = 24
-  private let landscapeButtonSize: CGFloat = 64
-
-  @Orientation private var orientation
-
-  private let onScanAction: () -> Void
-  private let onQRCodeAction: (() -> Void)?
+  private let verticalIconSize: CGFloat = 24
+  private let verticalButtonSize: CGFloat = 64
 
   @ViewBuilder
   private var content: some View {
-    if orientation.isLandscape {
+    if axis == .vertical {
       VStack(spacing: .x2) { iconOnlyButtons }
     } else if sizeCategory.isAccessibilityCategory {
       HStack(spacing: .x3) { iconOnlyButtons }
@@ -60,21 +61,21 @@ struct HomeActionButtons: View {
   @ViewBuilder
   private var labeledButtons: some View {
     scanButton
-    if let onQRCodeAction {
-      qrCodeButton(action: onQRCodeAction)
+    if isProximityEnabled {
+      qrCodeButton
     }
   }
 
   @ViewBuilder
   private var iconOnlyButtons: some View {
     scanIconButton
-    if let onQRCodeAction {
-      qrCodeIconButton(action: onQRCodeAction)
+    if isProximityEnabled {
+      qrCodeIconButton
     }
   }
 
   private var scanButton: some View {
-    Button(action: onScanAction) {
+    Button(action: { navigator.navigate(to: HomeDestinations.external(.invitation(.scan))) }) {
       HStack(spacing: .x2) {
         ThemingAssets.scanIcon.swiftUIImage
           .renderingMode(.template)
@@ -95,22 +96,22 @@ struct HomeActionButtons: View {
   }
 
   private var scanIconButton: some View {
-    Button(action: onScanAction) {
+    Button(action: { navigator.navigate(to: HomeDestinations.external(.invitation(.scan))) }) {
       ThemingAssets.scanIcon.swiftUIImage
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
-        .frame(width: landscapeIconSize, height: landscapeIconSize)
+        .frame(width: verticalIconSize, height: verticalIconSize)
         .foregroundColor(ThemingAssets.Brand.Core.white.swiftUIColor)
-        .frame(width: landscapeButtonSize, height: landscapeButtonSize)
+        .frame(width: verticalButtonSize, height: verticalButtonSize)
     }
     .buttonBackground(tint: ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
     .contentShape(.accessibility, .capsule)
     .accessibilityLabel(L10n.tkGlobalScanPrimarybuttonAlt)
   }
 
-  private func qrCodeButton(action: @escaping () -> Void) -> some View {
-    Button(action: action) {
+  private var qrCodeButton: some View {
+    Button(action: { navigator.navigate(to: HomeDestinations.external(.invitation(.proximityEngagement))) }) {
       ThemingAssets.qrCodeIcon.swiftUIImage
         .renderingMode(.template)
         .resizable()
@@ -124,15 +125,15 @@ struct HomeActionButtons: View {
     .accessibilityLabel(L10n.tkProximityEngagementTitleAlt)
   }
 
-  private func qrCodeIconButton(action: @escaping () -> Void) -> some View {
-    Button(action: action) {
+  private var qrCodeIconButton: some View {
+    Button(action: { navigator.navigate(to: HomeDestinations.external(.invitation(.proximityEngagement))) }) {
       ThemingAssets.qrCodeIcon.swiftUIImage
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: .fit)
-        .frame(width: landscapeIconSize, height: landscapeIconSize)
+        .frame(width: verticalIconSize, height: verticalIconSize)
         .foregroundColor(ThemingAssets.Fills.primary.swiftUIColor)
-        .frame(width: landscapeButtonSize, height: landscapeButtonSize)
+        .frame(width: verticalButtonSize, height: verticalButtonSize)
     }
     .buttonBackground(tint: ThemingAssets.Background.Button.secondary.swiftUIColor)
     .contentShape(.accessibility, .capsule)

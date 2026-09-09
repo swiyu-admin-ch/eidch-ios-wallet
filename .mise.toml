@@ -135,8 +135,6 @@ run = ['mise run deploy:run --environment prod', 'mise run deploy:run --environm
 
 # ── Profiles ─────────────────────────────────────────────────────────
 
-[tasks."profiles:appstore-dev"]
-run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:dev'
 [tasks."profiles:appstore-ref"]
 run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:ref'
 [tasks."profiles:appstore-abn"]
@@ -152,7 +150,6 @@ run = 'bundle exec fastlane ios refresh_provisioning_profile_appstore env:debugg
 description = 'Refresh AppStore provisioning profiles (all envs)'
 depends = ['setup:bundler']
 run = [
-    'mise run profiles:appstore-dev',
     'mise run profiles:appstore-ref',
     'mise run profiles:appstore-abn',
     'mise run profiles:appstore-prod',
@@ -160,8 +157,6 @@ run = [
     'mise run profiles:appstore-debugger',
 ]
 
-[tasks."profiles:development-dev"]
-run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:dev'
 [tasks."profiles:development-ref"]
 run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:ref'
 [tasks."profiles:development-abn"]
@@ -177,7 +172,6 @@ run = 'bundle exec fastlane ios refresh_provisioning_profile_development env:deb
 description = 'Refresh development provisioning profiles (all envs)'
 depends = ['setup:bundler']
 run = [
-    'mise run profiles:development-dev',
     'mise run profiles:development-ref',
     'mise run profiles:development-abn',
     'mise run profiles:development-prod',
@@ -188,17 +182,12 @@ run = [
 # ── CI ───────────────────────────────────────────────────────────────
 
 [tasks."ci:sonar"]
-description = 'Run sonar lane (dev)'
+description = 'Run sonar lane (ref)'
 depends = ['setup:xcode-ci']
-run = ['bundle install', 'bundle exec fastlane ios pipeline_sonar env:dev']
-
-[tasks."ci:run"]
-description = 'Run CI lane (dev)'
-depends = ['setup:xcode-ci']
-run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:dev']
+run = ['bundle install', 'bundle exec fastlane ios pipeline_sonar env:ref']
 
 [tasks."ci:run-ref"]
-description = 'Run CI lane (dev)'
+description = 'Run CI lane (ref)'
 depends = ['setup:xcode-ci']
 run = ['bundle install', 'bundle exec fastlane ios pipeline_ci env:ref']
 

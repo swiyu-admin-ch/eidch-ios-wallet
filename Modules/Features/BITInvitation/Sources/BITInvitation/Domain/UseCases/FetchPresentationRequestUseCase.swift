@@ -43,16 +43,19 @@ struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol 
         throw FetchPresentationRequestUseCaseError.invalidUrl
       case .expired:
         throw FetchPresentationRequestUseCaseError.expired
-      case .invalid(let responseUri, let responseError):
-        let presentationResponse = try await decline(url: responseUri, with: responseError)
+      case .invalid(let responseUri, let state, let responseError):
+        let presentationResponse = try await decline(url: responseUri, state: state, with: responseError)
         throw FetchPresentationRequestUseCaseError.invalidRequest(
           responseError.rawValue,
           presentationResponse: presentationResponse)
-      case .transactionDataNotSupported(let responseUri, let responseError):
-        let presentationResponse = try await decline(url: responseUri, with: responseError)
+      case .transactionDataNotSupported(let responseUri, let state, let responseError):
+        let presentationResponse = try await decline(url: responseUri, state: state, with: responseError)
         throw FetchPresentationRequestUseCaseError.transactionDataNotSupported(
           responseError.rawValue,
           presentationResponse: presentationResponse)
+      case .unknownRegistry(let responseUri, let state, let responseError):
+        let presentationResponse = try await decline(url: responseUri, state: state, with: responseError)
+        throw FetchPresentationRequestUseCaseError.unknownRegistry(presentationResponse: presentationResponse)
       case .presentationRequestNotFound:
         throw FetchPresentationRequestUseCaseError.notFound
       }
@@ -83,18 +86,18 @@ struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol 
     do {
       try await actorIdentityValidator.validate(requestObject.identityTrustStatement, for: requestObject.clientIdentifier.clientId)
     } catch GovernanceError.unverifiedActor {
-      let presentationResponse = try await decline(url: requestObject.responseUri, with: .accessDenied)
+      let presentationResponse = try await decline(url: requestObject.responseUri, state: requestObject.state, with: .accessDenied)
       throw FetchPresentationRequestUseCaseError.unverifiedActor(presentationResponse: presentationResponse)
     } catch GovernanceError.unknownRegistry {
-      let presentationResponse = try await decline(url: requestObject.responseUri, with: .accessDenied)
+      let presentationResponse = try await decline(url: requestObject.responseUri, state: requestObject.state, with: .accessDenied)
       throw FetchPresentationRequestUseCaseError.unknownRegistry(presentationResponse: presentationResponse)
     }
   }
 
-  private func decline(url: URL?, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
+  private func decline(url: URL?, state: String?, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
     guard let url else { return nil }
     do {
-      return try await presentationRequestService.decline(url: url, with: error)
+      return try await presentationRequestService.decline(url: url, state: state, with: error)
     } catch let error as PresentationResponseValidationError {
       throw error
     } catch {

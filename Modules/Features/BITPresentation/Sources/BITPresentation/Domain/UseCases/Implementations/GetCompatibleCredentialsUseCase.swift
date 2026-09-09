@@ -24,7 +24,9 @@ struct GetCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol 
       return []
     }
 
-    let compatibleCredentials = try await dcqlCredentialMatcher.match(credentials: credentials, with: requestObject.dcqlQuery)
+    let compatibleCredentials = try await dcqlCredentialMatcher
+      .match(credentials: credentials, with: requestObject.dcqlQuery)
+      .sortedByDisplayOrder(using: \.credential)
 
     guard !compatibleCredentials.isEmpty else {
       return []

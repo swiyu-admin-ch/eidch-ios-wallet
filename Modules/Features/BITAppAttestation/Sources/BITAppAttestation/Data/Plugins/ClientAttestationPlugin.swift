@@ -1,3 +1,4 @@
+import Factory
 import Foundation
 import Moya
 
@@ -26,10 +27,20 @@ public struct ClientAttestationPlugin: PluginType {
     return request
   }
 
+  public func didReceive(_ result: Result<Response, MoyaError>, target: any TargetType) {
+    guard case .success(let response) = result, response.statusCode == 401 else {
+      return
+    }
+
+    try? clientAttestationRepository.delete()
+  }
+
   // MARK: Private
 
   private static let oAuthClientAttestationHeaderKey = "OAuth-Client-Attestation"
   private static let oAuthClientAttestationPoPHeaderKey = "OAuth-Client-Attestation-PoP"
+
+  @Injected(\.clientAttestationRepository) private var clientAttestationRepository
 
   private let clientAttestation: String
   private let proofOfPossession: String?

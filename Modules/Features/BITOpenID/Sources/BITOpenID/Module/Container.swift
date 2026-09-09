@@ -50,10 +50,6 @@ extension Container {
     self { [.ES256] }
   }
 
-  public var isDPoPEnabled: Factory<Bool> {
-    self { false }
-  }
-
   public var validateCredentialOfferInvitationUrlUseCase: Factory<ValidateCredentialOfferInvitationUrlUseCaseProtocol> {
     self { ValidateCredentialOfferInvitationUrlUseCase() }
   }

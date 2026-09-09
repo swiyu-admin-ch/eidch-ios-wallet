@@ -39,7 +39,6 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
   // MARK: Private
 
   @Injected(\.credentialEncryptionContextGenerator) private var credentialEncryptionContextGenerator
-  @Injected(\.isDPoPEnabled) private var isDPoPEnabled
   @Injected(\.keyManager) private var keyManager
   @Injected(\.openIDRepository) private var openIDRepository
   @Injected(\.actorIdentityValidator) private var actorIdentityValidator
@@ -126,10 +125,6 @@ struct FetchDeferredCredentialService: FetchDeferredCredentialServiceProtocol {
   }
 
   private func resolveDPoPKeyPair(for deferredCredential: DeferredCredential) throws -> VaultKeyPair? {
-    guard isDPoPEnabled else {
-      return nil
-    }
-
     guard
       let dpopBinding = deferredCredential.authentication.dpopBinding,
       let algorithm = VaultAlgorithm(rawValue: dpopBinding.algorithm)

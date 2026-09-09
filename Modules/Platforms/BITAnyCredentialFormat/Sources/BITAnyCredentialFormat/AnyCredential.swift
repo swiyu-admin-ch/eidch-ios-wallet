@@ -16,6 +16,7 @@ public protocol AnyCredential {
   var validFrom: Date? { get }
   var validUntil: Date? { get }
   var vcSchemaId: String { get }
+  var swissProfileVersion: String? { get }
 
   func getClaimsJSON(_ claimSet: ClaimKind) -> JSON
   func getPresentingPaths(for paths: [ClaimsPathPointer]) -> [ClaimsPathPointer]

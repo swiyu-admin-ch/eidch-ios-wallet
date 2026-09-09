@@ -14,7 +14,7 @@ struct UserDefaultBiometricRepositoryTests {
 
   // MARK: Internal
 
-  @Test(arguments: [BiometricUsage.enabled, .disabled, .declined])
+  @Test(arguments: [BiometricUsage.enabled, .disabled])
   func setBiometricUsage_persistsUsage(_ usage: BiometricUsage) {
     repository.setBiometricUsage(usage)
 
@@ -23,10 +23,17 @@ struct UserDefaultBiometricRepositoryTests {
   }
 
   @Test
-  func getBiometricUsage_invalidStoredUsage_returnsSkipped() {
+  func getBiometricUsage_invalidStoredUsage_returnsDisabled() {
     UserDefaults.standard.set("invalid", forKey: usageKey)
 
-    #expect(repository.getBiometricUsage() == .declined)
+    #expect(repository.getBiometricUsage() == .disabled)
+  }
+
+  @Test
+  func getBiometricUsage_legacyDeclinedValue_returnsDisabled() {
+    UserDefaults.standard.set("declined", forKey: usageKey)
+
+    #expect(repository.getBiometricUsage() == .disabled)
   }
 
   @Test
@@ -39,10 +46,10 @@ struct UserDefaultBiometricRepositoryTests {
   }
 
   @Test
-  func getBiometricUsage_legacyValue_migratesSkipped() {
+  func getBiometricUsage_noStoredValue_returnsDisabled() {
     UserDefaults.standard.removeObject(forKey: legacyKey)
 
-    #expect(repository.getBiometricUsage() == .declined)
+    #expect(repository.getBiometricUsage() == .disabled)
   }
 
   // MARK: Private

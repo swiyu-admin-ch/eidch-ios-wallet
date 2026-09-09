@@ -103,12 +103,12 @@ final class BiometricViewModelTests: XCTestCase {
   }
 
   @MainActor
-  func testRegisterBiometricsWithBiometricNotAvailable_updatesUsageToDeclinedAndContinues() async {
+  func testRegisterBiometricsWithBiometricNotAvailable_updatesUsageToDisabledAndContinues() async {
     requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = AuthError.biometricNotAvailable
 
     await viewModel.registerBiometrics()
 
-    XCTAssertEqual(updateBiometricUsageUseCase.callAsFunctionReceivedUsage, .declined)
+    XCTAssertEqual(updateBiometricUsageUseCase.callAsFunctionReceivedUsage, .disabled)
     XCTAssertTrue(router.setupCalled)
     XCTAssertNil(viewModel.error)
     XCTAssertFalse(viewModel.isErrorPresented)

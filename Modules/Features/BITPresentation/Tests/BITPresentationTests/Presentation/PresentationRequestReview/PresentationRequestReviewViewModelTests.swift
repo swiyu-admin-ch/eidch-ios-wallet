@@ -34,6 +34,26 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.alert)
   }
 
+  func testInit_singleCompatibleCredential_hidesBackButton() {
+    viewModel = PresentationRequestReviewViewModel(context: context)
+
+    XCTAssertEqual(context.compatibleCredentials.count, 1)
+    XCTAssertTrue(viewModel.isBackButtonHidden)
+  }
+
+  func testInit_multipleCompatibleCredentials_showsBackButton() {
+    let multiContext = PresentationRequestContext(
+      requestObjectJWS: RequestObjectJWS.Mock.sample,
+      compatibleCredentials: CompatibleCredential.Mock.array,
+      trustInformation: .Mock.trustedIdentity)
+    multiContext.selectedCredential = CompatibleCredential.Mock.BIT
+
+    viewModel = PresentationRequestReviewViewModel(context: multiContext)
+
+    XCTAssertGreaterThan(multiContext.compatibleCredentials.count, 1)
+    XCTAssertFalse(viewModel.isBackButtonHidden)
+  }
+
   @MainActor
   func testUpdateCredential_loading_updatesStateToResult() {
     viewModel = PresentationRequestReviewViewModel(context: context)

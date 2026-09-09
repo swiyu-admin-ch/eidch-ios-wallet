@@ -53,15 +53,16 @@ struct VcSdJwtVpTokenGenerator: AnyVpTokenGeneratorProtocol {
 
     let sdHash = hash(data: sdJwtData, with: digestAlgorithm)
 
-    // If the response mode is dcApiJwt and origin is set, use the origin as the audience as specified in
-    // https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#appendix-A.4-6
+    // If the response mode is dc_api/dc_api.jwt and origin is set, use the origin as the audience as
+    // specified in https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#appendix-A.4-6.
     // else we fail.
+    let isDcApiResponse = requestObject.responseMode.isDigitalCredentialsApi
 
-    if requestObject.responseMode == .dcApiJWT && withOrigin == nil {
+    if isDcApiResponse && withOrigin == nil {
       throw AnyVpTokenGeneratorError.missingDcApiOrigin
     }
 
-    let aud = if let originAud = withOrigin, requestObject.responseMode == .dcApiJWT {
+    let aud = if let originAud = withOrigin, isDcApiResponse {
       "origin:\(originAud)"
     } else {
       requestObject.clientIdentifier.raw

@@ -694,6 +694,23 @@ public enum L10n {
     L10n.tr("Localizable", "emptyState_offlineTitle", fallback: "Missing internet connection")
   }
 
+  /// The following link will take you to an external website where you can create beta IDs.
+  ///
+  /// You can then import them and use them to test the swiyu Wallet.
+  public static var getBetaIdBody: String {
+    L10n.tr("Localizable", "getBetaId_body", fallback: "The following link will take you to an external website where you can create beta IDs.\n\nYou can then import them and use them to test the swiyu Wallet.")
+  }
+
+  /// Create Beta-ID
+  public static var getBetaIdButton: String {
+    L10n.tr("Localizable", "getBetaId_button", fallback: "Create Beta-ID")
+  }
+
+  /// Create Beta-ID
+  public static var getBetaIdTitle: String {
+    L10n.tr("Localizable", "getBetaId_title", fallback: "Create Beta-ID")
+  }
+
   /// Back
   public static var globalBack: String {
     L10n.tr("Localizable", "global_back", fallback: "Back")
@@ -704,9 +721,94 @@ public enum L10n {
     L10n.tr("Localizable", "global_cancel", fallback: "Cancel")
   }
 
+  /// Help & Contact
+  public static var menuHelpBody: String {
+    L10n.tr("Localizable", "menu_help_body", fallback: "Help & Contact")
+  }
+
+  /// Create Beta-ID
+  public static var menuOrderBetaIdBody: String {
+    L10n.tr("Localizable", "menu_orderBetaId_body", fallback: "Create Beta-ID")
+  }
+
+  /// Order e-ID
+  public static var menuOrderEidBody: String {
+    L10n.tr("Localizable", "menu_orderEid_body", fallback: "Order e-ID")
+  }
+
+  /// Settings
+  public static var menuSettingsBody: String {
+    L10n.tr("Localizable", "menu_settings_body", fallback: "Settings")
+  }
+
   /// Continue
   public static var onboardingContinue: String {
     L10n.tr("Localizable", "onboarding_continue", fallback: "Continue")
+  }
+
+  /// Language
+  public static var settingsGeneralLanguageBody: String {
+    L10n.tr("Localizable", "settings_general_language_body", fallback: "Language")
+  }
+
+  /// Wallet
+  public static var settingsGeneralSectionTitle: String {
+    L10n.tr("Localizable", "settings_general_sectionTitle", fallback: "Wallet")
+  }
+
+  /// Security & data protection
+  public static var settingsGeneralSecurityPrivacyBody: String {
+    L10n.tr("Localizable", "settings_general_securityPrivacy_body", fallback: "Security & data protection")
+  }
+
+  /// Help & Contact
+  public static var settingsHelpContactLinkText: String {
+    L10n.tr("Localizable", "settings_help_contact_linkText", fallback: "Help & Contact")
+  }
+
+  /// https://www.eid.admin.ch/en/hilfe-e
+  public static var settingsHelpContactLinkValue: String {
+    L10n.tr("Localizable", "settings_help_contact_linkValue", fallback: "https://www.eid.admin.ch/en/hilfe-e")
+  }
+
+  /// Feedback and support
+  public static var settingsHelpSectionTitle: String {
+    L10n.tr("Localizable", "settings_help_sectionTitle", fallback: "Feedback and support")
+  }
+
+  /// Accessibility
+  public static var settingsLegalAccessibilityBody: String {
+    L10n.tr("Localizable", "settings_legal_accessibility_body", fallback: "Accessibility")
+  }
+
+  /// Legal notice
+  public static var settingsLegalLegalNoticeBody: String {
+    L10n.tr("Localizable", "settings_legal_legalNotice_body", fallback: "Legal notice")
+  }
+
+  /// Licences
+  public static var settingsLegalLicencesBody: String {
+    L10n.tr("Localizable", "settings_legal_licences_body", fallback: "Licences")
+  }
+
+  /// General
+  public static var settingsLegalSectionTitle: String {
+    L10n.tr("Localizable", "settings_legal_sectionTitle", fallback: "General")
+  }
+
+  /// www.bj.admin.ch
+  public static var settingsLegalNoticePublisherLinkText: String {
+    L10n.tr("Localizable", "settings_legalNotice_publisher_linkText", fallback: "www.bj.admin.ch")
+  }
+
+  /// https://www.bj.admin.ch/en
+  public static var settingsLegalNoticePublisherLinkValue: String {
+    L10n.tr("Localizable", "settings_legalNotice_publisher_linkValue", fallback: "https://www.bj.admin.ch/en")
+  }
+
+  /// Settings
+  public static var settingsScreenTitle: String {
+    L10n.tr("Localizable", "settings_screenTitle", fallback: "Settings")
   }
 
   /// Your settings will be applied, which can take up to 30 seconds.
@@ -1318,6 +1420,11 @@ public enum L10n {
     L10n.tr("Localizable", "tk_displayrefresh_body", fallback: "This credential cannot be updated manually. If you notice incorrect or outdated data, please contact the issuer.")
   }
 
+  /// This credential is revoked and cannot be updated.
+  public static var tkDisplayrefreshButtonFooter: String {
+    L10n.tr("Localizable", "tk_displayrefresh_button_footer", fallback: "This credential is revoked and cannot be updated.")
+  }
+
   /// Update now
   public static var tkDisplayrefreshButtonPrimarybutton: String {
     L10n.tr("Localizable", "tk_displayrefresh_button_primarybutton", fallback: "Update now")
@@ -1336,6 +1443,16 @@ public enum L10n {
   /// Credential successfully updated.
   public static var tkDisplayrefreshNotificationSuccess: String {
     L10n.tr("Localizable", "tk_displayrefresh_notification_success", fallback: "Credential successfully updated.")
+  }
+
+  /// This credential can be updated to get the latest data from the issuer.
+  public static var tkDisplayrefreshRefreshableBody: String {
+    L10n.tr("Localizable", "tk_displayrefresh_refreshable_body", fallback: "This credential can be updated to get the latest data from the issuer.")
+  }
+
+  /// Update available
+  public static var tkDisplayrefreshRefreshableTitle: String {
+    L10n.tr("Localizable", "tk_displayrefresh_refreshable_title", fallback: "Update available")
   }
 
   /// Update credential
@@ -2799,17 +2916,6 @@ public enum L10n {
     L10n.tr("Localizable", "tk_errorView_default_primaryButton", fallback: "Try again")
   }
 
-  /// The following link will take you to an external website where you can create beta IDs.
-  /// You can then import them and use them to test the swiyu Wallet.
-  public static var tkGetBetaIdCreateBody: String {
-    L10n.tr("Localizable", "tk_getBetaId_create_body", fallback: "The following link will take you to an external website where you can create beta IDs.\nYou can then import them and use them to test the swiyu Wallet.")
-  }
-
-  /// Create Beta-ID
-  public static var tkGetBetaIdCreateTitle: String {
-    L10n.tr("Localizable", "tk_getBetaId_create_title", fallback: "Create Beta-ID")
-  }
-
   /// Add credentials
   public static var tkGetBetaIdFirstUseBody: String {
     L10n.tr("Localizable", "tk_getBetaId_firstUse_body", fallback: "Add credentials")
@@ -2873,11 +2979,6 @@ public enum L10n {
   /// Finish
   public static var tkGlobalFinish: String {
     L10n.tr("Localizable", "tk_global_finish", fallback: "Finish")
-  }
-
-  /// Create Beta-ID
-  public static var tkGlobalGetbetaidPrimarybutton: String {
-    L10n.tr("Localizable", "tk_global_getbetaid_primarybutton", fallback: "Create Beta-ID")
   }
 
   /// Password is hidden. Show password.
@@ -3078,26 +3179,6 @@ public enum L10n {
   /// The swiyu Wallet is locked
   public static var tkLoginVariantBody: String {
     L10n.tr("Localizable", "tk_login_variant_body", fallback: "The swiyu Wallet is locked")
-  }
-
-  /// Create Beta-ID
-  public static var tkMenuHomeListAdd: String {
-    L10n.tr("Localizable", "tk_menu_homeList_add", fallback: "Create Beta-ID")
-  }
-
-  /// Help & Contact
-  public static var tkMenuHomeListHelp: String {
-    L10n.tr("Localizable", "tk_menu_homeList_help", fallback: "Help & Contact")
-  }
-
-  /// Order e-ID
-  public static var tkMenuHomeListOrderEid: String {
-    L10n.tr("Localizable", "tk_menu_homeList_orderEid", fallback: "Order e-ID")
-  }
-
-  /// Settings
-  public static var tkMenuHomeListSettings: String {
-    L10n.tr("Localizable", "tk_menu_homeList_settings", fallback: "Settings")
   }
 
   /// During a data request, more information about me was requested than necessary.
@@ -3484,14 +3565,14 @@ public enum L10n {
     L10n.tr("Localizable", "tk_present_result_confirm_alt", fallback: "Confirmation")
   }
 
-  /// Your credential has been successfully submitted and is being verified.
+  /// Your credential has been successfully submitted and is being verified
   public static var tkPresentResultDataTransmittedBody: String {
-    L10n.tr("Localizable", "tk_present_result_data_transmitted_body", fallback: "Your credential has been successfully submitted and is being verified.")
+    L10n.tr("Localizable", "tk_present_result_data_transmitted_body", fallback: "Your credential has been successfully submitted and is being verified")
   }
 
-  /// Your data has been submitted
+  /// Your data has been submitted.
   public static var tkPresentResultDataTransmittedTitle: String {
-    L10n.tr("Localizable", "tk_present_result_data_transmitted_title", fallback: "Your data has been submitted")
+    L10n.tr("Localizable", "tk_present_result_data_transmitted_title", fallback: "Your data has been submitted.")
   }
 
   /// Data not submitted
@@ -4013,16 +4094,6 @@ public enum L10n {
     L10n.tr("Localizable", "tk_settings_diagnosticData_title", fallback: "Share diagnostic data")
   }
 
-  /// Feedback and support
-  public static var tkSettingsFeedbackSupportSectionTitle: String {
-    L10n.tr("Localizable", "tk_settings_feedbackSupport_sectionTitle", fallback: "Feedback and support")
-  }
-
-  /// Accessibility
-  public static var tkSettingsGeneralAccessibility: String {
-    L10n.tr("Localizable", "tk_settings_general_accessibility", fallback: "Accessibility")
-  }
-
   /// Send  feedback
   public static var tkSettingsGeneralFeedbackLinkText: String {
     L10n.tr("Localizable", "tk_settings_general_feedback_link_text", fallback: "Send  feedback")
@@ -4031,31 +4102,6 @@ public enum L10n {
   /// https://findmind.ch/c/feedback_public_beta_en
   public static var tkSettingsGeneralFeedbackLinkValue: String {
     L10n.tr("Localizable", "tk_settings_general_feedback_link_value", fallback: "https://findmind.ch/c/feedback_public_beta_en")
-  }
-
-  /// Help & Contact
-  public static var tkSettingsGeneralHelpLinkText: String {
-    L10n.tr("Localizable", "tk_settings_general_help_link_text", fallback: "Help & Contact")
-  }
-
-  /// https://www.eid.admin.ch/en/hilfe-e
-  public static var tkSettingsGeneralHelpLinkValue: String {
-    L10n.tr("Localizable", "tk_settings_general_help_link_value", fallback: "https://www.eid.admin.ch/en/hilfe-e")
-  }
-
-  /// Legal notice
-  public static var tkSettingsGeneralImprint: String {
-    L10n.tr("Localizable", "tk_settings_general_imprint", fallback: "Legal notice")
-  }
-
-  /// Licences
-  public static var tkSettingsGeneralLicences: String {
-    L10n.tr("Localizable", "tk_settings_general_licences", fallback: "Licences")
-  }
-
-  /// General
-  public static var tkSettingsGeneralSectionTitle: String {
-    L10n.tr("Localizable", "tk_settings_general_sectionTitle", fallback: "General")
   }
 
   /// App Version
@@ -4106,16 +4152,6 @@ public enum L10n {
   /// https://www.eid.admin.ch/en/swiyu-terms-e
   public static var tkSettingsImprintLegalTermsOfUseLinkValue: String {
     L10n.tr("Localizable", "tk_settings_imprint_legal_termsOfUse_link_value", fallback: "https://www.eid.admin.ch/en/swiyu-terms-e")
-  }
-
-  /// www.bj.admin.ch
-  public static var tkSettingsImprintPublisherLinkText: String {
-    L10n.tr("Localizable", "tk_settings_imprint_publisher_link_text", fallback: "www.bj.admin.ch")
-  }
-
-  /// https://www.bj.admin.ch/en
-  public static var tkSettingsImprintPublisherLinkValue: String {
-    L10n.tr("Localizable", "tk_settings_imprint_publisher_link_value", fallback: "https://www.bj.admin.ch/en")
   }
 
   /// Federal Department of Justice and Police FDJP
@@ -4218,26 +4254,6 @@ public enum L10n {
   /// Security and data protection - Doublete
   public static var tkSettingsSecurityPrivacyTitle: String {
     L10n.tr("Localizable", "tk_settings_securityPrivacy_title", fallback: "Security and data protection - Doublete")
-  }
-
-  /// Settings
-  public static var tkSettingsTitle: String {
-    L10n.tr("Localizable", "tk_settings_title", fallback: "Settings")
-  }
-
-  /// Language
-  public static var tkSettingsWalletLanguage: String {
-    L10n.tr("Localizable", "tk_settings_wallet_language", fallback: "Language")
-  }
-
-  /// Wallet
-  public static var tkSettingsWalletSectionTitle: String {
-    L10n.tr("Localizable", "tk_settings_wallet_sectionTitle", fallback: "Wallet")
-  }
-
-  /// Security and data protection
-  public static var tkSettingsWalletSecurityPrivacy: String {
-    L10n.tr("Localizable", "tk_settings_wallet_securityPrivacy", fallback: "Security and data protection ")
   }
 
   /// To settings

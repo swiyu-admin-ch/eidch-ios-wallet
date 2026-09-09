@@ -8,7 +8,7 @@ import Spyable
 @Spyable
 public protocol PresentationRequestServiceProtocol {
   func fetch(from url: URL) async throws -> RequestObjectJWS
-  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse?
+  func decline(url: URL, state: String?, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse?
 }
 
 // MARK: - PresentationRequestService
@@ -30,8 +30,8 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     }
   }
 
-  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
-    try await repository.decline(url: url, with: error)
+  func decline(url: URL, state: String?, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
+    try await repository.decline(url: url, state: state, with: error)
   }
 
   // MARK: Private
@@ -65,9 +65,9 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     case PresentationRequestUrlParserError.invalidRequestUrl:
       .invalidRequestUrl
     case let error as PresentationRequestRepositoryError:
-      mapRepositoryError(error) ?? .invalid(responseURL: nil, responseError: .invalidRequest)
+      mapRepositoryError(error) ?? .invalid(responseURL: nil, state: nil, responseError: .invalidRequest)
     default:
-      .invalid(responseURL: nil, responseError: .invalidRequest)
+      .invalid(responseURL: nil, state: nil, responseError: .invalidRequest)
     }
   }
 
@@ -79,7 +79,7 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
   }
 
   private func mapValidationError(_ error: Error, for requestObject: RequestObject) -> PresentationRequestError {
-    PresentationRequestError(validationError: error, responseURL: requestObject.responseUri)
+    PresentationRequestError(validationError: error, responseURL: requestObject.responseUri, state: requestObject.state)
   }
 }
 

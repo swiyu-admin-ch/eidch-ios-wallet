@@ -1,4 +1,3 @@
-import BITL10n
 import Factory
 import XCTest
 @testable import BITAppAuth
@@ -7,8 +6,6 @@ import XCTest
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 @testable import BITHome
-@testable import BITInvitation
-@testable import BITOTP
 @testable import BITPushNotification
 @testable import BITTestingCore
 
@@ -164,6 +161,54 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
   }
 
+  func testRefresh_credentialAddedWhileListLoaded_publishesLocalListWithoutWaitingForNetwork() async {
+    let initialCredentials: [VerifiableCredential] = [.Mock.sample, .Mock.diploma]
+    getCredentialListUseCase.callAsFunctionReturnValue = initialCredentials
+    refreshCredentialsUseCase.callAsFunctionReturnValue = initialCredentials
+
+    await viewModel.onAppear()
+
+    XCTAssertEqual(Set(viewModel.credentials.map(\.id)), Set(initialCredentials.map(\.id)))
+
+    getCredentialListUseCase.callAsFunctionReturnValue = mockCredentials
+    refreshCredentialsUseCase.callAsFunctionThrowableError = TestingError.error
+
+    await viewModel.refresh()
+
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(Set(viewModel.credentials.map(\.id)), Set(mockCredentials.map(\.id)))
+    XCTAssertEqual(viewModel.state, .results)
+  }
+
+  func testFetchData_checkpointAndOnAppearOverlap_coalescesIntoSingleFetch() async {
+    let credentials = mockCredentials
+    getCredentialListUseCase.callAsFunctionClosure = {
+      try? await Task.sleep(nanoseconds: 50_000_000)
+      return credentials
+    }
+
+    async let onAppear: Void = viewModel.onAppear()
+    async let checkpoint: Void = viewModel.handleNavigationCheckpoint(state: .acceptCredential)
+
+    _ = await (onAppear, checkpoint)
+
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(updateEIDRequestCaseStatusUseCase.executeCallsCount, 1)
+
+    XCTAssertNotNil(viewModel.toast)
+    XCTAssertEqual(Set(viewModel.credentials.map(\.id)), Set(credentials.map(\.id)))
+  }
+
+  func testFetchData_sequentialRefreshes_areNotCoalesced() async {
+    await viewModel.refresh()
+    await viewModel.refresh()
+
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 2)
+    XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 2)
+  }
+
   func testRefresh_afterOnAppear_noData() async {
     await viewModel.onAppear()
 
@@ -173,7 +218,7 @@ final class HomeViewModelTests: XCTestCase {
 
     await viewModel.refresh()
 
-    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
+    XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 2)
     XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 2)
 
     XCTAssertEqual(getEIDRequestCaseListUseCase.callAsFunctionCallsCount, 4)
@@ -184,124 +229,7 @@ final class HomeViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.requestCases.isEmpty)
   }
 
-  // MARK: - Navigation
-
-  func testOpenScanner() {
-    viewModel.openScanner()
-
-    if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.invitation(.scan))
-    }
-  }
-
-  func testOpenSettings() {
-    viewModel.openSettings()
-
-    if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.settings)
-    }
-  }
-
-  func testOpenCredential_deferredCredential_routeToDetails() {
-    viewModel.openCredential(DeferredCredentialViewModel(credential: .Mock.sample))
-
-    guard
-      case .external(let destination) = viewModel.destination,
-      case .credentialDetail(let input) = destination else
-    {
-      return XCTFail("Expected credential detail destination")
-    }
-
-    XCTAssertEqual(input.credentialId, DeferredCredential.Mock.sample.id)
-  }
-
-  func testOpenCredential_unacceptedCredential_routeToOffer() {
-    let credentialViewModel = VerifiableCredentialViewModel(
-      credential: VerifiableCredential(
-        progressionState: .unaccepted,
-        bundleItems: [BundleItem(payload: Data())],
-        nextPresentableBundleItemId: UUID(),
-        format: .vcSdJwt,
-        issuerUrl: mockIssuerUrl,
-        issuer: "issuer",
-        authentication: CredentialAuthentication(accessToken: "accessToken")))
-
-    viewModel.openCredential(credentialViewModel)
-
-    if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.offer(credentialViewModel.credential))
-    }
-  }
-
-  func testOpenCredential_acceptedCredential_routeToDetails() {
-    viewModel.openCredential(VerifiableCredentialViewModel(credential: .Mock.sample))
-
-    guard
-      case .external(let destination) = viewModel.destination,
-      case .credentialDetail(let input) = destination else
-    {
-      return XCTFail("Expected credential detail destination")
-    }
-
-    XCTAssertEqual(input.credentialId, VerifiableCredential.Mock.sample.id)
-  }
-
-  func testOpenBetaId() {
-    viewModel.openBetaId()
-
-    if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.betaId)
-    }
-  }
-
-  func testOpenEIDRequest() {
-    viewModel.openEIDRequest()
-
-    if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.otp)
-    }
-
-    XCTAssertEqual(isOTPEnabledUseCase.callAsFunctionCallsCount, 1)
-  }
-
-  func testOpenEIDRequest_whenOTPDisabled_routesToEIDRequest() {
-    isOTPEnabledUseCase.callAsFunctionReturnValue = false
-
-    viewModel.openEIDRequest()
-
-    if case .external(let destination) = viewModel.destination {
-      XCTAssertEqual(destination, HomeExternalDestinations.eIDRequest)
-    }
-
-    XCTAssertEqual(isOTPEnabledUseCase.callAsFunctionCallsCount, 1)
-  }
-
-  func testOpenHelp_setsHelpLinkAsExternalURL() {
-    viewModel.openHelp()
-
-    XCTAssertEqual(viewModel.externalURL, URL(string: L10n.tkSettingsGeneralHelpLinkValue))
-    XCTAssertNil(viewModel.destination)
-  }
-
-  func testOpenHelp_thenConsumed_resetsExternalURL() {
-    viewModel.openHelp()
-
-    viewModel.didConsumeExternalURL()
-
-    XCTAssertNil(viewModel.externalURL)
-  }
-
-  func testIsProximityEnabled_whenDisabled_isFalse() {
-    Container.shared.isProximityEnabled.register { false }
-
-    XCTAssertFalse(HomeViewModel().isProximityEnabled)
-  }
-
-  func testIsProximityEnabled_whenEnabled_isTrue() {
-    Container.shared.isProximityEnabled.register { true }
-
-    XCTAssertTrue(HomeViewModel().isProximityEnabled)
-  }
+  // MARK: - Request case navigation
 
   func testDidStartAutoVerification() {
     viewModel.didStartAutoVerification(caseId: mockCaseId)
@@ -429,7 +357,6 @@ final class HomeViewModelTests: XCTestCase {
   // MARK: Private
 
   private let mockCaseId = "caseId"
-  private let mockIssuerUrl = URL(string: "https://issuer.domain.ch")!
   private let mockCredentials = VerifiableCredential.Mock.array
   private let themeMock = "light"
   private var getCredentialListUseCase: GetCredentialListUseCaseProtocolSpy!
@@ -440,7 +367,6 @@ final class HomeViewModelTests: XCTestCase {
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
   private let mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleInQueue, .Mock.sampleAVReady]
   private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocolSpy!
-  private var isOTPEnabledUseCase: IsOTPEnabledUseCaseProtocolSpy!
   private var requestCasePollingManager: RequestCasePollingProtocolSpy!
   private var updatePushTokenUseCase: UpdatePushTokenUseCaseProtocolSpy!
   private var resetApplicationBadgeUseCase: ResetApplicationBadgeUseCaseProtocolSpy!
@@ -452,7 +378,6 @@ final class HomeViewModelTests: XCTestCase {
     updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
     deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
     isUserLoggedInUseCase = IsUserLoggedInUseCaseProtocolSpy()
-    isOTPEnabledUseCase = IsOTPEnabledUseCaseProtocolSpy()
     requestCasePollingManager = RequestCasePollingProtocolSpy()
     updatePushTokenUseCase = UpdatePushTokenUseCaseProtocolSpy()
     resetApplicationBadgeUseCase = ResetApplicationBadgeUseCaseProtocolSpy()
@@ -465,8 +390,6 @@ final class HomeViewModelTests: XCTestCase {
     Container.shared.refreshCredentialsUseCase.register { @MainActor in self.refreshCredentialsUseCase }
     Container.shared.requestCasePollingManager.register { @MainActor in self.requestCasePollingManager }
     Container.shared.isEIDRequestFeatureEnabled.register { @MainActor in true }
-    Container.shared.isProximityEnabled.register { false }
-    Container.shared.isOTPEnabledUseCase.register { @MainActor in self.isOTPEnabledUseCase }
     Container.shared.updatePushTokenUseCase.register { @MainActor in self.updatePushTokenUseCase }
     Container.shared.resetApplicationBadgeUseCase.register { @MainActor in self.resetApplicationBadgeUseCase }
   }
@@ -476,7 +399,6 @@ final class HomeViewModelTests: XCTestCase {
     getCredentialListUseCase.callAsFunctionReturnValue = mockCredentials
     getEIDRequestCaseListUseCase.callAsFunctionReturnValue = mockEIDRequestCases
     refreshCredentialsUseCase.callAsFunctionReturnValue = mockCredentials
-    isOTPEnabledUseCase.callAsFunctionReturnValue = true
   }
 
   private func assertRefresh() {

@@ -59,6 +59,17 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertNil(dictionary["state"])
   }
 
+  func testCallAsFunction_WithDcApiResponseMode_ReturnsVpTokenDictionaryInBody() throws {
+    let requestObject = try makeRequestObject(responseMode: .dcApi, clientMetadata: nil)
+
+    let response = try generator(for: compatibleCredentialMock, requestObject: requestObject, withOrigin: nil)
+
+    let dictionary = response.asDictionary()
+    XCTAssertEqual(dictionary["vp_token"] as? [String: [String]], [Self.mockDcqlQueryId: [Self.mockVpToken]])
+    XCTAssertFalse(dictionary["vp_token"] is String)
+    XCTAssertNil(dictionary["state"])
+  }
+
   func testCallAsFunction_missingQueryId_throws() throws {
     XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, withOrigin: nil)) { error in
       XCTAssertEqual(error as? RequestObjectError, .invalidQuery)

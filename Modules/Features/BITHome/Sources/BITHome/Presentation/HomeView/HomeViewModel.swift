@@ -5,10 +5,8 @@ import BITCredential
 import BITCredentialShared
 import BITEIDRequest
 import BITEIDRequestShared
-import BITInvitation
 import BITL10n
 import BITNavigation
-import BITOTP
 import BITPushNotification
 import BITTheming
 import Factory
@@ -46,8 +44,6 @@ final class HomeViewModel {
   var destination: HomeDestinations?
   var externalURL: URL?
 
-  @ObservationIgnored @Injected(\.isProximityEnabled) var isProximityEnabled: Bool
-
   func onAppear() async {
     if isUserLoggedInUseCase() {
       await fetchData()
@@ -70,24 +66,35 @@ final class HomeViewModel {
 
   private var colorScheme = String()
   @ObservationIgnored private var notificationTasks = [Task<Void, Never>]()
+  @ObservationIgnored private var fetchDataTask: Task<Void, Never>?
   @ObservationIgnored @Injected(\.getCredentialListUseCase) private var getCredentialListUseCase: GetCredentialListUseCaseProtocol
   @ObservationIgnored @Injected(\.isUserLoggedInUseCase) private var isUserLoggedInUseCase: IsUserLoggedInUseCaseProtocol
   @ObservationIgnored @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @ObservationIgnored @Injected(\.getEIDRequestCaseListUseCase) private var getEIDRequestCaseListUseCase: GetEIDRequestCaseListUseCaseProtocol
   @ObservationIgnored @Injected(\.updateEIDRequestCaseStatusUseCase) private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocol
   @ObservationIgnored @Injected(\.refreshCredentialsUseCase) private var refreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol
-  @ObservationIgnored @Injected(\.isOTPEnabledUseCase) private var isOTPEnabledUseCase: IsOTPEnabledUseCaseProtocol
   @ObservationIgnored @Injected(\.requestCasePollingManager) private var requestCasePollingManager: RequestCasePollingProtocol
   @ObservationIgnored @Injected(\.updatePushTokenUseCase) private var updatePushTokenUseCase: UpdatePushTokenUseCaseProtocol
   @ObservationIgnored @Injected(\.resetApplicationBadgeUseCase) private var resetApplicationBadgeUseCase: ResetApplicationBadgeUseCaseProtocol
 
   private func fetchData() async {
-    await withTaskGroup(of: Void.self) { group in
-      group.addTask { await self.fetchCredentials() }
-      group.addTask { await self.getEIDRequestCases() }
-
-      await group.waitForAll()
+    if let fetchDataTask {
+      return await fetchDataTask.value
     }
+
+    let task = Task {
+      await withTaskGroup(of: Void.self) { group in
+        group.addTask { await self.fetchCredentials() }
+        group.addTask { await self.getEIDRequestCases() }
+
+        await group.waitForAll()
+      }
+
+      self.fetchDataTask = nil
+    }
+
+    fetchDataTask = task
+    await task.value
   }
 
   private func registerNotificationListeners() {
@@ -107,63 +114,11 @@ final class HomeViewModel {
   }
 }
 
-// MARK: - Navigation
+// MARK: - External URL
 
 extension HomeViewModel {
-
-  // MARK: Internal
-
-  func openScanner(tab: InvitationTab = .scan) {
-    destination = .external(.invitation(tab))
-  }
-
-  func openSettings() {
-    destination = .external(.settings)
-  }
-
-  func openCredential(_ credentialViewModel: any CredentialViewModelProtocol) {
-    switch credentialViewModel.credential {
-    case let verifiableCredential as VerifiableCredential:
-      openVerifiableCredential(verifiableCredential)
-    case let deferredCredential as DeferredCredential:
-      openDeferredCredential(deferredCredential)
-    default: return
-    }
-  }
-
-  func openBetaId() {
-    destination = .external(.betaId)
-  }
-
-  func openEIDRequest() {
-    if isOTPEnabledUseCase() {
-      destination = .external(.otp)
-    } else {
-      destination = .external(.eIDRequest)
-    }
-  }
-
-  func openHelp() {
-    externalURL = URL(string: L10n.tkSettingsGeneralHelpLinkValue)
-  }
-
   func didConsumeExternalURL() {
     externalURL = nil
-  }
-
-  // MARK: Private
-
-  private func openVerifiableCredential(_ verifiableCredential: VerifiableCredential) {
-    switch verifiableCredential.progressionState {
-    case .accepted:
-      destination = .external(.credentialDetail(CredentialDetailInput(credential: verifiableCredential)))
-    case .unaccepted:
-      destination = .external(.offer(verifiableCredential))
-    }
-  }
-
-  private func openDeferredCredential(_ deferredCredential: DeferredCredential) {
-    destination = .external(.credentialDetail(CredentialDetailInput(credential: deferredCredential)))
   }
 }
 
@@ -182,10 +137,8 @@ extension HomeViewModel {
 
   private func fetchCredentials() async {
     do {
-      if credentials.isEmpty {
-        let allCredentials = try await getCredentialListUseCase()
-        updateView(with: allCredentials)
-      }
+      let allCredentials = try await getCredentialListUseCase()
+      updateView(with: allCredentials)
 
       await refreshCredentials()
     } catch {

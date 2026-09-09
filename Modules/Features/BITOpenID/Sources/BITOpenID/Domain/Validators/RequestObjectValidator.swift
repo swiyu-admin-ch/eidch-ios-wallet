@@ -13,6 +13,7 @@ enum RequestObjectValidationError: Error {
   case invalidClientId
   case invalidAudience
   case invalidResponseType
+  case unknownRegistry
   case invalidVerifierAttestation
   case transactionDataNotSupported
   case invalidState
@@ -74,11 +75,11 @@ struct RequestObjectValidator: RequestObjectValidatorProtocol {
   {
     try await jwsValidator.validate(jws)
     let kidDid = try didResolverHelper.getDid(from: jws.header.keyIdentifier)
-    guard
-      clientIdentifier.clientId.normalizedDid() == kidDid,
-      TrustEnvironment(did: clientIdentifier.clientId.normalizedDid()) != .external
-    else {
+    guard clientIdentifier.clientId.normalizedDid() == kidDid else {
       throw RequestObjectValidationError.invalidClientId
+    }
+    guard TrustEnvironment(did: clientIdentifier.clientId.normalizedDid()) != .external else {
+      throw RequestObjectValidationError.unknownRegistry
     }
   }
 
@@ -165,7 +166,7 @@ extension RequestObject {
   }
 
   private func validateState() throws {
-    guard responseMode != .dcApiJWT else { return }
+    guard !responseMode.isDigitalCredentialsApi else { return }
 
     guard let credentials = dcqlQuery.credentials else { return }
 

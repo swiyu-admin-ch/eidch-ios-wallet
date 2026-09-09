@@ -248,7 +248,6 @@ final class FetchDeferredCredentialServiceTests: XCTestCase {
     Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGeneratorSpy }
     Container.shared.keyManager.register { self.keyManagerSpy }
     Container.shared.actorIdentityValidator.register { self.actorIdentityValidatorSpy }
-    Container.shared.isDPoPEnabled.register { true }
   }
 
   private func success() {

@@ -47,6 +47,10 @@ extension VcSdJWS: AnyCredential {
     payload.vct
   }
 
+  public var swissProfileVersion: String? {
+    header.profileVersion
+  }
+
   public func getClaimsJSON(_ claimSet: ClaimKind) -> JSON {
     switch claimSet {
     case .all:

@@ -38,7 +38,7 @@ struct RequestObjectValidatorTests {
 
   // MARK: Internal
 
-  struct ValidationCase: Sendable {
+  struct ValidationCase {
     let build: @Sendable () -> RequestObjectJWS
     let expected: RequestObjectValidationError
   }
@@ -84,10 +84,26 @@ struct RequestObjectValidatorTests {
   }
 
   @Test
+  func validate_missingStateWithDcApiResponseMode_validates() async throws {
+    try await validator.validate(RequestObjectJWS.Mock.missingStateDcApi, transport: .network)
+
+    #expect(jwsValidatorMock.validateActivationBufferCallsCount == 1)
+  }
+
+  @Test
   func validate_kidMismatch_throwsInvalidClientId() async {
     didResolverSpy.getDidFromReturnValue = "did:example:mismatch"
 
     await #expect(throws: RequestObjectValidationError.invalidClientId) {
+      try await validator.validate(RequestObjectJWS.Mock.sample, transport: .network)
+    }
+  }
+
+  @Test
+  func validate_kidMismatch_throwsUnknownRegistry() async {
+    Container.shared.trustEnvironmentDidRegex.register { #/^did:unknownRegistry:.*/# }
+
+    await #expect(throws: RequestObjectValidationError.unknownRegistry) {
       try await validator.validate(RequestObjectJWS.Mock.sample, transport: .network)
     }
   }

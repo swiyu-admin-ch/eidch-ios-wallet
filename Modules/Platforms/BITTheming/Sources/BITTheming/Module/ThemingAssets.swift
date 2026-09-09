@@ -158,6 +158,7 @@ public enum ThemingAssets {
   public static let information = ImageAsset(name: "Information")
   public static let qrCodeIcon = ImageAsset(name: "QRCodeIcon")
   public static let scanIcon = ImageAsset(name: "ScanIcon")
+  public static let shield = ImageAsset(name: "Shield")
   public static let navigationAccent = ColorAsset(name: "navigationAccent")
   public static let accentColor = ColorAsset(name: "AccentColor")
   public static let background = ColorAsset(name: "Background")

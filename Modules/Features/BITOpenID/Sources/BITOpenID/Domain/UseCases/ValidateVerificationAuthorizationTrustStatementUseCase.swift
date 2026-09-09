@@ -69,7 +69,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCase: ValidateVerificat
     guard let url = requestObject.responseUri else { return nil }
 
     do {
-      return try await presentationRequestService.decline(url: url, with: .accessDenied)
+      return try await presentationRequestService.decline(url: url, state: requestObject.state, with: .accessDenied)
     } catch let error as PresentationResponseValidationError {
       throw error
     } catch {

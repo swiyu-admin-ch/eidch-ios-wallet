@@ -12,12 +12,12 @@ struct BetaIdView: View {
       backgroundColor: ThemingAssets.Background.secondary.swiftUIColor,
       content: {
         DefaultInformationContentView(
-          primary: L10n.tkGetBetaIdCreateTitle,
-          secondary: L10n.tkGetBetaIdCreateBody)
+          primary: L10n.getBetaIdTitle,
+          secondary: L10n.getBetaIdBody)
       },
       footer: {
         DefaultInformationFooterView(
-          primaryButtonLabel: L10n.tkGlobalGetbetaidPrimarybutton,
+          primaryButtonLabel: L10n.getBetaIdButton,
           primaryButtonAction: openBetaIdLink)
       })
       .toolbar { toolbar }

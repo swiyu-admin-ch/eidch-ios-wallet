@@ -30,7 +30,7 @@ struct UserDefaultBiometricRepository: BiometricRepositoryProtocol {
       return migrateFromLegacyKey()
     }
 
-    return BiometricUsage(rawValue: rawValue) ?? .declined
+    return BiometricUsage(rawValue: rawValue) ?? .disabled
   }
 
   // MARK: Private
@@ -41,7 +41,7 @@ struct UserDefaultBiometricRepository: BiometricRepositoryProtocol {
 
   private func migrateFromLegacyKey() -> BiometricUsage {
     guard userDefaults.object(forKey: legacyKey) != nil else {
-      return .declined
+      return .disabled
     }
 
     let usage: BiometricUsage = userDefaults.bool(forKey: legacyKey) ? .enabled : .disabled

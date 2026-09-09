@@ -8,7 +8,7 @@
   "jti": "jwtIdentifier",
   "client_id": "verifier_attestation:did:example:verifier-subject",
   "response_uri": "https://eid.admin.ch/response",
-  "response_mode": "dc_api.jwt",
+  "response_mode": "dc_api",
   "response_type": "vp_token",
   "expected_origins" : [
     "iso18013-5://test"

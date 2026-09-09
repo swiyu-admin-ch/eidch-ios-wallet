@@ -38,6 +38,10 @@ public struct MockAnyCredential: AnyCredential {
     "vcSchemaId"
   }
 
+  public var swissProfileVersion: String? {
+    "1.0.0"
+  }
+
   public func getClaimsJSON(_ claimSet: ClaimKind) -> JSON {
     [:]
   }

@@ -151,7 +151,7 @@ struct InvitationErrorMapperTests {
     (FetchPresentationRequestUseCaseError.invalidRequest("invalid_request"), InvitationError.invalidPresentationRequest("invalid_request")),
     (.transactionDataNotSupported("transaction_data"), .transactionDataNotSupported("transaction_data")),
     (.unverifiedActor(), .invalidPresentationRequest("unverified_actor")),
-    (.unknownRegistry(), .invalidPresentationRequest("unknown_registry")),
+    (.unknownRegistry(), .unknownRegistry),
     (.expired, .expiredPresentationRequest),
     (.notFound, .notFoundPresentationRequest),
   ])

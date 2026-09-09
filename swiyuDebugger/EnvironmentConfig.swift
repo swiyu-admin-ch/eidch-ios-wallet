@@ -7,9 +7,9 @@ import Moya
 
 struct EnvironmentFeatureFlags {
   let isEIDRequestFeatureEnabled: Bool
+  let isBetaIdEnabled: Bool
   let isNonComplianceEnabled: Bool
   let isVersionEnforcementEnabled: Bool
-  let isDPoPEnabled: Bool
   let isProximityEnabled: Bool
   let isBatchIssuanceEnabled: Bool
   let isActorIdentityValidationEnabled: Bool
@@ -132,9 +132,9 @@ struct EnvironmentConfig {
         demoTrustEnvironmentDidRegex: #/^did:(?:webvh:QmUsJTCE1tnjrqX1XjeSrTfA5RrV2sDg5pCnRUGJcHHByg:identifier-reg-r.trust-infra.swiyu.admin.ch:api:v1:did:f7698e93-2381-4024-9657-68cd1e383613|(?:tdw|webvh):[^:]+:identifier-reg(?:-a)?\.trust-infra\.swiyu-int\.admin\.ch:.*)$/#), // issuer03 or INT-ABN
       features: EnvironmentFeatureFlags(
         isEIDRequestFeatureEnabled: true,
+        isBetaIdEnabled: true,
         isNonComplianceEnabled: true,
         isVersionEnforcementEnabled: true,
-        isDPoPEnabled: true,
         isProximityEnabled: true,
         isBatchIssuanceEnabled: true,
         isActorIdentityValidationEnabled: true,

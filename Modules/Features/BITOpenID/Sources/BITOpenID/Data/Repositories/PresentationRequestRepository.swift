@@ -34,8 +34,8 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
     return try decodePresentationResponse(response)
   }
 
-  func decline(url: URL, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
-    let presentationErrorRequestBody = PresentationErrorRequestBody(error: error)
+  func decline(url: URL, state: String?, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse? {
+    let presentationErrorRequestBody = PresentationErrorRequestBody(error: error, state: state)
     let response = try await networkService.request(PresentationEndpoint.errorSubmission(url: url, presentationErrorBody: presentationErrorRequestBody))
     return try decodePresentationResponse(response)
   }

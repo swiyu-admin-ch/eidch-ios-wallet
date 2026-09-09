@@ -65,11 +65,12 @@ struct CameraView: View {
   // MARK: Private
 
   private enum FocusableElement {
-    case tip, close, flashlight, flashlightTip
+    case tip, flashlight
   }
 
   @Environment(\.navigator) private var navigator
   @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+  @Environment(\.invitationTabBarInset) private var bottomInset
 
   @AccessibilityFocusState private var focus: FocusableElement?
 
@@ -84,11 +85,13 @@ struct CameraView: View {
   }
 
   private func focusOnNotificationIfNeeded(oldValue: CameraViewModel.NotificationState?, newState: CameraViewModel.NotificationState?) {
-    guard let newState else { return }
     Task { @MainActor in
       try await Task.sleep(seconds: 0.3)
-      guard !Task.isCancelled, viewModel.notificationState == newState else { return }
-      focus = .tip
+      guard !Task.isCancelled else { return }
+      focus = newState == nil ? nil : .tip
+
+      guard voiceOverEnabled, newState == nil else { return }
+      UIAccessibility.post(notification: .screenChanged, argument: nil)
     }
   }
 }
@@ -124,10 +127,12 @@ extension CameraView {
       background: ThemingAssets.Background.tertiary.swiftUIColor,
       foreground: ThemingAssets.Label.primary.swiftUIColor)
       .accessibilityHidden(true)
+      .padding(.bottom, bottomInset)
   }
 
   private var torchTipView: some View {
     LabelBadge(text: L10n.tkQrscannerLightonTitle, backgroundColor: ThemingAssets.Brand.Bright.navyBlue.swiftUIColor, image: "sun.min")
+      .padding(.bottom, bottomInset)
   }
 
 }
@@ -179,7 +184,6 @@ extension CameraView {
   private func tipView(
     primary: String?,
     secondary: String?,
-    tertiary: String? = nil,
     icon: Image?,
     close: @escaping () -> Void)
     -> some View
@@ -195,6 +199,7 @@ extension CameraView {
       background: ThemingAssets.Background.tertiary.swiftUIColor,
       closeButtonStyle: .secondary)
       .accessibilityFocused($focus, equals: .tip)
+      .padding(.bottom, bottomInset)
   }
 
   private func customizeNotification<PopupContent: View>(_ parameters: Popup<PopupContent>.PopupParameters) -> Popup<PopupContent>.PopupParameters {

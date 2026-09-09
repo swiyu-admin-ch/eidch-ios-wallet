@@ -1,3 +1,5 @@
+import BITCredential
+import BITCredentialShared
 import BITEIDRequest
 import BITL10n
 import BITNavigation
@@ -34,13 +36,13 @@ struct HomeView: View {
         openExternalURL(externalURL)
       }
       .background(ThemingAssets.Background.secondary.swiftUIColor, ignoresSafeAreaEdges: .all)
-      .toast($viewModel.toast, verticalPadding: orientation.isPortrait ? .x30 : 0)
       .accessibilityElement(children: .contain)
       .accessibilityIdentifier(AccessibilityIdentifier.content.rawValue)
   }
 
   // MARK: Private
 
+  @Environment(\.navigator) private var navigator
   @Environment(\.openURL) private var openURL
 
   @InjectedObservable(\.homeViewModel) private var viewModel: HomeViewModel
@@ -65,43 +67,22 @@ struct HomeView: View {
 
 extension HomeView {
 
-  @ViewBuilder
   private var content: some View {
-    if orientation.isPortrait {
-      portraitLayout
-    } else {
-      landscapeLayout
-    }
-  }
-
-  private var portraitLayout: some View {
     mainContent
-      .safeAreaInset(edge: .bottom) { actionButtons }
-  }
-
-  private var landscapeLayout: some View {
-    ViewThatFits(in: .vertical) {
-      landscapeContentLayout
-      landscapeScrollableContentLayout
-    }
-  }
-
-  private var landscapeContentLayout: some View {
-    HStack {
-      actionButtons
-      Spacer()
-      mainContent
-    }
-  }
-
-  private var landscapeScrollableContentLayout: some View {
-    HStack {
-      actionButtons
-
-      mainContent
-        .padding(.x4)
-    }
-    .padding(.vertical, .x4)
+      .toast($viewModel.toast)
+      .safeAreaInset(edge: .bottom, spacing: 0) {
+        if !orientation.isLandscape {
+          HomeActionButtons(axis: .horizontal)
+            .padding(.horizontal, .x6)
+            .padding(.bottom, .x3)
+        }
+      }
+      .safeAreaInset(edge: .leading, spacing: 0) {
+        if orientation.isLandscape {
+          HomeActionButtons(axis: .vertical)
+            .padding(.horizontal, .x6)
+        }
+      }
   }
 
   private var mainContent: some View {
@@ -110,7 +91,7 @@ extension HomeView {
       .navigationTitle(L10n.tkHomeTitle)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
-          menuButton
+          HomeMenu()
         }
       }
   }
@@ -138,34 +119,44 @@ extension HomeView {
   private var stateContent: some View {
     switch viewModel.state {
     case .results:
-      HomeCredentialsList(viewModel.credentials, onSelect: viewModel.openCredential)
+      HomeCredentialsList(viewModel.credentials, onSelect: openCredential)
         .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor, ThemingAssets.Label.primary.swiftUIColor)
         .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
         .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
     case .error(let error):
       HomeErrorStateView(error, onRetry: viewModel.refresh)
     case .empty:
-      HomeEmptyStateView(
-        onOrderEID: viewModel.openEIDRequest,
-        onGetBetaId: viewModel.openBetaId)
+      CredentialEmptyStateView()
         .listRowSeparator(.hidden)
     }
   }
+}
 
-  private var menuButton: some View {
-    HomeMenu(
-      onAddCredential: viewModel.openBetaId,
-      onOrderEID: viewModel.openEIDRequest,
-      onOpenSettings: viewModel.openSettings,
-      onOpenHelp: viewModel.openHelp)
+// MARK: - Navigation
+
+extension HomeView {
+
+  private func openCredential(_ credentialViewModel: any CredentialViewModelProtocol) {
+    switch credentialViewModel.credential {
+    case let verifiableCredential as VerifiableCredential:
+      openVerifiableCredential(verifiableCredential)
+    case let deferredCredential as DeferredCredential:
+      openDeferredCredential(deferredCredential)
+    default: return
+    }
   }
 
-  private var actionButtons: some View {
-    HomeActionButtons(
-      onScanAction: { viewModel.openScanner() },
-      onQRCodeAction: viewModel.isProximityEnabled ? { viewModel.openScanner(tab: .proximityEngagement) } : nil)
-      .padding(.horizontal, .x6)
-      .padding(.bottom, .x3)
+  private func openVerifiableCredential(_ verifiableCredential: VerifiableCredential) {
+    switch verifiableCredential.progressionState {
+    case .accepted:
+      navigator.navigate(to: HomeDestinations.external(.credentialDetail(CredentialDetailInput(credential: verifiableCredential))))
+    case .unaccepted:
+      navigator.navigate(to: HomeDestinations.external(.offer(verifiableCredential)))
+    }
+  }
+
+  private func openDeferredCredential(_ deferredCredential: DeferredCredential) {
+    navigator.navigate(to: HomeDestinations.external(.credentialDetail(CredentialDetailInput(credential: deferredCredential))))
   }
 }
 

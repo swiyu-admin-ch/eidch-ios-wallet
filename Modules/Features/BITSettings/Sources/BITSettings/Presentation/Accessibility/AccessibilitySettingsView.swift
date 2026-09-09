@@ -8,7 +8,7 @@ struct AccessibilitySettingsView: View {
   // MARK: Internal
 
   var body: some View {
-    SettingsPage(title: L10n.tkSettingsGeneralAccessibility) {
+    SettingsPage(title: L10n.settingsLegalAccessibilityBody) {
       SettingsSection {
         SettingsItem(
           image: Assets.terms.swiftUIImage,

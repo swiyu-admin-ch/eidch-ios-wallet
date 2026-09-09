@@ -1,10 +1,11 @@
 import Factory
+import FactoryTesting
 import LocalAuthentication
 import Testing
 @testable import BITAppAuth
 @testable import BITLocalAuthentication
 
-@MainActor
+@Suite(.container)
 struct GetBiometricStateUseCaseTests {
 
   // MARK: Lifecycle
@@ -49,6 +50,15 @@ struct GetBiometricStateUseCaseTests {
 
     #expect(getBiometricStateUseCase() == .declined)
     #expect(biometricRepository.getBiometricUsageCalled == false)
+  }
+
+  @Test(arguments: [(BiometricUsage.enabled, BiometricState.enabled), (.disabled, .disabled)])
+  func callAsFunction_biometricsAvailable_returnsPersistedUsage(usage: BiometricUsage, expectedState: BiometricState) {
+    validator.validatePolicyContextReturnValue = true
+    biometricRepository.getBiometricUsageReturnValue = usage
+
+    #expect(getBiometricStateUseCase() == expectedState)
+    #expect(biometricRepository.getBiometricUsageCalled == true)
   }
 
   // MARK: Private

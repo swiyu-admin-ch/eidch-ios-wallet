@@ -8,7 +8,6 @@ import SwiftUI
 public enum CredentialDestinations: NavigationDestination {
   case detail(CredentialDetailInput)
   case refresh(CredentialDetailRefreshInput)
-  case updateCredentialInfo(CredentialIssuerDisplay?)
   case issuanceType(UUID)
 
   // MARK: Public
@@ -17,8 +16,7 @@ public enum CredentialDestinations: NavigationDestination {
     switch self {
     case .detail: .managedSheet
     case .issuanceType,
-         .refresh,
-         .updateCredentialInfo: .push
+         .refresh: .push
     }
   }
 
@@ -28,8 +26,6 @@ public enum CredentialDestinations: NavigationDestination {
       CredentialDetailView(credentialId: input.credentialId)
     case .refresh(let route):
       CredentialDetailUpdateView(credential: route.credential)
-    case .updateCredentialInfo(let issuerDisplay):
-      CredentialDetailUpdateView(issuerDisplay: issuerDisplay)
     case .issuanceType(let credentialId):
       IssuanceTypeView(credentialId: credentialId)
     }
@@ -45,8 +41,6 @@ extension CredentialDestinations {
       lhsInput == rhsInput
     case (.refresh(let lhsRoute), .refresh(let rhsRoute)):
       lhsRoute == rhsRoute
-    case (.updateCredentialInfo(let lhsIssuerDisplay), .updateCredentialInfo(let rhsIssuerDisplay)):
-      lhsIssuerDisplay?.id == rhsIssuerDisplay?.id
     case (.issuanceType(let lhsCredential), .issuanceType(let rhsCredential)):
       lhsCredential == rhsCredential
     default:
@@ -62,9 +56,6 @@ extension CredentialDestinations {
     case .refresh(let route):
       hasher.combine("refresh")
       hasher.combine(route)
-    case .updateCredentialInfo(let issuerDisplay):
-      hasher.combine("updateCredentialInfo")
-      hasher.combine(issuerDisplay?.id)
     case .issuanceType(let credential):
       hasher.combine("issuanceType")
       hasher.combine(credential)

@@ -25,6 +25,7 @@ public class PresentationRequestReviewViewModel {
       fatalError("No selected credential")
     }
     self.credential = credential
+    isBackButtonHidden = context.compatibleCredentials.count <= 1
   }
 
   // MARK: Internal
@@ -34,6 +35,8 @@ public class PresentationRequestReviewViewModel {
     case deny
     case onAppear
   }
+
+  let isBackButtonHidden: Bool
 
   private(set) var state = PresentationRequestReviewState.loading
   var alert: PresentationRequestReviewAlert?

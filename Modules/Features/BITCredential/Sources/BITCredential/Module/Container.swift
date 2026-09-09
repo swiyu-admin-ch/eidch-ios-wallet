@@ -78,11 +78,6 @@ extension Container {
   var credentialDetailUpdateViewModel: ParameterFactory<CredentialProtocol, CredentialDetailUpdateViewModel> {
     self { @MainActor in CredentialDetailUpdateViewModel(credential: $0) }
   }
-
-  @MainActor
-  var credentialDetailUpdateInfoViewModel: ParameterFactory<CredentialIssuerDisplay?, CredentialDetailUpdateViewModel> {
-    self { @MainActor in CredentialDetailUpdateViewModel(issuerDisplay: $0) }
-  }
 }
 
 // MARK: - Use cases
@@ -159,6 +154,10 @@ extension Container {
 
   var maxConcurrentVerifiableCredentialRefreshes: Factory<Int> {
     self { 3 }
+  }
+
+  var credentialExpiryRefreshRange: Factory<TimeInterval> {
+    self { 30 * 24 * 60 * 60 }
   }
 
   var getCredentialRefreshThresholdUseCase: Factory<GetCredentialRefreshThresholdUseCaseProtocol> {

@@ -41,8 +41,8 @@ public struct ImprintView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityRemoveTraits(.isImage)
             .accessibilityLabel(L10n.tkSettingsImprintPublisherName)
-          if let url = URL(string: L10n.tkSettingsImprintPublisherLinkValue) {
-            CustomLink(to: url, label: L10n.tkSettingsImprintPublisherLinkText)
+          if let url = URL(string: L10n.settingsLegalNoticePublisherLinkValue) {
+            CustomLink(to: url, label: L10n.settingsLegalNoticePublisherLinkText)
           }
         }
         .padding(.vertical, .x4)

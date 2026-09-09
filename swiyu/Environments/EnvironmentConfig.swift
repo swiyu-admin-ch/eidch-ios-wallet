@@ -7,9 +7,9 @@ import Moya
 
 struct EnvironmentFeatureFlags {
   let isEIDRequestFeatureEnabled: Bool
+  let isBetaIdEnabled: Bool
   let isNonComplianceEnabled: Bool
   let isVersionEnforcementEnabled: Bool
-  let isDPoPEnabled: Bool
   let isProximityEnabled: Bool
   let isBatchIssuanceEnabled: Bool
   let isActorIdentityValidationEnabled: Bool
@@ -77,9 +77,7 @@ struct EnvironmentNetworkingConfiguration {
 struct EnvironmentConfig {
 
   static var current: Self? {
-    #if DEV
-    .dev
-    #elseif REF
+    #if REF
     .ref
     #elseif ABN
     .abn

@@ -50,7 +50,6 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
   @Injected(\.credentialRepository) private var credentialRepository
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase
   @Injected(\.holderBindingsGenerator) private var holderBindingsGenerator
-  @Injected(\.isDPoPEnabled) private var isDPoPEnabled
   @Injected(\.keyBindingGenerator) private var keyBindingGenerator
   @Injected(\.keyManager) private var keyManager
   @Injected(\.mapCredentialsToKeyBindingsUseCase) private var mapCredentialsToKeyBindingsUseCase
@@ -209,10 +208,6 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
   }
 
   private func resolveDPoPKeyPair(for credential: VerifiableCredential) throws -> VaultKeyPair? {
-    guard isDPoPEnabled else {
-      return nil
-    }
-
     guard let dpopBinding = credential.authentication.dpopBinding else {
       return nil
     }

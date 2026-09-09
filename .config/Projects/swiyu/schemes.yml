@@ -19,33 +19,13 @@ define: &parallel_test_target
 
 define: &unit_test_plans
   testPlans:
-    - path: "../../../swiyuTests/swiyu Dev.xctestplan"
+    - path: "../../../swiyuTests/swiyu Ref.xctestplan"
 
 #####
 ##### Schemes
 #####
 
 schemes:
-  swiyu Dev:
-    build:
-      <<: *targets
-    run:
-      config: Dev (debug)
-      commandLineArguments: 
-        <<: *launch_arguments
-        -disable-user-inactivity-timeout: true
-    test:
-      config: Dev (debug)
-      <<: *unit_test_plans
-    profile:
-      config: Dev (release)
-    analyze:
-      config: Dev (debug)
-    archive:
-      config: Dev (release)
-      customArchiveName: swiyu-Dev
-      revealArchiveInOrganizer: true
-
   swiyu Ref:
     build:
       <<: *targets

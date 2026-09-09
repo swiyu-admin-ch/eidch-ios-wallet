@@ -3,6 +3,7 @@ import BITAppAuth
 import BITAppInfo
 import BITCore
 import BITEIDRequest
+import BITHome
 import BITNetworking
 import BITNonCompliance
 import BITOpenID
@@ -48,6 +49,7 @@ extension EnvironmentAutoRegistering {
 
   private func registerFeatureFlags(_ flags: EnvironmentFeatureFlags) {
     Container.shared.isEIDRequestFeatureEnabled.register { flags.isEIDRequestFeatureEnabled }
+    Container.shared.isBetaIdEnabled.register { flags.isBetaIdEnabled }
     Container.shared.isNonComplianceEnabled.register { flags.isNonComplianceEnabled }
     Container.shared.isProximityEnabled.register { flags.isProximityEnabled }
     Container.shared.isBatchIssuanceEnabled.register { flags.isBatchIssuanceEnabled }

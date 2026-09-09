@@ -98,7 +98,7 @@ struct InvitationErrorMapper: InvitationErrorMapping {
       case .unverifiedActor:
         return InvitationError.invalidPresentationRequest(GovernanceError.unverifiedActor.rawValue)
       case .unknownRegistry:
-        return InvitationError.invalidPresentationRequest(GovernanceError.unknownRegistry.rawValue)
+        return InvitationError.unknownRegistry
       case .expired:
         return InvitationError.expiredPresentationRequest
       case .notFound:
@@ -114,6 +114,8 @@ struct InvitationErrorMapper: InvitationErrorMapping {
         return InvitationError.invalidPresentationRequest(errorCode)
       case .transactionDataNotSupported(let errorCode):
         return InvitationError.transactionDataNotSupported(errorCode)
+      case .unknownRegistry:
+        return InvitationError.unknownRegistry
       case .expired:
         return InvitationError.expiredPresentationRequest
       case .notFound:

@@ -12,6 +12,72 @@
   "minimum_os_version": "16.0",
   "platform": "ios",
   "store_url": "https://apps.apple.com/ch/app/swiyu/id6737259614",
+  "swiss_profile_lifecycle": {
+    "swiss_profile_anchor": [
+      {
+        "profile": "swiss-profile-anchor",
+        "status": "current",
+        "version": "1.0.0"
+      },
+      {
+        "profile": "swiss-profile-anchor",
+        "status": "deprecated",
+        "version": "0.1.0"
+      }
+    ],
+    "swiss_profile_issuance": [
+      {
+        "profile": "swiss-profile-issuance",
+        "status": "current",
+        "version": "1.0.0"
+      },
+      {
+        "profile": "swiss-profile-issuance",
+        "status": "sunset",
+        "version": "0.2.0"
+      }
+    ],
+    "swiss_profile_portability": [
+      {
+        "profile": "swiss-profile-portability",
+        "status": "current",
+        "version": "1.0.0"
+      }
+    ],
+    "swiss_profile_proximity": [
+      {
+        "profile": "swiss-profile-proximity",
+        "status": "current",
+        "version": "1.0.0"
+      }
+    ],
+    "swiss_profile_trust": [
+      {
+        "profile": "swiss-profile-trust",
+        "status": "current",
+        "version": "1.0.0"
+      }
+    ],
+    "swiss_profile_vc": [
+      {
+        "profile": "swiss-profile-vc",
+        "status": "current",
+        "version": "1.0.0"
+      },
+      {
+        "profile": "swiss-profile-vc",
+        "status": "eol",
+        "version": "0.3.0"
+      }
+    ],
+    "swiss_profile_verification": [
+      {
+        "profile": "swiss-profile-verification",
+        "status": "current",
+        "version": "1.0.0"
+      }
+    ]
+  },
   "versions": [
     {
       "message": [

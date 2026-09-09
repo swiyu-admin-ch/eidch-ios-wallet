@@ -44,6 +44,7 @@ struct PresentationRequestReviewView: View {
       .onColorSchemeChange { scheme in
         viewModel.updateCredential(with: scheme.rawValue)
       }
+      .navigationBarBackButtonHidden(viewModel.isBackButtonHidden)
       .navigate(to: $viewModel.destination)
   }
 

@@ -81,6 +81,7 @@ struct InvitationContainerCapsule: View {
     .buttonStyle(.plain)
     .accessibilityLabel(title)
     .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    .contentShape(.accessibility, Capsule())
   }
 }
 

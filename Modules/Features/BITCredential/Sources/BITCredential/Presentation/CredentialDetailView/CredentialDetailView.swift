@@ -233,10 +233,8 @@ extension CredentialDetailView {
       if credentialViewModel is VerifiableCredentialViewModel {
         Section {
           Button(action: {
-            if credentialViewModel.isRefreshable, let credential = viewModel.credential {
+            if let credential = viewModel.credential {
               navigator.navigate(to: CredentialDestinations.refresh(CredentialDetailRefreshInput(credential: credential)))
-            } else {
-              navigator.navigate(to: CredentialDestinations.updateCredentialInfo(credentialViewModel.issuerDisplay))
             }
           }, label: {
             Text(L10n.tkDisplayrefreshMenuPrimarybutton)
@@ -264,10 +262,8 @@ extension CredentialDetailView {
     .accessibilityActions {
       if credentialViewModel is VerifiableCredentialViewModel {
         Button(L10n.tkDisplayrefreshMenuPrimarybutton) {
-          if credentialViewModel.isRefreshable, let credential = viewModel.credential {
+          if let credential = viewModel.credential {
             navigator.navigate(to: CredentialDestinations.refresh(CredentialDetailRefreshInput(credential: credential)))
-          } else {
-            navigator.navigate(to: CredentialDestinations.updateCredentialInfo(credentialViewModel.issuerDisplay))
           }
         }
       }

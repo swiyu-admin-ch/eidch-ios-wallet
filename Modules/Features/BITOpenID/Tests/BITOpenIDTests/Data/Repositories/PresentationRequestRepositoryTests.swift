@@ -172,7 +172,7 @@ final class PresentationRequestRepositoryTests: XCTestCase {
   // MARK: - Decline
 
   func testDecline_success() async throws {
-    let response = try await repository.decline(url: urlMock, with: .accessDenied)
+    let response = try await repository.decline(url: urlMock, state: stateMock, with: .accessDenied)
 
     XCTAssertNil(response)
   }
@@ -181,7 +181,7 @@ final class PresentationRequestRepositoryTests: XCTestCase {
     let url = "https://verifier.ch"
     mockResponse(code: 200, data: Data("{\"redirect_uri\":\"\(url)\"}".utf8))
 
-    let response = try await repository.decline(url: urlMock, with: .accessDenied)
+    let response = try await repository.decline(url: urlMock, state: stateMock, with: .accessDenied)
 
     XCTAssertEqual(response?.redirectUri?.absoluteString, url)
   }
@@ -190,7 +190,7 @@ final class PresentationRequestRepositoryTests: XCTestCase {
     mockResponse(code: 500)
 
     do {
-      _ = try await repository.decline(url: urlMock, with: .accessDenied)
+      _ = try await repository.decline(url: urlMock, state: stateMock, with: .accessDenied)
       XCTFail("Should have thrown an error")
     } catch {
       guard let error = error as? NetworkError else { return XCTFail("Expected a NetworkError") }
@@ -203,6 +203,7 @@ final class PresentationRequestRepositoryTests: XCTestCase {
   private static let vpToken = ["vct": ["token"]]
 
   private let urlMock = URL(string: "some://url")!
+  private let stateMock = "state"
   private let authorizationResponseMock = AuthorizationResponse(vpToken: vpToken)
   private let jweMock = "jwe"
   private let encryptionMock = AuthorizationResponseEncryption(jwk: .Mock.validSample, algorithm: .A256GCM)

@@ -114,6 +114,11 @@ extension CheckAndUpdateCredentialStatusUseCase {
     {
       return credentialCopy
     }
+
+    guard credentialCopy.bundleItems[index].status != status else {
+      return credentialCopy
+    }
+
     credentialCopy.bundleItems[index].status = status
 
     return try await credentialRepository.update(verifiableCredential: credentialCopy)

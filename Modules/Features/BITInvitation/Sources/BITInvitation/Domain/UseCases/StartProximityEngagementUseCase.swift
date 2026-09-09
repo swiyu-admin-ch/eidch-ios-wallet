@@ -83,7 +83,7 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
       do {
         try await requestObjectValidator.validate(requestObject, transport: .proximity)
       } catch {
-        throw PresentationRequestError(validationError: error, responseURL: nil)
+        throw PresentationRequestError(validationError: error, responseURL: nil, state: requestObject.payload.state)
       }
       return requestObject
     } catch let error as PresentationRequestError {
@@ -92,13 +92,16 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
         throw StartProximityEngagementUseCaseError.invalidRequest("invalid requestUrl")
       case .expired:
         throw StartProximityEngagementUseCaseError.expired
-      case .invalid(_, let responseError):
+      case .invalid(_, _, let responseError):
         repository.decline()
         throw StartProximityEngagementUseCaseError.invalidRequest(responseError.rawValue)
-      case .transactionDataNotSupported(_, let responseError):
+      case .transactionDataNotSupported(_, _, let responseError):
         repository.decline()
         throw StartProximityEngagementUseCaseError.transactionDataNotSupported(
           responseError.rawValue)
+      case .unknownRegistry:
+        repository.decline()
+        throw StartProximityEngagementUseCaseError.unknownRegistry
       case .presentationRequestNotFound:
         throw StartProximityEngagementUseCaseError.notFound
       }
@@ -111,7 +114,7 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
     do {
       return try jwsDecoder.decode(RequestObjectJWT.self, from: Data(parJwt.utf8))
     } catch {
-      throw PresentationRequestError.invalid(responseURL: nil, responseError: .invalidRequest)
+      throw PresentationRequestError.invalid(responseURL: nil, state: nil, responseError: .invalidRequest)
     }
   }
 
@@ -131,6 +134,7 @@ enum StartProximityEngagementUseCaseError: Error, Equatable {
   case invalidOrigin
   case invalidRequest(String)
   case transactionDataNotSupported(String)
+  case unknownRegistry
   case expired
   case notFound
 }

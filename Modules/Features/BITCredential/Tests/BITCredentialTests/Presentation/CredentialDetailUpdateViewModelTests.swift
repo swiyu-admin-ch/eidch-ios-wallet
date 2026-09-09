@@ -4,6 +4,7 @@ import Testing
 @testable import BITAnalytics
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITL10n
 @testable import BITTestingCore
 
 // MARK: - CredentialDetailUpdateViewModelTests
@@ -120,18 +121,30 @@ struct CredentialDetailUpdateViewModelTests {
   }
 
   @Test
-  func primaryAction_infoMode_doesNothing() async {
-    var successCredential: VerifiableCredential?
-    let viewModel = CredentialDetailUpdateViewModel(issuerDisplay: nil)
+  func initialState_credentialRefreshable() {
+    #expect(viewModel.title == L10n.tkDisplayrefreshRefreshableTitle)
+    #expect(viewModel.body == L10n.tkDisplayrefreshRefreshableBody)
+  }
 
-    await viewModel.primaryAction { credential in
-      successCredential = credential
-    }
+  @Test
+  func initialState_credentialNonRefreshable() {
+    let viewModel = makeViewModelWithoutRefreshToken()
 
-    #expect(successCredential == nil)
-    #expect(refreshCredentialUseCaseSpy.callAsFunctionCallsCount == 0)
-    #expect(!viewModel.isLoading)
-    #expect(!viewModel.isErrorPresented)
+    #expect(viewModel.title == L10n.tkDisplayrefreshTitle)
+    #expect(viewModel.body == L10n.tkDisplayrefreshBody)
+  }
+
+  @Test(arguments: [CredentialStatus.revoked, .valid])
+  func isUpdateEnabled_reflectsCredentialRevocationStatus(status: CredentialStatus) throws {
+    var credential = credential
+    let index = try #require(credential.bundleItems.firstIndex {
+      $0.id == credential.nextPresentableBundleItemId
+    })
+    credential.bundleItems[index].status = status
+
+    let viewModel = CredentialDetailUpdateViewModel(credential: credential)
+
+    #expect(viewModel.isUpdateEnabled == (status != .revoked))
   }
 
   // MARK: Private
@@ -142,4 +155,15 @@ struct CredentialDetailUpdateViewModelTests {
   private let analyticsProvider: MockProvider
   private let refreshCredentialUseCaseSpy: RefreshVerifiableCredentialUseCaseProtocolSpy
   private let viewModel: CredentialDetailUpdateViewModel
+
+  private func makeViewModelWithoutRefreshToken() -> CredentialDetailUpdateViewModel {
+    var credentialWithoutRefreshToken = credential
+    credentialWithoutRefreshToken.authentication = CredentialAuthentication(
+      accessToken: credentialWithoutRefreshToken.authentication.accessToken,
+      tokenType: credentialWithoutRefreshToken.authentication.tokenType,
+      refreshToken: nil,
+      dpopBinding: credentialWithoutRefreshToken.authentication.dpopBinding)
+    return CredentialDetailUpdateViewModel(credential: credentialWithoutRefreshToken)
+  }
+
 }

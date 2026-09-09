@@ -10,7 +10,6 @@ import Spyable
 @Spyable
 public protocol DeclinePresentationUseCaseProtocol {
   func callAsFunction(context: PresentationRequestContext) async throws -> PresentationResponse?
-  func callAsFunction(url: URL) async throws -> PresentationResponse?
 }
 
 // MARK: - DeclinePresentationUseCase
@@ -30,7 +29,7 @@ struct DeclinePresentationUseCase: DeclinePresentationUseCaseProtocol {
         return nil
       }
       do {
-        let presentationResponse = try await presentationRequestService.decline(url: responseUri, with: .accessDenied)
+        let presentationResponse = try await presentationRequestService.decline(url: responseUri, state: context.requestObject.state, with: .accessDenied)
         recordActivity(context: context)
         return presentationResponse
       } catch {
@@ -41,10 +40,6 @@ struct DeclinePresentationUseCase: DeclinePresentationUseCaseProtocol {
         throw error
       }
     }
-  }
-
-  func callAsFunction(url: URL) async throws -> PresentationResponse? {
-    try await presentationRequestService.decline(url: url, with: .accessDenied)
   }
 
   // MARK: Private

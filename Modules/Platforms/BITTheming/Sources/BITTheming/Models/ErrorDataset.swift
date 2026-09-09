@@ -91,6 +91,7 @@ public struct ErrorDataset {
 extension ErrorDataset {
   public static func governanceError(rawErrorCode: String, errorDescription: String) -> Self {
     ErrorDataset([
+      .hero(image: ThemingAssets.shield.swiftUIImage),
       .title(L10n.tkErrorGovernanceErrorPrimary),
       .body(L10n.tkErrorGovernanceErrorSecondary),
       .caption(rawErrorCode),

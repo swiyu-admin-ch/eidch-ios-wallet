@@ -194,10 +194,13 @@ extension AppDelegate {
           SettingsDestinations.settings
         case .betaId:
           InvitationDestinations.betaId
-        case .otp:
-          OTPDestinations.intro
         case .eIDRequest:
-          EIDRequestDestinations.introduction
+          let isOTPEnabled = Container.shared.isOTPEnabledUseCase()
+          if isOTPEnabled() {
+            OTPDestinations.intro
+          } else {
+            EIDRequestDestinations.introduction
+          }
         case .autoVerification(let caseId):
           EIDRequestDestinations.avWelcome(caseId: caseId)
         case .obtainConsent(let caseId):

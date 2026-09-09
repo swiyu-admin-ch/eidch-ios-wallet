@@ -39,11 +39,6 @@ targets:
         APPLICATION_EXTENSION_API_ONLY: YES
         SKIP_INSTALL: YES
       configs:
-        Dev (debug):
-          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.dev
-          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev.notification-extension
-          CODE_SIGN_IDENTITY: iPhone Developer
-          PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.dev.notification-extension
         Ref (debug):
           APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.ref
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref.notification-extension
@@ -68,11 +63,6 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.sandbox.notification-extension
           CODE_SIGN_IDENTITY: iPhone Developer
           PROVISIONING_PROFILE_SPECIFIER: match Development ch.admin.foitt.swiyu.sandbox.notification-extension
-        Dev (release):
-          APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.dev
-          PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.dev.notification-extension
-          CODE_SIGN_IDENTITY: iPhone Distribution
-          PROVISIONING_PROFILE_SPECIFIER: match AppStore ch.admin.foitt.swiyu.dev.notification-extension
         Ref (release):
           APP_GROUP_IDENTIFIER: group.ch.admin.foitt.swiyu.ref
           PRODUCT_BUNDLE_IDENTIFIER: ch.admin.foitt.swiyu.ref.notification-extension

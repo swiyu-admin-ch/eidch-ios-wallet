@@ -76,12 +76,32 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     }
   }
 
+  func testGenerate_dcApiJwtWithoutOrigin_throwsMissingDcApiOrigin() throws {
+    let requestedClaims = [Self.mockPath1]
+
+    XCTAssertThrowsError(
+      try generator.generate(
+        requestObject: RequestObjectJWS.Mock.sampleProximityDcApiJWT.payload,
+        credential: mockCredential,
+        keyPair: mockKeyPair,
+        paths: requestedClaims,
+        withOrigin: nil))
+    { error in
+      guard case AnyVpTokenGeneratorError.missingDcApiOrigin = error else {
+        return XCTFail("Expected AnyVpTokenGeneratorError.missingDcApiOrigin, got \(error)")
+      }
+    }
+
+    // We must throw before the key binding JWS is encoded.
+    XCTAssertNil(jwsEncoderMock.receivedKeyPair)
+  }
+
   func testGenerate_dcApiWithoutOrigin_throwsMissingDcApiOrigin() throws {
     let requestedClaims = [Self.mockPath1]
 
     XCTAssertThrowsError(
       try generator.generate(
-        requestObject: RequestObjectJWS.Mock.sampleProximity.payload,
+        requestObject: RequestObjectJWS.Mock.sampleProximityDcApi.payload,
         credential: mockCredential,
         keyPair: mockKeyPair,
         paths: requestedClaims,

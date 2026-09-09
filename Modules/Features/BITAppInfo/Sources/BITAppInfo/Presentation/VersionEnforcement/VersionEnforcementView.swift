@@ -9,8 +9,8 @@ struct VersionEnforcementView: View {
 
   // MARK: Lifecycle
 
-  init(viewModel: VersionEnforcementViewModel) {
-    _viewModel = State(initialValue: viewModel)
+  init(router: VersionEnforcementRouterRoutes, versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate) {
+    _viewModel = State(wrappedValue: Container.shared.versionEnforcementViewModel((router, versionEnforcement, delegate)))
   }
 
   // MARK: Internal
@@ -46,8 +46,8 @@ struct VersionEnforcementView: View {
   @ViewBuilder
   private func content() -> some View {
     switch viewModel.enforcementType {
-    case .forced:
-      VersionEnforcementForcedView(message: viewModel.message)
+    case .forced(let appStoreUrl):
+      VersionEnforcementForcedView(appStoreUrl: appStoreUrl, message: viewModel.message)
 
     case .optional:
       VersionEnforcementOptionalView(message: viewModel.message, onDismiss: viewModel.dismissToHomeScreen)

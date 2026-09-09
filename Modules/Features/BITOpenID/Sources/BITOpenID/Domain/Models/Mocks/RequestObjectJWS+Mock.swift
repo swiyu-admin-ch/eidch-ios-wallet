@@ -28,21 +28,25 @@ extension RequestObjectJWS: Mockable {
       fromFile: "request-object-jwt", dateFormatter: .secondsSince1970, bundle: Bundle.module)
 
     public static let sample: RequestObjectJWS = createObject(header: jwsHeader)
-    public static let sampleProximity: RequestObjectJWS = createObject(header: jwsHeader, payload: proximityRequest)
+    /// Proximity request using the deprecated `dc_api.jwt` response mode.
+    public static let sampleProximityDcApiJWT: RequestObjectJWS = createObject(header: jwsHeader, payload: proximityDcApiJWTRequest)
+    /// Proximity request using the `dc_api` response mode that's replacing ``sampleProximityDcApiJWT``.
+    public static let sampleProximityDcApi: RequestObjectJWS = createObject(header: jwsHeader, payload: proximityDcApiRequest)
     public static let sampleWithoutVerifiedQuery: RequestObjectJWS = createObject(header: jwsHeader, payload: sampleWithoutVerifiedQueryPayload)
     public static let identityTrustedWithoutVerifiedQuery: RequestObjectJWS = createObject(header: jwsHeader, payload: identityTrustedWithoutVerifiedQueryPayload)
     public static let sampleWithProtectedClaims: RequestObjectJWS = createObject(header: jwsHeader, payload: sampleWithProtectedClaimsPayload)
     public static let sampleWithProtectedClaimsWithoutIdentityTrust: RequestObjectJWS = createObject(header: jwsHeader, payload: sampleWithProtectedClaimsWithoutIdentityTrustPayload)
     public static let clientIdDIDPrefix: RequestObjectJWS = createObject(header: jwsHeader, payload: clientIdDidPrefixPayload)
 
-    public static let verifierAttestationPrefix: RequestObjectJWS = createObject(header: verifierAttestationJwsHeader, payload: proximityRequest, rawJWS: rawJWSWithAttestationHeader)
-    public static let verifierAttestationMissingHeader: RequestObjectJWS = createObject(header: verifierAttestationJwsHeader, payload: proximityRequest, rawJWS: rawJWSWithoutAttestationHeader)
+    public static let verifierAttestationPrefix: RequestObjectJWS = createObject(header: verifierAttestationJwsHeader, payload: proximityDcApiJWTRequest, rawJWS: rawJWSWithAttestationHeader)
+    public static let verifierAttestationMissingHeader: RequestObjectJWS = createObject(header: verifierAttestationJwsHeader, payload: proximityDcApiJWTRequest, rawJWS: rawJWSWithoutAttestationHeader)
     public static let kidMismatch: RequestObjectJWS = createObject(header: jwsHeaderDidMismatch, payload: clientIdDidPrefixPayload)
 
     public static let withoutIdentityTrust: RequestObjectJWS = createObject(header: jwsHeader, payload: withoutIdentityTrustPayload)
     public static let unsupportedResponseType: RequestObjectJWS = createObject(header: jwsHeader, payload: unsupportedResponseTypePayload)
     public static let transactionData: RequestObjectJWS = createObject(header: jwsHeader, payload: transactionDataPayload)
     public static let missingState: RequestObjectJWS = createObject(header: jwsHeader, payload: missingStatePayload)
+    public static let missingStateDcApi: RequestObjectJWS = createObject(header: jwsHeader, payload: missingStateDcApiPayload)
     public static let noVct: RequestObjectJWS = createObject(header: jwsHeader, payload: noVctPayload)
     public static let clientIdMismatch: RequestObjectJWS = createObject(header: jwsHeader, payload: clientIdMismatchPayload)
     public static let unsupportedAlgorithm: RequestObjectJWS = createObject(header: JWSHeader(algorithm: JWTAlgorithm.ES384))
@@ -52,7 +56,8 @@ extension RequestObjectJWS: Mockable {
     // MARK: Private
 
     private static let clientIdMismatchPayload: RequestObjectJWT = Mocker.decode(fromFile: "request-object-jwt-client-id-mismatch", dateFormatter: .secondsSince1970, bundle: Bundle.module)
-    private static let proximityRequest: RequestObjectJWT = Mocker.decode(fromFile: "request-object-dc-api-proximity", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    private static let proximityDcApiJWTRequest: RequestObjectJWT = Mocker.decode(fromFile: "request-object-dc-api-jwt-proximity", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    private static let proximityDcApiRequest: RequestObjectJWT = Mocker.decode(fromFile: "request-object-dc-api-proximity", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let sampleWithoutVerifiedQueryPayload: RequestObjectJWT = Mocker.decode(fromFile: "request-object-jwt-without-verified-query", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let identityTrustedWithoutVerifiedQueryPayload: RequestObjectJWT = Mocker.decode(fromFile: "request-object-jwt-with-identity-trust-without-verified-query", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let sampleWithProtectedClaimsPayload: RequestObjectJWT = Mocker.decode(fromFile: "request-object-jwt-with-protected-claims", dateFormatter: .secondsSince1970, bundle: Bundle.module)
@@ -63,6 +68,7 @@ extension RequestObjectJWS: Mockable {
     private static let unsupportedResponseTypePayload: RequestObjectJWT = decode(fromFile: "request-object-jwt-unsupported-response-type", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let transactionDataPayload: RequestObjectJWT = decode(fromFile: "request-object-jwt-with-transaction-data", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let missingStatePayload: RequestObjectJWT = decode(fromFile: "request-object-jwt-missing-state", dateFormatter: .secondsSince1970, bundle: Bundle.module)
+    private static let missingStateDcApiPayload: RequestObjectJWT = decode(fromFile: "request-object-jwt-missing-state-dc-api", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let audienceIssuerMismatchPayload: RequestObjectJWT = decode(fromFile: "request-object-jwt-audience-mismatch", dateFormatter: .secondsSince1970, bundle: Bundle.module)
     private static let noAudiencePayload: RequestObjectJWT = decode(fromFile: "request-object-jwt-no-audience", dateFormatter: .secondsSince1970, bundle: Bundle.module)
 

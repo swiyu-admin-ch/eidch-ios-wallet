@@ -55,7 +55,7 @@ struct FetchPresentationRequestUseCaseTests {
 
     #expect(serviceSpy.fetchFromCallsCount == 1)
     #expect(serviceSpy.fetchFromReceivedUrl == urlMock)
-    #expect(serviceSpy.declineUrlWithCallsCount == 0)
+    #expect(serviceSpy.declineUrlStateWithCallsCount == 0)
 
     #expect(getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingCallsCount == 1)
     #expect(
@@ -82,7 +82,7 @@ struct FetchPresentationRequestUseCaseTests {
 
     #expect(serviceSpy.fetchFromCallsCount == 1)
     #expect(serviceSpy.fetchFromReceivedUrl == urlMock)
-    #expect(serviceSpy.declineUrlWithCallsCount == 0)
+    #expect(serviceSpy.declineUrlStateWithCallsCount == 0)
 
     #expect(getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingCallsCount == 1)
     #expect(
@@ -144,7 +144,7 @@ struct FetchPresentationRequestUseCaseTests {
 
     #expect(serviceSpy.fetchFromCallsCount == 1)
     #expect(serviceSpy.fetchFromReceivedUrl == urlMock)
-    #expect(serviceSpy.declineUrlWithCallsCount == 0)
+    #expect(serviceSpy.declineUrlStateWithCallsCount == 0)
 
     #expect(getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingCallsCount == 1)
     #expect(
@@ -181,7 +181,7 @@ struct FetchPresentationRequestUseCaseTests {
 
     #expect(serviceSpy.fetchFromCallsCount == 1)
     #expect(serviceSpy.fetchFromReceivedUrl == urlMock)
-    #expect(serviceSpy.declineUrlWithCallsCount == 0)
+    #expect(serviceSpy.declineUrlStateWithCallsCount == 0)
 
     #expect(getCompatibleCredentialsUseCaseSpy.callAsFunctionUsingCallsCount == 1)
     #expect(
@@ -233,7 +233,8 @@ struct FetchPresentationRequestUseCaseTests {
       _ = try await useCase(url: urlMock)
     }
 
-    #expect(serviceSpy.declineUrlWithReceivedArguments?.error == .accessDenied)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.error == .accessDenied)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.state == stateMock)
   }
 
   @Test
@@ -244,7 +245,8 @@ struct FetchPresentationRequestUseCaseTests {
       _ = try await useCase(url: urlMock)
     }
 
-    #expect(serviceSpy.declineUrlWithReceivedArguments?.error == .accessDenied)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.error == .accessDenied)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.state == stateMock)
   }
 
   @Test
@@ -278,6 +280,7 @@ struct FetchPresentationRequestUseCaseTests {
   func execute_serviceInvalidRequestError_declinesAndThrowsInvalidRequest() async throws {
     serviceSpy.fetchFromThrowableError = PresentationRequestError.invalid(
       responseURL: Self.requestObjectMock.payload.responseUri,
+      state: stateMock,
       responseError: .invalidRequest)
 
     await #expect(throws: FetchPresentationRequestUseCaseError.invalidRequest("invalid_request")) {
@@ -285,16 +288,18 @@ struct FetchPresentationRequestUseCaseTests {
     }
 
     #expect(
-      serviceSpy.declineUrlWithReceivedArguments?.url == Self.requestObjectMock.payload.responseUri)
-    #expect(serviceSpy.declineUrlWithReceivedArguments?.error == .invalidRequest)
+      serviceSpy.declineUrlStateWithReceivedArguments?.url == Self.requestObjectMock.payload.responseUri)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.error == .invalidRequest)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.state == stateMock)
   }
 
   @Test
   func execute_declineReturnsPresentationResponse_forwardsResponseWithError() async {
     let presentationResponse = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
-    serviceSpy.declineUrlWithReturnValue = presentationResponse
+    serviceSpy.declineUrlStateWithReturnValue = presentationResponse
     serviceSpy.fetchFromThrowableError = PresentationRequestError.invalid(
       responseURL: Self.requestObjectMock.payload.responseUri,
+      state: stateMock,
       responseError: .invalidRequest)
 
     await #expect(
@@ -308,9 +313,10 @@ struct FetchPresentationRequestUseCaseTests {
 
   @Test
   func execute_declineReturnsInvalidRedirectUri_throwsValidationError() async {
-    serviceSpy.declineUrlWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
+    serviceSpy.declineUrlStateWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
     serviceSpy.fetchFromThrowableError = PresentationRequestError.invalid(
       responseURL: Self.requestObjectMock.payload.responseUri,
+      state: stateMock,
       responseError: .invalidRequest)
 
     await #expect(throws: PresentationResponseValidationError.invalidRedirectUri) {
@@ -320,12 +326,13 @@ struct FetchPresentationRequestUseCaseTests {
 
   @Test
   func
-    execute_servicetransactionDataNotSupportedError_declinesAndThrowsTransactionDataNotSupported()
+    execute_serviceTransactionDataNotSupportedError_declinesAndThrowsTransactionDataNotSupported()
     async throws
   {
     serviceSpy.fetchFromThrowableError =
       PresentationRequestError.transactionDataNotSupported(
         responseURL: Self.requestObjectMock.payload.responseUri,
+        state: stateMock,
         responseError: .invalidRequest)
 
     await #expect(
@@ -335,8 +342,29 @@ struct FetchPresentationRequestUseCaseTests {
     }
 
     #expect(
-      serviceSpy.declineUrlWithReceivedArguments?.url == Self.requestObjectMock.payload.responseUri)
-    #expect(serviceSpy.declineUrlWithReceivedArguments?.error == .invalidRequest)
+      serviceSpy.declineUrlStateWithReceivedArguments?.url == Self.requestObjectMock.payload.responseUri)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.state == stateMock)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.error == .invalidRequest)
+  }
+
+  @Test
+  func
+    execute_serviceUnknownRegistryError_declinesAndThrowsUnknownRegistry()
+    async throws
+  {
+    serviceSpy.fetchFromThrowableError =
+      PresentationRequestError.unknownRegistry(
+        responseURL: Self.requestObjectMock.payload.responseUri,
+        state: stateMock,
+        responseError: .invalidRequest)
+
+    await #expect(throws: FetchPresentationRequestUseCaseError.unknownRegistry()) {
+      _ = try await useCase(url: urlMock)
+    }
+
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.url == Self.requestObjectMock.payload.responseUri)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.state == stateMock)
+    #expect(serviceSpy.declineUrlStateWithReceivedArguments?.error == .invalidRequest)
   }
 
   @Test
@@ -383,6 +411,7 @@ struct FetchPresentationRequestUseCaseTests {
   private static let requestObjectMock = RequestObjectJWS.Mock.sample
 
   private let urlMock = URL(string: "https://example.com")!
+  private let stateMock = "1234"
 
   private let requestObjectJWSMock = RequestObjectJWS.Mock.sample
   private let compatibleCredentialsMock: [CompatibleCredential] = [CompatibleCredential.Mock.BIT]

@@ -114,9 +114,9 @@ extension FetchVersionEnforcementUseCase {
   private func enforcementType(for preferredVersion: VersionEnforcement.Response.Version, _ response: VersionEnforcement.Response) -> VersionEnforcementType {
     switch preferredVersion.updateType {
     case .forced:
-      .forced
+      .forced(storeURL: response.storeURL)
     case .optional:
-      hasVersionExpired(preferredVersion, response: response) ? .forced : .optional
+      hasVersionExpired(preferredVersion, response: response) ? .forced(storeURL: response.storeURL) : .optional
     }
   }
 }

@@ -135,7 +135,7 @@ extension PresentationRequestContext {
 
   enum Mock {
     static let vcSdJwtSample = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
-    static let vcSdJwtSampleProximity = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sampleProximity, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: TrustInformation(identity: .trustedCheckApp, vcSchema: .trusted), transport: .proximity)
+    static let vcSdJwtSampleProximity = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sampleProximityDcApiJWT, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: TrustInformation(identity: .trustedCheckApp, vcSchema: .trusted), transport: .proximity)
     static let sampleWithoutVerifiedQuery = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sampleWithoutVerifiedQuery, compatibleCredentials: CompatibleCredential.Mock.array)
     static let vcSdJwtWithoutVerifiedQuery = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.identityTrustedWithoutVerifiedQuery, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
     static let vcSdJwtWithoutIdentityTrust = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.withoutIdentityTrust, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.untrustedIdentity)

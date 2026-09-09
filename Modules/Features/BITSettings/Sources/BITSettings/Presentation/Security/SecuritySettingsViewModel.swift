@@ -1,7 +1,6 @@
 import BITAppAuth
 import BITCore
 import BITL10n
-import BITLocalAuthentication
 import BITTheming
 import Factory
 import Foundation
@@ -15,7 +14,7 @@ final class SecuritySettingsViewModel {
   // MARK: Internal
 
   var biometricType = BiometricType.none
-  var biometricUsage = BiometricState.disabled
+  var biometricState = BiometricState.disabled
 
   var toast: Toast?
   var isAnalyticsEnabled = false
@@ -23,11 +22,11 @@ final class SecuritySettingsViewModel {
   var destination: SettingsDestinations?
 
   var isBiometricEnabled: Bool {
-    biometricUsage == .enabled
+    biometricState == .enabled
   }
 
   var biometricItemDetail: String? {
-    switch biometricUsage {
+    switch biometricState {
     case .disabled,
          .enabled: nil
     case .declined: L10n.tkSettingsSecurityPrivacySecurityDisableBiometricDetail(biometricType.text, biometricType.text)
@@ -36,7 +35,7 @@ final class SecuritySettingsViewModel {
   }
 
   var biometricItemType: SettingsItemType {
-    switch biometricUsage {
+    switch biometricState {
     case .disabled,
          .enabled: .toggle(isOn: .constant(isBiometricEnabled)) {
         self.destination = .biometrics(self)
@@ -70,12 +69,11 @@ final class SecuritySettingsViewModel {
   @ObservationIgnored @Injected(\.isAnalyticsEnabledUseCase) private var isAnalyticsEnabledUseCase: IsAnalyticsEnabledUseCaseProtocol
   @ObservationIgnored @Injected(\.updateAnalyticsStatusUseCase) private var updateAnalyticsStatusUseCase: UpdateAnalyticStatusUseCaseProtocol
   @ObservationIgnored @Injected(\.getBiometricTypeUseCase) private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocol
-  @ObservationIgnored @Injected(\.internalContext) private var context: LAContextProtocol
   @ObservationIgnored @Injected(\.getBiometricStateUseCase) private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocol
   @ObservationIgnored @Injected(\.applicationService) private var applicationService
 
   private func fetchBiometricStatus() {
-    biometricUsage = getBiometricStateUseCase()
+    biometricState = getBiometricStateUseCase()
     biometricType = getBiometricTypeUseCase()
   }
 

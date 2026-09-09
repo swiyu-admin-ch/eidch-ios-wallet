@@ -28,7 +28,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     #expect(trustStatementValidatorSpy.validateForCallsCount == 1)
     #expect(trustStatementValidatorSpy.validateForReceivedTrustStatement?.payload == trustStatementMock.payload)
     #expect(trustStatementValidatorSpy.validateForReceivedSubjectDid == clientId)
-    #expect(!presentationRequestServiceSpy.declineUrlWithCalled)
+    #expect(!presentationRequestServiceSpy.declineUrlStateWithCalled)
   }
 
   @Test
@@ -38,7 +38,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     try await useCase(requestObject: requestObjectMock, requestedClaims: [pointer, otherProtectedPointer, otherPointer])
 
     #expect(trustStatementValidatorSpy.validateForCallsCount == 1)
-    #expect(!presentationRequestServiceSpy.declineUrlWithCalled)
+    #expect(!presentationRequestServiceSpy.declineUrlStateWithCalled)
   }
 
   @Test
@@ -48,7 +48,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     try await useCase(requestObject: requestObjectMock, requestedClaims: [pointer])
 
     #expect(trustStatementValidatorSpy.validateForCallsCount == 0)
-    #expect(!presentationRequestServiceSpy.declineUrlWithCalled)
+    #expect(!presentationRequestServiceSpy.declineUrlStateWithCalled)
   }
 
   @Test
@@ -56,7 +56,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     try await useCase(requestObject: requestObjectMock, requestedClaims: [])
 
     #expect(trustStatementValidatorSpy.validateForCallsCount == 0)
-    #expect(!presentationRequestServiceSpy.declineUrlWithCalled)
+    #expect(!presentationRequestServiceSpy.declineUrlStateWithCalled)
   }
 
   @Test
@@ -64,7 +64,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     try await useCase(requestObject: RequestObjectJWS.Mock.sampleWithoutVerifiedQuery.payload, requestedClaims: [pointer])
 
     #expect(trustStatementValidatorSpy.validateForCallsCount == 0)
-    #expect(!presentationRequestServiceSpy.declineUrlWithCalled)
+    #expect(!presentationRequestServiceSpy.declineUrlStateWithCalled)
     #expect(analyticsProvider.logCounter == 0)
   }
 
@@ -73,7 +73,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     try await useCase(requestObject: RequestObjectJWS.Mock.sampleWithProtectedClaimsWithoutIdentityTrust.payload, requestedClaims: [pointer])
 
     #expect(trustStatementValidatorSpy.validateForCallsCount == 0)
-    #expect(!presentationRequestServiceSpy.declineUrlWithCalled)
+    #expect(!presentationRequestServiceSpy.declineUrlStateWithCalled)
     #expect(analyticsProvider.logCounter == 0)
   }
 
@@ -86,9 +86,10 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     {
       try await useCase(requestObject: jws.payload, requestedClaims: [pointer])
     }
-    #expect(presentationRequestServiceSpy.declineUrlWithCallsCount == 1)
-    #expect(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.url == URL(string: "https://eid.admin.ch/response"))
-    #expect(presentationRequestServiceSpy.declineUrlWithReceivedArguments?.error == .accessDenied)
+    #expect(presentationRequestServiceSpy.declineUrlStateWithCallsCount == 1)
+    #expect(presentationRequestServiceSpy.declineUrlStateWithReceivedArguments?.url == URL(string: "https://eid.admin.ch/response"))
+    #expect(presentationRequestServiceSpy.declineUrlStateWithReceivedArguments?.error == .accessDenied)
+    #expect(presentationRequestServiceSpy.declineUrlStateWithReceivedArguments?.state == "1234")
     #expect(analyticsProvider.logCounter == 1)
   }
 
@@ -101,7 +102,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     {
       try await useCase(requestObject: requestObjectMock, requestedClaims: [pointer, [.string("other")]])
     }
-    #expect(presentationRequestServiceSpy.declineUrlWithCallsCount == 1)
+    #expect(presentationRequestServiceSpy.declineUrlStateWithCallsCount == 1)
     #expect(analyticsProvider.logCounter == 1)
   }
 
@@ -114,21 +115,21 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
     {
       try await useCase(requestObject: requestObjectMock, requestedClaims: [pointer])
     }
-    #expect(presentationRequestServiceSpy.declineUrlWithCallsCount == 1)
+    #expect(presentationRequestServiceSpy.declineUrlStateWithCallsCount == 1)
     #expect(analyticsProvider.logCounter == 1)
   }
 
   @Test
   func call_declineThrows_ignoresDeclineError() async {
     trustStatementValidatorSpy.validateForThrowingError = TrustStatementServiceError.validationFailed
-    presentationRequestServiceSpy.declineUrlWithThrowableError = TestingError.error
+    presentationRequestServiceSpy.declineUrlStateWithThrowableError = TestingError.error
 
     await #expect(
       throws: ValidateVerificationAuthorizationTrustStatementUseCaseError.unauthorizedVerification())
     {
       try await useCase(requestObject: requestObjectMock, requestedClaims: [pointer])
     }
-    #expect(presentationRequestServiceSpy.declineUrlWithCallsCount == 1)
+    #expect(presentationRequestServiceSpy.declineUrlStateWithCallsCount == 1)
     #expect(analyticsProvider.logCounter == 1)
   }
 
@@ -136,7 +137,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
   func call_declineWithPresentationResponse_throwsWithResponse() async {
     let presentationResponse = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
     trustStatementValidatorSpy.validateForThrowingError = TrustStatementServiceError.validationFailed
-    presentationRequestServiceSpy.declineUrlWithReturnValue = presentationResponse
+    presentationRequestServiceSpy.declineUrlStateWithReturnValue = presentationResponse
 
     await #expect(
       throws: ValidateVerificationAuthorizationTrustStatementUseCaseError.unauthorizedVerification(
@@ -149,7 +150,7 @@ struct ValidateVerificationAuthorizationTrustStatementUseCaseTests {
   @Test
   func call_declineWithInvalidRedirectUri_throwsInvalidRedirectUri() async {
     trustStatementValidatorSpy.validateForThrowingError = TrustStatementServiceError.validationFailed
-    presentationRequestServiceSpy.declineUrlWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
+    presentationRequestServiceSpy.declineUrlStateWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
 
     await #expect(throws: PresentationResponseValidationError.invalidRedirectUri) {
       try await useCase(requestObject: requestObjectMock, requestedClaims: [pointer])

@@ -1,19 +1,13 @@
+import BITEIDRequest
 import BITL10n
 import BITTheming
 import Factory
+import NavigatorUI
 import SwiftUI
 
-// MARK: - HomeEmptyStateView
+// MARK: - CredentialEmptyStateView
 
-struct HomeEmptyStateView: View {
-
-  // MARK: Lifecycle
-
-  init(onOrderEID: @escaping () -> Void, onGetBetaId: @escaping () -> Void) {
-    isEIDRequestEnabled = Container.shared.isEIDRequestFeatureEnabled()
-    self.onOrderEID = onOrderEID
-    self.onGetBetaId = onGetBetaId
-  }
+struct CredentialEmptyStateView: View {
 
   // MARK: Internal
 
@@ -28,12 +22,12 @@ struct HomeEmptyStateView: View {
 
   // MARK: Private
 
+  @Environment(\.navigator) private var navigator
   @Environment(\.sizeCategory) private var sizeCategory
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-  private let isEIDRequestEnabled: Bool
-  private let onOrderEID: () -> Void
-  private let onGetBetaId: () -> Void
+  @Injected(\.isEIDRequestFeatureEnabled) private var isEIDRequestEnabled
+  @Injected(\.isBetaIdEnabled) private var isBetaIdEnabled
 
   private var hidesButtonIcon: Bool {
     dynamicTypeSize >= .accessibility2
@@ -49,7 +43,9 @@ struct HomeEmptyStateView: View {
         orderEIDButton
       }
 
-      getBetaIdButton
+      if isBetaIdEnabled {
+        getBetaIdButton
+      }
     }
     .frame(maxWidth: .infinity)
     .padding(.horizontal, .x6)
@@ -82,13 +78,17 @@ struct HomeEmptyStateView: View {
   }
 
   private var orderEIDButton: some View {
-    primaryButton(L10n.tkMenuHomeListOrderEid, action: onOrderEID)
+    primaryButton(
+      L10n.menuOrderEidBody,
+      action: { navigator.navigate(to: HomeDestinations.external(.eIDRequest)) })
       .accessibilitySortPriority(AccessibilityPriority.x3.rawValue)
       .padding(.top, .x6)
   }
 
   private var getBetaIdButton: some View {
-    primaryButton(L10n.tkGlobalGetbetaidPrimarybutton, action: onGetBetaId)
+    primaryButton(
+      L10n.getBetaIdButton,
+      action: { navigator.navigate(to: HomeDestinations.external(.betaId)) })
       .accessibilitySortPriority(AccessibilityPriority.x4.rawValue)
       .padding(.top, .x4)
   }
