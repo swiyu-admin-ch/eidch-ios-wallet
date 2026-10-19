@@ -5,7 +5,7 @@ import Moya
 
 // MARK: - EnvironmentFeatureFlags
 
-struct EnvironmentFeatureFlags {
+struct EnvironmentFeatureFlags: Sendable {
   let isEIDRequestFeatureEnabled: Bool
   let isBetaIdEnabled: Bool
   let isNonComplianceEnabled: Bool
@@ -20,8 +20,7 @@ struct EnvironmentFeatureFlags {
 
 // MARK: - EnvironmentBaseURLs
 
-struct EnvironmentBaseURLs {
-  let versionEnforcement: String
+struct EnvironmentBaseURLs: Sendable {
   let sidBase: String
   let avBase: String
   let nonComplianceBase: String
@@ -30,16 +29,23 @@ struct EnvironmentBaseURLs {
   let pushNotification: String
 }
 
+// MARK: - EnvironmentVersionEnforcementConfiguration
+
+struct EnvironmentVersionEnforcementConfiguration: Sendable {
+  let serviceURL: String
+  let trustedDids: [String]
+}
+
 // MARK: - EnvironmentAttestationConfiguration
 
-struct EnvironmentAttestationConfiguration {
+struct EnvironmentAttestationConfiguration: Sendable {
   let serviceURL: String
   let trustedDids: [String]
 }
 
 // MARK: - EnvironmentTrustConfiguration
 
-struct EnvironmentTrustConfiguration {
+struct EnvironmentTrustConfiguration: @unchecked Sendable {
   let registryMapping: [String: String]
   let statusRegistryMapping: [String: String]
   let trustedDidsV1: [String: [String]]
@@ -67,14 +73,14 @@ extension EnvironmentTrustConfiguration {
 
 // MARK: - EnvironmentNetworkingConfiguration
 
-struct EnvironmentNetworkingConfiguration {
+struct EnvironmentNetworkingConfiguration: @unchecked Sendable {
   let plugins: [PluginType]
   let userAgent: String
 }
 
 // MARK: - EnvironmentConfig
 
-struct EnvironmentConfig {
+struct EnvironmentConfig: Sendable {
 
   static var current: Self? {
     #if REF
@@ -91,6 +97,7 @@ struct EnvironmentConfig {
   let trust: EnvironmentTrustConfiguration
   let features: EnvironmentFeatureFlags
   let baseURLs: EnvironmentBaseURLs
+  let versionEnforcement: EnvironmentVersionEnforcementConfiguration
   let attestation: EnvironmentAttestationConfiguration?
   let networking: EnvironmentNetworkingConfiguration
 }

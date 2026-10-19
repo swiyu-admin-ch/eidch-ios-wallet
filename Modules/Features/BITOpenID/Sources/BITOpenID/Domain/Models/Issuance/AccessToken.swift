@@ -11,7 +11,7 @@ enum AccessTokenError: Error {
 /// OAuth 2.0 Access Token
 /// https://www.rfc-editor.org/rfc/rfc6749.html
 /// https://www.rfc-editor.org/rfc/rfc9449.html
-public struct AccessToken: Codable, Equatable {
+public struct AccessToken: Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 
@@ -40,7 +40,7 @@ public struct AccessToken: Codable, Equatable {
 
   // MARK: Public
 
-  public enum TokenType: String, Codable, Hashable, Equatable {
+  public enum TokenType: String, Codable, Hashable, Equatable, Sendable {
     case bearer
     case dpop
   }

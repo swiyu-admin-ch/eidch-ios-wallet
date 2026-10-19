@@ -4,7 +4,7 @@ import Spyable
 // MARK: - VerifyOTPUseCaseProtocol
 
 @Spyable
-protocol VerifyOTPUseCaseProtocol {
+protocol VerifyOTPUseCaseProtocol: Sendable {
   func callAsFunction(email: String, code: String) async throws
 }
 

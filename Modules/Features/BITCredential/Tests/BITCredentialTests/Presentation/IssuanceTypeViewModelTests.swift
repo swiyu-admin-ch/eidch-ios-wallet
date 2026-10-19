@@ -15,24 +15,31 @@ final class IssuanceTypeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
     Container.shared.preferredUserLocales.register { ["en-CH"] }
 
-    getCredentialIssuanceSummaryUseCaseSpy = GetCredentialIssuanceSummaryUseCaseProtocolSpy()
-    Container.shared.getCredentialIssuanceSummaryUseCase.register { @MainActor in self.getCredentialIssuanceSummaryUseCaseSpy }
+    let getCredentialIssuanceSummaryUseCaseSpy = GetCredentialIssuanceSummaryUseCaseProtocolSpy()
+    self.getCredentialIssuanceSummaryUseCaseSpy = getCredentialIssuanceSummaryUseCaseSpy
+    Container.shared.getCredentialIssuanceSummaryUseCase.register { @MainActor in getCredentialIssuanceSummaryUseCaseSpy }
     let getCredentialRefreshThresholdUseCaseSpy = GetCredentialRefreshThresholdUseCaseProtocolSpy()
     getCredentialRefreshThresholdUseCaseSpy.callAsFunctionForReturnValue = 1
-    Container.shared.getCredentialRefreshThresholdUseCase.register { getCredentialRefreshThresholdUseCaseSpy }
+    Container.shared.getCredentialRefreshThresholdUseCase.register { @MainActor in getCredentialRefreshThresholdUseCaseSpy }
     self.getCredentialRefreshThresholdUseCaseSpy = getCredentialRefreshThresholdUseCaseSpy
 
-    getCredentialUseCaseSpy = GetCredentialUseCaseProtocolSpy()
-    Container.shared.getCredentialUseCase.register { @MainActor in self.getCredentialUseCaseSpy }
-    refreshCredentialUseCaseSpy = RefreshVerifiableCredentialUseCaseProtocolSpy()
-    Container.shared.refreshCredentialUseCase.register { @MainActor in self.refreshCredentialUseCaseSpy }
+    let getCredentialUseCaseSpy = GetCredentialUseCaseProtocolSpy()
+    self.getCredentialUseCaseSpy = getCredentialUseCaseSpy
+    Container.shared.getCredentialUseCase.register { @MainActor in getCredentialUseCaseSpy }
+    let refreshCredentialUseCaseSpy = RefreshVerifiableCredentialUseCaseProtocolSpy()
+    self.refreshCredentialUseCaseSpy = refreshCredentialUseCaseSpy
+    Container.shared.refreshCredentialUseCase.register { @MainActor in refreshCredentialUseCaseSpy }
 
     viewModel = IssuanceTypeViewModel(credentialId: VerifiableCredential.Mock.sample.id)
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testOnAppear_refreshesCredentialFromDatabase() async {

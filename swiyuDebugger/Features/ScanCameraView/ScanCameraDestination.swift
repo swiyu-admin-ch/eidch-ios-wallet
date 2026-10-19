@@ -39,7 +39,7 @@ extension ScanCameraDestination {
 
   // MARK: Internal
 
-  static func == (lhs: ScanCameraDestination, rhs: ScanCameraDestination) -> Bool {
+  nonisolated static func == (lhs: ScanCameraDestination, rhs: ScanCameraDestination) -> Bool {
     switch (lhs, rhs) {
     case (.result(let leftResult, let leftURL), .result(let rightResult, let rightURL)):
       leftResult == rightResult && leftURL == rightURL
@@ -52,7 +52,7 @@ extension ScanCameraDestination {
     }
   }
 
-  func hash(into hasher: inout Hasher) {
+  nonisolated func hash(into hasher: inout Hasher) {
     switch self {
     case .result(let result, let invitationURL):
       hasher.combine("result")

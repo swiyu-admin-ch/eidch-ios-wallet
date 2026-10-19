@@ -4,7 +4,7 @@ import Foundation
 // MARK: - TokenStatusList
 
 /// This class contains all registered claims which are specified by https://www.ietf.org/archive/id/draft-ietf-oauth-status-list-03.html#name-status-list-token
-public struct TokenStatusList: JWT, Codable, Equatable {
+public struct TokenStatusList: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 
@@ -47,7 +47,7 @@ public struct TokenStatusList: JWT, Codable, Equatable {
 
 extension TokenStatusList {
 
-  public struct StatusList: Codable, Equatable {
+  public struct StatusList: Codable, Equatable, Sendable {
     public let bits: Int
     public let list: String
     public let aggregationUri: String? = nil

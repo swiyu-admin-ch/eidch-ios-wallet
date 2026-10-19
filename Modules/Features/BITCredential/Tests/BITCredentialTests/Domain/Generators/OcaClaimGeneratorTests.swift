@@ -297,8 +297,11 @@ final class OcaClaimGeneratorTests: XCTestCase {
   private var generator = OcaClaimGenerator()
 
   private func registerMocks() {
-    Container.shared.overlayAttributeDateParser.register { self.overlayAttributeDateParserSpy }
-    Container.shared.imageValidator.register { self.imageValidator }
+    let overlayAttributeDateParserSpy = overlayAttributeDateParserSpy
+    let imageValidator = imageValidator
+
+    Container.shared.overlayAttributeDateParser.register { overlayAttributeDateParserSpy }
+    Container.shared.imageValidator.register { imageValidator }
   }
 
   private func success() {

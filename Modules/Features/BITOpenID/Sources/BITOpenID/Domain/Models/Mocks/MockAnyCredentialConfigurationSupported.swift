@@ -1,7 +1,7 @@
 import BITAnyCredentialFormat
 import Foundation
 
-public struct MockAnyCredentialConfigurationSupported: CredentialIssuerMetadata.AnyCredentialConfigurationSupported {
+public struct MockAnyCredentialConfigurationSupported: CredentialIssuerMetadata.AnyCredentialConfigurationSupported, Sendable {
 
   // MARK: Lifecycle
 
@@ -24,5 +24,7 @@ public struct MockAnyCredentialConfigurationSupported: CredentialIssuerMetadata.
   public var proofTypesSupported = [CredentialIssuerMetadata.ProofType]()
 
   public var credentialMetadata: CredentialIssuerMetadata.CredentialMetadata?
+
+  public var credentialRefreshDisabled = false
 
 }

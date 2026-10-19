@@ -1,6 +1,6 @@
 import BITClaimsPathPointer
 
-public struct OverlayBundleAttribute: Equatable {
+public struct OverlayBundleAttribute: Equatable, Sendable {
 
   // MARK: Lifecycle
 

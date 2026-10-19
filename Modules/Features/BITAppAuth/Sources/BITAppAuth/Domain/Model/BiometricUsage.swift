@@ -5,7 +5,7 @@
 /// This is intentionally limited to the user's choice. Whether biometrics are actually usable
 /// (permission granted, enrolled, hardware present) is a system fact read live from `LAContext`,
 /// never persisted here.
-public enum BiometricUsage: String {
+public enum BiometricUsage: String, Sendable {
   case enabled
   case disabled
 }

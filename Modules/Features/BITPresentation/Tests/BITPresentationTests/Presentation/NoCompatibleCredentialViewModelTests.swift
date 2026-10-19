@@ -14,18 +14,21 @@ final class NoCompatibleCredentialViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-
-    registerMocks()
+  override func setUp() async throws {
+    try await super.setUp()
+    Container.shared.preferredUserLanguageCodes.register { ["en"] }
+    let declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
+    self.declinePresentationUseCase = declinePresentationUseCase
+    Container.shared.declinePresentationUseCase.register { @MainActor in declinePresentationUseCase }
     viewModel = NoCompatibleCredentialViewModel(context: context)
   }
 
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
-    Container.shared.preferredUserLanguageCodes.register { ["en"] }
-
-    viewModel = NoCompatibleCredentialViewModel(context: context)
-
     XCTAssertEqual(viewModel.verifierDisplay.name, "entityName en-US")
     XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
     XCTAssertEqual(viewModel.verifierDisplay.trustInformation, context.trustInformation)
@@ -68,15 +71,9 @@ final class NoCompatibleCredentialViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private var viewModel: NoCompatibleCredentialViewModel!
-  private var declinePresentationUseCase: DeclinePresentationUseCaseProtocolSpy!
-
   private let context = PresentationRequestContext.Mock.vcSdJwtSample
   private let redirectUri = URL(string: "https://verifier.ch")!
 
-  private func registerMocks() {
-    declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
-
-    Container.shared.declinePresentationUseCase.register { @MainActor in self.declinePresentationUseCase }
-  }
+  private var viewModel: NoCompatibleCredentialViewModel!
+  private var declinePresentationUseCase: DeclinePresentationUseCaseProtocolSpy!
 }

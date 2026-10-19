@@ -14,7 +14,7 @@ enum CredentialIssuerMetadataError: Error {
 
 // MARK: - CredentialIssuerMetadata
 
-public struct CredentialIssuerMetadata: Decodable, Changeable {
+public struct CredentialIssuerMetadata: Decodable, Changeable, Sendable {
 
   // MARK: Lifecycle
 
@@ -113,7 +113,7 @@ public struct CredentialIssuerMetadata: Decodable, Changeable {
 // MARK: CredentialIssuerMetadata.BatchCredentialIssuance
 
 extension CredentialIssuerMetadata {
-  public struct BatchCredentialIssuance: Decodable, Equatable {
+  public struct BatchCredentialIssuance: Decodable, Equatable, Sendable {
 
     init(batchSize: Int) {
       self.batchSize = batchSize
@@ -137,7 +137,7 @@ extension CredentialIssuerMetadata {
 
   // MARK: CredentialRequestEncryption
 
-  public struct CredentialRequestEncryption: Decodable, Equatable {
+  public struct CredentialRequestEncryption: Decodable, Equatable, Sendable {
     public let jwks: JWKs
     public let supportedEncryptionAlgorithms: [EncryptionAlgorithm]
     public let supportedZipValues: [CompressionAlgorithm]?
@@ -150,14 +150,14 @@ extension CredentialIssuerMetadata {
       case encryptionRequired = "encryption_required"
     }
 
-    public struct JWKs: Decodable, Equatable {
+    public struct JWKs: Decodable, Equatable, Sendable {
       let keys: [JWK]
     }
   }
 
   // MARK: CredentialRequestEncryption
 
-  public struct CredentialResponseEncryption: Decodable, Equatable {
+  public struct CredentialResponseEncryption: Decodable, Equatable, Sendable {
     public let supportedAlgorithmValues: [KeyManagementAlgorithm]
     public let supportedEncryptionAlgorithms: [EncryptionAlgorithm]
     public let supportedZipValues: [CompressionAlgorithm]?
@@ -174,7 +174,7 @@ extension CredentialIssuerMetadata {
 
 extension CredentialIssuerMetadata {
 
-  public enum ProofType: ProofTypeProcotol, Equatable {
+  public enum ProofType: ProofTypeProcotol, Equatable, Sendable {
     /// Supported types for proof signing as defined in the specification.
     /// - Specification: [OpenID for Verifiable Credential Issuance 1.0](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-13.html#section-11.2.3-2.11.2.5.2.1)
     case jwt(JwtProofType)
@@ -205,7 +205,7 @@ extension CredentialIssuerMetadata {
     var algorithms: [String] { get }
   }
 
-  public struct JwtProofType: Decodable, Equatable {
+  public struct JwtProofType: Decodable, Equatable, Sendable {
 
     // MARK: Lifecycle
 
@@ -237,7 +237,7 @@ extension CredentialIssuerMetadata {
     let keyAttestationRequirements: KeyAttestationRequirements?
   }
 
-  public struct KeyAttestationRequirements: Decodable, Equatable {
+  public struct KeyAttestationRequirements: Decodable, Equatable, Sendable {
     enum CodingKeys: String, CodingKey {
       case keyStorage = "key_storage"
     }
@@ -245,7 +245,7 @@ extension CredentialIssuerMetadata {
     public let keyStorage: [KeyStorageSecurityLevel]
   }
 
-  public enum CryptographicBindingMethod: String {
+  public enum CryptographicBindingMethod: String, Sendable {
     case jwk
   }
 }
@@ -253,8 +253,8 @@ extension CredentialIssuerMetadata {
 // MARK: CredentialIssuerMetadata.CredentialMetadata
 
 extension CredentialIssuerMetadata {
-  public struct CredentialMetadata: Codable, Equatable {
-    public struct Claim: Codable, Equatable {
+  public struct CredentialMetadata: Codable, Equatable, Sendable {
+    public struct Claim: Codable, Equatable, Sendable {
 
       // MARK: Lifecycle
 
@@ -273,7 +273,7 @@ extension CredentialIssuerMetadata {
 
       // MARK: Public
 
-      public struct Display: Codable, Equatable, DisplayLocalizable {
+      public struct Display: Codable, Equatable, DisplayLocalizable, Sendable {
 
         // MARK: Lifecycle
 
@@ -296,7 +296,7 @@ extension CredentialIssuerMetadata {
       public let display: [Display]?
     }
 
-    public struct Display: Codable, Equatable, DisplayLocalizable {
+    public struct Display: Codable, Equatable, DisplayLocalizable, Sendable {
 
       // MARK: Lifecycle
 
@@ -343,7 +343,7 @@ extension CredentialIssuerMetadata {
 // MARK: CredentialIssuerMetadata.Display
 
 extension CredentialIssuerMetadata {
-  public struct Display: Codable, Equatable, DisplayLocalizable {
+  public struct Display: Codable, Equatable, DisplayLocalizable, Sendable {
 
     // MARK: Lifecycle
 
@@ -368,7 +368,7 @@ extension CredentialIssuerMetadata {
 // MARK: CredentialIssuerMetadata.Logo
 
 extension CredentialIssuerMetadata {
-  public struct Logo: Codable, Equatable {
+  public struct Logo: Codable, Equatable, Sendable {
 
     // MARK: Lifecycle
 

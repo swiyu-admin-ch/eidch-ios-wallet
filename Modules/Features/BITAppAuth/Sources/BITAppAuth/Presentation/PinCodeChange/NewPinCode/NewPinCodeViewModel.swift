@@ -6,6 +6,7 @@ import SwiftUI
 
 // MARK: - NewPinCodeViewModel
 
+@MainActor
 @Observable
 class NewPinCodeViewModel: Vibrating {
 

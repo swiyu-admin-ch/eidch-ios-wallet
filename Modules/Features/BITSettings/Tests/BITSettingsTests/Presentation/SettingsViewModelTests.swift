@@ -3,21 +3,28 @@ import XCTest
 @testable import BITOTP
 @testable import BITSettings
 
-// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional
 
 @MainActor
 final class SettingsViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    isOTPEnabledUseCase = IsOTPEnabledUseCaseProtocolSpy()
-    setOTPEnabledUseCase = SetOTPEnabledUseCaseProtocolSpy()
+  override func setUp() async throws {
+    try await super.setUp()
+    let isOTPEnabledUseCase = IsOTPEnabledUseCaseProtocolSpy()
+    self.isOTPEnabledUseCase = isOTPEnabledUseCase
+    let setOTPEnabledUseCase = SetOTPEnabledUseCaseProtocolSpy()
+    self.setOTPEnabledUseCase = setOTPEnabledUseCase
 
     Container.shared.isOTPDebugToggleEnabled.register { true }
-    Container.shared.isOTPEnabledUseCase.register { @MainActor in self.isOTPEnabledUseCase }
-    Container.shared.setOTPEnabledUseCase.register { @MainActor in self.setOTPEnabledUseCase }
+    Container.shared.isOTPEnabledUseCase.register { @MainActor in isOTPEnabledUseCase }
+    Container.shared.setOTPEnabledUseCase.register { @MainActor in setOTPEnabledUseCase }
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInit_whenDebugToggleDisabled_hidesToggleAndDoesNotReadFlag() {

@@ -46,6 +46,7 @@ struct CredentialIntroductionView: View {
 
 // MARK: - CredentialIntroductionViewModel
 
+@MainActor
 class CredentialIntroductionViewModel {
 
   // MARK: Lifecycle

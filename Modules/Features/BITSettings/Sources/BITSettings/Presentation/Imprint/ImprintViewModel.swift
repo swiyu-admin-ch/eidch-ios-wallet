@@ -2,6 +2,7 @@ import BITAppInfo
 import Factory
 import Foundation
 
+@MainActor
 @Observable
 class ImprintViewModel {
 

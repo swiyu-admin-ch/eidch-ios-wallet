@@ -3,5 +3,5 @@ import RealmSwift
 
 public class ActivityClaimEntity: EmbeddedObject {
 
-  @Persisted public var credentialClaimId: UUID
+  @Persisted public var path: String
 }

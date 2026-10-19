@@ -4,6 +4,7 @@ import UIKit
 
 // MARK: - BITAppearance
 
+@MainActor
 public class BITAppearance {
 
   public static func setup() {

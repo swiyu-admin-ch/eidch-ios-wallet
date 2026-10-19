@@ -150,10 +150,11 @@ struct InvitationErrorMapperTests {
   @Test("Presentation request errors are mapped to their dedicated case", arguments: [
     (FetchPresentationRequestUseCaseError.invalidRequest("invalid_request"), InvitationError.invalidPresentationRequest("invalid_request")),
     (.transactionDataNotSupported("transaction_data"), .transactionDataNotSupported("transaction_data")),
-    (.unverifiedActor(), .invalidPresentationRequest("unverified_actor")),
+    (.unverifiedActor(), .unverifiedActor),
     (.unknownRegistry(), .unknownRegistry),
     (.expired, .expiredPresentationRequest),
     (.notFound, .notFoundPresentationRequest),
+    (.noInternetConnection, .noConnection),
   ])
   func presentationRequestErrorsAreMappedToTheirDedicatedCase(_ error: FetchPresentationRequestUseCaseError, _ expected: InvitationError) {
     #expect(map(error) as? InvitationError == expected)
@@ -172,15 +173,10 @@ struct InvitationErrorMapperTests {
     (.transactionDataNotSupported("transaction_data"), .transactionDataNotSupported("transaction_data")),
     (.expired, .expiredPresentationRequest),
     (.notFound, .notFoundPresentationRequest),
+    (.noInternetConnection, .noConnection),
   ])
   func proximityEngagementErrorsAreMappedToTheirDedicatedCase(_ error: StartProximityEngagementUseCaseError, _ expected: InvitationError) {
     #expect(map(error) as? InvitationError == expected)
-  }
-
-  @Test("An invalid proximity origin is mapped to invalidQRCode and keeps the underlying error")
-  func invalidProximityOriginIsMappedToInvalidQRCode() throws {
-    let underlying = try #require(invalidQRCodeUnderlying(map(StartProximityEngagementUseCaseError.invalidOrigin)))
-    #expect(underlying as? StartProximityEngagementUseCaseError == .invalidOrigin)
   }
 
   // MARK: GovernanceError

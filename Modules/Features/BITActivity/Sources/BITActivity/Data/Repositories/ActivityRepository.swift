@@ -1,4 +1,3 @@
-import BITCrypto
 import BITDataStore
 import BITEntities
 import Combine
@@ -7,7 +6,9 @@ import Foundation
 
 // MARK: - ActivityRepository
 
-struct ActivityRepository: ActivityRepositoryProtocol {
+/// `CurrentValueSubject` is a Combine reference type that predates `Sendable`. The repository is
+/// registered `.cached`, so the subject is deliberately shared, and Combine synchronises it internally.
+struct ActivityRepository: ActivityRepositoryProtocol, @unchecked Sendable {
 
   // MARK: Internal
 
@@ -19,6 +20,7 @@ struct ActivityRepository: ActivityRepositoryProtocol {
     try database.save(entity)
     let credential = try getCredential(for: credentialId)
     try database.write {
+      snapshot(credential, into: entity)
       credential.activities.append(entity)
     }
     return entity.id
@@ -39,16 +41,15 @@ struct ActivityRepository: ActivityRepositoryProtocol {
 
   func delete(_ id: UUID) throws {
     let entity = try getEntity(id)
-    let images = entity.actorImages
+    let candidates = OrphanCandidates(entity)
     try database.delete(entity)
-    try database.removeUnreferencedImages(images)
+    try databaseCleaner.deleteOrphans(among: candidates)
   }
 
   func deleteAll() throws {
     let activities = try database.get(CredentialActivityEntity.self)
-    let images = activities.actorImages()
     try database.delete(activities)
-    try database.removeUnreferencedImages(images)
+    try databaseCleaner.deleteAllOrphans()
   }
 
   func isActivityHistoryEnabled() throws -> Bool {
@@ -65,6 +66,7 @@ struct ActivityRepository: ActivityRepositoryProtocol {
   private static let activityHistoryEnabledKey = "isActivityHistoryEnabled"
 
   @Injected(\.dataStore) private var database
+  @Injected(\.databaseCleaner) private var databaseCleaner
   @Injected(\.activityListItemFactory) private var activityListItemFactory
   @Injected(\.activityDetailFactory) private var activityDetailFactory
 
@@ -73,6 +75,12 @@ struct ActivityRepository: ActivityRepositoryProtocol {
       throw ActivityRepositoryError.notFound
     }
     return credential
+  }
+
+  private func snapshot(_ credential: CredentialEntity, into entity: CredentialActivityEntity) {
+    entity.credentialRendering = credential.credentialRendering
+    entity.rawCredentialData = credential.rawCredentialData
+    entity.issuer = credential.verifiableCredential?.issuer ?? ""
   }
 
   private func getEntity(_ id: UUID) throws -> CredentialActivityEntity {
@@ -85,13 +93,10 @@ struct ActivityRepository: ActivityRepositoryProtocol {
     for display in actorDisplays {
       guard let data = display.image else { continue }
 
-      let hash = ImageHasher.hash(data)
+      let image = ImageEntity(data)
 
-      if try database.get(ImageEntity.self, forPrimaryKey: hash) != nil { continue }
+      if try database.get(ImageEntity.self, forPrimaryKey: image.contentHash) != nil { continue }
 
-      let image = ImageEntity()
-      image.imageHash = hash
-      image.data = data
       try database.save(image)
     }
   }

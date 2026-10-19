@@ -6,7 +6,7 @@ import Spyable
 // MARK: - PresentationRequestServiceProtocol
 
 @Spyable
-public protocol PresentationRequestServiceProtocol {
+public protocol PresentationRequestServiceProtocol: Sendable {
   func fetch(from url: URL) async throws -> RequestObjectJWS
   func decline(url: URL, state: String?, with error: PresentationErrorRequestBody.Code) async throws -> PresentationResponse?
 }
@@ -75,6 +75,7 @@ struct PresentationRequestService: PresentationRequestServiceProtocol {
     switch error {
     case .presentationRequestExpired: .expired
     case .presentationRequestNotFound: .presentationRequestNotFound
+    case .noConnection: .noInternetConnection
     }
   }
 

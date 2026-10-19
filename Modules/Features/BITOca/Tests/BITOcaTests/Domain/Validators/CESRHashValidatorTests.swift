@@ -16,8 +16,9 @@ final class CESRHashValidatorTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    mockJsonCanonicalizer = JsonCanonicalizerProtocolSpy()
-    Container.shared.jsonCanonicalizer.register { self.mockJsonCanonicalizer }
+    let mockJsonCanonicalizer = JsonCanonicalizerProtocolSpy()
+    self.mockJsonCanonicalizer = mockJsonCanonicalizer
+    Container.shared.jsonCanonicalizer.register { mockJsonCanonicalizer }
     validator = OcaCESRHashValidator()
 
     setupSuccessState()

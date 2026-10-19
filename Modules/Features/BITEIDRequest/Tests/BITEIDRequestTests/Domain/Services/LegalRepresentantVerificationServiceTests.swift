@@ -87,11 +87,13 @@ final class LegalRepresentantVerificationServiceTests: XCTestCase {
   }
 
   private func registerMocks() {
-    repositorySpy = SIDRepositoryProtocolSpy()
-    qrCodeGeneratorSpy = QRCodeGeneratorProtocolSpy()
+    let repositorySpy = SIDRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    let qrCodeGeneratorSpy = QRCodeGeneratorProtocolSpy()
+    self.qrCodeGeneratorSpy = qrCodeGeneratorSpy
 
-    Container.shared.sidRepository.register { self.repositorySpy }
-    Container.shared.qrCodeGenerator.register { self.qrCodeGeneratorSpy }
+    Container.shared.sidRepository.register { repositorySpy }
+    Container.shared.qrCodeGenerator.register { qrCodeGeneratorSpy }
   }
 
 }

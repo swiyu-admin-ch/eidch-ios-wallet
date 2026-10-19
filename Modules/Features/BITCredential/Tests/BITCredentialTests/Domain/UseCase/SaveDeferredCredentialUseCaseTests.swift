@@ -13,7 +13,8 @@ final class SaveDeferredCredentialUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    Container.shared.credentialRepository.register { self.credentialRepository }
+    let credentialRepository = credentialRepository
+    Container.shared.credentialRepository.register { credentialRepository }
     credentialRepository.createDeferredCredentialReturnValue = mockCredential
     useCase = SaveDeferredCredentialUseCase()
   }

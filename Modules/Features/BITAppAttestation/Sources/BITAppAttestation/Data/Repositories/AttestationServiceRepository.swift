@@ -8,7 +8,7 @@ import Spyable
 // MARK: - AttestationServiceRepositoryProtocol
 
 @Spyable
-public protocol AttestationServiceRepositoryProtocol {
+public protocol AttestationServiceRepositoryProtocol: Sendable {
   func fetchChallenge() async throws -> AttestationChallenge
   func fetchClientAttestation(_ requestBody: ClientAttestationRequestBody) async throws -> ClientAttestation
   func fetchKeyAttestation(body: KeyAttestationRequestBody, clientAttestation: ClientAttestation) async throws -> KeyAttestation

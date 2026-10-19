@@ -12,10 +12,10 @@ extension EventInterceptor {
 
 // MARK: - UserActivityDetectorTests
 
-// swiftlint:disable all
+// swiftlint:disable implicitly_unwrapped_optional
 
 @MainActor
-@Suite("UserActivityDetectorTests")
+@Suite("UserActivityDetectorTests", .serialized)
 final class UserActivityDetectorTests {
 
   // MARK: Lifecycle
@@ -24,10 +24,6 @@ final class UserActivityDetectorTests {
     Container.shared.reset()
     Container.shared.userInactivityTimeout.register { Self.timeoutInterval }
 
-    timeoutNotificationObserver = NotificationCenter.default.addObserver(forName: .userInactivityTimeout, object: nil, queue: nil) { [weak self] _ in
-      self?.timeoutNotificationCount += 1
-    }
-
     let detector = UserActivityDetector()
     self.detector = detector
     EventInterceptor.eventHandler = { [weak detector] event in
@@ -35,10 +31,7 @@ final class UserActivityDetectorTests {
     }
   }
 
-  deinit {
-    if let timeoutNotificationObserver {
-      NotificationCenter.default.removeObserver(timeoutNotificationObserver)
-    }
+  isolated deinit {
     EventInterceptor.resetEventHandlerForTesting()
     Container.shared.reset()
   }
@@ -49,9 +42,7 @@ final class UserActivityDetectorTests {
   func notificationIsSentOnTimeout() async {
     detector.sendEvent(UIEvent())
 
-    try? await Task.sleep(nanoseconds: 300_000_000)
-
-    #expect(timeoutNotificationCount == 1)
+    await expectTimeoutNotifications(1, within: 300_000_000)
   }
 
   @Test
@@ -60,11 +51,8 @@ final class UserActivityDetectorTests {
       NotificationCenter.default.post(name: UIAccessibility.elementFocusedNotification, object: nil)
     }
 
-    try? await Task.sleep(nanoseconds: 250_000_000)
-    #expect(timeoutNotificationCount == 0)
-
-    try? await Task.sleep(nanoseconds: 150_000_000)
-    #expect(timeoutNotificationCount == 1)
+    await expectTimeoutNotifications(0, within: 250_000_000)
+    await expectTimeoutNotifications(1, within: 150_000_000)
   }
 
   @Test
@@ -77,41 +65,27 @@ final class UserActivityDetectorTests {
       NotificationCenter.default.post(name: UIAccessibility.elementFocusedNotification, object: nil)
     }
 
-    try? await Task.sleep(nanoseconds: 300_000_000)
-    #expect(timeoutNotificationCount == 0)
-
-    try? await Task.sleep(nanoseconds: 150_000_000)
-    #expect(timeoutNotificationCount == 1)
+    await expectTimeoutNotifications(0, within: 300_000_000)
+    await expectTimeoutNotifications(1, within: 150_000_000)
   }
 
   @Test
   func pauseNotificationPreventsTimeoutUntilResume() async {
     NotificationCenter.default.post(name: .pauseUserInactivityTimeout, object: nil)
 
-    try? await Task.sleep(nanoseconds: 300_000_000)
-    #expect(timeoutNotificationCount == 0)
+    await expectTimeoutNotifications(0, within: 300_000_000)
 
     NotificationCenter.default.post(name: .resumeUserInactivityTimeout, object: nil)
 
-    try? await Task.sleep(nanoseconds: 300_000_000)
-    #expect(timeoutNotificationCount == 1)
+    await expectTimeoutNotifications(1, within: 300_000_000)
   }
 
   @Test
   func disabledTimeoutNeverSchedulesNotification() async {
     NotificationCenter.default.post(name: .pauseUserInactivityTimeout, object: nil)
-    if let timeoutNotificationObserver {
-      NotificationCenter.default.removeObserver(timeoutNotificationObserver)
-      self.timeoutNotificationObserver = nil
-    }
 
     Container.shared.reset()
     Container.shared.userInactivityTimeout.register { .infinity }
-
-    timeoutNotificationCount = 0
-    timeoutNotificationObserver = NotificationCenter.default.addObserver(forName: .userInactivityTimeout, object: nil, queue: nil) { [weak self] _ in
-      self?.timeoutNotificationCount += 1
-    }
 
     let detector = UserActivityDetector()
     self.detector = detector
@@ -122,9 +96,7 @@ final class UserActivityDetectorTests {
     NotificationCenter.default.post(name: UIAccessibility.elementFocusedNotification, object: nil)
     detector.sendEvent(UIEvent())
 
-    try? await Task.sleep(nanoseconds: 300_000_000)
-
-    #expect(timeoutNotificationCount == 0)
+    await expectTimeoutNotifications(0, within: 300_000_000)
   }
 
   @Test
@@ -137,11 +109,8 @@ final class UserActivityDetectorTests {
       NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
-    try? await Task.sleep(nanoseconds: 250_000_000)
-    #expect(timeoutNotificationCount == 0)
-
-    try? await Task.sleep(nanoseconds: 350_000_000)
-    #expect(timeoutNotificationCount == 1)
+    await expectTimeoutNotifications(0, within: 250_000_000)
+    await expectTimeoutNotifications(1, within: 350_000_000)
   }
 
   @Test
@@ -150,11 +119,8 @@ final class UserActivityDetectorTests {
       NotificationCenter.default.post(name: .didLoginClose, object: nil)
     }
 
-    try? await Task.sleep(nanoseconds: 250_000_000)
-    #expect(timeoutNotificationCount == 0)
-
-    try? await Task.sleep(nanoseconds: 250_000_000)
-    #expect(timeoutNotificationCount == 1)
+    await expectTimeoutNotifications(0, within: 250_000_000)
+    await expectTimeoutNotifications(1, within: 250_000_000)
   }
 
   @Test
@@ -174,10 +140,21 @@ final class UserActivityDetectorTests {
 
   // MARK: Private
 
-  private static let timeoutInterval: TimeInterval = 0.2
+  private nonisolated static let timeoutInterval: TimeInterval = 0.2
 
   private var detector: UserActivityDetector!
-  private var timeoutNotificationCount = 0
-  private var timeoutNotificationObserver: NSObjectProtocol?
 
+  /// Observes `.userInactivityTimeout` for the given duration and confirms it is posted exactly `count` times.
+  /// The detector posts the notification synchronously on the main actor, so the count is settled once the wait ends.
+  private func expectTimeoutNotifications(_ count: Int, within nanoseconds: UInt64) async {
+    await confirmation("userInactivityTimeout posted", expectedCount: count) { timedOut in
+      let observer = NotificationCenter.default.addObserver(forName: .userInactivityTimeout, object: nil, queue: nil) { _ in
+        timedOut()
+      }
+      defer {
+        NotificationCenter.default.removeObserver(observer)
+      }
+      try? await Task.sleep(nanoseconds: nanoseconds)
+    }
+  }
 }

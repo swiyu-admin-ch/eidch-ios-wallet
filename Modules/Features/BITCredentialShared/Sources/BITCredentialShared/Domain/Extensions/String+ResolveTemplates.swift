@@ -42,11 +42,11 @@ extension String {
 
   // MARK: Private
 
-  private static let pathReference = Reference(String?.self)
-  private static let joinReference = Reference(String?.self)
-  private static let quoteReference = Reference(Substring.self)
+  private nonisolated(unsafe) static let pathReference = Reference(String?.self)
+  private nonisolated(unsafe) static let joinReference = Reference(String?.self)
+  private nonisolated(unsafe) static let quoteReference = Reference(Substring.self)
 
-  private static let regex = Regex {
+  private nonisolated(unsafe) static let regex = Regex {
     "{{"
     Capture(as: pathReference) {
       ZeroOrMore(.any, .reluctant)
@@ -55,7 +55,7 @@ extension String {
     "}}"
   }
 
-  private static let joinRegex = Regex {
+  private nonisolated(unsafe) static let joinRegex = Regex {
     ".join("
     Capture(as: quoteReference) {
       ChoiceOf {

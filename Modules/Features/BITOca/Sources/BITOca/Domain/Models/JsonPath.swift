@@ -33,14 +33,14 @@ public struct JsonPath: Equatable, Decodable {
 
   // MARK: Private
 
-  private static let validJsonPathRegex = Regex {
+  private nonisolated(unsafe) static let validJsonPathRegex = Regex {
     Anchor.startOfLine
     "$"
     OneOrMore(childSegment)
     Anchor.endOfLine
   }
 
-  private static let childSegment = Regex {
+  private nonisolated(unsafe) static let childSegment = Regex {
     ChoiceOf {
       dotChildSegment
       bracketChildSegment
@@ -48,19 +48,19 @@ public struct JsonPath: Equatable, Decodable {
     }
   }
 
-  private static let dotChildSegment = Regex {
+  private nonisolated(unsafe) static let dotChildSegment = Regex {
     "."
     dotNameCapture
   }
 
-  private static let dotNameReference = Reference(String?.self)
-  private static let dotNameCapture = Capture(as: dotNameReference) {
+  private nonisolated(unsafe) static let dotNameReference = Reference(String?.self)
+  private nonisolated(unsafe) static let dotNameCapture = Capture(as: dotNameReference) {
     childName
   } transform: {
     String($0)
   }
 
-  private static let childName = Regex {
+  private nonisolated(unsafe) static let childName = Regex {
     One(
       CharacterClass(
         .anyOf("_"),
@@ -69,8 +69,8 @@ public struct JsonPath: Equatable, Decodable {
     ZeroOrMore(.word)
   }
 
-  private static let quoteReference = Reference(Substring.self)
-  private static let bracketChildSegment = Regex {
+  private nonisolated(unsafe) static let quoteReference = Reference(Substring.self)
+  private nonisolated(unsafe) static let bracketChildSegment = Regex {
     "["
     Capture(.anyOf("\"'"), as: quoteReference) { $0 }
     bracketNameCapture
@@ -78,15 +78,15 @@ public struct JsonPath: Equatable, Decodable {
     "]"
   }
 
-  private static let bracketNameReference = Reference(String?.self)
-  private static let bracketNameCapture = Capture(as: bracketNameReference) {
+  private nonisolated(unsafe) static let bracketNameReference = Reference(String?.self)
+  private nonisolated(unsafe) static let bracketNameCapture = Capture(as: bracketNameReference) {
     childName
   } transform: {
     String($0)
   }
 
-  private static let arrayReference = Reference(String?.self)
-  private static let arraySegment = Regex {
+  private nonisolated(unsafe) static let arrayReference = Reference(String?.self)
+  private nonisolated(unsafe) static let arraySegment = Regex {
     Capture(as: arrayReference) {
       "["
       ChoiceOf {
@@ -140,7 +140,7 @@ extension String {
   }
 }
 
-private let indexArrayRegex = Regex {
+private nonisolated(unsafe) let indexArrayRegex = Regex {
   "["
   OneOrMore(.digit)
   "]"

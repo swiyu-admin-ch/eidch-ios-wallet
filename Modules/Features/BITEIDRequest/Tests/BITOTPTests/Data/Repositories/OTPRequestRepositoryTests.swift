@@ -13,8 +13,8 @@ final class OTPRequestRepositoryTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
     repository = OTPRequestRepository()
     createSuccessState()
@@ -25,9 +25,10 @@ final class OTPRequestRepositoryTests: XCTestCase {
     }
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
+    Container.shared.reset()
     NetworkContainer.shared.reset()
-    super.tearDown()
+    try await super.tearDown()
   }
 
   func testRequestOTP_success() async throws {
@@ -198,18 +199,23 @@ final class OTPRequestRepositoryTests: XCTestCase {
   }
 
   private func registerMocks() {
-    clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
-    proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
-    userSession = SessionSpy()
+    let clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
+    self.clientAttestationRepository = clientAttestationRepository
+    let proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
+    self.proofOfPossessionGenerator = proofOfPossessionGenerator
+    let userSession = SessionSpy()
+    self.userSession = userSession
     userContext = LAContextProtocolSpy()
     userSession.isLoggedIn = true
     userSession.context = userContext
+    let otpServiceBaseUrl = otpServiceBaseUrl
+    let attestationServiceUrl = attestationServiceUrl
 
-    Container.shared.otpServiceBaseUrl.register { self.otpServiceBaseUrl }
-    Container.shared.attestationServiceUrl.register { self.attestationServiceUrl }
-    Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
-    Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGenerator }
-    Container.shared.userSession.register { self.userSession }
+    Container.shared.otpServiceBaseUrl.register { otpServiceBaseUrl }
+    Container.shared.attestationServiceUrl.register { attestationServiceUrl }
+    Container.shared.clientAttestationRepository.register { clientAttestationRepository }
+    Container.shared.proofOfPossessionGenerator.register { proofOfPossessionGenerator }
+    Container.shared.userSession.register { userSession }
   }
 
   private func assertThrowsOTPError(

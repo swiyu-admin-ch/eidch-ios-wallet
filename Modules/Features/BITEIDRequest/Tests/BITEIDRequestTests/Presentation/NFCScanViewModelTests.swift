@@ -16,13 +16,17 @@ class NFCScanViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-
+  override func setUp() async throws {
+    try await super.setUp()
     Container.shared.reset()
     registerMocks()
-    viewModel = NFCScanViewModel()
     createSuccessCase()
+    viewModel = NFCScanViewModel()
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInitialState_whenSDKInitialized_stateIsReady() {
@@ -125,9 +129,10 @@ class NFCScanViewModelTests: XCTestCase {
   }
 
   func testDidCompleteNfcScan_nfcError_routeToError() async {
-    mockContext = EIDRequestContext.Mock.scanDocumentSample
+    let mockContext = EIDRequestContext.Mock.scanDocumentSample
+    self.mockContext = mockContext
 
-    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in mockContext }
     viewModel = NFCScanViewModel()
 
     let error = AVBeamError.nfcTechnicalError
@@ -148,9 +153,10 @@ class NFCScanViewModelTests: XCTestCase {
   }
 
   func testDidCompleteNfcScan_avError_routeToError() async {
-    mockContext = EIDRequestContext.Mock.scanDocumentSample
+    let mockContext = EIDRequestContext.Mock.scanDocumentSample
+    self.mockContext = mockContext
 
-    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in mockContext }
     viewModel = NFCScanViewModel()
 
     let error = AVBeamError.faceCaptureGeneric
@@ -163,9 +169,10 @@ class NFCScanViewModelTests: XCTestCase {
   }
 
   func testDidCompleteNfcScan_thirdFailure_routeToRetryAndContinue() async {
-    mockContext = EIDRequestContext.Mock.scanDocumentSample
+    let mockContext = EIDRequestContext.Mock.scanDocumentSample
+    self.mockContext = mockContext
 
-    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
+    Container.shared.eidRequestContext.register { @MainActor in mockContext }
     Container.shared.maxFailedNFCScanAttempts.register { 3 }
     viewModel = NFCScanViewModel()
 
@@ -194,15 +201,18 @@ class NFCScanViewModelTests: XCTestCase {
   private var avBeamNFCConfigurator: AVBeamNFCConfiguratorProtocolSpy!
 
   private func registerMocks() {
-    avBeamNFCConfigurator = AVBeamNFCConfiguratorProtocolSpy()
-    avBeam = AVBeamProtocolSpy()
+    let avBeamNFCConfigurator = AVBeamNFCConfiguratorProtocolSpy()
+    self.avBeamNFCConfigurator = avBeamNFCConfigurator
+    let avBeam = AVBeamProtocolSpy()
+    self.avBeam = avBeam
     avBeam.state = .initialized
 
-    mockContext = EIDRequestContext(caseId: mockCaseId, autoVerificationResponse: mockAutoVerificationResponse)
+    let mockContext = EIDRequestContext(caseId: mockCaseId, autoVerificationResponse: mockAutoVerificationResponse)
+    self.mockContext = mockContext
 
-    Container.shared.eidRequestContext.register { @MainActor in self.mockContext }
-    Container.shared.avBeam.register { @MainActor in self.avBeam }
-    Container.shared.avBeamNFCConfigurator.register { @MainActor in self.avBeamNFCConfigurator }
+    Container.shared.eidRequestContext.register { @MainActor in mockContext }
+    Container.shared.avBeam.register { @MainActor in avBeam }
+    Container.shared.avBeamNFCConfigurator.register { @MainActor in avBeamNFCConfigurator }
     Container.shared.maxFailedNFCScanAttempts.register { 3 }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
   }

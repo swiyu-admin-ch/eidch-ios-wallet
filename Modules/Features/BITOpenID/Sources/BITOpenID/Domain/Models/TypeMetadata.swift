@@ -7,7 +7,7 @@ import Foundation
 
 /// TypeMetadata
 /// - Documentation: [SD-JWT-based Verifiable Credentials - Draft 06](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-06.html#name-sd-jwt-vc-type-metadata)
-public struct TypeMetadata: Decodable {
+public struct TypeMetadata: Decodable, Sendable {
 
   // MARK: Public
 
@@ -42,7 +42,7 @@ extension TypeMetadata: Equatable {
 
 extension TypeMetadata {
 
-  public struct Display: Decodable, Equatable {
+  public struct Display: Decodable, Equatable, Sendable {
     public let lang: String
     public let name: String
     public let rendering: Rendering?
@@ -57,7 +57,7 @@ extension TypeMetadata {
 
 extension TypeMetadata.Display {
 
-  public struct Rendering: Decodable, Equatable {
+  public struct Rendering: Decodable, Equatable, Sendable {
 
     // MARK: Public
 

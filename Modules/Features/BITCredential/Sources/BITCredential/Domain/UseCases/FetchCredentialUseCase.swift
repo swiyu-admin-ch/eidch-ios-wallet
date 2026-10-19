@@ -12,7 +12,7 @@ import Spyable
 // MARK: - FetchCredentialUseCaseProtocol
 
 @Spyable
-public protocol FetchCredentialUseCaseProtocol {
+public protocol FetchCredentialUseCaseProtocol: Sendable {
   func execute(from offer: CredentialOffer) async throws -> CredentialProtocol
 }
 
@@ -137,7 +137,7 @@ struct FetchCredentialUseCase: FetchCredentialUseCaseProtocol {
       authentication: authentication)
 
     let savedCredential = try await credentialRepository.create(verifiableCredential: credential)
-    return (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
+    return (try? await checkAndUpdateCredentialStatusUseCase(for: savedCredential)) ?? savedCredential
   }
 
   private func createAuthentication(from authorization: IssuanceAuthorization) throws

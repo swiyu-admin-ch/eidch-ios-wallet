@@ -15,7 +15,7 @@ public enum VcMetadataForVcSdJwtError: Error {
 // MARK: - FetchVcMetadataForCredentialUseCaseProtocol
 
 @Spyable
-public protocol FetchVcMetadataForCredentialUseCaseProtocol {
+public protocol FetchVcMetadataForCredentialUseCaseProtocol: Sendable {
   func execute(anyCredential: AnyCredential) async throws -> (VcSchema?, RawOcaBundle?)
   func execute(metadata: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported) async throws -> (VcSchema?, RawOcaBundle?)
 }

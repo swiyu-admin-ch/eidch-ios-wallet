@@ -12,9 +12,10 @@ final class StartAutoVerificationUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    sidRepository = SIDRepositoryProtocolSpy()
+    let sidRepository = SIDRepositoryProtocolSpy()
+    self.sidRepository = sidRepository
     sidRepository.startAutoVerificationCaseIdAutoVerificationTypeIsNFCAvailableReturnValue = mockAutoVerificationResponse
-    Container.shared.sidRepository.register { self.sidRepository }
+    Container.shared.sidRepository.register { sidRepository }
 
     useCase = StartAutoVerificationUseCase()
   }

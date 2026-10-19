@@ -4,34 +4,41 @@ import XCTest
 @testable import BITEIDRequest
 @testable import BITTestingCore
 
+// MARK: - WalletPairingOfferViewModelTests
+
 @MainActor
 final class WalletPairingOfferViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
+    let pollingManager = WalletPairingPollingProtocolSpy()
+    self.pollingManager = pollingManager
+    let fetchWalletPairingOfferUseCase = FetchWalletPairingOfferUseCaseProtocolSpy()
+    self.fetchWalletPairingOfferUseCase = fetchWalletPairingOfferUseCase
+    let saveWalletPairingIdUseCase = SaveWalletPairingIdUseCaseProtocolSpy()
+    self.saveWalletPairingIdUseCase = saveWalletPairingIdUseCase
+    let context = EIDRequestContext()
+    self.context = context
 
-    pollingManager = WalletPairingPollingProtocolSpy()
-    fetchWalletPairingOfferUseCase = FetchWalletPairingOfferUseCaseProtocolSpy()
-    saveWalletPairingIdUseCase = SaveWalletPairingIdUseCaseProtocolSpy()
-    context = EIDRequestContext()
+    Container.shared.walletPairingPollingManager.register { @MainActor in pollingManager }
+    Container.shared.fetchWalletPairingOfferUseCase.register { @MainActor in fetchWalletPairingOfferUseCase }
+    Container.shared.saveWalletPairingIdUseCase.register { @MainActor in saveWalletPairingIdUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in context }
 
-    Container.shared.walletPairingPollingManager.register { @MainActor in self.pollingManager }
-    Container.shared.fetchWalletPairingOfferUseCase.register { @MainActor in self.fetchWalletPairingOfferUseCase }
-    Container.shared.saveWalletPairingIdUseCase.register { @MainActor in self.saveWalletPairingIdUseCase }
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
-
-    sut = WalletPairingOfferViewModel({ _ in self.didCallHandler = true })
+    sut = WalletPairingOfferViewModel { [weak self] _ in
+      self?.didCallHandler = true
+    }
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     sut = nil
     pollingManager = nil
     fetchWalletPairingOfferUseCase = nil
     saveWalletPairingIdUseCase = nil
     Container.shared.reset()
-    super.tearDown()
+    try await super.tearDown()
   }
 
   func testInit_ShouldSetupCorrectly() {
@@ -159,7 +166,7 @@ final class WalletPairingOfferViewModelTests: XCTestCase {
     if case .walletPairingOfferRejected = sut.destination {
       XCTAssert(true)
     } else {
-      XCTFail("Expected .walletPairingOfferRejected destination, got: \(sut.destination)")
+      XCTFail("Expected .walletPairingOfferRejected destination, got: \(String(describing: sut.destination))")
     }
   }
 

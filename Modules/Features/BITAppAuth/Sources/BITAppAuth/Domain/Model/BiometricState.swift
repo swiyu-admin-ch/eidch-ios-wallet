@@ -1,5 +1,5 @@
 /// Represents the exact state of the Biometric for the app
-public enum BiometricState {
+public enum BiometricState: Sendable {
 
   /// The permission is granted and user accepts to use it
   case enabled

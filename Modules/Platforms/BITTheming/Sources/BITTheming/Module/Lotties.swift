@@ -5,6 +5,7 @@ import Foundation
 
 // MARK: - Lotties
 
+@MainActor
 public enum Lotties {
   public static let lottieBlocks = LottieView(animationFile: "lottie-blocks", in: BundleToken.bundle)
 }

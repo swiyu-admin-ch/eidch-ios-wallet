@@ -13,10 +13,12 @@ final class JWSValidatorTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+    let jwsSignatureValidatorMock = JWSSignatureValidatorMock<RegisteredClaimsJWT>()
+    self.jwsSignatureValidatorMock = jwsSignatureValidatorMock
+    let dateMock = dateMock
 
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
-    Container.shared.currentDate.register { self.dateMock }
+    Container.shared.jwsSignatureValidator.register { jwsSignatureValidatorMock }
+    Container.shared.currentDate.register { dateMock }
 
     validator = JWSValidator()
   }
@@ -24,8 +26,10 @@ final class JWSValidatorTests: XCTestCase {
   func testValidate_validJws_argumentsPassed() async throws {
     try await validator.validate(jwsMock)
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateReceivedJws, jwsMock)
+    let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+    XCTAssertEqual(validateCallsCount, 1)
+    let validateReceivedJws = await jwsSignatureValidatorMock.validateReceivedJws
+    XCTAssertEqual(validateReceivedJws, jwsMock)
   }
 
   func testValidate_validActivatedAtAndExpiredAt_doesNotThrow() async throws {
@@ -48,7 +52,8 @@ final class JWSValidatorTests: XCTestCase {
       XCTAssertEqual(error as? JWSValidatorError, .expired)
     }
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
+    let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+    XCTAssertEqual(validateCallsCount, 0)
   }
 
   func testValidate_invalidActivatedAtAndValidExpiredAt_throwsNotYetActivated() async throws {
@@ -61,7 +66,8 @@ final class JWSValidatorTests: XCTestCase {
       XCTAssertEqual(error as? JWSValidatorError, .notYetActivated)
     }
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
+    let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+    XCTAssertEqual(validateCallsCount, 0)
   }
 
   func testValidate_invalidActivatedAtAndInvalidExpiredAt_throwsNotYetActivated() async throws {
@@ -136,7 +142,8 @@ final class JWSValidatorTests: XCTestCase {
       XCTAssertEqual(error as? JWSValidatorError, .issuedAtInFuture)
     }
 
-    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
+    let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+    XCTAssertEqual(validateCallsCount, 0)
   }
 
   func testValidate_validIssuedAtWithBuffer_doesNotThrow() async throws {

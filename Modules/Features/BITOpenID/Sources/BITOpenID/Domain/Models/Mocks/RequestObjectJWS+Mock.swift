@@ -41,7 +41,6 @@ extension RequestObjectJWS: Mockable {
     public static let verifierAttestationPrefix: RequestObjectJWS = createObject(header: verifierAttestationJwsHeader, payload: proximityDcApiJWTRequest, rawJWS: rawJWSWithAttestationHeader)
     public static let verifierAttestationMissingHeader: RequestObjectJWS = createObject(header: verifierAttestationJwsHeader, payload: proximityDcApiJWTRequest, rawJWS: rawJWSWithoutAttestationHeader)
     public static let kidMismatch: RequestObjectJWS = createObject(header: jwsHeaderDidMismatch, payload: clientIdDidPrefixPayload)
-
     public static let withoutIdentityTrust: RequestObjectJWS = createObject(header: jwsHeader, payload: withoutIdentityTrustPayload)
     public static let unsupportedResponseType: RequestObjectJWS = createObject(header: jwsHeader, payload: unsupportedResponseTypePayload)
     public static let transactionData: RequestObjectJWS = createObject(header: jwsHeader, payload: transactionDataPayload)

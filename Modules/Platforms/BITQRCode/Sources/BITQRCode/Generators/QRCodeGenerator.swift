@@ -5,7 +5,7 @@ import UIKit
 // MARK: - QRCodeGeneratorProtocol
 
 @Spyable
-public protocol QRCodeGeneratorProtocol {
+public protocol QRCodeGeneratorProtocol: Sendable {
   /// Generate a QR code based on the following parameters
   ///
   /// - Parameters:

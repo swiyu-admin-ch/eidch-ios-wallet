@@ -96,20 +96,20 @@ struct InvitationErrorMapper: InvitationErrorMapping {
       case .transactionDataNotSupported(let errorCode, _):
         return InvitationError.transactionDataNotSupported(errorCode)
       case .unverifiedActor:
-        return InvitationError.invalidPresentationRequest(GovernanceError.unverifiedActor.rawValue)
+        return InvitationError.unverifiedActor
       case .unknownRegistry:
         return InvitationError.unknownRegistry
       case .expired:
         return InvitationError.expiredPresentationRequest
       case .notFound:
         return InvitationError.notFoundPresentationRequest
+      case .noInternetConnection:
+        return InvitationError.noConnection
       }
     }
 
     if let proximityError = error as? StartProximityEngagementUseCaseError {
       switch proximityError {
-      case .invalidOrigin:
-        return InvitationError.invalidQRCode(proximityError)
       case .invalidRequest(let errorCode):
         return InvitationError.invalidPresentationRequest(errorCode)
       case .transactionDataNotSupported(let errorCode):
@@ -120,6 +120,8 @@ struct InvitationErrorMapper: InvitationErrorMapping {
         return InvitationError.expiredPresentationRequest
       case .notFound:
         return InvitationError.notFoundPresentationRequest
+      case .noInternetConnection:
+        return InvitationError.noConnection
       }
     }
 

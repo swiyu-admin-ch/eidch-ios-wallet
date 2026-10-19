@@ -11,6 +11,7 @@ import BITTheming
 
 // MARK: - {{enumName}}
 
+@MainActor
 {{accessModifier}} enum {{enumName}} {
     {% for file in files %}
       {% set base %}{{file.name}}{% endset %}

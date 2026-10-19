@@ -9,6 +9,7 @@ import UIKit
 // MARK: - ChangePinCodeRoutes
 
 @Spyable
+@MainActor
 public protocol ChangePinCodeRoutes {
   func changePinCode()
 }
@@ -28,6 +29,7 @@ extension ChangePinCodeRoutes where Self: RouterProtocol {
 
 // MARK: - ChangePinCodeInternalRoutes
 
+@MainActor
 public protocol ChangePinCodeInternalRoutes: ClosableRoutes {
 
   var context: ChangePinCodeContext { get }

@@ -158,6 +158,17 @@ extension ActivityDetailView {
       .padding(.vertical, .x4)
     }
 
+    @ViewBuilder
+    private func statusBadge(_ viewModel: ActivityCredentialViewModel) -> some View {
+      if let status = viewModel.displayedStatus {
+        CredentialStatusBadge(label: status.statusText(), image: status.statusImage)
+          .badgeType(.plain(status.statusBadgeStyle))
+          .font(.custom.caption1)
+          .padding(.top, 2)
+          .accessibilityLabel(status.statusTextAlt())
+      }
+    }
+
     private func credentialInfo(_ viewModel: ActivityCredentialViewModel, title: String?) -> some View {
       VStack(alignment: .leading, spacing: 0) {
         if let title {
@@ -186,6 +197,7 @@ extension ActivityDetailView {
                   .font(.custom.body)
                   .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
               }
+              statusBadge(viewModel)
             }.accessibilityElement(children: .combine)
           }
           .frame(maxWidth: .infinity, alignment: .leading)

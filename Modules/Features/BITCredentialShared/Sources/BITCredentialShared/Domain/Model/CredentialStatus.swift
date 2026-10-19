@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - CredentialStatus
 
-public enum CredentialStatus: String, Codable, CaseIterable {
+public enum CredentialStatus: String, Codable, CaseIterable, Sendable {
   case valid
   case revoked
   case suspended
@@ -15,7 +15,7 @@ public enum CredentialStatus: String, Codable, CaseIterable {
 
   // MARK: Lifecycle
 
-  init(_ status: BundleItemEntity.CredentialStatus) {
+  public init(_ status: BundleItemEntity.CredentialStatus) {
     switch status {
     case .valid:
       self = .valid
@@ -39,7 +39,7 @@ public enum CredentialStatus: String, Codable, CaseIterable {
 
 extension BundleItemEntity.CredentialStatus {
 
-  init(_ status: CredentialStatus) {
+  public init(_ status: CredentialStatus) {
     switch status {
     case .valid:
       self = .valid

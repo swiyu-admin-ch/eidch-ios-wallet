@@ -3,11 +3,12 @@ import UIKit
 
 // MARK: - EventInterceptor
 
+@MainActor
 enum EventInterceptor {
 
   // MARK: Internal
 
-  static var eventHandler: (UIEvent) -> Void = { userActivityDetector.sendEvent($0) }
+  static var eventHandler: @MainActor (UIEvent) -> Void = { userActivityDetector.sendEvent($0) }
 
   static let userActivityDetector = UserActivityDetector()
 

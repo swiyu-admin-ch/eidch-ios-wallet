@@ -104,12 +104,16 @@ final class AppAttestationKeyRepositoryTests: XCTestCase {
   private var keyManagerSpy: KeyManagerProtocolSpy!
 
   private func registerMocks() {
-    context = LAContextProtocolSpy()
-    keyManagerSpy = KeyManagerProtocolSpy()
+    let context = LAContextProtocolSpy()
+    let keyManagerSpy = KeyManagerProtocolSpy()
+    let attestationKeyAlgorithm = attestationKeyAlgorithm
+    let attestationKeyVaultOptions = attestationKeyVaultOptions
+    self.context = context
+    self.keyManagerSpy = keyManagerSpy
 
-    Container.shared.keyManager.register { self.keyManagerSpy }
-    Container.shared.attestationKeyAlgorithm.register { self.attestationKeyAlgorithm }
-    Container.shared.attestationKeyVaultOptions.register { self.attestationKeyVaultOptions }
+    Container.shared.keyManager.register { keyManagerSpy }
+    Container.shared.attestationKeyAlgorithm.register { attestationKeyAlgorithm }
+    Container.shared.attestationKeyVaultOptions.register { attestationKeyVaultOptions }
   }
 
   private func success() {

@@ -3,7 +3,7 @@ import RegexBuilder
 // MARK: - AttributeType
 
 /// Enum representing the different types of Capture Base attribute types.
-public indirect enum AttributeType: Decodable, Equatable {
+public indirect enum AttributeType: Decodable, Equatable, Sendable {
   case text
   case numeric
   case boolean
@@ -50,7 +50,7 @@ public indirect enum AttributeType: Decodable, Equatable {
   }
 }
 
-private let arrayRegex = Regex {
+private nonisolated(unsafe) let arrayRegex = Regex {
   "Array["
   Capture {
     OneOrMore {

@@ -75,8 +75,9 @@ final class TrustStatementRepositoryTests: XCTestCase {
   }
 
   func testFetchProtectedIssuanceTrustListStatement_decodingError_throwsError() async throws {
-    var jwsDecoderMock = makeJwsDecoderMock()
-    jwsDecoderMock.throwingError = TestingError.error
+    var mutableJwsDecoderMock = makeJwsDecoderMock()
+    mutableJwsDecoderMock.throwingError = TestingError.error
+    let jwsDecoderMock = mutableJwsDecoderMock
     Container.shared.jwsDecoder.register { jwsDecoderMock }
     repository = TrustStatementRepository()
     mockResponse(code: 200, data: ProtectedIssuanceTrustListStatementJWT.Mock.rawJWSData)
@@ -134,12 +135,14 @@ final class TrustStatementRepositoryTests: XCTestCase {
       { _ in .immediate }
     }
 
-    mapperSpy = TrustRegistryUrlMapperProtocolSpy()
-    vcSdJwsDecoderMock = VcSdJWSDecoderMock()
+    let mapperSpy = TrustRegistryUrlMapperProtocolSpy()
+    self.mapperSpy = mapperSpy
+    let vcSdJwsDecoderMock = VcSdJWSDecoderMock<IdentityTrustStatementV1JWT>()
+    self.vcSdJwsDecoderMock = vcSdJwsDecoderMock
     let jwsDecoderMock = makeJwsDecoderMock()
 
-    Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
-    Container.shared.vcSdJwsDecoder.register { self.vcSdJwsDecoderMock }
+    Container.shared.trustRegistryUrlMapper.register { mapperSpy }
+    Container.shared.vcSdJwsDecoder.register { vcSdJwsDecoderMock }
     Container.shared.jwsDecoder.register { jwsDecoderMock }
   }
 

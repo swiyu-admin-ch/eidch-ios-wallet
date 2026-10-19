@@ -6,7 +6,7 @@ import Spyable
 // MARK: - ValidateAttestationsUseCaseProtocol
 
 @Spyable
-public protocol ValidateAttestationsUseCaseProtocol {
+public protocol ValidateAttestationsUseCaseProtocol: Sendable {
   func execute(clientAttestation: ClientAttestation, keyAttestation: KeyAttestation) async throws
 }
 

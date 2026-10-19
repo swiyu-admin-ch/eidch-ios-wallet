@@ -61,11 +61,11 @@ extension Container {
   // MARK: Public
 
   public var onboardingContext: Factory<OnboardingContext> {
-    self { OnboardingContext() }
+    self { @MainActor in OnboardingContext() }
   }
 
   public var onboardingRouter: Factory<OnboardingRouter> {
-    self { OnboardingRouter() }
+    self { @MainActor in OnboardingRouter() }
   }
 
   // MARK: Internal

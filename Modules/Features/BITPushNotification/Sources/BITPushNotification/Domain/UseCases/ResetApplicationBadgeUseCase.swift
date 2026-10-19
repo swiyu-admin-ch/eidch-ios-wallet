@@ -4,7 +4,7 @@ import Spyable
 // MARK: - ResetApplicationBadgeUseCaseProtocol
 
 @Spyable
-public protocol ResetApplicationBadgeUseCaseProtocol {
+public protocol ResetApplicationBadgeUseCaseProtocol: Sendable {
   func callAsFunction() async throws
 }
 

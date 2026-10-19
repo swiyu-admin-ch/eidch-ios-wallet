@@ -5,6 +5,6 @@ import Spyable
 // MARK: - TokenStatusListDecoderProtocol
 
 @Spyable
-protocol TokenStatusListDecoderProtocol {
+protocol TokenStatusListDecoderProtocol: Sendable {
   func decode(_ jws: JWS<TokenStatusList>, index: Int) throws -> StatusCode
 }

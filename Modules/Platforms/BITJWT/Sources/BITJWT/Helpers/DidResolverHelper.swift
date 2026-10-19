@@ -7,7 +7,7 @@ import Spyable
 // MARK: - DidResolverHelperProtocol
 
 @Spyable
-public protocol DidResolverHelperProtocol {
+public protocol DidResolverHelperProtocol: Sendable {
   func getDid(from kid: String?) throws -> String
   func getJWK(from kid: String?) async throws -> JWK
   func getURL(from did: String) throws -> URL

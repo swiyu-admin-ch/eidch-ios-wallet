@@ -380,10 +380,12 @@ final class AttestationServiceRepositoryTests: XCTestCase {
   }
 
   private func registerMocks() {
-    proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
-    didResolverSpy = DidResolverHelperProtocolSpy()
+    let proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    self.proofOfPossessionGenerator = proofOfPossessionGenerator
+    self.didResolverSpy = didResolverSpy
 
-    Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGenerator }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
+    Container.shared.proofOfPossessionGenerator.register { proofOfPossessionGenerator }
+    Container.shared.didResolverHelper.register { didResolverSpy }
   }
 }

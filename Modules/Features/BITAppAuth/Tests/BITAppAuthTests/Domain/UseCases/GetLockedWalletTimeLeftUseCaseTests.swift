@@ -73,12 +73,15 @@ final class GetLockedWalletTimeLeftUseCaseTests: XCTestCase {
   // swiftlint:enable all
 
   private func registerMocks() {
-    lockWalletRepositorySpy = LockWalletRepositoryProtocolSpy()
-    processInfoServiceSpy = ProcessInfoServiceProtocolSpy()
+    let lockWalletRepositorySpy = LockWalletRepositoryProtocolSpy()
+    let processInfoServiceSpy = ProcessInfoServiceProtocolSpy()
+    let delay = delay
+    self.lockWalletRepositorySpy = lockWalletRepositorySpy
+    self.processInfoServiceSpy = processInfoServiceSpy
 
-    Container.shared.lockWalletRepository.register { self.lockWalletRepositorySpy }
-    Container.shared.processInfoService.register { self.processInfoServiceSpy }
-    Container.shared.lockDelay.register { self.delay }
+    Container.shared.lockWalletRepository.register { lockWalletRepositorySpy }
+    Container.shared.processInfoService.register { processInfoServiceSpy }
+    Container.shared.lockDelay.register { delay }
   }
 
   private func success() {

@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - VcSdJwtOcaRendering
 
-public struct VcSdJwtOcaRendering: Decodable, Equatable {
+public struct VcSdJwtOcaRendering: Decodable, Equatable, Sendable {
   public let uri: String
   public let uriIntegrity: IntegrityHash?
 

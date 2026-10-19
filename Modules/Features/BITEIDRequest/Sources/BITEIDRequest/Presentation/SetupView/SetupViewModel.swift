@@ -12,6 +12,7 @@ import SwiftUI
 
 @Observable
 
+@MainActor
 class SetupViewModel {
 
   // MARK: Internal
@@ -32,7 +33,7 @@ class SetupViewModel {
           return
         }
 
-        try? avBeam.initialize(using: AVBeamInitConfig(appId: avBeamAppID))
+        try? await avBeam.initialize(using: AVBeamInitConfig(appId: avBeamAppID))
       }
 
       try await validateDeviceSecurityRequirementsUseCase(context)

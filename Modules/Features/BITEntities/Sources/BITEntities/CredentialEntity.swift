@@ -16,8 +16,7 @@ public class CredentialEntity: Object {
   @Persisted public var deferredCredential: DeferredCredentialEntity?
   @Persisted public var verifiableCredential: VerifiableCredentialEntity?
 
-  @Persisted public var issuerDisplays = List<CredentialIssuerDisplayEntity>()
-  @Persisted public var displays = List<CredentialDisplayEntity>()
+  @Persisted public var credentialRendering: CredentialRenderingEntity?
   @Persisted public var activities = List<CredentialActivityEntity>()
 
 }

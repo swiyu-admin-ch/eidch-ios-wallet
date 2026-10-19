@@ -10,23 +10,30 @@ class LegalRepresentantQRCodeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-
+  override func setUp() async throws {
+    try await super.setUp()
     Container.shared.reset()
 
-    context = EIDRequestContext()
+    let context = EIDRequestContext()
+    self.context = context
     context.caseId = mockCaseId
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
-    getLegalRepresentantVerificationQRCodeUseCase = GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy()
-    updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    let getLegalRepresentantVerificationQRCodeUseCase = GetLegalRepresentantVerificationQRCodeUseCaseProtocolSpy()
+    self.getLegalRepresentantVerificationQRCodeUseCase = getLegalRepresentantVerificationQRCodeUseCase
+    let updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    self.updateEIDRequestCaseStatusUseCase = updateEIDRequestCaseStatusUseCase
 
-    Container.shared.getLegalRepresentantVerificationQRCodeUseCase.register { @MainActor in self.getLegalRepresentantVerificationQRCodeUseCase }
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
+    Container.shared.getLegalRepresentantVerificationQRCodeUseCase.register { @MainActor in getLegalRepresentantVerificationQRCodeUseCase }
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in updateEIDRequestCaseStatusUseCase }
 
     viewModel = LegalRepresentantQRCodeViewModel(caseId: mockCaseId)
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func initialState() {

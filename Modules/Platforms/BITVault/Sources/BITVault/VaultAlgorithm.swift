@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - VaultAlgorithm
 
-public enum VaultAlgorithm: String, CaseIterable {
+public enum VaultAlgorithm: String, CaseIterable, Sendable {
   case eciesEncryptionStandardVariableIVX963SHA256AESGCM = "ES256"
   case eciesEncryptionStandardVariableIVX963SHA512AESGCM = "ES512"
   case ecdhP256 = "ECDH-ES"

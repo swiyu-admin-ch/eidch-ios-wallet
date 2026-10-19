@@ -7,7 +7,7 @@ import Spyable
 // MARK: - OverlayBundleAttributesGeneratorProtocol
 
 @Spyable
-public protocol OverlayBundleAttributesGeneratorProtocol {
+public protocol OverlayBundleAttributesGeneratorProtocol: Sendable {
   func generate(from ocaBundle: OcaBundle) -> [OverlayBundleAttribute]
 }
 

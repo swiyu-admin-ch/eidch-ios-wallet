@@ -9,8 +9,8 @@ import Spyable
 // MARK: - ActivityDetailCredentialFactoryProtocol
 
 @Spyable
-protocol ActivityDetailCredentialFactoryProtocol {
-  func callAsFunction(_ entity: CredentialEntity, claimIds: [UUID]) -> ActivityDetailCredential
+protocol ActivityDetailCredentialFactoryProtocol: Sendable {
+  func callAsFunction(_ entity: CredentialActivityEntity, paths: [String]) -> ActivityDetailCredential
 }
 
 // MARK: - ActivityDetailCredentialFactory
@@ -19,36 +19,31 @@ struct ActivityDetailCredentialFactory: ActivityDetailCredentialFactoryProtocol 
 
   // MARK: Internal
 
-  func callAsFunction(_ entity: CredentialEntity, claimIds: [UUID]) -> ActivityDetailCredential {
-    if let verifiableCredential = entity.verifiableCredential {
-      let allClusters = Array(verifiableCredential.clusters)
-      var clusters = createClusters(for: verifiableCredential, claimIds: claimIds)
-      clusters = clusters.map { $0.resolvePathTemplates(using: allClusters) }
-      let displays = entity.displays
-        .findDisplaysWithFallback()
-        .map(CredentialDisplay.init)
-        .map { $0.resolvePathTemplates(using: allClusters) }
-      return ActivityDetailCredential(
-        id: entity.id,
-        displays: displays,
-        environment: TrustEnvironment(did: verifiableCredential.issuer),
-        clusters: clusters)
-    }
+  func callAsFunction(_ entity: CredentialActivityEntity, paths: [String]) -> ActivityDetailCredential {
+    let rendering = entity.credentialRendering
+    let allClusters = rendering.map { Array($0.clusters) } ?? []
+    let clusters = createClusters(for: rendering, paths: paths)
+      .map { $0.resolvePathTemplates(using: allClusters) }
+    let displays = (rendering?.displays.findDisplaysWithFallback() ?? [])
+      .map(CredentialDisplay.init)
+      .map { $0.resolvePathTemplates(using: allClusters) }
+
     return ActivityDetailCredential(
       id: entity.id,
-      displays: entity.displays.findDisplaysWithFallback().map(CredentialDisplay.init),
-      environment: TrustEnvironment.external,
-      clusters: [])
+      displays: displays,
+      environment: TrustEnvironment(did: entity.issuer),
+      clusters: clusters,
+      statusListState: entity.bundleItem.map { CredentialStatus($0.statusListState) })
   }
 
   // MARK: Private
 
-  private static func filterClusterClaims(_ cluster: CredentialClaimClusterEntity, claimIds: [UUID]) -> CredentialClaimCluster? {
+  private static func filterClusterClaims(_ cluster: CredentialClaimClusterEntity, paths: [String]) -> CredentialClaimCluster? {
     let claims = cluster.claims.filter { claim in
-      claimIds.contains(claim.id)
+      paths.contains(claim.path)
     }
     let childClusters = cluster.childClusters.compactMap { childCluster in
-      filterClusterClaims(childCluster, claimIds: claimIds)
+      filterClusterClaims(childCluster, paths: paths)
     }
     guard !claims.isEmpty || !childClusters.isEmpty else { return nil }
     return CredentialClaimCluster(
@@ -60,11 +55,11 @@ struct ActivityDetailCredentialFactory: ActivityDetailCredentialFactoryProtocol 
       displays: Array(cluster.displays).map(ClusterDisplay.init))
   }
 
-  private func createClusters(for credential: VerifiableCredentialEntity, claimIds: [UUID]) -> [CredentialClaimCluster] {
-    credential.clusters
+  private func createClusters(for rendering: CredentialRenderingEntity?, paths: [String]) -> [CredentialClaimCluster] {
+    rendering?.clusters
       .compactMap { cluster in
-        Self.filterClusterClaims(cluster, claimIds: claimIds)
-      }
+        Self.filterClusterClaims(cluster, paths: paths)
+      } ?? []
   }
 }
 

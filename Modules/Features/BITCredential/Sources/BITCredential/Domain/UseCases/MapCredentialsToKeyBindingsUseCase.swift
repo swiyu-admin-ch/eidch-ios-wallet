@@ -10,7 +10,7 @@ import Spyable
 // MARK: - MapCredentialsToKeyBindingsUseCaseProtocol
 
 @Spyable
-protocol MapCredentialsToKeyBindingsUseCaseProtocol {
+protocol MapCredentialsToKeyBindingsUseCaseProtocol: Sendable {
   func callAsFunction(credentials: [AnyCredential], keyPairs: [VaultKeyPair]) throws -> [CredentialWithKeyBinding]
   func callAsFunction(credentials: [AnyCredential], keyBindings: [KeyBinding]) throws -> [CredentialWithKeyBinding]
 }

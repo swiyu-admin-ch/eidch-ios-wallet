@@ -7,7 +7,7 @@ import Spyable
 // MARK: - AcceptCredentialUseCaseProtocol
 
 @Spyable
-public protocol AcceptCredentialUseCaseProtocol {
+public protocol AcceptCredentialUseCaseProtocol: Sendable {
   @discardableResult
   func callAsFunction(_ credential: VerifiableCredential, trustInformation: TrustInformation, actorCompliance: ActorCompliance) async throws -> VerifiableCredential
 }

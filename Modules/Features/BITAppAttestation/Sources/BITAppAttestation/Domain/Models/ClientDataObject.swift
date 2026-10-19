@@ -1,4 +1,4 @@
-struct ClientDataObject: Codable, Equatable {
+struct ClientDataObject: Codable, Equatable, Sendable {
   let challenge: AttestationChallenge
   let bindingKey: BindingKey
 

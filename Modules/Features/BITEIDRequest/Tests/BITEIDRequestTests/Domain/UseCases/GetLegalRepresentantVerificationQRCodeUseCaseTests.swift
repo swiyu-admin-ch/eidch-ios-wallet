@@ -53,9 +53,10 @@ final class GetLegalRepresentantVerificationQRCodeUseCaseTests: XCTestCase {
   }
 
   private func registerMocks() {
-    verificationService = LegalRepresentantVerificationServiceProtocolSpy()
+    let verificationService = LegalRepresentantVerificationServiceProtocolSpy()
+    self.verificationService = verificationService
 
-    Container.shared.legalRepresentantVerificationService.register { self.verificationService }
+    Container.shared.legalRepresentantVerificationService.register { verificationService }
   }
 
 }

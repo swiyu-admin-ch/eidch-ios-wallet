@@ -4,7 +4,7 @@ import Spyable
 // MARK: - AppVersionRepositoryProtocol
 
 @Spyable
-public protocol AppVersionRepositoryProtocol {
+public protocol AppVersionRepositoryProtocol: Sendable {
   func getVersion() throws -> String
   func getBuildNumber() throws -> Int
 }

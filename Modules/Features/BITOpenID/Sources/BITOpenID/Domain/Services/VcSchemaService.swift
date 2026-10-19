@@ -12,7 +12,7 @@ enum VcSchemaServiceError: Error {
 // MARK: - VcSchemaServiceProtocol
 
 @Spyable
-public protocol VcSchemaServiceProtocol {
+public protocol VcSchemaServiceProtocol: Sendable {
   func fetch(for typeMetadata: TypeMetadata) async throws -> VcSchema?
 }
 

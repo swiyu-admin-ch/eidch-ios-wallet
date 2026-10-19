@@ -5,7 +5,7 @@ import Spyable
 // MARK: - GetAppVersionUseCaseProtocol
 
 @Spyable
-public protocol GetAppVersionUseCaseProtocol {
+public protocol GetAppVersionUseCaseProtocol: Sendable {
   func callAsFunction() throws -> Version
 }
 

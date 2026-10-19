@@ -25,6 +25,7 @@ extension InvitationError {
     case .validationFailed: L10n.tkErrorInvitationcredentialTitle
     case .invalidQRCode: L10n.tkErrorInvitationcredentialTitle
     case .expiredPresentationRequest,
+         .invalidPresentationRequest,
          .notFoundPresentationRequest: L10n.tkErrorInvalidrequestTitle
     default: nil
     }
@@ -38,6 +39,7 @@ extension InvitationError {
     case .validationFailed: L10n.tkErrorInvitationcredentialBody
     case .invalidQRCode: L10n.tkErrorInvitationcredentialBody
     case .expiredPresentationRequest,
+         .invalidPresentationRequest,
          .notFoundPresentationRequest: L10n.tkErrorInvalidrequestBody
     default: nil
     }

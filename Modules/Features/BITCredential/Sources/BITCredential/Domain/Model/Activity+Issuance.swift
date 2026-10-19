@@ -10,7 +10,8 @@ extension Activity {
       vcSchemaTrust: trustInformation.vcSchemaTrust,
       actorCompliance: actorCompliance.actorComplianceStatus,
       nonComplianceReasonDisplays: actorCompliance.nonComplianceReasonDisplays,
-      actorDisplays: credential.issuerDisplays.map(ActivityActorDisplay.init))
+      actorDisplays: credential.issuerDisplays.map(ActivityActorDisplay.init),
+      bundleItem: credential.presentableBundleItem.map(ActivityBundleItem.init))
   }
 }
 

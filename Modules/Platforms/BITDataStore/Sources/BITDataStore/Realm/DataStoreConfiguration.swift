@@ -6,7 +6,7 @@ import Spyable
 // MARK: - DataStoreConfigurationManagerProtocol
 
 @Spyable
-public protocol DataStoreConfigurationManagerProtocol {
+public protocol DataStoreConfigurationManagerProtocol: Sendable {
 
   var configuration: Realm.Configuration { get }
 
@@ -16,7 +16,7 @@ public protocol DataStoreConfigurationManagerProtocol {
 
 // MARK: - DataStoreConfiguration
 
-class DataStoreConfiguration: DataStoreConfigurationManagerProtocol {
+final class DataStoreConfiguration: DataStoreConfigurationManagerProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -36,7 +36,7 @@ class DataStoreConfiguration: DataStoreConfigurationManagerProtocol {
     var configuration = Container.shared.realmDataStoreConfiguration()
     configuration.encryptionKey = key
     self.configuration = configuration
-    Container.shared.realmDataStoreConfiguration.register { self.configuration }
+    Container.shared.realmDataStoreConfiguration.register { [configuration] in configuration }
   }
 
   func excludeFileFromBackup(at url: URL) {

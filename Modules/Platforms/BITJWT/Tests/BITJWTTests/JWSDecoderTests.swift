@@ -78,7 +78,7 @@ final class JWSDecoderTests: XCTestCase {
     let data = RegisteredClaimsJWT.Mock.invalidAlgorithmData
 
     XCTAssertThrowsError(try decoder.decode(RegisteredClaimsJWT.self, from: data)) { error in
-      XCTAssertEqual(error as? JWSDecoderError, .algorithmNotFound)
+      XCTAssertEqual(error as? JWSHeaderError, .algorithmNotFound)
     }
   }
 

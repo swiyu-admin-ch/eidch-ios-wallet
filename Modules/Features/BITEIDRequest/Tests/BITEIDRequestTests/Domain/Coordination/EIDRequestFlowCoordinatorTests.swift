@@ -10,23 +10,25 @@ final class EIDRequestFlowCoordinatorTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
+    let avBeam = AVBeamProtocolSpy()
+    self.avBeam = avBeam
+    let context = EIDRequestContext()
+    self.context = context
+    let getPushPermissionStatusUseCase = GetPushPermissionStatusUseCaseProtocolSpy()
+    self.getPushPermissionStatusUseCase = getPushPermissionStatusUseCase
 
-    avBeam = AVBeamProtocolSpy()
-    context = EIDRequestContext()
-    getPushPermissionStatusUseCase = GetPushPermissionStatusUseCaseProtocolSpy()
-
-    Container.shared.avBeam.register { @MainActor in self.avBeam }
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
-    Container.shared.getPushPermissionStatusUseCase.register { @MainActor in self.getPushPermissionStatusUseCase }
+    Container.shared.avBeam.register { @MainActor in avBeam }
+    Container.shared.eidRequestContext.register { @MainActor in context }
+    Container.shared.getPushPermissionStatusUseCase.register { @MainActor in getPushPermissionStatusUseCase }
 
     sut = EIDRequestFlowCoordinator()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     Container.shared.reset()
-    super.tearDown()
+    try await super.tearDown()
   }
 
   // MARK: - Close Tests

@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PushUpdateResponseError
 
-struct PushUpdateResponseError: Codable, Equatable {
+struct PushUpdateResponseError: Codable, Equatable, Sendable {
   let pushId: String
   let code: Code
 

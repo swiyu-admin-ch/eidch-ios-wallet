@@ -4,11 +4,11 @@ import XCTest
 @testable import BITOnboarding
 @testable import BITSettings
 
+@MainActor
 final class PrivacyPermissionViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
   override func setUp() {
     super.setUp()
 

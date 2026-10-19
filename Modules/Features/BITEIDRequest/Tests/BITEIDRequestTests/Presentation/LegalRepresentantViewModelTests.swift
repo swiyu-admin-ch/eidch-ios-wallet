@@ -8,11 +8,18 @@ class LegalRepresentantViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    context = EIDRequestContext()
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+  override func setUp() async throws {
+    try await super.setUp()
+    let context = EIDRequestContext()
+    self.context = context
+    Container.shared.eidRequestContext.register { @MainActor in context }
 
     viewModel = LegalRepresentantViewModel()
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testYesAction() {

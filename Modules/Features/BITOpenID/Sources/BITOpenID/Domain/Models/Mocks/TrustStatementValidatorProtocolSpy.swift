@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - TrustStatementValidatorProtocolSpy
 
-class TrustStatementValidatorProtocolSpy<U: TrustStatementJWT>: TrustStatementValidatorProtocol {
+final class TrustStatementValidatorProtocolSpy<U: TrustStatementJWT>: TrustStatementValidatorProtocol, @unchecked Sendable {
   var validateCallsCount = 0
   var validateThrowingError: Error?
   var validateClosure: ((JWS<U>) -> Void)?

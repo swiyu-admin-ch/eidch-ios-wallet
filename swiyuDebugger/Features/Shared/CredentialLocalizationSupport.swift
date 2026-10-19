@@ -54,6 +54,7 @@ enum CredentialLocalizationSupport {
     return clusters.map { localizedCluster($0, preferredLanguageCode: selectedLanguage) }
   }
 
+  @MainActor
   static func credentialCardViewModel(
     for credential: VerifiableCredential,
     selectedLanguage: String?,

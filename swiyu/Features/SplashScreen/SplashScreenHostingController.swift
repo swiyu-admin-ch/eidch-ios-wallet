@@ -3,6 +3,7 @@ import SwiftUI
 
 // MARK: - SplashScreenDelegate
 
+@MainActor
 protocol SplashScreenDelegate: AnyObject {
   func didCompleteSplashScreen()
 }

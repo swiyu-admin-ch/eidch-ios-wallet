@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -26,6 +25,7 @@ let package = Package(
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITDataStore", package: "BITDataStore"),
+        .product(name: "Factory", package: "Factory"),
         .product(name: "RealmSwift", package: "realm-swift"),
       ],
       resources: [.process("Resources")]),
@@ -35,6 +35,7 @@ let package = Package(
         "BITEntities",
         .product(name: "BITDataStore", package: "BITDataStore"),
         .product(name: "Factory", package: "Factory"),
+        .product(name: "FactoryTesting", package: "Factory"),
         .product(name: "RealmSwift", package: "realm-swift"),
       ]),
   ])

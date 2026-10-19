@@ -1,4 +1,4 @@
-// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional
 import Combine
 import Factory
 import XCTest
@@ -12,11 +12,16 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
     createSuccessState()
     viewModel = ActivityHistorySettingsViewModel(getActivityHistoryEnabledSubject: getActivityHistoryEnabledSubjectUseCaseSpy)
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInit_returnsDefaults() {
@@ -125,13 +130,16 @@ class ActivityHistorySettingsViewModelTests: XCTestCase {
 
   private func registerMocks() {
     subjectMock = CurrentValueSubject(false)
-    getActivityHistoryEnabledSubjectUseCaseSpy = GetActivityHistoryEnabledSubjectUseCaseProtocolSpy()
-    setActivityHistoryEnabledUseCaseSpy = SetActivityHistoryEnabledUseCaseProtocolSpy()
-    deleteAllActivitiesUseCaseSpy = DeleteAllActivitiesUseCaseProtocolSpy()
+    let getActivityHistoryEnabledSubjectUseCaseSpy = GetActivityHistoryEnabledSubjectUseCaseProtocolSpy()
+    self.getActivityHistoryEnabledSubjectUseCaseSpy = getActivityHistoryEnabledSubjectUseCaseSpy
+    let setActivityHistoryEnabledUseCaseSpy = SetActivityHistoryEnabledUseCaseProtocolSpy()
+    self.setActivityHistoryEnabledUseCaseSpy = setActivityHistoryEnabledUseCaseSpy
+    let deleteAllActivitiesUseCaseSpy = DeleteAllActivitiesUseCaseProtocolSpy()
+    self.deleteAllActivitiesUseCaseSpy = deleteAllActivitiesUseCaseSpy
 
-    Container.shared.getActivityHistoryEnabledSubjectUseCase.register { @MainActor in self.getActivityHistoryEnabledSubjectUseCaseSpy }
-    Container.shared.setActivityHistoryEnabledUseCase.register { @MainActor in self.setActivityHistoryEnabledUseCaseSpy }
-    Container.shared.deleteAllActivitiesUseCase.register { @MainActor in self.deleteAllActivitiesUseCaseSpy }
+    Container.shared.getActivityHistoryEnabledSubjectUseCase.register { @MainActor in getActivityHistoryEnabledSubjectUseCaseSpy }
+    Container.shared.setActivityHistoryEnabledUseCase.register { @MainActor in setActivityHistoryEnabledUseCaseSpy }
+    Container.shared.deleteAllActivitiesUseCase.register { @MainActor in deleteAllActivitiesUseCaseSpy }
   }
 
   private func createSuccessState() {

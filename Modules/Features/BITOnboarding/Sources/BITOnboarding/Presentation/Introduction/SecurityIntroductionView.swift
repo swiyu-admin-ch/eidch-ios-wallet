@@ -48,6 +48,7 @@ struct SecurityIntroductionView: View {
 
 // MARK: - SecurityIntroductionViewModel
 
+@MainActor
 class SecurityIntroductionViewModel {
 
   // MARK: Lifecycle

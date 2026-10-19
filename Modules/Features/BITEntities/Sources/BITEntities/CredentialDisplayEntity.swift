@@ -14,14 +14,14 @@ public class CredentialDisplayEntity: Object, DisplayLocalizable {
   @Persisted public var backgroundColor: String?
   @Persisted public var theme: String?
   @Persisted(originProperty: "displays")
-  public var credential: LinkingObjects<CredentialEntity>
+  public var rendering: LinkingObjects<CredentialRenderingEntity>
 
   public var cachedLogoData: Data? {
     guard let logoDataHash, let realm else {
       return logoData
     }
 
-    return realm.object(ofType: ImageEntity.self, forPrimaryKey: logoDataHash)?.data ?? logoData
+    return realm.object(ofType: ImageEntity.self, forPrimaryKey: logoDataHash)?.image ?? logoData
   }
 
 }

@@ -5,6 +5,7 @@ import Spyable
 // MARK: - RequestCaseViewStateDelegate
 
 @Spyable
+@MainActor
 public protocol RequestCaseViewStateDelegate: AnyObject {
   func didDeleteRequestCase()
   func didStartAutoVerification(caseId: String)
@@ -34,6 +35,7 @@ enum RequestCaseViewStateError: Error {
 
 // MARK: - RequestCaseViewState
 
+@MainActor
 public enum RequestCaseViewState: Identifiable, Hashable {
   case inQueue(InQueueStateViewModel)
   case readyForOnlineSession(ReadyForOnlineSessionStateViewModel)
@@ -83,7 +85,7 @@ public enum RequestCaseViewState: Identifiable, Hashable {
 
   // MARK: Public
 
-  public var id: String {
+  public nonisolated var id: String {
     switch self {
     case .agentReview(let viewModel as RequestCaseStateBaseViewModel),
          .autoVerification(let viewModel as RequestCaseStateBaseViewModel),

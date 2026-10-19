@@ -66,8 +66,9 @@ final class GetCredentialActivitiesUseCaseTest: XCTestCase {
   private var repositorySpy = ActivityRepositoryProtocolSpy()
 
   private func registerMocks() {
-    repositorySpy = ActivityRepositoryProtocolSpy()
-    Container.shared.activityRepository.register { self.repositorySpy }
+    let repositorySpy = ActivityRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    Container.shared.activityRepository.register { repositorySpy }
   }
 
   private func createSuccessState() {

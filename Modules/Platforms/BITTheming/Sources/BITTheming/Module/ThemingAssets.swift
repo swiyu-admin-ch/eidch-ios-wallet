@@ -184,7 +184,7 @@ public enum ThemingAssets {
 
 // swiftlint:enable identifier_name line_length nesting type_body_length type_name
 
-public final class ColorAsset {
+public final class ColorAsset: @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -254,7 +254,7 @@ extension SwiftUI.Color {
 
 // MARK: - ImageAsset
 
-public struct ImageAsset {
+public struct ImageAsset: Sendable {
   #if os(macOS)
   public typealias Image = NSImage
   #elseif os(iOS) || os(tvOS) || os(watchOS)

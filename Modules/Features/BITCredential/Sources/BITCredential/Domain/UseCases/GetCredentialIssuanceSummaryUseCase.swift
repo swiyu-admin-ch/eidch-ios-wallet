@@ -12,7 +12,7 @@ enum GetCredentialIssuanceSummaryUseCaseError: Error {
 // MARK: - GetCredentialIssuanceSummaryUseCaseProtocol
 
 @Spyable
-protocol GetCredentialIssuanceSummaryUseCaseProtocol {
+protocol GetCredentialIssuanceSummaryUseCaseProtocol: Sendable {
   func callAsFunction(for credentialId: UUID) async throws -> CredentialIssuanceSummary
 }
 

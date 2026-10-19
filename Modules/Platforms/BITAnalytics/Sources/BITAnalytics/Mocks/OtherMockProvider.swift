@@ -1,6 +1,6 @@
 import Foundation
 
-public final class OtherMockProvider: AnalyticsProviderProtocol {
+public final class OtherMockProvider: AnalyticsProviderProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 

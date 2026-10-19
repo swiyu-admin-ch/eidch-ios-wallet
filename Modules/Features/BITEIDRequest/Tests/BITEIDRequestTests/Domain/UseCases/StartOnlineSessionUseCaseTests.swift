@@ -42,8 +42,9 @@ final class StartOnlineSessionUseCaseTests: XCTestCase {
   private var repository: SIDRepositoryProtocolSpy!
 
   private func registerMocks() {
-    repository = SIDRepositoryProtocolSpy()
-    Container.shared.sidRepository.register { self.repository }
+    let repository = SIDRepositoryProtocolSpy()
+    self.repository = repository
+    Container.shared.sidRepository.register { repository }
   }
 
 }

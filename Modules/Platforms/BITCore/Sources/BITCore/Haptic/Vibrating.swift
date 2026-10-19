@@ -3,6 +3,7 @@ import UIKit
 
 // MARK: - Vibrating
 
+@MainActor
 public protocol Vibrating {
   func vibrate(_ type: UINotificationFeedbackGenerator.FeedbackType)
 }

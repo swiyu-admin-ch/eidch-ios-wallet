@@ -119,15 +119,19 @@ final class ProofOfPossessionGeneratorTests: XCTestCase {
   }
 
   private func registerMocks() {
-    jwsEncoder = JWSEncoderMock()
-    jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
-    urlSession = URLSessionProtocolSpy()
-    appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
+    let jwsEncoder = JWSEncoderMock<ClientAttestationProofOfPossessionJWT>()
+    let jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
+    let urlSession = URLSessionProtocolSpy()
+    let appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
+    self.jwsEncoder = jwsEncoder
+    self.jsonCanonicalizer = jsonCanonicalizer
+    self.urlSession = urlSession
+    self.appAttestationKeyRepository = appAttestationKeyRepository
 
-    Container.shared.jwsEncoder.register { self.jwsEncoder }
-    Container.shared.jsonCanonicalizer.register { self.jsonCanonicalizer }
-    Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
-    NetworkContainer.shared.urlSession.register { self.urlSession }
+    Container.shared.jwsEncoder.register { jwsEncoder }
+    Container.shared.jsonCanonicalizer.register { jsonCanonicalizer }
+    Container.shared.appAttestationKeyRepository.register { appAttestationKeyRepository }
+    NetworkContainer.shared.urlSession.register { urlSession }
   }
 }
 

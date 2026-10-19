@@ -4,7 +4,7 @@ import Spyable
 // MARK: - LocaleValidatorProtocol
 
 @Spyable
-public protocol LocaleValidatorProtocol {
+public protocol LocaleValidatorProtocol: Sendable {
   func validate(_ locale: String) -> Bool
 }
 
@@ -13,9 +13,9 @@ public protocol LocaleValidatorProtocol {
 struct LocaleValidator: LocaleValidatorProtocol {
 
   func validate(_ locale: String) -> Bool {
-    let match = try? languageRegex.wholeMatch(in: locale)
+    let match = try? Self.languageRegex.wholeMatch(in: locale)
     return match != nil
   }
 
-  private let languageRegex = #/^[a-z]{2}(-[A-Z]{2})?$/#
+  private nonisolated(unsafe) static let languageRegex = #/^[a-z]{2}(-[A-Z]{2})?$/#
 }

@@ -1,5 +1,4 @@
 import BITCredentialShared
-import BITCrypto
 import BITDataStore
 import BITEntities
 import BITVault
@@ -10,7 +9,7 @@ import Spyable
 // MARK: - CredentialRepositoryProtocol
 
 @Spyable
-public protocol CredentialRepositoryProtocol {
+public protocol CredentialRepositoryProtocol: Sendable {
 
   func count() throws -> Int
   func delete(_ id: UUID, deleteKeyPairs: Bool) async throws
@@ -72,12 +71,12 @@ struct CredentialRepository: CredentialRepositoryProtocol {
 
   func delete(_ id: UUID, deleteKeyPairs: Bool = true) async throws {
     let entity = try await getEntity(id)
-    let images = entity.displayImages
     if deleteKeyPairs {
       deleteAssociatedKeyPairs(for: entity)
     }
+    let candidates = OrphanCandidates(entity)
     try database.delete(entity)
-    try database.removeUnreferencedImages(images)
+    try databaseCleaner.deleteOrphans(among: candidates)
   }
 
   func getAll() async throws -> [any CredentialProtocol] {
@@ -90,6 +89,7 @@ struct CredentialRepository: CredentialRepositoryProtocol {
   // MARK: Private
 
   @Injected(\.dataStore) private var database
+  @Injected(\.databaseCleaner) private var databaseCleaner
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
 
   private func getEntity(_ id: UUID) async throws -> CredentialEntity {
@@ -134,15 +134,12 @@ struct CredentialRepository: CredentialRepositoryProtocol {
     let images = credential.issuerDisplays.compactMap(\.image) + credential.displays.compactMap(\.logoBase64)
 
     for data in images {
-      let hash = ImageHasher.hash(data)
+      let image = ImageEntity(data)
 
-      if try database.get(ImageEntity.self, forPrimaryKey: hash) != nil {
+      if try database.get(ImageEntity.self, forPrimaryKey: image.contentHash) != nil {
         continue
       }
 
-      let image = ImageEntity()
-      image.imageHash = hash
-      image.data = data
       try database.save(image)
     }
   }
@@ -162,12 +159,12 @@ extension CredentialRepository {
   @discardableResult
   func update(verifiableCredential: VerifiableCredential) async throws -> VerifiableCredential {
     let entity = try await getEntity(verifiableCredential.id)
-    let images = entity.displayImages
     try createImages(from: verifiableCredential)
+    let candidates = OrphanCandidates(entity)
     try database.write {
       entity.setValues(from: verifiableCredential)
     }
-    try database.removeUnreferencedImages(images)
+    try databaseCleaner.deleteOrphans(among: candidates)
     return try VerifiableCredential(entity)
   }
 
@@ -207,12 +204,12 @@ extension CredentialRepository {
 
   func update(deferredCredential: DeferredCredential) async throws -> DeferredCredential {
     let entity = try await getEntity(deferredCredential.id)
-    let images = entity.displayImages
     try createImages(from: deferredCredential)
+    let candidates = OrphanCandidates(entity)
     try database.write {
       entity.setValues(from: deferredCredential)
     }
-    try database.removeUnreferencedImages(images)
+    try databaseCleaner.deleteOrphans(among: candidates)
     return try DeferredCredential(entity)
   }
 

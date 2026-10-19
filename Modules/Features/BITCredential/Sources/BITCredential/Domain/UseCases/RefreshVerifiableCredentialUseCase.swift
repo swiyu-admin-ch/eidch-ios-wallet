@@ -11,7 +11,7 @@ import Spyable
 // MARK: - RefreshVerifiableCredentialUseCaseProtocol
 
 @Spyable
-public protocol RefreshVerifiableCredentialUseCaseProtocol {
+public protocol RefreshVerifiableCredentialUseCaseProtocol: Sendable {
   func callAsFunction(_ credential: VerifiableCredential) async throws -> VerifiableCredential
 }
 
@@ -22,22 +22,28 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
   // MARK: Internal
 
   func callAsFunction(_ credential: VerifiableCredential) async throws -> VerifiableCredential {
-    let metadataJws = try await openIDRepository.fetchMetadata(from: credential.issuerUrl)
-
-    try await actorIdentityValidator.validate(metadataJws)
-
-    let metadataWrapper = try createMetadataWrapper(for: credential, metadataJws: metadataJws)
-    let holderBindings = try await holderBindingsGenerator(
-      batchSize: metadataWrapper.credentialIssuerMetadata.batchCredentialIssuance?.batchSize,
-      proofTypes: metadataWrapper.selectedCredential.proofTypesSupported)
-
+    guard await canBeRefreshed(credential) else { return credential }
     do {
+      let metadataJws = try await openIDRepository.fetchMetadata(from: credential.issuerUrl)
+
+      try await actorIdentityValidator.validate(metadataJws)
+
+      let metadataWrapper = try createMetadataWrapper(for: credential, metadataJws: metadataJws)
+      guard !metadataWrapper.selectedCredential.credentialRefreshDisabled else {
+        return credential
+      }
+
+      let holderBindings = try await holderBindingsGenerator(
+        batchSize: metadataWrapper.credentialIssuerMetadata.batchCredentialIssuance?.batchSize,
+        proofTypes: metadataWrapper.selectedCredential.proofTypesSupported)
       return try await refresh(
         credential,
         metadataWrapper: metadataWrapper,
         holderBindings: holderBindings)
     } catch {
-      deleteHolderBindings(holderBindings)
+      var updatedCredential = credential
+      updatedCredential.lastRefreshAttemptAt = Container.shared.currentDate()
+      try await credentialRepository.update(verifiableCredential: updatedCredential)
       throw error
     }
   }
@@ -45,7 +51,8 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
   // MARK: Private
 
   @Injected(\.checkAndUpdateCredentialStatusUseCase) private var checkAndUpdateCredentialStatusUseCase
-  @Injected(\.credentialKeyRepository) private var credentialKeyRepository: CredentialKeyRepositoryProtocol
+  @Injected(\.credentialStatusValidator) private var credentialStatusValidator
+  @Injected(\.credentialKeyRepository) private var credentialKeyRepository
   @Injected(\.credentialGenerator) private var credentialGenerator
   @Injected(\.credentialRepository) private var credentialRepository
   @Injected(\.fetchVcMetadataUseCase) private var fetchVcMetadataUseCase
@@ -57,9 +64,17 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
   @Injected(\.actorIdentityValidator) private var actorIdentityValidator
   @Injected(\.protectedIssuanceValidator) private var protectedIssuanceValidator
   @Injected(\.refreshAnyVerifiableCredentialUseCase) private var refreshAnyVerifiableCredentialUseCase
-  @Injected(\.trustInformationService) private var trustInformationService
-  @Injected(\.trustStatementValidator) private var trustStatementValidator
   @Injected(\.analytics) private var analytics
+  @Injected(\.swissProfileStatusEvaluator) private var swissProfileStatusEvaluator
+
+  private func canBeRefreshed(_ credential: VerifiableCredential) async -> Bool {
+    guard
+      credential.progressionState == .accepted,
+      credential.authentication.refreshToken != nil
+    else { return false }
+    // Revoked credentials will never recover thus check it here. If check fails, assume it's not revoked.
+    return (try? await credentialStatusValidator(credential)) != .revoked
+  }
 
   private func refresh(
     _ credential: VerifiableCredential,
@@ -67,32 +82,37 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
     holderBindings: [HolderBinding]) async throws
     -> VerifiableCredential
   {
-    let dpopKeyPair = try resolveDPoPKeyPair(for: credential)
-    let authorization = IssuanceAuthorization(
-      accessToken: AccessToken(
-        accessToken: credential.authentication.accessToken,
-        tokenType: credential.authentication.tokenType,
-        refreshToken: credential.authentication.refreshToken),
-      dpopKeyPair: dpopKeyPair)
-    let result = try await refreshAnyVerifiableCredentialUseCase(
-      metadataWrapper: metadataWrapper,
-      holderBindings: holderBindings,
-      authorization: authorization)
-    let authentication = try createAuthentication(from: result.authorization)
-
-    switch result.credentials {
-    case .credential(let credentials):
-      let credentialsWithKeyBindings = try mapBatchCredentialsToKeyBindings(
-        credentials,
-        holderBindings: holderBindings)
-      return try await refreshCredential(
-        from: credentialsWithKeyBindings,
-        currentCredential: credential,
+    do {
+      let dpopKeyPair = try resolveDPoPKeyPair(for: credential)
+      let authorization = IssuanceAuthorization(
+        accessToken: AccessToken(
+          accessToken: credential.authentication.accessToken,
+          tokenType: credential.authentication.tokenType,
+          refreshToken: credential.authentication.refreshToken),
+        dpopKeyPair: dpopKeyPair)
+      let result = try await refreshAnyVerifiableCredentialUseCase(
         metadataWrapper: metadataWrapper,
-        authentication: authentication)
+        holderBindings: holderBindings,
+        authorization: authorization)
+      let authentication = try createAuthentication(from: result.authorization)
 
-    case .deferred:
-      throw RefreshVerifiableCredentialUseCaseError.deferredCredentialResponseNotSupported
+      switch result.credentials {
+      case .credential(let credentials):
+        let credentialsWithKeyBindings = try mapBatchCredentialsToKeyBindings(
+          credentials,
+          holderBindings: holderBindings)
+        return try await refreshCredential(
+          from: credentialsWithKeyBindings,
+          currentCredential: credential,
+          metadataWrapper: metadataWrapper,
+          authentication: authentication)
+
+      case .deferred:
+        throw RefreshVerifiableCredentialUseCaseError.deferredCredentialResponseNotSupported
+      }
+    } catch {
+      deleteHolderBindings(holderBindings)
+      throw error
     }
   }
 
@@ -142,6 +162,9 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
       metadataJws: metadataWrapper.metadataJws)
 
     let anyCredential = firstCredentialWithKeyBinding.credential
+    guard await hasSameOrNewerProfileStatus(oldCredential: currentCredential, newCredential: anyCredential) else {
+      throw RefreshVerifiableCredentialUseCaseError.invalidSwissProfile
+    }
     try await protectedIssuanceValidator.validate(anyCredential: anyCredential, metadataWrapper: metadataWrapper)
     let rawOcaBundle = try await fetchVcMetadataUseCase.execute(anyCredential: anyCredential)
 
@@ -151,10 +174,12 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
       metadataWrapper: metadataWrapper,
       authentication: authentication)
 
+    let date = Container.shared.currentDate()
     let updatedCredential = VerifiableCredential(
       id: currentCredential.id,
       createdAt: currentCredential.createdAt,
-      refreshedAt: Date(),
+      refreshedAt: date,
+      lastRefreshAttemptAt: date,
       progressionState: currentCredential.progressionState,
       bundleItems: generatedCredential.bundleItems,
       nextPresentableBundleItemId: generatedCredential.nextPresentableBundleItemId,
@@ -173,7 +198,13 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
 
     let savedCredential = try await credentialRepository.update(verifiableCredential: updatedCredential)
     currentCredential.keyBindings.forEach(deleteKeyBinding)
-    return (try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)) ?? savedCredential
+    return (try? await checkAndUpdateCredentialStatusUseCase(for: savedCredential)) ?? savedCredential
+  }
+
+  private func hasSameOrNewerProfileStatus(oldCredential: VerifiableCredential, newCredential: AnyCredential) async -> Bool {
+    guard let oldStatus = await swissProfileStatusEvaluator(oldCredential) else { return true }
+    guard let newStatus = await swissProfileStatusEvaluator(anyCredential: newCredential) else { return false }
+    return oldStatus <= newStatus
   }
 
   private func mapBatchCredentialsToKeyBindings(
@@ -199,11 +230,12 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
   }
 
   private func deleteHolderBindings(_ holderBindings: [HolderBinding]) {
-    let keyPairs = holderBindings.map(\.keyPair)
-    do {
-      try keyPairs.forEach { try credentialKeyRepository.delete($0) }
-    } catch {
-      analytics.log(error)
+    for holderBinding in holderBindings {
+      do {
+        try credentialKeyRepository.delete(holderBinding.keyPair)
+      } catch {
+        analytics.log(error)
+      }
     }
   }
 
@@ -220,11 +252,9 @@ struct RefreshVerifiableCredentialUseCase: RefreshVerifiableCredentialUseCasePro
 // MARK: - RefreshVerifiableCredentialUseCaseError
 
 enum RefreshVerifiableCredentialUseCaseError: Error, Equatable {
-  case invalidIssuerUrl
+  case invalidSwissProfile
   case invalidConfigurationId
-  case invalidCredentialIssuerMetadata
   case invalidKeyBinding
   case invalidBatchCredentials
   case deferredCredentialResponseNotSupported
-  case invalidCredentialDid
 }

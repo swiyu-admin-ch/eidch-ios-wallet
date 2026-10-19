@@ -4,6 +4,7 @@ import UIKit
 
 // MARK: - OpeningStyle
 
+@MainActor
 public protocol OpeningStyle: AnyObject {
   var viewController: UIViewController? { get set }
 

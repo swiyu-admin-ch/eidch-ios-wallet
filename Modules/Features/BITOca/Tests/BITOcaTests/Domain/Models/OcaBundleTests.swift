@@ -253,10 +253,13 @@ final class OcaBundleTests: XCTestCase {
   private var rootCaptureBaseResolverSpy = RootCaptureBaseResolverProtocolSpy()
 
   private func registerMocks() {
-    attributesGeneratorSpy = OverlayBundleAttributesGeneratorProtocolSpy()
-    Container.shared.overlayBundleAttributesGenerator.register { self.attributesGeneratorSpy }
-    Container.shared.ocaBundleValidator.register { self.ocaBundleValidatorSpy }
-    Container.shared.rootCaptureBaseResolver.register { self.rootCaptureBaseResolverSpy }
+    let attributesGeneratorSpy = OverlayBundleAttributesGeneratorProtocolSpy()
+    let ocaBundleValidatorSpy = ocaBundleValidatorSpy
+    let rootCaptureBaseResolverSpy = rootCaptureBaseResolverSpy
+    self.attributesGeneratorSpy = attributesGeneratorSpy
+    Container.shared.overlayBundleAttributesGenerator.register { attributesGeneratorSpy }
+    Container.shared.ocaBundleValidator.register { ocaBundleValidatorSpy }
+    Container.shared.rootCaptureBaseResolver.register { rootCaptureBaseResolverSpy }
   }
 
   private func setupSuccessState() {

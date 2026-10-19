@@ -4,7 +4,7 @@ import Spyable
 // MARK: - AppIdentifierRepositoryProtocol
 
 @Spyable
-public protocol AppIdentifierRepositoryProtocol {
+public protocol AppIdentifierRepositoryProtocol: Sendable {
   func get() throws -> String
 }
 

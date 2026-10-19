@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-public struct ScanResultEntryImage: Hashable {
+public struct ScanResultEntryImage: Hashable, Sendable {
   let key: String
   let value: Data
   let side: ScanningState

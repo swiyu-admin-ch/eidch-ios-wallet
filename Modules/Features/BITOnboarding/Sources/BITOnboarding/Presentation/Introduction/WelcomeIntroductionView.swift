@@ -45,6 +45,7 @@ struct WelcomeIntroductionView: View {
 
 // MARK: - WelcomeIntroductionViewModel
 
+@MainActor
 class WelcomeIntroductionViewModel {
 
   // MARK: Lifecycle

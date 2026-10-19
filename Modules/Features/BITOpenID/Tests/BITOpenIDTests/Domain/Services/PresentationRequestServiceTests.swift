@@ -44,11 +44,12 @@ final class PresentationRequestServiceTests: XCTestCase {
   func testFetch_openID4VPWithMismatchedClientId_throwsInvalidError() async throws {
     urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: "invalid")
     repositorySpy.fetchFromReturnValue = requestObjectJWSMock
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
+    let responseUri = requestObjectJWSMock.payload.responseUri
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
-      XCTAssertEqual(
-        error as? PresentationRequestError,
-        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
+      XCTAssertEqual(error as? PresentationRequestError, .invalid(responseURL: responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
@@ -66,46 +67,52 @@ final class PresentationRequestServiceTests: XCTestCase {
     let verifierAttestationMock = RequestObjectJWS.Mock.verifierAttestationPrefix
     urlParserSpy.parseReturnValue = .openID4VP(url: urlMock, clientId: "decentralized_identifier:did:example:12345")
     repositorySpy.fetchFromReturnValue = verifierAttestationMock
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
+    let responseUri = verifierAttestationMock.payload.responseUri
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
-      XCTAssertEqual(
-        error as? PresentationRequestError,
-        .invalid(responseURL: verifierAttestationMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
+      XCTAssertEqual(error as? PresentationRequestError, .invalid(responseURL: responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
   func testFetch_validatorThrows_throwsInvalidError() async throws {
     requestObjectValidatorSpy.validateTransportThrowableError = TestingError.error
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
+    let responseUri = requestObjectJWSMock.payload.responseUri
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
-      XCTAssertEqual(
-        error as? PresentationRequestError,
-        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
+      XCTAssertEqual(error as? PresentationRequestError, .invalid(responseURL: responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
   func testFetch_validatorThrowsVerifierAttestationNotSupported_throwsInvalidError() async throws {
     requestObjectValidatorSpy.validateTransportThrowableError = RequestObjectValidationError.verifierAttestationNotSupported
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
+    let responseUri = requestObjectJWSMock.payload.responseUri
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
-      XCTAssertEqual(
-        error as? PresentationRequestError,
-        .invalid(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
+      XCTAssertEqual(error as? PresentationRequestError, .invalid(responseURL: responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
   func testFetch_validatorThrowsTransactionDataNotSupported_throwsTransactionDataNotSupportedError() async throws {
     requestObjectValidatorSpy.validateTransportThrowableError = RequestObjectValidationError.transactionDataNotSupported
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
+    let responseUri = requestObjectJWSMock.payload.responseUri
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
-      XCTAssertEqual(
-        error as? PresentationRequestError,
-        .transactionDataNotSupported(responseURL: self.requestObjectJWSMock.payload.responseUri, state: stateMock, responseError: .invalidRequest))
+      XCTAssertEqual(error as? PresentationRequestError, .transactionDataNotSupported(responseURL: responseUri, state: stateMock, responseError: .invalidRequest))
     }
   }
 
   func testFetch_urlParserThrowsInvalidRequestUrl_throwsInvalidRequestUrl() async throws {
     urlParserSpy.parseThrowableError = PresentationRequestUrlParserError.invalidRequestUrl
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(error as? PresentationRequestError, .invalidRequestUrl)
@@ -114,6 +121,8 @@ final class PresentationRequestServiceTests: XCTestCase {
 
   func testFetch_repositoryThrowsPresentationRequestExpired_throwsExpired() async throws {
     repositorySpy.fetchFromThrowableError = PresentationRequestRepositoryError.presentationRequestExpired
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(error as? PresentationRequestError, .expired)
@@ -122,15 +131,27 @@ final class PresentationRequestServiceTests: XCTestCase {
 
   func testFetch_repositoryThrowsPresentationRequestNotFound_throwsPresentationRequestNotFound() async throws {
     repositorySpy.fetchFromThrowableError = PresentationRequestRepositoryError.presentationRequestNotFound
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(error as? PresentationRequestError, .presentationRequestNotFound)
     }
   }
 
+  func testFetch_repositoryThrowsNoConnection_throwsNoInternetConnection() async throws {
+    repositorySpy.fetchFromThrowableError = PresentationRequestRepositoryError.noConnection
+
+    await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
+      XCTAssertEqual(error as? PresentationRequestError, .noInternetConnection)
+    }
+  }
+
   func testFetch_repositoryThrowsDecodingError_throwsInvalidError() async throws {
     repositorySpy.fetchFromThrowableError = DecodingError.dataCorrupted(
       DecodingError.Context(codingPath: [], debugDescription: "test error"))
+    let service = try XCTUnwrap(service)
+    let urlMock = urlMock
 
     await XCTAssertThrowsErrorAsync(try await service.fetch(from: urlMock)) { error in
       XCTAssertEqual(
@@ -157,6 +178,7 @@ final class PresentationRequestServiceTests: XCTestCase {
   func testDecline_repositoryThrowsError_rethrowsError() async throws {
     repositorySpy.declineUrlStateWithThrowableError = TestingError.error
     let responseUri = try XCTUnwrap(requestObjectJWSMock.payload.responseUri)
+    let service = try XCTUnwrap(service)
 
     await XCTAssertThrowsErrorAsync(try await service.decline(url: responseUri, state: stateMock, with: .accessDenied)) { error in
       XCTAssertEqual(error as? TestingError, .error)
@@ -176,13 +198,16 @@ final class PresentationRequestServiceTests: XCTestCase {
   private var service: PresentationRequestService!
 
   private func registerMocks() {
-    urlParserSpy = PresentationRequestUrlParserProtocolSpy()
-    repositorySpy = PresentationRequestRepositoryProtocolSpy()
-    requestObjectValidatorSpy = RequestObjectValidatorProtocolSpy()
+    let urlParserSpy = PresentationRequestUrlParserProtocolSpy()
+    self.urlParserSpy = urlParserSpy
+    let repositorySpy = PresentationRequestRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    let requestObjectValidatorSpy = RequestObjectValidatorProtocolSpy()
+    self.requestObjectValidatorSpy = requestObjectValidatorSpy
 
-    Container.shared.presentationRequestUrlParser.register { self.urlParserSpy }
-    Container.shared.presentationRequestRepository.register { self.repositorySpy }
-    Container.shared.requestObjectValidator.register { self.requestObjectValidatorSpy }
+    Container.shared.presentationRequestUrlParser.register { urlParserSpy }
+    Container.shared.presentationRequestRepository.register { repositorySpy }
+    Container.shared.requestObjectValidator.register { requestObjectValidatorSpy }
   }
 
   private func createSuccessState() {

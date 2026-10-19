@@ -22,7 +22,7 @@ enum SdJWSDecoderError: Error, Equatable {
 
 // MARK: - SdJWSDecoderProtocol
 
-public protocol SdJWSDecoderProtocol {
+public protocol SdJWSDecoderProtocol: Sendable {
   func decode<T: JWT>(_ type: T.Type, from data: Data) throws -> SdJWS<T>
 }
 
@@ -65,14 +65,14 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     case arrayDigest = "..."
   }
 
-  private static let jwtCharacters = OneOrMore {
+  private nonisolated(unsafe) static let jwtCharacters = OneOrMore {
     ChoiceOf {
       .word
       "-"
     }
   }
 
-  private static let jwtCapture = Capture {
+  private nonisolated(unsafe) static let jwtCapture = Capture {
     jwtCharacters
     "."
     jwtCharacters
@@ -80,14 +80,14 @@ public struct SdJWSDecoder: SdJWSDecoderProtocol {
     jwtCharacters
   }
 
-  private static let disclosuresCapture = Capture {
+  private nonisolated(unsafe) static let disclosuresCapture = Capture {
     OneOrMore {
       jwtCharacters
       sdJWTSeparator
     }
   }
 
-  private static let sdJWTPattern = Regex {
+  private nonisolated(unsafe) static let sdJWTPattern = Regex {
     jwtCapture
     sdJWTSeparator
     Optionally {

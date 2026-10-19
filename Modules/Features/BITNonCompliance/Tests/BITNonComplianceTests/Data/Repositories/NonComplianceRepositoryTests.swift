@@ -113,7 +113,10 @@ final class NonComplianceRepositoryTests: XCTestCase {
     mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
     mapperSpy.mapDidThrowableError = TestingError.error
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchActorCompliance(for: subjectDidMock)) { error in
+    do {
+      _ = try await repository.fetchActorCompliance(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertEqual(trustStatementValidatorSpy.validateForCallsCount, 0)
     }
@@ -123,7 +126,10 @@ final class NonComplianceRepositoryTests: XCTestCase {
     mockResponse(code: 200, data: NonComplianceTrustListStatementJWT.Mock.rawJWSData)
     trustStatementValidatorSpy.validateThrowingError = TestingError.error
 
-    await XCTAssertThrowsErrorAsync(try await repository.fetchActorCompliance(for: subjectDidMock)) { error in
+    do {
+      _ = try await repository.fetchActorCompliance(for: subjectDidMock)
+      XCTFail("An error was expected")
+    } catch {
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertEqual(trustStatementValidatorSpy.validateCallsCount, 1)
     }
@@ -197,34 +203,44 @@ final class NonComplianceRepositoryTests: XCTestCase {
   private var activityFactorySpy: NonComplianceActivityFactoryProtocolSpy!
 
   private func registerMocks() {
-    reportBodyGeneratorSpy = NonComplianceReportRequestBodyGeneratorProtocolSpy()
-    proofOfPossessionGeneratorSpy = ProofOfPossessionGeneratorProtocolSpy()
-    clientAttestationRepositorySpy = ClientAttestationRepositoryProtocolSpy()
-    mapperSpy = TrustRegistryUrlMapperProtocolSpy()
-    jwsDecoderMock = JWSDecoderMock(
+    let reportBodyGeneratorSpy = NonComplianceReportRequestBodyGeneratorProtocolSpy()
+    self.reportBodyGeneratorSpy = reportBodyGeneratorSpy
+    let proofOfPossessionGeneratorSpy = ProofOfPossessionGeneratorProtocolSpy()
+    self.proofOfPossessionGeneratorSpy = proofOfPossessionGeneratorSpy
+    let clientAttestationRepositorySpy = ClientAttestationRepositoryProtocolSpy()
+    self.clientAttestationRepositorySpy = clientAttestationRepositorySpy
+    let mapperSpy = TrustRegistryUrlMapperProtocolSpy()
+    self.mapperSpy = mapperSpy
+    let jwsDecoderMock = JWSDecoderMock(
       jwt: nonComplianceTrustListStatementMock.payload,
       rawPayload: nonComplianceTrustListStatementMock.rawPayload,
       expectedInput: NonComplianceTrustListStatementJWT.Mock.rawJWS)
-    trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy<NonComplianceTrustListStatementJWT>()
-    actorDisplayFactorySpy = ActivityActorDisplayFactoryProtocolSpy()
-    activityFactorySpy = NonComplianceActivityFactoryProtocolSpy()
+    self.jwsDecoderMock = jwsDecoderMock
+    let trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy<NonComplianceTrustListStatementJWT>()
+    self.trustStatementValidatorSpy = trustStatementValidatorSpy
+    let actorDisplayFactorySpy = ActivityActorDisplayFactoryProtocolSpy()
+    self.actorDisplayFactorySpy = actorDisplayFactorySpy
+    let activityFactorySpy = NonComplianceActivityFactoryProtocolSpy()
+    self.activityFactorySpy = activityFactorySpy
 
-    userSession = SessionSpy()
+    let userSession = SessionSpy()
+    self.userSession = userSession
     userContext = LAContextProtocolSpy()
     userSession.isLoggedIn = true
     userSession.context = userContext
 
     Container.shared.configureInMemoryDataStore()
-    Container.shared.nonComplianceReportRequestBodyGenerator.register { self.reportBodyGeneratorSpy }
-    Container.shared.proofOfPossessionGenerator.register { self.proofOfPossessionGeneratorSpy }
-    Container.shared.clientAttestationRepository.register { self.clientAttestationRepositorySpy }
-    Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
-    Container.shared.jwsDecoder.register { self.jwsDecoderMock }
-    Container.shared.trustStatementValidator.register { self.trustStatementValidatorSpy }
-    Container.shared.activityActorDisplayFactory.register { self.actorDisplayFactorySpy }
-    Container.shared.nonComplianceActivityFactory.register { self.activityFactorySpy }
-    Container.shared.nonComplianceBaseURL.register { self.baseURLMock }
-    Container.shared.userSession.register { self.userSession }
+    Container.shared.nonComplianceReportRequestBodyGenerator.register { reportBodyGeneratorSpy }
+    Container.shared.proofOfPossessionGenerator.register { proofOfPossessionGeneratorSpy }
+    Container.shared.clientAttestationRepository.register { clientAttestationRepositorySpy }
+    Container.shared.trustRegistryUrlMapper.register { mapperSpy }
+    Container.shared.jwsDecoder.register { jwsDecoderMock }
+    Container.shared.trustStatementValidator.register { trustStatementValidatorSpy }
+    Container.shared.activityActorDisplayFactory.register { actorDisplayFactorySpy }
+    Container.shared.nonComplianceActivityFactory.register { activityFactorySpy }
+    let baseURLMock = baseURLMock
+    Container.shared.nonComplianceBaseURL.register { baseURLMock }
+    Container.shared.userSession.register { userSession }
   }
 
   private func success() {

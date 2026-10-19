@@ -20,6 +20,8 @@ struct PinCodeRepositoryTests {
     let secretManagerSpy = SecretManagerProtocolSpy()
     let keyManagerSpy = KeyManagerProtocolSpy()
     let processInfoServiceSpy = ProcessInfoServiceProtocolSpy()
+    let saltLength = Self.saltLength
+    let initialVectorLength = Self.initialVectorLength
 
     keyManagerSpy.generateKeyPairWithIdentifierAlgorithmOptionsQueryReturnValue = mockKeyPair
     keyManagerSpy.getKeyPairWithIdentifierAlgorithmQueryReturnValue = mockKeyPair
@@ -27,8 +29,8 @@ struct PinCodeRepositoryTests {
     Container.shared.secretManager.register { secretManagerSpy }
     Container.shared.keyManager.register { keyManagerSpy }
     Container.shared.processInfoService.register { processInfoServiceSpy }
-    Container.shared.appPinSaltLength.register { Self.saltLength }
-    Container.shared.pepperKeyInitialVectorLength.register { Self.initialVectorLength }
+    Container.shared.appPinSaltLength.register { saltLength }
+    Container.shared.pepperKeyInitialVectorLength.register { initialVectorLength }
 
     self.secretManagerSpy = secretManagerSpy
     self.keyManagerSpy = keyManagerSpy

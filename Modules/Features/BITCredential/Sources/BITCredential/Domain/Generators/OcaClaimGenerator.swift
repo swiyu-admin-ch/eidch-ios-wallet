@@ -11,7 +11,7 @@ import Spyable
 // MARK: - OcaClaimGeneratorProtocol
 
 @Spyable
-protocol OcaClaimGeneratorProtocol {
+protocol OcaClaimGeneratorProtocol: Sendable {
   func generate(path: ClaimsPathPointer, value: String?, ocaAttribute: OverlayBundleAttribute?, order: Int?) throws -> CredentialClaim
 }
 

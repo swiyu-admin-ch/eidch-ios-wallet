@@ -3,7 +3,7 @@ import Spyable
 // MARK: - RootCaptureBaseResolverProtocol
 
 @Spyable
-public protocol RootCaptureBaseResolverProtocol {
+public protocol RootCaptureBaseResolverProtocol: Sendable {
   func resolve(_ captureBases: [any CaptureBase]) throws -> any CaptureBase
 }
 

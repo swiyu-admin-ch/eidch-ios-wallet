@@ -2,7 +2,7 @@ import BITCrypto
 import BITVault
 import Foundation
 
-public struct CredentialResponseEncryption: Codable, Equatable {
+public struct CredentialResponseEncryption: Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

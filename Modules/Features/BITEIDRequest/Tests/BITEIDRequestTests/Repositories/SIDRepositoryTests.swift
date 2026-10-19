@@ -4,11 +4,13 @@ import Foundation
 import Testing
 @testable import BITAppAttestation
 @testable import BITAppAuth
+@testable import BITCrypto
 @testable import BITEIDRequest
 @testable import BITEIDRequestShared
 @testable import BITLocalAuthentication
 @testable import BITNetworking
 @testable import BITTestingCore
+@testable import BITVault
 
 @Suite(.container)
 struct SIDRepositoryTests {
@@ -23,6 +25,14 @@ struct SIDRepositoryTests {
     let proofOfPossessionGenerator = ProofOfPossessionGeneratorProtocolSpy()
     proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderReturnValue = mockClientAttestationProofOfPossession
     self.proofOfPossessionGenerator = proofOfPossessionGenerator
+
+    let jweDecrypter = JWEDecrypterProtocolSpy()
+    jweDecrypter.decryptPayloadPrivateKeyKeyTypeLimitReturnValue = WalletPairingResponse.Mock.sampleData
+    self.jweDecrypter = jweDecrypter
+
+    let appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
+    appAttestationKeyRepository.getForReturnValue = mockClientAttestationKeyPair
+    self.appAttestationKeyRepository = appAttestationKeyRepository
 
     let userSession = SessionSpy()
     let userContext = LAContextProtocolSpy()
@@ -39,6 +49,8 @@ struct SIDRepositoryTests {
     Container.shared.proofOfPossessionGenerator.register { proofOfPossessionGenerator }
     Container.shared.userSession.register { userSession }
     Container.shared.sidBaseUrl.register { strURL }
+    Container.shared.jweDecrypter.register { jweDecrypter }
+    Container.shared.appAttestationKeyRepository.register { appAttestationKeyRepository }
 
     NetworkContainer.shared.stubClosure.register {
       { _ in .immediate }
@@ -201,11 +213,37 @@ struct SIDRepositoryTests {
 
     #expect(result == WalletPairingResponse.Mock.sample)
     #expect(proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderCallsCount == 1)
+
+    #expect(appAttestationKeyRepository.getForCallsCount == 1)
+    #expect(appAttestationKeyRepository.getForReceivedType == .client)
+
+    #expect(jweDecrypter.decryptPayloadPrivateKeyKeyTypeLimitCallsCount == 1)
+    #expect(jweDecrypter.decryptPayloadPrivateKeyKeyTypeLimitReceivedArguments?.keyType == .hardware)
+    #expect(jweDecrypter.decryptPayloadPrivateKeyKeyTypeLimitReceivedArguments?.privateKey == mockClientAttestationKeyPair.privateKey)
+    #expect(jweDecrypter.decryptPayloadPrivateKeyKeyTypeLimitReceivedArguments?.limit == JWESizeLimit.Mock.sample)
   }
 
   @Test
   func pairWallet_generateProofOfPossessionsFails_throwsError() async throws {
     proofOfPossessionGenerator.callAsFunctionForAudienceChallengeEndpointClientAttestationEncoderThrowableError = TestingError.error
+
+    await #expect(throws: TestingError.error) {
+      _ = try await repository.pairWallet(caseId: mockCaseId)
+    }
+  }
+
+  @Test
+  func pairWallet_getAttestationKeyFails_throwsError() async throws {
+    appAttestationKeyRepository.getForThrowableError = TestingError.error
+
+    await #expect(throws: TestingError.error) {
+      _ = try await repository.pairWallet(caseId: mockCaseId)
+    }
+  }
+
+  @Test
+  func pairWallet_decryptPayloadFails_throwsError() async throws {
+    jweDecrypter.decryptPayloadPrivateKeyKeyTypeLimitThrowableError = TestingError.error
 
     await #expect(throws: TestingError.error) {
       _ = try await repository.pairWallet(caseId: mockCaseId)
@@ -295,12 +333,15 @@ struct SIDRepositoryTests {
   private let mockePushIdRegistrationBody = PushIdRegistrationBody.Mock.sample
   private let mockeIDRequestResponse: EIDRequestResponse = .Mock.sample
   private let mockValidateAttestationsRequestBody: ValidateAttestationsRequestBody = .Mock.sample
+  private let mockClientAttestationKeyPair = VaultKeyPair.Mock.ES256
 
   private let mockClientAttestation = ClientAttestationJWT.Mock.sample
   private let mockClientAttestationProofOfPossession = ClientAttestationProofOfPossession.Mock.sample
 
   private let clientAttestationRepository: ClientAttestationRepositoryProtocolSpy
   private let proofOfPossessionGenerator: ProofOfPossessionGeneratorProtocolSpy
+  private let appAttestationKeyRepository: AppAttestationKeyRepositoryProtocolSpy
+  private let jweDecrypter: JWEDecrypterProtocolSpy
   private let userSession: SessionSpy
   private let userContext: LAContextProtocolSpy
 

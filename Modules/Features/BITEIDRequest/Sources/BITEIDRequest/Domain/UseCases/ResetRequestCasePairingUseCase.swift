@@ -5,7 +5,7 @@ import Spyable
 // MARK: - ResetRequestCasePairingUseCaseProtocol
 
 @Spyable
-protocol ResetRequestCasePairingUseCaseProtocol {
+protocol ResetRequestCasePairingUseCaseProtocol: Sendable {
   func callAsFunction(for caseId: String) async throws
 }
 

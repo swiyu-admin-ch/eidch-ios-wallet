@@ -128,14 +128,17 @@ final class RefreshAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private var useCase: RefreshAnyVerifiableCredentialUseCase!
 
   private func registerMocks() {
-    repository = OpenIDRepositoryProtocolSpy()
+    let repository = OpenIDRepositoryProtocolSpy()
+    self.repository = repository
     fetchAnyCredentialUseCase = FetchAnyCredentialUseCaseProtocolSpy()
-    credentialEncryptionContextGenerator = CredentialEncryptionContextGeneratorProtocolSpy()
-    dispatcher = [.vcSdJwt: fetchAnyCredentialUseCase]
+    let credentialEncryptionContextGenerator = CredentialEncryptionContextGeneratorProtocolSpy()
+    self.credentialEncryptionContextGenerator = credentialEncryptionContextGenerator
+    let dispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol] = [.vcSdJwt: fetchAnyCredentialUseCase]
+    self.dispatcher = dispatcher
 
-    Container.shared.openIDRepository.register { self.repository }
-    Container.shared.anyFetchCredentialDispatcher.register { self.dispatcher }
-    Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGenerator }
+    Container.shared.openIDRepository.register { repository }
+    Container.shared.anyFetchCredentialDispatcher.register { dispatcher }
+    Container.shared.credentialEncryptionContextGenerator.register { credentialEncryptionContextGenerator }
 
     anyCredential.format = .vcSdJwt
     anyCredential.raw = "refreshed-any-credential"

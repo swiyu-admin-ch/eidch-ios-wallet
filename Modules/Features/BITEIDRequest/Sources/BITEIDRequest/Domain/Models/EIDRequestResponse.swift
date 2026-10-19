@@ -1,7 +1,7 @@
 import BITEIDRequestShared
 import Foundation
 
-struct EIDRequestResponse: Decodable, Equatable {
+struct EIDRequestResponse: Decodable, Equatable, Sendable {
 
   // MARK: Internal
 

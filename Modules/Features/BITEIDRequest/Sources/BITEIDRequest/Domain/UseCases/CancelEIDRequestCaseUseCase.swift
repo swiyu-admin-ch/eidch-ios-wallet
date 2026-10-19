@@ -5,7 +5,7 @@ import Spyable
 // MARK: - CancelRequestCaseUseCaseProtocol
 
 @Spyable
-protocol CancelRequestCaseUseCaseProtocol {
+protocol CancelRequestCaseUseCaseProtocol: Sendable {
   func callAsFunction(for caseId: String) async throws
 }
 

@@ -8,7 +8,7 @@ import Spyable
 // MARK: - RefreshAnyVerifiableCredentialUseCaseProtocol
 
 @Spyable
-public protocol RefreshAnyVerifiableCredentialUseCaseProtocol {
+public protocol RefreshAnyVerifiableCredentialUseCaseProtocol: Sendable {
   func callAsFunction(
     metadataWrapper: CredentialIssuerMetadataWrapper,
     holderBindings: [HolderBinding]?,

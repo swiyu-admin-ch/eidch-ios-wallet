@@ -13,15 +13,16 @@ extension Activity {
       actorCompliance: context.actorCompliance.actorComplianceStatus,
       nonComplianceData: context.requestObjectJWS.rawJWS,
       nonComplianceReasonDisplays: context.actorCompliance.nonComplianceReasonDisplays,
-      claims: credential.uniqueClaimIds.map(ActivityClaim.init),
-      actorDisplays: context.verifierDisplays.map(ActivityActorDisplay.init))
+      claims: credential.uniqueClaimPaths.map(ActivityClaim.init),
+      actorDisplays: context.verifierDisplays.map(ActivityActorDisplay.init),
+      bundleItem: credential.credential.presentableBundleItem.map(ActivityBundleItem.init))
   }
 }
 
 extension CompatibleCredential {
-  fileprivate var uniqueClaimIds: Set<UUID> {
+  fileprivate var uniqueClaimPaths: Set<String> {
     let allClaims = requestedClaimClusters.flatMap(\.allClaims)
-    return Set(allClaims.map(\.id))
+    return Set(allClaims.map(\.path.stringValue))
   }
 }
 

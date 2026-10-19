@@ -9,35 +9,44 @@ import XCTest
 @testable import BITSettings
 @testable import BITTestingCore
 
+@MainActor
 final class BiometricViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     router = MockOnboardingInternalRoutes()
 
-    getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
+    let getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
     getBiometricTypeUseCase.callAsFunctionReturnValue = .faceID
-    hasBiometricAuthUseCase = HasBiometricAuthUseCaseProtocolSpy()
+    self.getBiometricTypeUseCase = getBiometricTypeUseCase
+    let hasBiometricAuthUseCase = HasBiometricAuthUseCaseProtocolSpy()
     hasBiometricAuthUseCase.callAsFunctionReturnValue = true
-    requestBiometricAuthUseCase = RequestBiometricAuthUseCaseProtocolSpy()
-    updateBiometricUsageUseCase = UpdateBiometricUsageUseCaseProtocolSpy()
+    self.hasBiometricAuthUseCase = hasBiometricAuthUseCase
+    let requestBiometricAuthUseCase = RequestBiometricAuthUseCaseProtocolSpy()
+    self.requestBiometricAuthUseCase = requestBiometricAuthUseCase
+    let updateBiometricUsageUseCase = UpdateBiometricUsageUseCaseProtocolSpy()
+    self.updateBiometricUsageUseCase = updateBiometricUsageUseCase
     context = OnboardingContext()
-    internalLAContext = LAContextProtocolSpy()
+    let internalLAContext = LAContextProtocolSpy()
+    self.internalLAContext = internalLAContext
 
-    Container.shared.getBiometricTypeUseCase.register { @MainActor in self.getBiometricTypeUseCase }
-    Container.shared.hasBiometricAuthUseCase.register { @MainActor in self.hasBiometricAuthUseCase }
-    Container.shared.requestBiometricAuthUseCase.register { @MainActor in self.requestBiometricAuthUseCase }
-    Container.shared.updateBiometricUsageUseCase.register { @MainActor in self.updateBiometricUsageUseCase }
-    Container.shared.internalLAContext.register { @MainActor in self.internalLAContext }
+    Container.shared.getBiometricTypeUseCase.register { @MainActor in getBiometricTypeUseCase }
+    Container.shared.hasBiometricAuthUseCase.register { @MainActor in hasBiometricAuthUseCase }
+    Container.shared.requestBiometricAuthUseCase.register { @MainActor in requestBiometricAuthUseCase }
+    Container.shared.updateBiometricUsageUseCase.register { @MainActor in updateBiometricUsageUseCase }
+    Container.shared.internalLAContext.register { @MainActor in internalLAContext }
 
     viewModel = BiometricsViewModel(router: router)
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testInit() {
     XCTAssertTrue(getBiometricTypeUseCase.callAsFunctionCalled)
     XCTAssertEqual(getBiometricTypeUseCase.callAsFunctionCallsCount, 1)
@@ -49,7 +58,6 @@ final class BiometricViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.biometricType, .faceID)
   }
 
-  @MainActor
   func testRegisterBiometrics() async {
     context.pincode = "123456"
 
@@ -68,7 +76,6 @@ final class BiometricViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isErrorPresented)
   }
 
-  @MainActor
   func testPrimaryActionWithBiometricsUnavailable_continuesWithoutRequestingBiometrics() async {
     hasBiometricAuthUseCase.callAsFunctionReturnValue = false
     viewModel.checkBiometricStatus()
@@ -80,7 +87,6 @@ final class BiometricViewModelTests: XCTestCase {
     XCTAssertFalse(updateBiometricUsageUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testPrimaryActionWithBiometricsAvailable_requestsBiometrics() async {
     await viewModel.primaryAction()
 
@@ -89,7 +95,6 @@ final class BiometricViewModelTests: XCTestCase {
     XCTAssertTrue(router.setupCalled)
   }
 
-  @MainActor
   func testRegisterBiometricsWithError_presentsErrorWithoutContinuing() async {
     requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = TestingError.error
 
@@ -114,7 +119,6 @@ final class BiometricViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isErrorPresented)
   }
 
-  @MainActor
   func testRegisterBiometricsWithUnexpectedError_presentsError() async {
     requestBiometricAuthUseCase.callAsFunctionReasonContextThrowableError = TestingError.error
 
@@ -140,7 +144,7 @@ final class BiometricViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
+  // swiftlint:disable implicitly_unwrapped_optional
   private var viewModel: BiometricsViewModel!
   private var context: OnboardingContext!
   private var internalLAContext: LAContextProtocolSpy!
@@ -149,6 +153,6 @@ final class BiometricViewModelTests: XCTestCase {
   private var hasBiometricAuthUseCase: HasBiometricAuthUseCaseProtocolSpy!
   private var requestBiometricAuthUseCase: RequestBiometricAuthUseCaseProtocolSpy!
   private var updateBiometricUsageUseCase: UpdateBiometricUsageUseCaseProtocolSpy!
-  // swiftlint:enable all
+  // swiftlint:enable implicitly_unwrapped_optional
 
 }

@@ -8,6 +8,7 @@ import SwiftUI
 
 // MARK: - SecuritySettingsViewModel
 
+@MainActor
 @Observable
 final class SecuritySettingsViewModel {
 

@@ -3,6 +3,7 @@ import BITPushNotification
 import Factory
 import Foundation
 
+@MainActor
 public class CancelledStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Internal

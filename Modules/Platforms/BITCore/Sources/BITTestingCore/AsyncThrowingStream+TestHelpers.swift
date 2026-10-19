@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-extension AsyncThrowingStream where Failure == Error {
+extension AsyncThrowingStream where Failure == Error, Element: Sendable {
 
   /// Creates a stream that synchronously yields the provided elements and then finishes.
   ///

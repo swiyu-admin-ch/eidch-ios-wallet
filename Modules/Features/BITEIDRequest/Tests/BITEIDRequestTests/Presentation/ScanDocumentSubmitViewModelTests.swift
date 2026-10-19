@@ -1,4 +1,5 @@
 import Factory
+import FactoryTesting
 import Foundation
 import Spyable
 import Testing
@@ -12,14 +13,13 @@ import Testing
 
 // MARK: - ScanDocumentSubmitViewModelTests
 
+@Suite(.container)
 @MainActor
 final class ScanDocumentSubmitViewModelTests {
 
   // MARK: Lifecycle
 
   init() {
-    Container.shared.reset()
-
     let context = EIDRequestContext()
     context.hasLegalRepresentant = true
     context.identityType = .passport
@@ -198,9 +198,10 @@ final class ScanDocumentSubmitViewModelTests {
 
   @Test
   func submit_autoVerificationWithDocumentRecording_routesToRecordDocumentInformation() async {
-    context = EIDRequestContext.Mock.documentRecordingSample
+    let context = EIDRequestContext.Mock.documentRecordingSample
     context.identityType = .identityCard
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    self.context = context
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
 
     await viewModel.submit()
@@ -214,9 +215,10 @@ final class ScanDocumentSubmitViewModelTests {
 
   @Test
   func submit_autoVerificationWithoutDocumentRecording_routesToSelfieVideo() async {
-    context = EIDRequestContext.Mock.sample
+    let context = EIDRequestContext.Mock.sample
     context.identityType = .identityCard
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    self.context = context
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
 
     await viewModel.submit()
@@ -229,10 +231,11 @@ final class ScanDocumentSubmitViewModelTests {
 
   @Test
   func submit_autoVerificationWrongDocument_routesToError() async {
-    context = EIDRequestContext.Mock.sample
+    let context = EIDRequestContext.Mock.sample
     context.identityType = .identityCard
+    self.context = context
     compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = false
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
 
     await viewModel.submit()
@@ -249,11 +252,12 @@ final class ScanDocumentSubmitViewModelTests {
 
   @Test
   func submit_autoVerificationUploadFails_routesToRetryError() async {
-    context = EIDRequestContext.Mock.sample
+    let context = EIDRequestContext.Mock.sample
     context.identityType = .identityCard
+    self.context = context
 
     let throwingUseCase = ThrowingUpdateEIDRequestCaseFilesUseCase(error: TestingError.error)
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     Container.shared.updateEIDRequestCaseFilesUseCase.register { @MainActor in throwingUseCase }
     viewModel = ScanDocumentSubmitViewModel(scanDocumentOutput: scanDocumentOutput)
 

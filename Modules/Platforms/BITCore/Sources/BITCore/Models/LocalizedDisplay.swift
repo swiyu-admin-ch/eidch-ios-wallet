@@ -56,3 +56,7 @@ extension LocalizedDisplay: Hashable where T: Hashable {
     }
   }
 }
+
+// MARK: Sendable
+
+extension LocalizedDisplay: Sendable where T: Sendable {}

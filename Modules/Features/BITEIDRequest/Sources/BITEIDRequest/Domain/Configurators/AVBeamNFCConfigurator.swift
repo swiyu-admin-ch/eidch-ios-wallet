@@ -8,13 +8,13 @@ import Spyable
 // MARK: - AVBeamNFCConfiguratorProtocol
 
 @Spyable
-protocol AVBeamNFCConfiguratorProtocol {
+protocol AVBeamNFCConfiguratorProtocol: Sendable {
   func configure(for caseId: String, authenticationToken: String) async throws -> AVBeamScanNfcConfig
 }
 
 // MARK: - AVBeamNFCConfigurator
 
-struct AVBeamNFCConfigurator: AVBeamNFCConfiguratorProtocol {
+struct AVBeamNFCConfigurator: AVBeamNFCConfiguratorProtocol, @unchecked Sendable {
 
   // MARK: Internal
 

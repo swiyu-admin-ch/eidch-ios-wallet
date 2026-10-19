@@ -1,5 +1,6 @@
 import BITAppAttestation
 import BITAppAuth
+import BITCrypto
 import BITEIDRequestShared
 import BITLocalAuthentication
 import BITNetworking
@@ -11,7 +12,7 @@ import Spyable
 // MARK: - SIDRepositoryProtocol
 
 @Spyable
-protocol SIDRepositoryProtocol {
+protocol SIDRepositoryProtocol: Sendable {
   func apply(with body: EIDRequestPayload) async throws -> EIDRequestResponse
   func fetchRequestStatus(for caseId: String) async throws -> EIDRequestStatus
   func fetchLegalRepresentantVerification(for requestCaseId: String) async throws -> LegalRepresentantVerificationResponse
@@ -80,8 +81,9 @@ struct SIDRepository: SIDRepositoryProtocol {
 
   func pairWallet(caseId: String) async throws -> WalletPairingResponse {
     let clientAttestationPlugin = try await generateClientAttestationPlugin(for: EIDRequestEmptyBody())
+    let response = try await networkService.request(SIDRepositoryEndpoint.pairWallet(caseId: caseId), plugins: [clientAttestationPlugin])
 
-    return try await networkService.request(SIDRepositoryEndpoint.pairWallet(caseId: caseId), plugins: [clientAttestationPlugin])
+    return try decryptWalletPairing(from: response)
   }
 
   func startAutoVerification(caseId: String, autoVerificationType: AutoVerificationType, isNFCAvailable: Bool) async throws -> AutoVerificationResponse {
@@ -109,12 +111,17 @@ struct SIDRepository: SIDRepositoryProtocol {
 
   // MARK: Private
 
+  private static let maxDecompressedSize = 1024
+  private static let maxCompressedCipherTextLength = 8 * 1024
+
   @Injected(\.sidBaseUrl) private var sidBaseUrl
   @Injected(\NetworkContainer.service) private var networkService
   @Injected(\.eIDRequestResponseDecoder) private var eIDRequestResponseDecoder
   @Injected(\.proofOfPossessionGenerator) private var proofOfPossessionGenerator
   @Injected(\.clientAttestationRepository) private var clientAttestationRepository
   @Injected(\.userSession) private var userSession
+  @Injected(\.jweDecrypter) private var jweDecrypter: JWEDecrypterProtocol
+  @Injected(\.appAttestationKeyRepository) private var appAttestationKeyRepository: AppAttestationKeyRepositoryProtocol
 
   private func parseError(_ error: NetworkError) throws -> Swift.Error {
     let errorResponse = try JSONDecoder().decode(EIDRequestErrorResponse.self, from: error.response?.data ?? Data())
@@ -150,6 +157,17 @@ struct SIDRepository: SIDRepositoryProtocol {
     }
 
     return context
+  }
+
+  private func decryptWalletPairing(from response: Response) throws -> WalletPairingResponse {
+    let clientAttestationKeyPair = try appAttestationKeyRepository.get(for: .client)
+    let decryptedPayload = try jweDecrypter.decrypt(
+      payload: response.data,
+      privateKey: clientAttestationKeyPair.privateKey,
+      keyType: .hardware,
+      limit: JWESizeLimit(maxDecompressedSize: Self.maxDecompressedSize, maxCompressedCipherTextLength: Self.maxCompressedCipherTextLength))
+
+    return try JSONDecoder().decode(WalletPairingResponse.self, from: decryptedPayload)
   }
 }
 

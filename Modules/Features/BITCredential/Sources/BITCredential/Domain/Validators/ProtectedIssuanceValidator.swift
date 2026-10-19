@@ -8,7 +8,7 @@ import Spyable
 // MARK: - ProtectedIssuanceValidatorProtocol
 
 @Spyable
-protocol ProtectedIssuanceValidatorProtocol {
+protocol ProtectedIssuanceValidatorProtocol: Sendable {
   func validate(anyCredential: AnyCredential, metadataWrapper: CredentialIssuerMetadataWrapper) async throws
 }
 

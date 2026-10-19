@@ -111,9 +111,9 @@ final class NFCScanViewModel {
   }
 }
 
-// MARK: AVBeamMessageDelegate
+// MARK: @MainActor AVBeamMessageDelegate
 
-extension NFCScanViewModel: AVBeamMessageDelegate {
+extension NFCScanViewModel: @MainActor AVBeamMessageDelegate {
 
   func didReceiveError(error: AVBeamError) {
     Task { @MainActor in
@@ -132,26 +132,29 @@ extension NFCScanViewModel: AVBeamMessageDelegate {
   }
 }
 
-// MARK: AVBeamNfcDelegate
+// MARK: @MainActor AVBeamNfcDelegate
 
-extension NFCScanViewModel: AVBeamNfcDelegate {
+extension NFCScanViewModel: @MainActor AVBeamNfcDelegate {
   func didCompleteNfcScan(packageResult: AVBeamPackageResult) {
-    NotificationCenter.default.post(name: .permissionAlertFinished, object: nil)
+    nonisolated(unsafe) let packageResult = packageResult
+    Task { @MainActor in
+      NotificationCenter.default.post(name: .permissionAlertFinished, object: nil)
 
-    guard packageResult.data.nfcError == .none else {
-      if packageResult.data.nfcError == .nfcSessionInvalidated { return } // nfc timeout - do nothing.
-      return handleScanFailure(packageResult.data.nfcError)
-    }
+      guard packageResult.data.nfcError == .none else {
+        if packageResult.data.nfcError == .nfcSessionInvalidated { return } // nfc timeout - do nothing.
+        return handleScanFailure(packageResult.data.nfcError)
+      }
 
-    guard packageResult.data.errorCode == .none else {
-      return handleScanFailure(packageResult.data.errorCode)
-    }
+      guard packageResult.data.errorCode == .none else {
+        return handleScanFailure(packageResult.data.errorCode)
+      }
 
-    scanResult = packageResult
-    failedNFCScanAttempts = 0
+      scanResult = packageResult
+      failedNFCScanAttempts = 0
 
-    if let scanResult {
-      destination = .nfcScanResult(scanResult)
+      if let scanResult {
+        destination = .nfcScanResult(scanResult)
+      }
     }
   }
 }
@@ -160,7 +163,7 @@ extension NFCScanViewModel: AVBeamNfcDelegate {
 
 extension NFCScanViewModel {
 
-  private func handleError(_ error: Error, action: (() -> Void)? = nil) {
+  private func handleError(_ error: Error, action: VoidAction? = nil) {
     destination = .error(errorDataset(for: error, action: action))
   }
 
@@ -211,14 +214,14 @@ extension NFCScanViewModel {
     }
   }
 
-  private func retryHandler(_ action: (() -> Void)? = nil) -> (Navigator) -> Void {
+  private func retryHandler(_ action: VoidAction? = nil) -> NavigatorAction {
     { navigator in
       navigator.pop()
       action?()
     }
   }
 
-  private func errorDataset(for error: Error, action: (() -> Void)? = nil) -> ErrorDataset {
+  private func errorDataset(for error: Error, action: VoidAction? = nil) -> ErrorDataset {
     guard let avBeamError = error as? AVBeamError else {
       return ErrorDataset.retry(error, retryHandler(action))
     }
@@ -227,7 +230,7 @@ extension NFCScanViewModel {
       avBeamError, retryAction: retryHandler(action), closeAction: closeHandler())
   }
 
-  private func closeHandler() -> () -> Void {
+  private func closeHandler() -> VoidAction {
     { [weak self] in
       self?.coordinator.cleanup()
     }

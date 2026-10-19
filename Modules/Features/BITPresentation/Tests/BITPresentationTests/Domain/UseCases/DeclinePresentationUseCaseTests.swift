@@ -9,21 +9,25 @@ import XCTest
 
 // MARK: - DeclinePresentationUseCaseTests
 
-@MainActor
 final class DeclinePresentationUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
-    presentationRequestServiceSpy = PresentationRequestServiceProtocolSpy()
-    activityServiceSpy = ActivityServiceProtocolSpy()
-    proximityRepository = ProximityPresentationRepositoryProtocolSpy()
-    Container.shared.presentationRequestService.register { @MainActor in self.presentationRequestServiceSpy }
-    Container.shared.activityService.register { @MainActor in self.activityServiceSpy }
-    Container.shared.proximityPresentationRepository.register { @MainActor in self.proximityRepository }
+    super.setUp()
+    let presentationRequestServiceSpy = PresentationRequestServiceProtocolSpy()
+    self.presentationRequestServiceSpy = presentationRequestServiceSpy
+    let activityServiceSpy = ActivityServiceProtocolSpy()
+    self.activityServiceSpy = activityServiceSpy
+    let proximityRepository = ProximityPresentationRepositoryProtocolSpy()
+    self.proximityRepository = proximityRepository
+    Container.shared.presentationRequestService.register { @MainActor in presentationRequestServiceSpy }
+    Container.shared.activityService.register { @MainActor in activityServiceSpy }
+    Container.shared.proximityPresentationRepository.register { @MainActor in proximityRepository }
     useCase = DeclinePresentationUseCase()
   }
 
+  @MainActor
   func testExecute_passesArguments() async throws {
     let redirect = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
     presentationRequestServiceSpy.declineUrlStateWithReturnValue = redirect
@@ -41,6 +45,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.credentialId, contextMock.selectedCredential?.id)
   }
 
+  @MainActor
   func testExecute_serviceThrows_throwsError() async throws {
     presentationRequestServiceSpy.declineUrlStateWithThrowableError = TestingError.error
 
@@ -52,6 +57,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testExecute_serviceThrowsNoConnection_DoesNotCreateActivity() async throws {
     presentationRequestServiceSpy.declineUrlStateWithThrowableError = NetworkError(status: .noConnection)
 
@@ -63,6 +69,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testExecute_serviceThrowsHttpNetworkError_CreatesActivity() async throws {
     presentationRequestServiceSpy.declineUrlStateWithThrowableError = NetworkError(status: .badRequest)
 
@@ -76,10 +83,14 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testExecute_serviceThrowsPresentationResponseValidationError_CreatesActivity() async throws {
     presentationRequestServiceSpy.declineUrlStateWithThrowableError = PresentationResponseValidationError.invalidRedirectUri
 
-    await XCTAssertThrowsErrorAsync(try await useCase(context: contextMock)) { error in
+    do {
+      _ = try await useCase(context: contextMock)
+      XCTFail("Expected PresentationResponseValidationError.invalidRedirectUri")
+    } catch {
       XCTAssertEqual(error as? PresentationResponseValidationError, .invalidRedirectUri)
       XCTAssertEqual(activityServiceSpy.createCredentialIdCallsCount, 1)
       XCTAssertEqual(activityServiceSpy.createCredentialIdReceivedArguments?.activity.type, .presentationDeclined)
@@ -87,6 +98,7 @@ final class DeclinePresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testExecute_Proximity_UsesRepositoryOnly() async throws {
     let proximityContext = PresentationRequestContext(
       requestObjectJWS: contextMock.requestObjectJWS,

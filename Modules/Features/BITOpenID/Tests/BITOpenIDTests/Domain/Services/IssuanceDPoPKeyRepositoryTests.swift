@@ -16,13 +16,15 @@ final class IssuanceDPoPKeyRepositoryTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    keyManagerSpy = KeyManagerProtocolSpy()
-    userSession = SessionSpy()
+    let keyManagerSpy = KeyManagerProtocolSpy()
+    self.keyManagerSpy = keyManagerSpy
+    let userSession = SessionSpy()
+    self.userSession = userSession
     userSession.isLoggedIn = true
     userSession.context = LAContextProtocolSpy()
 
-    Container.shared.keyManager.register { self.keyManagerSpy }
-    Container.shared.userSession.register { self.userSession }
+    Container.shared.keyManager.register { keyManagerSpy }
+    Container.shared.userSession.register { userSession }
 
     repository = IssuanceDPoPKeyRepository()
 

@@ -23,6 +23,8 @@ final class PushDataSourceTests {
 
   @Test
   func getPushToken_withMultipleCallers_returnsPushTokenToAll() async {
+    let dataSource = dataSource
+    let mockPushToken = mockPushToken
     async let firstPushToken = dataSource.getPushToken()
     async let secondPushToken = dataSource.getPushToken()
 

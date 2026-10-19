@@ -4,6 +4,7 @@ import SwiftUI
 
 // MARK: - SettingsViewModel
 
+@MainActor
 @Observable
 class SettingsViewModel {
 

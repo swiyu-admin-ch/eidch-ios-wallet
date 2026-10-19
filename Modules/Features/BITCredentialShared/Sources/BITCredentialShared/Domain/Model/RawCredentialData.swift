@@ -1,39 +1,38 @@
+import BITCore
 import BITEntities
 import Foundation
 
 // MARK: - RawCredentialData
 
-public struct RawCredentialData: Identifiable, Codable, Equatable {
+public struct RawCredentialData: Identifiable, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 
   public init(
-    id: UUID = UUID(),
     rawOIDMetadata: Data? = nil,
     rawOcaBundle: Data? = nil)
   {
-    self.id = id
+    id = Self.contentHash(rawOIDMetadata: rawOIDMetadata, rawOcaBundle: rawOcaBundle)
     self.rawOIDMetadata = rawOIDMetadata
     self.rawOcaBundle = rawOcaBundle
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    id = try container.decode(UUID.self, forKey: .id)
-    rawOIDMetadata = try container.decodeIfPresent(Data.self, forKey: .rawOIDMetadata)
-    rawOcaBundle = try container.decodeIfPresent(Data.self, forKey: .rawOcaBundle)
+    let rawOIDMetadata = try container.decodeIfPresent(Data.self, forKey: .rawOIDMetadata)
+    let rawOcaBundle = try container.decodeIfPresent(Data.self, forKey: .rawOcaBundle)
+    self.init(rawOIDMetadata: rawOIDMetadata, rawOcaBundle: rawOcaBundle)
   }
 
   public init(_ entity: RawCredentialDataEntity) {
-    self.init(
-      id: entity.id,
-      rawOIDMetadata: try? entity.rawOIDMetadata?.decompressed(ignoreHeaderBytes: false),
-      rawOcaBundle: try? entity.rawOcaBundle?.decompressed(ignoreHeaderBytes: false))
+    id = entity.contentHash
+    rawOIDMetadata = try? entity.rawOIDMetadata?.decompressed(ignoreHeaderBytes: false)
+    rawOcaBundle = try? entity.rawOcaBundle?.decompressed(ignoreHeaderBytes: false)
   }
 
   // MARK: Public
 
-  public let id: UUID
+  public let id: String
   public let rawOIDMetadata: Data?
   public let rawOcaBundle: Data?
 
@@ -43,5 +42,9 @@ public struct RawCredentialData: Identifiable, Codable, Equatable {
     case id
     case rawOIDMetadata
     case rawOcaBundle
+  }
+
+  private static func contentHash(rawOIDMetadata: Data?, rawOcaBundle: Data?) -> String {
+    RawCredentialDataEntity(rawOIDMetadata: rawOIDMetadata, rawOcaBundle: rawOcaBundle).contentHash
   }
 }

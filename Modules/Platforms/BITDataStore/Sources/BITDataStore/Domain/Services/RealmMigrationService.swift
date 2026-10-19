@@ -1,3 +1,4 @@
+import Factory
 import Foundation
 import RealmSwift
 
@@ -13,7 +14,29 @@ struct RealmMigrationService: MigrationServiceProtocol {
 
   // MARK: Internal
 
+  @Injected(\.contentHasher) var contentHasher
+
   func migrate(from oldVersion: UInt64, to newVersion: UInt64, migration: Migration) {
+    migrateSteps(from: oldVersion, to: newVersion, migration: migration)
+    deleteOrphanedObjects(migration)
+  }
+
+  func getOldToNewObjectMap(ofType type: String, migration: Migration) -> [String: MigrationObject] {
+    var mapping = [String: MigrationObject]()
+    migration.enumerateObjects(ofType: type) { oldObject, newObject in
+      guard let oldId = oldObject?.getId(), let newObject else {
+        return
+      }
+      mapping[oldId] = newObject
+    }
+    return mapping
+  }
+
+  // MARK: Private
+
+  /// The step chain to run, picked by the version the store is coming from. Every chain ends on the
+  /// current schema, so the orphan sweep is left to the caller rather than repeated at each end.
+  private func migrateSteps(from oldVersion: UInt64, to newVersion: UInt64, migration: Migration) {
     if oldVersion < 5 && newVersion >= 5 {
       return migrateFromSchema4(migration)
     }
@@ -53,9 +76,19 @@ struct RealmMigrationService: MigrationServiceProtocol {
     if oldVersion < 29 && newVersion >= 29 {
       return migrateFromSchema28(migration)
     }
+
+    if oldVersion < 32 && newVersion >= 32 {
+      return migrateFromSchema31(migration)
+    }
   }
 
-  // MARK: Private
+  private func deleteOrphanedObjects(_ migration: Migration) {
+    let childrenMap = getCredentialChildrenIds(migration: migration)
+    for (entityType, ids) in childrenMap {
+      migration.deleteOrphanedObjects(ofType: entityType, ids: ids)
+    }
+    deleteOrphanedEIDRequestCaseStates(migration: migration)
+  }
 
   /**
    * Version 3.7 (schema 5)
@@ -82,8 +115,10 @@ struct RealmMigrationService: MigrationServiceProtocol {
 
       let keyBinding = createKeyBindingFromCredentialFields(oldCredential, migration: migration)
       let verifiableCredential = createVerifiableCredential(from: oldCredential, keyBinding: keyBinding, in: migration)
-      let clusters = verifiableCredential?["clusters"] as? List<MigrationObject>
-      clusters?.append(cluster)
+      if let newCredential {
+        let clusters = rendering(for: newCredential, in: migration)["clusters"] as? List<MigrationObject>
+        clusters?.append(cluster)
+      }
 
       newCredential?["verifiableCredential"] = verifiableCredential
     }
@@ -91,7 +126,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
-    deleteOrphanedObjects(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -103,7 +138,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migration.enumerateObjects(ofType: "CredentialEntity") { oldCredential, newCredential in
       let keyBinding = createKeyBindingFromCredentialFields(oldCredential, migration: migration)
       let verifiableCredential = createVerifiableCredential(from: oldCredential, keyBinding: keyBinding, in: migration)
-      copyClusters(from: oldCredential, to: verifiableCredential, in: migration)
+      copyClusters(from: oldCredential, to: newCredential, in: migration)
 
       newCredential?["verifiableCredential"] = verifiableCredential
     }
@@ -111,7 +146,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
-    deleteOrphanedObjects(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -123,7 +158,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migration.enumerateObjects(ofType: "CredentialEntity") { oldCredential, newCredential in
       let keyBinding = getLegacyKeyBindingId(oldCredential).flatMap { keyBindingsById[$0] }
       let verifiableCredential = createVerifiableCredential(from: oldCredential, keyBinding: keyBinding, in: migration)
-      copyClusters(from: oldCredential, to: verifiableCredential, in: migration)
+      copyClusters(from: oldCredential, to: newCredential, in: migration)
 
       newCredential?["verifiableCredential"] = verifiableCredential
     }
@@ -131,7 +166,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
-    deleteOrphanedObjects(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -149,8 +184,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
-
-    deleteOrphanedObjects(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -165,9 +199,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
-
-    deleteOrphanedObjects(migration)
-
+    migrateToSchema32(migration)
   }
 
   /**
@@ -180,6 +212,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -193,6 +226,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateCredentialAuthentication(migration)
     replaceKeyWithClaimsPathPointer(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -204,6 +238,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateBatchData(migration)
     migrateCredentialAuthentication(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
+    migrateToSchema32(migration)
   }
 
   private func replaceKeyWithClaimsPathPointer(_ migration: Migration) {
@@ -226,6 +261,7 @@ struct RealmMigrationService: MigrationServiceProtocol {
     migrateBatchData(migration)
     migrateCredentialAuthentication(migration)
     migrateCredentialDisplaySummaryTemplates(migration)
+    migrateToSchema32(migration)
   }
 
   /**
@@ -234,6 +270,16 @@ struct RealmMigrationService: MigrationServiceProtocol {
    */
   private func migrateFromSchema28(_ migration: Migration) {
     migrateCredentialDisplaySummaryTemplates(migration)
+    migrateToSchema32(migration)
+  }
+
+  /**
+   * Version 7.0 (schema 32)
+   * - Re-key **RawCredentialDataEntity** and **ImageEntity** onto content hashes
+   * - Add **CredentialRenderingEntity** and move the display and cluster trees onto it
+   */
+  private func migrateFromSchema31(_ migration: Migration) {
+    migrateToSchema32(migration)
   }
 
   private func migrateCredentialDisplaySummaryTemplates(_ migration: Migration) {
@@ -256,16 +302,8 @@ struct RealmMigrationService: MigrationServiceProtocol {
     }
   }
 
-  private func deleteOrphanedObjects(_ migration: Migration) {
-    let childrenMap = getCredentialChildrenIds(migration: migration)
-    for (entityType, ids) in childrenMap {
-      migration.deleteOrphanedObjects(ofType: entityType, ids: ids)
-    }
-    deleteOrphanedEIDRequestCaseStates(migration: migration)
-  }
-
-  private func getCredentialChildrenIds(migration: Migration) -> [String: [String]] {
-    var childrenMap = [String: [String]]()
+  private func getCredentialChildrenIds(migration: Migration) -> [String: Set<String>] {
+    var childrenMap = [String: Set<String>]()
     migration.enumerateObjects(ofType: "CredentialEntity") { _, newCredential in
       if let newCredential {
         if let id = newCredential.getId(forChild: "rawCredentialData") {
@@ -286,8 +324,19 @@ struct RealmMigrationService: MigrationServiceProtocol {
         if let id = newCredential.getId(forChild: "verifiableCredential") {
           createOrAppend(&childrenMap, key: "VerifiableCredentialEntity", value: id)
         }
-        createOrAppend(&childrenMap, key: "CredentialIssuerDisplayEntity", value: newCredential.getIds(forChildren: "issuerDisplays"))
-        createOrAppend(&childrenMap, key: "CredentialDisplayEntity", value: newCredential.getIds(forChildren: "displays"))
+        if let rendering = newCredential["credentialRendering"] as? MigrationObject {
+          registerRendering(rendering, in: &childrenMap)
+        }
+        if let activities = newCredential["activities"] as? List<MigrationObject> {
+          for activity in activities {
+            if let rendering = activity["credentialRendering"] as? MigrationObject {
+              registerRendering(rendering, in: &childrenMap)
+            }
+            if let id = activity.getId(forChild: "rawCredentialData") {
+              createOrAppend(&childrenMap, key: "RawCredentialDataEntity", value: id)
+            }
+          }
+        }
         if let verifiableCredential = newCredential["verifiableCredential"] as? MigrationObject {
           createOrAppend(&childrenMap, key: "BundleItemEntity", value: verifiableCredential.getIds(forChildren: "bundleItems"))
           if let bundleItems = verifiableCredential["bundleItems"] as? List<MigrationObject> {
@@ -300,45 +349,46 @@ struct RealmMigrationService: MigrationServiceProtocol {
           if let id = verifiableCredential.getId(forChild: "batchData") {
             createOrAppend(&childrenMap, key: "BatchDataEntity", value: id)
           }
-          createOrAppend(&childrenMap, key: "CredentialClaimClusterEntity", value: verifiableCredential.getIds(forChildren: "clusters"))
-          if let clusters = verifiableCredential["clusters"] as? List<MigrationObject> {
-            let clusterDisplayIds: [String] = clusters.flatMap { $0.getIds(forChildren: "displays") }
-            createOrAppend(&childrenMap, key: "CredentialClaimClusterDisplayEntity", value: clusterDisplayIds)
-            for cluster in clusters {
-              createOrAppend(&childrenMap, key: "CredentialClaimEntity", value: cluster.getIds(forChildren: "claims"))
-              if let claims = cluster["claims"] as? List<MigrationObject> {
-                let claimDisplayIds: [String] = claims.flatMap { $0.getIds(forChildren: "displays") }
-                createOrAppend(&childrenMap, key: "CredentialClaimDisplayEntity", value: claimDisplayIds)
-              }
-            }
-          }
         }
       }
     }
     return childrenMap
   }
 
-  private func createOrAppend(_ dictionary: inout [String: [String]], key: String, value: String) {
-    if dictionary[key] == nil {
-      dictionary[key] = [value]
-    } else {
-      dictionary[key]?.append(value)
+  private func registerRendering(_ rendering: MigrationObject, in childrenMap: inout [String: Set<String>]) {
+    if let id = rendering.getId() {
+      createOrAppend(&childrenMap, key: "CredentialRenderingEntity", value: id)
+    }
+    createOrAppend(&childrenMap, key: "CredentialIssuerDisplayEntity", value: rendering.getIds(forChildren: "issuerDisplays"))
+    createOrAppend(&childrenMap, key: "CredentialDisplayEntity", value: rendering.getIds(forChildren: "displays"))
+    createOrAppend(&childrenMap, key: "CredentialClaimClusterEntity", value: rendering.getIds(forChildren: "clusters"))
+
+    guard let clusters = rendering["clusters"] as? List<MigrationObject> else { return }
+
+    let clusterDisplayIds: [String] = clusters.flatMap { $0.getIds(forChildren: "displays") }
+    createOrAppend(&childrenMap, key: "CredentialClaimClusterDisplayEntity", value: clusterDisplayIds)
+    for cluster in clusters {
+      createOrAppend(&childrenMap, key: "CredentialClaimEntity", value: cluster.getIds(forChildren: "claims"))
+      if let claims = cluster["claims"] as? List<MigrationObject> {
+        let claimDisplayIds: [String] = claims.flatMap { $0.getIds(forChildren: "displays") }
+        createOrAppend(&childrenMap, key: "CredentialClaimDisplayEntity", value: claimDisplayIds)
+      }
     }
   }
 
-  private func createOrAppend(_ dictionary: inout [String: [String]], key: String, value: [String]) {
-    if dictionary[key] == nil {
-      dictionary[key] = value
-    } else {
-      dictionary[key]?.append(contentsOf: value)
-    }
+  private func createOrAppend(_ dictionary: inout [String: Set<String>], key: String, value: String) {
+    dictionary[key, default: []].insert(value)
+  }
+
+  private func createOrAppend(_ dictionary: inout [String: Set<String>], key: String, value: [String]) {
+    dictionary[key, default: []].formUnion(value)
   }
 
   private func deleteOrphanedEIDRequestCaseStates(migration: Migration) {
-    var caseStateIds = [String]()
+    var caseStateIds = Set<String>()
     migration.enumerateObjects(ofType: "EIDRequestCaseEntity") { oldCase, _ in
       if let ids = oldCase?.getId(forChild: "state") {
-        caseStateIds.append(ids)
+        caseStateIds.insert(ids)
       }
     }
     migration.deleteOrphanedObjects(ofType: "EIDRequestStateEntity", ids: caseStateIds)
@@ -387,9 +437,11 @@ struct RealmMigrationService: MigrationServiceProtocol {
     return migration.create("CredentialKeyBindingEntity", value: [id, algorithm, "hardware", nil, nil])
   }
 
-  private func copyClusters(from oldCredential: MigrationObject?, to verifiableCredential: MigrationObject?, in migration: Migration) {
+  private func copyClusters(from oldCredential: MigrationObject?, to newCredential: MigrationObject?, in migration: Migration) {
+    guard let newCredential else { return }
+
     let oldClusters = oldCredential?["clusters"] as? List<MigrationObject> ?? List()
-    let newClusters = verifiableCredential?["clusters"] as? List<MigrationObject> ?? List()
+    let newClusters = rendering(for: newCredential, in: migration)["clusters"] as? List<MigrationObject> ?? List()
 
     migration.enumerateObjects(ofType: "CredentialClaimClusterEntity") { oldCluster, newCluster in
       if let oldCluster, oldClusters.contains(oldCluster), let newCluster {
@@ -411,17 +463,6 @@ struct RealmMigrationService: MigrationServiceProtocol {
         keyBindingsById: keyBindingsById,
         migration: migration)
     }
-  }
-
-  private func getOldToNewObjectMap(ofType type: String, migration: Migration) -> [String: MigrationObject] {
-    var mapping = [String: MigrationObject]()
-    migration.enumerateObjects(ofType: type) { oldObject, newObject in
-      guard let oldId = oldObject?.getId(), let newObject else {
-        return
-      }
-      mapping[oldId] = newObject
-    }
-    return mapping
   }
 
   private func getLegacyKeyBindingId(_ oldCredential: MigrationObject?) -> String? {
@@ -549,9 +590,9 @@ struct RealmMigrationService: MigrationServiceProtocol {
 }
 
 extension Migration {
-  fileprivate func deleteOrphanedObjects(ofType type: String, ids: [String]) {
+  fileprivate func deleteOrphanedObjects(ofType type: String, ids: Set<String>) {
     enumerateObjects(ofType: type) { _, newObject in
-      let childId = (newObject?["id"] as? UUID)?.uuidString ?? newObject?["id"] as? String
+      let childId = newObject?.getId()
       if let childId, let newObject {
         if !ids.contains(childId) {
           delete(newObject)
@@ -562,16 +603,39 @@ extension Migration {
 }
 
 extension MigrationObject {
-  fileprivate func hasProperty(_ property: String) -> Bool {
-    objectSchema.properties.contains(where: { $0.name == property })
-  }
 
-  fileprivate func getObject(forProperty property: String) -> MigrationObject? {
+  // MARK: Internal
+
+  func getObject(forProperty property: String) -> MigrationObject? {
     guard hasProperty(property) else {
       return nil
     }
 
     return self[property] as? MigrationObject
+  }
+
+  func getId() -> String? {
+    if let uuid: UUID = getValue(forProperty: "id") {
+      return uuid.uuidString
+    }
+    if let id: String = getValue(forProperty: "id") {
+      return id
+    }
+    return getValue(forProperty: "contentHash")
+  }
+
+  func getChildren(_ children: String) -> [MigrationObject]? {
+    guard hasProperty(children) else {
+      return nil
+    }
+
+    return (self[children] as? List<MigrationObject>).map(Array.init)
+  }
+
+  // MARK: Fileprivate
+
+  fileprivate func hasProperty(_ property: String) -> Bool {
+    objectSchema.properties.contains(where: { $0.name == property })
   }
 
   fileprivate func getValue<T>(forProperty property: String) -> T? {
@@ -582,13 +646,6 @@ extension MigrationObject {
     return self[property] as? T
   }
 
-  fileprivate func getId() -> String? {
-    if let uuid = self["id"] as? UUID {
-      return uuid.uuidString
-    }
-    return self["id"] as? String
-  }
-
   fileprivate func getId(forChild child: String) -> String? {
     let childObject = self[child] as? MigrationObject
     return childObject?.getId()
@@ -596,11 +653,6 @@ extension MigrationObject {
 
   fileprivate func getIds(forChildren children: String) -> [String] {
     let childrenObject = self[children] as? List<MigrationObject>
-    return childrenObject?.compactMap {
-      if let uuid = $0["id"] as? UUID {
-        return uuid.uuidString
-      }
-      return $0["id"] as? String
-    } ?? []
+    return childrenObject?.compactMap { $0.getId() } ?? []
   }
 }

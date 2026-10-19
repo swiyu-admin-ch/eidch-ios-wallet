@@ -6,7 +6,7 @@ import Foundation
 ///
 /// - RFC 7517: https://www.rfc-editor.org/rfc/rfc7517.html
 /// - RFC 8037: https://www.rfc-editor.org/rfc/rfc8037.html
-public struct PublicKeyInfo: Codable, Equatable {
+public struct PublicKeyInfo: Codable, Equatable, Sendable {
 
   // MARK: Public
 

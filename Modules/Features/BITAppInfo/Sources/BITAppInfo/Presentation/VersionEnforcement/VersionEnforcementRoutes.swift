@@ -6,6 +6,7 @@ import Spyable
 // MARK: - VersionEnforcementRoutes
 
 @Spyable
+@MainActor
 public protocol VersionEnforcementRoutes {
   func versionEnforcement(_ versionEnforcement: VersionEnforcement, delegate: VersionEnforcementDelegate)
 }

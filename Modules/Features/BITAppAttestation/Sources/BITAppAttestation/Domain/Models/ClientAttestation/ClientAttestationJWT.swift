@@ -11,7 +11,7 @@ public typealias ClientAttestation = JWS<ClientAttestationJWT>
 
 // MARK: - ClientAttestationJWT
 
-public struct ClientAttestationJWT: JWT, Codable, Equatable {
+public struct ClientAttestationJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Public
 

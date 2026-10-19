@@ -26,7 +26,7 @@ struct ValidatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocol {
 
 // MARK: - PinCodeError
 
-public enum PinCodeError {
+public enum PinCodeError: Sendable {
   case tooShort
   case empty
   case mismatch

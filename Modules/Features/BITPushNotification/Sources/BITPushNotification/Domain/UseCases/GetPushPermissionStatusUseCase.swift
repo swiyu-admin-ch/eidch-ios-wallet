@@ -6,7 +6,7 @@ import UserNotifications
 // MARK: - GetPushPermissionStatusUseCaseProtocol
 
 @Spyable
-public protocol GetPushPermissionStatusUseCaseProtocol {
+public protocol GetPushPermissionStatusUseCaseProtocol: Sendable {
   func callAsFunction() async -> UNAuthorizationStatus
 }
 

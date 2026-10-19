@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PushUpdateResponse
 
-public struct PushUpdateResponse: Codable, Equatable {
+public struct PushUpdateResponse: Codable, Equatable, Sendable {
   let successes: [String]
   let failures: [PushUpdateResponseError]
 

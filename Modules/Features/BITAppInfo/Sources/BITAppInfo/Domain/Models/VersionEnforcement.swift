@@ -2,7 +2,7 @@ import BITCore
 
 // MARK: - VersionEnforcement
 
-public struct VersionEnforcement: Equatable {
+public struct VersionEnforcement: Equatable, Sendable {
 
   // MARK: Lifecycle
 
@@ -21,7 +21,7 @@ public struct VersionEnforcement: Equatable {
 
 extension VersionEnforcement {
 
-  struct Message: Decodable, DisplayLocalizable, Equatable {
+  struct Message: Decodable, DisplayLocalizable, Equatable, Sendable {
     let title: String
     let body: String
     let locale: UserLocale?

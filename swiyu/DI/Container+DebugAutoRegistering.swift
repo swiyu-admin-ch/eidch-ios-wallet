@@ -26,7 +26,6 @@ enum Argument: String, CaseIterable {
 // MARK: - Container + AutoRegistering
 
 extension Container: AutoRegistering {
-  @MainActor
   public func autoRegister() {
     if ProcessInfo().arguments.contains(Argument.disableDevicePin.rawValue) {
       hasDevicePinUseCase.register { MockHasDevicePinUseCase(true) }

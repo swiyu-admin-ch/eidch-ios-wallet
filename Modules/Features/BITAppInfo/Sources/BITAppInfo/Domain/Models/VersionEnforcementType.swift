@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - VersionEnforcementType
 
-enum VersionEnforcementType {
+enum VersionEnforcementType: Sendable {
   case forced(storeURL: URL)
   case optional
   case outdatedOsVersion

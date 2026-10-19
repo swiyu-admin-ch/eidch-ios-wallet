@@ -4,7 +4,7 @@ import Spyable
 // MARK: - DisableBiometricUseCaseProtocol
 
 @Spyable
-protocol DisableBiometricUseCaseProtocol {
+protocol DisableBiometricUseCaseProtocol: Sendable {
   func callAsFunction() throws
 }
 

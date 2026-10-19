@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - CustomButtonConfiguration
 
-public struct CustomButtonConfiguration {
+public struct CustomButtonConfiguration: Sendable {
 
   // MARK: Lifecycle
 
@@ -42,49 +42,49 @@ public struct CustomButtonConfiguration {
 }
 
 extension CustomButtonConfiguration {
-  public static var primary = CustomButtonConfiguration(
+  public static let primary = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Background.Button.primaryDisabled.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
 
-  public static var secondary = CustomButtonConfiguration(
+  public static let secondary = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Label.primary.swiftUIColor,
     backgroundColor: ThemingAssets.Background.Button.secondary.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.accentColor.swiftUIColor)
 
-  public static var tertiary = CustomButtonConfiguration(
+  public static let tertiary = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.firGreen.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor)
 
-  public static var destructive = CustomButtonConfiguration(
+  public static let destructive = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.swissRed.swiftUIColor.opacity(0.2),
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.swissRed.swiftUIColor)
 
-  public static var bezeled = CustomButtonConfiguration(
+  public static let bezeled = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Shades.navyBlue70.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor)
 
-  public static var firGreen = CustomButtonConfiguration(
+  public static let firGreen = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.firGreen.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.firGreenLabel.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.firGreen.swiftUIColor)
 
-  public static var navyBlue = CustomButtonConfiguration(
+  public static let navyBlue = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Brand.Core.navyBlue.swiftUIColor,
     backgroundColor: ThemingAssets.Brand.Core.navyBlueLabel.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,
     progressViewTint: ThemingAssets.Brand.Core.navyBlue.swiftUIColor)
 
-  public static var warning = CustomButtonConfiguration(
+  public static let warning = CustomButtonConfiguration(
     foregroundColor: ThemingAssets.Background.Button.warningLabel.swiftUIColor,
     backgroundColor: ThemingAssets.Background.Button.warning.swiftUIColor,
     backgroundColorDisabled: ThemingAssets.Fills.tertiary.swiftUIColor,

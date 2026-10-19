@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -16,6 +15,7 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../../Platforms/BITCore"),
+    .package(path: "../../Platforms/BITCrypto"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/realm/realm-swift", exact: "20.0.5"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
@@ -25,6 +25,7 @@ let package = Package(
       name: "BITDataStore",
       dependencies: [
         .product(name: "BITCore", package: "BITCore"),
+        .product(name: "BITCrypto", package: "BITCrypto"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "RealmSwift", package: "realm-swift"),
         .product(name: "Spyable", package: "swift-spyable"),
@@ -34,7 +35,12 @@ let package = Package(
       ]),
     .testTarget(
       name: "BITDataStoreTests",
-      dependencies: ["BITDataStore"],
+      dependencies: [
+        "BITDataStore",
+        .product(name: "BITCore", package: "BITCore"),
+        .product(name: "FactoryTesting", package: "Factory"),
+        .product(name: "RealmSwift", package: "realm-swift"),
+      ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),
       ]),

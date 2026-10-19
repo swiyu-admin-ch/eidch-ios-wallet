@@ -16,14 +16,16 @@ final class CredentialKeyRepositoryTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    keyManagerProtocolSpy = KeyManagerProtocolSpy()
+    let keyManagerProtocolSpy = KeyManagerProtocolSpy()
+    self.keyManagerProtocolSpy = keyManagerProtocolSpy
 
     userSession.isLoggedIn = true
     userSession.context = LAContextProtocolSpy()
 
     Container.shared.reset()
-    Container.shared.keyManager.register { self.keyManagerProtocolSpy }
-    Container.shared.userSession.register { self.userSession }
+    Container.shared.keyManager.register { keyManagerProtocolSpy }
+    let userSession = userSession
+    Container.shared.userSession.register { userSession }
 
     repository = CredentialKeyRepository()
 

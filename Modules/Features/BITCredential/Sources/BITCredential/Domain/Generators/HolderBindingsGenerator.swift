@@ -12,7 +12,7 @@ import Spyable
 // MARK: - HolderBindingsGeneratorProtocol
 
 @Spyable
-protocol HolderBindingsGeneratorProtocol {
+protocol HolderBindingsGeneratorProtocol: Sendable {
   func callAsFunction(batchSize: Int?, proofTypes: [CredentialIssuerMetadata.ProofType]) async throws -> [HolderBinding]
 }
 
@@ -127,12 +127,19 @@ struct HolderBindingsGenerator: HolderBindingsGeneratorProtocol {
       throw AttestationServiceRepositoryError.invalidKeyAttestation
     }
 
-    for (index, keyAttestation) in zip(hardwareBoundedKeyPairs, fetchedKeyAttestations) {
-      guard await keyAttestationValidator(keyPair: keyPairs[index], with: keyAttestation) else {
-        throw AttestationServiceRepositoryError.invalidKeyAttestation
+    try await withThrowingTaskGroup(of: (Int, KeyAttestation).self) { group in
+      for (index, keyAttestation) in zip(hardwareBoundedKeyPairs, fetchedKeyAttestations) {
+        group.addTask {
+          guard await keyAttestationValidator(keyPair: keyPairs[index], with: keyAttestation) else {
+            throw AttestationServiceRepositoryError.invalidKeyAttestation
+          }
+          return (index, keyAttestation)
+        }
       }
 
-      keyAttestations[index] = keyAttestation
+      for try await (index, keyAttestation) in group {
+        keyAttestations[index] = keyAttestation
+      }
     }
 
     return keyAttestations

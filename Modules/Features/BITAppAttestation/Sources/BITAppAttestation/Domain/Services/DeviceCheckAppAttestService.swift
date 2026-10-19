@@ -4,7 +4,7 @@ import Spyable
 // MARK: - DeviceCheckAppAttestServiceProtocol
 
 @Spyable
-protocol DeviceCheckAppAttestServiceProtocol {
+public protocol DeviceCheckAppAttestServiceProtocol: Sendable {
   func generateKey() async throws -> String
   func attestKey(_ keyId: String, clientDataHash: Data) async throws -> Data
   func generateAssertion(_ keyId: String, clientDataHash: Data) async throws -> Data

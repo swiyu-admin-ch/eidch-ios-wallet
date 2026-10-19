@@ -6,6 +6,7 @@ import Factory
 import NavigatorUI
 import SwiftUI
 
+@MainActor
 @Observable
 final class AVIdentityCheckViewModel {
 

@@ -3,7 +3,7 @@ import BITTheming
 import NavigatorUI
 
 extension PushPermissionViewModel {
-  static func errorDataset(retryAction: @escaping (Navigator) -> Void, skipAction: @escaping (Navigator) -> Void) -> ErrorDataset {
+  static func errorDataset(retryAction: @escaping NavigatorAction, skipAction: @escaping NavigatorAction) -> ErrorDataset {
     ErrorDataset(
       [
         .title(L10n.tkPushNotificationPermissionErrorTitle),

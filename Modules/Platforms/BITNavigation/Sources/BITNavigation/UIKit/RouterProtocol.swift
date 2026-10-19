@@ -3,6 +3,7 @@ import UIKit
 
 // MARK: - RouterProtocol
 
+@MainActor
 public protocol RouterProtocol: AnyObject {
   associatedtype View: UIViewController
   var viewController: View? { get }

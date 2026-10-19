@@ -5,7 +5,7 @@ import Spyable
 // MARK: - JWKGeneratorProtocol
 
 @Spyable
-public protocol JWKGeneratorProtocol {
+public protocol JWKGeneratorProtocol: Sendable {
   func callAsFunction(from keyPair: VaultKeyPair) throws -> BITCrypto.JWK
 }
 

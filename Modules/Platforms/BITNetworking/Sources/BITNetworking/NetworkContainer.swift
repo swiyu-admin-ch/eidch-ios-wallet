@@ -8,9 +8,9 @@ import OSLog
 // MARK: - NetworkContainer
 
 public final class NetworkContainer: SharedContainer {
-  public static var shared = NetworkContainer()
+  public static let shared = NetworkContainer()
 
-  public var manager = ContainerManager()
+  public let manager = ContainerManager()
 }
 
 public typealias StubHandler = (TargetType) -> Moya.StubBehavior

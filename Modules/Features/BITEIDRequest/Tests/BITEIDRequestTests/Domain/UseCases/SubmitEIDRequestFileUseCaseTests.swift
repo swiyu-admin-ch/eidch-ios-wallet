@@ -70,8 +70,9 @@ final class SubmitEIDRequestFileUseCaseTests: XCTestCase {
   private let mockProgressBlock: ProgressBlock = { _ in }
 
   private func registerMocks() {
-    avRepository = AVRepositoryProtocolSpy()
+    let avRepository = AVRepositoryProtocolSpy()
+    self.avRepository = avRepository
 
-    Container.shared.avRepository.register { self.avRepository }
+    Container.shared.avRepository.register { avRepository }
   }
 }

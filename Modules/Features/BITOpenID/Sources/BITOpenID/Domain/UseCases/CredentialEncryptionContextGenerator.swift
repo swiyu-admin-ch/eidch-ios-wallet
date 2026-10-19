@@ -15,7 +15,7 @@ enum CredentialEncryptionContextGeneratorError: Error {
 // MARK: - CredentialEncryptionContextGeneratorProtocol
 
 @Spyable
-public protocol CredentialEncryptionContextGeneratorProtocol {
+public protocol CredentialEncryptionContextGeneratorProtocol: Sendable {
   func callAsFunction(for metadata: CredentialIssuerMetadata) throws -> CredentialEncryptionContext
 }
 

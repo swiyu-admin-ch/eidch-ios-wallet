@@ -4,7 +4,7 @@ import Spyable
 // MARK: - SecretManagerProtocol
 
 @Spyable
-public protocol SecretManagerProtocol {
+public protocol SecretManagerProtocol: Sendable {
   func string(forKey key: String, query: Query?) -> String?
   func integer(forKey key: String, query: Query?) -> Int?
   func double(forKey key: String, query: Query?) -> Double?

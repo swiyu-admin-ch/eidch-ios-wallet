@@ -5,7 +5,7 @@ import Spyable
 // MARK: - ActivityActorDisplayFactoryProtocol
 
 @Spyable
-public protocol ActivityActorDisplayFactoryProtocol {
+public protocol ActivityActorDisplayFactoryProtocol: Sendable {
   func callAsFunction(_ entity: ActivityActorDisplayEntity) -> ActivityActorDisplay
 }
 

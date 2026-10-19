@@ -1,10 +1,12 @@
 import BITL10n
 import Factory
+import FactoryTesting
 import Foundation
 import Spyable
 import Testing
 @testable import BITAppInfo
 
+@Suite(.container) @MainActor
 struct VersionEnforcementViewModelTests {
 
   // MARK: Lifecycle

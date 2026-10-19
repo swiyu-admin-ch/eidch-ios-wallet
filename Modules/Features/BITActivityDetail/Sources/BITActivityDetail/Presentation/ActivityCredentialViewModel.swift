@@ -18,6 +18,7 @@ struct ActivityCredentialViewModel: Equatable {
     logoBase64 = display?.logoBase64
     environment = detail.credential.environment
     clusters = detail.credential.clusters
+    statusListState = detail.credential.statusListState
   }
 
   // MARK: Internal
@@ -29,7 +30,24 @@ struct ActivityCredentialViewModel: Equatable {
   let environment: TrustEnvironment
   let clusters: [CredentialClaimCluster]
 
-  // MARK: Private
+  let statusListState: CredentialStatus?
+
+  /// The status the badge shows, or `nil` when there is nothing to show: everything the badge
+  /// needs comes from it, so it either shows in full or not at all.
+  var displayedStatus: CredentialStatus? {
+    guard let statusListState else { return nil }
+
+    return switch statusListState {
+    case .revoked,
+         .suspended,
+         .valid: statusListState
+    case .businessExpired,
+         .expired,
+         .notYetValid,
+         .unknown,
+         .unsupported: nil
+    }
+  }
 }
 
 extension ActivityDetailCredential {

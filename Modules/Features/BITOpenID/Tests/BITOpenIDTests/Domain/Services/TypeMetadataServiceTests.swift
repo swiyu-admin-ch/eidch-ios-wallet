@@ -103,11 +103,13 @@ final class TypeMetadataServiceTests: XCTestCase {
   private var repository: OpenIDRepositoryProtocolSpy!
 
   private func registerMocks() {
-    repository = OpenIDRepositoryProtocolSpy()
-    sriValidator = SRIValidatorProtocolSpy()
+    let repository = OpenIDRepositoryProtocolSpy()
+    self.repository = repository
+    let sriValidator = SRIValidatorProtocolSpy()
+    self.sriValidator = sriValidator
 
-    Container.shared.openIDRepository.register { self.repository }
-    Container.shared.sriValidator.register { self.sriValidator }
+    Container.shared.openIDRepository.register { repository }
+    Container.shared.sriValidator.register { sriValidator }
   }
 
   private func createSuccessState() {

@@ -13,7 +13,7 @@ enum CredentialIssuerMetadataWrapperError: Error {
  - Description: CredentialIssuerMetadataWrapper handles the mapping between the selectedCredential coming from the metadata and the metadata themselves. That selectedCredentialID will allow us to find later on the correct rawCredential payload and map the corresponding claims.
  */
 
-public struct CredentialIssuerMetadataWrapper {
+public struct CredentialIssuerMetadataWrapper: Sendable {
 
   // MARK: Lifecycle
 

@@ -106,11 +106,13 @@ final class FetchVcMetadataUseCaseTests: XCTestCase {
   private func registerMocks() {
     anyCredentialSpy = AnyCredentialSpy()
     fetchVcMetadataForVcSdJwtUseCaseSpy = FetchVcMetadataForCredentialUseCaseProtocolSpy()
-    jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
-    dispatcherMock = [.vcSdJwt: fetchVcMetadataForVcSdJwtUseCaseSpy]
+    let jsonSchemaValidatorSpy = JsonSchemaValidatorProtocolSpy()
+    self.jsonSchemaValidatorSpy = jsonSchemaValidatorSpy
+    let dispatcherMock: [CredentialFormat: FetchVcMetadataForCredentialUseCaseProtocolSpy] = [.vcSdJwt: fetchVcMetadataForVcSdJwtUseCaseSpy]
+    self.dispatcherMock = dispatcherMock
 
-    Container.shared.fetchVcMetadataForAnyCredentialDispatcher.register { self.dispatcherMock }
-    Container.shared.jsonSchemaValidator.register { self.jsonSchemaValidatorSpy }
+    Container.shared.fetchVcMetadataForAnyCredentialDispatcher.register { dispatcherMock }
+    Container.shared.jsonSchemaValidator.register { jsonSchemaValidatorSpy }
   }
 
   private func success(format: CredentialFormat) {

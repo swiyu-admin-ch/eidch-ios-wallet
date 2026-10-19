@@ -89,16 +89,21 @@ final class FetchIssuanceTrustInformationUseCaseTests: XCTestCase {
   private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
 
   private func registerMocks() {
-    trustInformationService = TrustInformationServiceProtocolSpy()
-    nonComplianceRepository = NonComplianceRepositoryProtocolSpy()
-    createAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
-    trustStatementValidator = TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>()
+    let trustInformationService = TrustInformationServiceProtocolSpy()
+    self.trustInformationService = trustInformationService
+    let nonComplianceRepository = NonComplianceRepositoryProtocolSpy()
+    self.nonComplianceRepository = nonComplianceRepository
+    let createAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
+    self.createAnyCredentialUseCase = createAnyCredentialUseCase
+    let trustStatementValidator = TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>()
+    self.trustStatementValidator = trustStatementValidator
+    let selectCredentialBundleItemUseCaseSpy = selectCredentialBundleItemUseCaseSpy
 
-    Container.shared.trustInformationService.register { self.trustInformationService }
-    Container.shared.nonComplianceRepository.register { self.nonComplianceRepository }
-    Container.shared.createAnyCredentialUseCase.register { self.createAnyCredentialUseCase }
-    Container.shared.trustStatementValidator.register { self.trustStatementValidator }
-    Container.shared.selectCredentialBundleItemUseCase.register { self.selectCredentialBundleItemUseCaseSpy }
+    Container.shared.trustInformationService.register { trustInformationService }
+    Container.shared.nonComplianceRepository.register { nonComplianceRepository }
+    Container.shared.createAnyCredentialUseCase.register { createAnyCredentialUseCase }
+    Container.shared.trustStatementValidator.register { trustStatementValidator }
+    Container.shared.selectCredentialBundleItemUseCase.register { selectCredentialBundleItemUseCaseSpy }
 
     selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
       guard let first = $0.bundleItems.first else { throw CredentialError.noBundleItem }

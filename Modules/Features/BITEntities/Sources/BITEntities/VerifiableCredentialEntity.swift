@@ -3,7 +3,7 @@ import RealmSwift
 
 public class VerifiableCredentialEntity: Object {
 
-  public enum ProgressionState: String, PersistableEnum {
+  public enum ProgressionState: String, PersistableEnum, Sendable {
     case accepted
     case unaccepted
   }
@@ -17,10 +17,10 @@ public class VerifiableCredentialEntity: Object {
 
   @Persisted public var createdAt = Date()
   @Persisted public var refreshedAt: Date?
+  @Persisted public var lastRefreshAttemptAt: Date?
 
   @Persisted public var bundleItems = List<BundleItemEntity>()
   @Persisted public var nextPresentableBundleItemId: UUID
-  @Persisted public var clusters = List<CredentialClaimClusterEntity>()
 
   @Persisted public var batchData: BatchDataEntity?
 }

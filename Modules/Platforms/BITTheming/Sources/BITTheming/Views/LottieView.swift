@@ -45,17 +45,8 @@ public struct LottieView: View {
 
 }
 
-// MARK: - LottiePlaybackModeKey
-
-private struct LottiePlaybackModeKey: EnvironmentKey {
-  static let defaultValue = LottiePlaybackMode.playing(.fromProgress(0, toProgress: 1, loopMode: .loop))
-}
-
 extension EnvironmentValues {
-  public var lottiePlaybackMode: LottiePlaybackMode {
-    get { self[LottiePlaybackModeKey.self] }
-    set { self[LottiePlaybackModeKey.self] = newValue }
-  }
+  @Entry public var lottiePlaybackMode = LottiePlaybackMode.playing(.fromProgress(0, toProgress: 1, loopMode: .loop))
 }
 
 extension View {

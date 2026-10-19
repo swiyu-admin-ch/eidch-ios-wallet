@@ -12,11 +12,13 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
-    sidRepository = SIDRepositoryProtocolSpy()
+    let eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    self.eIDRequestCaseRepository = eIDRequestCaseRepository
+    let sidRepository = SIDRepositoryProtocolSpy()
+    self.sidRepository = sidRepository
 
-    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
-    Container.shared.sidRepository.register { self.sidRepository }
+    Container.shared.eIDRequestCaseRepository.register { eIDRequestCaseRepository }
+    Container.shared.sidRepository.register { sidRepository }
 
     registerMocks()
     useCase = UpdateEIDRequestCaseStatusUseCase()
@@ -83,11 +85,13 @@ final class UpdateEIDRequestCaseStatusUseCaseTests: XCTestCase {
   private var mockEIDRequestCases: [EIDRequestCase] = [.Mock.sampleInQueue, .Mock.sampleWithoutState]
 
   private func registerMocks() {
-    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
-    sidRepository = SIDRepositoryProtocolSpy()
+    let eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    self.eIDRequestCaseRepository = eIDRequestCaseRepository
+    let sidRepository = SIDRepositoryProtocolSpy()
+    self.sidRepository = sidRepository
 
-    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
-    Container.shared.sidRepository.register { self.sidRepository }
+    Container.shared.eIDRequestCaseRepository.register { eIDRequestCaseRepository }
+    Container.shared.sidRepository.register { sidRepository }
   }
 
   private func createSuccessState() {

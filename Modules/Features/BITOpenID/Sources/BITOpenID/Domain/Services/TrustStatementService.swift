@@ -8,7 +8,7 @@ import Spyable
 // MARK: - TrustStatementServiceProtocol
 
 @Spyable
-public protocol TrustStatementServiceProtocol {
+public protocol TrustStatementServiceProtocol: Sendable {
   func fetchIdentity(for subjectDid: String) async throws -> IdentityTrustStatementV1
   func fetchVcSchema(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async throws -> VcSchemaTrustStatement?
 }

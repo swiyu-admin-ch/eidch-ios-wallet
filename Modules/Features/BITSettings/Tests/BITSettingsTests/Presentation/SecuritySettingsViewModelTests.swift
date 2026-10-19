@@ -5,7 +5,7 @@ import Testing
 @testable import BITCore
 @testable import BITSettings
 
-@Suite(.container)
+@Suite(.container) @MainActor
 struct SecuritySettingsViewModelTests {
 
   // MARK: Lifecycle

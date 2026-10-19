@@ -37,7 +37,7 @@ extension Container {
   }
 
   var queueInformationViewModel: ParameterFactory<Date, QueueInformationViewModel> {
-    self { QueueInformationViewModel(onlineSessionStartDate: $0) }
+    self { @MainActor in QueueInformationViewModel(onlineSessionStartDate: $0) }
   }
 
   var walletPairingViewModel: Factory<WalletPairingViewModel> {
@@ -49,7 +49,7 @@ extension Container {
   }
 
   var avIdentityCheckViewModel: ParameterFactory<String, AVIdentityCheckViewModel> {
-    self { AVIdentityCheckViewModel(caseId: $0) }
+    self { @MainActor in AVIdentityCheckViewModel(caseId: $0) }
   }
 
   var legalRepresentantViewModel: Factory<LegalRepresentantViewModel> {
@@ -77,11 +77,11 @@ extension Container {
   }
 
   var documentSelectionViewModel: Factory<DocumentSelectionViewModel> {
-    self { DocumentSelectionViewModel() }
+    self { @MainActor in DocumentSelectionViewModel() }
   }
 
   var setupViewModel: Factory<SetupViewModel> {
-    self {
+    self { @MainActor in
       #if targetEnvironment(simulator)
       MockSetupViewModel()
       #else
@@ -103,7 +103,7 @@ extension Container {
   }
 
   var nfcScanResultViewModel: ParameterFactory<AVBeamPackageResult, NFCScanResultViewModel> {
-    self { NFCScanResultViewModel(package: $0) }
+    self { @MainActor in NFCScanResultViewModel(package: $0) }
   }
 
   var eidRequestFlowCoordinator: Factory<EIDRequestFlowCoordinatorProtocol> {

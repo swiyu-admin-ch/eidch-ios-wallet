@@ -131,6 +131,8 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
   // MARK: Private
 
   private static let dpopNonceHeaderField = "DPoP-Nonce"
+  private static let maxDecompressedSize = 20 * 1024 * 1024 // 20MB
+  private static let maxCompressedCipherTextLength = 6_000_000 // credentials containing large images etc. have max 5.5mio for now so use 6mio
 
   private let baseDPoPAdditionalHeaderParameters = ["profile_version": "swiss-profile-issuance:1.0.0"]
 
@@ -334,7 +336,10 @@ struct OpenIDRepository: OpenIDRepositoryProtocol {
   {
     do {
       guard ContentType(response.response) == .jwt else { throw OpenIdRepositoryError.unencryptedCredentialResponse }
-      let decryptedPayload = try jweDecrypter.decrypt(payload: response.data, privateKey: privateKey)
+      let decryptedPayload = try jweDecrypter.decrypt(
+        payload: response.data,
+        privateKey: privateKey,
+        limit: JWESizeLimit(maxDecompressedSize: Self.maxDecompressedSize, maxCompressedCipherTextLength: Self.maxCompressedCipherTextLength))
       return try getAnyCredentialResult(
         from: response.statusCode,
         data: decryptedPayload,

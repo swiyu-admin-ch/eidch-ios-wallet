@@ -9,6 +9,7 @@ extension CredentialActivityEntity {
     self.init()
     id = activity.id
     setValues(from: activity)
+    bundleItem = activity.bundleItem.map(ActivityBundleItemEntity.init)
     claims.append(objectsIn: activity.claims.map(ActivityClaimEntity.init))
     actorDisplays.append(objectsIn: activity.actorDisplays.map(ActivityActorDisplayEntity.init))
     nonComplianceReasonDisplays.append(objectsIn: (activity.nonComplianceReasonDisplays).map(NonComplianceReasonDisplayEntity.init))

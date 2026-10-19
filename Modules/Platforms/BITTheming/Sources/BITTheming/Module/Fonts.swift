@@ -69,7 +69,7 @@ public enum FontFamily {
 
 // swiftlint:enable identifier_name line_length type_body_length
 
-public struct FontConvertible {
+public struct FontConvertible: Sendable {
 
   // MARK: Public
 

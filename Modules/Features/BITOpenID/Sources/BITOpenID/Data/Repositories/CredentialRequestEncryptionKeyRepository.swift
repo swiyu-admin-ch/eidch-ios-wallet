@@ -6,7 +6,7 @@ import Spyable
 // MARK: - CredentialResponseEncryptionKeyRepositoryProtocol
 
 @Spyable
-protocol CredentialResponseEncryptionKeyRepositoryProtocol {
+protocol CredentialResponseEncryptionKeyRepositoryProtocol: Sendable {
   func create(
     using responseEncryption: CredentialIssuerMetadata.CredentialResponseEncryption) throws
     -> VaultKeyPair

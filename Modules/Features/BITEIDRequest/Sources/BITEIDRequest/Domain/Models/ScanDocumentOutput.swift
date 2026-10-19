@@ -5,7 +5,7 @@ import UIKit
 
 // MARK: - ScanDocumentOutput
 
-public struct ScanDocumentOutput: Equatable, Hashable {
+public struct ScanDocumentOutput: Equatable, Hashable, @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -54,8 +54,8 @@ public struct ScanDocumentOutput: Equatable, Hashable {
   // MARK: Internal
 
   struct ExtractedData: Codable {
-    struct Step: Codable {
-      struct Summary: Codable {
+    struct Step: Codable, Sendable {
+      struct Summary: Codable, Sendable {
         let documentNumber: String
       }
 

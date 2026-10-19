@@ -2,7 +2,7 @@ xcassets:
  inputs:
    - Sources/BITHome/Resources/HomeAssets.xcassets
  outputs:
-   - templateName: swift5
+   - templatePath: ../../../.resources/xcassets-swift6.stencil
      output: Sources/BITHome/Module/HomeAssets.swift
      params:
        enumName: HomeAssets

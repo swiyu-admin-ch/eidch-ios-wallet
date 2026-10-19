@@ -6,7 +6,7 @@ import Spyable
 
 
 @Spyable
-protocol GetEIDRequestCaseFilesUseCaseProtocol {
+protocol GetEIDRequestCaseFilesUseCaseProtocol: Sendable {
   func execute(caseId: String) async throws -> [EIDRequestCaseFile]
 }
 

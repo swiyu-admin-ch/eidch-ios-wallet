@@ -177,6 +177,7 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
   }
 
   nonisolated func didReceiveNotification(notification: AVBeamNotification) {
+    nonisolated(unsafe) let notification = notification
     Task { @MainActor in
       switch notification {
       case .initialized:
@@ -193,8 +194,10 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
         }
 
         self.timer?.invalidate()
-        self.timer = .scheduledTimer(withTimeInterval: self.recordDocumentTimeout / 2, repeats: false, block: { @MainActor _ in
-          self.scanningState = .verso
+        self.timer = .scheduledTimer(withTimeInterval: self.recordDocumentTimeout / 2, repeats: false, block: { _ in
+          Task { @MainActor in
+            self.scanningState = .verso
+          }
         })
 
       default:
@@ -208,6 +211,7 @@ extension RecordDocumentViewModel: AVBeamMessageDelegate {
 
 extension RecordDocumentViewModel: AVBeamRecordDocumentDelegate {
   nonisolated func didCompleteRecordDocument(packageResult: AVBeamPackageResult) {
+    nonisolated(unsafe) let packageResult = packageResult
     Task { @MainActor in
       do {
         guard packageResult.data.errorCode == .none else {
@@ -252,13 +256,13 @@ extension RecordDocumentViewModel {
     return .avBeamError(avBeamError, retryAction: retryHandler(), closeAction: closeHandler())
   }
 
-  private func closeHandler() -> () -> Void {
+  private func closeHandler() -> VoidAction {
     { [weak self] in
       self?.coordinator.cleanup()
     }
   }
 
-  private func retryHandler() -> (Navigator) -> Void {
+  private func retryHandler() -> NavigatorAction {
     { [weak self] navigator in
       guard let self else { return }
       reset()

@@ -6,7 +6,7 @@ import Spyable
 // MARK: - SdJwtBatchCredentialConsistencyValidatorProtocol
 
 @Spyable
-protocol SdJwtBatchCredentialConsistencyValidatorProtocol {
+protocol SdJwtBatchCredentialConsistencyValidatorProtocol: Sendable {
   func validate(_ credentials: [VcSdJWS]) throws
 }
 

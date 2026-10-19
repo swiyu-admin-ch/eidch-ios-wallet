@@ -84,11 +84,14 @@ final class AppPepperKeyRepositoryTests: XCTestCase {
   private var keyManagerSpy: KeyManagerProtocolSpy!
 
   private func registerMocks() {
-    keyManagerSpy = KeyManagerProtocolSpy()
+    let keyManagerSpy = KeyManagerProtocolSpy()
+    let pepperKeyAlgorithm = pepperKeyAlgorithm
+    let pepperKeyVaultOptions = pepperKeyVaultOptions
+    self.keyManagerSpy = keyManagerSpy
 
-    Container.shared.keyManager.register { self.keyManagerSpy }
-    Container.shared.pepperKeyAlgorithm.register { self.pepperKeyAlgorithm }
-    Container.shared.pepperKeyVaultOptions.register { self.pepperKeyVaultOptions }
+    Container.shared.keyManager.register { keyManagerSpy }
+    Container.shared.pepperKeyAlgorithm.register { pepperKeyAlgorithm }
+    Container.shared.pepperKeyVaultOptions.register { pepperKeyVaultOptions }
   }
 
   private func success() {

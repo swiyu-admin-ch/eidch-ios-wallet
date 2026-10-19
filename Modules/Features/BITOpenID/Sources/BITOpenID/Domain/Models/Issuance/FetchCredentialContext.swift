@@ -3,7 +3,9 @@ import BITCore
 import BITVault
 import Foundation
 
-public class FetchCredentialContext: Changeable {
+/// Request-scoped context passed across async repository/use-case boundaries.
+/// Mutation is limited to creating changed copies via `Changeable`, so callers must not share and mutate the same instance concurrently.
+public class FetchCredentialContext: Changeable, @unchecked Sendable {
 
   // MARK: Lifecycle
 

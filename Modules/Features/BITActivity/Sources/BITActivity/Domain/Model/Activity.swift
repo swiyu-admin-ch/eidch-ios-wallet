@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - Activity
 
-public struct Activity: Identifiable, Codable {
+public struct Activity: Identifiable, Codable, Sendable {
 
   // MARK: Lifecycle
 
@@ -18,7 +18,8 @@ public struct Activity: Identifiable, Codable {
     nonComplianceData: String? = nil,
     nonComplianceReasonDisplays: [NonComplianceReasonDisplay] = [],
     claims: [ActivityClaim] = [],
-    actorDisplays: [ActivityActorDisplay] = [])
+    actorDisplays: [ActivityActorDisplay] = [],
+    bundleItem: ActivityBundleItem? = nil)
   {
     self.id = id
     self.credential = credential
@@ -31,6 +32,7 @@ public struct Activity: Identifiable, Codable {
     self.nonComplianceReasonDisplays = nonComplianceReasonDisplays
     self.claims = claims
     self.actorDisplays = actorDisplays
+    self.bundleItem = bundleItem
   }
 
   // MARK: Public
@@ -46,11 +48,12 @@ public struct Activity: Identifiable, Codable {
   public var nonComplianceReasonDisplays: [NonComplianceReasonDisplay]
   public var claims: [ActivityClaim]
   public var actorDisplays: [ActivityActorDisplay]
+  public var bundleItem: ActivityBundleItem?
 }
 
 // MARK: - ActivityType
 
-public enum ActivityType: String, Codable {
+public enum ActivityType: String, Codable, Sendable {
   case presentationAccepted
   case presentationDeclined
   case issuance
@@ -75,6 +78,7 @@ extension Activity: Equatable {
       lhs.vcSchemaTrust == rhs.vcSchemaTrust &&
       lhs.actorCompliance == rhs.actorCompliance &&
       lhs.nonComplianceData == rhs.nonComplianceData &&
+      lhs.bundleItem == rhs.bundleItem &&
       lhs.nonComplianceReasonDisplays == rhs.nonComplianceReasonDisplays &&
       lhs.claims.allSatisfy(rhs.claims.contains) && rhs.claims.allSatisfy(lhs.claims.contains) &&
       lhs.actorDisplays.allSatisfy(rhs.actorDisplays.contains) && rhs.actorDisplays.allSatisfy(lhs.actorDisplays.contains)

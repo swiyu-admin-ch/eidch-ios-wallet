@@ -105,11 +105,13 @@ final class ApplyEIDRequestUseCaseTests: XCTestCase {
   }
 
   private func registerMocks() {
-    sidRepository = SIDRepositoryProtocolSpy()
-    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    let sidRepository = SIDRepositoryProtocolSpy()
+    self.sidRepository = sidRepository
+    let eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    self.eIDRequestCaseRepository = eIDRequestCaseRepository
 
-    Container.shared.sidRepository.register { self.sidRepository }
-    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
+    Container.shared.sidRepository.register { sidRepository }
+    Container.shared.eIDRequestCaseRepository.register { eIDRequestCaseRepository }
   }
 
   private func createSuccessState() {

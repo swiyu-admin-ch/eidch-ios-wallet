@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - CredentialAuthentication
 
-public struct CredentialAuthentication: Codable, Equatable, Hashable {
+public struct CredentialAuthentication: Codable, Equatable, Hashable, Sendable {
 
   // MARK: Lifecycle
 

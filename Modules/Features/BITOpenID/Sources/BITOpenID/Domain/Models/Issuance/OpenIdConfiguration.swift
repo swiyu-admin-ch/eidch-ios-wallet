@@ -5,7 +5,7 @@ import Foundation
 /// A srtructure representing OpenID Provider Metadata.
 /// This structure is based on the OpenID Connect 1.0
 /// https://openid.net/specs/openid-connect-discovery-1_0.html
-public struct OpenIdConfiguration: Codable, Equatable {
+public struct OpenIdConfiguration: Codable, Equatable, Sendable {
 
   // MARK: Internal
 

@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class QueueInformationViewModel {
 
   // MARK: Lifecycle

@@ -4,7 +4,7 @@ import Spyable
 // MARK: - DeletePushIdUseCaseProtocol
 
 @Spyable
-public protocol DeletePushIdUseCaseProtocol {
+public protocol DeletePushIdUseCaseProtocol: Sendable {
   func callAsFunction(_ pushId: String) async throws
 }
 

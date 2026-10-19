@@ -1,4 +1,4 @@
-final class AnalyticsSpy: AnalyticsProtocol {
+final class AnalyticsSpy: AnalyticsProtocol, @unchecked Sendable {
 
   struct LogEventReceivedArguments {
     let event: AnalyticsEventProtocol

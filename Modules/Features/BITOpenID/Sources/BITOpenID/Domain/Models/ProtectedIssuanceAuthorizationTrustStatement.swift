@@ -7,7 +7,7 @@ public typealias ProtectedIssuanceAuthorizationTrustStatement = JWS<ProtectedIss
 
 // MARK: - ProtectedIssuanceAuthorizationTrustStatementJWT
 
-public struct ProtectedIssuanceAuthorizationTrustStatementJWT: TrustStatementJWT, JWT, Equatable {
+public struct ProtectedIssuanceAuthorizationTrustStatementJWT: TrustStatementJWT, JWT, Equatable, Sendable {
 
   public var type: String? = "swiyu-protected-issuance-authorization-trust-statement+jwt"
 
@@ -22,7 +22,7 @@ public struct ProtectedIssuanceAuthorizationTrustStatementJWT: TrustStatementJWT
 // MARK: ProtectedIssuanceAuthorizationTrustStatementJWT.CanIssue
 
 extension ProtectedIssuanceAuthorizationTrustStatementJWT {
-  public struct CanIssue: Codable, Equatable {
+  public struct CanIssue: Codable, Equatable, Sendable {
 
     public init(from decoder: Decoder) throws {
       let dynamicContainer = try decoder.container(keyedBy: DynamicCodingKey.self)

@@ -1,51 +1,48 @@
-// swiftlint:disable implicitly_unwrapped_optional
-import XCTest
+import Foundation
+import Testing
 @testable import BITCrypto
 
-final class SRIValidatorTests: XCTest {
+struct SRIValidatorTests {
 
   // MARK: Internal
 
-  override func setUp() {
-    sriValidator = SRIValidator()
-  }
-
-  func testValidate_success() throws {
-    let integrity = "sha384-H8BRh8j48O9oYatfu5AZzq6A9RINhZO5H16dQZngK7T62em8MUt1FLm52t+eX6xO"
+  @Test
+  func validate_success() throws {
+    let integrity = "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
 
     let result = try sriValidator.validate(mockData, with: integrity)
 
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func testValidate_failure() throws {
+  @Test
+  func validate_failure() throws {
     let integrity = "sha384-XXX"
 
     let result = try sriValidator.validate(mockData, with: integrity)
 
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func testValidate_failure_throwsMalformedIntegriy() throws {
+  @Test
+  func validate_failure_throwsMalformedIntegriy() throws {
     let integrity = "incorrect integrity"
 
-    XCTAssertThrowsError(try sriValidator.validate(mockData, with: integrity)) { error in
-      XCTAssertEqual(error as? SRIError, .malformedIntegrity)
+    #expect(throws: SRIError.malformedIntegrity) {
+      try sriValidator.validate(mockData, with: integrity)
     }
   }
 
   func testValidate_failure_throwsUnsupportedAlgorithm() throws {
     let integrity = "sha224-H8BRh8j48O9oYatfu5AZzq6A9RINhZO5H16dQZngK7T62em8MUt1FLm52t+eX6xO"
 
-    XCTAssertThrowsError(try sriValidator.validate(mockData, with: integrity)) { error in
-      XCTAssertEqual(error as? SRIError, .unsupportedAlgorithm)
+    #expect(throws: SRIError.unsupportedAlgorithm) {
+      try sriValidator.validate(mockData, with: integrity)
     }
   }
 
   // MARK: Private
 
-  private var sriValidator: SRIValidatorProtocol!
+  private var sriValidator = SRIValidator()
   private let mockData = Data()
 }
-
-// swiftlint:enable implicitly_unwrapped_optional

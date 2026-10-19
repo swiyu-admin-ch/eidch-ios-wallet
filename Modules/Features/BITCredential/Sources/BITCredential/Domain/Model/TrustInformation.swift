@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - TrustInformation
 
-public struct TrustInformation: Equatable, Hashable {
+public struct TrustInformation: Equatable, Hashable, Sendable {
   public let identity: IdentityTrust
   public let vcSchema: VcSchemaTrust
 
@@ -16,7 +16,7 @@ public struct TrustInformation: Equatable, Hashable {
 
 // MARK: - IdentityTrust
 
-public enum IdentityTrust: Equatable, Hashable {
+public enum IdentityTrust: Equatable, Hashable, Sendable {
   case trusted
   case untrusted
   case unknown

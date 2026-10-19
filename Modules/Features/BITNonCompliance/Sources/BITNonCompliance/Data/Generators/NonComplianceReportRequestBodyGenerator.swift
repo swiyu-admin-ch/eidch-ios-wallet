@@ -17,7 +17,7 @@ enum NonComplianceReportRequestBodyGeneratorError: Error {
 // MARK: - NonComplianceReportRequestBodyGeneratorProtocol
 
 @Spyable
-protocol NonComplianceReportRequestBodyGeneratorProtocol {
+protocol NonComplianceReportRequestBodyGeneratorProtocol: Sendable {
   func generate(from report: NonComplianceReport) throws -> any Encodable
 }
 

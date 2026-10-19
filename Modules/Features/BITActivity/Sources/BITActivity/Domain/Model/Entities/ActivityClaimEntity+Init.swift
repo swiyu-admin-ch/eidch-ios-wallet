@@ -5,6 +5,6 @@ extension ActivityClaimEntity {
 
   public convenience init(_ claim: ActivityClaim) {
     self.init()
-    credentialClaimId = claim.credentialClaimId
+    path = claim.path
   }
 }

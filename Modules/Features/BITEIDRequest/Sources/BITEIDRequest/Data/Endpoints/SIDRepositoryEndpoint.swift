@@ -42,7 +42,7 @@ extension SIDRepositoryEndpoint: TargetType {
     case .startOnlineSession(let caseId):
       "api/rest/eid/\(caseId)/start-online-session"
     case .pairWallet(let caseId):
-      "api/rest/eid/\(caseId)/pair-wallet"
+      "api/rest/eid/\(caseId)/pair-wallet/v2"
     case .startAutoVerification(let caseId, let autoVerificationType, _):
       "api/rest/eid/\(caseId)/start-auto-verification/\(autoVerificationType.rawValue)"
     case .pairingState(let caseId, let pairingId):

@@ -1450,9 +1450,9 @@ public enum L10n {
     L10n.tr("Localizable", "tk_displayrefresh_refreshable_body", fallback: "This credential can be updated to get the latest data from the issuer.")
   }
 
-  /// Update available
+  /// Update credential
   public static var tkDisplayrefreshRefreshableTitle: String {
-    L10n.tr("Localizable", "tk_displayrefresh_refreshable_title", fallback: "Update available")
+    L10n.tr("Localizable", "tk_displayrefresh_refreshable_title", fallback: "Update credential")
   }
 
   /// Update credential

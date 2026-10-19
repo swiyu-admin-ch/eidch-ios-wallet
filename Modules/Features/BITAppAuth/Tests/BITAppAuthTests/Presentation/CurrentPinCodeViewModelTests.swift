@@ -7,21 +7,6 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
-
-    getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
-    lockWalletUseCase = LockWalletUseCaseProtocolSpy()
-    getLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
-    getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
-
-    Container.shared.getUniquePassphraseUseCase.register { @MainActor in self.getUniquePassphraseUseCase }
-    Container.shared.lockWalletUseCase.register { @MainActor in self.lockWalletUseCase }
-    Container.shared.getLoginAttemptCounterUseCase.register { @MainActor in self.getLoginAttemptCounterUseCase }
-    Container.shared.pinCodeMinimumSize.register { 6 }
-  }
-
   override func tearDown() {
     super.tearDown()
     Container.shared.reset()
@@ -29,6 +14,8 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState() {
+    registerDependencies()
+
     let viewModel = Container.shared.currentPinCodeViewModel(ChangePinRouterMock())
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertNil(viewModel.inputFieldMessage)
@@ -41,6 +28,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_whenAttemptsAreGreaterThanZero() {
+    let (_, getLoginAttemptCounterUseCase, _) = registerDependencies()
     let router = ChangePinRouterMock()
     let attempts = 4
     getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attempts
@@ -55,6 +43,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testCurrentPinCode_success() {
+    let (getUniquePassphraseUseCase, _, _) = registerDependencies()
     let router = ChangePinRouterMock()
 
     getUniquePassphraseUseCase.callAsFunctionFromReturnValue = Data()
@@ -74,6 +63,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testCurrentPinCode_error() {
+    let (getUniquePassphraseUseCase, _, _) = registerDependencies()
     let router = ChangePinRouterMock()
 
     getUniquePassphraseUseCase.callAsFunctionFromThrowableError = PinCodeError.wrongPinCode
@@ -93,6 +83,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testCurrentPinCode_lockWallet() {
+    let (getUniquePassphraseUseCase, _, lockWalletUseCase) = registerDependencies()
     let logoutExpectation = XCTNSNotificationExpectation(name: .logout)
     let router = ChangePinRouterMock()
 
@@ -119,6 +110,7 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testUnlockWallet() async throws {
+    let (getUniquePassphraseUseCase, _, lockWalletUseCase) = registerDependencies()
     let logoutExpectation = XCTNSNotificationExpectation(name: .logout)
     let router = ChangePinRouterMock()
 
@@ -154,10 +146,24 @@ final class CurrentPinCodeViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocolSpy!
-  private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocolSpy!
-  private var lockWalletUseCase: LockWalletUseCaseProtocolSpy!
-  // swiftlint:enable all
+  @MainActor
+  @discardableResult
+  private func registerDependencies() -> (
+    GetUniquePassphraseUseCaseProtocolSpy,
+    GetLoginAttemptCounterUseCaseProtocolSpy,
+    LockWalletUseCaseProtocolSpy)
+  {
+    let getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
+    let lockWalletUseCase = LockWalletUseCaseProtocolSpy()
+    let getLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
+    getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
+
+    Container.shared.getUniquePassphraseUseCase.register { @MainActor in getUniquePassphraseUseCase }
+    Container.shared.lockWalletUseCase.register { @MainActor in lockWalletUseCase }
+    Container.shared.getLoginAttemptCounterUseCase.register { @MainActor in getLoginAttemptCounterUseCase }
+    Container.shared.pinCodeMinimumSize.register { 6 }
+
+    return (getUniquePassphraseUseCase, getLoginAttemptCounterUseCase, lockWalletUseCase)
+  }
 
 }

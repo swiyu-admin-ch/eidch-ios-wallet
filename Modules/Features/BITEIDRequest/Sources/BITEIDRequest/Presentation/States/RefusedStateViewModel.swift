@@ -2,6 +2,7 @@ import BITL10n
 import Factory
 import Foundation
 
+@MainActor
 public class RefusedStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Internal

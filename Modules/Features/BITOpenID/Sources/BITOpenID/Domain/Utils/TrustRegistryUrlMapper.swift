@@ -7,7 +7,7 @@ import Spyable
 // MARK: - TrustRegistryUrlMapperProtocol
 
 @Spyable
-public protocol TrustRegistryUrlMapperProtocol {
+public protocol TrustRegistryUrlMapperProtocol: Sendable {
   func map(did: String) throws -> URL
 }
 

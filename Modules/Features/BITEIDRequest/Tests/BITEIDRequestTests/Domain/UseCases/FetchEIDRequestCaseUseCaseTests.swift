@@ -33,8 +33,9 @@ final class FetchEIDRequestCaseUseCaseTests: XCTestCase {
   private var repository: EIDRequestCaseRepositoryProtocolSpy!
 
   private func registerMocks() {
-    repository = EIDRequestCaseRepositoryProtocolSpy()
-    Container.shared.eIDRequestCaseRepository.register { self.repository }
+    let repository = EIDRequestCaseRepositoryProtocolSpy()
+    self.repository = repository
+    Container.shared.eIDRequestCaseRepository.register { repository }
   }
 
 }

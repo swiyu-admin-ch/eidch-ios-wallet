@@ -1,5 +1,3 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
-
 import Foundation
 import Security
 import Testing
@@ -8,7 +6,6 @@ import Testing
 
 // MARK: - JWETests
 
-@Suite(.serialized)
 struct JWETests {
 
   // MARK: Internal
@@ -69,8 +66,6 @@ struct JWETests {
 
   // MARK: Private
 
-  private static let privateKeyMock = SecKeyTestsHelper.createStaticPrivateKey()
-
   private let jwkMock = JWK(
     kty: "EC",
     kid: nil,
@@ -87,6 +82,10 @@ struct JWETests {
     JWEEncrypter()
   }
 
+  private var privateKeyMock: SecKey {
+    SecKeyTestsHelper.createStaticPrivateKey()
+  }
+
   private func encryptAndDecrypt(
     data: Data,
     encryptionAlgorithm: EncryptionAlgorithm,
@@ -98,6 +97,6 @@ struct JWETests {
       publicKey: jwkMock,
       encryptionAlgorithm: encryptionAlgorithm,
       compressionAlgorithm: compressionAlgorithm)
-    return try decrypter.decrypt(payload: Data(encryptedData.utf8), privateKey: Self.privateKeyMock)
+    return try decrypter.decrypt(payload: Data(encryptedData.utf8), privateKey: privateKeyMock, limit: JWESizeLimit.Mock.bigSample)
   }
 }

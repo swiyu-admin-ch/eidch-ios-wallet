@@ -163,9 +163,11 @@ final class OcaBundleValidatorTests: XCTestCase {
   }
 
   private func registerMocks() {
-    localeValidatorSpy = LocaleValidatorProtocolSpy()
-    Container.shared.localeValidator.register { self.localeValidatorSpy }
-    Container.shared.rootCaptureBaseResolver.register { self.rootCaptureBaseResolverSpy }
+    let localeValidatorSpy = LocaleValidatorProtocolSpy()
+    let rootCaptureBaseResolverSpy = rootCaptureBaseResolverSpy
+    self.localeValidatorSpy = localeValidatorSpy
+    Container.shared.localeValidator.register { localeValidatorSpy }
+    Container.shared.rootCaptureBaseResolver.register { rootCaptureBaseResolverSpy }
   }
 
   private func successState() {

@@ -18,8 +18,8 @@ final class HomeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     registerMocks()
     viewModel = HomeViewModel()
@@ -187,10 +187,10 @@ final class HomeViewModelTests: XCTestCase {
       return credentials
     }
 
-    async let onAppear: Void = viewModel.onAppear()
-    async let checkpoint: Void = viewModel.handleNavigationCheckpoint(state: .acceptCredential)
+    let onAppear = Task { await viewModel.onAppear() }
+    let checkpoint = Task { await viewModel.handleNavigationCheckpoint(state: .acceptCredential) }
 
-    _ = await (onAppear, checkpoint)
+    _ = await (onAppear.value, checkpoint.value)
 
     XCTAssertEqual(getCredentialListUseCase.callAsFunctionCallsCount, 1)
     XCTAssertEqual(refreshCredentialsUseCase.callAsFunctionCallsCount, 1)

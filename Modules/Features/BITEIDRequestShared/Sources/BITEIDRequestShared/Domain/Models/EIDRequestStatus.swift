@@ -2,7 +2,7 @@ import BITEntities
 import Foundation
 
 
-public struct EIDRequestStatus: Decodable, Equatable {
+public struct EIDRequestStatus: Decodable, Equatable, Sendable {
 
   // MARK: Public
 
@@ -25,7 +25,7 @@ public struct EIDRequestStatus: Decodable, Equatable {
 
 extension EIDRequestStatus {
 
-  public enum State: String, Codable {
+  public enum State: String, Codable, Sendable {
     case inQueue = "IN_QUEUING"
     case readyForOnlineSession = "READY_FOR_ONLINE_SESSION"
     case inTargetWalletPairing = "IN_TARGET_WALLET_PAIRING"
@@ -40,7 +40,7 @@ extension EIDRequestStatus {
     case readyForFinalEntitlementCheck = "READY_FOR_FINAL_ENTITLEMENT_CHECK"
   }
 
-  public struct QueueInformation: Decodable, Equatable {
+  public struct QueueInformation: Decodable, Equatable, Sendable {
 
     // MARK: Public
 
@@ -59,7 +59,7 @@ extension EIDRequestStatus {
 
   }
 
-  public struct LegalRepresentant: Decodable, Equatable {
+  public struct LegalRepresentant: Decodable, Equatable, Sendable {
 
     // MARK: Public
 
@@ -76,9 +76,9 @@ extension EIDRequestStatus {
 
   }
 
-  public struct TargetWallet: Decodable, Equatable {
+  public struct TargetWallet: Decodable, Equatable, Sendable {
 
-    public struct PairedWallet: Decodable, Equatable {
+    public struct PairedWallet: Decodable, Equatable, Sendable {
 
       // MARK: Public
 

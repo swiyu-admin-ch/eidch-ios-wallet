@@ -7,7 +7,7 @@ public typealias IdentityTrustStatement = JWS<IdentityTrustStatementJWT>
 
 // MARK: - IdentityTrustStatementJWT
 
-public struct IdentityTrustStatementJWT: TrustStatementJWT, Equatable, Changeable {
+public struct IdentityTrustStatementJWT: TrustStatementJWT, Equatable, Changeable, Sendable {
 
   public let subject: String?
   public let jti: UUID
@@ -73,7 +73,7 @@ extension IdentityTrustStatementJWT: Codable {
 // MARK: IdentityTrustStatementJWT.RegistryId
 
 extension IdentityTrustStatementJWT {
-  public struct RegistryId: Codable, Equatable {
+  public struct RegistryId: Codable, Equatable, Sendable {
     public let type: String
     public let value: String
   }

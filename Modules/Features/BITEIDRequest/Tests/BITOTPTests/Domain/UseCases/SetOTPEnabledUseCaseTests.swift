@@ -10,9 +10,10 @@ final class SetOTPEnabledUseCaseTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    repository = OTPEnabledRepositoryProtocolSpy()
+    let repository = OTPEnabledRepositoryProtocolSpy()
+    self.repository = repository
 
-    Container.shared.otpEnabledRepository.register { self.repository }
+    Container.shared.otpEnabledRepository.register { repository }
   }
 
   func testCallAsFunction_setsRepositoryValue() {

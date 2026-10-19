@@ -6,7 +6,7 @@ import UserNotifications
 // MARK: - RequestPushPermissionUseCaseProtocol
 
 @Spyable
-public protocol RequestPushPermissionUseCaseProtocol {
+public protocol RequestPushPermissionUseCaseProtocol: Sendable {
   func callAsFunction() async throws -> Bool
 }
 

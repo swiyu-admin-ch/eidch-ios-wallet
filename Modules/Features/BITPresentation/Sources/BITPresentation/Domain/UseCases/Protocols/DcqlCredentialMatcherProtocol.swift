@@ -4,7 +4,7 @@ import BITSwiyuSharedKMP
 import Spyable
 
 @Spyable
-public protocol DcqlCredentialMatcherProtocol {
+public protocol DcqlCredentialMatcherProtocol: Sendable {
 
   func match(credentials: [VerifiableCredential], with dcqlQuery: Heidi_dcqlDcqlQuery) async throws -> [CompatibleCredential]
 

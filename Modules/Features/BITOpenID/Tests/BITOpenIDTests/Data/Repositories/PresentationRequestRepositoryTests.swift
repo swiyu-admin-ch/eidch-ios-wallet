@@ -59,6 +59,18 @@ final class PresentationRequestRepositoryTests: XCTestCase {
     }
   }
 
+  func testFetch_noConnectionError_throwsNoConnectionError() async throws {
+    mockNetworkError(code: URLError.notConnectedToInternet.rawValue)
+
+    do {
+      _ = try await repository.fetch(from: urlMock)
+      XCTFail("Should have thrown an error")
+    } catch {
+      guard let error = error as? PresentationRequestRepositoryError else { return XCTFail("Unexpected error: \(error)") }
+      XCTAssertEqual(error, .noConnection)
+    }
+  }
+
   func testFetch_serverError_throwsServerError() async throws {
     mockResponse(code: 500)
 
@@ -104,6 +116,10 @@ final class PresentationRequestRepositoryTests: XCTestCase {
 
   func testSubmitPresentation_InvalidRedirectUri_ThrowsInvalidRedirectUri() async throws {
     mockResponse(code: 200, data: Data("{\"redirect_uri\":\"swiyu-verify://1234\"}".utf8))
+    let repository = repository
+    let authorizationResponseMock = authorizationResponseMock
+    let urlMock = urlMock
+    let encryptionMock = encryptionMock
 
     await XCTAssertThrowsErrorAsync(try await repository.submit(authorizationResponse: authorizationResponseMock, to: urlMock, encryption: encryptionMock)) { error in
       XCTAssertEqual(error as? PresentationResponseValidationError, .invalidRedirectUri)
@@ -217,10 +233,18 @@ final class PresentationRequestRepositoryTests: XCTestCase {
     }
   }
 
+  private func mockNetworkError(code: Int) {
+    NetworkContainer.shared.endpointClosure.register {
+      .networkError(NSError(domain: NSURLErrorDomain, code: code))
+    }
+  }
+
   private func registerMocks() {
-    jwsDecoderSpy = JWSDecoderMock(jwt: RequestObjectJWS.Mock.sampleJWT, rawPayload: "rawPayload")
-    jweEncrypterSpy = JWEEncrypterProtocolSpy()
-    Container.shared.jwsDecoder.register { @MainActor in self.jwsDecoderSpy }
-    Container.shared.jweEncrypter.register { @MainActor in self.jweEncrypterSpy }
+    let jwsDecoderSpy = JWSDecoderMock(jwt: RequestObjectJWS.Mock.sampleJWT, rawPayload: "rawPayload")
+    self.jwsDecoderSpy = jwsDecoderSpy
+    let jweEncrypterSpy = JWEEncrypterProtocolSpy()
+    self.jweEncrypterSpy = jweEncrypterSpy
+    Container.shared.jwsDecoder.register { @MainActor in jwsDecoderSpy }
+    Container.shared.jweEncrypter.register { @MainActor in jweEncrypterSpy }
   }
 }

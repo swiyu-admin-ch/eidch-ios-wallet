@@ -7,7 +7,7 @@ import Spyable
 // MARK: - TrustInformationServiceProtocol
 
 @Spyable
-public protocol TrustInformationServiceProtocol {
+public protocol TrustInformationServiceProtocol: Sendable {
   func fetch(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String?) async -> TrustInformation
   func fetchVcSchemaTrust(for subjectDid: String, type: VcSchemaTrustStatementType, vcSchemaId: String) async -> VcSchemaTrust
   func getEntityNames(for subjectDid: String?) async -> [String: String]?

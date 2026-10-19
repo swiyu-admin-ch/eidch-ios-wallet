@@ -6,6 +6,7 @@ import UIKit
 
 // MARK: - BiometricChangeRouterRoutes
 
+@MainActor
 public protocol BiometricChangeRouterRoutes: ClosableRoutes, LoginRoutes, BiometricChangeRoutes, ExternalRoutes {}
 
 // MARK: - BiometricChangeRouter

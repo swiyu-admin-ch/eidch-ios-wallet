@@ -1,7 +1,7 @@
 import BITCrypto
 import BITVault
 
-public struct CredentialEncryptionContext: Equatable {
+public struct CredentialEncryptionContext: Equatable, Sendable {
 
   public let issuerPublicKey: JWK
   public let credentialRequestEncryptionAlgorithm: EncryptionAlgorithm

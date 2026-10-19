@@ -1,10 +1,17 @@
 import BITCrypto
 import Foundation
+import JWSETKit
+
+// MARK: - JWSHeaderError
+
+public enum JWSHeaderError: Error {
+  case algorithmNotFound
+}
 
 // MARK: - JWSHeader
 
 /// This class represents the header of a signed JWT (JWS) which is specified by https://www.rfc-editor.org/rfc/rfc7515.html
-open class JWSHeader: Equatable {
+public final class JWSHeader: Equatable, Sendable {
 
   // MARK: Lifecycle
 
@@ -20,6 +27,20 @@ open class JWSHeader: Equatable {
     self.keyIdentifier = keyIdentifier
     self.jwk = jwk
     self.profileVersion = profileVersion
+  }
+
+  convenience init(from jws: JSONWebSignaturePlain) throws {
+    guard
+      let algorithm = jws.header.algorithm,
+      let jwtAlgorithm = JWTAlgorithm(rawValue: algorithm.rawValue)
+    else { throw JWSHeaderError.algorithmNotFound }
+
+    try self.init(
+      algorithm: jwtAlgorithm,
+      type: jws.header.type?.rawValue,
+      keyIdentifier: jws.header.keyId,
+      jwk: jws.header.key.map { try BITCrypto.JWK(webKey: $0) },
+      profileVersion: jws.profileVersion)
   }
 
   // MARK: Public
@@ -47,5 +68,18 @@ open class JWSHeader: Equatable {
       lhs.keyIdentifier == rhs.keyIdentifier &&
       lhs.jwk == rhs.jwk &&
       lhs.profileVersion == rhs.profileVersion
+  }
+}
+
+extension BITCrypto.JWK {
+  fileprivate init(webKey: some JSONWebKey) throws {
+    let data = try JSONEncoder().encode(AnyJSONWebKey(webKey))
+    self = try JSONDecoder().decode(BITCrypto.JWK.self, from: data)
+  }
+}
+
+extension JSONWebSignaturePlain {
+  fileprivate var profileVersion: String? {
+    header["profile_version"]
   }
 }

@@ -2,7 +2,7 @@ import BITCore
 import BITEntities
 import Foundation
 
-public struct ClusterDisplay: Codable, Hashable, Equatable, DisplayLocalizable {
+public struct ClusterDisplay: Codable, Hashable, Equatable, DisplayLocalizable, Sendable {
 
   // MARK: Lifecycle
 

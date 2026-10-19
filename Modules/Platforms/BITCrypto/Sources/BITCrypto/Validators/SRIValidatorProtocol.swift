@@ -4,7 +4,7 @@ import Spyable
 /// Ensuring the integrity of resources following Subresource Integrity (SRI) specification
 /// https://www.w3.org/TR/SRI
 @Spyable
-public protocol SRIValidatorProtocol {
+public protocol SRIValidatorProtocol: Sendable {
 
   /// Validates the provided data against the given integrity hash-expression (e.g. "sha256-abc123").
   ///

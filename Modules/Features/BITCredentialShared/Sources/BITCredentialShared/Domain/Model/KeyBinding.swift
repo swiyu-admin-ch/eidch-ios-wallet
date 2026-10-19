@@ -1,16 +1,15 @@
+import BITCrypto
 import BITEntities
 import Foundation
 
-// MARK: - KeyBinding
-
-public struct KeyBinding: Codable, Equatable, Hashable {
+public struct KeyBinding: Codable, Equatable, Swift.Hashable, Sendable {
 
   // MARK: Lifecycle
 
   public init(
     id: UUID,
     algorithm: String,
-    bindingType: KeyBindingType,
+    bindingType: KeyType,
     publicKey: Data? = nil,
     privateKey: Data? = nil)
   {
@@ -25,7 +24,7 @@ public struct KeyBinding: Codable, Equatable, Hashable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     id = try container.decode(UUID.self, forKey: .id)
     algorithm = try container.decode(String.self, forKey: .algorithm)
-    bindingType = try container.decode(KeyBinding.KeyBindingType.self, forKey: .bindingType)
+    bindingType = try container.decode(KeyType.self, forKey: .bindingType)
     publicKey = try container.decodeIfPresent(Data.self, forKey: .publicKey)
     privateKey = try container.decodeIfPresent(Data.self, forKey: .privateKey)
   }
@@ -43,21 +42,16 @@ public struct KeyBinding: Codable, Equatable, Hashable {
     self.init(
       id: entity.id,
       algorithm: entity.algorithm,
-      bindingType: KeyBindingType(rawValue: entity.bindingType) ?? .software,
+      bindingType: KeyType(rawValue: entity.bindingType) ?? .software,
       publicKey: entity.publicKey,
       privateKey: entity.privateKey)
   }
 
   // MARK: Public
 
-  public enum KeyBindingType: String, Codable {
-    case software
-    case hardware
-  }
-
   public let id: UUID
   public let algorithm: String
-  public let bindingType: KeyBindingType
+  public let bindingType: KeyType
   public let publicKey: Data?
   public let privateKey: Data?
 }

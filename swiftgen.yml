@@ -2,11 +2,11 @@ xcassets:
   inputs:
     - swiyu/Resources/Assets.xcassets
   outputs:
-    - templateName: swift5
+    - templatePath: .resources/xcassets-swift6.stencil
       output: swiyu/Resources/Assets.swift
       
 plist:
   inputs: swiyu/Info.plist
   outputs:
-    templateName: runtime-swift5
+    templatePath: .resources/plist-swift6.stencil
     output: swiyu/Resources/Plist.swift

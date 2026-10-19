@@ -4,7 +4,7 @@ import Spyable
 // MARK: - ProcessInfoServiceProtocol
 
 @Spyable
-public protocol ProcessInfoServiceProtocol {
+public protocol ProcessInfoServiceProtocol: Sendable {
   var systemUptime: TimeInterval { get }
 }
 

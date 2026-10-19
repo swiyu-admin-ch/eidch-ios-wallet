@@ -9,7 +9,7 @@ import Spyable
 // MARK: - OTPRequestRepositoryProtocol
 
 @Spyable
-protocol OTPRequestRepositoryProtocol {
+protocol OTPRequestRepositoryProtocol: Sendable {
   func requestOTP(email: String) async throws
   func verifyOTP(email: String, code: String) async throws
 }

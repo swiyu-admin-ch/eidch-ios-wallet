@@ -14,15 +14,15 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
     viewModel = WalletPairingListViewModel(caseId: mockCaseId)
   }
 
-  override func tearDown() {
-    super.tearDown()
+  override func tearDown() async throws {
     Container.shared.reset()
+    try await super.tearDown()
   }
 
   // MARK: - Initial State Tests
@@ -44,7 +44,7 @@ class WalletPairingListViewModelTests: XCTestCase {
   func testPairDevice_otherDevice() async {
     await viewModel.pairDevice(.other)
 
-    if case .walletPairingOffer(let callback) = viewModel.destination {
+    if case .walletPairingOffer = viewModel.destination {
       XCTAssert(true)
     } else {
       XCTFail("Expected .walletPairingOffer destination")
@@ -59,7 +59,6 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.toast)
   }
 
-  @MainActor
   func testPairDevice_currentDevice_success() async {
     setupSuccessfulStatusResponse()
 
@@ -76,25 +75,15 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertEqual(walletPairingPollingManager.startPollingForPairingIdReceivedArguments?.pairingId, mockPairingId)
   }
 
-  @MainActor
   func testPairDevice_currentDevice_setsLoadingState() async {
     setupSuccessfulStatusResponse()
 
-    // Note: This test may be flaky due to timing, but demonstrates the state transition
-    let expectation = expectation(description: "Loading state set")
+    await viewModel.pairDevice(.current)
 
-    Task {
-      await viewModel.pairDevice(.current)
-      expectation.fulfill()
-    }
-
-    // Give it a moment to enter loading state
-    try? await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
-
-    await fulfillment(of: [expectation], timeout: 1.0)
+    XCTAssertEqual(viewModel.currentDevicePairingState, .loading)
+    XCTAssertTrue(walletPairingPollingManager.startPollingForPairingIdCalled)
   }
 
-  @MainActor
   func testPairDevice_currentDevicePairWalletThrows_failure() async {
     pairWalletUseCase.executeForThrowableError = TestingError.error
 
@@ -106,7 +95,6 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertTrue(walletPairingPollingManager.resetCalled)
   }
 
-  @MainActor
   func testPairDevice_currentDeviceSaveWalletPairingIdThrows_failure() async {
     saveWalletPairingIdUseCase.callAsFunctionForRequestCaseThrowableError = TestingError.error
 
@@ -120,7 +108,6 @@ class WalletPairingListViewModelTests: XCTestCase {
     XCTAssertTrue(walletPairingPollingManager.resetCalled)
   }
 
-  @MainActor
   func testPairDevice_currentDeviceMissingCaseId_failure() async {
     context.caseId = nil
 
@@ -135,7 +122,6 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   // MARK: - Primary Action Tests
 
-  @MainActor
   func testPrimaryAction_success() {
     viewModel.primaryAction()
 
@@ -603,8 +589,10 @@ class WalletPairingListViewModelTests: XCTestCase {
 
   private func registerMocks() {
 
-    fetchEIDRequestStatusUseCase = FetchEIDRequestStatusUseCaseProtocolSpy()
-    fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
+    let fetchEIDRequestStatusUseCase = FetchEIDRequestStatusUseCaseProtocolSpy()
+    self.fetchEIDRequestStatusUseCase = fetchEIDRequestStatusUseCase
+    let fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
+    self.fetchEIDRequestCaseUseCase = fetchEIDRequestCaseUseCase
     fetchEIDRequestCaseUseCase.executeCaseIdReturnValue = EIDRequestCase(
       id: "id",
       rawMRZ: [],
@@ -613,24 +601,29 @@ class WalletPairingListViewModelTests: XCTestCase {
       firstName: "firstname",
       deferredCredential: DeferredCredential.Mock.sample)
 
-    Container.shared.fetchEIDRequestCaseUseCase.register { @MainActor in self.fetchEIDRequestCaseUseCase }
-    Container.shared.fetchEIDRequestStatusUseCase.register { @MainActor in self.fetchEIDRequestStatusUseCase }
+    Container.shared.fetchEIDRequestCaseUseCase.register { @MainActor in fetchEIDRequestCaseUseCase }
+    Container.shared.fetchEIDRequestStatusUseCase.register { @MainActor in fetchEIDRequestStatusUseCase }
 
-    context = EIDRequestContext()
+    let context = EIDRequestContext()
+    self.context = context
     context.caseId = mockCaseId
 
-    pairWalletUseCase = PairWalletUseCaseProtocolSpy()
+    let pairWalletUseCase = PairWalletUseCaseProtocolSpy()
+    self.pairWalletUseCase = pairWalletUseCase
     pairWalletUseCase.executeForReturnValue = mockPairingId
-    saveWalletPairingIdUseCase = SaveWalletPairingIdUseCaseProtocolSpy()
+    let saveWalletPairingIdUseCase = SaveWalletPairingIdUseCaseProtocolSpy()
+    self.saveWalletPairingIdUseCase = saveWalletPairingIdUseCase
 
-    walletPairingDateFormatter = DateFormatter(format: "dd.MM.yyyy HH:mm")
-    walletPairingPollingManager = WalletPairingPollingProtocolSpy()
+    let walletPairingDateFormatter = DateFormatter(format: "dd.MM.yyyy HH:mm")
+    self.walletPairingDateFormatter = walletPairingDateFormatter
+    let walletPairingPollingManager = WalletPairingPollingProtocolSpy()
+    self.walletPairingPollingManager = walletPairingPollingManager
 
-    Container.shared.pairWalletUseCase.register { @MainActor in self.pairWalletUseCase }
-    Container.shared.saveWalletPairingIdUseCase.register { @MainActor in self.saveWalletPairingIdUseCase }
-    Container.shared.walletPairingDateFormatter.register { @MainActor in self.walletPairingDateFormatter }
-    Container.shared.walletPairingPollingManager.register { @MainActor in self.walletPairingPollingManager }
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.pairWalletUseCase.register { @MainActor in pairWalletUseCase }
+    Container.shared.saveWalletPairingIdUseCase.register { @MainActor in saveWalletPairingIdUseCase }
+    Container.shared.walletPairingDateFormatter.register { @MainActor in walletPairingDateFormatter }
+    Container.shared.walletPairingPollingManager.register { @MainActor in walletPairingPollingManager }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
   }
 

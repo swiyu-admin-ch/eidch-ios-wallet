@@ -12,9 +12,10 @@ final class TokenStatusListDecoderTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    spyTokenStatusListByteDecoder = TokenStatusListByteDecoderProtocolSpy()
+    let spyTokenStatusListByteDecoder = TokenStatusListByteDecoderProtocolSpy()
+    self.spyTokenStatusListByteDecoder = spyTokenStatusListByteDecoder
 
-    Container.shared.tokenStatusListByteDecoder.register { self.spyTokenStatusListByteDecoder }
+    Container.shared.tokenStatusListByteDecoder.register { spyTokenStatusListByteDecoder }
 
     decoder = TokenStatusListDecoder()
   }

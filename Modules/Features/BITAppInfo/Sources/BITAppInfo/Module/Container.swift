@@ -23,7 +23,7 @@ extension Container {
   }
 
   public var versionEnforcementRouter: Factory<VersionEnforcementRouter> {
-    self { VersionEnforcementRouter() }
+    self { @MainActor in VersionEnforcementRouter() }
   }
 
   public var versionEnforcementLoginTimeout: Factory<UInt64> {
@@ -39,6 +39,15 @@ extension Container {
     }
   }
 
+  public var versionEnforcementTrustedDids: Factory<[String]> {
+    self {
+      [
+        "did:tdw:Qmet5dXTKHmvArLVJTxrg1e9rfgQmMFxgBtf2zp4B7YTGq:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:da06c198-8544-44eb-a558-1ac87fd89f21",
+        "did:webvh:QmdQUxfqpECnuHK5b3wNmHiF6zUH41nRx9RVCzEpcKZwCE:identifier-reg.trust-infra.swiyu.admin.ch:api:v1:did:c6e1fa56-248d-45c8-bfc7-42f681539f10",
+      ]
+    }
+  }
+
   public var appIdentifierRepository: Factory<AppIdentifierRepositoryProtocol> {
     self { AppIdentifierRepository() }
   }
@@ -51,6 +60,10 @@ extension Container {
 
   var versionEnforcementRepository: Factory<VersionEnforcementRepositoryProtocol> {
     self { self.enforcementRepository() }
+  }
+
+  var versionEnforcementSignatureValidator: Factory<VersionEnforcementSignatureValidatorProtocol> {
+    self { VersionEnforcementSignatureValidator() }
   }
 
   var versionEnforcementCache: Factory<CacheManager<VersionEnforcement.Response>> {

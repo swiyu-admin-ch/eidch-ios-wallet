@@ -1,95 +1,95 @@
-// swiftlint: disable implicitly_unwrapped_optional force_try
 import Factory
+import FactoryTesting
 import Foundation
 import Realm
 import RealmSwift
-import XCTest
+import Testing
 @testable import BITDataStore
 
 // MARK: - RealmDataStoreTests
 
-final class RealmDataStoreTests: XCTestCase {
+@MainActor
+@Suite(.container)
+struct RealmDataStoreTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    resetRealm()
+  init() throws {
+    realm = try Realm(configuration: configuration)
     dataStore = RealmDataStore()
   }
 
-  func testGet_noObjects_returnsEmptyList() throws {
-    let objects = try dataStore.get(TestObject.self, configuration: configuration)
+  // MARK: Internal
 
-    XCTAssertEqual(objects.count, 0)
+  enum SavePayload: CaseIterable {
+    case singleObject
+    case multipleObjects
+
+    var count: Int {
+      switch self {
+      case .singleObject: 1
+      case .multipleObjects: 2
+      }
+    }
   }
 
-  func testGet_multipleObjects_returnsAll() throws {
+  @Test(arguments: [0, 2])
+  func get_returnsEveryStoredObject(count: Int) throws {
     try realm.write {
-      realm.add(TestObject())
-      realm.add(TestObject())
+      for _ in 0..<count {
+        realm.add(TestObject())
+      }
     }
 
     let objects = try dataStore.get(TestObject.self, configuration: configuration)
 
-    XCTAssertEqual(objects.count, 2)
+    #expect(objects.count == count)
   }
 
-  func testGet_invalidId_returnsNil() throws {
-    try realm.write {
-      realm.add(TestObject())
-    }
-
-    let object = try dataStore.get(TestObject.self, forPrimaryKey: UUID(), configuration: configuration)
-
-    XCTAssertNil(object)
-  }
-
-  func testGet_validId_returnsObject() throws {
+  @Test(arguments: [true, false])
+  func get_byPrimaryKey_returnsTheObjectOnlyForAKnownId(isKnownId: Bool) throws {
     let id = UUID()
     try realm.write {
       realm.add(TestObject(value: [id]))
     }
 
-    let object = try dataStore.get(TestObject.self, forPrimaryKey: id, configuration: configuration)
+    let object = try dataStore.get(TestObject.self, forPrimaryKey: isKnownId ? id : UUID(), configuration: configuration)
 
-    XCTAssertNotNil(object)
+    #expect((object != nil) == isKnownId)
   }
 
-  func testSave_singleObject_createsObject() throws {
-    let object = TestObject()
+  @Test(arguments: SavePayload.allCases)
+  func save_createsEveryObject(payload: SavePayload) throws {
+    let objects = (0..<payload.count).map { _ in TestObject() }
 
-    try dataStore.save(object, policy: .all, configuration: configuration)
+    switch payload {
+    case .singleObject:
+      try dataStore.save(objects[0], policy: .all, configuration: configuration)
+    case .multipleObjects:
+      try dataStore.save(objects, policy: .all, configuration: configuration)
+    }
 
-    XCTAssertEqual(realm.objects(TestObject.self).count, 1)
-    XCTAssertEqual(object, realm.object(ofType: TestObject.self, forPrimaryKey: object.id))
+    #expect(realm.objects(TestObject.self).count == payload.count)
+    for object in objects {
+      #expect(object == realm.object(ofType: TestObject.self, forPrimaryKey: object.id))
+    }
   }
 
-  func testSave_multipleObjects_createsObjects() throws {
-    let object1 = TestObject()
-    let object2 = TestObject()
-
-    try dataStore.save([object1, object2], policy: .all, configuration: configuration)
-
-    XCTAssertEqual(realm.objects(TestObject.self).count, 2)
-    XCTAssertEqual(object1, realm.object(ofType: TestObject.self, forPrimaryKey: object1.id))
-    XCTAssertEqual(object2, realm.object(ofType: TestObject.self, forPrimaryKey: object2.id))
-  }
-
-  func testDelete_simpleObject_deletesObject() throws {
+  @Test
+  func delete_simpleObject_deletesObject() throws {
     let object = TestObject()
     try realm.write {
       realm.add(object)
     }
-    XCTAssertEqual(object, realm.object(ofType: TestObject.self, forPrimaryKey: object.id))
+    #expect(object == realm.object(ofType: TestObject.self, forPrimaryKey: object.id))
 
     try dataStore.delete(object, configuration: configuration)
 
-    XCTAssertEqual(realm.objects(TestObject.self).count, 0)
+    #expect(realm.objects(TestObject.self).isEmpty)
   }
 
-  func testDelete_nestedObject_deletesObjectAndChildren() throws {
+  @Test
+  func delete_nestedObject_deletesObjectAndChildren() throws {
     let childObject = TestObject()
     let subParentObject1 = SubParentTestObject(value: [UUID(), childObject])
     let subParentObject2 = SubParentTestObject()
@@ -97,29 +97,42 @@ final class RealmDataStoreTests: XCTestCase {
     try realm.write {
       realm.add(parentObject)
     }
-    XCTAssertEqual(realm.objects(ParentTestObject.self).count, 1)
-    XCTAssertEqual(realm.objects(SubParentTestObject.self).count, 2)
-    XCTAssertEqual(realm.objects(TestObject.self).count, 1)
+    #expect(realm.objects(ParentTestObject.self).count == 1)
+    #expect(realm.objects(SubParentTestObject.self).count == 2)
+    #expect(realm.objects(TestObject.self).count == 1)
 
     try dataStore.delete(parentObject, configuration: configuration)
 
-    XCTAssertEqual(realm.objects(ParentTestObject.self).count, 0)
-    XCTAssertEqual(realm.objects(SubParentTestObject.self).count, 0)
-    XCTAssertEqual(realm.objects(TestObject.self).count, 0)
+    #expect(realm.objects(ParentTestObject.self).isEmpty)
+    #expect(realm.objects(SubParentTestObject.self).isEmpty)
+    #expect(realm.objects(TestObject.self).isEmpty)
+  }
+
+  @Test
+  func delete_contentHashedObject_isNotCascaded() throws {
+    let firstId = UUID()
+    let secondId = UUID()
+    let shared = SharedFixture(value: ["shared-hash"])
+    let first = OwnerFixture(value: [firstId, shared])
+    let second = OwnerFixture(value: [secondId, shared])
+    try realm.write {
+      realm.add(first)
+      realm.add(second, update: .modified)
+    }
+
+    try dataStore.delete(first, configuration: configuration)
+
+    #expect(realm.object(ofType: OwnerFixture.self, forPrimaryKey: firstId) == nil)
+    #expect(realm.object(ofType: OwnerFixture.self, forPrimaryKey: secondId) != nil)
+    #expect(realm.object(ofType: SharedFixture.self, forPrimaryKey: "shared-hash") != nil)
   }
 
   // MARK: Private
 
-  private var dataStore: RealmDataStore!
-  private var configuration = Realm.Configuration(inMemoryIdentifier: "inMemory")
-  private var realm: Realm!
+  private let configuration = Realm.Configuration(inMemoryIdentifier: UUID().uuidString)
 
-  private func resetRealm() {
-    realm = try! Realm(configuration: configuration)
-    try! realm.write {
-      realm.deleteAll()
-    }
-  }
+  private let realm: Realm
+  private let dataStore: RealmDataStore
 }
 
 // MARK: - ParentTestObject
@@ -143,4 +156,19 @@ private class SubParentTestObject: Object {
 @objc(TestObject)
 private class TestObject: Object {
   @Persisted(primaryKey: true) var id: UUID
+}
+
+// MARK: - SharedFixture
+
+@objc(SharedFixture)
+private class SharedFixture: Object {
+  @Persisted(primaryKey: true) var contentHash: String
+}
+
+// MARK: - OwnerFixture
+
+@objc(OwnerFixture)
+private class OwnerFixture: Object {
+  @Persisted(primaryKey: true) var id: UUID
+  @Persisted var shared: SharedFixture?
 }

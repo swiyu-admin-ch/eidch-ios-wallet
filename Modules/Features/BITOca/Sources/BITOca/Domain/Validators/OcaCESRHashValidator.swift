@@ -8,7 +8,7 @@ import Spyable
 // MARK: - OcaCESRHashValidatorProtocol
 
 @Spyable
-public protocol OcaCESRHashValidatorProtocol {
+public protocol OcaCESRHashValidatorProtocol: Sendable {
   func validate(data: Data) -> Bool
   func validate(jsonString: String) -> Bool
 }

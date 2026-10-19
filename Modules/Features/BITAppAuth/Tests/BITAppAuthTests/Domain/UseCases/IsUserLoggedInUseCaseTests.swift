@@ -9,8 +9,9 @@ final class IsUserLoggedInUseCaseTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    userSession = SessionSpy()
-    Container.shared.userSession.register { self.userSession }
+    let userSession = SessionSpy()
+    self.userSession = userSession
+    Container.shared.userSession.register { userSession }
 
     useCase = IsUserLoggedInUseCase()
   }

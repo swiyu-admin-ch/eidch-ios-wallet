@@ -2,7 +2,7 @@ xcassets:
   inputs:
     - Sources/BITTheming/Resources/ThemingAssets.xcassets
   outputs:
-    - templateName: swift5
+    - templatePath: ../../../.resources/xcassets-swift6.stencil
       output: Sources/BITTheming/Module/ThemingAssets.swift
       params:
         enumName: ThemingAssets

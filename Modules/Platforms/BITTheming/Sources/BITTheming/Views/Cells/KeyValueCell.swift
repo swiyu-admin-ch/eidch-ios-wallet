@@ -162,7 +162,7 @@ public struct IconKeyValueCell<Content: View>: View {
     KeyValueCell(key: "Test", value: "Value")
     KeyValueCell(key: "Test", value: "Value") {
       Badge(label: "Test")
-        .badgeStyle(.error)
+        .badgeType(.filled(.error))
     }
     KeyValueCustomCell(key: "Test", {
       Label(
@@ -171,7 +171,7 @@ public struct IconKeyValueCell<Content: View>: View {
     })
     IconKeyValueCell(key: "Label", value: "Icon", image: Image(systemName: "42.circle"), trailingContent: {
       Badge(label: "Test")
-        .badgeStyle(.error)
+        .badgeType(.filled(.error))
     })
   }
 }

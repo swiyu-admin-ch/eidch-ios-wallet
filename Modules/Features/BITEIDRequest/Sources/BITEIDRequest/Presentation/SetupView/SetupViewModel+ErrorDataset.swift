@@ -56,6 +56,7 @@ extension ErrorDataset {
 
     // MARK: Private
 
+    @MainActor
     private static func openLink(_ link: String) {
       guard let url = URL(string: link) else { return }
       UIApplication.shared.open(url)

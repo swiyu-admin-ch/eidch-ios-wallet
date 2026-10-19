@@ -8,7 +8,7 @@ public typealias NonComplianceTrustListStatement = JWS<NonComplianceTrustListSta
 
 // MARK: - NonComplianceTrustListStatementJWT
 
-public struct NonComplianceTrustListStatementJWT: TrustStatementJWT, Equatable {
+public struct NonComplianceTrustListStatementJWT: TrustStatementJWT, Equatable, Sendable {
 
   public var type: String? = "swiyu-non-compliance-trust-list-statement+jwt"
 
@@ -48,7 +48,7 @@ extension NonComplianceTrustListStatementJWT: Codable {
 // MARK: NonComplianceTrustListStatementJWT.NonCompliantActor
 
 extension NonComplianceTrustListStatementJWT {
-  public struct NonCompliantActor: Codable, Equatable {
+  public struct NonCompliantActor: Codable, Equatable, Sendable {
 
     // MARK: Lifecycle
 

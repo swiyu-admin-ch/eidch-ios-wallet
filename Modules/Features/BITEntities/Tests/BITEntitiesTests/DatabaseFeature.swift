@@ -37,6 +37,15 @@ enum DatabaseFeature {
     }
   }
 
+  func getCredentialRenderingCount() -> Int {
+    switch self {
+    case .cluster,
+         .deferredCredential,
+         .rawCredentialData: 3
+    case .none: 4
+    }
+  }
+
   func getCredentialIssuerDisplayCount() -> Int {
     switch self {
     case .cluster,

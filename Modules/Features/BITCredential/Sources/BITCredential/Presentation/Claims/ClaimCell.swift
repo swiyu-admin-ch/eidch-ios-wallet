@@ -62,7 +62,7 @@ public struct ClaimCell: View {
   private var trailingView: some View {
     if viewModel.isSensitive {
       Badge(label: L10n.tkGlobalSensitiveData)
-        .badgeStyle(.sensitive)
+        .badgeType(.filled(.sensitive))
         .accessibilityLabel(L10n.tkGlobalSensitiveDataAlt)
     } else {
       EmptyView()

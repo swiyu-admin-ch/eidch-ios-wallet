@@ -6,7 +6,7 @@ typealias SdJwtCredentialConsistencyResult = SdJwtCredentialConsistencyChecker.C
 // MARK: - SdJwtCredentialConsistencyCheckerProtocol
 
 @Spyable
-protocol SdJwtCredentialConsistencyCheckerProtocol {
+protocol SdJwtCredentialConsistencyCheckerProtocol: Sendable {
   func checkConsistency(left: String, right: String) -> SdJwtCredentialConsistencyResult
 }
 

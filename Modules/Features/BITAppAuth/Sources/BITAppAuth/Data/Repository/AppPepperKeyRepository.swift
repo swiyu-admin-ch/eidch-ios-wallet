@@ -6,7 +6,7 @@ import Spyable
 // MARK: - AppPepperKeyRepositoryProtocol
 
 @Spyable
-protocol AppPepperKeyRepositoryProtocol {
+protocol AppPepperKeyRepositoryProtocol: Sendable {
   func create() throws -> VaultKeyPair
   func get() throws -> VaultKeyPair
 }
@@ -40,9 +40,12 @@ struct AppPepperKeyRepository: AppPepperKeyRepositoryProtocol {
 
   // MARK: Private
 
-  private let protection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
   @Injected(\.pepperKeyAlgorithm) private var pepperKeyAlgorithm: VaultAlgorithm
   @Injected(\.pepperKeyVaultOptions) private var pepperKeyVaultOptions: VaultOptions
+
+  private var protection: CFString {
+    kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+  }
+
 }

@@ -6,6 +6,7 @@ import Factory
 import Foundation
 import SwiftUI
 
+@MainActor
 public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, CredentialViewModelProtocol {
 
   // MARK: Lifecycle
@@ -40,15 +41,11 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
   public var statusImage: Image {
     switch credential.progressionState {
     case .inProgress:
-      Image(systemName: "clock")
+      Assets.statusInProgress.swiftUIImage
     case .invalid,
          .issuanceFailed:
-      Image(systemName: "xmark")
+      Assets.statusRejected.swiftUIImage
     }
-  }
-
-  public var statusBadgeAccessibilityText: String {
-    statusText
   }
 
   public var statusTextAlt: String {
@@ -59,16 +56,12 @@ public class DeferredCredentialViewModel: CredentialCardViewModelProtocol, Crede
     }
   }
 
-  public var cardStatusBadgeStyle: any BadgeStyle {
+  public var statusBadgeStyle: BadgeStyle {
     credential.progressionState == .inProgress ? .info : .error
   }
 
-  public var statusBadgeStyle: any BadgeStyle {
-    .info
-  }
-
-  public var statusColor: Color {
-    ThemingAssets.Label.secondary.swiftUIColor
+  public var statusBadgeType: BadgeType {
+    .plain(statusBadgeStyle)
   }
 
   public var cardStyle: CredentialCardStyle {

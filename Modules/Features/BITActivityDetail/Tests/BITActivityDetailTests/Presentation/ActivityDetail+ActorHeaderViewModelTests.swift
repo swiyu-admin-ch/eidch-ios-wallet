@@ -33,7 +33,7 @@ struct ActivityActorHeaderViewModelTests {
     let activity = ActivityDetail.Mock.make(
       actorTrust: .trusted,
       actorCompliance: .notCompliant,
-      nonComplianceReasonDisplay: NonComplianceReasonDisplay(locale: nil, value: reason))
+      nonComplianceReasonDisplay: NonComplianceReasonDisplay(locale: nil, reason: reason))
 
     #expect(activity.actorHeaderViewModel.isNonCompliant)
     #expect(activity.actorHeaderViewModel.actorInformation.nonComplianceReason == nil)

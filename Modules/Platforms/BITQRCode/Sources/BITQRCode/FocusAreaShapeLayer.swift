@@ -29,6 +29,7 @@ class FocusAreaShapeLayer: CAShapeLayer {
     path = newPath.cgPath
   }
 
+  @MainActor
   func resetPositionToOrigin(of view: UIView, center: CGPoint? = nil) {
     let squareSize = defaultSize
     let centerPoint = center ?? CGPoint(x: view.bounds.midX, y: view.bounds.midY)

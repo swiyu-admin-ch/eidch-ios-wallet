@@ -1,24 +1,24 @@
 import XCTest
 @testable import BITSettings
 
+// swiftlint:disable implicitly_unwrapped_optional
+
+@MainActor
 final class LicencesListViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     fetchPackagesUseCase = FetchPackagesUseCaseProtocolSpy()
     viewModel = LicencesListViewModel(fetchPackagesUseCase: fetchPackagesUseCase)
   }
 
-  @MainActor
   func testInitialState() {
     XCTAssertEqual(viewModel.state, .loading)
     XCTAssertNotNil(viewModel.packages)
   }
 
-  @MainActor
   func testFetchPackages_withResults() async {
     fetchPackagesUseCase.executeReturnValue = [PackageDependency.Mock.sample]
     await viewModel.send(event: .fetch)
@@ -29,7 +29,6 @@ final class LicencesListViewModelTests: XCTestCase {
     XCTAssertEqual(fetchPackagesUseCase.executeCallsCount, 1)
   }
 
-  @MainActor
   func testFetchPackages_withoutResults() async {
     fetchPackagesUseCase.executeReturnValue = []
     await viewModel.send(event: .fetch)
@@ -40,7 +39,6 @@ final class LicencesListViewModelTests: XCTestCase {
     XCTAssertEqual(fetchPackagesUseCase.executeCallsCount, 1)
   }
 
-  @MainActor
   func testFetchPackages_failure() async {
     fetchPackagesUseCase.executeThrowableError = FetchPackagesError.fileNotExisting
     await viewModel.send(event: .fetch)
@@ -53,8 +51,6 @@ final class LicencesListViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
   private var viewModel: LicencesListViewModel!
   private var fetchPackagesUseCase: FetchPackagesUseCaseProtocolSpy!
-  // swiftlint:enable all
 }

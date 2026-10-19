@@ -11,7 +11,7 @@ public enum JWSValidatorError: Error, Equatable {
 
 // MARK: - JWSValidatorProtocol
 
-public protocol JWSValidatorProtocol {
+public protocol JWSValidatorProtocol: Sendable {
   func validate(_ jws: JWS<some JWT>, activationBuffer: TimeInterval) async throws
 }
 

@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITCore
 import BITJWT
 import Foundation
 
@@ -8,7 +9,7 @@ extension CredentialIssuerMetadata {
 
   /// `vc+sd-jwt` and `dc+sd-jwt` implementation of the `credential_configurations_supported`
   /// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-ID1.html#name-credential-issuer-metadata-6
-  public struct VcSdJwtCredentialConfigurationSupported: AnyCredentialConfigurationSupported, Decodable, Equatable {
+  public struct VcSdJwtCredentialConfigurationSupported: AnyCredentialConfigurationSupported, Decodable, Equatable, Changeable, Sendable {
 
     // MARK: Lifecycle
 
@@ -23,7 +24,8 @@ extension CredentialIssuerMetadata {
       vctMetadataUriIntegrity: String? = nil,
       protectedIssuanceAuthorizationTrustStatement: ProtectedIssuanceAuthorizationTrustStatement? = nil,
       proofTypesSupported: [ProofType] = [],
-      credentialMetadata: CredentialMetadata? = nil)
+      credentialMetadata: CredentialMetadata? = nil,
+      credentialRefreshDisabled: Bool = true)
     {
       self.format = format
       self.scope = scope
@@ -36,6 +38,7 @@ extension CredentialIssuerMetadata {
       self.protectedIssuanceAuthorizationTrustStatement = protectedIssuanceAuthorizationTrustStatement
       self.proofTypesSupported = proofTypesSupported
       self.credentialMetadata = credentialMetadata
+      self.credentialRefreshDisabled = credentialRefreshDisabled
     }
 
     public init(from decoder: Decoder) throws {
@@ -71,6 +74,7 @@ extension CredentialIssuerMetadata {
       proofTypesSupported = proofTypes
 
       credentialMetadata = try container.decodeIfPresent(CredentialMetadata.self, forKey: .credentialMetadata)
+      credentialRefreshDisabled = try container.decodeIfPresent(Bool.self, forKey: .credentialRefreshDisabled) ?? false
     }
 
     // MARK: Public
@@ -90,6 +94,7 @@ extension CredentialIssuerMetadata {
     public let proofTypesSupported: [ProofType]
 
     public let credentialMetadata: CredentialMetadata?
+    public var credentialRefreshDisabled: Bool
 
     // MARK: Internal
 
@@ -105,6 +110,7 @@ extension CredentialIssuerMetadata {
       case credentialSigningAlgValuesSupported = "credential_signing_alg_values_supported"
       case proofTypesSupported = "proof_types_supported"
       case credentialMetadata = "credential_metadata"
+      case credentialRefreshDisabled = "credential_refresh_disabled"
     }
 
     enum VcSdJwtCredentialConfigurationSupportedError: Error {

@@ -5,15 +5,14 @@ import Foundation
 
 // MARK: - CredentialIssuerDisplay
 
-public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, Swift.Hashable {
+public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, Swift.Hashable, Sendable {
 
   // MARK: Lifecycle
 
-  public init(id: UUID = UUID(), locale: String? = nil, name: String? = nil, credentialId: UUID?, image: Data?) {
+  public init(id: UUID = UUID(), locale: String? = nil, name: String? = nil, image: Data?) {
     self.id = id
     self.locale = locale ?? UserLocale.defaultLocaleIdentifier
     self.name = name
-    self.credentialId = credentialId
     self.image = image
   }
 
@@ -22,7 +21,6 @@ public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, S
       id: entity.id,
       locale: entity.locale,
       name: entity.name,
-      credentialId: entity.credential.first?.id,
       image: entity.cachedImage)
   }
 
@@ -31,7 +29,6 @@ public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, S
     id = try container.decode(UUID.self, forKey: .id)
     name = try container.decodeIfPresent(String.self, forKey: .name)
     locale = try container.decodeIfPresent(String.self, forKey: .locale) ?? UserLocale.defaultLocaleIdentifier
-    credentialId = try container.decodeIfPresent(UUID.self, forKey: .credentialId)
     image = try container.decodeIfPresent(Data.self, forKey: .image)
   }
 
@@ -40,7 +37,6 @@ public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, S
   public var id: UUID
   public var name: String?
   public var locale: UserLocale?
-  public var credentialId: UUID?
   public var image: Data?
 
   // MARK: Internal
@@ -50,6 +46,5 @@ public struct CredentialIssuerDisplay: Codable, Equatable, DisplayLocalizable, S
     case name
     case image
     case locale
-    case credentialId = "credential_id"
   }
 }

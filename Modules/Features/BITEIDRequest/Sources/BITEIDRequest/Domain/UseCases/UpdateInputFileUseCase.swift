@@ -7,12 +7,14 @@ import XMLCoder
 // MARK: - UpdateInputFileUseCaseProtocol
 
 @Spyable
+@MainActor
 protocol UpdateInputFileUseCaseProtocol {
   func callAsFunction() throws -> AVBeamFile
 }
 
 // MARK: - UpdateInputFileUseCase
 
+@MainActor
 struct UpdateInputFileUseCase: UpdateInputFileUseCaseProtocol {
 
   // MARK: Internal

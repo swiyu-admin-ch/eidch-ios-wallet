@@ -8,7 +8,7 @@ import Moya
 import Spyable
 
 @Spyable
-public protocol OpenIDRepositoryProtocol {
+public protocol OpenIDRepositoryProtocol: Sendable {
   func fetchVcSchemaData(from url: URL) async throws -> VcSchema
   func fetchTypeMetadata(from url: URL) async throws -> (object: TypeMetadata, response: Response)
   func fetchMetadata(from issuerUrl: URL) async throws -> JWS<CredentialIssuerMetadataJWT>

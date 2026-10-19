@@ -139,7 +139,7 @@ class CredentialDetailViewModel {
       return
     }
 
-    guard let credential = try? await checkAndUpdateCredentialStatusUseCase.execute(for: verifiableCredential) else {
+    guard let credential = try? await checkAndUpdateCredentialStatusUseCase(for: verifiableCredential) else {
       return analytics.log(AnalyticsEvent.checkStatusFailed)
     }
 

@@ -2,7 +2,7 @@ import BITAnyCredentialFormat
 import BITEntities
 import Foundation
 
-public struct BundleItem: Codable, Equatable, Hashable, Identifiable {
+public struct BundleItem: Codable, Equatable, Hashable, Identifiable, Sendable {
 
   // MARK: Lifecycle
 

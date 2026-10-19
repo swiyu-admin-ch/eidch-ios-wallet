@@ -194,9 +194,10 @@ final class GetEIDRequestCaseFilesUseCaseTests: XCTestCase {
   // MARK: Helper Methods
 
   private func registerMocks() {
-    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    let eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    self.eIDRequestCaseRepository = eIDRequestCaseRepository
 
-    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
+    Container.shared.eIDRequestCaseRepository.register { eIDRequestCaseRepository }
   }
 
   private func success() {

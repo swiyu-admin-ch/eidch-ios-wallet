@@ -191,11 +191,13 @@ final class TrustInformationServiceTests: XCTestCase {
   private var service: TrustInformationService!
 
   private func registerMocks() {
-    statementServiceSpy = TrustStatementServiceProtocolSpy()
-    didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    let statementServiceSpy = TrustStatementServiceProtocolSpy()
+    self.statementServiceSpy = statementServiceSpy
+    let didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    self.didResolverHelperSpy = didResolverHelperSpy
 
-    Container.shared.trustStatementService.register { self.statementServiceSpy }
-    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
+    Container.shared.trustStatementService.register { statementServiceSpy }
+    Container.shared.didResolverHelper.register { didResolverHelperSpy }
   }
 
   private func setupSuccessState() {

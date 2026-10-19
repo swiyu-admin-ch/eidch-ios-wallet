@@ -13,6 +13,10 @@ extension CredentialActivityEntity: Mockable {
       actorTrust: String = "unknown",
       vcSchemaTrust: String = "notProtected",
       actorCompliance: String = "unknown",
+      issuer: String = "",
+      credentialRendering: CredentialRenderingEntity? = nil,
+      rawCredentialData: RawCredentialDataEntity? = nil,
+      bundleItem: ActivityBundleItemEntity? = nil,
       actorDisplays: [ActivityActorDisplayEntity] = [],
       nonComplianceReasonDisplays: [NonComplianceReasonDisplayEntity] = [],
       claims: [ActivityClaimEntity] = [],
@@ -27,6 +31,10 @@ extension CredentialActivityEntity: Mockable {
       entity.actorTrust = actorTrust
       entity.vcSchemaTrust = vcSchemaTrust
       entity.actorCompliance = actorCompliance
+      entity.issuer = issuer
+      entity.credentialRendering = credentialRendering
+      entity.rawCredentialData = rawCredentialData
+      entity.bundleItem = bundleItem
 
       let actorList = List<ActivityActorDisplayEntity>()
       actorList.append(objectsIn: actorDisplays)

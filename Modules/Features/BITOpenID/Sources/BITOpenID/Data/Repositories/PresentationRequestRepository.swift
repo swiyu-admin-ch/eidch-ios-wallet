@@ -19,6 +19,8 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
       throw PresentationRequestRepositoryError.presentationRequestExpired
     } catch let error as NetworkError where error.status == .notFound {
       throw PresentationRequestRepositoryError.presentationRequestNotFound
+    } catch let error as NetworkError where error.status == .noConnection {
+      throw PresentationRequestRepositoryError.noConnection
     }
   }
 
@@ -67,4 +69,5 @@ struct PresentationRequestRepository: PresentationRequestRepositoryProtocol {
 public enum PresentationRequestRepositoryError: Error, Equatable {
   case presentationRequestExpired
   case presentationRequestNotFound
+  case noConnection
 }

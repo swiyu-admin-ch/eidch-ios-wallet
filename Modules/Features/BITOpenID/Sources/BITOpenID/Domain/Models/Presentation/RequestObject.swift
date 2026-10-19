@@ -54,7 +54,8 @@ public class RequestObject: Codable {
     identityTrustStatement: IdentityTrustStatement? = nil,
     verificationQueryPublicStatement: VerificationQueryPublicStatement? = nil,
     protectedVerificationAuthorizationTrustStatement: ProtectedVerificationAuthorizationTrustStatement? = nil,
-    transactionData: [String]?) throws
+    transactionData: [String]?,
+    expectedOrigins: [String]? = nil) throws
   {
     self.dcqlQuery = dcqlQuery
     self.state = state
@@ -69,6 +70,7 @@ public class RequestObject: Codable {
     self.verificationQueryPublicStatement = verificationQueryPublicStatement
     self.protectedVerificationAuthorizationTrustStatement = protectedVerificationAuthorizationTrustStatement
     self.transactionData = transactionData
+    self.expectedOrigins = expectedOrigins
   }
 
   public required init(from decoder: Decoder) throws {
@@ -88,6 +90,7 @@ public class RequestObject: Codable {
     protectedVerificationAuthorizationTrustStatement = try container.decodeTrustStatement(ProtectedVerificationAuthorizationTrustStatementJWT.self)
     self.dcqlQuery = try Self.getVerifiedQuery(for: scope, vqPS: verificationQueryPublicStatement?.payload, dcqlQuery: dcqlQuery).query
     transactionData = try container.decodeIfPresent([String].self, forKey: .transactionData)
+    expectedOrigins = try container.decodeIfPresent([String].self, forKey: .expectedOrigins)
   }
 
   // MARK: Public
@@ -105,6 +108,7 @@ public class RequestObject: Codable {
   public let verificationQueryPublicStatement: VerificationQueryPublicStatement?
   public let protectedVerificationAuthorizationTrustStatement: ProtectedVerificationAuthorizationTrustStatement?
   public let transactionData: [String]?
+  public let expectedOrigins: [String]?
   public var raw: Data?
 
   public func encode(to encoder: Encoder) throws {
@@ -119,6 +123,7 @@ public class RequestObject: Codable {
     try container.encode(responseMode, forKey: .responseMode)
     try container.encodeIfPresent(scope, forKey: .scope)
     try container.encodeIfPresent(transactionData, forKey: .transactionData)
+    try container.encodeIfPresent(expectedOrigins, forKey: .expectedOrigins)
   }
 
   public func isEqual(to other: RequestObject) -> Bool {
@@ -135,7 +140,8 @@ public class RequestObject: Codable {
       identityTrustStatement == other.identityTrustStatement &&
       verificationQueryPublicStatement == other.verificationQueryPublicStatement &&
       protectedVerificationAuthorizationTrustStatement == other.protectedVerificationAuthorizationTrustStatement &&
-      transactionData == other.transactionData
+      transactionData == other.transactionData &&
+      expectedOrigins == other.expectedOrigins
   }
 
   // MARK: Internal
@@ -151,6 +157,7 @@ public class RequestObject: Codable {
     case verifierInfo = "verifier_info"
     case transactionData = "transaction_data"
     case dcqlQuery = "dcql_query"
+    case expectedOrigins = "expected_origins"
   }
 
   // MARK: Private
@@ -190,7 +197,7 @@ extension KeyedDecodingContainer<RequestObject.CodingKeys> {
 // MARK: - RequestObject.ResponseMode
 
 extension RequestObject {
-  public enum ResponseMode: String, Codable {
+  public enum ResponseMode: String, Codable, Sendable {
     case directPostJWT = "direct_post.jwt"
     /// Unsigned Digital Credentials API response used by the proximity flow.
     case dcApi = "dc_api"
@@ -288,7 +295,7 @@ public struct ClientMetadata: Codable, Equatable, Changeable {
 // MARK: ClientMetadata.JWKs
 
 extension ClientMetadata {
-  public struct JWKs: Codable, Equatable {
+  public struct JWKs: Codable, Equatable, Sendable {
     public let keys: [JWK]
 
     public init(keys: [JWK]) {

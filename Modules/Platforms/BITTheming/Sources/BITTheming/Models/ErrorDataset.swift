@@ -13,11 +13,11 @@ public struct ErrorDataset {
     primary: String = L10n.tkErrorViewDefaultPrimaryButton,
     secondary: String,
     tertiary: String? = nil,
-    primaryAction: (() -> Void)? = nil,
+    primaryAction: VoidAction? = nil,
     primaryActionLabel: String? = L10n.tkErrorViewDefaultPrimaryButton,
-    secondaryAction: (() -> Void)? = nil,
+    secondaryAction: VoidAction? = nil,
     secondaryActionLabel: String? = nil,
-    tertiaryAction: (() -> Void)? = nil)
+    tertiaryAction: VoidAction? = nil)
   {
     var contents = [InformationView2.ContentType]()
     var actions = [InformationView2.ActionType]()
@@ -54,6 +54,7 @@ public struct ErrorDataset {
     self.actions = actions
   }
 
+  @MainActor
   public init(_ error: Error, _ actions: [InformationView2.ActionType]) {
     self.init([
       .title(L10n.tkErrorGenericPrimary),
@@ -99,7 +100,8 @@ extension ErrorDataset {
     ])
   }
 
-  public static func retry(_ error: Error, _ action: @escaping (Navigator) -> Void) -> Self {
+  @MainActor
+  public static func retry(_ error: Error, _ action: @escaping NavigatorAction) -> Self {
     ErrorDataset(error, [.primary(L10n.tkErrorGenericButtonPrimary, action)])
   }
 }

@@ -96,8 +96,9 @@ final class OcaCaptureBaseDigestsValidatorTests: XCTestCase {
   private var validator = OcaCaptureBaseDigestsValidator()
 
   private func registerMocks() {
-    cesrHashValidatorMock = OcaCESRHashValidatorProtocolSpy()
-    Container.shared.ocaCESRHashValidator.register { self.cesrHashValidatorMock }
+    let cesrHashValidatorMock = OcaCESRHashValidatorProtocolSpy()
+    self.cesrHashValidatorMock = cesrHashValidatorMock
+    Container.shared.ocaCESRHashValidator.register { cesrHashValidatorMock }
   }
 
   private func successState() {

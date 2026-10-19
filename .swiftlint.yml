@@ -36,6 +36,7 @@ excluded:
   - Packages
   - .build
   - Modules/**/.build
+  - build
   - vendor # Remove some CI checks
 
 colon:
@@ -126,7 +127,7 @@ custom_rules:
   swift_tool_version_in_spm:
     name: "SPM Swift version must be aligned to project requirements"
     included: ".*Package\\.swift$"
-    regex: "swift-tools-version: (?!5\\.10)"
+    regex: "swift-tools-version: (?!(5\\.10|6\\.3))"
     message: "SPM Swift version must be aligned to project requirements"
     match_kinds: 
       - comment

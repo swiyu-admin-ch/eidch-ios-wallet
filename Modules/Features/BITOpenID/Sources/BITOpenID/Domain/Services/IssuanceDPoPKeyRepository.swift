@@ -7,7 +7,7 @@ import Spyable
 // MARK: - IssuanceDPoPKeyRepositoryProtocol
 
 @Spyable
-public protocol IssuanceDPoPKeyRepositoryProtocol {
+public protocol IssuanceDPoPKeyRepositoryProtocol: Sendable {
   func create(isHardwareBound: Bool) throws -> VaultKeyPair
   func delete(_ keyPair: VaultKeyPair) throws
 }
@@ -35,10 +35,12 @@ struct IssuanceDPoPKeyRepository: IssuanceDPoPKeyRepositoryProtocol {
 
   // MARK: Private
 
-  private let protection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
   @Injected(\.userSession) private var userSession: Session
+
+  private var protection: CFString {
+    kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+  }
 
   private func createQuery(options: VaultOptions) throws -> Query {
     guard

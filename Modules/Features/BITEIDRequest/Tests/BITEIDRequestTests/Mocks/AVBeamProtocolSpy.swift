@@ -5,13 +5,17 @@ import UIKit
 
 // MARK: - AVBeamProtocolSpy
 
-public class AVBeamProtocolSpy: AVBeamProtocol {
+/// AVBeamProtocol requires Sendable, but this mutable spy is used from actor-confined tests only.
+public final class AVBeamProtocolSpy: AVBeamProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 
   // MARK: - Initialization
 
-  public required init() {}
+  public required init() {
+    // getGLViewReturnValue is left unset here; tests that exercise getGLView() must
+    // assign it (e.g. `avBeam.getGLViewReturnValue = UIView()`) from a @MainActor context.
+  }
 
   // MARK: Public
 
@@ -42,7 +46,7 @@ public class AVBeamProtocolSpy: AVBeamProtocol {
   public var getGLViewCallsCount = 0
   public var getGLViewReceivedArguments: (width: Int, height: Int)?
   public var getGLViewReceivedInvocations = [(width: Int, height: Int)]()
-  public var getGLViewReturnValue = UIView()
+  public var getGLViewReturnValue: UIView!
 
   public var startCameraCalled = false
   public var startCameraCallsCount = 0

@@ -18,6 +18,7 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() async throws {
+    try await super.setUp()
     Container.shared.reset()
     registerMocks()
 
@@ -26,7 +27,11 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     viewModel.updateCredential(with: colorSchemeMock)
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testInit_loadingWithoutAlert() {
     viewModel = PresentationRequestReviewViewModel(context: context)
 
@@ -68,7 +73,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testUpdateCredential_result_updatesCredential() {
     if case .result(let oldViewState) = viewModel.state {
       let colorScheme = "other"
@@ -86,7 +90,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
-  @MainActor
   func testUpdateCredential_processing_updatesCredential() async {
     if case .result(let resultViewState) = viewModel.state {
       await viewModel.send(.submit(resultViewState, true))
@@ -107,14 +110,12 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTFail("Wrong state: \(viewModel.state)")
   }
 
-  @MainActor
   func testOnAppear_pvaTSValid_justRuns() async {
     await viewModel.send(.onAppear)
 
     XCTAssertNil(viewModel.destination)
   }
 
-  @MainActor
   func testOnAppear_unauthorizedVerification_navigatesToError() async {
     validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError =
       ValidateVerificationAuthorizationTrustStatementUseCaseError.unauthorizedVerification()
@@ -126,7 +127,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testOnAppear_unauthorizedVerificationWithRedirect_navigatesToErrorWithPresentationResponse() async {
     let presentationResponse = PresentationResponse(redirectUri: redirectUri)
     validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError =
@@ -141,7 +141,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     XCTAssertEqual(destinationResponse, presentationResponse)
   }
 
-  @MainActor
   func testOnAppear_invalidRedirect_navigatesToRedirectErrorView() async {
     validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError =
       PresentationResponseValidationError.invalidRedirectUri
@@ -153,7 +152,6 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testOnAppear_pvaTSValidatorThrowsError_navigatesToError() async {
     validateVerificationAuthorizationTrustStatementUseCase.callAsFunctionRequestObjectRequestedClaimsThrowableError = TestingError.error
 
@@ -550,18 +548,22 @@ class PresentationRequestReviewViewModelTests: XCTestCase {
   }
 
   private func registerMocks() {
-    submitPresentationUseCase = SubmitPresentationUseCaseProtocolSpy()
-    declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
-    selectCredentialBundleItemUseCase = SelectCredentialBundleItemUseCaseProtocolSpy()
-    validateVerificationAuthorizationTrustStatementUseCase = ValidateVerificationAuthorizationTrustStatementUseCaseProtocolSpy()
+    let submitPresentationUseCase = SubmitPresentationUseCaseProtocolSpy()
+    self.submitPresentationUseCase = submitPresentationUseCase
+    let declinePresentationUseCase = DeclinePresentationUseCaseProtocolSpy()
+    self.declinePresentationUseCase = declinePresentationUseCase
+    let selectCredentialBundleItemUseCase = SelectCredentialBundleItemUseCaseProtocolSpy()
+    self.selectCredentialBundleItemUseCase = selectCredentialBundleItemUseCase
+    let validateVerificationAuthorizationTrustStatementUseCase = ValidateVerificationAuthorizationTrustStatementUseCaseProtocolSpy()
+    self.validateVerificationAuthorizationTrustStatementUseCase = validateVerificationAuthorizationTrustStatementUseCase
     selectCredentialBundleItemUseCase.callAsFunctionClosure = { credential in
       guard let first = credential.bundleItems.first else { throw CredentialError.noBundleItem }
       return first
     }
-    Container.shared.submitPresentationUseCase.register { @MainActor in self.submitPresentationUseCase }
-    Container.shared.declinePresentationUseCase.register { @MainActor in self.declinePresentationUseCase }
-    Container.shared.selectCredentialBundleItemUseCase.register { @MainActor in self.selectCredentialBundleItemUseCase }
-    Container.shared.validateVerificationAuthorizationTrustStatementUseCase.register { @MainActor in self.validateVerificationAuthorizationTrustStatementUseCase }
+    Container.shared.submitPresentationUseCase.register { @MainActor in submitPresentationUseCase }
+    Container.shared.declinePresentationUseCase.register { @MainActor in declinePresentationUseCase }
+    Container.shared.selectCredentialBundleItemUseCase.register { @MainActor in selectCredentialBundleItemUseCase }
+    Container.shared.validateVerificationAuthorizationTrustStatementUseCase.register { @MainActor in validateVerificationAuthorizationTrustStatementUseCase }
 
     submitPresentationUseCase.executeContextReturnValue = .just(.success(nil))
   }

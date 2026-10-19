@@ -8,7 +8,7 @@ public typealias CredentialPayload = Data
 // MARK: - AnyCredential
 
 @Spyable
-public protocol AnyCredential {
+public protocol AnyCredential: Sendable {
   var format: CredentialFormat { get }
   var raw: String { get }
   var issuer: String { get }

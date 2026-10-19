@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PushRegistrationResponse
 
-public struct PushRegistrationResponse: Codable, Equatable {
+public struct PushRegistrationResponse: Codable, Equatable, Sendable {
   public let pushId: String
 }
 

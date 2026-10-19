@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - CompatibleCredential
 
-public struct CompatibleCredential: Identifiable, Equatable {
+public struct CompatibleCredential: Identifiable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

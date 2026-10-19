@@ -1,93 +1,132 @@
+import CryptoKit
 import Factory
-import XCTest
+import FactoryTesting
+import Foundation
+import Testing
 @testable import BITCrypto
 @testable import BITJWT
 @testable import BITTestingCore
 
-// swiftlint:disable force_unwrapping implicitly_unwrapped_optional
+@Suite(.container)
+struct JWSSignatureValidatorTests {
 
-final class JWSSignatureValidatorTests: XCTestCase {
+  // MARK: Lifecycle
 
-  // MARK: Internal
+  init() throws {
+    let signingSecKey = SecKeyTestsHelper.createStaticPrivateKey()
+    let representation = try #require(SecKeyCopyExternalRepresentation(signingSecKey, nil) as Data?)
+    signingKey = try P256.Signing.PrivateKey(x963Representation: representation)
+    detachedJWSSigningJWK = try JWK(from: SecKeyTestsHelper.getPublicKey(for: signingSecKey))
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+    let didResolverHelper = DidResolverHelperProtocolSpy()
+    didResolverHelper.getJWKFromReturnValue = .Mock.validSample
+    self.didResolverHelper = didResolverHelper
 
-    didResolverSpy = DidResolverHelperProtocolSpy()
-    didResolverSpy.getJWKFromReturnValue = .Mock.validSample
-
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
+    Container.shared.didResolverHelper.register { didResolverHelper }
 
     validator = JWSSignatureValidator()
   }
 
-  func testValidate_validJws_argumentsPassed() async throws {
-    _ = try await validator.validate(jwsMock)
+  // MARK: Internal
 
-    XCTAssertEqual(didResolverSpy.getJWKFromReceivedKid, jwsMock.header.keyIdentifier)
+  // MARK: Attached payload
+
+  @Test
+  func validate_resolvedKey_resolvesKeyIdentifierAndAccepts() async throws {
+    try await validator.validate(jws)
+
+    #expect(didResolverHelper.getJWKFromReceivedKid == jws.header.keyIdentifier)
   }
 
-  func testValidate_jwsWithOneValidPublicKey_doesNotThrow() async throws {
-    didResolverSpy.getJWKFromReturnValue = .Mock.validSample
+  @Test
+  func validate_otherResolvedKey_throwsInvalidSignature() async throws {
+    didResolverHelper.getJWKFromReturnValue = .Mock.invalidSample
 
-    do {
-      try await validator.validate(jwsMock)
-    } catch {
-      XCTFail("Expected not to throw an error")
+    await #expect(throws: JWSSignatureValidatorError.invalidSignature) {
+      try await validator.validate(jws)
     }
   }
 
-  func testValidate_jwsWithNoValidPublicKey_throwsInvalidSignature() async throws {
-    didResolverSpy.getJWKFromReturnValue = .Mock.invalidSample
+  @Test
+  func validate_unresolvableDid_throwsCannotResolveDid() async throws {
+    didResolverHelper.getJWKFromThrowableError = TestingError.error
 
-    do {
-      try await validator.validate(jwsMock)
-      XCTFail("Expected to throw an error")
-    } catch {
-      XCTAssertEqual(error as? JWSSignatureValidatorError, .invalidSignature)
+    await #expect(throws: JWSSignatureValidatorError.cannotResolveDid(TestingError.error)) {
+      try await validator.validate(jws)
     }
   }
 
-  func testValidate_didResolverThrows_throwsError() async throws {
-    didResolverSpy.getJWKFromThrowableError = TestingError.error
+  @Test
+  func validate_deactivatedDidDocument_throwsCannotResolveDid() async throws {
+    didResolverHelper.getJWKFromThrowableError = DidResolverHelperError.didDocumentDeactivated
 
-    do {
-      _ = try await validator.validate(jwsMock)
-      XCTFail("Expected to throw an error, but it did not.")
-    } catch JWSSignatureValidatorError.cannotResolveDid(let error) {
-      XCTAssertEqual(error as? TestingError, .error)
+    await #expect(throws: JWSSignatureValidatorError.cannotResolveDid(DidResolverHelperError.didDocumentDeactivated)) {
+      try await validator.validate(jws)
     }
   }
 
-  func testValidate_didDocumentDeactivated_throwsCannotResolveDid() async throws {
-    didResolverSpy.getJWKFromThrowableError = DidResolverHelperError.didDocumentDeactivated
+  @Test
+  func validate_suppliedKey_acceptsWithoutResolvingDid() throws {
+    try validator.validate(jws, with: .Mock.validSample)
 
-    do {
-      try await validator.validate(jwsMock)
-      XCTFail("Expected to throw an error")
-    } catch JWSSignatureValidatorError.cannotResolveDid(let error) {
-      XCTAssertEqual(error as? DidResolverHelperError, .didDocumentDeactivated)
+    #expect(!didResolverHelper.getJWKFromCalled)
+  }
+
+  @Test
+  func validate_suppliedOtherKey_throwsInvalidSignature() throws {
+    #expect(throws: JWSSignatureValidatorError.invalidSignature) {
+      try validator.validate(jws, with: .Mock.invalidSample)
     }
   }
 
-  func testValidate_withSuppliedValidJwk_doesNotThrow() throws {
-    XCTAssertNoThrow(try validator.validate(jwsMock, with: .Mock.validSample))
-    XCTAssertNil(didResolverSpy.getJWKFromReceivedKid, "Supplying a JWK should bypass DID resolution")
+  // MARK: Detached payload
+
+  @Test
+  func validate_detachedJWSSignedByResolvedKey_resolvesKeyIdentifierAndAccepts() async throws {
+    didResolverHelper.getJWKFromReturnValue = detachedJWSSigningJWK
+    let detachedJWS = try DetachedJWS.Mock.signed(over: payload, by: signingKey)
+
+    try await validator.validate(detachedJWS, payload: payload)
+
+    #expect(didResolverHelper.getJWKFromReceivedKid == DetachedJWS.Mock.keyIdentifier)
   }
 
-  func testValidate_withSuppliedInvalidJwk_throwsInvalidSignature() throws {
-    XCTAssertThrowsError(try validator.validate(jwsMock, with: .Mock.invalidSample)) { error in
-      XCTAssertEqual(error as? JWSSignatureValidatorError, .invalidSignature)
+  @Test
+  func validate_detachedJWSOverTamperedPayload_throwsInvalidSignature() async throws {
+    didResolverHelper.getJWKFromReturnValue = detachedJWSSigningJWK
+    let detachedJWS = try DetachedJWS.Mock.signed(over: payload, by: signingKey)
+
+    await #expect(throws: JWSSignatureValidatorError.invalidSignature) {
+      try await validator.validate(detachedJWS, payload: Data(#"{"platform":"android"}"#.utf8))
+    }
+  }
+
+  @Test
+  func validate_detachedJWSSignedByAnotherKey_throwsInvalidSignature() async throws {
+    didResolverHelper.getJWKFromReturnValue = detachedJWSSigningJWK
+    let detachedJWS = try DetachedJWS.Mock.signed(over: payload, by: P256.Signing.PrivateKey())
+
+    await #expect(throws: JWSSignatureValidatorError.invalidSignature) {
+      try await validator.validate(detachedJWS, payload: payload)
+    }
+  }
+
+  @Test
+  func validate_detachedJWSWithUnresolvableDid_throwsCannotResolveDid() async throws {
+    didResolverHelper.getJWKFromThrowableError = TestingError.error
+    let detachedJWS = try DetachedJWS.Mock.signed(over: payload, by: signingKey)
+
+    await #expect(throws: JWSSignatureValidatorError.cannotResolveDid(TestingError.error)) {
+      try await validator.validate(detachedJWS, payload: payload)
     }
   }
 
   // MARK: Private
 
-  private let kid = "did:example:123456789#key-01"
-  private let jwsMock = RegisteredClaimsJWT.Mock.sample
-
-  private var didResolverSpy: DidResolverHelperProtocolSpy!
-
-  private var validator: JWSSignatureValidator!
+  private let validator: JWSSignatureValidator
+  private let didResolverHelper: DidResolverHelperProtocolSpy
+  private let signingKey: P256.Signing.PrivateKey
+  private let detachedJWSSigningJWK: JWK
+  private let jws = RegisteredClaimsJWT.Mock.sample
+  private let payload = DetachedJWS.Mock.payload
 }

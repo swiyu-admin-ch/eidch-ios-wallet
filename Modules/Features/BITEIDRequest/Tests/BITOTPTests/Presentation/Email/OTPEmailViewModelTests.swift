@@ -11,12 +11,17 @@ final class OTPEmailViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
-    requestOTPUseCase = RequestOTPUseCaseProtocolSpy()
+  override func setUp() async throws {
+    try await super.setUp()
+    let requestOTPUseCase = RequestOTPUseCaseProtocolSpy()
+    self.requestOTPUseCase = requestOTPUseCase
 
-    Container.shared.requestOTPUseCase.register { @MainActor in self.requestOTPUseCase }
+    Container.shared.requestOTPUseCase.register { @MainActor in requestOTPUseCase }
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInit_defaultState_emptyEmailAndInvalidFormat() {

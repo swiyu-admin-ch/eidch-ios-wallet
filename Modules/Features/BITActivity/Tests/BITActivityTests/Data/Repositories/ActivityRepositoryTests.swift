@@ -1,228 +1,274 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
-import BITCrypto
+import BITCredentialShared
 import BITDataStore
 import BITEntities
 import Factory
+import FactoryTesting
+import Foundation
 import RealmSwift
-import XCTest
+import Testing
 @testable import BITActivity
 
-final class ActivityRepositoryTests: XCTestCase {
+// MARK: - ActivityRepositoryTests
+
+@MainActor
+@Suite(.container)
+struct ActivityRepositoryTests {
+
+  // MARK: Lifecycle
+
+  init() throws {
+    Container.shared.configureInMemoryDataStore()
+    realm = try Realm(configuration: Container.shared.realmDataStoreConfiguration())
+
+    let listItemFactorySpy = ActivityListItemFactoryProtocolSpy()
+    listItemFactorySpy.callAsFunctionReturnValue = Self.activityListItemMock
+    let detailFactorySpy = ActivityDetailFactoryProtocolSpy()
+    detailFactorySpy.callAsFunctionReturnValue = Self.activityDetailMock
+
+    Container.shared.activityListItemFactory.register { listItemFactorySpy }
+    Container.shared.activityDetailFactory.register { detailFactorySpy }
+
+    self.listItemFactorySpy = listItemFactorySpy
+    self.detailFactorySpy = detailFactorySpy
+    repository = ActivityRepository()
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    registerMocks()
-    repository = ActivityRepository()
-    createSuccessState()
+  enum MissingIdOperation: CaseIterable {
+    case getDetail
+    case getAll
+    case delete
   }
 
-  func testActivityHistoryEnabledSubject_initiallyEnabled_returnsEnabled() {
-    UserDefaults.standard.set(true, forKey: Self.activityHistoryEnabledKey)
-    repository = ActivityRepository()
+  @Test(arguments: [true, false])
+  func activityHistoryEnabledSubject_reflectsTheStoredPreference(isEnabled: Bool) {
+    UserDefaults.standard.set(isEnabled, forKey: Self.activityHistoryEnabledKey)
 
-    XCTAssertTrue(repository.activityHistoryEnabledSubject.value)
+    let repository = ActivityRepository()
+
+    #expect(repository.activityHistoryEnabledSubject.value == isEnabled)
   }
 
-  func testActivityHistoryEnabledSubject_initiallyDisabled_returnsDisabled() {
-    UserDefaults.standard.set(false, forKey: Self.activityHistoryEnabledKey)
-    repository = ActivityRepository()
-
-    XCTAssertFalse(repository.activityHistoryEnabledSubject.value)
-  }
-
-  func testCreate_success() throws {
+  @Test
+  func create_success() throws {
     _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock)
 
     let id = try repository.create(.Mock.default, credentialId: Self.credentialIdMock)
 
     let images = realm.objects(ImageEntity.self)
-    XCTAssertEqual(images.count, 1)
-    XCTAssertEqual(images[0].imageHash, "200f1baf565d5eb3005560fcad0a7304cbdf89bd93444d79b4783ffc57fe3465")
+    #expect(images.count == 1)
+    #expect(images[0].contentHash == ImageEntity.contentHash(of: Activity.Mock.default.actorDisplays.first?.image))
     let credential = realm.object(ofType: CredentialEntity.self, forPrimaryKey: Self.credentialIdMock)
-    XCTAssertEqual(credential?.activities.count, 1)
-    XCTAssertEqual(credential?.activities[0].id, id)
-    XCTAssertEqual(realm.objects(CredentialActivityEntity.self).count, 1)
+    #expect(credential?.activities.count == 1)
+    #expect(credential?.activities[0].id == id)
+    #expect(realm.objects(CredentialActivityEntity.self).count == 1)
   }
 
-  func testGetDetail_success() throws {
+  @Test
+  func create_snapshotsCredentialRenderingAndIssuer() throws {
+    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(issuer: Self.issuerMock, createParent: false)
+    let rendering = try CredentialRenderingEntity.Mock.create(displays: [CredentialDisplayEntity.Mock.create(locale: "locale", createParent: false)])
+    _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock, verifiableCredential: verifiableCredential, rendering: rendering)
+
+    let id = try repository.create(.Mock.default, credentialId: Self.credentialIdMock)
+
+    let activity = realm.object(ofType: CredentialActivityEntity.self, forPrimaryKey: id)
+    #expect(activity?.credentialRendering?.contentHash == rendering.contentHash)
+    #expect(activity?.issuer == Self.issuerMock)
+    #expect(activity?.claims.count == 3)
+  }
+
+  @Test
+  func create_bundleItemSnapshot_isPersisted() throws {
+    _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock)
+    let bundleItem = ActivityBundleItem(payload: Self.payloadMock, statusListState: .revoked)
+    let activity = Activity(type: .issuance, actorTrust: .trusted, vcSchemaTrust: .trusted, bundleItem: bundleItem)
+
+    let id = try repository.create(activity, credentialId: Self.credentialIdMock)
+
+    let entity = realm.object(ofType: CredentialActivityEntity.self, forPrimaryKey: id)
+    #expect(entity?.bundleItem?.statusListState == .revoked)
+    #expect(entity?.bundleItem?.payload == Self.payloadMock)
+  }
+
+  @Test
+  func create_noBundleItemSnapshot_persistsNoBundleItem() throws {
+    _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock)
+
+    let id = try repository.create(.Mock.default, credentialId: Self.credentialIdMock)
+
+    let entity = realm.object(ofType: CredentialActivityEntity.self, forPrimaryKey: id)
+    #expect(entity?.bundleItem == nil)
+  }
+
+  @Test
+  func getDetail_success() throws {
     let activity = try createActivity(id: Self.activityIdMock)
 
     let fetched = try repository.getDetail(Self.activityIdMock)
 
-    XCTAssertEqual(fetched, activityDetailMock)
-    XCTAssertEqual(detailFactorySpy.callAsFunctionReceivedEntity, activity)
+    #expect(fetched == Self.activityDetailMock)
+    #expect(detailFactorySpy.callAsFunctionReceivedEntity == activity)
   }
 
-  func testGetDetail_noActivity_notFound() throws {
-    XCTAssertThrowsError(try repository.getDetail(UUID())) { error in
-      XCTAssertEqual(error as? ActivityRepositoryError, .notFound)
+  @Test(arguments: MissingIdOperation.allCases)
+  func operationOnAMissingId_throwsNotFound(operation: MissingIdOperation) throws {
+    #expect(throws: ActivityRepositoryError.notFound) {
+      switch operation {
+      case .getDetail: _ = try repository.getDetail(UUID())
+      case .getAll: _ = try repository.getAll(for: UUID())
+      case .delete: try repository.delete(UUID())
+      }
     }
   }
 
-  func testGetAll_noLimit_returnsAll() throws {
+  @Test(arguments: [Int.max, 1, 3])
+  func getAll_returnsTheMostRecentActivitiesUpToTheLimit(limit: Int) throws {
     let earlierActivity = try createActivity(createdAt: Date())
     let laterActivity = try createActivity(createdAt: Date().addingTimeInterval(10))
     _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock, activities: [earlierActivity, laterActivity])
 
-    let activities = try repository.getAll(for: Self.credentialIdMock)
+    let activities = try repository.getAll(for: Self.credentialIdMock, limit: limit)
 
-    XCTAssertEqual(listItemFactorySpy.callAsFunctionReceivedInvocations.map(\.id), [laterActivity.id, earlierActivity.id])
-    XCTAssertEqual(activities, [activityListItemMock, activityListItemMock])
+    let expectedIds = limit == 1 ? [laterActivity.id] : [laterActivity.id, earlierActivity.id]
+    #expect(listItemFactorySpy.callAsFunctionReceivedInvocations.map(\.id) == expectedIds)
+    #expect(activities == Array(repeating: Self.activityListItemMock, count: expectedIds.count))
   }
 
-  func testGetAll_limit_returnsSpecifiedNumber() throws {
-    let earlierActivity = try createActivity(createdAt: Date())
-    let laterActivity = try createActivity(createdAt: Date().addingTimeInterval(10))
-    _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock, activities: [earlierActivity, laterActivity])
-
-    let activities = try repository.getAll(for: Self.credentialIdMock, limit: 1)
-
-    XCTAssertEqual(listItemFactorySpy.callAsFunctionReceivedInvocations.map(\.id), [laterActivity.id])
-    XCTAssertEqual(activities, [activityListItemMock])
-  }
-
-  func testGetAll_biggerLimit_returnsAll() throws {
-    let earlierActivity = try createActivity(createdAt: Date())
-    let laterActivity = try createActivity(createdAt: Date().addingTimeInterval(10))
-    _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock, activities: [earlierActivity, laterActivity])
-
-    let activities = try repository.getAll(for: Self.credentialIdMock, limit: 3)
-
-    XCTAssertEqual(listItemFactorySpy.callAsFunctionReceivedInvocations.map(\.id), [laterActivity.id, earlierActivity.id])
-    XCTAssertEqual(activities, [activityListItemMock, activityListItemMock])
-  }
-
-  func testGetAll_notFound() throws {
-    XCTAssertThrowsError(try repository.getAll(for: UUID())) { error in
-      XCTAssertEqual(error as? ActivityRepositoryError, .notFound)
-    }
-  }
-
-  func testDelete_success() throws {
+  @Test
+  func delete_success() throws {
     let created = try createActivity()
 
     try repository.delete(created.id)
 
-    XCTAssertEqual(realm.objects(CredentialActivityEntity.self).count, 0)
+    #expect(realm.objects(CredentialActivityEntity.self).isEmpty)
   }
 
-  func testDelete_unreferencedImage_removesImage() throws {
+  @Test(arguments: [true, false])
+  func delete_image_isRemovedOnlyWhenNoActivityStillReferencesIt(isStillReferenced: Bool) throws {
     let created = try createActivity(imageHash: imageHashMock)
-    _ = try ImageEntity.Mock.create(imageHash: imageHashMock)
-    XCTAssertNotNil(realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHashMock))
+    if isStillReferenced {
+      let other = try createActivity(imageHash: imageHashMock)
+      _ = try CredentialEntity.Mock.create(activities: [created, other])
+    }
+    _ = try ImageEntity.Mock.create(contentHash: imageHashMock)
+    #expect(realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHashMock) != nil)
 
     try repository.delete(created.id)
 
-    XCTAssertNil(realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHashMock))
+    #expect((realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHashMock) != nil) == isStillReferenced)
   }
 
-  func testDelete_keepsImageWhenStillReferenced() throws {
-    let activity1 = try createActivity(imageHash: imageHashMock)
-    let activity2 = try createActivity(imageHash: imageHashMock)
-    _ = try CredentialEntity.Mock.create(activities: [activity1, activity2])
-    _ = try ImageEntity.Mock.create(imageHash: imageHashMock)
+  @Test(arguments: [true, false])
+  func delete_snapshotRendering_isRemovedOnlyWhenItsCredentialNoLongerPointsAtIt(isStillReferenced: Bool) throws {
+    let rendering = try CredentialRenderingEntity.Mock.create(displays: [CredentialDisplayEntity.Mock.create(locale: "locale", createParent: false)])
+    let contentHash = rendering.contentHash
+    let created = try createActivity(rendering: rendering)
+    if isStillReferenced {
+      _ = try CredentialEntity.Mock.create(rendering: rendering, activities: [created])
+    }
 
-    try repository.delete(activity1.id)
+    try repository.delete(created.id)
 
-    XCTAssertNotNil(realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHashMock))
-  }
-
-  func testDelete_notFound() throws {
-    XCTAssertThrowsError(try repository.delete(UUID())) { error in
-      XCTAssertEqual(error as? ActivityRepositoryError, .notFound)
+    #expect((realm.object(ofType: CredentialRenderingEntity.self, forPrimaryKey: contentHash) != nil) == isStillReferenced)
+    if !isStillReferenced {
+      #expect(realm.objects(CredentialDisplayEntity.self).isEmpty)
     }
   }
 
-  func testDeleteAll_success() throws {
+  @Test
+  func deleteAll_success() throws {
     _ = try CredentialEntity.Mock.create(id: Self.credentialIdMock, activities: [createActivity(), createActivity()])
     _ = try CredentialEntity.Mock.create(activities: [createActivity()])
 
     try repository.deleteAll()
 
     let credential = realm.object(ofType: CredentialEntity.self, forPrimaryKey: Self.credentialIdMock)
-    XCTAssertEqual(credential?.activities.count, 0)
-    XCTAssertEqual(realm.objects(CredentialActivityEntity.self).count, 0)
+    #expect(credential?.activities.isEmpty == true)
+    #expect(realm.objects(CredentialActivityEntity.self).isEmpty)
   }
 
-  func testDeleteAll_removesCachedImages() throws {
+  @Test
+  func deleteAll_removesCachedImages() throws {
     let imageData = Data("image".utf8)
-    let hash = ImageHasher.hash(imageData)
+    let hash = ImageEntity.contentHash(of: imageData)
     let activity1 = try createActivity(imageHash: hash)
     let activity2 = try createActivity(imageHash: hash)
     _ = try CredentialEntity.Mock.create(activities: [activity1, activity2])
 
     try repository.deleteAll()
 
-    XCTAssertNil(realm.object(ofType: ImageEntity.self, forPrimaryKey: hash))
+    #expect(realm.object(ofType: ImageEntity.self, forPrimaryKey: hash) == nil)
   }
 
-  func testIsActivityHistoryEnabled_enabled_returnsEnabled() throws {
-    UserDefaults.standard.set(true, forKey: Self.activityHistoryEnabledKey)
+  @Test
+  func deleteAll_removesSnapshotRenderingsNoCredentialPointsAt() throws {
+    let snapshot = try CredentialRenderingEntity.Mock.create(displays: [CredentialDisplayEntity.Mock.create(locale: "snapshot", createParent: false)])
+    let current = try CredentialRenderingEntity.Mock.create(displays: [CredentialDisplayEntity.Mock.create(locale: "current", createParent: false)])
+    let snapshotContentHash = snapshot.contentHash
+    let activity = try createActivity(rendering: snapshot)
+    _ = try CredentialEntity.Mock.create(rendering: current, activities: [activity])
+
+    try repository.deleteAll()
+
+    #expect(realm.object(ofType: CredentialRenderingEntity.self, forPrimaryKey: snapshotContentHash) == nil)
+    #expect(realm.object(ofType: CredentialRenderingEntity.self, forPrimaryKey: current.contentHash) != nil)
+  }
+
+  @Test(arguments: [true, false])
+  func isActivityHistoryEnabled_returnsTheStoredPreference(isEnabled: Bool) throws {
+    UserDefaults.standard.set(isEnabled, forKey: Self.activityHistoryEnabledKey)
 
     let result = try repository.isActivityHistoryEnabled()
 
-    XCTAssertTrue(result)
+    #expect(result == isEnabled)
   }
 
-  func testIsActivityHistoryEnabled_disabled_returnsDisabled() throws {
+  @Test
+  func setActivityHistoryEnabled_disabled_passesArguments() throws {
     UserDefaults.standard.set(false, forKey: Self.activityHistoryEnabledKey)
-
-    let result = try repository.isActivityHistoryEnabled()
-
-    XCTAssertFalse(result)
-  }
-
-  func testSetActivityHistoryEnabled_disabled_passesArguments() throws {
-    UserDefaults.standard.set(false, forKey: Self.activityHistoryEnabledKey)
-    repository = ActivityRepository()
+    let repository = ActivityRepository()
 
     try repository.setActivityHistoryEnabled(true)
 
-    let result = UserDefaults.standard.bool(forKey: Self.activityHistoryEnabledKey)
-    XCTAssertTrue(result)
-    XCTAssertTrue(repository.activityHistoryEnabledSubject.value)
+    #expect(UserDefaults.standard.bool(forKey: Self.activityHistoryEnabledKey))
+    #expect(repository.activityHistoryEnabledSubject.value)
   }
 
   // MARK: Private
 
   private static let activityHistoryEnabledKey = "isActivityHistoryEnabled"
-  private static let imageDataMock = "image".data(using: .utf8)!
-  private static let activityIdMock = UUID(uuidString: "9d0e30cd-e8ff-43b4-ba46-efe9047770a2")!
-  private static let credentialIdMock = UUID(uuidString: "9d0e30cd-e8ff-43b4-ba46-efe9047770a1")!
+  private static let imageDataMock = Data("image".utf8)
+  private static let activityIdMock = UUID(uuidString: "9d0e30cd-e8ff-43b4-ba46-efe9047770a2") ?? UUID()
+  private static let credentialIdMock = UUID(uuidString: "9d0e30cd-e8ff-43b4-ba46-efe9047770a1") ?? UUID()
+  private static let issuerMock = "issuer"
+  private static let payloadMock = Data("presented-token".utf8)
+  private static let activityListItemMock = ActivityListItem.Mock.acceptedPresentation
+  private static let activityDetailMock = ActivityDetail.Mock.trustedIssuance
 
-  private let activityListItemMock = ActivityListItem.Mock.acceptedPresentation
-  private let activityDetailMock = ActivityDetail.Mock.trustedIssuance
-  private var realm: Realm!
-
-  private var listItemFactorySpy: ActivityListItemFactoryProtocolSpy!
-  private var detailFactorySpy: ActivityDetailFactoryProtocolSpy!
-
-  private var repository: ActivityRepositoryProtocol!
+  private let realm: Realm
+  private let listItemFactorySpy: ActivityListItemFactoryProtocolSpy
+  private let detailFactorySpy: ActivityDetailFactoryProtocolSpy
+  private let repository: ActivityRepositoryProtocol
 
   private var imageHashMock: String {
-    ImageHasher.hash(Self.imageDataMock)
+    ImageEntity.contentHash(of: Self.imageDataMock)
   }
 
-  private func registerMocks() {
-    Container.shared.configureInMemoryDataStore()
-    realm = try! Realm(configuration: Container.shared.realmDataStoreConfiguration())
-    listItemFactorySpy = ActivityListItemFactoryProtocolSpy()
-    detailFactorySpy = ActivityDetailFactoryProtocolSpy()
-
-    Container.shared.activityListItemFactory.register { self.listItemFactorySpy }
-    Container.shared.activityDetailFactory.register { self.detailFactorySpy }
-  }
-
-  private func createSuccessState() {
-    listItemFactorySpy.callAsFunctionReturnValue = activityListItemMock
-    detailFactorySpy.callAsFunctionReturnValue = activityDetailMock
-  }
-
-  private func createActivity(id: UUID = UUID(), createdAt: Date = Date(), imageHash: String? = nil) throws -> CredentialActivityEntity {
+  private func createActivity(
+    id: UUID = UUID(),
+    createdAt: Date = Date(),
+    imageHash: String? = nil,
+    rendering: CredentialRenderingEntity? = nil) throws
+    -> CredentialActivityEntity
+  {
     let actorDisplay = try ActivityActorDisplayEntity.Mock.create(imageHash: imageHash, createParent: false)
-    return try CredentialActivityEntity.Mock.create(id: id, createdAt: createdAt, actorDisplays: [actorDisplay], createParent: false)
+    return try CredentialActivityEntity.Mock.create(
+      id: id,
+      createdAt: createdAt,
+      credentialRendering: rendering,
+      actorDisplays: [actorDisplay],
+      createParent: false)
   }
 }

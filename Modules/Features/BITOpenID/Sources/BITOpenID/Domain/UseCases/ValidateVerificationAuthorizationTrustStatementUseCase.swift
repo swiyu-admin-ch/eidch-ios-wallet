@@ -7,7 +7,7 @@ import Spyable
 // MARK: - ValidateVerificationAuthorizationTrustStatementUseCaseProtocol
 
 @Spyable
-public protocol ValidateVerificationAuthorizationTrustStatementUseCaseProtocol {
+public protocol ValidateVerificationAuthorizationTrustStatementUseCaseProtocol: Sendable {
   func callAsFunction(requestObject: RequestObject, requestedClaims: [ClaimsPathPointer]) async throws
 }
 

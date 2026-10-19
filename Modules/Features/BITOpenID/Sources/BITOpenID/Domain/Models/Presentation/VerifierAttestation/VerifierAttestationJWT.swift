@@ -38,10 +38,8 @@ public struct VerifierAttestationJWT: JWT, Codable, Equatable {
     case expiredAt = "exp"
     case activatedAt = "nbf"
     case cnf
-    case redirectUris = "redirect_uris"
   }
 
   let cnf: Confirmation
-  let redirectUris: [String]?
 
 }

@@ -9,6 +9,7 @@ public enum PresentationRequestError: Error, Equatable {
   case invalid(responseURL: URL?, state: String?, responseError: PresentationErrorRequestBody.Code)
   case transactionDataNotSupported(responseURL: URL?, state: String?, responseError: PresentationErrorRequestBody.Code)
   case unknownRegistry(responseURL: URL?, state: String?, responseError: PresentationErrorRequestBody.Code)
+  case noInternetConnection
 }
 
 extension PresentationRequestError {

@@ -5,7 +5,7 @@ import Spyable
 // MARK: - OcaCaptureBaseDigestsValidatorProtocol
 
 @Spyable
-public protocol OcaCaptureBaseDigestsValidatorProtocol {
+public protocol OcaCaptureBaseDigestsValidatorProtocol: Sendable {
   func validate(_ rawOcaData: Data) -> Bool
 }
 

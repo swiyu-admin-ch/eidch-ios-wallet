@@ -7,26 +7,31 @@ import XCTest
 
 // MARK: - PinCodeViewModelTests
 
+@MainActor
 final class PinCodeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     spyDelegate = PinCodeDelegateSpy()
     router = MockOnboardingInternalRoutes()
     router.context.pinCodeDelegate = spyDelegate
-    validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
+    let validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
+    self.validatePinCodeRuleUseCase = validatePinCodeRuleUseCase
 
     Container.shared.validatePinCodeRuleUseCase.register {
-      self.validatePinCodeRuleUseCase
+      validatePinCodeRuleUseCase
     }
 
     viewModel = PinCodeViewModel(router: router)
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testEnterValidPinCode() {
     let pinCode = "12345678"
     viewModel.pinCode = pinCode
@@ -43,7 +48,6 @@ final class PinCodeViewModelTests: XCTestCase {
     XCTAssertTrue(router.pinCodeConfirmationCalled)
   }
 
-  @MainActor
   func testEnterLongPinCode_noDelegate() {
     let pinCode = "123456789qwertzuiop"
     viewModel.pinCode = pinCode
@@ -58,7 +62,6 @@ final class PinCodeViewModelTests: XCTestCase {
     XCTAssertEqual(router.context.pincode, pinCode)
   }
 
-  @MainActor
   func testEnterShortPinCode() {
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
     viewModel.pinCode = "1234"
@@ -74,12 +77,13 @@ final class PinCodeViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
+  // swiftlint:disable implicitly_unwrapped_optional
   private var viewModel: PinCodeViewModel!
   private var router: MockOnboardingInternalRoutes!
+  // swiftlint:disable:next weak_delegate
   private var spyDelegate: PinCodeDelegateSpy!
 
   private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocolSpy!
-  // swiftlint:enable all
+  // swiftlint:enable implicitly_unwrapped_optional
 
 }

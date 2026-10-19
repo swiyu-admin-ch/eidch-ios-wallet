@@ -164,6 +164,7 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
   }
 
   nonisolated func didReceiveNotification(notification: AVBeamNotification) {
+    nonisolated(unsafe) let notification = notification
     Task { @MainActor in
       switch notification {
       case .initialized:
@@ -185,6 +186,7 @@ extension RecordSelfieViewModel: AVBeamMessageDelegate {
 
 extension RecordSelfieViewModel: AVBeamCaptureFaceDelegate {
   nonisolated func didCompleteCaptureFace(packageResult: AVBeamPackageResult) {
+    nonisolated(unsafe) let packageResult = packageResult
     Task { @MainActor in
       guard packageResult.data.errorCode == .none else {
         return self.handleError(packageResult.data.errorCode)
@@ -234,13 +236,13 @@ extension RecordSelfieViewModel {
     return .avBeamError(avBeamError, retryAction: retryHandler(), closeAction: closeHandler())
   }
 
-  private func closeHandler() -> () -> Void {
+  private func closeHandler() -> VoidAction {
     { [weak self] in
       self?.coordinator.cleanup()
     }
   }
 
-  private func retryHandler() -> (Navigator) -> Void {
+  private func retryHandler() -> NavigatorAction {
     { [weak self] navigator in
       self?.reset()
       navigator.returnToCheckpointSafely(EIDRequestCheckpoints.recordSelfieInformation)

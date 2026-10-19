@@ -52,7 +52,7 @@ extension Container {
   }
 
   public var applicationService: Factory<ApplicationServiceProtocol> {
-    self { UIApplication.shared }.singleton
+    self { @MainActor in UIApplication.shared }.singleton
   }
 
   /// Maximum execution time for regex-based validators evaluating untrusted input.

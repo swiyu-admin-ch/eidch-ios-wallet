@@ -58,10 +58,12 @@ final class HasDevicePinUseCaseTests: XCTestCase {
   // swiftlint:enable all
 
   private func registerMocks() {
-    policyValidatorSpy = LocalAuthenticationPolicyValidatorProtocolSpy()
-    contextSpy = LAContextProtocolSpy()
-    Container.shared.localAuthenticationPolicyValidator.register { self.policyValidatorSpy }
-    Container.shared.internalContext.register { self.contextSpy }
+    let policyValidatorSpy = LocalAuthenticationPolicyValidatorProtocolSpy()
+    let contextSpy = LAContextProtocolSpy()
+    self.policyValidatorSpy = policyValidatorSpy
+    self.contextSpy = contextSpy
+    Container.shared.localAuthenticationPolicyValidator.register { policyValidatorSpy }
+    Container.shared.internalContext.register { contextSpy }
   }
 
 }

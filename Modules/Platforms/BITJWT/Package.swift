@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -49,6 +48,7 @@ let package = Package(
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITVault", package: "BITVault"),
         .product(name: "Factory", package: "Factory"),
+        .product(name: "FactoryTesting", package: "Factory"),
         .product(name: "JWSETKit", package: "JWSETKit"),
         .product(name: "BITTestingCore", package: "BITCore"),
       ]),

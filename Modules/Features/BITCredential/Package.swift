@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -33,6 +32,7 @@ let package = Package(
     .package(path: "../BITActivity"),
     .package(path: "../BITNonCompliance"),
     .package(path: "../BITCredentialShared"),
+    .package(path: "../BITEntities"),
     .package(path: "../BITOpenID"),
     .package(path: "../BITOca"),
     .package(path: "../BITAppInfo"),
@@ -60,6 +60,7 @@ let package = Package(
         .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITNonCompliance", package: "BITNonCompliance"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
+        .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITClaimsPathPointer", package: "BITClaimsPathPointer"),
         .product(name: "BITOpenID", package: "BITOpenID"),
         .product(name: "BITOca", package: "BITOca"),
@@ -76,6 +77,7 @@ let package = Package(
         "BITCredential",
         .product(name: "BITAnyCredentialFormat", package: "BITAnyCredentialFormat"),
         .product(name: "BITClaimsPathPointer", package: "BITClaimsPathPointer"),
+        .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITNonCompliance", package: "BITNonCompliance"),
         .product(name: "BITSdJWT", package: "BITSdJWT"),

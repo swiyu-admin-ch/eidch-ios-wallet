@@ -13,6 +13,7 @@ final class ImprintViewModelTests: XCTestCase {
     getBuildNumberUseCase = GetBuildNumberUseCaseProtocolSpy()
   }
 
+  @MainActor
   func test_init() {
     let version = "0.0.0"
     let buildNumber = 1234
@@ -25,6 +26,7 @@ final class ImprintViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.buildNumber, "\(buildNumber)")
   }
 
+  @MainActor
   func test_appVersionFailure() {
     let buildNumber = 1234
     getAppVersionUseCase.callAsFunctionThrowableError = TestingError.error
@@ -36,6 +38,7 @@ final class ImprintViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.buildNumber, "\(buildNumber)")
   }
 
+  @MainActor
   func test_buildNumberFailure() {
     let version = "1234"
     getAppVersionUseCase.callAsFunctionReturnValue = Version(version)

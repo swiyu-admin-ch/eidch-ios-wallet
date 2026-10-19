@@ -25,7 +25,7 @@ enum RequestObjectValidationError: Error {
 // MARK: - RequestObjectValidatorProtocol
 
 @Spyable
-public protocol RequestObjectValidatorProtocol {
+public protocol RequestObjectValidatorProtocol: Sendable {
   func validate(_ jws: RequestObjectJWS, transport: PresentationTransport) async throws
 }
 

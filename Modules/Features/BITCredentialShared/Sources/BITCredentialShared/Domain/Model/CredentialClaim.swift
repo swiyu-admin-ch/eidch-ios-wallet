@@ -8,7 +8,7 @@ import Foundation
 
 // MARK: - CredentialClaim
 
-public struct CredentialClaim: Codable, ClusterItem {
+public struct CredentialClaim: Codable, ClusterItem, Sendable {
 
   // MARK: Lifecycle
 
@@ -129,6 +129,7 @@ public struct CredentialClaim: Codable, ClusterItem {
     formatter.locale = currentLocale
     formatter.timeZone = format.hasTimeZone ? Container.shared.userTimeZone() : .gmt
     formatter.dateStyle = format.hasDate ? .short : .none
+    formatter.calendar = .autoupdatingCurrent
 
     if format.hasSeconds {
       formatter.timeStyle = .medium

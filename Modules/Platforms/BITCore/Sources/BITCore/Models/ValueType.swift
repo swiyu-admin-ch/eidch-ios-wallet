@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - ValueType
 
-public enum ValueType: String, Codable, CaseIterable {
+public enum ValueType: String, Codable, CaseIterable, Sendable {
   case boolean
   case dateTime
   case imagePng = "image/png"

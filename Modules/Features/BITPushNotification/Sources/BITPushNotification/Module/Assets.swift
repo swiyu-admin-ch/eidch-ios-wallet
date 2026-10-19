@@ -31,7 +31,7 @@ enum Assets {
 
 // swiftlint:enable identifier_name line_length nesting type_body_length type_name
 
-struct ImageAsset {
+struct ImageAsset: Sendable {
   #if os(macOS)
   typealias Image = NSImage
   #elseif os(iOS) || os(tvOS) || os(watchOS)

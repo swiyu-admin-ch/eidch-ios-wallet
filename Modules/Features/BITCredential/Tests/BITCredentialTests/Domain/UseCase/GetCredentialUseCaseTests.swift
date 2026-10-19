@@ -12,8 +12,9 @@ final class GetCredentialUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
     Container.shared.reset()
-    repositorySpy = CredentialRepositoryProtocolSpy()
-    Container.shared.credentialRepository.register { self.repositorySpy }
+    let repositorySpy = CredentialRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    Container.shared.credentialRepository.register { repositorySpy }
     useCase = GetCredentialUseCase()
   }
 

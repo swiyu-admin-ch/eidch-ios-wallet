@@ -20,7 +20,7 @@ enum MRZError: Error, LocalizedError {
 
 // MARK: - MRZ
 
-public struct MRZ: Equatable, Hashable {
+public struct MRZ: Equatable, Hashable, Sendable {
 
   // MARK: Lifecycle
 

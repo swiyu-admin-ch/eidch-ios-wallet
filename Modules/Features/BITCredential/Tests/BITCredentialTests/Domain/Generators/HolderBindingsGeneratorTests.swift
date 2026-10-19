@@ -12,23 +12,25 @@ import XCTest
 
 // MARK: - HolderBindingsGeneratorTests
 
+@MainActor
 final class HolderBindingsGeneratorTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
 
     userSession.context = mockContext
+    analytics.register(analyticsProvider)
     registerMocks()
     success()
 
-    analyticsProvider = MockProvider()
-    analytics = AnalyticsSpy()
-    analytics.register(analyticsProvider)
-
     generator = HolderBindingsGenerator()
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testGenerate_metadataWithoutProofTypes_returnsEmpty() async throws {
@@ -305,7 +307,7 @@ final class HolderBindingsGeneratorTests: XCTestCase {
 
   private var generator = HolderBindingsGenerator()
 
-  private var mockContext = LAContextProtocolSpy()
+  private let mockContext = LAContextProtocolSpy()
   private let mockMetadataWrapper = CredentialIssuerMetadataWrapper.Mock.sample
   private let mockpreferredKeyBindingAlgorithmsOrdered: [JWTAlgorithm] = [.ES256]
   private let mockKeyPair = VaultKeyPair.Mock.ES256
@@ -313,27 +315,33 @@ final class HolderBindingsGeneratorTests: XCTestCase {
   private let mockKeyAttestation = KeyAttestationJWT.Mock.sample
   private let mockClientAttestation = ClientAttestationJWT.Mock.sample
 
-  private var attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
-  private var clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
-  private var keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
-  private var credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()
-  private var userSession = SessionSpy()
+  private let attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
+  private let clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
+  private let keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
+  private let credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()
+  private let userSession = SessionSpy()
 
-  // swiftlint:disable all
-  private var analytics: AnalyticsProtocol!
-  private var analyticsProvider: MockProvider!
-
-  // swiftlint:enable all
+  private let analytics = AnalyticsSpy()
+  private let analyticsProvider = MockProvider()
 
   private func registerMocks() {
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.preferredKeyBindingAlgorithmsOrdered.register { self.mockpreferredKeyBindingAlgorithmsOrdered }
-    Container.shared.credentialKeyRepository.register { self.credentialKeyRepository }
-    Container.shared.supportedKeyStorageSecurityLevel.register { self.mockSupportedKeyStorageSecurityLevel }
-    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
-    Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
-    Container.shared.keyAttestationValidator.register { self.keyAttestationValidator }
-    Container.shared.analytics.register { self.analytics }
+    let userSession = userSession
+    let mockpreferredKeyBindingAlgorithmsOrdered = mockpreferredKeyBindingAlgorithmsOrdered
+    let credentialKeyRepository = credentialKeyRepository
+    let mockSupportedKeyStorageSecurityLevel = mockSupportedKeyStorageSecurityLevel
+    let attestationServiceRepository = attestationServiceRepository
+    let clientAttestationRepository = clientAttestationRepository
+    let keyAttestationValidator = keyAttestationValidator
+    let analytics = analytics
+
+    Container.shared.userSession.register { userSession }
+    Container.shared.preferredKeyBindingAlgorithmsOrdered.register { mockpreferredKeyBindingAlgorithmsOrdered }
+    Container.shared.credentialKeyRepository.register { credentialKeyRepository }
+    Container.shared.supportedKeyStorageSecurityLevel.register { mockSupportedKeyStorageSecurityLevel }
+    Container.shared.attestationServiceRepository.register { attestationServiceRepository }
+    Container.shared.clientAttestationRepository.register { clientAttestationRepository }
+    Container.shared.keyAttestationValidator.register { keyAttestationValidator }
+    Container.shared.analytics.register { analytics }
   }
 
   private func success() {

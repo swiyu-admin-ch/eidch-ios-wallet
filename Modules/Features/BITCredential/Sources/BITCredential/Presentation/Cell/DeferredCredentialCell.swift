@@ -45,18 +45,13 @@ public struct DeferredCredentialCell: View {
           HStack(spacing: .x3) {
             if viewModel.environment == .swiyuInt {
               Badge(label: L10n.tkCredentialStatusDemo)
-                .badgeStyle(.info)
+                .badgeType(.filled(.info))
             }
 
-            HStack(spacing: .x1) {
-              viewModel.statusImage
-                .aspectRatio(contentMode: .fit)
-              Text(viewModel.statusText)
-            }
-            .foregroundStyle(viewModel.statusColor)
+            CredentialStatusBadge(label: viewModel.statusText, image: viewModel.statusImage)
+              .badgeType(viewModel.statusBadgeType)
           }
           .font(.custom.caption1)
-          .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           .padding(.top, 2)
         }
       }

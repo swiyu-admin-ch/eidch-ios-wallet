@@ -1,6 +1,6 @@
 import BITEntities
 
-public struct BatchData: Codable, Equatable, Hashable {
+public struct BatchData: Codable, Equatable, Hashable, Sendable {
 
   // MARK: Lifecycle
 

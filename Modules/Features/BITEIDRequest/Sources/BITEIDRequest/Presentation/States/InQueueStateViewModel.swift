@@ -2,6 +2,7 @@ import BITEIDRequestShared
 import BITL10n
 import Foundation
 
+@MainActor
 public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle
@@ -45,7 +46,7 @@ public class InQueueStateViewModel: RequestCaseStateBaseViewModel {
       return .default
     }
 
-    return .primary(label: L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueueButton, action: primaryAction)
+    return .primary(label: L10n.tkEidRequestNotificationLegalRepresentantPendingConsentInQueueButton, action: primaryAction, style: .tertiary)
   }
 
   func primaryAction() {

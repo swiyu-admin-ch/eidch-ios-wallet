@@ -4,7 +4,7 @@ import Spyable
 // MARK: - GetCredentialRefreshThresholdUseCaseProtocol
 
 @Spyable
-protocol GetCredentialRefreshThresholdUseCaseProtocol {
+protocol GetCredentialRefreshThresholdUseCaseProtocol: Sendable {
   func callAsFunction(for batchSize: Int) -> Int
 }
 

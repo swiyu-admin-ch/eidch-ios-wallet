@@ -5,7 +5,7 @@ import Spyable
 // MARK: - UpdatePushTokenUseCaseProtocol
 
 @Spyable
-public protocol UpdatePushTokenUseCaseProtocol {
+public protocol UpdatePushTokenUseCaseProtocol: Sendable {
   func callAsFunction() async throws
 }
 

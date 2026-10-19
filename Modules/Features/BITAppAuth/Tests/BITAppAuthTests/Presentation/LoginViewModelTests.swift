@@ -9,15 +9,15 @@ import XCTest
 
 // MARK: - LoginViewModelTests
 
+@MainActor
 final class LoginViewModelTests: XCTestCase {
 
   // MARK: Internal
 
   let inputPinCode = "123456"
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
 
     mockGetBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
     mockLoginPinCodeUseCase = LoginPinCodeUseCaseProtocolSpy()
@@ -39,7 +39,8 @@ final class LoginViewModelTests: XCTestCase {
     mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
     mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
-    mockUseCases = LoginUseCasesProtocolSpy()
+    let mockUseCases = LoginUseCasesProtocolSpy()
+    self.mockUseCases = mockUseCases
     mockUseCases.getBiometricStateUseCase = mockGetBiometricStateUseCase
     mockUseCases.loginPinCode = mockLoginPinCodeUseCase
     mockUseCases.loginBiometric = mockLoginBiometricUseCase
@@ -53,10 +54,13 @@ final class LoginViewModelTests: XCTestCase {
     mockUseCases.resetLoginAttemptCounterUseCase = mockResetLoginAttemptCounterUseCase
     mockUseCases.fetchVersionEnforcementUseCase = mockFetchVersionEnforcementUseCase
 
-    isLoginRequiredNotificationTriggered = false
     mockRouter = LoginRouterMock()
+    Container.shared.loginUseCases.register { @MainActor in mockUseCases }
+  }
 
-    Container.shared.loginUseCases.register { @MainActor in self.mockUseCases }
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testLoginProductionValues() {
@@ -73,7 +77,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(pinCodeSize, expectedPinCodeSize)
   }
 
-  @MainActor
   func testWithInitialData_withBiometricsTypeNone() {
     mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
     mockGetBiometricTypeUseCase.callAsFunctionReturnValue = BiometricType.none
@@ -100,7 +103,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLockWalletUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testWithInitialData_withBiometricsAvailable() {
     mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
 
@@ -128,7 +130,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(mockGetBiometricStateUseCase.callAsFunctionCallsCount, 1)
   }
 
-  @MainActor
   func testInitLockWithExceededAttempts() {
     let attemptLimit = 2
     mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attemptLimit
@@ -155,7 +156,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testInitLockWithExceededAttemptsButLockTimeIsDone() {
     let attemptLimit = 2
     mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = attemptLimit
@@ -184,7 +184,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testRestartTimerAfterRebootWithTooManyAttempts() {
     let attemptLimit = 2
     let lockDelay: TimeInterval = 10
@@ -216,7 +215,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockLockWalletUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testRestartTimerAfterReboot() {
     let attemptLimit = 2
     let lockDelay: TimeInterval = 10
@@ -250,7 +248,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockLockWalletUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testPinCodeHappyPath() async {
     Container.shared.loadingDelay.register { 0 }
     viewModel = LoginViewModel(router: mockRouter)
@@ -276,7 +273,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testPinCodeAttemptFailure() async {
     mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
     Container.shared.lockDelay.register { 0 }
@@ -284,7 +280,6 @@ final class LoginViewModelTests: XCTestCase {
     await attemptWithFailure(viewModel: viewModel)
   }
 
-  @MainActor
   func testPinCodeAttemptFailure_thenSuccess() async {
     mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
     mockGetLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
@@ -316,7 +311,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(1, mockGetBiometricStateUseCase.callAsFunctionCallsCount)
   }
 
-  @MainActor
   func testBiometricAuthHappyPath() async {
     mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
     mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
@@ -341,7 +335,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testBiometricAttemptFailure_deviceHasBiometric() async {
     mockGetBiometricStateUseCase.callAsFunctionReturnValue = .declined
     mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
@@ -359,7 +352,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testBiometricAttemptFailure_biometricNotAllowed() async {
     mockGetBiometricStateUseCase.callAsFunctionReturnValue = .disabled
     mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
@@ -377,7 +369,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockLoginBiometricUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testBiometricAttemptFailure() async {
     mockGetBiometricStateUseCase.callAsFunctionReturnValue = .enabled
     mockIsBiometricInvalidatedUseCase.callAsFunctionReturnValue = false
@@ -404,7 +395,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, 1)
   }
 
-  @MainActor
   func testLockedState() async {
     let maxAttempts = 3
     let delay: TimeInterval = 5
@@ -418,7 +408,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(mockRegisterLoginAttemptCounterUseCase.callAsFunctionKindCallsCount, maxAttempts)
   }
 
-  @MainActor
   func testLockedStateMoreAttempts() async {
     let maxAttempts = 5
     let delay: TimeInterval = 5
@@ -435,7 +424,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertFalse(mockUnlockWalletUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testBiometricLoginWithVersionEnforcementBlock() async {
     mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = mockVersionEnforcement
 
@@ -447,7 +435,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(mockRouter.versionEnforcement, mockVersionEnforcement)
   }
 
-  @MainActor
   func testBiometricLoginWithoutVersionEnforcementBlock() async {
     mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
@@ -458,7 +445,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testPinLoginWithoutVersionEnforcementBlock() async {
     mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = nil
 
@@ -469,7 +455,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testPinLoginWithVersionEnforcementBlock() async {
     mockFetchVersionEnforcementUseCase.callAsFunctionReturnValue = mockVersionEnforcement
 
@@ -481,7 +466,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertEqual(mockRouter.versionEnforcement, mockVersionEnforcement)
   }
 
-  @MainActor
   func testVersionEnforcementGenericErrorSilentFail() async {
     mockFetchVersionEnforcementUseCase.callAsFunctionThrowableError = TestingError.error
 
@@ -492,7 +476,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockFetchVersionEnforcementUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testDidDismissVersionEnforcement() {
     viewModel = LoginViewModel(router: mockRouter)
 
@@ -503,27 +486,25 @@ final class LoginViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private var mockGetBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
-  private var mockLoginPinCodeUseCase = LoginPinCodeUseCaseProtocolSpy()
-  private var mockLoginBiometricUseCase = LoginBiometricUseCaseProtocolSpy()
-  private var mockIsBiometricInvalidatedUseCase = IsBiometricInvalidatedUseCaseProtocolSpy()
-  private var mockGetBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
-  private var mockLockWalletUseCase = LockWalletUseCaseProtocolSpy()
-  private var mockUnlockWalletUseCase = UnlockWalletUseCaseProtocolSpy()
-  private var mockGetLockedWalletTimeLeftUseCase = GetLockedWalletTimeLeftUseCaseProtocolSpy()
-  private var mockGetLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
-  private var mockRegisterLoginAttemptCounterUseCase = RegisterLoginAttemptCounterUseCaseProtocolSpy()
-  private var mockResetLoginAttemptCounterUseCase = ResetLoginAttemptCounterUseCaseProtocolSpy()
-  private var mockFetchVersionEnforcementUseCase = FetchVersionEnforcementUseCaseProtocolSpy()
-  private var mockUseCases = LoginUseCasesProtocolSpy()
-  private var mockRouter = LoginRouterMock()
-  private var mockVersionEnforcement = VersionEnforcement.Mock.forced
-  // swiftlint:disable all
+  // swiftlint:disable implicitly_unwrapped_optional
+  private var mockGetBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy!
+  private var mockLoginPinCodeUseCase: LoginPinCodeUseCaseProtocolSpy!
+  private var mockLoginBiometricUseCase: LoginBiometricUseCaseProtocolSpy!
+  private var mockIsBiometricInvalidatedUseCase: IsBiometricInvalidatedUseCaseProtocolSpy!
+  private var mockGetBiometricTypeUseCase: GetBiometricTypeUseCaseProtocolSpy!
+  private var mockLockWalletUseCase: LockWalletUseCaseProtocolSpy!
+  private var mockUnlockWalletUseCase: UnlockWalletUseCaseProtocolSpy!
+  private var mockGetLockedWalletTimeLeftUseCase: GetLockedWalletTimeLeftUseCaseProtocolSpy!
+  private var mockGetLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocolSpy!
+  private var mockRegisterLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocolSpy!
+  private var mockResetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocolSpy!
+  private var mockFetchVersionEnforcementUseCase: FetchVersionEnforcementUseCaseProtocolSpy!
+  private var mockUseCases: LoginUseCasesProtocolSpy!
+  private var mockRouter: LoginRouterMock!
   private var viewModel: LoginViewModel!
-  // swiftlint:enable all
-  private var isLoginRequiredNotificationTriggered = false
+  // swiftlint:enable implicitly_unwrapped_optional
+  private let mockVersionEnforcement = VersionEnforcement.Mock.forced
 
-  @MainActor
   private func lockedState(maxAttempts: Int, delay: TimeInterval) async {
     mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = nil
     Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
@@ -547,7 +528,6 @@ final class LoginViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   private func biometricLockedState(maxAttempts: Int, delay: TimeInterval) async {
     mockGetLockedWalletTimeLeftUseCase.callAsFunctionReturnValue = nil
     Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
@@ -571,7 +551,6 @@ final class LoginViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   private func biometricAttemptFailure(viewModel: LoginViewModel) async {
     mockLoginBiometricUseCase.callAsFunctionThrowableError = TestingError.error
 
@@ -585,7 +564,6 @@ final class LoginViewModelTests: XCTestCase {
     XCTAssertTrue(mockLoginBiometricUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   private func attemptWithFailure(viewModel: LoginViewModel) async {
     mockLoginPinCodeUseCase.callAsFunctionFromThrowableError = TestingError.error
 

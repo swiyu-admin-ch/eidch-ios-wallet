@@ -11,9 +11,10 @@ final class RegisterLoginAttemptCounterUseCaseTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    repository = LoginRepositoryProtocolSpy()
+    let repository = LoginRepositoryProtocolSpy()
+    self.repository = repository
 
-    Container.shared.loginRepository.register { self.repository }
+    Container.shared.loginRepository.register { repository }
 
     useCase = RegisterLoginAttemptCounterUseCase()
   }

@@ -1,7 +1,7 @@
 import BITAnyCredentialFormat
 import Foundation
 
-public struct DeferredCredentialContext: Equatable {
+public struct DeferredCredentialContext: Equatable, Sendable {
 
   // MARK: Lifecycle
 

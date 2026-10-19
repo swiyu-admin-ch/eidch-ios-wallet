@@ -14,7 +14,7 @@ enum AuthorizationResponseEncryptionGeneratorError: Error {
 // MARK: - AuthorizationResponseEncryptionGeneratorProtocol
 
 @Spyable
-public protocol AuthorizationResponseEncryptionGeneratorProtocol {
+public protocol AuthorizationResponseEncryptionGeneratorProtocol: Sendable {
   func callAsFunction(for clientMetadata: ClientMetadata?) throws -> AuthorizationResponseEncryption
 }
 

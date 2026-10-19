@@ -4,7 +4,7 @@ import Spyable
 
 // MARK: - SubmitPresentationEvent
 
-public enum SubmitPresentationEvent: Equatable {
+public enum SubmitPresentationEvent: Equatable, Sendable {
   case progress(Double?)
   case success(PresentationResponse?)
 }
@@ -12,6 +12,6 @@ public enum SubmitPresentationEvent: Equatable {
 // MARK: - SubmitPresentationUseCaseProtocol
 
 @Spyable
-public protocol SubmitPresentationUseCaseProtocol {
+public protocol SubmitPresentationUseCaseProtocol: Sendable {
   func execute(context: PresentationRequestContext) -> AsyncThrowingStream<SubmitPresentationEvent, Error>
 }

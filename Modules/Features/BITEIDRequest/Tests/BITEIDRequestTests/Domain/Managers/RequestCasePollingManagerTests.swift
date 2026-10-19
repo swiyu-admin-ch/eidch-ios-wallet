@@ -10,24 +10,25 @@ final class RequestCasePollingManagerTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-
-    delegate = RequestCasePollingDelegateSpy()
-    updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
+  override func setUp() async throws {
+    try await super.setUp()
+    let delegate = RequestCasePollingDelegateSpy()
+    self.delegate = delegate
+    let updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    self.updateEIDRequestCaseStatusUseCase = updateEIDRequestCaseStatusUseCase
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in updateEIDRequestCaseStatusUseCase }
 
     manager = RequestCasePollingManager(pollingInterval: pollingInterval, timeout: timeout)
     manager.delegate = delegate
   }
 
-  override func tearDown() {
-    manager.stopPolling()
+  override func tearDown() async throws {
+    manager?.stopPolling()
+    Container.shared.reset()
     manager = nil
     delegate = nil
     updateEIDRequestCaseStatusUseCase = nil
-    Container.shared.reset()
-    super.tearDown()
+    try await super.tearDown()
   }
 
   func testStartPolling_WhenNotAlreadyPolling_ShouldStartPolling() async {

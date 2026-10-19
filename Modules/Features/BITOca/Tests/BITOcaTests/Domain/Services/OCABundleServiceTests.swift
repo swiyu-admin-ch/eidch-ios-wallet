@@ -10,11 +10,13 @@ final class OCABundleServiceTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    sriValidator = SRIValidatorProtocolSpy()
-    ocaRepository = OCARepositoryProtocolSpy()
+    let sriValidator = SRIValidatorProtocolSpy()
+    let ocaRepository = OCARepositoryProtocolSpy()
+    self.sriValidator = sriValidator
+    self.ocaRepository = ocaRepository
 
-    Container.shared.sriValidator.register { self.sriValidator }
-    Container.shared.ocaRepository.register { self.ocaRepository }
+    Container.shared.sriValidator.register { sriValidator }
+    Container.shared.ocaRepository.register { ocaRepository }
 
     service = OCABundleService()
   }

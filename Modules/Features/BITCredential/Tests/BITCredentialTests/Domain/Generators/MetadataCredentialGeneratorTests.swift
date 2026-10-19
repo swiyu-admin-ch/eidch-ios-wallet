@@ -1,5 +1,6 @@
 import Factory
-import XCTest
+import Foundation
+import Testing
 @testable import BITAnyCredentialFormat
 @testable import BITClaimsPathPointer
 @testable import BITCore
@@ -11,68 +12,93 @@ import XCTest
 
 // swiftlint:disable force_unwrapping force_try
 
-final class MetadataCredentialGeneratorTests: XCTestCase {
+// MARK: - MetadataCredentialGeneratorTests
+
+@Suite(.serialized)
+struct MetadataCredentialGeneratorTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.reset()
+
+    let imageValidatorSpy = ImageValidatorProtocolSpy()
+    Container.shared.imageValidator.register { imageValidatorSpy }
+    Container.shared.valueTypeResolver.register { ValueTypeResolver() }
+
+    self.imageValidatorSpy = imageValidatorSpy
+    anyCredentialSpy = Self.makeAnyCredential()
+    credentialWithoutKeyBinding = CredentialWithKeyBinding(credential: anyCredentialSpy, keyBinding: nil)
+    generator = MetadataCredentialGenerator()
+
+    selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
+      $0.bundleItems.first!
+    }
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    registerMocks()
-    generator = MetadataCredentialGenerator()
-  }
-
   // MARK: - Generate Verifiable credential
 
-  func testGenerate_withKeyPair_returnsCredential() throws {
-    let credential = try generator.generate(
-      for: [CredentialWithKeyBinding(credential: anyCredentialSpy, keyBinding: mockCredentialKeyBinding)],
-      selectedCredential: selectedCredentialMock,
-      context: mockCredentialGeneratorContext)
+  @Test(arguments: [true, false])
+  func generate_returnsCredentialWithTheKeyBindingItWasGivenIfAny(hasKeyBinding: Bool) throws {
+    let credentials = hasKeyBinding
+      ? [CredentialWithKeyBinding(credential: anyCredentialSpy, keyBinding: Self.credentialKeyBinding)]
+      : [credentialWithoutKeyBinding]
 
-    assertCredential(credential, selectedKeyBinding: mockCredentialKeyBinding, rawPayload: anyCredentialSpy.raw)
+    let credential = try generator.generate(
+      for: credentials,
+      selectedCredential: selectedCredentialMock,
+      context: Self.credentialGeneratorContextMock)
+
+    assertCredential(credential, selectedKeyBinding: hasKeyBinding ? Self.credentialKeyBinding : nil, rawPayload: anyCredentialSpy.raw)
     try assertClusters(in: credential)
   }
 
-  func testGenerate_withoutKeyPair_returnsCredential() throws {
-    let credential = try generator.generate(
-      for: [credentialWithoutKeyBinding],
-      selectedCredential: selectedCredentialMock,
-      context: mockCredentialGeneratorContext)
-
-    assertCredential(credential, selectedKeyBinding: nil, rawPayload: anyCredentialSpy.raw)
-  }
-
-  func testGenerate_multipleCredentials_returnsCredentialWithMultipleBundleItems() throws {
+  @Test
+  func generate_multipleCredentials_returnsCredentialWithMultipleBundleItems() throws {
     let credential = try generator.generate(
       for: [
-        CredentialWithKeyBinding(credential: makeAnyCredential(rawPayload: rawPayloadMock1), keyBinding: mockCredentialKeyBinding),
-        CredentialWithKeyBinding(credential: makeAnyCredential(rawPayload: rawPayloadMock2), keyBinding: mockCredentialKeyBinding),
+        CredentialWithKeyBinding(credential: Self.makeAnyCredential(rawPayload: Self.rawPayloadMock1), keyBinding: Self.credentialKeyBinding),
+        CredentialWithKeyBinding(credential: Self.makeAnyCredential(rawPayload: Self.rawPayloadMock2), keyBinding: Self.credentialKeyBinding),
       ],
       selectedCredential: selectedCredentialMock,
-      context: mockCredentialGeneratorContext)
+      context: Self.credentialGeneratorContextMock)
 
-    XCTAssertEqual(credential.bundleItems.count, 2)
-    XCTAssertEqual(String(data: credential.bundleItems[0].payload, encoding: .utf8), rawPayloadMock1)
-    XCTAssertEqual(credential.bundleItems[0].keyBinding, mockCredentialKeyBinding)
-    XCTAssertEqual(String(data: credential.bundleItems[1].payload, encoding: .utf8), rawPayloadMock2)
-    XCTAssertEqual(credential.bundleItems[1].keyBinding, mockCredentialKeyBinding)
+    #expect(credential.bundleItems.count == 2)
+    #expect(String(data: credential.bundleItems[0].payload, encoding: .utf8) == Self.rawPayloadMock1)
+    #expect(credential.bundleItems[0].keyBinding == Self.credentialKeyBinding)
+    #expect(String(data: credential.bundleItems[1].payload, encoding: .utf8) == Self.rawPayloadMock2)
+    #expect(credential.bundleItems[1].keyBinding == Self.credentialKeyBinding)
   }
 
-  func testGenerate_withoutDisplays_returnsCredentialAndClaimsWithoutDisplays() throws {
+  @Test(arguments: [false, true])
+  func generate_withoutDisplays_returnsCredentialWithoutDisplays(isDeferred: Bool) throws {
     let metadata = CredentialIssuerMetadata.Mock.simpleSampleWithoutDisplays
-    let selectedCredential = try XCTUnwrap(metadata.credentialConfigurationsSupported.first?.value)
+    let selectedCredential = try #require(metadata.credentialConfigurationsSupported.first?.value)
 
-    let credential = try generator.generate(
-      for: [credentialWithoutKeyBinding],
-      selectedCredential: selectedCredential,
-      context: mockCredentialGeneratorContext)
+    if isDeferred {
+      let deferredCredential = try generator.generateDeferred(
+        Self.deferredCredentialContextMock,
+        keyBindings: Self.credentialKeyBindings,
+        selectedCredential: selectedCredential,
+        context: Self.credentialGeneratorContextMock)
 
-    XCTAssertTrue(credential.displays.isEmpty)
-    XCTAssertTrue(allClaims(in: credential.clusters).allSatisfy(\.displays.isEmpty))
+      #expect(deferredCredential.displays.isEmpty)
+    } else {
+      let credential = try generator.generate(
+        for: [credentialWithoutKeyBinding],
+        selectedCredential: selectedCredential,
+        context: Self.credentialGeneratorContextMock)
+
+      let everyClaimHasNoDisplay = allClaims(in: credential.clusters).allSatisfy(\.displays.isEmpty)
+      #expect(credential.displays.isEmpty)
+      #expect(everyClaimHasNoDisplay)
+    }
   }
 
-  func testGenerate_withBatchSize_setsBatchData() throws {
+  @Test
+  func generate_withBatchSize_setsBatchData() throws {
     let context = makeContext(batchSize: 3)
 
     let credential = try generator.generate(
@@ -80,56 +106,42 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
       selectedCredential: selectedCredentialMock,
       context: context)
 
-    XCTAssertEqual(credential.batchData, BatchData(batchSize: 3))
+    #expect(credential.batchData == BatchData(batchSize: 3))
   }
 
-  func testGenerate_withAuthentication_setsAuthentication() throws {
-    let context = makeContext(authentication: mockAuthentication)
+  @Test(arguments: [false, true])
+  func generate_withAuthentication_setsAuthentication(isDeferred: Bool) throws {
+    let context = makeContext(authentication: Self.authenticationMock)
 
-    let credential = try generator.generate(
-      for: [credentialWithoutKeyBinding],
-      selectedCredential: selectedCredentialMock,
-      context: context)
+    let authentication: CredentialAuthentication = if isDeferred {
+      try generator.generateDeferred(
+        Self.deferredCredentialContextMock,
+        keyBindings: Self.credentialKeyBindings,
+        selectedCredential: selectedCredentialMock,
+        context: context).authentication
+    } else {
+      try generator.generate(
+        for: [credentialWithoutKeyBinding],
+        selectedCredential: selectedCredentialMock,
+        context: context).authentication
+    }
 
-    XCTAssertEqual(credential.authentication, mockAuthentication)
+    #expect(authentication == Self.authenticationMock)
   }
 
-  func testGenerateDeferredCredential_returnsDeferredCredential() throws {
+  @Test
+  func generateDeferredCredential_returnsDeferredCredential() throws {
     let deferredCredential = try generator.generateDeferred(
-      mockDeferredCredentialContext,
-      keyBindings: mockCredentialKeyBindings,
+      Self.deferredCredentialContextMock,
+      keyBindings: Self.credentialKeyBindings,
       selectedCredential: selectedCredentialMock,
-      context: mockCredentialGeneratorContext)
+      context: Self.credentialGeneratorContextMock)
 
     assertDeferredCredential(
       deferredCredential,
-      context: mockCredentialGeneratorContext,
-      keyBindings: mockCredentialKeyBindings,
-      deferredCredentialContext: mockDeferredCredentialContext)
-  }
-
-  func testGenerateDeferredCredential_withoutCredentialDisplay_returnsCredentialWithoutCredentialDisplays() throws {
-    let selectedCredential = try XCTUnwrap(CredentialIssuerMetadata.Mock.simpleSampleWithoutDisplays.credentialConfigurationsSupported.first?.value)
-
-    let deferredCredential = try generator.generateDeferred(
-      mockDeferredCredentialContext,
-      keyBindings: mockCredentialKeyBindings,
-      selectedCredential: selectedCredential,
-      context: mockCredentialGeneratorContext)
-
-    XCTAssertTrue(deferredCredential.displays.isEmpty)
-  }
-
-  func testGenerateDeferredCredential_withAuthentication_setsAuthentication() throws {
-    let context = makeContext(authentication: mockAuthentication)
-
-    let credential = try generator.generateDeferred(
-      mockDeferredCredentialContext,
-      keyBindings: mockCredentialKeyBindings,
-      selectedCredential: selectedCredentialMock,
-      context: context)
-
-    XCTAssertEqual(credential.authentication, mockAuthentication)
+      context: Self.credentialGeneratorContextMock,
+      keyBindings: Self.credentialKeyBindings,
+      deferredCredentialContext: Self.deferredCredentialContextMock)
   }
 
   // MARK: Private
@@ -144,145 +156,30 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
   private static let salutationPath: ClaimsPathPointer = [.string("salutation")]
   private static let msisdnPath: ClaimsPathPointer = [.string("msisdn")]
 
-  private let formatMock = CredentialFormat.vcSdJwt
-  private let issuerMock = "issuer"
-  private let validFromMock = Date()
-  private let validUntilMock = Date()
-  private let rawPayloadMock1 = "rawPayloadMock1"
-  private let rawPayloadMock2 = "rawPayloadMock2"
-  private let credentialComplexPayload = JSON.Mock.credentialComplex
-  private lazy var selectedCredentialMock: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported =
-    CredentialIssuerMetadata.Mock.credentialComplex.credentialConfigurationsSupported[Self.credentialNameMock]!
+  private static let formatMock = CredentialFormat.vcSdJwt
+  private static let issuerMock = "issuer"
+  private static let validFromMock = Date()
+  private static let validUntilMock = Date()
+  private static let rawPayloadMock1 = "rawPayloadMock1"
+  private static let rawPayloadMock2 = "rawPayloadMock2"
 
-  private let mockAuthentication = CredentialAuthentication(accessToken: "access-token", refreshToken: "refresh-token")
-  private let mockDeferredCredentialContext = DeferredCredentialContext.Mock.sample
-  private let mockCredentialGeneratorContext = CredentialGeneratorContext.Mock.sample
-  private let mockCredentialKeyBinding = KeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
-  private lazy var mockCredentialKeyBindings = [mockCredentialKeyBinding]
+  private static let authenticationMock = CredentialAuthentication(accessToken: "access-token", refreshToken: "refresh-token")
+  private static let deferredCredentialContextMock = DeferredCredentialContext.Mock.sample
+  private static let credentialGeneratorContextMock = CredentialGeneratorContext.Mock.sample
+  private static let credentialKeyBinding = KeyBinding(id: UUID(), algorithm: "ES512", bindingType: .hardware)
+  private static let credentialKeyBindings = [credentialKeyBinding]
 
-  private lazy var anyCredentialSpy = makeAnyCredential()
-  private lazy var credentialWithoutKeyBinding = CredentialWithKeyBinding(credential: anyCredentialSpy, keyBinding: nil)
-
-  private var imageValidatorSpy = ImageValidatorProtocolSpy()
+  private let anyCredentialSpy: AnyCredentialSpy
+  private let credentialWithoutKeyBinding: CredentialWithKeyBinding
+  private let imageValidatorSpy: ImageValidatorProtocolSpy
   private let selectCredentialBundleItemUseCaseSpy = SelectCredentialBundleItemUseCaseProtocolSpy()
+  private let generator: MetadataCredentialGenerator
 
-  private var generator = MetadataCredentialGenerator()
-
-  private func allClaims(in cluster: CredentialClaimCluster) -> [CredentialClaim] {
-    cluster.claims + cluster.childClusters.flatMap(allClaims)
+  private var selectedCredentialMock: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported {
+    CredentialIssuerMetadata.Mock.credentialComplex.credentialConfigurationsSupported[Self.credentialNameMock]!
   }
 
-  private func allClaims(in clusters: [CredentialClaimCluster]) -> [CredentialClaim] {
-    clusters.flatMap(allClaims)
-  }
-
-  private func registerMocks() {
-    imageValidatorSpy = ImageValidatorProtocolSpy()
-    Container.shared.imageValidator.register { self.imageValidatorSpy }
-    Container.shared.valueTypeResolver.register { ValueTypeResolver() }
-
-    selectCredentialBundleItemUseCaseSpy.callAsFunctionClosure = {
-      $0.bundleItems.first!
-    }
-  }
-
-  private func assertCredential(_ credential: VerifiableCredential, selectedKeyBinding: KeyBinding?, rawPayload: String?) {
-    let selectedBundleItem = try? selectCredentialBundleItemUseCaseSpy(credential)
-
-    XCTAssertEqual(credential.id, mockCredentialGeneratorContext.credentialId)
-    XCTAssertEqual(selectedBundleItem?.status, .unknown)
-    XCTAssertEqual(selectedBundleItem?.keyBinding, selectedKeyBinding)
-    XCTAssertEqual(String(data: selectedBundleItem?.payload ?? Data(), encoding: .utf8), rawPayload)
-    XCTAssertEqual(credential.rawCredentialData, mockCredentialGeneratorContext.rawCredentialData)
-    XCTAssertEqual(credential.format, formatMock)
-    XCTAssertEqual(credential.issuerUrl, mockCredentialGeneratorContext.issuerUrl)
-    XCTAssertEqual(credential.issuer, issuerMock)
-    XCTAssertEqual(credential.validFrom, validFromMock)
-    XCTAssertEqual(credential.validUntil, validUntilMock)
-    XCTAssertEqual(credential.issuerDisplays, mockCredentialGeneratorContext.issuerDisplays)
-    assertCredentialDisplays(credential.displays, credentialId: credential.id)
-  }
-
-  private func assertClusters(in credential: VerifiableCredential) throws {
-    XCTAssertEqual(credential.clusters.count, 1)
-
-    let rootCluster = try XCTUnwrap(credential.clusters.first)
-    XCTAssertEqual(rootCluster.path, [])
-    XCTAssertEqual(rootCluster.claims.count, 3)
-    XCTAssertEqual(rootCluster.childClusters.count, 1)
-
-    let rootClaimPaths = Set(rootCluster.claims.map(\.path.stringValue))
-    XCTAssertEqual(rootClaimPaths, Set([
-      Self.birthMiddleNamePath.stringValue,
-      Self.salutationPath.stringValue,
-      Self.msisdnPath.stringValue,
-    ]))
-
-    let verifiedClaimsCluster = try XCTUnwrap([.string("verified_claims")].findCluster(in: credential.clusters))
-    XCTAssertEqual(verifiedClaimsCluster.displays.count, 2)
-
-    let evidenceArrayCluster = try XCTUnwrap(Self.evidenceArrayPath.findCluster(in: credential.clusters))
-    XCTAssertEqual(evidenceArrayCluster.order, 5)
-    XCTAssertEqual(evidenceArrayCluster.displays.count, 2)
-    XCTAssertTrue(evidenceArrayCluster.claims.isEmpty)
-    XCTAssertEqual(evidenceArrayCluster.childClusters.count, 1)
-
-    let evidenceItemCluster = try XCTUnwrap(Self.evidenceItemPath.findCluster(in: credential.clusters))
-    XCTAssertEqual(evidenceItemCluster.claims.count, 3)
-    XCTAssertEqual(evidenceItemCluster.childClusters.count, 1)
-
-    let issuerPath: ClaimsPathPointer = [.string("verified_claims"), .string("verification"), .string("evidence"), .index(0), .string("document"), .string("issuer")]
-    let issuerCluster = try XCTUnwrap(issuerPath.findCluster(in: credential.clusters))
-    XCTAssertEqual(issuerCluster.claims.count, 2)
-
-    let issuerNameClaim = try XCTUnwrap(Self.issuerNamePath.findClaim(in: credential.clusters))
-    XCTAssertEqual(issuerNameClaim.value, "Stadt Augsburg")
-    XCTAssertEqual(issuerNameClaim.displays.count, 2)
-
-    let nationalitiesCluster = try XCTUnwrap(Self.nationalitiesArrayPath.findCluster(in: credential.clusters))
-    XCTAssertEqual(nationalitiesCluster.order, 20)
-    XCTAssertEqual(nationalitiesCluster.displays.count, 2)
-    XCTAssertEqual(nationalitiesCluster.claims.count, 2)
-    XCTAssertEqual(Set(nationalitiesCluster.claims.compactMap(\.value)), Set(["DE", "FR"]))
-  }
-
-  private func assertDeferredCredential(
-    _ deferredCredential: DeferredCredential,
-    context: CredentialGeneratorContext,
-    keyBindings: [KeyBinding],
-    deferredCredentialContext: DeferredCredentialContext)
-  {
-    XCTAssertEqual(deferredCredential.transactionId, deferredCredentialContext.transactionId)
-    XCTAssertEqual(deferredCredential.authentication.accessToken, context.authentication.accessToken)
-    XCTAssertEqual(deferredCredential.endpoint, deferredCredentialContext.endpoint)
-    XCTAssertEqual(deferredCredential.format, deferredCredentialContext.format)
-    XCTAssertEqual(deferredCredential.issuerUrl, context.issuerUrl)
-    XCTAssertEqual(deferredCredential.keyBindings, keyBindings)
-    XCTAssertEqual(deferredCredential.rawCredentialData, context.rawCredentialData)
-    XCTAssertEqual(deferredCredential.issuerDisplays, context.issuerDisplays)
-    XCTAssertEqual(deferredCredential.authentication.refreshToken, context.authentication.refreshToken)
-
-    assertCredentialDisplays(deferredCredential.displays, credentialId: context.credentialId)
-  }
-
-  private func makeContext(
-    batchSize: Int? = nil,
-    authentication: CredentialAuthentication = CredentialAuthentication(accessToken: "accessToken"))
-    -> CredentialGeneratorContext
-  {
-    let batchData = batchSize.map(BatchData.init)
-
-    return CredentialGeneratorContext(
-      credentialId: mockCredentialGeneratorContext.credentialId,
-      issuerUrl: mockCredentialGeneratorContext.issuerUrl,
-      credentialConfigurationId: mockCredentialGeneratorContext.credentialConfigurationId,
-      batchData: batchData,
-      authentication: authentication,
-      issuerDisplays: mockCredentialGeneratorContext.issuerDisplays,
-      rawCredentialData: mockCredentialGeneratorContext.rawCredentialData)
-  }
-
-  private func makeAnyCredential(
+  private static func makeAnyCredential(
     _ payload: JSON = JSON.Mock.credentialComplex,
     rawPayload: String? = nil)
     -> AnyCredentialSpy
@@ -301,4 +198,110 @@ final class MetadataCredentialGeneratorTests: XCTestCase {
     credential.getClaimsJSONReturnValue = payload
     return credential
   }
+
+  private func allClaims(in cluster: CredentialClaimCluster) -> [CredentialClaim] {
+    cluster.claims + cluster.childClusters.flatMap(allClaims)
+  }
+
+  private func allClaims(in clusters: [CredentialClaimCluster]) -> [CredentialClaim] {
+    clusters.flatMap(allClaims)
+  }
+
+  private func assertCredential(_ credential: VerifiableCredential, selectedKeyBinding: KeyBinding?, rawPayload: String?) {
+    let selectedBundleItem = try? selectCredentialBundleItemUseCaseSpy(credential)
+
+    #expect(credential.id == Self.credentialGeneratorContextMock.credentialId)
+    #expect(selectedBundleItem?.status == .unknown)
+    #expect(selectedBundleItem?.keyBinding == selectedKeyBinding)
+    #expect(String(data: selectedBundleItem?.payload ?? Data(), encoding: .utf8) == rawPayload)
+    #expect(credential.rawCredentialData == Self.credentialGeneratorContextMock.rawCredentialData)
+    #expect(credential.format == Self.formatMock)
+    #expect(credential.issuerUrl == Self.credentialGeneratorContextMock.issuerUrl)
+    #expect(credential.issuer == Self.issuerMock)
+    #expect(credential.validFrom == Self.validFromMock)
+    #expect(credential.validUntil == Self.validUntilMock)
+    #expect(credential.issuerDisplays == Self.credentialGeneratorContextMock.issuerDisplays)
+    assertCredentialDisplays(credential.displays)
+  }
+
+  private func assertClusters(in credential: VerifiableCredential) throws {
+    #expect(credential.clusters.count == 1)
+
+    let rootCluster = try #require(credential.clusters.first)
+    #expect(rootCluster.path == [])
+    #expect(rootCluster.claims.count == 3)
+    #expect(rootCluster.childClusters.count == 1)
+
+    let rootClaimPaths = Set(rootCluster.claims.map(\.path.stringValue))
+    #expect(rootClaimPaths == Set([
+      Self.birthMiddleNamePath.stringValue,
+      Self.salutationPath.stringValue,
+      Self.msisdnPath.stringValue,
+    ]))
+
+    let verifiedClaimsCluster = try #require([.string("verified_claims")].findCluster(in: credential.clusters))
+    #expect(verifiedClaimsCluster.displays.count == 2)
+
+    let evidenceArrayCluster = try #require(Self.evidenceArrayPath.findCluster(in: credential.clusters))
+    #expect(evidenceArrayCluster.order == 5)
+    #expect(evidenceArrayCluster.displays.count == 2)
+    #expect(evidenceArrayCluster.claims.isEmpty)
+    #expect(evidenceArrayCluster.childClusters.count == 1)
+
+    let evidenceItemCluster = try #require(Self.evidenceItemPath.findCluster(in: credential.clusters))
+    #expect(evidenceItemCluster.claims.count == 3)
+    #expect(evidenceItemCluster.childClusters.count == 1)
+
+    let issuerPath: ClaimsPathPointer = [.string("verified_claims"), .string("verification"), .string("evidence"), .index(0), .string("document"), .string("issuer")]
+    let issuerCluster = try #require(issuerPath.findCluster(in: credential.clusters))
+    #expect(issuerCluster.claims.count == 2)
+
+    let issuerNameClaim = try #require(Self.issuerNamePath.findClaim(in: credential.clusters))
+    #expect(issuerNameClaim.value == "Stadt Augsburg")
+    #expect(issuerNameClaim.displays.count == 2)
+
+    let nationalitiesCluster = try #require(Self.nationalitiesArrayPath.findCluster(in: credential.clusters))
+    #expect(nationalitiesCluster.order == 20)
+    #expect(nationalitiesCluster.displays.count == 2)
+    #expect(nationalitiesCluster.claims.count == 2)
+    #expect(Set(nationalitiesCluster.claims.compactMap(\.value)) == Set(["DE", "FR"]))
+  }
+
+  private func assertDeferredCredential(
+    _ deferredCredential: DeferredCredential,
+    context: CredentialGeneratorContext,
+    keyBindings: [KeyBinding],
+    deferredCredentialContext: DeferredCredentialContext)
+  {
+    #expect(deferredCredential.transactionId == deferredCredentialContext.transactionId)
+    #expect(deferredCredential.authentication.accessToken == context.authentication.accessToken)
+    #expect(deferredCredential.endpoint == deferredCredentialContext.endpoint)
+    #expect(deferredCredential.format == deferredCredentialContext.format)
+    #expect(deferredCredential.issuerUrl == context.issuerUrl)
+    #expect(deferredCredential.keyBindings == keyBindings)
+    #expect(deferredCredential.rawCredentialData == context.rawCredentialData)
+    #expect(deferredCredential.issuerDisplays == context.issuerDisplays)
+    #expect(deferredCredential.authentication.refreshToken == context.authentication.refreshToken)
+
+    assertCredentialDisplays(deferredCredential.displays)
+  }
+
+  private func makeContext(
+    batchSize: Int? = nil,
+    authentication: CredentialAuthentication = CredentialAuthentication(accessToken: "accessToken"))
+    -> CredentialGeneratorContext
+  {
+    let batchData = batchSize.map(BatchData.init)
+
+    return CredentialGeneratorContext(
+      credentialId: Self.credentialGeneratorContextMock.credentialId,
+      issuerUrl: Self.credentialGeneratorContextMock.issuerUrl,
+      credentialConfigurationId: Self.credentialGeneratorContextMock.credentialConfigurationId,
+      batchData: batchData,
+      authentication: authentication,
+      issuerDisplays: Self.credentialGeneratorContextMock.issuerDisplays,
+      rawCredentialData: Self.credentialGeneratorContextMock.rawCredentialData)
+  }
 }
+
+// swiftlint:enable force_unwrapping force_try

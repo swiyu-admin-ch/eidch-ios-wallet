@@ -32,7 +32,7 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
     XCTAssertEqual(credentialRepository.getAllCallsCount, 1)
     XCTAssertEqual(refreshDeferredCredentialUseCase.executeCallsCount, 1)
     XCTAssertEqual(refreshVerifiableCredentialsUseCase.callAsFunctionCallsCount, 1)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 1)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionCallsCount, 1)
   }
 
   func testCallAsFunction_success_assertParameters() async throws {
@@ -40,7 +40,7 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
 
     XCTAssertEqual(refreshDeferredCredentialUseCase.executeReceivedCredentials, mockDeferredCredentials)
     XCTAssertEqual(refreshVerifiableCredentialsUseCase.callAsFunctionReceivedCredentials, mockVerifiableCredentials)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeReceivedCredentials, refreshedVerifiableCredentials)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionReceivedCredentials, refreshedVerifiableCredentials)
   }
 
   func testCallAsFunction_getAllDeferredCredentialsFails_throwsError() async throws {
@@ -77,7 +77,7 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
   }
 
   func testCallAsFunction_checkAndUpdateUseCaseFails_throwsError() async throws {
-    checkAndUpdateCredentialStatusUseCase.executeThrowableError = TestingError.error
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionThrowableError = TestingError.error
 
     do {
       _ = try await useCase.callAsFunction()
@@ -112,15 +112,19 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
   private let refreshedVerifiableCredentials = [VerifiableCredential.Mock.sampleDisplaysAdditional]
 
   private func registerMocks() {
-    credentialRepository = CredentialRepositoryProtocolSpy()
-    refreshDeferredCredentialUseCase = RefreshDeferredCredentialUseCaseProtocolSpy()
-    refreshVerifiableCredentialsUseCase = RefreshVerifiableCredentialsUseCaseProtocolSpy()
-    checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+    self.credentialRepository = credentialRepository
+    let refreshDeferredCredentialUseCase = RefreshDeferredCredentialUseCaseProtocolSpy()
+    self.refreshDeferredCredentialUseCase = refreshDeferredCredentialUseCase
+    let refreshVerifiableCredentialsUseCase = RefreshVerifiableCredentialsUseCaseProtocolSpy()
+    self.refreshVerifiableCredentialsUseCase = refreshVerifiableCredentialsUseCase
+    let checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
+    self.checkAndUpdateCredentialStatusUseCase = checkAndUpdateCredentialStatusUseCase
 
-    Container.shared.credentialRepository.register { self.credentialRepository }
-    Container.shared.refreshDeferredCredentialUseCase.register { self.refreshDeferredCredentialUseCase }
-    Container.shared.refreshVerifiableCredentialsUseCase.register { self.refreshVerifiableCredentialsUseCase }
-    Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
+    Container.shared.credentialRepository.register { credentialRepository }
+    Container.shared.refreshDeferredCredentialUseCase.register { refreshDeferredCredentialUseCase }
+    Container.shared.refreshVerifiableCredentialsUseCase.register { refreshVerifiableCredentialsUseCase }
+    Container.shared.checkAndUpdateCredentialStatusUseCase.register { checkAndUpdateCredentialStatusUseCase }
   }
 
   private func createSuccessState() {
@@ -130,7 +134,7 @@ final class RefreshCredentialsUseCaseTests: XCTestCase {
         self.mockVerifiableCredentials :
         self.refreshedVerifiableCredentials
     }
-    checkAndUpdateCredentialStatusUseCase.executeReturnValue = mockVerifiableCredentials
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionReturnValue = mockVerifiableCredentials
     credentialRepository.getAllReturnValue = mockDeferredCredentials + mockVerifiableCredentials
   }
 

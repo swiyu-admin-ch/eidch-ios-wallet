@@ -1,4 +1,4 @@
-extension CredentialEntity {
+extension CredentialRenderingEntity {
 
   // MARK: Public
 
@@ -17,10 +17,16 @@ extension CredentialEntity {
   }
 }
 
-extension Sequence<CredentialEntity> {
+extension CredentialEntity {
+  public var displayImages: Set<String> {
+    credentialRendering?.displayImages ?? []
+  }
+}
+
+extension Sequence<CredentialRenderingEntity> {
   public func displayImages() -> Set<String> {
-    reduce(into: Set<String>()) { result, credential in
-      result.formUnion(credential.displayImages)
+    reduce(into: Set<String>()) { result, rendering in
+      result.formUnion(rendering.displayImages)
     }
   }
 }

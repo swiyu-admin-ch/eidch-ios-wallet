@@ -7,7 +7,7 @@ import Spyable
 // MARK: - AppAttestationKeyRepositoryProtocol
 
 @Spyable
-public protocol AppAttestationKeyRepositoryProtocol {
+public protocol AppAttestationKeyRepositoryProtocol: Sendable {
   func get(for type: AttestationType) throws -> VaultKeyPair
   func create(for type: AttestationType, with context: LAContextProtocol) throws -> VaultKeyPair
 }
@@ -40,9 +40,12 @@ struct AppAttestationKeyRepository: AppAttestationKeyRepositoryProtocol {
 
   // MARK: Private
 
-  private let protection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
   @Injected(\.attestationKeyAlgorithm) private var attestationKeyAlgorithm: VaultAlgorithm
   @Injected(\.attestationKeyVaultOptions) private var attestationKeyVaultOptions: VaultOptions
+
+  private var protection: CFString {
+    kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+  }
+
 }

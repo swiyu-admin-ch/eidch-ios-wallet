@@ -1,15 +1,17 @@
 import Foundation
-import XCTest
+import Testing
 @testable import BITOnboarding
 
-class CredentialIntroductionViewModelTests: XCTestCase {
+@MainActor
+struct CredentialIntroductionViewModelTests {
 
-  func testPrimaryAction() {
+  @Test
+  func primaryAction() {
     let router = MockOnboardingInternalRoutes()
     let viewModel = CredentialIntroductionViewModel(router: router)
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.privacyPermissionCalled)
+    #expect(router.privacyPermissionCalled)
   }
 
 }

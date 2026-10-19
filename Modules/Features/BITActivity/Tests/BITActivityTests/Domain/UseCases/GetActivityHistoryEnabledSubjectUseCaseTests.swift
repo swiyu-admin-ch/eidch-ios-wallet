@@ -32,8 +32,9 @@ final class GetActivityHistoryEnabledSubjectUseCaseTests: XCTestCase {
 
   private func registerMocks() {
     subjectMock = CurrentValueSubject(false)
-    repositorySpy = ActivityRepositoryProtocolSpy()
-    Container.shared.activityRepository.register { self.repositorySpy }
+    let repositorySpy = ActivityRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    Container.shared.activityRepository.register { repositorySpy }
   }
 
   private func createSuccessState() {

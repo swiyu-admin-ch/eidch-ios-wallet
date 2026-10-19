@@ -7,26 +7,6 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  // swiftlint:disable all
-  var router = ChangePinRouterMock()
-
-  // swiftlint:enable all
-
-  @MainActor
-  override func setUp() {
-    super.setUp()
-
-    router = ChangePinRouterMock()
-    router.context.uniquePassphrase = pinCode.data(using: .utf8)
-    router.context.newPinCode = pinCode
-
-    validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
-    updatePinCodeUseCase = UpdatePinCodeUseCaseProtocolSpy()
-
-    Container.shared.validatePinCodeRuleUseCase.register { @MainActor in self.validatePinCodeRuleUseCase }
-    Container.shared.updatePinCodeUseCase.register { @MainActor in self.updatePinCodeUseCase }
-  }
-
   override func tearDown() {
     super.tearDown()
     Container.shared.reset()
@@ -34,7 +14,8 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState() {
-    let viewModel = ConfirmPinCodeViewModel(router: router)
+    let (_, viewModel, _, _) = makeSUT()
+
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.inputFieldState, .normal)
@@ -43,10 +24,10 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_success() {
+    let (router, viewModel, validatePinCodeRuleUseCase, updatePinCodeUseCase) = makeSUT()
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = nil
     updatePinCodeUseCase.callAsFunctionWithAndThrowableError = nil
 
-    let viewModel = ConfirmPinCodeViewModel(router: router)
     viewModel.pinCode = pinCode
     viewModel.submit()
 
@@ -60,9 +41,9 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_mismatch() {
+    let (router, viewModel, validatePinCodeRuleUseCase, _) = makeSUT()
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = nil
 
-    let viewModel = ConfirmPinCodeViewModel(router: router)
     viewModel.pinCode = "123456789"
     viewModel.submit()
 
@@ -75,9 +56,9 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_error() {
+    let (router, viewModel, validatePinCodeRuleUseCase, _) = makeSUT()
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
 
-    let viewModel = ConfirmPinCodeViewModel(router: router)
     viewModel.pinCode = "123"
     viewModel.submit()
 
@@ -91,9 +72,9 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
   @MainActor
   func testPinCode_TooManyAttempts() {
     Container.shared.attemptsLimitChangePinCode.register { 2 }
+    let (router, viewModel, validatePinCodeRuleUseCase, _) = makeSUT()
 
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.empty
-    let viewModel = ConfirmPinCodeViewModel(router: router)
 
     viewModel.submit()
     viewModel.submit()
@@ -110,9 +91,25 @@ final class ConfirmPinCodeViewModelTests: XCTestCase {
 
   private let pinCode = "123456"
 
-  // swiftlint: disable all
-  private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocolSpy!
-  private var updatePinCodeUseCase: UpdatePinCodeUseCaseProtocolSpy!
-  // swiftlint: enable all
+  @MainActor
+  private func makeSUT() -> (
+    ChangePinRouterMock,
+    ConfirmPinCodeViewModel,
+    ValidatePinCodeRuleUseCaseProtocolSpy,
+    UpdatePinCodeUseCaseProtocolSpy)
+  {
+    let router = ChangePinRouterMock()
+    router.context.uniquePassphrase = pinCode.data(using: .utf8)
+    router.context.newPinCode = pinCode
+
+    let validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
+    let updatePinCodeUseCase = UpdatePinCodeUseCaseProtocolSpy()
+
+    Container.shared.validatePinCodeRuleUseCase.register { @MainActor in validatePinCodeRuleUseCase }
+    Container.shared.updatePinCodeUseCase.register { @MainActor in updatePinCodeUseCase }
+
+    let viewModel = ConfirmPinCodeViewModel(router: router)
+    return (router, viewModel, validatePinCodeRuleUseCase, updatePinCodeUseCase)
+  }
 
 }

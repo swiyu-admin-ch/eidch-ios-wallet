@@ -5,7 +5,7 @@ import Spyable
 // MARK: - SaveDeferredCredentialUseCaseProtocol
 
 @Spyable
-public protocol SaveDeferredCredentialUseCaseProtocol {
+public protocol SaveDeferredCredentialUseCaseProtocol: Sendable {
   func execute(for deferredCredential: DeferredCredential) async throws
 }
 

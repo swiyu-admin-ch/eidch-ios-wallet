@@ -129,7 +129,7 @@ extension InformationView2 {
     case spacer(_ size: CGFloat = .x4)
     case caption(_ label: String, alt: String? = nil, identifier: String? = nil)
     case captionErrorDescription(_ error: Error, alt: String? = nil, identifier: String? = nil)
-    case captionButton(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
+    case captionButton(_ label: String, alt: String? = nil, identifier: String? = nil, NavigatorAction)
     case hero(Hero)
     case anyView(AnyView)
 
@@ -172,10 +172,10 @@ extension InformationView2 {
   // MARK: - ActionType
 
   public enum ActionType {
-    case primary(_ label: String, alt: String? = nil, hint: String? = nil, identifier: String? = nil, (Navigator) -> Void)
-    case secondary(_ label: String, alt: String? = nil, identifier: String? = nil, (Navigator) -> Void)
-    case primaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), (Navigator) async -> Void)
-    case secondaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), (Navigator) async -> Void)
+    case primary(_ label: String, alt: String? = nil, hint: String? = nil, identifier: String? = nil, NavigatorAction)
+    case secondary(_ label: String, alt: String? = nil, identifier: String? = nil, NavigatorAction)
+    case primaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), AsyncNavigatorAction)
+    case secondaryAsync(_ label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), AsyncNavigatorAction)
     case anyView(AnyView)
 
     // MARK: Public
@@ -330,7 +330,7 @@ struct ActionTypeView: View {
     hint: String? = nil,
     identifier: String? = nil,
     style: CustomButtonStyle = .primary,
-    _ action: @escaping ((Navigator) -> Void))
+    _ action: @escaping NavigatorAction)
     -> some View
   {
     Button(action: { action(navigator) }) {
@@ -347,7 +347,7 @@ struct ActionTypeView: View {
     }
   }
 
-  private func asyncButton(label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), style: CustomButtonStyle = .primary, _ action: @escaping ((Navigator) async -> Void)) -> some View {
+  private func asyncButton(label: String, alt: String? = nil, identifier: String? = nil, actionOptions: Set<AsyncActionOption> = Set(AsyncActionOption.allCases), style: CustomButtonStyle = .primary, _ action: @escaping AsyncNavigatorAction) -> some View {
     AsyncButton(action: { await action(navigator) }, actionOptions: actionOptions) {
       AnyView(
         Text(label)

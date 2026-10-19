@@ -1,6 +1,6 @@
 import BITEIDRequestShared
 
-class EIDRequestContext {
+class EIDRequestContext: @unchecked Sendable {
 
   // MARK: Lifecycle
 

@@ -54,7 +54,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
       XCTAssertEqual(actorIdentityValidator.validateCallsCount, 1)
       XCTAssertEqual(actorIdentityValidator.validateIssuerDidMetadataJwsCallsCount, 0)
       XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 0)
-      XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeCallsCount, 0)
+      XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionCallsCount, 0)
     }
   }
 
@@ -113,7 +113,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 1)
     XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationCallsCount, 1)
     XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 1)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionForCallsCount, 1)
   }
 
   func testExecute_validResultCredential_argumentsPassed() async throws {
@@ -136,7 +136,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(
       credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationReceivedArguments?.metadataWrapper.metadataJws, Self.metadataJws)
 
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionForReceivedCredential, repositoryCredential)
   }
 
   func testExecute_validResultCredential_passesRefreshTokenToCredentialGenerator() async throws {
@@ -184,7 +184,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(credential as? VerifiableCredential, updatedCredential)
 
     XCTAssertNil(credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationReceivedArguments?.rawOcaBundle)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionForReceivedCredential, repositoryCredential)
   }
 
   func testExecute_fetchMetadataFails_throwsError() async throws {
@@ -375,7 +375,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_checkAndUpdateCredentialStatusFailure_returnsValidCredentialAndTrustStatement() async throws {
-    checkAndUpdateCredentialStatusUseCase.executeForThrowableError = TestingError.error
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionForThrowableError = TestingError.error
 
     let credential = try await useCase.execute(from: offer)
 
@@ -415,23 +415,37 @@ final class FetchCredentialUseCaseTests: XCTestCase {
   private var mockCredentialKeyBinding: KeyBinding!
 
   private func registerMocks() {
-    openIdRepositorySpy = OpenIDRepositoryProtocolSpy()
-    holderBindingsGenerator = HolderBindingsGeneratorProtocolSpy()
-    fetchAnyVerifiableCredentialUseCase = FetchAnyVerifiableCredentialUseCaseProtocolSpy()
-    fetchVcMetadataUseCase = FetchVcMetadataUseCaseProtocolSpy()
-    credentialGenerator = CredentialGeneratorProtocolSpy()
-    credentialRepository = CredentialRepositoryProtocolSpy()
-    checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
-    credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()
+    let openIdRepositorySpy = OpenIDRepositoryProtocolSpy()
+    self.openIdRepositorySpy = openIdRepositorySpy
+    let holderBindingsGenerator = HolderBindingsGeneratorProtocolSpy()
+    self.holderBindingsGenerator = holderBindingsGenerator
+    let fetchAnyVerifiableCredentialUseCase = FetchAnyVerifiableCredentialUseCaseProtocolSpy()
+    self.fetchAnyVerifiableCredentialUseCase = fetchAnyVerifiableCredentialUseCase
+    let fetchVcMetadataUseCase = FetchVcMetadataUseCaseProtocolSpy()
+    self.fetchVcMetadataUseCase = fetchVcMetadataUseCase
+    let credentialGenerator = CredentialGeneratorProtocolSpy()
+    self.credentialGenerator = credentialGenerator
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+    self.credentialRepository = credentialRepository
+    let checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
+    self.checkAndUpdateCredentialStatusUseCase = checkAndUpdateCredentialStatusUseCase
+    let credentialKeyRepository = CredentialKeyRepositoryProtocolSpy()
+    self.credentialKeyRepository = credentialKeyRepository
     analyticsProvider = MockProvider()
     let analytics = Analytics()
     analytics.register(analyticsProvider)
-    issuanceDPoPKeyRepository = IssuanceDPoPKeyRepositoryProtocolSpy()
-    mapCredentialsToKeyBindingsUseCase = MapCredentialsToKeyBindingsUseCaseProtocolSpy()
-    keyBindingGenerator = KeyBindingGeneratorProtocolSpy()
-    trustStatementValidator = TrustStatementValidatorProtocolSpy()
-    protectedIssuanceValidator = ProtectedIssuanceValidatorProtocolSpy()
-    actorIdentityValidator = ActorIdentityValidatorProtocolSpy()
+    let issuanceDPoPKeyRepository = IssuanceDPoPKeyRepositoryProtocolSpy()
+    self.issuanceDPoPKeyRepository = issuanceDPoPKeyRepository
+    let mapCredentialsToKeyBindingsUseCase = MapCredentialsToKeyBindingsUseCaseProtocolSpy()
+    self.mapCredentialsToKeyBindingsUseCase = mapCredentialsToKeyBindingsUseCase
+    let keyBindingGenerator = KeyBindingGeneratorProtocolSpy()
+    self.keyBindingGenerator = keyBindingGenerator
+    let trustStatementValidator = TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>()
+    self.trustStatementValidator = trustStatementValidator
+    let protectedIssuanceValidator = ProtectedIssuanceValidatorProtocolSpy()
+    self.protectedIssuanceValidator = protectedIssuanceValidator
+    let actorIdentityValidator = ActorIdentityValidatorProtocolSpy()
+    self.actorIdentityValidator = actorIdentityValidator
     mockCredentialKeyBinding = try? KeyBinding(
       id: UUID(uuidString: mockHolderBindings.first!.keyPair.identifier)!,
       algorithm: "ES256",
@@ -439,21 +453,21 @@ final class FetchCredentialUseCaseTests: XCTestCase {
       publicKey: mockHolderBindings.first?.keyPair.publicKey?.toData(),
       privateKey: mockHolderBindings.first?.keyPair.privateKey.toData())
 
-    Container.shared.openIDRepository.register { self.openIdRepositorySpy }
-    Container.shared.holderBindingsGenerator.register { self.holderBindingsGenerator }
-    Container.shared.fetchAnyVerifiableCredentialUseCase.register { self.fetchAnyVerifiableCredentialUseCase }
-    Container.shared.fetchVcMetadataUseCase.register { self.fetchVcMetadataUseCase }
-    Container.shared.credentialGenerator.register { self.credentialGenerator }
-    Container.shared.credentialRepository.register { self.credentialRepository }
-    Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
-    Container.shared.credentialKeyRepository.register { self.credentialKeyRepository }
+    Container.shared.openIDRepository.register { openIdRepositorySpy }
+    Container.shared.holderBindingsGenerator.register { holderBindingsGenerator }
+    Container.shared.fetchAnyVerifiableCredentialUseCase.register { fetchAnyVerifiableCredentialUseCase }
+    Container.shared.fetchVcMetadataUseCase.register { fetchVcMetadataUseCase }
+    Container.shared.credentialGenerator.register { credentialGenerator }
+    Container.shared.credentialRepository.register { credentialRepository }
+    Container.shared.checkAndUpdateCredentialStatusUseCase.register { checkAndUpdateCredentialStatusUseCase }
+    Container.shared.credentialKeyRepository.register { credentialKeyRepository }
     Container.shared.analytics.register { analytics }
-    Container.shared.issuanceDPoPKeyRepository.register { self.issuanceDPoPKeyRepository }
-    Container.shared.mapCredentialsToKeyBindingsUseCase.register { self.mapCredentialsToKeyBindingsUseCase }
-    Container.shared.keyBindingGenerator.register { self.keyBindingGenerator }
-    Container.shared.trustStatementValidator.register { self.trustStatementValidator }
-    Container.shared.protectedIssuanceValidator.register { self.protectedIssuanceValidator }
-    Container.shared.actorIdentityValidator.register { self.actorIdentityValidator }
+    Container.shared.issuanceDPoPKeyRepository.register { issuanceDPoPKeyRepository }
+    Container.shared.mapCredentialsToKeyBindingsUseCase.register { mapCredentialsToKeyBindingsUseCase }
+    Container.shared.keyBindingGenerator.register { keyBindingGenerator }
+    Container.shared.trustStatementValidator.register { trustStatementValidator }
+    Container.shared.protectedIssuanceValidator.register { protectedIssuanceValidator }
+    Container.shared.actorIdentityValidator.register { actorIdentityValidator }
     Container.shared.trustEnvironmentDidRegex.register { #/^did:tdw:mock=:mock\.swiyu\.admin\.ch:.*/# }
 
   }
@@ -481,7 +495,7 @@ final class FetchCredentialUseCaseTests: XCTestCase {
     mapCredentialsToKeyBindingsUseCase.callAsFunctionCredentialsKeyPairsReturnValue = [mappedCredential]
     credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationReturnValue = generatedCredential
     credentialRepository.createVerifiableCredentialReturnValue = repositoryCredential
-    checkAndUpdateCredentialStatusUseCase.executeForReturnValue = updatedCredential
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionForReturnValue = updatedCredential
     credentialGenerator.generateDeferredKeyBindingsRawOcaBundleMetadataWrapperAuthenticationReturnValue = DeferredCredential(
       transactionId: mockDeferredCredentialRequest.transactionId,
       endpoint: mockDeferredCredentialRequest.endpoint,

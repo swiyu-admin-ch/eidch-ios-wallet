@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -18,6 +17,7 @@ let package = Package(
     .package(path: "../BITActivity"),
     .package(path: "../BITAppAuth"),
     .package(path: "../BITCredentialShared"),
+    .package(path: "../BITEntities"),
     .package(path: "../BITAppAttestation"),
     .package(path: "../BITOpenID"),
     .package(path: "../../Platforms/BITNetworking"),
@@ -38,6 +38,7 @@ let package = Package(
         .product(name: "BITActivity", package: "BITActivity"),
         .product(name: "BITAppAuth", package: "BITAppAuth"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
+        .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITAppAttestation", package: "BITAppAttestation"),
         .product(name: "BITNetworking", package: "BITNetworking"),
         .product(name: "BITJWT", package: "BITJWT"),
@@ -57,8 +58,10 @@ let package = Package(
         "BITNonCompliance",
         .product(name: "BITAppAttestation", package: "BITAppAttestation"),
         .product(name: "BITCredentialShared", package: "BITCredentialShared"),
+        .product(name: "BITEntities", package: "BITEntities"),
         .product(name: "BITOpenID", package: "BITOpenID"),
         .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITTestingCore", package: "BITCore"),
+        .product(name: "FactoryTesting", package: "Factory"),
       ]),
   ])

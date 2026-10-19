@@ -5,7 +5,7 @@ import Spyable
 // MARK: - OpenID4VCIErrorParserProtocol
 
 @Spyable
-protocol OpenID4VCIErrorParserProtocol {
+protocol OpenID4VCIErrorParserProtocol: Sendable {
   func parse(_ error: Error) -> Error
 }
 

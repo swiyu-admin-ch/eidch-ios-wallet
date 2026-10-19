@@ -13,11 +13,14 @@ final class UniquePassphraseManagerTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
-    spyUniquePassphraseRepository = UniquePassphraseRepositoryProtocolSpy()
-    Container.shared.getBiometricStateUseCase.register { self.getBiometricStateUseCase }
-    Container.shared.uniquePassphraseRepository.register { self.spyUniquePassphraseRepository }
-    Container.shared.passphraseLength.register { Self.passphraseLength }
+    let getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    let spyUniquePassphraseRepository = UniquePassphraseRepositoryProtocolSpy()
+    let passphraseLength = Self.passphraseLength
+    self.getBiometricStateUseCase = getBiometricStateUseCase
+    self.spyUniquePassphraseRepository = spyUniquePassphraseRepository
+    Container.shared.getBiometricStateUseCase.register { getBiometricStateUseCase }
+    Container.shared.uniquePassphraseRepository.register { spyUniquePassphraseRepository }
+    Container.shared.passphraseLength.register { passphraseLength }
     uniquePassphraseManager = UniquePassphraseManager()
   }
 

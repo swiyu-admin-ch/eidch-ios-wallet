@@ -10,7 +10,7 @@ import Spyable
 // MARK: - FetchIssuanceTrustInformationUseCaseProtocol
 
 @Spyable
-public protocol FetchIssuanceTrustInformationUseCaseProtocol {
+public protocol FetchIssuanceTrustInformationUseCaseProtocol: Sendable {
   func callAsFunction(for credential: VerifiableCredential) async throws -> (TrustInformation, ActorCompliance)
 }
 
@@ -22,7 +22,7 @@ struct FetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCas
 
   func callAsFunction(for credential: VerifiableCredential) async throws -> (TrustInformation, ActorCompliance) {
     let bundleItem = try selectCredentialBundleItemUseCase(credential)
-    let anyCredential = try createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
+    let anyCredential = try await createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
     var isIdentityTrusted = false
 
     if

@@ -11,13 +11,13 @@ extension FetchCredentialContext {
 
     // MARK: Internal
 
-    static let sample = make()
-    static let sampleWithoutHolderBinding = make(holderBindings: nil)
-    static let sampleBatch = make(holderBindings: [
+    nonisolated(unsafe) static let sample = make()
+    nonisolated(unsafe) static let sampleWithoutHolderBinding = make(holderBindings: nil)
+    nonisolated(unsafe) static let sampleBatch = make(holderBindings: [
       HolderBinding(keyPair: VaultKeyPair.Mock.ES256, keyAttestationJWS: "attestationJWS-1"),
       HolderBinding(keyPair: VaultKeyPair.Mock.ES256SavePermanently(id: UUID()), keyAttestationJWS: nil),
     ])
-    static let sampleWithSoftwareHolderBinding = make(holderBindings: HolderBinding.Mock.softwareKey)
+    nonisolated(unsafe) static let sampleWithSoftwareHolderBinding = make(holderBindings: HolderBinding.Mock.softwareKey)
 
     // MARK: Private
 

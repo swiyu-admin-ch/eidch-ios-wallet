@@ -4,7 +4,7 @@ import Spyable
 
 
 @Spyable
-protocol SubmitEIDRequestUseCaseProtocol {
+protocol SubmitEIDRequestUseCaseProtocol: Sendable {
   func callAsFunction(caseId: String, authJwt: String, files: [EIDRequestCaseFile]) async throws
 }
 

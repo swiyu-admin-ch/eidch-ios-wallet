@@ -8,7 +8,7 @@ import Spyable
 // MARK: - KeyAttestationValidatorProtocol
 
 @Spyable
-public protocol KeyAttestationValidatorProtocol {
+public protocol KeyAttestationValidatorProtocol: Sendable {
   func callAsFunction(keyPair: VaultKeyPair, with keyAttestation: KeyAttestation) async -> Bool
 }
 

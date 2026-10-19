@@ -10,7 +10,7 @@ import Spyable
 // MARK: - AVRepositoryProtocol
 
 @Spyable
-protocol AVRepositoryProtocol {
+protocol AVRepositoryProtocol: Sendable {
   func submitFile(_ file: EIDRequestCaseFile, caseId: String, authJwt: String, _ progress: ProgressBlock?) async throws
   func submitRequest(caseId: String, authJwt: String, files: [EIDRequestCaseFile]) async throws
 }

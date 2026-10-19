@@ -32,20 +32,22 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
 
     XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForCallsCount, 1)
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.callAsFunctionCredentialsKeyBindingsCallsCount, 1)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
+    let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+    XCTAssertEqual(validateCallsCount, 1)
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialCallsCount, 1)
     XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationCallsCount, 1)
     XCTAssertEqual(actorIdentityValidator.validateIssuerDidMetadataJwsCallsCount, 1)
     XCTAssertEqual(credentialRepository.createVerifiableCredentialCallsCount, 1)
     XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsCallsCount, 1)
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForCallsCount, 1)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionForCallsCount, 1)
   }
 
   func testExecute_generateCredentialAssertParameters_success() async throws {
     try await useCase.execute(for: mockDeferredCredential)
 
     XCTAssertEqual(fetchDeferredCredentialService.callAsFunctionForReceivedDeferredCredential, mockDeferredCredential)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateReceivedJws as? VcSdJWS, anyCredential)
+    let validateReceivedJws = await jwsSignatureValidatorMock.validateReceivedJws
+    XCTAssertEqual(validateReceivedJws as? VcSdJWS, anyCredential)
 
     XCTAssertEqual(fetchVcMetadataUseCase.executeAnyCredentialReceivedAnyCredential?.raw, anyCredential.raw)
 
@@ -65,7 +67,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.id, mockDeferredCredential.id)
     XCTAssertEqual(credentialRepository.deleteDeleteKeyPairsReceivedArguments?.deleteKeyPairs, false)
 
-    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential, repositoryCredential)
+    XCTAssertEqual(checkAndUpdateCredentialStatusUseCase.callAsFunctionForReceivedCredential, repositoryCredential)
   }
 
   func testExecute_updateDeferredCredential_success() async throws {
@@ -161,7 +163,8 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.callAsFunctionCredentialsKeyBindingsCallsCount, 1)
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.callAsFunctionCredentialsKeyBindingsReceivedArguments?.credentials.count, 2)
     XCTAssertEqual(mapCredentialsToKeyBindingsUseCase.callAsFunctionCredentialsKeyBindingsReceivedArguments?.keyBindings.count, 2)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
+    let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+    XCTAssertEqual(validateCallsCount, 1)
     XCTAssertEqual(actorIdentityValidator.validateIssuerDidMetadataJwsCallsCount, 1)
     XCTAssertEqual(actorIdentityValidator.validateIssuerDidMetadataJwsReceivedArguments?.issuerDid, anyCredential.issuer)
     XCTAssertEqual(credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationCallsCount, 1)
@@ -298,7 +301,7 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   }
 
   func testExecute_checkAndUpdateCredentialStatusFailure() async throws {
-    checkAndUpdateCredentialStatusUseCase.executeForThrowableError = TestingError.error
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionForThrowableError = TestingError.error
 
     do {
       try await useCase.execute(for: mockDeferredCredential)
@@ -341,25 +344,34 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
   private let updatedCredential: VerifiableCredential = .Mock.sampleDisplaysEmpty
 
   private func registerMocks() {
-    fetchDeferredCredentialService = FetchDeferredCredentialServiceProtocolSpy()
-    fetchVcMetadataUseCase = FetchVcMetadataUseCaseProtocolSpy()
-    credentialGenerator = CredentialGeneratorProtocolSpy()
-    credentialRepository = CredentialRepositoryProtocolSpy()
-    checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
-    mapCredentialsToKeyBindingsUseCase = MapCredentialsToKeyBindingsUseCaseProtocolSpy()
-    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
-    protectedIssuanceValidator = ProtectedIssuanceValidatorProtocolSpy()
-    actorIdentityValidator = ActorIdentityValidatorProtocolSpy()
+    let fetchDeferredCredentialService = FetchDeferredCredentialServiceProtocolSpy()
+    self.fetchDeferredCredentialService = fetchDeferredCredentialService
+    let fetchVcMetadataUseCase = FetchVcMetadataUseCaseProtocolSpy()
+    self.fetchVcMetadataUseCase = fetchVcMetadataUseCase
+    let credentialGenerator = CredentialGeneratorProtocolSpy()
+    self.credentialGenerator = credentialGenerator
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+    self.credentialRepository = credentialRepository
+    let checkAndUpdateCredentialStatusUseCase = CheckAndUpdateCredentialStatusUseCaseProtocolSpy()
+    self.checkAndUpdateCredentialStatusUseCase = checkAndUpdateCredentialStatusUseCase
+    let mapCredentialsToKeyBindingsUseCase = MapCredentialsToKeyBindingsUseCaseProtocolSpy()
+    self.mapCredentialsToKeyBindingsUseCase = mapCredentialsToKeyBindingsUseCase
+    let jwsSignatureValidatorMock: JWSSignatureValidatorMock<VcSdJwt> = JWSSignatureValidatorMock()
+    self.jwsSignatureValidatorMock = jwsSignatureValidatorMock
+    let protectedIssuanceValidator = ProtectedIssuanceValidatorProtocolSpy()
+    self.protectedIssuanceValidator = protectedIssuanceValidator
+    let actorIdentityValidator = ActorIdentityValidatorProtocolSpy()
+    self.actorIdentityValidator = actorIdentityValidator
 
-    Container.shared.fetchDeferredCredentialService.register { self.fetchDeferredCredentialService }
-    Container.shared.fetchVcMetadataUseCase.register { self.fetchVcMetadataUseCase }
-    Container.shared.credentialGenerator.register { self.credentialGenerator }
-    Container.shared.credentialRepository.register { self.credentialRepository }
-    Container.shared.checkAndUpdateCredentialStatusUseCase.register { self.checkAndUpdateCredentialStatusUseCase }
-    Container.shared.mapCredentialsToKeyBindingsUseCase.register { self.mapCredentialsToKeyBindingsUseCase }
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
-    Container.shared.protectedIssuanceValidator.register { self.protectedIssuanceValidator }
-    Container.shared.actorIdentityValidator.register { self.actorIdentityValidator }
+    Container.shared.fetchDeferredCredentialService.register { fetchDeferredCredentialService }
+    Container.shared.fetchVcMetadataUseCase.register { fetchVcMetadataUseCase }
+    Container.shared.credentialGenerator.register { credentialGenerator }
+    Container.shared.credentialRepository.register { credentialRepository }
+    Container.shared.checkAndUpdateCredentialStatusUseCase.register { checkAndUpdateCredentialStatusUseCase }
+    Container.shared.mapCredentialsToKeyBindingsUseCase.register { mapCredentialsToKeyBindingsUseCase }
+    Container.shared.jwsSignatureValidator.register { jwsSignatureValidatorMock }
+    Container.shared.protectedIssuanceValidator.register { protectedIssuanceValidator }
+    Container.shared.actorIdentityValidator.register { actorIdentityValidator }
     Container.shared.trustEnvironmentDidRegex.register { #/^did:example:123$/# }
   }
 
@@ -372,6 +384,6 @@ final class RefreshDeferredCredentialUseCaseTests: XCTestCase {
     mapCredentialsToKeyBindingsUseCase.callAsFunctionCredentialsKeyBindingsReturnValue = [CredentialWithKeyBinding(credential: anyCredential, keyBinding: keyBindingMock)]
     credentialRepository.createVerifiableCredentialReturnValue = repositoryCredential
     credentialRepository.updateDeferredCredentialReturnValue = updatedDeferredCredential
-    checkAndUpdateCredentialStatusUseCase.executeForReturnValue = updatedCredential
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionForReturnValue = updatedCredential
   }
 }

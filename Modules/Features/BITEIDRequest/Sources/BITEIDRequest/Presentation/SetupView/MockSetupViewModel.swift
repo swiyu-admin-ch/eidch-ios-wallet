@@ -2,6 +2,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 class MockSetupViewModel: SetupViewModel {
 
   @MainActor

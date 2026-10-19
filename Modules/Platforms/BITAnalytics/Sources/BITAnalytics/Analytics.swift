@@ -6,7 +6,7 @@ public typealias AnalyticsProtocol = Loggable & PrivacySettable & ProviderRegist
 
 // MARK: - Analytics
 
-final class Analytics: AnalyticsProtocol {
+final class Analytics: AnalyticsProtocol, @unchecked Sendable {
 
   private(set) var isAnalyticsEnabled = false
   private(set) var providers = [AnalyticsProviderProtocol]()

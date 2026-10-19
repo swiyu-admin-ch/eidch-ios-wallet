@@ -1,3 +1,4 @@
+import BITCredentialShared
 import BITEntities
 
 extension EIDRequestCaseEntity {

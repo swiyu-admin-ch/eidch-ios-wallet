@@ -6,6 +6,6 @@ typealias StatusCode = Int
 // MARK: - TokenStatusListByteDecoderProtocol
 
 @Spyable
-protocol TokenStatusListByteDecoderProtocol {
+protocol TokenStatusListByteDecoderProtocol: Sendable {
   func decode(_ statusList: Data, bits: Int, index: Int) throws -> StatusCode
 }

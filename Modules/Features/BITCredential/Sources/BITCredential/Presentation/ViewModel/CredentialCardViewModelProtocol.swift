@@ -6,6 +6,7 @@ import SwiftUI
 
 // MARK: - CredentialCardViewModelProtocol
 
+@MainActor
 public protocol CredentialCardViewModelProtocol {
   var issuerDisplay: CredentialIssuerDisplay? { get }
   var credentialDisplay: CredentialDisplay? { get }
@@ -14,16 +15,15 @@ public protocol CredentialCardViewModelProtocol {
   var isBatchPrivacyWarningVisible: Bool { get }
   var statusText: String { get }
   var statusImage: Image { get }
-  var statusBadgeAccessibilityText: String { get }
   var statusTextAlt: String { get }
-  var statusBadgeStyle: any BadgeStyle { get }
-  var statusColor: Color { get }
+  var statusBadgeStyle: BadgeStyle { get }
+  var statusBadgeType: BadgeType { get }
   var cardStyle: CredentialCardStyle { get }
-  var cardStatusBadgeStyle: any BadgeStyle { get }
 }
 
 // MARK: - CredentialViewModelProtocol
 
+@MainActor
 public protocol CredentialViewModelProtocol: CredentialCardViewModelProtocol, Identifiable {
   associatedtype CredentialType where CredentialType: CredentialProtocol
   var credential: CredentialType { get }

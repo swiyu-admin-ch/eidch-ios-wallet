@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - OpenIdConfigurationJWT
 
-struct OpenIdConfigurationJWT: JWT, Codable, Equatable {
+struct OpenIdConfigurationJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

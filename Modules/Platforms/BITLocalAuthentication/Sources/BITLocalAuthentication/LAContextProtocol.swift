@@ -5,7 +5,7 @@ import Spyable
 // MARK: - LAContextProtocol
 
 @Spyable
-public protocol LAContextProtocol {
+public protocol LAContextProtocol: Sendable {
   var localizedReason: String { get set }
   var interactionNotAllowed: Bool { get set }
   var biometryType: LABiometryType { get }

@@ -4,8 +4,7 @@ import Spyable
 import XCTest
 @testable import BITOnboarding
 
-// MARK: - PinCodeViewModelTests
-
+@MainActor
 final class PinCodeInformationViewModelTests: XCTestCase {
 
   // MARK: Internal

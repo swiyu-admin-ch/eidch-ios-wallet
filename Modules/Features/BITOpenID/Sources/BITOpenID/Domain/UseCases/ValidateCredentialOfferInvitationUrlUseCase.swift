@@ -4,7 +4,7 @@ import Spyable
 // MARK: - ValidateCredentialOfferInvitationUrlUseCaseProtocol
 
 @Spyable
-public protocol ValidateCredentialOfferInvitationUrlUseCaseProtocol {
+public protocol ValidateCredentialOfferInvitationUrlUseCaseProtocol: Sendable {
   func execute(_ url: URL) throws -> CredentialOffer
 }
 

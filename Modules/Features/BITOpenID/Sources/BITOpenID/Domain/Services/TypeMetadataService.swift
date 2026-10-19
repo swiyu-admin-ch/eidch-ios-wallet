@@ -14,7 +14,7 @@ enum TypeMetadataServiceError: Error {
 // MARK: - TypeMetadataServiceProtocol
 
 @Spyable
-protocol TypeMetadataServiceProtocol {
+protocol TypeMetadataServiceProtocol: Sendable {
   ///
   /// Fetches the type metadata based on the `vct_metadata_uri` or `vct` property of a `vc`.
   ///

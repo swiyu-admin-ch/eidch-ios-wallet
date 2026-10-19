@@ -99,6 +99,7 @@ extension PinCodeViewModel {
 // MARK: - PinCodeDelegate
 
 @Spyable
+@MainActor
 public protocol PinCodeDelegate: AnyObject {
   func didTryTooManyAttempts()
 }

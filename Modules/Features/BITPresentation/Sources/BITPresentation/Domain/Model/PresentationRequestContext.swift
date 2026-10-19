@@ -7,7 +7,7 @@ import Spyable
 
 // MARK: - PresentationRequestContext
 
-public class PresentationRequestContext: Equatable {
+public class PresentationRequestContext: Equatable, @unchecked Sendable {
 
   // MARK: Lifecycle
 

@@ -8,7 +8,7 @@ import Spyable
 // MARK: - PushNotificationRepositoryProtocol
 
 @Spyable
-public protocol PushNotificationRepositoryProtocol {
+public protocol PushNotificationRepositoryProtocol: Sendable {
   func delete(pushId: String) async throws
   func register(body: PushRegistrationBody) async throws -> PushRegistrationResponse
 

@@ -8,13 +8,13 @@ import Spyable
 // MARK: - LoginBiometricUseCaseProtocol
 
 @Spyable
-public protocol LoginBiometricUseCaseProtocol {
+public protocol LoginBiometricUseCaseProtocol: Sendable {
   func callAsFunction() async throws
 }
 
 // MARK: - LoginBiometricUseCase
 
-class LoginBiometricUseCase: LoginBiometricUseCaseProtocol {
+struct LoginBiometricUseCase: LoginBiometricUseCaseProtocol {
 
   // MARK: Internal
 

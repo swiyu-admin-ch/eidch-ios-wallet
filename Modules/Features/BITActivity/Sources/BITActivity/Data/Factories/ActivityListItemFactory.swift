@@ -6,7 +6,7 @@ import Spyable
 // MARK: - ActivityListItemFactoryProtocol
 
 @Spyable
-public protocol ActivityListItemFactoryProtocol {
+public protocol ActivityListItemFactoryProtocol: Sendable {
   func callAsFunction(_ entity: CredentialActivityEntity) -> ActivityListItem
 }
 

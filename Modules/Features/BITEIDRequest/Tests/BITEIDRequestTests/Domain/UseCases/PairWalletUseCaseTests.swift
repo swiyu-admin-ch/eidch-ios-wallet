@@ -126,15 +126,19 @@ final class PairWalletUseCaseTests: XCTestCase {
   private var validateCredentialOfferInvitationUrlUseCase: ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy!
 
   private func registerMocks() {
-    sidRepository = SIDRepositoryProtocolSpy()
-    fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
-    eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
-    validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
+    let sidRepository = SIDRepositoryProtocolSpy()
+    self.sidRepository = sidRepository
+    let fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
+    self.fetchCredentialUseCase = fetchCredentialUseCase
+    let eIDRequestCaseRepository = EIDRequestCaseRepositoryProtocolSpy()
+    self.eIDRequestCaseRepository = eIDRequestCaseRepository
+    let validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
+    self.validateCredentialOfferInvitationUrlUseCase = validateCredentialOfferInvitationUrlUseCase
 
-    Container.shared.sidRepository.register { self.sidRepository }
-    Container.shared.fetchCredentialUseCase.register { self.fetchCredentialUseCase }
-    Container.shared.eIDRequestCaseRepository.register { self.eIDRequestCaseRepository }
-    Container.shared.validateCredentialOfferInvitationUrlUseCase.register { self.validateCredentialOfferInvitationUrlUseCase }
+    Container.shared.sidRepository.register { sidRepository }
+    Container.shared.fetchCredentialUseCase.register { fetchCredentialUseCase }
+    Container.shared.eIDRequestCaseRepository.register { eIDRequestCaseRepository }
+    Container.shared.validateCredentialOfferInvitationUrlUseCase.register { validateCredentialOfferInvitationUrlUseCase }
   }
 
   private func createSuccessState() {

@@ -5,6 +5,7 @@ import SwiftUI
 
 // MARK: - PinCodeInformationViewModel
 
+@MainActor
 @Observable
 class PinCodeInformationViewModel {
 

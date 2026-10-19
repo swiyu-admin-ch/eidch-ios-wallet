@@ -162,7 +162,9 @@ public class CameraPreviewView: UIView {
 
   private func configureTimer() {
     scannerTimer = Timer.scheduledTimer(withTimeInterval: Self.scannerTimeoutInterval, repeats: true) { [weak self] _ in
-      self?.resetFocusAreaIfNeeeded()
+      Task { @MainActor in
+        self?.resetFocusAreaIfNeeeded()
+      }
     }
   }
 

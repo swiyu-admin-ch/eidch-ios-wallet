@@ -18,7 +18,7 @@ public struct CredentialCard: View {
     environment: TrustEnvironment? = nil,
     statusBadgeLabel: String? = nil,
     statusBadgeImage: Image? = nil,
-    statusBadgeStyle: (any BadgeStyle)? = nil,
+    statusBadgeStyle: BadgeStyle? = nil,
     colorSchemeOverride: ColorScheme? = nil,
     style: CredentialCardStyle = .verifiable)
   {
@@ -102,10 +102,12 @@ public struct CredentialCard: View {
   private var environment: TrustEnvironment?
   private var statusBadgeLabel: String?
   private var statusBadgeImage: Image?
-  private var statusBadgeStyle: (any BadgeStyle)?
+  private var statusBadgeStyle: BadgeStyle?
   private var style: CredentialCardStyle
   private var colorSchemeOverride: ColorScheme?
 
+  private let nameLineLimit = 2
+  private let summaryLineLimit = 2
   private let secondaryTextOpacity = 0.7
   private let deferredCredentialOverlayOpacity = 0.6
   private let defaultText = "n/a"
@@ -170,6 +172,7 @@ public struct CredentialCard: View {
       VStack(alignment: .leading) {
         Text(name ?? defaultText)
           .font(.mono.headline)
+          .lineLimit(nameLineLimit)
           .fixedSize(horizontal: false, vertical: true)
           .frame(maxWidth: .infinity, alignment: .leading)
           .multilineTextAlignment(.leading)
@@ -177,6 +180,7 @@ public struct CredentialCard: View {
         if let summary {
           Text(summary)
             .font(.mono.headline)
+            .lineLimit(summaryLineLimit)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
@@ -193,6 +197,7 @@ public struct CredentialCard: View {
         VStack(alignment: .leading) {
           Text(name ?? defaultText)
             .font(.mono.headline)
+            .lineLimit(nameLineLimit)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
@@ -201,6 +206,7 @@ public struct CredentialCard: View {
           if let summary {
             Text(summary)
               .font(.mono.headline)
+              .lineLimit(summaryLineLimit)
               .fixedSize(horizontal: false, vertical: true)
               .frame(maxWidth: .infinity, alignment: .leading)
               .multilineTextAlignment(.leading)
@@ -257,12 +263,13 @@ public struct CredentialCard: View {
   private func badges() -> some View {
     if environment == .swiyuInt {
       Badge(label: L10n.tkCredentialStatusDemo)
-        .badgeStyle(.info)
+        .badgeType(.filled(.info))
         .colorScheme(cardColorScheme == .dark ? .light : .dark)
         .accessibilityLabel(L10n.tkCredentialStatusDemoAlt)
     }
     if let statusBadgeLabel, let statusBadgeImage, let statusBadgeStyle {
-      CredentialStatusBadge(label: statusBadgeLabel, image: statusBadgeImage, style: statusBadgeStyle)
+      CredentialStatusBadge(label: statusBadgeLabel, image: statusBadgeImage)
+        .badgeType(.filled(statusBadgeStyle))
     }
   }
 

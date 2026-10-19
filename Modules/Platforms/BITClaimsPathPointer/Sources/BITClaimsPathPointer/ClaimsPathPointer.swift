@@ -4,7 +4,7 @@ public typealias ClaimsPathPointer = [ClaimsPathPointerElement]
 
 // MARK: - ClaimsPathPointerElement
 
-public enum ClaimsPathPointerElement: Codable, Hashable {
+public enum ClaimsPathPointerElement: Codable, Hashable, Sendable {
   case string(String)
   case index(Int)
   case null

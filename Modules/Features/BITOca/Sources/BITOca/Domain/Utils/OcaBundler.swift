@@ -9,7 +9,7 @@ import Spyable
 /// https://github.com/e-id-admin/open-source-community/blob/main/tech-roadmap/rfcs/oca/spec.md
 ///
 @Spyable
-public protocol OcaBundlerProtocol {
+public protocol OcaBundlerProtocol: Sendable {
   ///
   /// Validates a OCA Bundle JSON and creates the [OcaBundle] data model.
   ///

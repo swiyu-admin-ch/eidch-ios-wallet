@@ -5,7 +5,7 @@ import RealmSwift
 
 // MARK: - RealmDataStore
 
-public class RealmDataStore: RealmDataStoreProtocol {
+public struct RealmDataStore: RealmDataStoreProtocol {
 
   // MARK: Public
 
@@ -66,16 +66,21 @@ public class RealmDataStore: RealmDataStoreProtocol {
 
   // MARK: Private
 
+  @Injected(\.contentHasher) private var contentHasher
+
+  /// Content-hashed children are shared by every owner of the same content, so a delete stops at
+  /// them instead of cascading into rows another owner still points at.
   private func delete(_ object: some Object, from realm: Realm, configuration: Realm.Configuration) {
     for property in object.objectSchema.properties {
-      if property.objectClassName != nil {
-        if let childObject = object[property.name] as? Object {
-          delete(childObject, from: realm, configuration: configuration)
-        } else if property.isArray {
-          let childList = object.dynamicList(property.name)
-          for child in childList {
-            delete(child, from: realm, configuration: configuration)
-          }
+      guard property.objectClassName != nil, property.type != .linkingObjects else { continue }
+
+      if let childObject = object[property.name] as? Object {
+        guard !contentHasher.isContentHashed(childObject) else { continue }
+        delete(childObject, from: realm, configuration: configuration)
+      } else if property.isArray {
+        let childList = object.dynamicList(property.name)
+        for child in childList where !contentHasher.isContentHashed(child) {
+          delete(child, from: realm, configuration: configuration)
         }
       }
     }

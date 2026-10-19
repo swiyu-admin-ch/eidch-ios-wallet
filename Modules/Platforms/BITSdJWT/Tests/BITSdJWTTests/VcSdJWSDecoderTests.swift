@@ -108,8 +108,9 @@ final class VcSdJWSDecoderTests: XCTestCase {
   private var didResolverHelperSpy: DidResolverHelperProtocolSpy!
 
   private func registerMocks() {
-    didResolverHelperSpy = DidResolverHelperProtocolSpy()
-    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
+    let didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    self.didResolverHelperSpy = didResolverHelperSpy
+    Container.shared.didResolverHelper.register { didResolverHelperSpy }
   }
 
   private func success() {

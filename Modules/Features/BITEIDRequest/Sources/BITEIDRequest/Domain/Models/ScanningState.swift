@@ -1,4 +1,4 @@
-enum ScanningState: Equatable {
+enum ScanningState: Equatable, Sendable {
   case recto
   case verso
 }

@@ -10,10 +10,10 @@ import Testing
 @testable import BITTestingCore
 @testable import BITVault
 
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
+// swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try force_cast
 
-@Suite(.serialized)
-struct RefreshVerifiableCredentialUseCaseTests {
+@Suite
+struct RefreshVerifiableCredentialUseCaseTests: @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -39,8 +39,8 @@ struct RefreshVerifiableCredentialUseCaseTests {
       refreshAnyCredentialUseCase.callAsFunctionMetadataWrapperHolderBindingsAuthorizationReceivedArguments?.metadataWrapper.credentialConfigurationId ==
         credential.selectedConfigurationId)
     #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCallsCount == 1)
-    #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesReceivedArguments?.batchSize == metadataJwsMock.payload.credentialIssuerMetadata.batchCredentialIssuance?.batchSize)
-    #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesReceivedArguments?.proofTypes == metadataJwsMock.payload.credentialIssuerMetadata.credentialConfigurationsSupported.first?.value.proofTypesSupported)
+    #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesReceivedArguments?.batchSize == Self.metadataJwsMock.payload.credentialIssuerMetadata.batchCredentialIssuance?.batchSize)
+    #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesReceivedArguments?.proofTypes == Self.metadataJwsMock.payload.credentialIssuerMetadata.credentialConfigurationsSupported.first?.value.proofTypesSupported)
     #expect(refreshAnyCredentialUseCase.callAsFunctionMetadataWrapperHolderBindingsAuthorizationReceivedArguments?.holderBindings?.count == 1)
     #expect(refreshAnyCredentialUseCase.callAsFunctionMetadataWrapperHolderBindingsAuthorizationReceivedArguments?.holderBindings == holderBindings)
     #expect(keyBindingGenerator.generateFromCallsCount == 1)
@@ -52,10 +52,10 @@ struct RefreshVerifiableCredentialUseCaseTests {
     #expect(refreshAnyCredentialUseCase.callAsFunctionMetadataWrapperHolderBindingsAuthorizationReceivedArguments?.authorization == expectedAuthorization)
 
     #expect(actorIdentityValidator.validateCallsCount == 1)
-    #expect(actorIdentityValidator.validateReceivedMetadataJws == metadataJwsMock)
+    #expect(actorIdentityValidator.validateReceivedMetadataJws == Self.metadataJwsMock)
     #expect(actorIdentityValidator.validateIssuerDidMetadataJwsCallsCount == 1)
     #expect(actorIdentityValidator.validateIssuerDidMetadataJwsReceivedArguments?.issuerDid == anyCredential.issuer)
-    #expect(actorIdentityValidator.validateIssuerDidMetadataJwsReceivedArguments?.metadataJws == metadataJwsMock)
+    #expect(actorIdentityValidator.validateIssuerDidMetadataJwsReceivedArguments?.metadataJws == Self.metadataJwsMock)
 
     #expect(fetchVcMetadataUseCase.executeAnyCredentialCallsCount == 1)
     #expect(fetchVcMetadataUseCase.executeAnyCredentialReceivedAnyCredential?.raw == anyCredential.raw)
@@ -77,9 +77,118 @@ struct RefreshVerifiableCredentialUseCaseTests {
     #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.refreshedAt != nil)
     #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.authentication.accessToken == refreshedAccessToken.accessToken)
 
-    #expect(checkAndUpdateCredentialStatusUseCase.executeForCallsCount == 1)
-    #expect(checkAndUpdateCredentialStatusUseCase.executeForReceivedCredential == savedCredential)
+    #expect(checkAndUpdateCredentialStatusUseCase.callAsFunctionForCallsCount == 1)
+    #expect(checkAndUpdateCredentialStatusUseCase.callAsFunctionForReceivedCredential == savedCredential)
     #expect(refreshedCredential == checkedCredential)
+  }
+
+  @Test(arguments: VerifiableCredential.ProgressState.allCases.filter { $0 != .accepted })
+  func callAsFunction_notAcceptedCredential_returnsCredentialAsIs(status: VerifiableCredential.ProgressState) async throws {
+    var credential = credential
+    credential.progressionState = status
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == credential)
+    #expect(!holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCalled)
+    #expect(!credentialRepository.updateVerifiableCredentialCalled)
+  }
+
+  @Test
+  func callAsFunction_noRefreshToken_returnsCredentialAsIs() async throws {
+    let credential = Self.createCredential(refreshToken: nil)
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == credential)
+    #expect(!holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCalled)
+    #expect(!credentialRepository.updateVerifiableCredentialCalled)
+  }
+
+  @Test(arguments: CredentialStatus.allCases.filter { $0 != .revoked })
+  func callAsFunction_notRevokedCredential_refreshesCredential(status: CredentialStatus) async throws {
+    credentialStatusValidator.callAsFunctionReturnValue = status
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == checkedCredential)
+    #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCalled)
+    #expect(credentialRepository.updateVerifiableCredentialCalled)
+  }
+
+  @Test
+  func callAsFunction_revokedCredential_returnsCredentialAsIs() async throws {
+    credentialStatusValidator.callAsFunctionReturnValue = .revoked
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == credential)
+    #expect(!holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCalled)
+    #expect(!credentialRepository.updateVerifiableCredentialCalled)
+  }
+
+  @Test
+  func callAsFunction_refreshDisabled_returnsCredentialAsIs() async throws {
+    var metadata = CredentialIssuerMetadata.Mock.sample
+    metadata.credentialConfigurationsSupported = metadata.credentialConfigurationsSupported.mapValues {
+      var config = $0 as! CredentialIssuerMetadata.VcSdJwtCredentialConfigurationSupported
+      config.credentialRefreshDisabled = true
+      return config
+    }
+    let metadataJws = CredentialIssuerMetadataJWT.Mock.createJWS(from: metadata)
+    openIDRepository.fetchMetadataFromReturnValue = metadataJws
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == credential)
+    #expect(!holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCalled)
+    #expect(!credentialRepository.updateVerifiableCredentialCalled)
+  }
+
+  @Test
+  func callAsFunction_currentCredentialHasNoProfile_refreshesCredential() async throws {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = nil
+    swissProfileStatusEvaluator.callAsFunctionAnyCredentialReturnValue = .endOfLife
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == checkedCredential)
+  }
+
+  @Test
+  func callAsFunction_refreshCredentialHasNewerProfile_refreshesCredential() async throws {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = .endOfLife
+    swissProfileStatusEvaluator.callAsFunctionAnyCredentialReturnValue = .deprecated
+
+    let refreshedCredential = try await useCase(credential)
+
+    #expect(refreshedCredential == checkedCredential)
+  }
+
+  @Test
+  func callAsFunction_refreshCredentialHasOlderProfile_throws() async throws {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = .current
+    swissProfileStatusEvaluator.callAsFunctionAnyCredentialReturnValue = .deprecated
+
+    await #expect(throws: RefreshVerifiableCredentialUseCaseError.invalidSwissProfile) {
+      _ = try await useCase(credential)
+    }
+    #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
+    #expect(credentialKeyRepository.deleteCallsCount == holderBindings.count)
+    #expect(credentialKeyRepository.deleteReceivedInvocations == holderBindings.map(\.keyPair))
+  }
+
+  @Test
+  func callAsFunction_refreshCredentialHasNoProfile_throws() async throws {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = .current
+    swissProfileStatusEvaluator.callAsFunctionAnyCredentialReturnValue = nil
+
+    await #expect(throws: RefreshVerifiableCredentialUseCaseError.invalidSwissProfile) {
+      _ = try await useCase(credential)
+    }
+    #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
+    #expect(credentialKeyRepository.deleteCallsCount == holderBindings.count)
+    #expect(credentialKeyRepository.deleteReceivedInvocations == holderBindings.map(\.keyPair))
   }
 
   @Test
@@ -92,7 +201,7 @@ struct RefreshVerifiableCredentialUseCaseTests {
       _ = try await useCase(credential)
       Issue.record("Expected deferredCredentialResponseNotSupported")
     } catch RefreshVerifiableCredentialUseCaseError.deferredCredentialResponseNotSupported {
-      #expect(!credentialRepository.updateVerifiableCredentialCalled)
+      #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
       #expect(credentialKeyRepository.deleteCallsCount == holderBindings.count)
       #expect(credentialKeyRepository.deleteReceivedInvocations == holderBindings.map(\.keyPair))
     } catch {
@@ -113,7 +222,7 @@ struct RefreshVerifiableCredentialUseCaseTests {
 
     #expect(credentialKeyRepository.deleteCallsCount == generatedHolderBindings.count)
     #expect(credentialKeyRepository.deleteReceivedInvocations == generatedHolderBindings.map(\.keyPair))
-    #expect(!credentialRepository.updateVerifiableCredentialCalled)
+    #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
   }
 
   @Test
@@ -122,6 +231,7 @@ struct RefreshVerifiableCredentialUseCaseTests {
 
     await XCTAssertThrowsErrorAsync(try await useCase(credential)) { error in
       #expect(error as? GovernanceError == .unverifiedActor)
+      #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
     }
   }
 
@@ -133,6 +243,7 @@ struct RefreshVerifiableCredentialUseCaseTests {
       #expect(error as? GovernanceError == .unverifiedActor)
       #expect(holderBindingsGenerator.callAsFunctionBatchSizeProofTypesCallsCount == 0)
       #expect(refreshAnyCredentialUseCase.callAsFunctionMetadataWrapperHolderBindingsAuthorizationCallsCount == 0)
+      #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
     }
   }
 
@@ -142,6 +253,7 @@ struct RefreshVerifiableCredentialUseCaseTests {
 
     await XCTAssertThrowsErrorAsync(try await useCase(credential)) { error in
       #expect(error as? TestingError == .error)
+      #expect(credentialRepository.updateVerifiableCredentialReceivedVerifiableCredential?.lastRefreshAttemptAt == Self.dateMock)
     }
   }
 
@@ -152,14 +264,14 @@ struct RefreshVerifiableCredentialUseCaseTests {
     ])
     credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationReturnValue = refreshedCredential
     credentialRepository.updateVerifiableCredentialReturnValue = refreshedCredential
-    checkAndUpdateCredentialStatusUseCase.executeForReturnValue = refreshedCredential
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionForReturnValue = refreshedCredential
 
     _ = try await useCase(credential)
 
     #expect(credentialRepository.updateVerifiableCredentialCallsCount == 1)
     #expect(keyManager.deleteKeyPairWithIdentifierAlgorithmCallsCount == 1)
-    #expect(keyManager.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier == keyBinding.id.uuidString)
-    let expectedAlgorithm = try VaultAlgorithm(fromSignatureAlgorithm: keyBinding.algorithm)
+    #expect(keyManager.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.identifier == Self.keyBinding.id.uuidString)
+    let expectedAlgorithm = try VaultAlgorithm(fromSignatureAlgorithm: Self.keyBinding.algorithm)
     #expect(keyManager.deleteKeyPairWithIdentifierAlgorithmReceivedArguments?.algorithm == expectedAlgorithm)
     #expect(credentialKeyRepository.deleteCallsCount == 0)
   }
@@ -181,6 +293,7 @@ struct RefreshVerifiableCredentialUseCaseTests {
 
   // MARK: Private
 
+  private static let dateMock = Date(timeIntervalSince1970: 1_700_000_000)
   private static let refreshedKeyPair = VaultKeyPair.Mock.ES256SavePermanently(id: UUID())
   private static let refreshedKeyBinding = KeyBinding(
     id: UUID(),
@@ -189,8 +302,10 @@ struct RefreshVerifiableCredentialUseCaseTests {
     publicKey: try! refreshedKeyPair.publicKey?.toData(),
     privateKey: try! refreshedKeyPair.privateKey.toData())
 
+  private static let metadataJwsMock = CredentialIssuerMetadataJWT.Mock.sample
+  private static let keyBinding = KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)
+
   private let anyCredential: AnyCredential = MockAnyCredential()
-  private let metadataJwsMock = CredentialIssuerMetadataJWT.Mock.sample
   private let generatedCredential: VerifiableCredential = .Mock.sampleDisplaysEmpty
   private let savedCredential: VerifiableCredential = .Mock.sample
   private let checkedCredential: VerifiableCredential = .Mock.sampleWithoutKeyBinding
@@ -198,14 +313,15 @@ struct RefreshVerifiableCredentialUseCaseTests {
     accessToken: "refreshed-access-token",
     tokenType: .bearer,
     refreshToken: "refreshed-refresh-token")
-  private let keyBinding = KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)
   private let dpopKeyBinding = KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)
   private let secondRefreshedKeyBinding = KeyBinding(id: UUID(), algorithm: "ES256", bindingType: .software)
   private let holderBindings = [HolderBinding(keyPair: refreshedKeyPair)]
   private let rawOcaBundle = "rawOcaBundle".data(using: .utf8)!
+
   private var useCase: RefreshVerifiableCredentialUseCase!
+
+  private var credentialStatusValidator: CredentialStatusValidatorProtocolSpy!
   private var openIDRepository: OpenIDRepositoryProtocolSpy!
-  private var trustStatementValidator: TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>!
   private var refreshAnyCredentialUseCase: RefreshAnyVerifiableCredentialUseCaseProtocolSpy!
   private var holderBindingsGenerator: HolderBindingsGeneratorProtocolSpy!
   private var keyManager: KeyManagerProtocolSpy!
@@ -219,12 +335,22 @@ struct RefreshVerifiableCredentialUseCaseTests {
   private var keyBindingGenerator: KeyBindingGeneratorProtocolSpy!
   private var protectedIssuanceValidator: ProtectedIssuanceValidatorProtocolSpy!
   private var actorIdentityValidator: ActorIdentityValidatorProtocolSpy!
+  private var swissProfileStatusEvaluator: SwissProfileStatusEvaluatorProtocolSpy!
 
-  private var credential: VerifiableCredential!
+  private var credential = createCredential()
+
+  private static func createCredential(refreshToken: String? = "stored-refresh-token") -> VerifiableCredential {
+    var credential = VerifiableCredential.Mock.sampleWithoutKeyBinding
+    credential.bundleItems = [BundleItem(payload: CredentialPayload.Mock.default, keyBinding: keyBinding)]
+    credential.authentication = CredentialAuthentication(accessToken: "stored-access-token", refreshToken: refreshToken)
+    credential.issuerUrl = metadataJwsMock.payload.credentialIssuerMetadata.credentialIssuer
+    credential.selectedConfigurationId = CredentialIssuerMetadataWrapper.Mock.sample.credentialConfigurationId
+    return credential
+  }
 
   private mutating func registerMocks() {
+    let credentialStatusValidator = CredentialStatusValidatorProtocolSpy()
     let openIDRepository = OpenIDRepositoryProtocolSpy()
-    let trustStatementValidator = TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>()
     let refreshAnyCredentialUseCase = RefreshAnyVerifiableCredentialUseCaseProtocolSpy()
     let holderBindingsGenerator = HolderBindingsGeneratorProtocolSpy()
     let keyManager = KeyManagerProtocolSpy()
@@ -240,9 +366,10 @@ struct RefreshVerifiableCredentialUseCaseTests {
     let keyBindingGenerator = KeyBindingGeneratorProtocolSpy()
     let protectedIssuanceValidator = ProtectedIssuanceValidatorProtocolSpy()
     let actorIdentityValidator = ActorIdentityValidatorProtocolSpy()
+    let swissProfileStatusEvaluator = SwissProfileStatusEvaluatorProtocolSpy()
 
+    self.credentialStatusValidator = credentialStatusValidator
     self.openIDRepository = openIDRepository
-    self.trustStatementValidator = trustStatementValidator
     self.refreshAnyCredentialUseCase = refreshAnyCredentialUseCase
     self.holderBindingsGenerator = holderBindingsGenerator
     self.keyManager = keyManager
@@ -256,16 +383,10 @@ struct RefreshVerifiableCredentialUseCaseTests {
     self.keyBindingGenerator = keyBindingGenerator
     self.protectedIssuanceValidator = protectedIssuanceValidator
     self.actorIdentityValidator = actorIdentityValidator
+    self.swissProfileStatusEvaluator = swissProfileStatusEvaluator
 
-    var credential = VerifiableCredential.Mock.sampleWithoutKeyBinding
-    credential.bundleItems = [BundleItem(payload: CredentialPayload.Mock.default, keyBinding: keyBinding)]
-    credential.authentication = CredentialAuthentication(accessToken: "stored-access-token", refreshToken: "stored-refresh-token")
-    credential.issuerUrl = metadataJwsMock.payload.credentialIssuerMetadata.credentialIssuer
-    credential.selectedConfigurationId = CredentialIssuerMetadataWrapper.Mock.sample.credentialConfigurationId
-    self.credential = credential
-
+    Container.shared.credentialStatusValidator.register { credentialStatusValidator }
     Container.shared.openIDRepository.register { openIDRepository }
-    Container.shared.trustStatementValidator.register { trustStatementValidator }
     Container.shared.refreshAnyVerifiableCredentialUseCase.register { refreshAnyCredentialUseCase }
     Container.shared.holderBindingsGenerator.register { holderBindingsGenerator }
     Container.shared.keyManager.register { keyManager }
@@ -279,11 +400,14 @@ struct RefreshVerifiableCredentialUseCaseTests {
     Container.shared.keyBindingGenerator.register { keyBindingGenerator }
     Container.shared.protectedIssuanceValidator.register { protectedIssuanceValidator }
     Container.shared.actorIdentityValidator.register { actorIdentityValidator }
+    Container.shared.swissProfileStatusEvaluator.register { swissProfileStatusEvaluator }
     Container.shared.trustEnvironmentDidRegex.register { #/^did:tdw:mock=:mock\.swiyu\.admin\.ch:.*/# }
+    Container.shared.currentDate.register { Self.dateMock }
   }
 
   private func createSuccessState() {
-    openIDRepository.fetchMetadataFromReturnValue = metadataJwsMock
+    credentialStatusValidator.callAsFunctionReturnValue = .valid
+    openIDRepository.fetchMetadataFromReturnValue = Self.metadataJwsMock
     refreshAnyCredentialUseCase.callAsFunctionMetadataWrapperHolderBindingsAuthorizationReturnValue = FetchAnyCredentialResult(
       credentials: .credential([anyCredential]),
       authorization: IssuanceAuthorization(accessToken: refreshedAccessToken))
@@ -296,7 +420,8 @@ struct RefreshVerifiableCredentialUseCaseTests {
     fetchVcMetadataUseCase.executeAnyCredentialReturnValue = rawOcaBundle
     credentialGenerator.generateForRawOcaBundleMetadataWrapperAuthenticationReturnValue = generatedCredential
     credentialRepository.updateVerifiableCredentialReturnValue = savedCredential
-    checkAndUpdateCredentialStatusUseCase.executeForReturnValue = checkedCredential
+    checkAndUpdateCredentialStatusUseCase.callAsFunctionForReturnValue = checkedCredential
+    swissProfileStatusEvaluator.callAsFunctionAnyCredentialReturnValue = .current
   }
 
   private func credentialWith(bundleItems: [BundleItem]) -> VerifiableCredential {
@@ -308,5 +433,3 @@ struct RefreshVerifiableCredentialUseCaseTests {
     return credential
   }
 }
-
-// swiftlint:enable implicitly_unwrapped_optional force_unwrapping

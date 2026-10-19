@@ -84,7 +84,7 @@ public struct ActorHeaderView: View {
 
       HStack(alignment: .center, spacing: .x2) {
         Text(viewModel.name)
-          .lineLimit(0)
+          .lineLimit(2)
           .font(.custom.body)
           .foregroundStyle(ThemingAssets.Label.primary.swiftUIColor)
           .accessibilityAddTraits(.isHeader)

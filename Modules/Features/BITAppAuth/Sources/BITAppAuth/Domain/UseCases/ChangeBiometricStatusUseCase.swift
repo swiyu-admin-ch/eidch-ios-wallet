@@ -8,7 +8,7 @@ import Spyable
 // MARK: - ChangeBiometricStatusUseCaseProtocol
 
 @Spyable
-public protocol ChangeBiometricStatusUseCaseProtocol {
+public protocol ChangeBiometricStatusUseCaseProtocol: Sendable {
   func callAsFunction(with uniquePassphrase: Data) async throws
 }
 

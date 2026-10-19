@@ -3,7 +3,7 @@ import BITEntities
 import Foundation
 
 
-public struct EIDRequestCase: Codable, Identifiable, Equatable {
+public struct EIDRequestCase: Codable, Identifiable, Equatable, @unchecked Sendable {
 
   // MARK: Lifecycle
 

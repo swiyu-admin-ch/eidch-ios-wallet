@@ -19,31 +19,38 @@ class RecordDocumentViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     Container.shared.reset()
 
-    avBeam = AVBeamProtocolSpy()
-    updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
-    saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
-    fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
-    context = EIDRequestContext()
+    let avBeam = AVBeamProtocolSpy()
+    self.avBeam = avBeam
+    let updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
+    self.updateInputFileUseCase = updateInputFileUseCase
+    let saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
+    self.saveEIDRequestFilesUseCase = saveEIDRequestFilesUseCase
+    let fetchEIDRequestCaseUseCase = FetchEIDRequestCaseUseCaseProtocolSpy()
+    self.fetchEIDRequestCaseUseCase = fetchEIDRequestCaseUseCase
+    let context = EIDRequestContext()
+    self.context = context
+    let appId = appId
 
-    Container.shared.avBeam.register { @MainActor in self.avBeam }
-    Container.shared.saveEIDRequestFilesUseCase.register { @MainActor in self.saveEIDRequestFilesUseCase }
-    Container.shared.fetchEIDRequestCaseUseCase.register { @MainActor in self.fetchEIDRequestCaseUseCase }
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.avBeam.register { @MainActor in avBeam }
+    Container.shared.saveEIDRequestFilesUseCase.register { @MainActor in saveEIDRequestFilesUseCase }
+    Container.shared.fetchEIDRequestCaseUseCase.register { @MainActor in fetchEIDRequestCaseUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     Container.shared.recordDocumentTimeout.register { 10.0 }
-    Container.shared.avBeamAppID.register { @MainActor in self.appId }
-    Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
+    Container.shared.avBeamAppID.register { @MainActor in appId }
+    Container.shared.updateInputFileUseCase.register { @MainActor in updateInputFileUseCase }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     success()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInitialization_stateIsLoading() {
@@ -56,7 +63,6 @@ class RecordDocumentViewModelTests: XCTestCase {
     XCTAssertNotNil(avBeam.recordDocumentDelegate)
   }
 
-  @MainActor
   func testCancelInitialization_sdkIsStopped() {
     viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)

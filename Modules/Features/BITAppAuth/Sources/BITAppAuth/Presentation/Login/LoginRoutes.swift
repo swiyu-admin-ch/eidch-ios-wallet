@@ -8,6 +8,7 @@ import UIKit
 // MARK: - LoginRoutes
 
 @Spyable
+@MainActor
 public protocol LoginRoutes {
   func login(animated: Bool)
 }

@@ -2,7 +2,7 @@ import BITCredentialShared
 
 // MARK: - CredentialDetailRefreshInput
 
-public struct CredentialDetailRefreshInput: Hashable {
+public struct CredentialDetailRefreshInput: Hashable, Sendable {
 
   public init(credential: CredentialProtocol) {
     self.credential = credential

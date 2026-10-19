@@ -4,7 +4,7 @@ import UserNotifications
 // MARK: - PushNotificationCenterRepositoryProtocol
 
 @Spyable
-protocol PushNotificationCenterRepositoryProtocol {
+protocol PushNotificationCenterRepositoryProtocol: Sendable {
   func notificationSettings() async -> UNNotificationSettings
   func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
   func setBadgeCount(_ count: Int) async throws

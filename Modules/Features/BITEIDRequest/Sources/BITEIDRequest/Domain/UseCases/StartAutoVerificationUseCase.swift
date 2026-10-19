@@ -5,7 +5,7 @@ import Spyable
 // MARK: - StartAutoVerificationUseCaseProtocol
 
 @Spyable
-protocol StartAutoVerificationUseCaseProtocol {
+protocol StartAutoVerificationUseCaseProtocol: Sendable {
   func execute(for caseId: String) async throws -> AutoVerificationResponse
 }
 

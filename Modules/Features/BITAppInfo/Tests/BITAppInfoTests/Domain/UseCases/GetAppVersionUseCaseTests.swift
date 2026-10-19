@@ -1,9 +1,11 @@
 import Factory
+import FactoryTesting
 import Foundation
 import Spyable
 import Testing
 @testable import BITAppInfo
 
+@Suite(.container)
 struct GetAppVersionUseCaseTests {
 
   // MARK: Lifecycle

@@ -8,7 +8,7 @@ public typealias ProgressHandler = ProgressBlock
 
 // MARK: - NetworkService
 
-public struct NetworkService {
+public struct NetworkService: Sendable {
 
   // MARK: Public
 
@@ -104,3 +104,7 @@ extension MoyaProvider {
     }
   }
 }
+
+// MARK: - Moya.Response + @retroactive @unchecked Sendable
+
+extension Moya.Response: @retroactive @unchecked Sendable {}

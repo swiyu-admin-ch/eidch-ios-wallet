@@ -63,6 +63,14 @@ extension Container {
   var credentialKeyRepository: Factory<CredentialKeyRepositoryProtocol> {
     self { CredentialKeyRepository() }
   }
+
+  var credentialStatusValidator: Factory<CredentialStatusValidatorProtocol> {
+    self { CredentialStatusValidator() }
+  }
+
+  var swissProfileStatusEvaluator: Factory<SwissProfileStatusEvaluatorProtocol> {
+    self { SwissProfileStatusEvaluator() }
+  }
 }
 
 // MARK: - Credential detail

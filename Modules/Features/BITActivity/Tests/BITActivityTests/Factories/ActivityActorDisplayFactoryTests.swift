@@ -1,37 +1,43 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import XCTest
+import FactoryTesting
+import Foundation
+import Testing
 @testable import BITActivity
 @testable import BITEntities
 
-final class ActivityActorDisplayFactoryTests: XCTestCase {
+// MARK: - ActivityActorDisplayFactoryTests
 
-  // MARK: Internal
+@MainActor
+@Suite(.container)
+struct ActivityActorDisplayFactoryTests {
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  // MARK: Lifecycle
+
+  init() {
     Container.shared.configureInMemoryDataStore()
     factory = ActivityActorDisplayFactory()
   }
 
-  func testCallAsFunction_success_returnsDisplay() throws {
-    _ = try ImageEntity.Mock.create(imageHash: imageHashMock, data: imageDataMock)
+  // MARK: Internal
+
+  @Test
+  func callAsFunction_success_returnsDisplay() throws {
+    _ = try ImageEntity.Mock.create(contentHash: imageHashMock, image: imageDataMock)
     let entity = try ActivityActorDisplayEntity.Mock.create(name: nameMock, locale: localeMock, imageHash: imageHashMock)
 
     let display = factory(entity)
 
-    XCTAssertEqual(display.name, nameMock)
-    XCTAssertEqual(display.locale, localeMock)
-    XCTAssertEqual(display.image, imageDataMock)
+    #expect(display.name == nameMock)
+    #expect(display.locale == localeMock)
+    #expect(display.image == imageDataMock)
   }
 
   // MARK: Private
 
   private let nameMock = "issuer"
   private let localeMock = "locale"
-  private let imageDataMock = "image".data(using: .utf8)!
+  private let imageDataMock = Data("image".utf8)
   private let imageHashMock = "imageHash"
 
-  private var factory: ActivityActorDisplayFactory!
+  private let factory: ActivityActorDisplayFactory
 }

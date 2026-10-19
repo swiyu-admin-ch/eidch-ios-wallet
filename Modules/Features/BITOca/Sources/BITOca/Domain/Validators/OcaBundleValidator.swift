@@ -6,7 +6,7 @@ import Spyable
 // MARK: - OcaBundleValidatorProtocol
 
 @Spyable
-public protocol OcaBundleValidatorProtocol {
+public protocol OcaBundleValidatorProtocol: Sendable {
   func validate(_ captureBases: [any CaptureBase], _ overlays: [any Overlay]) throws
 }
 

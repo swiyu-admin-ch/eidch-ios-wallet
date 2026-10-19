@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - External Keyboard Shortcuts
 
@@ -31,19 +32,24 @@ private struct ExternalKeyboardShortcutModifier: ViewModifier {
 /// `onKeyPress` or `keyboardShortcut` modifiers
 private struct ExternalKeyboardShortcutContainer<Content: View>: UIViewControllerRepresentable {
 
+  // MARK: Internal
+
   let keys: [UIKeyboardHIDUsage]
   @ViewBuilder
   let content: Content
   let completion: () -> Void
 
   func makeUIViewController(context: Context) -> ExternalKeyboardShortcutHostingController<Content> {
-    ExternalKeyboardShortcutHostingController(rootView: content, keys: keys, completion: completion)
+    let viewController = ExternalKeyboardShortcutHostingController(rootView: content, keys: keys, completion: completion)
+    viewController.overrideUserInterfaceStyle = colorScheme.userInterfaceStyle
+    return viewController
   }
 
   func updateUIViewController(_ uiViewController: ExternalKeyboardShortcutHostingController<Content>, context: Context) {
     uiViewController.rootView = content
     uiViewController.keys = keys
     uiViewController.completion = completion
+    uiViewController.overrideUserInterfaceStyle = colorScheme.userInterfaceStyle
   }
 
   /// Ensures that UIHostingController's rootView is rendered properly in the List
@@ -53,6 +59,12 @@ private struct ExternalKeyboardShortcutContainer<Content: View>: UIViewControlle
     let sizeThatFits = uiViewController.sizeThatFits(in: fittingSize)
     return CGSize(width: width, height: sizeThatFits.height)
   }
+
+  // MARK: Private
+
+  /// Add colorScheme cause `UIHostingController` can't inherit from the SwiftUI environment scheme
+  @Environment(\.colorScheme) private var colorScheme
+
 }
 
 // MARK: - ExternalKeyboardShortcutHostingController

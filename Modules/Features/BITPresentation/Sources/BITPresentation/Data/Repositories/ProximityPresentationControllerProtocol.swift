@@ -1,11 +1,11 @@
-import BITSwiyuSharedKMP
+@preconcurrency import BITSwiyuSharedKMP
 import Foundation
 import Spyable
 
 // MARK: - ProximityPresentationControllerProtocol
 
 @Spyable
-protocol ProximityPresentationControllerProtocol {
+protocol ProximityPresentationControllerProtocol: Sendable {
   func startEngagement()
   func startEngagementReverse(readerEngagement: String)
   func submitDocument(data: KotlinByteArray)

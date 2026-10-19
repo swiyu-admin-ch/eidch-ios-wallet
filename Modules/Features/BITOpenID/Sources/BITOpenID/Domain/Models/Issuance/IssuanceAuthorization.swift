@@ -4,7 +4,7 @@ import Foundation
 // MARK: - IssuanceAuthorization
 
 /// In-memory authorization state for an issuance session.
-public struct IssuanceAuthorization: Equatable {
+public struct IssuanceAuthorization: Equatable, Sendable {
 
   // MARK: Lifecycle
 

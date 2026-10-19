@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PushRegistrationBody
 
-public struct PushRegistrationBody: Codable, Equatable {
+public struct PushRegistrationBody: Codable, Equatable, Sendable {
 
   public init(pushDeviceToken: String, platform: String) {
     self.pushDeviceToken = pushDeviceToken

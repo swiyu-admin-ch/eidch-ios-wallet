@@ -6,6 +6,7 @@ import Foundation
 
 // MARK: - CompatibleCredentialViewModel
 
+@MainActor
 @Observable
 final class CompatibleCredentialViewModel {
 

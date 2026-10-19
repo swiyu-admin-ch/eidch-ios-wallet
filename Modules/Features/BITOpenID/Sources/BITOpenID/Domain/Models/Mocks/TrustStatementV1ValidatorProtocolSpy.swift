@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - TrustStatementV1ValidatorProtocolSpy
 
-class TrustStatementV1ValidatorProtocolSpy<U: TrustStatementV1JWT & Codable & Equatable>: TrustStatementV1ValidatorProtocol {
+final class TrustStatementV1ValidatorProtocolSpy<U: TrustStatementV1JWT & Codable & Equatable>: TrustStatementV1ValidatorProtocol, @unchecked Sendable {
 
   var validateForCallsCount = 0
   var validateForReturnValue = false

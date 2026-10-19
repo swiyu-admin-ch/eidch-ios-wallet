@@ -1,3 +1,4 @@
+import BITAnalytics
 import BITCredential
 import BITJWT
 import BITOpenID
@@ -9,7 +10,7 @@ import Spyable
 // MARK: - StartProximityEngagementUseCaseProtocol
 
 @Spyable
-public protocol StartProximityEngagementUseCaseProtocol {
+public protocol StartProximityEngagementUseCaseProtocol: Sendable {
   func callAsFunction(qrCode: String?) -> AsyncThrowingStream<ProximityEngagementEvent, Error>
 }
 
@@ -21,14 +22,14 @@ extension StartProximityEngagementUseCaseProtocol {
 
 // MARK: - ProximityEngagementEvent
 
-public enum ProximityEngagementEvent: Equatable {
+public enum ProximityEngagementEvent: Equatable, Sendable {
   case qrCode(String)
   case request(PresentationRequestContext)
 }
 
 // MARK: - StartProximityEngagementUseCase
 
-final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProtocol {
+struct StartProximityEngagementUseCase: StartProximityEngagementUseCaseProtocol {
 
   // MARK: Internal
 
@@ -59,10 +60,12 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
   @Injected(\.getCompatibleCredentialsUseCase) private var getCompatibleCredentialsUseCase: GetCompatibleCredentialsUseCaseProtocol
   @Injected(\.jwsDecoder) private var jwsDecoder: JWSDecoderProtocol
   @Injected(\.requestObjectValidator) private var requestObjectValidator: RequestObjectValidatorProtocol
+  @Injected(\.analytics) private var analytics: AnalyticsProtocol
 
   private func makeContext(from parJwt: String, withOrigin: String?) async throws -> PresentationRequestContext {
     let requestObject = try await validatedRequestObject(from: parJwt)
 
+    try validateOrigin(withOrigin, in: requestObject)
 
     let compatibleCredentials = try await getCompatibleCredentialsUseCase(using: requestObject.payload)
 
@@ -75,6 +78,19 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
     context.trustInformation = TrustInformation(identity: .trustedCheckApp, vcSchema: .trusted)
     context.actorCompliance = .compliant
     return context
+  }
+
+  private func validateOrigin(_ origin: String?, in requestObject: RequestObjectJWS) throws {
+    guard
+      let origin,
+      let expectedOrigins = requestObject.payload.expectedOrigins,
+      expectedOrigins.contains(origin)
+    else {
+      analytics.log(StartProximityEngagementUseCaseError.invalidRequest(
+        "Proximity request origin mismatch: received \(origin ?? "nil"), expected \(requestObject.payload.expectedOrigins ?? [])"))
+      repository.decline()
+      throw StartProximityEngagementUseCaseError.invalidRequest(PresentationErrorRequestBody.Code.invalidRequest.rawValue)
+    }
   }
 
   private func validatedRequestObject(from parJwt: String) async throws -> RequestObjectJWS {
@@ -104,6 +120,8 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
         throw StartProximityEngagementUseCaseError.unknownRegistry
       case .presentationRequestNotFound:
         throw StartProximityEngagementUseCaseError.notFound
+      case .noInternetConnection:
+        throw StartProximityEngagementUseCaseError.noInternetConnection
       }
     } catch {
       throw StartProximityEngagementUseCaseError.invalidRequest(error.localizedDescription)
@@ -131,10 +149,10 @@ final class StartProximityEngagementUseCase: StartProximityEngagementUseCaseProt
 // MARK: - StartProximityEngagementUseCaseError
 
 enum StartProximityEngagementUseCaseError: Error, Equatable {
-  case invalidOrigin
   case invalidRequest(String)
   case transactionDataNotSupported(String)
   case unknownRegistry
   case expired
   case notFound
+  case noInternetConnection
 }

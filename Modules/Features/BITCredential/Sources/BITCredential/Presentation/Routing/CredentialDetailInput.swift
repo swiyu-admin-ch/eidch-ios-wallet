@@ -1,7 +1,7 @@
 import BITCredentialShared
 import Foundation
 
-public struct CredentialDetailInput: Hashable {
+public struct CredentialDetailInput: Hashable, Sendable {
   public let credentialId: UUID
 
   public init(credentialId: UUID) {

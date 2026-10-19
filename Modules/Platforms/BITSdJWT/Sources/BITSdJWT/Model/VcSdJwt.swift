@@ -65,7 +65,7 @@ public struct VcSdJwt: JWT, Codable, Equatable {
 
 extension VcSdJwt {
 
-  public struct KeyBinding: Codable, Equatable {
+  public struct KeyBinding: Codable, Equatable, Sendable {
 
     // MARK: Lifecycle
 

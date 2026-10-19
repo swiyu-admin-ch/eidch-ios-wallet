@@ -3,6 +3,7 @@ import SwiftUI
 
 // MARK: - NonComplianceDescriptionViewModel
 
+@MainActor
 @Observable
 class NonComplianceDescriptionViewModel {
 

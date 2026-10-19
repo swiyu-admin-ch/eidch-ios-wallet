@@ -9,12 +9,10 @@ public struct ActivityCell: View {
 
   public init(
     _ viewModel: ActivityCellViewModel,
-    configuration: Configuration = .default,
-    onTap: (() -> Void)? = nil)
+    configuration: Configuration = .default)
   {
     self.viewModel = viewModel
     self.configuration = configuration
-    self.onTap = onTap
   }
 
   // MARK: Public
@@ -25,13 +23,7 @@ public struct ActivityCell: View {
   }
 
   public var body: some View {
-    if let onTap {
-      Button(action: { onTap() }) {
-        content
-      }
-    } else {
-      content
-    }
+    content
   }
 
   // MARK: Private
@@ -41,7 +33,6 @@ public struct ActivityCell: View {
 
   private let viewModel: ActivityCellViewModel
   private let configuration: Configuration
-  private let onTap: (() -> Void)?
 
   private var content: some View {
     VStack(spacing: 0) {
@@ -50,9 +41,6 @@ public struct ActivityCell: View {
           .padding(.trailing, .x3)
         texts
         Spacer(minLength: .x2)
-        if onTap != nil {
-          trailingIcon
-        }
       }
       .accessibilityElement(children: .combine)
     }
@@ -85,15 +73,6 @@ public struct ActivityCell: View {
         .padding(.top, .x1)
         .accessibilityLabel(viewModel.accessibleTimeStamp)
     }
-  }
-
-  private var trailingIcon: some View {
-    ThemingAssets.chevronRight.swiftUIImage
-      .resizable()
-      .scaledToFit()
-      .foregroundColor(ThemingAssets.Label.secondary.swiftUIColor)
-      .frame(width: trailingIconSize, height: trailingIconSize)
-      .accessibilityHidden(true)
   }
 }
 

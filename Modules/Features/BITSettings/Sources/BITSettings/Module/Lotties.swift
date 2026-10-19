@@ -6,6 +6,7 @@ import Foundation
 
 // MARK: - Lotties
 
+@MainActor
 enum Lotties {
   static let confirmIdentity = LottieView(animationFile: "confirm-identity-light", darkModeFile: "confirm-identity-dark", in: BundleToken.bundle)
   static let docRecordAnimation = LottieView(animationFile: "doc_record_animation", in: BundleToken.bundle)

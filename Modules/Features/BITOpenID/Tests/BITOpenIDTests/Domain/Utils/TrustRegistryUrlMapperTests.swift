@@ -63,9 +63,10 @@ final class TrustRegistryUrlMapperTests: XCTestCase {
   private var mapper: TrustRegistryUrlMapper!
 
   private func registerMocks() {
-    didResolverSpy = DidResolverHelperProtocolSpy()
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    self.didResolverSpy = didResolverSpy
 
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
+    Container.shared.didResolverHelper.register { didResolverSpy }
     Container.shared.trustRegistryMapping.register { [
       Self.baseRegistryDomain: Self.trustRegistryDomain,
       Self.baseRegistryDomainInt: Self.trustRegistryDomainInt,

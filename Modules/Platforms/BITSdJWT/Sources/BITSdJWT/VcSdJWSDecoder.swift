@@ -10,7 +10,7 @@ enum VcSdJWSDecoderError: Error, Equatable {
 
 // MARK: - VcSdJWSDecoderProtocol
 
-public protocol VcSdJWSDecoderProtocol {
+public protocol VcSdJWSDecoderProtocol: Sendable {
   func decode<T: JWT>(_ type: T.Type, from data: Data) throws -> SdJWS<T>
 }
 

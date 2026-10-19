@@ -1,6 +1,6 @@
 import Foundation
 
-public struct VaultKeyPair: Equatable {
+public struct VaultKeyPair: Equatable, @unchecked Sendable {
 
   // MARK: Lifecycle
 

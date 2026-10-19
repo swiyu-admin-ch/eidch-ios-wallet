@@ -138,17 +138,21 @@ final class TokenStatusListValidatorTests: XCTestCase {
   private var validator: TokenStatusListValidator!
 
   private func registerMocks() {
-    openIdRepositorySpy = OpenIDRepositoryProtocolSpy()
-    jwsValidatorMock = JWSValidatorMock()
-    didResolverSpy = DidResolverHelperProtocolSpy()
+    let openIdRepositorySpy = OpenIDRepositoryProtocolSpy()
+    self.openIdRepositorySpy = openIdRepositorySpy
+    let jwsValidatorMock = JWSValidatorMock<TokenStatusList>()
+    self.jwsValidatorMock = jwsValidatorMock
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    self.didResolverSpy = didResolverSpy
     didResolverSpy.getDidFromReturnValue = Self.issuerMock
     didResolverSpy.getURLFromReturnValue = URL(string: "https://\(Self.baseRegistryDomain)/api/v1/did/example")!
-    tokenStatusListDecoderSpy = TokenStatusListDecoderProtocolSpy()
+    let tokenStatusListDecoderSpy = TokenStatusListDecoderProtocolSpy()
+    self.tokenStatusListDecoderSpy = tokenStatusListDecoderSpy
 
-    Container.shared.openIDRepository.register { self.openIdRepositorySpy }
-    Container.shared.tokenStatusListDecoder.register { self.tokenStatusListDecoderSpy }
-    Container.shared.jwsValidator.register { self.jwsValidatorMock }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
+    Container.shared.openIDRepository.register { openIdRepositorySpy }
+    Container.shared.tokenStatusListDecoder.register { tokenStatusListDecoderSpy }
+    Container.shared.jwsValidator.register { jwsValidatorMock }
+    Container.shared.didResolverHelper.register { didResolverSpy }
     Container.shared.statusRegistryMapping.register { [Self.baseRegistryDomain: Self.statusRegistryDomain] }
     Container.shared.trustEnvironmentDidRegex.register { #/^did:tdw:example$/# }
   }

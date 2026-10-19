@@ -50,8 +50,9 @@ final class GetActivityActorDisplayUseCaseTests: XCTestCase {
   private var useCase: GetActivityActorDisplayUseCase!
 
   private func registerMocks() {
-    repositorySpy = NonComplianceRepositoryProtocolSpy()
-    Container.shared.nonComplianceRepository.register { self.repositorySpy }
+    let repositorySpy = NonComplianceRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    Container.shared.nonComplianceRepository.register { repositorySpy }
   }
 
   private func createSuccessState() {

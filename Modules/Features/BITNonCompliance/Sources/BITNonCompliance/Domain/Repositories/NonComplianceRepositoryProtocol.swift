@@ -3,7 +3,7 @@ import Foundation
 import Spyable
 
 @Spyable
-public protocol NonComplianceRepositoryProtocol {
+public protocol NonComplianceRepositoryProtocol: Sendable {
   func create(_ report: NonComplianceReport) async throws
   func fetchActorCompliance(for subjectDid: String) async throws -> ActorCompliance
   func getActivity(_ id: UUID) throws -> NonComplianceActivity

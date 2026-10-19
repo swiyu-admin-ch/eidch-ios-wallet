@@ -61,9 +61,11 @@ final class ActivityListItemFactoryTests: XCTestCase {
 
   private func registerMocks() {
     Container.shared.configureInMemoryDataStore()
-    Container.shared.preferredUserLanguageCodes.register { [self.localeMock] }
-    actorDisplayFactorySpy = ActivityActorDisplayFactoryProtocolSpy()
-    Container.shared.activityActorDisplayFactory.register { self.actorDisplayFactorySpy }
+    let localeMock = localeMock
+    Container.shared.preferredUserLanguageCodes.register { [localeMock] }
+    let actorDisplayFactorySpy = ActivityActorDisplayFactoryProtocolSpy()
+    self.actorDisplayFactorySpy = actorDisplayFactorySpy
+    Container.shared.activityActorDisplayFactory.register { actorDisplayFactorySpy }
   }
 
   private func createSuccessState() {

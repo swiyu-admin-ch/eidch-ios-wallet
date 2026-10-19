@@ -11,8 +11,9 @@ final class SaveEIDRequestFilesUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    repository = EIDRequestCaseRepositoryProtocolSpy()
-    Container.shared.eIDRequestCaseRepository.register { @MainActor in self.repository }
+    let repository = EIDRequestCaseRepositoryProtocolSpy()
+    self.repository = repository
+    Container.shared.eIDRequestCaseRepository.register { @MainActor in repository }
     useCase = SaveEIDRequestFilesUseCase()
   }
 

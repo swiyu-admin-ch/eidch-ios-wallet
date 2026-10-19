@@ -5,7 +5,7 @@ import RealmSwift
 
 // MARK: - RealmDataStoreProtocol
 
-public protocol RealmDataStoreProtocol {
+public protocol RealmDataStoreProtocol: Sendable {
   func get<T: RealmFetchable>(_ type: T.Type, configuration: Realm.Configuration) throws -> Results<T>
   func get<T: RealmSwiftObject>(_ type: T.Type, forPrimaryKey: some Any, configuration: Realm.Configuration) throws -> T?
 

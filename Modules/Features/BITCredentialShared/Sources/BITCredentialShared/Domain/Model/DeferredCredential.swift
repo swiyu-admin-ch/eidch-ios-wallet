@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: - DeferredCredential
 
-public struct DeferredCredential: Codable, CredentialProtocol {
+public struct DeferredCredential: Codable, CredentialProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -52,8 +52,8 @@ public struct DeferredCredential: Codable, CredentialProtocol {
       throw CredentialError.invalidEntity
     }
 
-    let issuerDisplays = Array(entity.issuerDisplays.map(CredentialIssuerDisplay.init))
-    let displays = Array(entity.displays.map(CredentialDisplay.init))
+    let issuerDisplays = Array(entity.credentialRendering?.issuerDisplays.map(CredentialIssuerDisplay.init) ?? [])
+    let displays = Array(entity.credentialRendering?.displays.map(CredentialDisplay.init) ?? [])
 
     self.init(
       id: entity.id,
@@ -75,7 +75,7 @@ public struct DeferredCredential: Codable, CredentialProtocol {
 
   // MARK: Public
 
-  public enum ProgressionState: String, Codable {
+  public enum ProgressionState: String, Codable, Sendable {
     case inProgress
     case invalid
     case issuanceFailed

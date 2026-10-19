@@ -14,14 +14,18 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
 
     viewModel = SubmitEIDRequestFilesViewModel()
 
     success()
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testFileUploads_initialState() {
@@ -164,8 +168,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
 
   func testSubmit_renamesFilesBeforeSubmitting() async {
     let file = EIDRequestCaseFile.Mock.sample(name: "result.xml")
-    filenameMap = ["result.xml": "mobile-result.xml"]
-    allowedFiles = ["mobile-result.xml"]
+    registerSIDFiles(filenameMap: ["result.xml": "mobile-result.xml"], allowedFiles: ["mobile-result.xml"])
     getEIDRequestFilesUseCase.executeCaseIdReturnValue = [file]
 
     viewModel = SubmitEIDRequestFilesViewModel()
@@ -175,7 +178,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
   }
 
   func testSubmit_filtersFilesNotAllowedForSID() async {
-    allowedFiles = [mockFile1.fileName]
+    registerSIDFiles(allowedFiles: [mockFile1.fileName])
 
     viewModel = SubmitEIDRequestFilesViewModel()
     await viewModel.submit()
@@ -187,7 +190,7 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
   func testSubmit_duplicateFileNames_submitsLargestFile() async {
     let smallerFile = EIDRequestCaseFile(fileName: "duplicate.jpg", mime: .jpg, data: Data([0x01]), category: .documentScan)
     let largerFile = EIDRequestCaseFile(fileName: "duplicate.jpg", mime: .jpg, data: Data([0x01, 0x02]), category: .documentScan)
-    allowedFiles = ["duplicate.jpg"]
+    registerSIDFiles(allowedFiles: ["duplicate.jpg"])
     getEIDRequestFilesUseCase.executeCaseIdReturnValue = [smallerFile, largerFile]
 
     viewModel = SubmitEIDRequestFilesViewModel()
@@ -283,8 +286,6 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
   private var submitEIDRequestFileUseCase: SubmitEIDRequestFileUseCaseProtocolSpy!
   private var submitEIDRequestUseCase: SubmitEIDRequestUseCaseProtocolSpy!
   private var deleteEIDRequestCaseFileUseCase: DeleteEIDRequestCaseFileUseCaseProtocolSpy!
-  private var filenameMap: [String: String?]!
-  private var allowedFiles: [String]!
 
   private var viewModel: SubmitEIDRequestFilesViewModel!
 
@@ -307,22 +308,30 @@ final class SubmitEIDRequestFilesViewModelTests: XCTestCase {
   }
 
   private func registerMocks() {
-    context = EIDRequestContext()
+    let context = EIDRequestContext()
+    self.context = context
 
-    getEIDRequestFilesUseCase = GetEIDRequestCaseFilesUseCaseProtocolSpy()
-    submitEIDRequestFileUseCase = SubmitEIDRequestFileUseCaseProtocolSpy()
-    deleteEIDRequestCaseFileUseCase = DeleteEIDRequestCaseFileUseCaseProtocolSpy()
-    submitEIDRequestUseCase = SubmitEIDRequestUseCaseProtocolSpy()
-    filenameMap = [:]
-    allowedFiles = [mockFile1.fileName, mockFile2.fileName, mockFile3.fileName]
+    let getEIDRequestFilesUseCase = GetEIDRequestCaseFilesUseCaseProtocolSpy()
+    self.getEIDRequestFilesUseCase = getEIDRequestFilesUseCase
+    let submitEIDRequestFileUseCase = SubmitEIDRequestFileUseCaseProtocolSpy()
+    self.submitEIDRequestFileUseCase = submitEIDRequestFileUseCase
+    let deleteEIDRequestCaseFileUseCase = DeleteEIDRequestCaseFileUseCaseProtocolSpy()
+    self.deleteEIDRequestCaseFileUseCase = deleteEIDRequestCaseFileUseCase
+    let submitEIDRequestUseCase = SubmitEIDRequestUseCaseProtocolSpy()
+    self.submitEIDRequestUseCase = submitEIDRequestUseCase
 
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
-    Container.shared.sidFilenameMap.register { @MainActor in self.filenameMap }
-    Container.shared.sidAllowedFiles.register { @MainActor in self.allowedFiles }
-    Container.shared.getEIDRequestCaseFilesUseCase.register { @MainActor in self.getEIDRequestFilesUseCase }
-    Container.shared.submitEIDRequestFileUseCase.register { @MainActor in self.submitEIDRequestFileUseCase }
-    Container.shared.submitEIDRequestUseCase.register { @MainActor in self.submitEIDRequestUseCase }
-    Container.shared.deleteEIDRequestCaseFileUseCase.register { @MainActor in self.deleteEIDRequestCaseFileUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in context }
+    registerSIDFiles(allowedFiles: [mockFile1.fileName, mockFile2.fileName, mockFile3.fileName])
+    Container.shared.getEIDRequestCaseFilesUseCase.register { @MainActor in getEIDRequestFilesUseCase }
+    Container.shared.submitEIDRequestFileUseCase.register { @MainActor in submitEIDRequestFileUseCase }
+    Container.shared.submitEIDRequestUseCase.register { @MainActor in submitEIDRequestUseCase }
+    Container.shared.deleteEIDRequestCaseFileUseCase.register { @MainActor in deleteEIDRequestCaseFileUseCase }
+  }
+
+  /// The view model resolves these at construction, so tests must register their values before creating a new view model.
+  private func registerSIDFiles(filenameMap: [String: String?] = [:], allowedFiles: [String]) {
+    Container.shared.sidFilenameMap.register { @MainActor in filenameMap }
+    Container.shared.sidAllowedFiles.register { @MainActor in allowedFiles }
   }
 
   private func success() {

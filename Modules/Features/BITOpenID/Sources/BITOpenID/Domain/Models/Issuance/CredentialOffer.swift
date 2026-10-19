@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - CredentialOffer
 
-public struct CredentialOffer: Codable, Equatable {
+public struct CredentialOffer: Codable, Equatable, @unchecked Sendable {
   public let issuer: URL
   public let grants: Grants
   public let credentialConfigurationIds: [String]
@@ -20,7 +20,7 @@ public struct CredentialOffer: Codable, Equatable {
 
 // MARK: - Grants
 
-public struct Grants: Codable, Equatable {
+public struct Grants: Codable, Equatable, Sendable {
   public let urn: Urn
 
   enum CodingKeys: String, CodingKey {
@@ -30,7 +30,7 @@ public struct Grants: Codable, Equatable {
 
 // MARK: - Urn
 
-public struct Urn: Codable, Equatable {
+public struct Urn: Codable, Equatable, Sendable {
   public let preAuthorizedCode: String
 
   enum CodingKeys: String, CodingKey {

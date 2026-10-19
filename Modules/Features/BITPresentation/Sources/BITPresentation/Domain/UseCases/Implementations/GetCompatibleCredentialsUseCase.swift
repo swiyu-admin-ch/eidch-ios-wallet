@@ -7,7 +7,7 @@ import Spyable
 // MARK: - GetCompatibleCredentialsUseCaseProtocol
 
 @Spyable
-public protocol GetCompatibleCredentialsUseCaseProtocol {
+public protocol GetCompatibleCredentialsUseCaseProtocol: Sendable {
   func callAsFunction(using requestObject: RequestObject) async throws -> [CompatibleCredential]
 }
 

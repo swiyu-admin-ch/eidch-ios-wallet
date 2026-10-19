@@ -1,6 +1,6 @@
 import Foundation
 
-public enum DateFormat: String, CaseIterable {
+public enum DateFormat: String, CaseIterable, Sendable {
   case dateTimeTimeZoneSecondsFractional = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
   case dateTimeTimeZoneSeconds = "yyyy-MM-dd'T'HH:mm:ssZ"
   case dateTimeTimeZone = "yyyy-MM-dd'T'HH:mmZ"

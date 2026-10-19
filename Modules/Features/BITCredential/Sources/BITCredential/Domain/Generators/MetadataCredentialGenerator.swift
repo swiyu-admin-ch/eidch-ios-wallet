@@ -10,7 +10,7 @@ import Spyable
 // MARK: - MetadataCredentialGeneratorProtocol
 
 @Spyable
-protocol MetadataCredentialGeneratorProtocol {
+protocol MetadataCredentialGeneratorProtocol: Sendable {
   func generate(for credentialsWithKeyBinding: [CredentialWithKeyBinding], selectedCredential: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported, context: CredentialGeneratorContext) throws -> VerifiableCredential
   func generateDeferred(
     _ deferredCredentialContext: DeferredCredentialContext,
@@ -35,7 +35,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     // Claim equality across credentials will be validated in a future iteration.
     let primaryCredential = primaryCredentialWithKeyBinding.credential
     let cluster = try createCluster(from: primaryCredential.getClaimsJSON(.nonTechnical), metadataClaims: selectedCredential.credentialMetadata?.claims ?? [])
-    let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display, credentialId: context.credentialId)
+    let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display)
 
     let bundleItems = try createBundleItems(from: credentialsWithKeyBinding)
 
@@ -69,7 +69,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     context: CredentialGeneratorContext) throws
     -> DeferredCredential
   {
-    let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display, credentialId: context.credentialId)
+    let credentialDisplays = createCredentialDisplays(from: selectedCredential.credentialMetadata?.display)
 
     return DeferredCredential(
       transactionId: deferredCredentialContext.transactionId,
@@ -215,7 +215,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
     } ?? []
   }
 
-  private func createCredentialDisplays(from displays: [CredentialIssuerMetadata.CredentialMetadata.Display]?, credentialId: UUID) -> [CredentialDisplay] {
+  private func createCredentialDisplays(from displays: [CredentialIssuerMetadata.CredentialMetadata.Display]?) -> [CredentialDisplay] {
     displays?.map { display in
       CredentialDisplay(
         name: display.name,
@@ -223,8 +223,7 @@ struct MetadataCredentialGenerator: MetadataCredentialGeneratorProtocol {
         locale: display.locale ?? UserLocale.defaultLocaleIdentifier,
         logoAltText: display.logo?.altText,
         logoBase64: display.logo?.url?.dataURLData,
-        summary: display.description,
-        credentialId: credentialId)
+        summary: display.description)
     } ?? []
   }
 

@@ -22,7 +22,7 @@ public struct CharacterEncodingOverlay1x0: CharacterEncodingOverlay {
 
 // MARK: - CharacterEncoding
 
-public enum CharacterEncoding: Decodable, Equatable {
+public enum CharacterEncoding: Decodable, Equatable, Sendable {
   case utf8
   case base64
   case unknown(rawString: String)

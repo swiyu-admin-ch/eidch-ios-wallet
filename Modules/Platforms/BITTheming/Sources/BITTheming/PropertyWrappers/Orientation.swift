@@ -3,6 +3,7 @@ import UIKit
 
 // MARK: - Orientation
 
+@MainActor
 @propertyWrapper
 public struct Orientation: DynamicProperty {
   @State private var manager = OrientationManager.shared
@@ -16,6 +17,7 @@ public struct Orientation: DynamicProperty {
 
 // MARK: - OrientationManager
 
+@MainActor
 @Observable
 fileprivate class OrientationManager {
 

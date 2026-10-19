@@ -40,7 +40,7 @@ public struct SubmitPresentationUseCase: SubmitPresentationUseCaseProtocol {
           let authorizationResponse: AuthorizationResponse
 
           do {
-            authorizationResponse = try authorizationResponseBodyGenerator(for: selectedCredential, requestObject: context.requestObject, withOrigin: context.origin)
+            authorizationResponse = try await authorizationResponseBodyGenerator(for: selectedCredential, requestObject: context.requestObject, withOrigin: context.origin)
           } catch RequestObjectError.invalidPayload, RequestObjectError.invalidQuery {
             throw SubmitPresentationUseCaseError.invalidAuthorizationRequest
           }

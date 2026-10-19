@@ -27,6 +27,7 @@ struct VcSdJwtCredentialConfigurationSupportedTests {
     #expect(config.vctIntegrity == "vctIntegrity")
     #expect(config.vctMetadataUri == "vctMetadataUri")
     #expect(config.vctMetadataUriIntegrity == "vctMetadataUriIntegrity")
+    #expect(config.credentialRefreshDisabled)
 
     #expect(config.protectedIssuanceAuthorizationTrustStatement != nil)
 
@@ -59,6 +60,15 @@ struct VcSdJwtCredentialConfigurationSupportedTests {
     let config = try decoder.decode(Config.self, from: data)
 
     #expect(config.proofTypesSupported.isEmpty)
+  }
+
+  @Test
+  func decodeMetadataWithoutCredentialRefreshDisabled() throws {
+    let data = try Config.Mock.sampleData.removeJsonKey(Config.CodingKeys.credentialRefreshDisabled.rawValue)
+
+    let config = try decoder.decode(Config.self, from: data)
+
+    #expect(!config.credentialRefreshDisabled)
   }
 
   @Test

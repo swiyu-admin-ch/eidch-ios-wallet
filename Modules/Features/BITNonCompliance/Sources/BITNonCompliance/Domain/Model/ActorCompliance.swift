@@ -2,7 +2,7 @@ import BITCore
 
 // MARK: - ActorCompliance
 
-public enum ActorCompliance: Equatable {
+public enum ActorCompliance: Equatable, Sendable {
   case compliant
   case notCompliant(LocalizedDisplay<String>?)
 }

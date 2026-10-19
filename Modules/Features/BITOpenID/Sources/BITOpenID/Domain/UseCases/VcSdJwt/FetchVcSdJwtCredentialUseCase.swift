@@ -8,7 +8,7 @@ import Spyable
 // MARK: - FetchAnyCredentialUseCaseProtocol
 
 @Spyable
-protocol FetchAnyCredentialUseCaseProtocol {
+protocol FetchAnyCredentialUseCaseProtocol: Sendable {
   func execute(for context: FetchCredentialContext) async throws -> FetchAnyCredentialResult.Credentials
 }
 
@@ -75,8 +75,15 @@ struct FetchVcSdJwtCredentialUseCase: FetchAnyCredentialUseCaseProtocol {
         }
         return vcSdJWS
       }
-      for credential in vcSdJwsCredentials {
-        try await jwsSignatureValidator.validate(credential)
+
+      try await withThrowingTaskGroup(of: Void.self) { group in
+        for credential in vcSdJwsCredentials {
+          group.addTask {
+            try await jwsSignatureValidator.validate(credential)
+          }
+        }
+
+        try await group.waitForAll()
       }
 
       try sdJwtBatchCredentialConsistencyValidator.validate(vcSdJwsCredentials)

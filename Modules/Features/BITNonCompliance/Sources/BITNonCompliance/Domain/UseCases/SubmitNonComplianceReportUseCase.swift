@@ -5,7 +5,7 @@ import Spyable
 // MARK: - SubmitNonComplianceReportUseCaseProtocol
 
 @Spyable
-protocol SubmitNonComplianceReportUseCaseProtocol {
+protocol SubmitNonComplianceReportUseCaseProtocol: Sendable {
   func execute(
     category: NonComplianceCategory,
     description: String,

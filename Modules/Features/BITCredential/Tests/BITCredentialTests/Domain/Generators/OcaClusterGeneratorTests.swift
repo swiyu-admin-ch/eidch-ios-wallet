@@ -72,6 +72,17 @@ class OcaClusterGeneratorTests: XCTestCase {
     XCTAssertEqual(arrayObjectNotInOcaClaim1.order, Int(Int16.max))
   }
 
+  func testGenerate_dcSdJwtCredentialWithVcSdJwtDataSource_returnsClaim() throws {
+    let clusters = try generator.generate(
+      from: ["name": "nameValue"],
+      credentialFormat: .dcSdJwt,
+      ocaBundle: OcaBundle.Mock.dataSource2x0VcSdJwt)
+
+    let cluster = try XCTUnwrap(clusters.first)
+    let claim = try XCTUnwrap(Self.namePath.findClaim(in: cluster))
+    XCTAssertEqual(claim.value, "nameValue")
+  }
+
   func testGenerate_referenceAttributeWithoutDataSource_returnsOcaClusters() throws {
     let clusters = try generator.generate(
       from: JSON.Mock.credentialOcaOnlyClusters,
@@ -168,11 +179,13 @@ class OcaClusterGeneratorTests: XCTestCase {
   private var generator = OcaClusterGenerator()
 
   private func registerMocks() {
-    imageValidatorSpy = ImageValidatorProtocolSpy()
-    overlayAttributeDateParserSpy = OverlayAttributeDateParserProtocolSpy()
+    let imageValidatorSpy = ImageValidatorProtocolSpy()
+    self.imageValidatorSpy = imageValidatorSpy
+    let overlayAttributeDateParserSpy = OverlayAttributeDateParserProtocolSpy()
+    self.overlayAttributeDateParserSpy = overlayAttributeDateParserSpy
 
     Container.shared.ocaClaimGenerator.register { OcaClaimGenerator() }
-    Container.shared.imageValidator.register { self.imageValidatorSpy }
-    Container.shared.overlayAttributeDateParser.register { self.overlayAttributeDateParserSpy }
+    Container.shared.imageValidator.register { imageValidatorSpy }
+    Container.shared.overlayAttributeDateParser.register { overlayAttributeDateParserSpy }
   }
 }

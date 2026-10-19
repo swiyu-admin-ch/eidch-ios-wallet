@@ -133,20 +133,27 @@ final class ClientAttestationValidatorTests: XCTestCase {
   }
 
   private func registerMocks() {
-    mockClientAttestation = ClientAttestationJWT.Mock.sample
-    trustedDids = [ "did:tdw:example.com" ]
-    jwsValidator = JWSValidatorMock()
-    didResolverSpy = DidResolverHelperProtocolSpy()
-    appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
-    jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
-    appIdentifierRepository = AppIdentifierRepositoryProtocolSpy()
+    let mockClientAttestation = ClientAttestationJWT.Mock.sample
+    let trustedDids = [ "did:tdw:example.com" ]
+    let jwsValidator = JWSValidatorMock<ClientAttestationJWT>()
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    let appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
+    let jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
+    let appIdentifierRepository = AppIdentifierRepositoryProtocolSpy()
+    self.mockClientAttestation = mockClientAttestation
+    self.trustedDids = trustedDids
+    self.jwsValidator = jwsValidator
+    self.didResolverSpy = didResolverSpy
+    self.appAttestationKeyRepository = appAttestationKeyRepository
+    self.jsonCanonicalizer = jsonCanonicalizer
+    self.appIdentifierRepository = appIdentifierRepository
 
-    Container.shared.jwsValidator.register { self.jwsValidator }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
-    Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
-    Container.shared.attestationServiceTrustedDids.register { self.trustedDids }
-    Container.shared.jsonCanonicalizer.register { self.jsonCanonicalizer }
-    Container.shared.appIdentifierRepository.register { self.appIdentifierRepository }
+    Container.shared.jwsValidator.register { jwsValidator }
+    Container.shared.didResolverHelper.register { didResolverSpy }
+    Container.shared.appAttestationKeyRepository.register { appAttestationKeyRepository }
+    Container.shared.attestationServiceTrustedDids.register { trustedDids }
+    Container.shared.jsonCanonicalizer.register { jsonCanonicalizer }
+    Container.shared.appIdentifierRepository.register { appIdentifierRepository }
   }
 
 }

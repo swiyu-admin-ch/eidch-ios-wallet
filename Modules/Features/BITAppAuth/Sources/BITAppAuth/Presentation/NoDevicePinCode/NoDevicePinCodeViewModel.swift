@@ -4,12 +4,14 @@ import Foundation
 
 // MARK: - NoDevicePinCodeDelegate
 
+@MainActor
 public protocol NoDevicePinCodeDelegate: AnyObject {
   func didCompleteNoDevicePinCode()
 }
 
 // MARK: - NoDevicePinCodeViewModel
 
+@MainActor
 public class NoDevicePinCodeViewModel {
 
   // MARK: Lifecycle

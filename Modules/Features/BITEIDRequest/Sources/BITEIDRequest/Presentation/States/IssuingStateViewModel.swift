@@ -1,5 +1,6 @@
 import BITL10n
 
+@MainActor
 public class IssuingStateViewModel: RequestCaseStateBaseViewModel {
 
   var notificationTitle: String {

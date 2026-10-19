@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
 
-public class JWSValidatorMock<U: JWT>: JWSValidatorProtocol {
+public final class JWSValidatorMock<U: JWT>: JWSValidatorProtocol, @unchecked Sendable {
 
   public var validateActivationBufferReceivedJws: JWS<U>?
   public var validateActivationBufferReceivedActivationBuffer: TimeInterval?

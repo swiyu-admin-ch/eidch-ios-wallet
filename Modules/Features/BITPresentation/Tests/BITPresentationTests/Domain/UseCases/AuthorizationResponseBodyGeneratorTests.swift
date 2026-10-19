@@ -28,8 +28,8 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     generator = AuthorizationResponseBodyGenerator()
   }
 
-  func testCallAsFunction_WithKeyBinding_ReturnsBody() throws {
-    let response = try generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)
+  func testCallAsFunction_WithKeyBinding_ReturnsBody() async throws {
+    let response = try await generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)
 
     assertArguments(for: compatibleCredentialMock, assertKeyPair: true)
 
@@ -38,8 +38,8 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertEqual(analyticsProvider.logCounter, 0)
   }
 
-  func testCallAsFunction_WithoutKeyBinding_ReturnsBody() throws {
-    let response = try generator(for: compatibleCredentialWithoutKeyBindingMock, requestObject: mockRequestObject, withOrigin: nil)
+  func testCallAsFunction_WithoutKeyBinding_ReturnsBody() async throws {
+    let response = try await generator(for: compatibleCredentialWithoutKeyBindingMock, requestObject: mockRequestObject, withOrigin: nil)
 
     assertArguments(for: compatibleCredentialWithoutKeyBindingMock, assertKeyPair: false)
 
@@ -48,10 +48,10 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertEqual(analyticsProvider.logCounter, 0)
   }
 
-  func testCallAsFunction_WithDcApiJwtResponseMode_ReturnsVpTokenDictionaryInBody() throws {
+  func testCallAsFunction_WithDcApiJwtResponseMode_ReturnsVpTokenDictionaryInBody() async throws {
     let requestObject = try makeRequestObject(responseMode: .dcApiJWT, clientMetadata: nil)
 
-    let response = try generator(for: compatibleCredentialMock, requestObject: requestObject, withOrigin: nil)
+    let response = try await generator(for: compatibleCredentialMock, requestObject: requestObject, withOrigin: nil)
 
     let dictionary = response.asDictionary()
     XCTAssertEqual(dictionary["vp_token"] as? [String: [String]], [Self.mockDcqlQueryId: [Self.mockVpToken]])
@@ -59,10 +59,10 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertNil(dictionary["state"])
   }
 
-  func testCallAsFunction_WithDcApiResponseMode_ReturnsVpTokenDictionaryInBody() throws {
+  func testCallAsFunction_WithDcApiResponseMode_ReturnsVpTokenDictionaryInBody() async throws {
     let requestObject = try makeRequestObject(responseMode: .dcApi, clientMetadata: nil)
 
-    let response = try generator(for: compatibleCredentialMock, requestObject: requestObject, withOrigin: nil)
+    let response = try await generator(for: compatibleCredentialMock, requestObject: requestObject, withOrigin: nil)
 
     let dictionary = response.asDictionary()
     XCTAssertEqual(dictionary["vp_token"] as? [String: [String]], [Self.mockDcqlQueryId: [Self.mockVpToken]])
@@ -70,46 +70,46 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
     XCTAssertNil(dictionary["state"])
   }
 
-  func testCallAsFunction_missingQueryId_throws() throws {
-    XCTAssertThrowsError(try generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, withOrigin: nil)) { error in
+  func testCallAsFunction_missingQueryId_throws() async throws {
+    await XCTAssertThrowsErrorAsync(try await generator(for: CompatibleCredential.Mock.BIT, requestObject: mockRequestObject, withOrigin: nil)) { error in
       XCTAssertEqual(error as? RequestObjectError, .invalidQuery)
     }
   }
 
-  func testCallAsFunction_CreateAnyCredentialUseCaseThrows_ThrowsError() throws {
+  func testCallAsFunction_CreateAnyCredentialUseCaseThrows_ThrowsError() async throws {
     spyCreateAnyCredentialUseCase.executeFromFormatThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try generator(for: compatibleCredentialWithoutKeyBindingMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
+    await XCTAssertThrowsErrorAsync(try await generator(for: compatibleCredentialWithoutKeyBindingMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertTrue(spyCreateAnyCredentialUseCase.executeFromFormatCalled)
       XCTAssertEqual(analyticsProvider.logCounter, 0)
     }
   }
 
-  func testCallAsFunction_GetPrivateKeyThrows_ThrowsError() throws {
+  func testCallAsFunction_GetPrivateKeyThrows_ThrowsError() async throws {
     spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
+    await XCTAssertThrowsErrorAsync(try await generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertTrue(spyKeyManager.getKeyPairWithIdentifierAlgorithmQueryCalled)
       XCTAssertEqual(analyticsProvider.logCounter, 1)
     }
   }
 
-  func testCallAsFunction_AnyVpTokenGeneratorThrows_ThrowsError() throws {
+  func testCallAsFunction_AnyVpTokenGeneratorThrows_ThrowsError() async throws {
     spyVpTokenGenerator.generateRequestObjectCredentialKeyPairPathsWithOriginThrowableError = TestingError.error
 
-    XCTAssertThrowsError(try generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
+    await XCTAssertThrowsErrorAsync(try await generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
       XCTAssertEqual(error as? TestingError, .error)
       XCTAssertTrue(spyVpTokenGenerator.generateRequestObjectCredentialKeyPairPathsWithOriginCalled)
       XCTAssertEqual(analyticsProvider.logCounter, 0)
     }
   }
 
-  func testCallAsFunction_userLoggedOut() throws {
+  func testCallAsFunction_userLoggedOut() async throws {
     userSession.isLoggedIn = false
 
-    XCTAssertThrowsError(try generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
+    await XCTAssertThrowsErrorAsync(try await generator(for: compatibleCredentialMock, requestObject: mockRequestObject, withOrigin: nil)) { error in
       XCTAssertEqual(error as? UserSessionError, .notLoggedIn)
       XCTAssertEqual(userSession.endSessionCallsCount, 1)
       XCTAssertEqual(analyticsProvider.logCounter, 0)
@@ -151,18 +151,23 @@ final class AuthorizationResponseBodyGeneratorTests: XCTestCase {
   // swiftlint:enable all
 
   private func setupMocks() {
-    spyKeyManager = KeyManagerProtocolSpy()
-    userSession = SessionSpy()
-    spyVpTokenGenerator = AnyVpTokenGeneratorProtocolSpy()
-    spyCreateAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
+    let spyKeyManager = KeyManagerProtocolSpy()
+    self.spyKeyManager = spyKeyManager
+    let userSession = SessionSpy()
+    self.userSession = userSession
+    let spyVpTokenGenerator = AnyVpTokenGeneratorProtocolSpy()
+    self.spyVpTokenGenerator = spyVpTokenGenerator
+    let spyCreateAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
+    self.spyCreateAnyCredentialUseCase = spyCreateAnyCredentialUseCase
     analyticsProvider = MockProvider()
-    analytics = AnalyticsSpy()
+    let analytics = AnalyticsSpy()
+    self.analytics = analytics
 
-    Container.shared.keyManager.register { self.spyKeyManager }
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.anyVpTokenGenerator.register { self.spyVpTokenGenerator }
-    Container.shared.createAnyCredentialUseCase.register { self.spyCreateAnyCredentialUseCase }
-    Container.shared.analytics.register { self.analytics }
+    Container.shared.keyManager.register { spyKeyManager }
+    Container.shared.userSession.register { userSession }
+    Container.shared.anyVpTokenGenerator.register { spyVpTokenGenerator }
+    Container.shared.createAnyCredentialUseCase.register { spyCreateAnyCredentialUseCase }
+    Container.shared.analytics.register { analytics }
 
     analytics.register(analyticsProvider)
 

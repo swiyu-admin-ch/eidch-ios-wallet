@@ -10,7 +10,7 @@ public protocol CredentialDisplayOrderable {
 
 // MARK: - CredentialProtocol
 
-public protocol CredentialProtocol: CredentialDisplayOrderable {
+public protocol CredentialProtocol: CredentialDisplayOrderable, Sendable {
   var id: UUID { get }
   var format: CredentialFormat { get }
   var issuerUrl: URL { get }

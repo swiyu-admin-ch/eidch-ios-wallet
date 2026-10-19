@@ -28,7 +28,7 @@ final class OverlayWindowCoordinator: OverlayWindowCoordinating {
 
   // MARK: Lifecycle
 
-  init(_ overlayWindowFactory: @escaping (UIWindow) -> UIWindow? = OverlayWindowCoordinator.makeOverlayWindow) {
+  init(_ overlayWindowFactory: @escaping @MainActor (UIWindow) -> UIWindow? = OverlayWindowCoordinator.makeOverlayWindow) {
     self.overlayWindowFactory = overlayWindowFactory
   }
 
@@ -103,7 +103,7 @@ final class OverlayWindowCoordinator: OverlayWindowCoordinating {
   private var loginModule: LoginModule?
   private var privacyWindow: UIWindow?
   private var permissionAlertPresented = false
-  private let overlayWindowFactory: (UIWindow) -> UIWindow?
+  private let overlayWindowFactory: @MainActor (UIWindow) -> UIWindow?
 
   @Injected(\.loginWindowAnimator) private var loginWindowAnimator
   @Injected(\.privacyWindowAnimator) private var privacyWindowAnimator

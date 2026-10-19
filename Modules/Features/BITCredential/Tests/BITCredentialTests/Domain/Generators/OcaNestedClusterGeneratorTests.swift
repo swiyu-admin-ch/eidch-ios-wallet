@@ -99,12 +99,14 @@ final class OcaNestedClusterGeneratorTests: XCTestCase {
   private var generator = OcaClusterGenerator()
 
   private func registerMocks() {
-    imageValidatorSpy = ImageValidatorProtocolSpy()
-    overlayAttributeDateParserSpy = OverlayAttributeDateParserProtocolSpy()
+    let imageValidatorSpy = ImageValidatorProtocolSpy()
+    self.imageValidatorSpy = imageValidatorSpy
+    let overlayAttributeDateParserSpy = OverlayAttributeDateParserProtocolSpy()
+    self.overlayAttributeDateParserSpy = overlayAttributeDateParserSpy
 
     Container.shared.ocaClaimGenerator.register { OcaClaimGenerator() }
-    Container.shared.imageValidator.register { self.imageValidatorSpy }
-    Container.shared.overlayAttributeDateParser.register { self.overlayAttributeDateParserSpy }
+    Container.shared.imageValidator.register { imageValidatorSpy }
+    Container.shared.overlayAttributeDateParser.register { overlayAttributeDateParserSpy }
   }
 
   private func assertRootCluster(_ rootCluster: CredentialClaimCluster) throws {

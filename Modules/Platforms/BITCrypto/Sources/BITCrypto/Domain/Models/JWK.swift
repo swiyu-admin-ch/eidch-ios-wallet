@@ -4,7 +4,7 @@ import Security
 
 // MARK: - JWK
 
-public struct JWK: Codable, Equatable {
+public struct JWK: Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

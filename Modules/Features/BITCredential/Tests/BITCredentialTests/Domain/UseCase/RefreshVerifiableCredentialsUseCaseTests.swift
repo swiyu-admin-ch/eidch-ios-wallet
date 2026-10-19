@@ -2,6 +2,7 @@
 
 import Factory
 import Foundation
+import Spyable
 import Testing
 @testable import BITAnalytics
 @testable import BITAnyCredentialFormat
@@ -14,7 +15,7 @@ import Testing
 
 // MARK: - RefreshVerifiableCredentialsUseCaseTests
 
-@Suite(.serialized)
+@Suite
 struct RefreshVerifiableCredentialsUseCaseTests {
 
   // MARK: Lifecycle
@@ -28,83 +29,20 @@ struct RefreshVerifiableCredentialsUseCaseTests {
 
   // MARK: Internal
 
+  struct RefreshIntervalTestCase {
+    let status: SwissProfile.Status?
+    let days: Double
+  }
+
   @Test
   func callAsFunction_freshCredentialCountAtThreshold_refreshesCredential() async {
     let credential = Self.refreshableCredential(freshCredentialCount: 2, batchSize: 10)
 
     await useCase([credential])
 
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-    #expect(await refreshCredentialUseCase.callAsFunctionReceivedCredential == credential)
+    #expect(refreshCredentialUseCase.callAsFunctionCallsCount == 1)
+    #expect(refreshCredentialUseCase.callAsFunctionReceivedCredential == credential)
     #expect(getCredentialRefreshThresholdUseCase.callAsFunctionForReceivedBatchSize == 10)
-  }
-
-  @Test(arguments: [SwissProfile.Status.deprecated, .sunset, .endOfLife])
-  func callAsFunction_profileIsNotCurrent_refreshesCredential(status: SwissProfile.Status) async {
-    swissProfileLifecycleRepository.fetchSwissProfilesReturnValue = [SwissProfile(type: .verifiableCredential, status: status, version: versionMock)]
-
-    await useCase([credentialMock])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-    #expect(await refreshCredentialUseCase.callAsFunctionReceivedCredential == credentialMock)
-    #expect(getCredentialRefreshThresholdUseCase.callAsFunctionForReceivedBatchSize == 1)
-  }
-
-  @Test
-  func callAsFunction_createAnyCredentialFails_refreshesCredential() async {
-    createAnyCredentialUseCase.executeFromFormatThrowableError = TestingError.error
-
-    await useCase([credentialMock])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-  }
-
-  @Test
-  func callAsFunction_noSwissProfileVersion_refreshesCredential() async {
-    createAnyCredentialUseCase.executeFromFormatReturnValue = Self.createVcSdJwt(profileVersion: nil)
-
-    await useCase([credentialMock])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-  }
-
-  @Test
-  func callAsFunction_wrongSwissProfileVersion_refreshesCredential() async {
-    createAnyCredentialUseCase.executeFromFormatReturnValue = Self.createVcSdJwt(profileVersion: "swiss-profile-issuance:1.0.0")
-
-    await useCase([credentialMock])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-  }
-
-  @Test
-  func callAsFunction_expired_refreshesCredential() async {
-    var credential = credentialMock
-    credential.validUntil = Self.testDate
-
-    await useCase([credential])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-  }
-
-  @Test
-  func callAsFunction_willExpire_refreshesCredential() async {
-    var credential = credentialMock
-    credential.validUntil = Self.testDate.addingTimeInterval(Self.expiryRange)
-
-    await useCase([credential])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
-  }
-
-  @Test
-  func callAsFunction_justNotExpired_refreshesCredential() async {
-    var credential = credentialMock
-    credential.validUntil = Self.testDate.addingTimeInterval(Self.expiryRange + 1)
-
-    await useCase([credential])
-
-    #expect(await refreshCredentialUseCase.callAsFunctionCalled == false)
   }
 
   @Test
@@ -135,95 +73,160 @@ struct RefreshVerifiableCredentialsUseCaseTests {
   }
 
   @Test
-  func callAsFunction_withoutRefreshToken_doesNotRefreshCredential() async {
-    var credential = credentialRefreshMock
-    credential.authentication = CredentialAuthentication(accessToken: "access-token")
+  func callAsFunction_lastAttemptIsNil_refreshesCredential() async {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = .deprecated
+    let credential = Self.refreshableCredential(lastAttempt: nil)
 
     await useCase([credential])
 
-    #expect(await refreshCredentialUseCase.callAsFunctionCalled == false)
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
   }
 
-  @Test
-  func callAsFunction_unacceptedCredential_doesNotRefreshCredential() async {
-    var credential = credentialRefreshMock
-    credential.progressionState = .unaccepted
+  @Test(arguments: refreshIntervalTestCases)
+  func callAsFunction_justInsideRefreshInterval_doesNotRefreshCredential(testCase: RefreshIntervalTestCase) async {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = testCase.status
+    let lastAttempt = Self.testDate.addingTimeInterval(-.days(testCase.days) + 1)
+    let credential = Self.refreshableCredential(lastAttempt: lastAttempt)
 
     await useCase([credential])
 
-    #expect(await refreshCredentialUseCase.callAsFunctionCalled == false)
+    #expect(!refreshCredentialUseCase.callAsFunctionCalled)
+  }
+
+  @Test(arguments: refreshIntervalTestCases)
+  func callAsFunction_atRefreshInterval_refreshesCredential(testCase: RefreshIntervalTestCase) async {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = testCase.status
+    let lastAttempt = Self.testDate.addingTimeInterval(-.days(testCase.days))
+    var credential = Self.refreshableCredential(lastAttempt: lastAttempt)
+    credential.validUntil = Self.testDate
+
+    await useCase([credential])
+
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
+  }
+
+  @Test(arguments: refreshIntervalTestCases)
+  func callAsFunction_justAfterRefreshInterval_refreshesCredential(testCase: RefreshIntervalTestCase) async {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = testCase.status
+    let lastAttempt = Self.testDate.addingTimeInterval(-.days(testCase.days) - 1)
+    var credential = Self.refreshableCredential(lastAttempt: lastAttempt)
+    credential.validUntil = Self.testDate
+
+    await useCase([credential])
+
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
   }
 
   @Test
-  func callAsFunction_swissProfileFetchFails_doesNotRefresh() async {
-    swissProfileLifecycleRepository.fetchSwissProfilesThrowableError = TestingError.error
+  func callAsFunction_batchThresholdReachedAndInsideRefreshInterval_refreshesCredential() async {
+    let lastAttempt = Self.testDate.addingTimeInterval(-1)
+    let credential = Self.refreshableCredential(freshCredentialCount: 2, batchSize: 10, lastAttempt: lastAttempt)
 
-    await useCase([credentialMock])
+    await useCase([credential])
 
-    #expect(await refreshCredentialUseCase.callAsFunctionCalled == false)
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
+  }
+
+  @Test(arguments: SwissProfile.Status.allCases.filter { $0 != .current })
+  func callAsFunction_notCurrentProfile_refreshesCredential(status: SwissProfile.Status) async {
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = status
+    let credential = Self.refreshableCredential()
+
+    await useCase([credential])
+
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
   }
 
   @Test
-  func callAsFunction_swissProfileFetchWithoutVcProfile_doesNotRefresh() async {
-    swissProfileLifecycleRepository.fetchSwissProfilesReturnValue = [SwissProfile(type: .issuance, status: .deprecated, version: "1.0.0")]
+  func callAsFunction_expired_refreshesCredential() async {
+    var credential = credentialMock
+    credential.validUntil = Self.testDate
 
-    await useCase([credentialMock])
+    await useCase([credential])
 
-    #expect(await refreshCredentialUseCase.callAsFunctionCalled == false)
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
+  }
+
+  @Test
+  func callAsFunction_willExpire_refreshesCredential() async {
+    var credential = credentialMock
+    credential.validUntil = Self.testDate.addingTimeInterval(Self.expiryRange)
+
+    await useCase([credential])
+
+    #expect(refreshCredentialUseCase.callAsFunctionCalled)
+  }
+
+  @Test
+  func callAsFunction_justNotExpired_doesNotRefreshCredential() async {
+    var credential = credentialMock
+    credential.validUntil = Self.testDate.addingTimeInterval(Self.expiryRange + 1)
+
+    await useCase([credential])
+
+    #expect(!refreshCredentialUseCase.callAsFunctionCalled)
+  }
+
+  @Test
+  func callAsFunction_noExpiry_doesNotRefreshCredential() async {
+    var credential = credentialMock
+    credential.validUntil = nil
+
+    await useCase([credential])
+
+    #expect(!refreshCredentialUseCase.callAsFunctionCalled)
   }
 
   @Test
   func callAsFunction_refreshFails_doesNotThrow() async {
-    await refreshCredentialUseCase.setCallAsFunctionThrowableError(TestingError.error)
+    refreshCredentialUseCase.callAsFunctionThrowableError = TestingError.error
 
     await useCase([credentialRefreshMock])
 
-    #expect(await refreshCredentialUseCase.callAsFunctionCallsCount == 1)
     #expect(analyticsProvider.logCounter == 1)
   }
 
   @Test
-  func callAsFunction_refreshesCredentialsInParallelWithLimit() async {
-    let tracker = ConcurrencyTracker()
-    await refreshCredentialUseCase.setCallAsFunctionClosure { credential in
-      await tracker.track { credential }
-    }
-    let credentials = (0..<4).map { _ in
-      credentialRefreshMock
-    }
+  func callAsFunction_refreshMultipleCredentialsMixedSuccessAndFailure_completesAndLogsError() async {
+    let checkpoint = TestCheckpoint()
+
+    let credential1 = credentialRefreshMock
+    let credential2 = Self.refreshableCredential(freshCredentialCount: 2, batchSize: 10)
+    let credential3 = Self.refreshableCredential(freshCredentialCount: 2, batchSize: 10)
+    let credentials = [credential1, credential2, credential3]
+
+    Container.shared.refreshCredentialUseCase.register { RefreshCredentialUseCaseMock(checkpoint: checkpoint, failingId: credential2.id) }
+    let useCase = RefreshVerifiableCredentialsUseCase()
 
     let task = Task {
       await useCase(credentials)
     }
 
-    await tracker.waitUntilPausedTasks(count: 2)
-    let maxActive = await tracker.maxActiveTaskCount
-    #expect(maxActive == Self.maxConcurrentRefreshes)
-    await tracker.resumeAll()
-
-    await tracker.waitUntilPausedTasks(count: 2)
-    await tracker.resumeAll()
+    await checkpoint.waitUntilPausedTasks(count: 3)
+    await checkpoint.resumeAll()
     await task.value
-
-    let callsCount = await refreshCredentialUseCase.callAsFunctionCallsCount
-    #expect(callsCount == 4)
+    #expect(analyticsProvider.logCounter == 1)
   }
 
   // MARK: Private
 
-  private static let maxConcurrentRefreshes = 2
   private static let expiryRange: TimeInterval = 60 * 60
-  private static let testDate = Date()
+  private static let testDate = Date(timeIntervalSince1970: 1_700_000_000)
+  private static let refreshIntervalTestCases: [RefreshIntervalTestCase] = [
+    RefreshIntervalTestCase(status: .current, days: 7),
+    RefreshIntervalTestCase(status: .deprecated, days: 5),
+    RefreshIntervalTestCase(status: .sunset, days: 2),
+    RefreshIntervalTestCase(status: .endOfLife, days: 1),
+    RefreshIntervalTestCase(status: nil, days: 1),
+  ]
 
-  private let versionMock = "1.0.0"
   private let credentialMock = refreshableCredential(freshCredentialCount: 1, batchSize: 1)
   private let credentialRefreshMock = refreshableCredential(freshCredentialCount: 2, batchSize: 10)
 
   private var useCase: RefreshVerifiableCredentialsUseCase!
-  private var refreshCredentialUseCase: ThreadSafeRefreshVerifiableCredentialUseCaseSpy!
+  private var refreshCredentialUseCase: RefreshVerifiableCredentialUseCaseProtocolSpy!
   private var getCredentialRefreshThresholdUseCase: GetCredentialRefreshThresholdUseCaseProtocolSpy!
-  private var swissProfileLifecycleRepository: SwissProfileLifecycleRepositoryProtocolSpy!
-  private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocolSpy!
+  private var swissProfileStatusEvaluator: SwissProfileStatusEvaluatorProtocolSpy!
   private var analyticsProvider: MockProvider!
 
   private static func createVcSdJwt(profileVersion: String?) -> VcSdJWS {
@@ -232,7 +235,7 @@ struct RefreshVerifiableCredentialsUseCaseTests {
     return VcSdJWS(jws: jws, payload: payload, resolvedJSON: [:], rawSdJWS: "rawSdJWS", disclosures: [], rawKeyBinding: nil, keyIdentifierDid: "keyIdentifierDid")
   }
 
-  private static func refreshableCredential(freshCredentialCount: Int, batchSize: Int) -> VerifiableCredential {
+  private static func refreshableCredential(id: UUID = UUID(), freshCredentialCount: Int = 1, batchSize: Int = 1, lastAttempt: Date? = nil) -> VerifiableCredential {
     let presentedCount = batchSize - freshCredentialCount
     let bundleItems = (0..<batchSize).map { index in
       BundleItem(
@@ -241,7 +244,9 @@ struct RefreshVerifiableCredentialsUseCaseTests {
     }
 
     var credential = VerifiableCredential.Mock.sample
+    credential.id = id
     credential.progressionState = .accepted
+    credential.lastRefreshAttemptAt = lastAttempt
     credential.bundleItems = bundleItems
     credential.nextPresentableBundleItemId = bundleItems[min(presentedCount, batchSize - 1)].id
     credential.batchData = BatchData(batchSize: batchSize)
@@ -252,10 +257,9 @@ struct RefreshVerifiableCredentialsUseCaseTests {
   }
 
   private mutating func registerMocks() {
-    let refreshCredentialUseCase = ThreadSafeRefreshVerifiableCredentialUseCaseSpy(returnValue: VerifiableCredential.Mock.diploma)
+    let refreshCredentialUseCase = RefreshVerifiableCredentialUseCaseProtocolSpy()
     let getCredentialRefreshThresholdUseCase = GetCredentialRefreshThresholdUseCaseProtocolSpy()
-    let swissProfileLifecycleRepository = SwissProfileLifecycleRepositoryProtocolSpy()
-    let createAnyCredentialUseCase = CreateAnyCredentialUseCaseProtocolSpy()
+    let swissProfileStatusEvaluator = SwissProfileStatusEvaluatorProtocolSpy()
     let analyticsProvider = MockProvider()
     let analytics = AnalyticsSpy()
     analytics.register(analyticsProvider)
@@ -263,78 +267,39 @@ struct RefreshVerifiableCredentialsUseCaseTests {
     self.refreshCredentialUseCase = refreshCredentialUseCase
     self.getCredentialRefreshThresholdUseCase = getCredentialRefreshThresholdUseCase
     self.analyticsProvider = analyticsProvider
-    self.swissProfileLifecycleRepository = swissProfileLifecycleRepository
-    self.createAnyCredentialUseCase = createAnyCredentialUseCase
+    self.swissProfileStatusEvaluator = swissProfileStatusEvaluator
 
     Container.shared.analytics.register { analytics }
     Container.shared.refreshCredentialUseCase.register { refreshCredentialUseCase }
     Container.shared.getCredentialRefreshThresholdUseCase.register { getCredentialRefreshThresholdUseCase }
-    Container.shared.swissProfileLifecycleRepository.register { swissProfileLifecycleRepository }
-    Container.shared.createAnyCredentialUseCase.register { createAnyCredentialUseCase }
-    Container.shared.maxConcurrentVerifiableCredentialRefreshes.register { Self.maxConcurrentRefreshes }
+    Container.shared.swissProfileStatusEvaluator.register { swissProfileStatusEvaluator }
     Container.shared.credentialExpiryRefreshRange.register { Self.expiryRange }
     Container.shared.currentDate.register { Self.testDate }
   }
 
   private func createSuccessState() {
+    refreshCredentialUseCase.callAsFunctionReturnValue = VerifiableCredential.Mock.sample
     getCredentialRefreshThresholdUseCase.callAsFunctionForReturnValue = 2
-    swissProfileLifecycleRepository.fetchSwissProfilesReturnValue = [SwissProfile(type: .verifiableCredential, status: .current, version: versionMock)]
-    createAnyCredentialUseCase.executeFromFormatReturnValue = Self.createVcSdJwt(profileVersion: "swiss-profile-vc:\(versionMock)")
+    swissProfileStatusEvaluator.callAsFunctionReturnValue = .current
   }
-
 }
 
-// MARK: - ThreadSafeRefreshVerifiableCredentialUseCaseSpy
+// MARK: - RefreshCredentialUseCaseMock
 
-private actor ThreadSafeRefreshVerifiableCredentialUseCaseSpy: RefreshVerifiableCredentialUseCaseProtocol {
+actor RefreshCredentialUseCaseMock: RefreshVerifiableCredentialUseCaseProtocol {
+  let checkpoint: TestCheckpoint
+  let failingId: UUID
 
-  // MARK: Lifecycle
-
-  init(returnValue: VerifiableCredential) {
-    callAsFunctionReturnValue = returnValue
-  }
-
-  // MARK: Internal
-
-  var callAsFunctionCallsCount: Int {
-    callAsFunctionReceivedInvocations.count
-  }
-
-  var callAsFunctionCalled: Bool {
-    callAsFunctionCallsCount > 0
-  }
-
-  var callAsFunctionReceivedCredential: VerifiableCredential? {
-    callAsFunctionReceivedInvocations.last
-  }
-
-  func setCallAsFunctionThrowableError(_ error: Error?) {
-    callAsFunctionThrowableError = error
-  }
-
-  func setCallAsFunctionClosure(_ closure: @escaping (VerifiableCredential) async throws -> VerifiableCredential) {
-    callAsFunctionClosure = closure
+  init(checkpoint: TestCheckpoint, failingId: UUID) {
+    self.checkpoint = checkpoint
+    self.failingId = failingId
   }
 
   func callAsFunction(_ credential: VerifiableCredential) async throws -> VerifiableCredential {
-    callAsFunctionReceivedInvocations.append(credential)
-
-    if let callAsFunctionThrowableError {
-      throw callAsFunctionThrowableError
+    await checkpoint.pause()
+    if credential.id == failingId {
+      throw TestingError.error
     }
-
-    if let callAsFunctionClosure {
-      return try await callAsFunctionClosure(credential)
-    }
-
-    return callAsFunctionReturnValue
+    return credential
   }
-
-  // MARK: Private
-
-  private var callAsFunctionReceivedInvocations = [VerifiableCredential]()
-  private let callAsFunctionReturnValue: VerifiableCredential
-  private var callAsFunctionThrowableError: Error?
-  private var callAsFunctionClosure: ((VerifiableCredential) async throws -> VerifiableCredential)?
-
 }

@@ -16,15 +16,19 @@ final class LoginBiometricUseCaseTests: XCTestCase {
   override func setUp() {
     super.setUp()
 
-    uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
-    userSession = SessionSpy()
-    context = LAContextProtocolSpy()
-    dataStoreConfiguration = DataStoreConfigurationManagerProtocolSpy()
+    let uniquePassphraseManager = UniquePassphraseManagerProtocolSpy()
+    let userSession = SessionSpy()
+    let context = LAContextProtocolSpy()
+    let dataStoreConfiguration = DataStoreConfigurationManagerProtocolSpy()
+    self.uniquePassphraseManager = uniquePassphraseManager
+    self.userSession = userSession
+    self.context = context
+    self.dataStoreConfiguration = dataStoreConfiguration
 
-    Container.shared.uniquePassphraseManager.register { self.uniquePassphraseManager }
-    Container.shared.dataStoreConfigurationManager.register { self.dataStoreConfiguration }
-    Container.shared.internalContext.register { self.context }
-    Container.shared.userSession.register { self.userSession }
+    Container.shared.uniquePassphraseManager.register { uniquePassphraseManager }
+    Container.shared.dataStoreConfigurationManager.register { dataStoreConfiguration }
+    Container.shared.internalContext.register { context }
+    Container.shared.userSession.register { userSession }
 
     useCase = LoginBiometricUseCase()
   }

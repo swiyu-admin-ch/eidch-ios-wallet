@@ -10,13 +10,19 @@ class DocumentSelectionViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    context = EIDRequestContext()
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+  override func setUp() async throws {
+    try await super.setUp()
+    let context = EIDRequestContext()
+    self.context = context
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = DocumentSelectionViewModel()
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testOpenScanner() {
     viewModel.didSelect(.identityCard)
 

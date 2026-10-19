@@ -8,7 +8,7 @@ import Spyable
 // MARK: - RefreshVerifiableCredentialsUseCaseProtocol
 
 @Spyable
-protocol RefreshVerifiableCredentialsUseCaseProtocol {
+protocol RefreshVerifiableCredentialsUseCaseProtocol: Sendable {
   func callAsFunction(_ credentials: [VerifiableCredential]) async
 }
 
@@ -19,27 +19,15 @@ struct RefreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseP
   // MARK: Internal
 
   func callAsFunction(_ credentials: [VerifiableCredential]) async {
-    let swissProfiles = try? await swissProfileLifecycleRepository.fetchSwissProfiles(.verifiableCredential)
-    let refreshableCredentials = credentials.filter {
-      canBeRefreshed($0) && needsToRefresh($0, swissProfiles: swissProfiles ?? [])
+    let refreshableCredentials = await credentials.asyncFilter { credential in
+      if batchThresholdReached(credential) { return true }
+      let status = await swissProfileStatusEvaluator(credential) ?? .endOfLife // no profile version on credential, treat it as end of life
+      guard await isAllowedToRefresh(credential, status: status) else { return false }
+      return status != .current || isInExpiryRange(credential)
     }
 
-    await withTaskGroup(of: Void.self) { taskGroup in
-      var credentialIterator = refreshableCredentials.makeIterator()
-
-      for _ in 0..<maxConcurrentRefreshes {
-        guard let credential = credentialIterator.next() else { break }
-        taskGroup.addTask {
-          await refresh(credential)
-        }
-      }
-
-      while await taskGroup.next() != nil {
-        guard let credential = credentialIterator.next() else { continue }
-        taskGroup.addTask {
-          await refresh(credential)
-        }
-      }
+    _ = await refreshableCredentials.concurrentMapLimited(maxConcurrentTasks: maxConcurrentRefreshes) {
+      await refresh($0)
     }
   }
 
@@ -50,32 +38,20 @@ struct RefreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseP
   @Injected(\.getCredentialRefreshThresholdUseCase) private var getCredentialRefreshThresholdUseCase:
     GetCredentialRefreshThresholdUseCaseProtocol
   @Injected(\.maxConcurrentVerifiableCredentialRefreshes) private var maxConcurrentRefreshes: Int
-  @Injected(\.swissProfileLifecycleRepository) private var swissProfileLifecycleRepository
-  @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase
+  @Injected(\.swissProfileStatusEvaluator) private var swissProfileStatusEvaluator
   @Injected(\.credentialExpiryRefreshRange) private var credentialExpiryRefreshRange: TimeInterval
 
-  private func canBeRefreshed(_ credential: VerifiableCredential) -> Bool {
-    credential.progressionState == .accepted && credential.authentication.refreshToken != nil
-  }
-
-  private func needsToRefresh(_ credential: VerifiableCredential, swissProfiles: [SwissProfile]) -> Bool {
-    batchThresholdReached(credential) ||
-      getSwissProfileStatus(for: credential, swissProfiles: swissProfiles) != .current ||
-      isInExpiryRange(credential)
-  }
-
   private func batchThresholdReached(_ credential: VerifiableCredential) -> Bool {
-    let presentedCredentials = credential.bundleItems.filter { !$0.presented }
-    let threshold = getCredentialRefreshThresholdUseCase(for: credential.bundleItems.count)
-    return credential.bundleItems.count > 1 && presentedCredentials.count <= threshold
+    let totalCount = credential.bundleItems.count
+    guard totalCount > 1 else { return false }
+    let remainingCount = credential.bundleItems.filter { !$0.presented }.count
+    let threshold = getCredentialRefreshThresholdUseCase(for: totalCount)
+    return remainingCount <= threshold
   }
 
-  private func getSwissProfileStatus(for credential: VerifiableCredential, swissProfiles: [SwissProfile]) -> SwissProfile.Status? {
-    guard let firstBundleItem = credential.bundleItems.first else { return nil }
-    let anyCredential = try? createAnyCredentialUseCase.execute(from: firstBundleItem.payload, format: credential.format)
-    let version = anyCredential?.swissProfileVersion
-    guard swissProfiles.contains(where: { $0.type == .verifiableCredential }) else { return .current } // no info about profile version so assume it's current
-    return swissProfiles.getStatus(for: version)
+  private func isAllowedToRefresh(_ credential: VerifiableCredential, status: SwissProfile.Status) async -> Bool {
+    guard let lastAttemptAt = credential.lastRefreshAttemptAt else { return true }
+    return Container.shared.currentDate().timeIntervalSince(lastAttemptAt) >= status.attemptInterval
   }
 
   private func refresh(_ credential: VerifiableCredential) async {
@@ -83,7 +59,6 @@ struct RefreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseP
       _ = try await refreshCredentialUseCase(credential)
     } catch {
       analytics.log(error)
-      return
     }
   }
 
@@ -93,14 +68,13 @@ struct RefreshVerifiableCredentialsUseCase: RefreshVerifiableCredentialsUseCaseP
   }
 }
 
-extension [SwissProfile] {
-  fileprivate func getStatus(for version: String?) -> SwissProfile.Status? {
-    let vcPrefix = SwissProfile.ProfileType.verifiableCredential.rawValue
-    guard
-      let version,
-      version.hasPrefix(vcPrefix),
-      let profile = first(where: { $0.version == version.replacing(vcPrefix + ":", with: "") })
-    else { return nil }
-    return profile.status
+extension SwissProfile.Status {
+  fileprivate var attemptInterval: TimeInterval {
+    switch self {
+    case .current: .days(7)
+    case .deprecated: .days(5)
+    case .sunset: .days(2)
+    case .endOfLife: .days(1)
+    }
   }
 }

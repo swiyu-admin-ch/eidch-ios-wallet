@@ -7,7 +7,7 @@ public typealias VcSchemaTrustStatement = SdJWS<VcSchemaTrustStatementJWT>
 
 // MARK: - VcSchemaTrustStatementJWT
 
-public struct VcSchemaTrustStatementJWT: TrustStatementV1JWT, Codable, Equatable {
+public struct VcSchemaTrustStatementJWT: TrustStatementV1JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

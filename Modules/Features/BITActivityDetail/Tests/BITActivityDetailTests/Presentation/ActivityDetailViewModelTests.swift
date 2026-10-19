@@ -14,12 +14,16 @@ final class ActivityDetailViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
-    viewModel = ActivityDetailViewModel(activityIdMock)
     createSuccessState()
+    viewModel = ActivityDetailViewModel(activityIdMock)
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testOnColorScheme_success_stateIsResult() async {
@@ -121,10 +125,12 @@ final class ActivityDetailViewModelTests: XCTestCase {
   private var viewModel: ActivityDetailViewModel!
 
   private func registerMocks() {
-    getActivityDetailUseCaseSpy = GetActivityDetailUseCaseProtocolSpy()
-    deleteActivityUseCaseSpy = DeleteActivityUseCaseProtocolSpy()
-    Container.shared.getActivityDetailUseCase.register { @MainActor in self.getActivityDetailUseCaseSpy }
-    Container.shared.deleteActivityUseCase.register { @MainActor in self.deleteActivityUseCaseSpy }
+    let getActivityDetailUseCaseSpy = GetActivityDetailUseCaseProtocolSpy()
+    self.getActivityDetailUseCaseSpy = getActivityDetailUseCaseSpy
+    let deleteActivityUseCaseSpy = DeleteActivityUseCaseProtocolSpy()
+    self.deleteActivityUseCaseSpy = deleteActivityUseCaseSpy
+    Container.shared.getActivityDetailUseCase.register { @MainActor in getActivityDetailUseCaseSpy }
+    Container.shared.deleteActivityUseCase.register { @MainActor in deleteActivityUseCaseSpy }
   }
 
   private func createSuccessState() {

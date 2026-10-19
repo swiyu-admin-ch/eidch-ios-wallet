@@ -27,6 +27,7 @@ enum PresentationRequestReviewState: Equatable {
 
 #if DEBUG
 extension PresentationRequestReviewState {
+  @MainActor
   struct Mock {
     static var result: PresentationRequestReviewState {
       let info = TrustInformation(identity: .untrusted, vcSchema: .untrusted)

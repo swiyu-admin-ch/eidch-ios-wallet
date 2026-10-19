@@ -14,7 +14,7 @@ struct UniquePassphraseRepository: UniquePassphraseRepositoryProtocol {
     let query = try QueryBuilder()
       .setService(Key.authenticationService)
       .setAccessControlFlags(authMethod.accessControlFlags)
-      .setProtection(SecretConfiguration.protection)
+      .setProtection(protection)
       .setContext(context)
       .build()
 
@@ -64,9 +64,10 @@ struct UniquePassphraseRepository: UniquePassphraseRepositoryProtocol {
     case unavailableData
   }
 
-  private enum SecretConfiguration {
-    static let protection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+  @Injected(\.secretManager) private var secretManager: SecretManagerProtocol
+
+  private var protection: CFString {
+    kSecAttrAccessibleWhenUnlockedThisDeviceOnly
   }
 
-  @Injected(\.secretManager) private var secretManager: SecretManagerProtocol
 }

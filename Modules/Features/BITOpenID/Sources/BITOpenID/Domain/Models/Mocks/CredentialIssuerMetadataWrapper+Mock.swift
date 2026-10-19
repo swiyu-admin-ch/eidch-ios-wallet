@@ -8,8 +8,8 @@ import Foundation
 extension CredentialIssuerMetadataWrapper: Mockable {
 
   struct Mock {
-    static var sample = CredentialIssuerMetadataWrapper(credentialConfigurationId: "sample-credential", credentialIssuerMetadata: .Mock.sample)
-    static var simpleSample = CredentialIssuerMetadataWrapper(credentialConfigurationId: "sample-credential", credentialIssuerMetadata: .Mock.simpleSample)
+    static let sample = CredentialIssuerMetadataWrapper(credentialConfigurationId: "sample-credential", credentialIssuerMetadata: .Mock.sample)
+    static let simpleSample = CredentialIssuerMetadataWrapper(credentialConfigurationId: "sample-credential", credentialIssuerMetadata: .Mock.simpleSample)
   }
 }
 

@@ -6,7 +6,7 @@ import RegexBuilder
 
 // MARK: - CredentialDisplay
 
-public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equatable {
+public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equatable, Sendable {
 
   // MARK: Lifecycle
 
@@ -18,8 +18,7 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
     locale: UserLocale,
     logoAltText: String? = nil,
     logoBase64: Data? = nil,
-    summary: String? = nil,
-    credentialId: UUID? = nil)
+    summary: String? = nil)
   {
     self.id = id
     self.name = name
@@ -29,7 +28,6 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
     self.logoAltText = logoAltText
     self.logoBase64 = logoBase64
     self.summary = summary
-    self.credentialId = credentialId
   }
 
   public init(from decoder: Decoder) throws {
@@ -42,7 +40,6 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
     logoAltText = try container.decodeIfPresent(String.self, forKey: .logoAltText)
     logoBase64 = try container.decodeIfPresent(Data.self, forKey: .logoBase64)
     summary = try container.decodeIfPresent(String.self, forKey: .summary)
-    credentialId = try container.decodeIfPresent(UUID.self, forKey: .credentialId)
   }
 
   public init(_ entity: CredentialDisplayEntity) {
@@ -54,8 +51,7 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
       locale: entity.locale ?? UserLocale.defaultLocaleIdentifier,
       logoAltText: entity.logoAltText,
       logoBase64: entity.cachedLogoData,
-      summary: entity.summary,
-      credentialId: entity.credential.first?.id)
+      summary: entity.summary)
   }
 
   // MARK: Public
@@ -69,7 +65,6 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
     case logoAltText = "logo_alt_text"
     case logoBase64 = "logo_data"
     case summary
-    case credentialId = "credential_id"
   }
 
   public var id: UUID
@@ -80,7 +75,6 @@ public struct CredentialDisplay: Codable, Identifiable, DisplayLocalizable, Equa
   public var logoAltText: String?
   public var logoBase64: Data?
   public var summary: String?
-  public var credentialId: UUID?
 
   #warning("TODO: should be moved to a CredentialDisplayFactory")
 

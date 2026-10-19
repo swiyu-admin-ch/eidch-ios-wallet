@@ -18,11 +18,13 @@ final class VcSdJwtVpTokenGeneratorTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    sha256HasherSpy = HashableSpy()
-    jwsEncoderMock = JWSEncoderMock()
+    let sha256HasherSpy = HashableSpy()
+    self.sha256HasherSpy = sha256HasherSpy
+    let jwsEncoderMock = JWSEncoderMock<KeyBindingJWT>()
+    self.jwsEncoderMock = jwsEncoderMock
 
-    Container.shared.sha256Hasher.register { self.sha256HasherSpy }
-    Container.shared.jwsEncoder.register { self.jwsEncoderMock }
+    Container.shared.sha256Hasher.register { sha256HasherSpy }
+    Container.shared.jwsEncoder.register { jwsEncoderMock }
 
     jwsEncoderMock.encodeUsingReturnValue = Self.mockJwtData
     sha256HasherSpy.hashReturnValue = Data()

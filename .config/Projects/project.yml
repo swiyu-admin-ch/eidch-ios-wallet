@@ -5,6 +5,10 @@ options:
   deploymentTarget: [iOS]
   generateEmptyDirectories: true
   
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+
 configs:
   Dev (debug): debug
   Dev (release): release

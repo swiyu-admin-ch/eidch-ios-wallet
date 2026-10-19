@@ -17,7 +17,7 @@ enum FetchDeferredCredentialServiceError: Error {
 // MARK: - FetchDeferredCredentialServiceProtocol
 
 @Spyable
-protocol FetchDeferredCredentialServiceProtocol {
+protocol FetchDeferredCredentialServiceProtocol: Sendable {
   func callAsFunction(for deferredCredential: DeferredCredential) async throws -> (JWS<CredentialIssuerMetadataJWT>, FetchAnyCredentialResult.Credentials)
 }
 

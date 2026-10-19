@@ -5,7 +5,7 @@ import Spyable
 // MARK: - ImageValidatorProtocol
 
 @Spyable
-public protocol ImageValidatorProtocol {
+public protocol ImageValidatorProtocol: Sendable {
   /// Validates that an image payload matches the expected image format based on the file magic numbers
   /// https://gist.github.com/leommoore/f9e57ba2aa4bf197ebc5
   ///

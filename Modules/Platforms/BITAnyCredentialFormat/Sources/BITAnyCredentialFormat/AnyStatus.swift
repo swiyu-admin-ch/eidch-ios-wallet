@@ -10,6 +10,6 @@ public protocol AnyStatus {
 
 // MARK: - AnyStatusType
 
-public enum AnyStatusType: String {
+public enum AnyStatusType: String, Sendable {
   case tokenStatusList
 }

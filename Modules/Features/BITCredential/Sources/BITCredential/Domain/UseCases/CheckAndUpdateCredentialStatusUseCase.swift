@@ -1,4 +1,5 @@
 import BITAnyCredentialFormat
+import BITCore
 import BITCredentialShared
 import BITOpenID
 import BITSdJWT
@@ -9,10 +10,10 @@ import Spyable
 // MARK: - CheckAndUpdateCredentialStatusUseCaseProtocol
 
 @Spyable
-protocol CheckAndUpdateCredentialStatusUseCaseProtocol {
+protocol CheckAndUpdateCredentialStatusUseCaseProtocol: Sendable {
   @discardableResult
-  func execute(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential]
-  func execute(for credential: VerifiableCredential) async throws -> VerifiableCredential
+  func callAsFunction(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential]
+  func callAsFunction(for credential: VerifiableCredential) async throws -> VerifiableCredential
 }
 
 // MARK: - CheckAndUpdateCredentialStatusUseCase
@@ -21,24 +22,23 @@ struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseC
 
   // MARK: Internal
 
-  func execute(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential] {
-    try await withThrowingTaskGroup(of: VerifiableCredential.self, returning: [VerifiableCredential].self) { taskGroup in
-
-      for credential in credentials {
-        taskGroup.addTask {
-          try await execute(for: credential)
-        }
-      }
-
-      return try await taskGroup.reduce(into: [VerifiableCredential]()) { updatedCredentials, credential in
-        updatedCredentials.append(credential)
+  func callAsFunction(_ credentials: [VerifiableCredential]) async throws -> [VerifiableCredential] {
+    let results = await credentials.concurrentMapLimited(maxConcurrentTasks: maxConcurrentStatusChecks) {
+      try await callAsFunction(for: $0)
+    }
+    return zip(credentials, results).map { credential, result in
+      switch result {
+      case .success(let updatedCredential):
+        updatedCredential
+      case .failure:
+        credential
       }
     }
   }
 
-  func execute(for credential: VerifiableCredential) async throws -> VerifiableCredential {
-    let status = try await getStatus(of: credential)
-    if status != .unknown {
+  func callAsFunction(for credential: VerifiableCredential) async throws -> VerifiableCredential {
+    let status = try await credentialStatusValidator(credential)
+    if status != .unknown && status != credential.status {
       return try await updateCredentialStatus(credential, to: status)
     }
     return credential
@@ -46,65 +46,11 @@ struct CheckAndUpdateCredentialStatusUseCase: CheckAndUpdateCredentialStatusUseC
 
   // MARK: Private
 
-  @Injected(\.createAnyCredentialUseCase) private var createAnyCredentialUseCase: CreateAnyCredentialUseCaseProtocol
-  @Injected(\.statusValidators) private var validators: [AnyStatusType: any AnyStatusCheckValidatorProtocol]
+  private let maxConcurrentStatusChecks = 10
+
+  @Injected(\.credentialStatusValidator) private var credentialStatusValidator
   @Injected(\.credentialRepository) private var credentialRepository
-  @Injected(\.dateBuffer) private var dateBuffer: TimeInterval
   @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
-}
-
-extension CheckAndUpdateCredentialStatusUseCase {
-  private func getStatus(of credential: VerifiableCredential) async throws -> CredentialStatus {
-    let bundleItem = try selectCredentialBundleItemUseCase(credential)
-    let anyCredential = try createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
-    let dateStatus = checkDateValidity(anyCredential: anyCredential)
-    if dateStatus == .expired {
-      return .expired
-    }
-
-    let validatorStatus = await getValidatorStatus(anyCredential: anyCredential)
-    if validatorStatus == .revoked {
-      return .revoked
-    }
-
-    if dateStatus == .businessExpired {
-      return .businessExpired
-    }
-
-    if dateStatus == .notYetValid {
-      return .notYetValid
-    }
-
-    if validatorStatus != .unknown {
-      return CredentialStatus(validatorStatus)
-    }
-    return .unknown
-  }
-
-  private func getValidatorStatus(anyCredential: AnyCredential) async -> VcStatus {
-    guard
-      let anyStatus = anyCredential.status,
-      let validator = validators[anyStatus.type]
-    else { return .unknown }
-    return await validator.validate(anyStatus, issuer: anyCredential.issuer)
-  }
-
-  private func checkDateValidity(anyCredential: AnyCredential) -> CredentialStatus {
-    let now = Date()
-    if let validFrom = anyCredential.validFrom, validFrom > now.addingTimeInterval(dateBuffer) {
-      return .notYetValid
-    }
-
-    if let validUntil = anyCredential.validUntil, validUntil < now {
-      return .expired
-    }
-
-    if let businessExpiry = (anyCredential as? VcSdJWS)?.businessExpiryDate, businessExpiry < now {
-      return .businessExpired
-    }
-
-    return .valid
-  }
 
   private func updateCredentialStatus(_ credential: VerifiableCredential, to status: CredentialStatus) async throws -> VerifiableCredential {
     var credentialCopy = credential
@@ -122,24 +68,5 @@ extension CheckAndUpdateCredentialStatusUseCase {
     credentialCopy.bundleItems[index].status = status
 
     return try await credentialRepository.update(verifiableCredential: credentialCopy)
-  }
-
-}
-
-extension CredentialStatus {
-
-  init(_ vcStatus: VcStatus) {
-    self = switch vcStatus {
-    case .valid:
-      .valid
-    case .revoked:
-      .revoked
-    case .suspended:
-      .suspended
-    case .unsupported:
-      .unsupported
-    case .unknown:
-      .unknown
-    }
   }
 }

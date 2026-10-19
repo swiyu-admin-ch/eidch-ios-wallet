@@ -1,6 +1,7 @@
 import BITEIDRequestShared
 import BITL10n
 
+@MainActor
 public class AutoVerificationStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle

@@ -10,6 +10,6 @@ public class ActivityActorDisplayEntity: EmbeddedObject, DisplayLocalizable {
 
   public var image: Data? {
     guard let imageHash, let realm else { return nil }
-    return realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHash)?.data
+    return realm.object(ofType: ImageEntity.self, forPrimaryKey: imageHash)?.image
   }
 }

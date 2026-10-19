@@ -3,7 +3,7 @@ import Foundation
 @testable import BITCore
 @testable import BITJWT
 
-struct ComplexJWT: JWT, Codable, Equatable {
+struct ComplexJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 
@@ -40,7 +40,7 @@ struct ComplexJWT: JWT, Codable, Equatable {
     case partlyDisclosedObject = "key_object_partly_disclosed"
   }
 
-  struct NestedObject: Codable, Equatable {
+  struct NestedObject: Codable, Equatable, Sendable {
     let key1: String?
     let key2: String?
 
@@ -50,7 +50,7 @@ struct ComplexJWT: JWT, Codable, Equatable {
     }
   }
 
-  struct PartlyDisclosedObject: Codable, Equatable {
+  struct PartlyDisclosedObject: Codable, Equatable, Sendable {
     let key1: String
     let key2: PartlyDisclosedObject12?
     let key3: [String]?
@@ -68,7 +68,7 @@ struct ComplexJWT: JWT, Codable, Equatable {
     }
   }
 
-  struct PartlyDisclosedObject12: Codable, Equatable {
+  struct PartlyDisclosedObject12: Codable, Equatable, Sendable {
     let key1: String?
     let key2: String?
     let key3: DisclosableArray<PartlyDisclosedObject123>
@@ -86,7 +86,7 @@ struct ComplexJWT: JWT, Codable, Equatable {
     }
   }
 
-  struct PartlyDisclosedObject123: Codable, Equatable {
+  struct PartlyDisclosedObject123: Codable, Equatable, Sendable {
     let key: DisclosableArray<String>
 
     init(key: [String]) {

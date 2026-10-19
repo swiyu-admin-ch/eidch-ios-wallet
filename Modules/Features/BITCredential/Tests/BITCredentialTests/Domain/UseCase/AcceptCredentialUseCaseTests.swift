@@ -76,10 +76,12 @@ final class AcceptCredentialUseCaseTests: XCTestCase {
   private var activityServiceSpy: ActivityServiceProtocolSpy!
 
   private func registerMocks() {
-    credentialRepositorySpy = CredentialRepositoryProtocolSpy()
-    activityServiceSpy = ActivityServiceProtocolSpy()
-    Container.shared.credentialRepository.register { self.credentialRepositorySpy }
-    Container.shared.activityService.register { self.activityServiceSpy }
+    let credentialRepositorySpy = CredentialRepositoryProtocolSpy()
+    self.credentialRepositorySpy = credentialRepositorySpy
+    let activityServiceSpy = ActivityServiceProtocolSpy()
+    self.activityServiceSpy = activityServiceSpy
+    Container.shared.credentialRepository.register { credentialRepositorySpy }
+    Container.shared.activityService.register { activityServiceSpy }
   }
 
   private func createSuccess() {

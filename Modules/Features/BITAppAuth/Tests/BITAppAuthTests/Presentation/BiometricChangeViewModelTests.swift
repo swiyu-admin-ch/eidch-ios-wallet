@@ -8,35 +8,6 @@ final class BiometricChangeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    router = BiometricChangeRouterRoutesMock()
-    getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
-    changeBiometricStatusUseCase = ChangeBiometricStatusUseCaseProtocolSpy()
-    getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
-    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
-
-    lockWalletUseCase = LockWalletUseCaseProtocolSpy()
-    registerLoginAttemptCounterUseCase = RegisterLoginAttemptCounterUseCaseProtocolSpy()
-    registerLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
-    getLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
-    getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
-    resetLoginAttemptCounterUseCase = ResetLoginAttemptCounterUseCaseProtocolSpy()
-    getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
-    getBiometricTypeUseCase.callAsFunctionReturnValue = .faceID
-
-    Container.shared.getUniquePassphraseUseCase.register { @MainActor in self.getUniquePassphraseUseCase }
-    Container.shared.changeBiometricStatusUseCase.register { @MainActor in self.changeBiometricStatusUseCase }
-    Container.shared.getBiometricStateUseCase.register { @MainActor in self.getBiometricStateUseCase }
-
-    Container.shared.lockWalletUseCase.register { @MainActor in self.lockWalletUseCase }
-    Container.shared.registerLoginAttemptCounterUseCase.register { @MainActor in self.registerLoginAttemptCounterUseCase }
-    Container.shared.getLoginAttemptCounterUseCase.register { @MainActor in self.getLoginAttemptCounterUseCase }
-    Container.shared.resetLoginAttemptCounterUseCase.register { @MainActor in self.resetLoginAttemptCounterUseCase }
-    Container.shared.getBiometricTypeUseCase.register { @MainActor in self.getBiometricTypeUseCase }
-    Container.shared.pinCodeMinimumSize.register { @MainActor in self.pinCodeSize }
-  }
-
   override func tearDown() {
     super.tearDown()
     Container.shared.reset()
@@ -44,7 +15,8 @@ final class BiometricChangeViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_hasBiometricAuth() {
-    let viewModel = BiometricChangeViewModel(router: router)
+    let dependencies = makeDependencies()
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     XCTAssertEqual(viewModel.state, .password)
     XCTAssertNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 0)
@@ -56,8 +28,9 @@ final class BiometricChangeViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState_noBiometricAuth() {
-    getBiometricStateUseCase.callAsFunctionReturnValue = .notEnrolled
-    let viewModel = BiometricChangeViewModel(router: router)
+    let dependencies = makeDependencies()
+    dependencies.getBiometricStateUseCase.callAsFunctionReturnValue = .notEnrolled
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     XCTAssertEqual(viewModel.state, .disabledBiometrics)
     XCTAssertNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 0)
@@ -68,33 +41,35 @@ final class BiometricChangeViewModelTests: XCTestCase {
 
   @MainActor
   func testHappyPath() async {
+    let dependencies = makeDependencies()
     let pinCode = "123456"
     let mockData = Data()
-    getUniquePassphraseUseCase.callAsFunctionFromReturnValue = mockData
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromReturnValue = mockData
 
-    let viewModel = BiometricChangeViewModel(router: router)
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     viewModel.pinCode = pinCode
     await viewModel.submit()
 
     XCTAssertTrue(viewModel.isSubmitEnabled)
     XCTAssertFalse(viewModel.pinCode.isEmpty)
-    XCTAssertEqual(getUniquePassphraseUseCase.callAsFunctionFromReceivedPinCode, pinCode)
-    XCTAssertTrue(getBiometricStateUseCase.callAsFunctionCalled)
-    XCTAssertTrue(changeBiometricStatusUseCase.callAsFunctionWithCalled)
+    XCTAssertEqual(dependencies.getUniquePassphraseUseCase.callAsFunctionFromReceivedPinCode, pinCode)
+    XCTAssertTrue(dependencies.getBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertTrue(dependencies.changeBiometricStatusUseCase.callAsFunctionWithCalled)
   }
 
   @MainActor
   func testPassphraseFailure() async {
+    let dependencies = makeDependencies()
     let pinCode = "123456"
-    registerLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
-    getUniquePassphraseUseCase.callAsFunctionFromThrowableError = TestingError.error
+    dependencies.registerLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromThrowableError = TestingError.error
 
-    let viewModel = BiometricChangeViewModel(router: router)
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     viewModel.pinCode = pinCode
     await viewModel.submit()
 
     XCTAssertFalse(viewModel.pinCode.isEmpty)
-    XCTAssertEqual(getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
+    XCTAssertEqual(dependencies.getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
     XCTAssertEqual(viewModel.inputFieldState, .error)
     XCTAssertNotNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 1)
@@ -102,11 +77,12 @@ final class BiometricChangeViewModelTests: XCTestCase {
 
   @MainActor
   func testPassphraseFailure_thenSuccess() async {
+    let dependencies = makeDependencies()
     let pinCode = "123456"
-    registerLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
-    getUniquePassphraseUseCase.callAsFunctionFromThrowableError = TestingError.error
+    dependencies.registerLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 1
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromThrowableError = TestingError.error
 
-    let viewModel = BiometricChangeViewModel(router: router)
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     viewModel.pinCode = pinCode
     await viewModel.submit()
 
@@ -115,28 +91,29 @@ final class BiometricChangeViewModelTests: XCTestCase {
     XCTAssertNotNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 1)
 
-    XCTAssertEqual(getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
+    XCTAssertEqual(dependencies.getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
 
     let data = Data()
-    getUniquePassphraseUseCase.callAsFunctionFromThrowableError = nil
-    getUniquePassphraseUseCase.callAsFunctionFromReturnValue = data
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromThrowableError = nil
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromReturnValue = data
 
     await viewModel.submit()
 
     XCTAssertFalse(viewModel.pinCode.isEmpty)
-    XCTAssertEqual(getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
-    XCTAssertTrue(getBiometricStateUseCase.callAsFunctionCalled)
-    XCTAssertEqual(changeBiometricStatusUseCase.callAsFunctionWithReceivedUniquePassphrase, data)
+    XCTAssertEqual(dependencies.getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
+    XCTAssertTrue(dependencies.getBiometricStateUseCase.callAsFunctionCalled)
+    XCTAssertEqual(dependencies.changeBiometricStatusUseCase.callAsFunctionWithReceivedUniquePassphrase, data)
   }
 
   @MainActor
   func testChangeBiometricStatus_failure() async {
+    let dependencies = makeDependencies()
     let pinCode = "123456"
     let data = Data()
-    getUniquePassphraseUseCase.callAsFunctionFromReturnValue = data
-    changeBiometricStatusUseCase.callAsFunctionWithThrowableError = TestingError.error
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromReturnValue = data
+    dependencies.changeBiometricStatusUseCase.callAsFunctionWithThrowableError = TestingError.error
 
-    let viewModel = BiometricChangeViewModel(router: router)
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     viewModel.pinCode = pinCode
     await viewModel.submit()
 
@@ -145,17 +122,18 @@ final class BiometricChangeViewModelTests: XCTestCase {
     XCTAssertNotNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 0)
 
-    XCTAssertEqual(getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
+    XCTAssertEqual(dependencies.getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
   }
 
   @MainActor
   func testChangeBiometricStatus_userCancel() async {
+    let dependencies = makeDependencies()
     let pinCode = "123456"
     let data = Data()
-    getUniquePassphraseUseCase.callAsFunctionFromReturnValue = data
-    changeBiometricStatusUseCase.callAsFunctionWithThrowableError = ChangeBiometricStatusError.userCancel
+    dependencies.getUniquePassphraseUseCase.callAsFunctionFromReturnValue = data
+    dependencies.changeBiometricStatusUseCase.callAsFunctionWithThrowableError = ChangeBiometricStatusError.userCancel
 
-    let viewModel = BiometricChangeViewModel(router: router)
+    let viewModel = BiometricChangeViewModel(router: dependencies.router)
     viewModel.pinCode = pinCode
     await viewModel.submit()
 
@@ -164,25 +142,62 @@ final class BiometricChangeViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.inputFieldMessage)
     XCTAssertEqual(viewModel.attempts, 0)
 
-    XCTAssertEqual(getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
+    XCTAssertEqual(dependencies.getUniquePassphraseUseCase.callAsFunctionFromReceivedInvocations.first, pinCode)
   }
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var pinCodeSize = 6
-  private var isPresented = true
+  private struct Dependencies {
+    let router: BiometricChangeRouterRoutes
+    let getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocolSpy
+    let lockWalletUseCase: LockWalletUseCaseProtocolSpy
+    let registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocolSpy
+    let getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocolSpy
+    let resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocolSpy
+    let changeBiometricStatusUseCase: ChangeBiometricStatusUseCaseProtocolSpy
+    let getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy
+    let getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocolSpy
+  }
 
-  private var getUniquePassphraseUseCase: GetUniquePassphraseUseCaseProtocolSpy!
-  private var lockWalletUseCase: LockWalletUseCaseProtocolSpy!
-  private var registerLoginAttemptCounterUseCase: RegisterLoginAttemptCounterUseCaseProtocolSpy!
-  private var getLoginAttemptCounterUseCase: GetLoginAttemptCounterUseCaseProtocolSpy!
-  private var resetLoginAttemptCounterUseCase: ResetLoginAttemptCounterUseCaseProtocolSpy!
-  private var changeBiometricStatusUseCase: ChangeBiometricStatusUseCaseProtocolSpy!
-  private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy!
-  private var getBiometricTypeUseCase: GetBiometricTypeUseCaseProtocolSpy!
+  @MainActor
+  private func makeDependencies() -> Dependencies {
+    let router = BiometricChangeRouterRoutesMock()
+    let getUniquePassphraseUseCase = GetUniquePassphraseUseCaseProtocolSpy()
+    let changeBiometricStatusUseCase = ChangeBiometricStatusUseCaseProtocolSpy()
+    let getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
 
-  private var router: BiometricChangeRouterRoutes!
-  // swiftlint:enable all
+    let lockWalletUseCase = LockWalletUseCaseProtocolSpy()
+    let registerLoginAttemptCounterUseCase = RegisterLoginAttemptCounterUseCaseProtocolSpy()
+    registerLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
+    let getLoginAttemptCounterUseCase = GetLoginAttemptCounterUseCaseProtocolSpy()
+    getLoginAttemptCounterUseCase.callAsFunctionKindReturnValue = 0
+    let resetLoginAttemptCounterUseCase = ResetLoginAttemptCounterUseCaseProtocolSpy()
+    let getBiometricTypeUseCase = GetBiometricTypeUseCaseProtocolSpy()
+    getBiometricTypeUseCase.callAsFunctionReturnValue = .faceID
+    let pinCodeSize = 6
+
+    Container.shared.getUniquePassphraseUseCase.register { @MainActor in getUniquePassphraseUseCase }
+    Container.shared.changeBiometricStatusUseCase.register { @MainActor in changeBiometricStatusUseCase }
+    Container.shared.getBiometricStateUseCase.register { @MainActor in getBiometricStateUseCase }
+
+    Container.shared.lockWalletUseCase.register { @MainActor in lockWalletUseCase }
+    Container.shared.registerLoginAttemptCounterUseCase.register { @MainActor in registerLoginAttemptCounterUseCase }
+    Container.shared.getLoginAttemptCounterUseCase.register { @MainActor in getLoginAttemptCounterUseCase }
+    Container.shared.resetLoginAttemptCounterUseCase.register { @MainActor in resetLoginAttemptCounterUseCase }
+    Container.shared.getBiometricTypeUseCase.register { @MainActor in getBiometricTypeUseCase }
+    Container.shared.pinCodeMinimumSize.register { @MainActor in pinCodeSize }
+
+    return Dependencies(
+      router: router,
+      getUniquePassphraseUseCase: getUniquePassphraseUseCase,
+      lockWalletUseCase: lockWalletUseCase,
+      registerLoginAttemptCounterUseCase: registerLoginAttemptCounterUseCase,
+      getLoginAttemptCounterUseCase: getLoginAttemptCounterUseCase,
+      resetLoginAttemptCounterUseCase: resetLoginAttemptCounterUseCase,
+      changeBiometricStatusUseCase: changeBiometricStatusUseCase,
+      getBiometricStateUseCase: getBiometricStateUseCase,
+      getBiometricTypeUseCase: getBiometricTypeUseCase)
+  }
 
 }

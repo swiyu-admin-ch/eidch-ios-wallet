@@ -6,7 +6,7 @@ import Spyable
 // MARK: - ActorIdentityValidatorProtocol
 
 @Spyable
-public protocol ActorIdentityValidatorProtocol {
+public protocol ActorIdentityValidatorProtocol: Sendable {
   func validate(_ metadataJws: JWS<CredentialIssuerMetadataJWT>) async throws
   func validate(_ identityTrustStatement: IdentityTrustStatement?, for actorDid: String) async throws
   func validate(issuerDid: String, metadataJws: JWS<CredentialIssuerMetadataJWT>) throws
@@ -23,25 +23,21 @@ struct ActorIdentityValidator: ActorIdentityValidatorProtocol {
     guard let identityTrustStatement = metadataJws.payload.credentialIssuerMetadata.identityTrustStatement
     else {
       #warning("checks TP 1.0 identity, remove as soon as TP 2.0 is enforced")
-      if isActorIdentityValidationEnabled {
-        do {
-          _ = try await trustStatementService.fetchIdentity(for: actorDid)
-        } catch {
-          let error = GovernanceError.unverifiedActor
-          analytics.log(error)
-          throw error
-        }
-      }
+      try await validateTP1_0(for: actorDid)
       return
     }
     try await validate(identityTrustStatement, for: actorDid)
   }
 
   func validate(_ identityTrustStatement: IdentityTrustStatement?, for actorDid: String) async throws {
-    guard let identityTrustStatement else { return }
     do {
       guard TrustEnvironment(did: actorDid) != .external else {
         throw GovernanceError.unknownRegistry
+      }
+      guard let identityTrustStatement else {
+        #warning("checks TP 1.0 identity, remove as soon as TP 2.0 is enforced")
+        try await validateTP1_0(for: actorDid)
+        return
       }
       try await trustStatementValidator.validate(identityTrustStatement, for: actorDid)
     } catch {
@@ -68,4 +64,19 @@ struct ActorIdentityValidator: ActorIdentityValidatorProtocol {
   @Injected(\.trustStatementService) private var trustStatementService
   @Injected(\.isActorIdentityValidationEnabled) private var isActorIdentityValidationEnabled
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
+
+  private func validateTP1_0(for actorDid: String) async throws {
+    if isActorIdentityValidationEnabled {
+      do {
+        guard TrustEnvironment(did: actorDid) != .external else {
+          throw GovernanceError.unknownRegistry
+        }
+        _ = try await trustStatementService.fetchIdentity(for: actorDid)
+      } catch {
+        let error = error as? GovernanceError ?? GovernanceError.unverifiedActor
+        analytics.log(error)
+        throw error
+      }
+    }
+  }
 }

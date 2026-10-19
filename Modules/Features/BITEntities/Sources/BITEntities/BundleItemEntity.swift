@@ -3,7 +3,7 @@ import RealmSwift
 
 public class BundleItemEntity: Object {
 
-  public enum CredentialStatus: String, PersistableEnum {
+  public enum CredentialStatus: String, PersistableEnum, Sendable {
     case valid
     case revoked
     case suspended

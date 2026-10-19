@@ -9,18 +9,16 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
   override func setUp() {
+    super.setUp()
     Container.shared.reset()
-
-    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
   }
 
   @MainActor
   func testVerifierDisplay_oneLanguage_returnsDisplayInLanguage() throws {
     Container.shared.preferredUserLanguageCodes.register { ["en"] }
 
-    viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
+    let viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
 
     XCTAssertEqual(viewModel.verifierDisplay.name, "entityName en-US")
     XCTAssertEqual(try String(data: XCTUnwrap(viewModel.verifierDisplay.logo), encoding: .utf8), "EN_logoUri")
@@ -29,6 +27,8 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
 
   @MainActor
   func testRetry_delegateRetryCalled() {
+    let viewModel = PresentationRequestResultStateViewModel(state: .error, context: context)
+
     XCTAssertFalse(viewModel.isNavigationBackTriggered)
     viewModel.retry()
 
@@ -37,7 +37,6 @@ class PresentationRequestResultStateViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private var viewModel: PresentationRequestResultStateViewModel!
   private let context = PresentationRequestContext.Mock.vcSdJwtSample
   // swiftlint:enable all
 }

@@ -5,7 +5,7 @@ import Foundation
 
 extension AVBeamScanNfcConfig: Mockable {
   struct Mock {
-    static let sample: AVBeamScanNfcConfig = Mocker.decode(fromFile: "avbeam-scan-nfc-config", bundle: Bundle.module)
+    nonisolated(unsafe) static let sample: AVBeamScanNfcConfig = Mocker.decode(fromFile: "avbeam-scan-nfc-config", bundle: Bundle.module)
   }
 }
 #endif

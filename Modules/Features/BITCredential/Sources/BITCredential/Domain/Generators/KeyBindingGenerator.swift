@@ -7,7 +7,7 @@ import Spyable
 // MARK: - KeyBindingGeneratorProtocol
 
 @Spyable
-protocol KeyBindingGeneratorProtocol {
+protocol KeyBindingGeneratorProtocol: Sendable {
   func generate(from keyPair: VaultKeyPair?) throws -> KeyBinding?
 }
 

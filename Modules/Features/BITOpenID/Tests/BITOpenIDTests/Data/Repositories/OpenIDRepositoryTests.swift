@@ -12,6 +12,12 @@ import XCTest
 @testable import BITTestingCore
 @testable import BITVault
 
+// MARK: - EndpointSampleResponse + @retroactive @unchecked Sendable
+
+/// Sample responses in these tests are built once from immutable components and only read
+/// by Moya's stub closures, so capturing them across the registration boundary is safe.
+extension EndpointSampleResponse: @retroactive @unchecked Sendable {}
+
 // MARK: - OpenIDRepositoryTests
 
 final class OpenIDRepositoryTests: XCTestCase {
@@ -30,6 +36,12 @@ final class OpenIDRepositoryTests: XCTestCase {
     NetworkContainer.shared.stubClosure.register {
       { _ in .immediate }
     }
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    NetworkContainer.shared.reset()
+    try await super.tearDown()
   }
 
   // MARK: - Metadata
@@ -481,7 +493,7 @@ final class OpenIDRepositoryTests: XCTestCase {
     Container.shared.isBatchIssuanceEnabled.register { true }
     repository = OpenIDRepository()
     mockResponse(code: 200, data: mockBatchCredentialResponseData, headers: mockJWTHeaders)
-    jweDecrypterMock.decryptPayloadPrivateKeyReturnValue = mockBatchCredentialResponseData
+    jweDecrypterMock.decryptPayloadPrivateKeyKeyTypeLimitReturnValue = mockBatchCredentialResponseData
 
     let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: credentialRequest)
 
@@ -495,7 +507,7 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   func testFetchCredentialWithContext_success_returnsDeferredCredential() async throws {
     mockResponse(code: 202, data: mockCredentialResponseDeferredData, headers: mockJWTHeaders)
-    jweDecrypterMock.decryptPayloadPrivateKeyReturnValue = mockCredentialResponseDeferredData
+    jweDecrypterMock.decryptPayloadPrivateKeyKeyTypeLimitReturnValue = mockCredentialResponseDeferredData
 
     let result = try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: credentialRequest)
 
@@ -578,7 +590,7 @@ final class OpenIDRepositoryTests: XCTestCase {
   func testFetchCredentialWithContext_jweDecrypterThrows_throws() async throws {
     mockResponse(code: 200, data: mockCredentialResponseData, headers: mockJWTHeaders)
 
-    jweDecrypterMock.decryptPayloadPrivateKeyThrowableError = TestingError.error
+    jweDecrypterMock.decryptPayloadPrivateKeyKeyTypeLimitThrowableError = TestingError.error
     repository = OpenIDRepository()
 
     await XCTAssertThrowsErrorAsync(try await repository.fetchCredential(with: mockFetchCredentialContext, credentialRequest: credentialRequest)) { error in
@@ -621,7 +633,7 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   func testFetchCredentialFromDeferredEndpoint_returnsDeferredCredential() async throws {
     mockResponse(code: 202, data: mockCredentialResponseDeferredData, headers: mockJWTHeaders)
-    jweDecrypterMock.decryptPayloadPrivateKeyReturnValue = mockCredentialResponseDeferredData
+    jweDecrypterMock.decryptPayloadPrivateKeyKeyTypeLimitReturnValue = mockCredentialResponseDeferredData
 
     let result = try await repository.fetchCredential(with: mockFetchDeferredCredentialContext, deferredCredentialRequest: deferredCredentialRequest)
 
@@ -822,20 +834,24 @@ final class OpenIDRepositoryTests: XCTestCase {
   }
 
   private func registerMocks() {
-    jweEncrypterMock = JWEEncrypterProtocolSpy()
-    jweDecrypterMock = JWEDecrypterProtocolSpy()
-    dpopGeneratorSpy = DPoPGeneratorProtocolSpy()
-    didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    let jweEncrypterMock = JWEEncrypterProtocolSpy()
+    self.jweEncrypterMock = jweEncrypterMock
+    let jweDecrypterMock = JWEDecrypterProtocolSpy()
+    self.jweDecrypterMock = jweDecrypterMock
+    let dpopGeneratorSpy = DPoPGeneratorProtocolSpy()
+    self.dpopGeneratorSpy = dpopGeneratorSpy
+    let didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    self.didResolverHelperSpy = didResolverHelperSpy
 
-    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
-    Container.shared.jweEncrypter.register { self.jweEncrypterMock }
-    Container.shared.jweDecrypter.register { self.jweDecrypterMock }
-    Container.shared.dpopGenerator.register { self.dpopGeneratorSpy }
+    Container.shared.didResolverHelper.register { didResolverHelperSpy }
+    Container.shared.jweEncrypter.register { jweEncrypterMock }
+    Container.shared.jweDecrypter.register { jweDecrypterMock }
+    Container.shared.dpopGenerator.register { dpopGeneratorSpy }
   }
 
   private func success() {
     jweEncrypterMock.encryptDataPublicKeyEncryptionAlgorithmCompressionAlgorithmReturnValue = jweMock
-    jweDecrypterMock.decryptPayloadPrivateKeyReturnValue = mockCredentialResponseData
+    jweDecrypterMock.decryptPayloadPrivateKeyKeyTypeLimitReturnValue = mockCredentialResponseData
     dpopGeneratorSpy.generateMethodUrlKeyPairNonceAccessTokenRequestBodyAdditionalHeaderParametersReturnValue = DPoPJWT.Mock.sample
     didResolverHelperSpy.getDidFromReturnValue = keyIdentifierDidMock
   }
@@ -885,9 +901,8 @@ final class OpenIDRepositoryTests: XCTestCase {
   }
 
   private func mockResponse(code: Int, data: Data = Data(), headers: [String: String]? = nil) {
-    NetworkContainer.shared.endpointClosure.register {
-      self.createResponse(code: code, data: data, headers: headers)
-    }
+    let response = createResponse(code: code, data: data, headers: headers)
+    NetworkContainer.shared.endpointClosure.register { response }
   }
 
   private func mockMetadataEndpoints(metadataResponse: EndpointSampleResponse = .networkResponse(404, Data()), oidConnectMetadataResponse: EndpointSampleResponse = .networkResponse(404, Data())) {
@@ -932,11 +947,12 @@ final class OpenIDRepositoryTests: XCTestCase {
 
   private func mockResponses(_ responses: [(code: Int, data: Data, headers: [String: String]?)]) {
     let queue = ResponseQueue(responses)
+    let mockUrl = mockUrl
     NetworkContainer.shared.endpointClosure.register {
       let nextResponse = queue.next()
       guard
         let response = HTTPURLResponse(
-          url: self.mockUrl,
+          url: mockUrl,
           statusCode: nextResponse.code,
           httpVersion: nil,
           headerFields: nextResponse.headers)

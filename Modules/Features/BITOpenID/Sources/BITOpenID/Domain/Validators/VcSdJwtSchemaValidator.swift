@@ -5,7 +5,7 @@ import Spyable
 // MARK: - VcSdJwtSchemaValidatorProtocol
 
 @Spyable
-public protocol VcSdJwtSchemaValidatorProtocol {
+public protocol VcSdJwtSchemaValidatorProtocol: Sendable {
   func validate(schema: Data) throws -> Bool
 }
 

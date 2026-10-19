@@ -10,7 +10,7 @@ import Spyable
 // MARK: - ProofOfPossessionGeneratorProtocol
 
 @Spyable
-public protocol ProofOfPossessionGeneratorProtocol {
+public protocol ProofOfPossessionGeneratorProtocol: Sendable {
   func callAsFunction(
     for body: Encodable,
     audience: String?,

@@ -13,7 +13,7 @@ public struct SensitiveDataBadge: View {
 
   public var body: some View {
     Badge(label: claimName, image: isSensitive ? Assets.sensitiveBadge.swiftUIImage : nil)
-      .badgeStyle(isSensitive ? .sensitive : .info)
+      .badgeType(.filled(isSensitive ? .sensitive : .info))
       .if(isSensitive) { $0.accessibilityHint(L10n.tkGlobalSensitiveDataHint) }
   }
 

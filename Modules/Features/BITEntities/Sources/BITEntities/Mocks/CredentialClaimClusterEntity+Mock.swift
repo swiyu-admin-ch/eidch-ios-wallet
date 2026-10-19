@@ -32,7 +32,7 @@ extension CredentialClaimClusterEntity: Mockable {
 
       try Realm.save(entity)
       if createParent {
-        _ = try VerifiableCredentialEntity.Mock.create(clusters: [entity])
+        _ = try CredentialEntity.Mock.create(clusters: [entity])
       }
       return entity
     }

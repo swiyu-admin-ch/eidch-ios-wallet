@@ -12,7 +12,7 @@ public enum JWEEncrypterError: Error {
 // MARK: - JWEEncrypterProtocol
 
 @Spyable
-public protocol JWEEncrypterProtocol {
+public protocol JWEEncrypterProtocol: Sendable {
   func encrypt(data: Data, publicKey: JWK, encryptionAlgorithm: EncryptionAlgorithm, compressionAlgorithm: BITCrypto.CompressionAlgorithm?) throws -> String
 }
 

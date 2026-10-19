@@ -9,6 +9,7 @@ import UIKit
 // MARK: - BiometricChangeRoutes
 
 @Spyable
+@MainActor
 public protocol BiometricChangeRoutes {
   var delegate: BiometricChangeDelegate? { get }
 

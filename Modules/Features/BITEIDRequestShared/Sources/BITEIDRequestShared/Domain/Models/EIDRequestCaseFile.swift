@@ -8,7 +8,7 @@ enum EIDRequestCaseFileError: Error {
 }
 
 
-public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable, Hashable {
+public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable, Hashable, @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -41,7 +41,7 @@ public struct EIDRequestCaseFile: Decodable, Identifiable, Equatable, Hashable {
 
   // MARK: Public
 
-  public enum Category: String, Decodable {
+  public enum Category: String, Decodable, Sendable {
     case documentScan
     case documentRecording
     case faceRecording

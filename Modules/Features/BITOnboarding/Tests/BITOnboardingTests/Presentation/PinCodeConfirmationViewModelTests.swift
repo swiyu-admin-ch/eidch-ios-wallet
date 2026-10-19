@@ -7,25 +7,30 @@ import XCTest
 
 // MARK: - PinCodeViewModelTests
 
+@MainActor
 final class PinCodeConfirmationViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     spyDelegate = PinCodeDelegateSpy()
     router = MockOnboardingInternalRoutes()
     router.context.pincode = pincode
     router.context.pinCodeDelegate = spyDelegate
-    getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
+    let getBiometricStateUseCase = GetBiometricStateUseCaseProtocolSpy()
     getBiometricStateUseCase.callAsFunctionReturnValue = .disabled
-    Container.shared.getBiometricStateUseCase.register { @MainActor in self.getBiometricStateUseCase }
+    self.getBiometricStateUseCase = getBiometricStateUseCase
+    Container.shared.getBiometricStateUseCase.register { @MainActor in getBiometricStateUseCase }
     viewModel = PinCodeConfirmationViewModel(router: router)
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testEnterValidPinCodeWithDisabledBiometrics() {
     viewModel.pinCode = pincode
 
@@ -38,7 +43,6 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertEqual(router.context.pincode, pincode)
   }
 
-  @MainActor
   func testEnterValidPinCodeWithEnabledBiometrics() {
     getBiometricStateUseCase.callAsFunctionReturnValue = .enabled
     viewModel.pinCode = pincode
@@ -49,7 +53,6 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertFalse(router.setupCalled)
   }
 
-  @MainActor
   func testEnterValidPinCodeWithDeclinedBiometrics() {
     getBiometricStateUseCase.callAsFunctionReturnValue = .declined
     viewModel.pinCode = pincode
@@ -60,7 +63,6 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertTrue(router.setupCalled)
   }
 
-  @MainActor
   func testEnterValidPinCodeWithNotEnrolledBiometrics() {
     getBiometricStateUseCase.callAsFunctionReturnValue = .notEnrolled
     viewModel.pinCode = pincode
@@ -71,7 +73,6 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertTrue(router.setupCalled)
   }
 
-  @MainActor
   func testEnterOnceShortPinCode() {
     viewModel.pinCode = "111111"
 
@@ -91,7 +92,6 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertEqual(router.context.pincode, pincode)
   }
 
-  @MainActor
   func testAttemptsInfoPresented() {
     let maxAttempts = 2
     Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
@@ -114,7 +114,6 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
     XCTAssertTrue(spyDelegate.didTryTooManyAttemptsCalled)
   }
 
-  @MainActor
   func testMaxAttemptReached() {
     let maxAttempts = 2
     Container.shared.attemptsLimit.register { @MainActor in maxAttempts }
@@ -138,14 +137,15 @@ final class PinCodeConfirmationViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
+  // swiftlint:disable implicitly_unwrapped_optional
   private var viewModel: PinCodeConfirmationViewModel!
   private var router: MockOnboardingInternalRoutes!
+  // swiftlint:disable:next weak_delegate
   private var spyDelegate: PinCodeDelegateSpy!
   private var context: PinCodeContext!
   private var getBiometricStateUseCase: GetBiometricStateUseCaseProtocolSpy!
 
   private let pincode = "123456789"
-  // swiftlint:enable all
+  // swiftlint:enable implicitly_unwrapped_optional
 
 }

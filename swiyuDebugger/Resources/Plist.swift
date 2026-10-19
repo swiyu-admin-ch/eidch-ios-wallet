@@ -21,7 +21,6 @@ enum PlistFiles {
   static let cfBundleName: String = _document["CFBundleName"]
   static let cfBundlePackageType: String = _document["CFBundlePackageType"]
   static let cfBundleShortVersionString: String = _document["CFBundleShortVersionString"]
-  static let cfBundleURLTypes: [[String: Any]] = _document["CFBundleURLTypes"]
   static let cfBundleVersion: String = _document["CFBundleVersion"]
   static let dtxAllowAnyCert: Bool = _document["DTXAllowAnyCert"]
   static let dtxApplicationID: String = _document["DTXApplicationID"]
@@ -44,15 +43,30 @@ enum PlistFiles {
   static let dtxUserOptIn: String = _document["DTXUserOptIn"]
   static let itsAppUsesNonExemptEncryption: Bool = _document["ITSAppUsesNonExemptEncryption"]
   static let lsHasLocalizedDisplayName: Bool = _document["LSHasLocalizedDisplayName"]
-  static let nsAppTransportSecurity: [String: Any] = _document["NSAppTransportSecurity"]
   static let nsCameraUsageDescription: String = _document["NSCameraUsageDescription"]
   static let nsFaceIDUsageDescription: String = _document["NSFaceIDUsageDescription"]
-  static let uiApplicationSceneManifest: [String: Any] = _document["UIApplicationSceneManifest"]
   static let uiApplicationSupportsIndirectInputEvents: Bool = _document["UIApplicationSupportsIndirectInputEvents"]
-  static let uiLaunchScreen: [String: Any] = _document["UILaunchScreen"]
   static let uiLaunchStoryboardName: String = _document["UILaunchStoryboardName"]
   static let uiRequiredDeviceCapabilities: [String] = _document["UIRequiredDeviceCapabilities"]
   static let uiSupportedInterfaceOrientations: [String] = _document["UISupportedInterfaceOrientations"]
+
+  static var cfBundleURLTypes: [[String: Any]] {
+
+    _document["CFBundleURLTypes"]
+
+  }
+
+  static var nsAppTransportSecurity: [String: Any] {
+    _document["NSAppTransportSecurity"]
+  }
+
+  static var uiApplicationSceneManifest: [String: Any] {
+    _document["UIApplicationSceneManifest"]
+  }
+
+  static var uiLaunchScreen: [String: Any] {
+    _document["UILaunchScreen"]
+  }
 
   // MARK: Private
 
@@ -75,7 +89,7 @@ private func arrayFromPlist<T>(at path: String) -> [T] {
 
 // MARK: - PlistDocument
 
-private struct PlistDocument {
+private struct PlistDocument: @unchecked Sendable {
   let data: [String: Any]
 
   init(path: String) {

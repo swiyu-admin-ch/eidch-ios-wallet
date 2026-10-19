@@ -6,7 +6,7 @@ public typealias ProtectedIssuanceTrustListStatement = JWS<ProtectedIssuanceTrus
 
 // MARK: - ProtectedIssuanceTrustListStatementJWT
 
-public struct ProtectedIssuanceTrustListStatementJWT: TrustStatementJWT, JWT, Equatable {
+public struct ProtectedIssuanceTrustListStatementJWT: TrustStatementJWT, JWT, Equatable, Sendable {
 
   public var type: String? = "swiyu-protected-issuance-trust-list-statement+jwt"
 

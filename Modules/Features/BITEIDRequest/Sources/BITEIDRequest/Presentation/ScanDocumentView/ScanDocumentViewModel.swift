@@ -199,6 +199,7 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
   }
 
   nonisolated func didReceiveNotification(notification: AVBeamNotification) {
+    nonisolated(unsafe) let notification = notification
     Task { @MainActor [weak self] in
       guard let self else { return }
 
@@ -244,6 +245,7 @@ extension ScanDocumentViewModel: AVBeamMessageDelegate {
 
 extension ScanDocumentViewModel: AVBeamScanDocumentDelegate {
   nonisolated func didCompleteScanDocument(packageResult: AVBeamPackageResult) {
+    nonisolated(unsafe) let packageResult = packageResult
     Task { @MainActor in
       do {
         guard packageResult.data.errorCode == .none else {
@@ -286,13 +288,13 @@ extension ScanDocumentViewModel {
     return .avBeamError(avBeamError, retryAction: retryHandler(), closeAction: closeHandler())
   }
 
-  private func closeHandler() -> () -> Void {
+  private func closeHandler() -> VoidAction {
     { [weak self] in
       self?.coordinator.cleanup()
     }
   }
 
-  private func retryHandler() -> (Navigator) -> Void {
+  private func retryHandler() -> NavigatorAction {
     { [weak self] navigator in
       self?.reset()
       navigator.returnToCheckpointSafely(EIDRequestCheckpoints.scanDocumentInformation)

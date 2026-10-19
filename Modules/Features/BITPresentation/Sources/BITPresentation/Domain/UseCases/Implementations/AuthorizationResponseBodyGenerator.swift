@@ -20,8 +20,8 @@ enum AuthorizationResponseBodyGeneratorError: Error {
 // MARK: - AuthorizationResponseBodyGeneratorProtocol
 
 @Spyable
-public protocol AuthorizationResponseBodyGeneratorProtocol {
-  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, withOrigin: String?) throws -> AuthorizationResponse
+public protocol AuthorizationResponseBodyGeneratorProtocol: Sendable {
+  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, withOrigin: String?) async throws -> AuthorizationResponse
 }
 
 // MARK: - AuthorizationResponseBodyGenerator
@@ -30,7 +30,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
 
   // MARK: Internal
 
-  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, withOrigin: String?) throws -> AuthorizationResponse {
+  func callAsFunction(for compatibleCredential: CompatibleCredential, requestObject: RequestObject, withOrigin: String?) async throws -> AuthorizationResponse {
     guard let queryId = compatibleCredential.dcqlQueryId else {
       throw RequestObjectError.invalidQuery
     }
@@ -38,7 +38,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
     let credential = compatibleCredential.credential
     let paths = compatibleCredential.presentingPaths
 
-    let vpToken = try createVpToken(credential: credential, requestObject: requestObject, paths: paths, withOrigin: withOrigin)
+    let vpToken = try await createVpToken(credential: credential, requestObject: requestObject, paths: paths, withOrigin: withOrigin)
 
     return AuthorizationResponse(
       vpToken: [queryId: [vpToken]],
@@ -55,7 +55,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
   @Injected(\.analytics) private var analytics: AnalyticsProtocol
   @Injected(\.selectCredentialBundleItemUseCase) private var selectCredentialBundleItemUseCase: SelectCredentialBundleItemUseCaseProtocol
 
-  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, paths: [ClaimsPathPointer], withOrigin: String?) throws -> VpToken {
+  private func createVpToken(credential: VerifiableCredential, requestObject: RequestObject, paths: [ClaimsPathPointer], withOrigin: String?) async throws -> VpToken {
     guard
       userSession.isLoggedIn,
       let context = userSession.context
@@ -66,7 +66,7 @@ struct AuthorizationResponseBodyGenerator: AuthorizationResponseBodyGeneratorPro
 
     let bundleItem = try selectCredentialBundleItemUseCase(credential)
 
-    let anyCredential = try createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
+    let anyCredential = try await createAnyCredentialUseCase.execute(from: bundleItem.payload, format: credential.format)
     let query = try QueryBuilder()
       .setContext(context)
       .build()

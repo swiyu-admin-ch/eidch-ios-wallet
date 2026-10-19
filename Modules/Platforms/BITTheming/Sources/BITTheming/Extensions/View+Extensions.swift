@@ -77,14 +77,14 @@ extension View {
 // MARK: - SizePreferenceKey
 
 private struct SizePreferenceKey: PreferenceKey {
-  static var defaultValue = CGSize.zero
+  static let defaultValue = CGSize.zero
   static func reduce(value: inout CGSize, nextValue: () -> CGSize) {}
 }
 
 // MARK: - SafeAreaInsetsPreferenceKey
 
 private struct SafeAreaInsetsPreferenceKey: PreferenceKey {
-  static var defaultValue = EdgeInsets()
+  static let defaultValue = EdgeInsets()
   static func reduce(value: inout EdgeInsets, nextValue: () -> EdgeInsets) {
     value = EdgeInsets(top: value.top.rounded(), leading: value.leading.rounded(), bottom: value.bottom.rounded(), trailing: value.trailing.rounded())
   }

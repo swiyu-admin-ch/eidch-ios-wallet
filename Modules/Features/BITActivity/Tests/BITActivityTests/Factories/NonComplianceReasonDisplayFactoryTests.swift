@@ -1,33 +1,38 @@
-// swiftlint: disable implicitly_unwrapped_optional
 import Factory
-import XCTest
+import FactoryTesting
+import Testing
 @testable import BITActivity
 @testable import BITEntities
 
-final class NonComplianceReasonDisplayFactoryTests: XCTestCase {
+// MARK: - NonComplianceReasonDisplayFactoryTests
 
-  // MARK: Internal
+@MainActor
+@Suite(.container)
+struct NonComplianceReasonDisplayFactoryTests {
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  // MARK: Lifecycle
+
+  init() {
     Container.shared.configureInMemoryDataStore()
     factory = NonComplianceReasonDisplayFactory()
   }
 
-  func testCallAsFunction_success_returnsDisplay() throws {
-    let entity = try NonComplianceReasonDisplayEntity.Mock.create(locale: localeMock, value: valueMock)
+  // MARK: Internal
+
+  @Test
+  func callAsFunction_success_returnsDisplay() throws {
+    let entity = try NonComplianceReasonDisplayEntity.Mock.create(locale: localeMock, reason: reasonMock)
 
     let display = factory(entity)
 
-    XCTAssertEqual(display.locale, localeMock)
-    XCTAssertEqual(display.value, valueMock)
+    #expect(display.locale == localeMock)
+    #expect(display.reason == reasonMock)
   }
 
   // MARK: Private
 
   private let localeMock = "locale"
-  private let valueMock = "value"
+  private let reasonMock = "reason"
 
-  private var factory: NonComplianceReasonDisplayFactory!
+  private let factory: NonComplianceReasonDisplayFactory
 }

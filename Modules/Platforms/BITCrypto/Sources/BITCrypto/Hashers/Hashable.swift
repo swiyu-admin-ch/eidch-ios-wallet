@@ -5,7 +5,7 @@ import Spyable
 
 /// A protocol for general-purpose hashing functions, designed to generate secure, one-way hashes for data integrity, digital signatures, and other cryptographic needs.
 @Spyable
-public protocol Hashable {
+public protocol Hashable: Sendable {
 
   /// Produce a hash of the data given in parameter
   ///

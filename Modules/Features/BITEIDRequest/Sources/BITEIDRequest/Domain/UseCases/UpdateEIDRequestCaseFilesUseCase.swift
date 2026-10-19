@@ -4,7 +4,7 @@ import Spyable
 
 
 @Spyable
-protocol UpdateEIDRequestCaseFilesUseCaseProtocol {
+protocol UpdateEIDRequestCaseFilesUseCaseProtocol: Sendable {
   func callAsFunction(for caseId: String, scanDocumentOutput: ScanDocumentOutput) async throws
 }
 

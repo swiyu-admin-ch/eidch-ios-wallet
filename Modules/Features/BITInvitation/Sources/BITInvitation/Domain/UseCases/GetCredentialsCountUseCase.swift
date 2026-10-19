@@ -6,7 +6,7 @@ import Spyable
 // MARK: - GetCredentialsCountUseCaseProtocol
 
 @Spyable
-protocol GetCredentialsCountUseCaseProtocol {
+protocol GetCredentialsCountUseCaseProtocol: Sendable {
   func callAsFunction() async throws -> Int
 }
 

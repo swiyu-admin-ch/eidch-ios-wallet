@@ -6,6 +6,7 @@ extension PresentationRequestReviewState.Result {
 
   // MARK: Lifecycle
 
+  @MainActor
   init(
     credential: CompatibleCredential,
     verifierDisplay: VerifierDisplay,

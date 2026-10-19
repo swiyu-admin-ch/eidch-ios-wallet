@@ -7,7 +7,7 @@ import Spyable
 // MARK: - UniquePassphraseManagerProtocol
 
 @Spyable
-public protocol UniquePassphraseManagerProtocol {
+public protocol UniquePassphraseManagerProtocol: Sendable {
   func generate() throws -> Data
   func save(uniquePassphrase: Data, for authMethod: AuthMethod, context: LAContextProtocol) throws
   func exists(for authMethod: AuthMethod) -> Bool
@@ -18,7 +18,7 @@ public protocol UniquePassphraseManagerProtocol {
 
 // MARK: - UniquePassphraseManager
 
-struct UniquePassphraseManager: UniquePassphraseManagerProtocol {
+struct UniquePassphraseManager: UniquePassphraseManagerProtocol, @unchecked Sendable {
 
   // MARK: Internal
 

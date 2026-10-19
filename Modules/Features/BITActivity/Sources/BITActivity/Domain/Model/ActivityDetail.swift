@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - ActivityDetail
 
-public struct ActivityDetail: Identifiable, Codable, Equatable {
+public struct ActivityDetail: Identifiable, Codable, Equatable, Sendable {
 
   // MARK: Public
 

@@ -11,11 +11,17 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
+  override func setUp() async throws {
+    try await super.setUp()
     Container.shared.reset()
     registerMocks()
 
     viewModel = LegalRepresentantVerificationViewModel(caseId: mockCaseId)
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testStartVerification_success_validRouteCalled() async {
@@ -66,11 +72,13 @@ class LegalRepresentantVerificationViewModelTests: XCTestCase {
   private var updateEIDRequestCaseStatusUseCaseSpy: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
 
   private func registerMocks() {
-    getLegalRepresentantPresentationRequestContextUseCaseSpy = GetLegalRepresentantPresentationRequestContextUseCaseProtocolSpy()
-    updateEIDRequestCaseStatusUseCaseSpy = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    let getLegalRepresentantPresentationRequestContextUseCaseSpy = GetLegalRepresentantPresentationRequestContextUseCaseProtocolSpy()
+    self.getLegalRepresentantPresentationRequestContextUseCaseSpy = getLegalRepresentantPresentationRequestContextUseCaseSpy
+    let updateEIDRequestCaseStatusUseCaseSpy = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    self.updateEIDRequestCaseStatusUseCaseSpy = updateEIDRequestCaseStatusUseCaseSpy
 
-    Container.shared.getLegalRepresentantPresentationRequestContextUseCase.register { @MainActor in self.getLegalRepresentantPresentationRequestContextUseCaseSpy }
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCaseSpy }
+    Container.shared.getLegalRepresentantPresentationRequestContextUseCase.register { @MainActor in getLegalRepresentantPresentationRequestContextUseCaseSpy }
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in updateEIDRequestCaseStatusUseCaseSpy }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
   }
 

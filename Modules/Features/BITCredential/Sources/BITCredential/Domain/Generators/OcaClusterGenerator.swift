@@ -9,7 +9,7 @@ import Spyable
 // MARK: - OcaClusterGeneratorProtocol
 
 @Spyable
-protocol OcaClusterGeneratorProtocol {
+protocol OcaClusterGeneratorProtocol: Sendable {
   func generate(
     from payload: JSON,
     credentialFormat: CredentialFormat,
@@ -79,7 +79,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
     var childClusters = [CredentialClaimCluster]()
 
     for ocaAttribute in ocaBundle.getAttributes(digest: captureBaseDigest) {
-      if let dataSource = ocaAttribute.dataSources[credentialFormat.rawValue] {
+      if let dataSource = getDataSource(for: ocaAttribute, credentialFormat: credentialFormat) {
         let elementPath = dataSource.resolveNullElement(with: path.allIndices)
         let element = try createElement(
           attributeType: ocaAttribute.attributeType,
@@ -99,7 +99,7 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
         continue
       }
 
-      if ocaAttribute.dataSources[credentialFormat.rawValue] == nil, case .reference(let digest) = ocaAttribute.attributeType {
+      if case .reference(let digest) = ocaAttribute.attributeType {
         let cluster = try createCluster(
           credentialClaims: &credentialClaims,
           credentialFormat: credentialFormat,
@@ -273,6 +273,15 @@ struct OcaClusterGenerator: OcaClusterGeneratorProtocol {
       path: [],
       order: -1,
       claims: claims)
+  }
+
+  private func getDataSource(for attribute: OverlayBundleAttribute, credentialFormat: CredentialFormat) -> ClaimsPathPointer? {
+    switch credentialFormat {
+    case .vcSdJwt:
+      attribute.dataSources[CredentialFormat.vcSdJwt.rawValue] ?? attribute.dataSources[CredentialFormat.dcSdJwt.rawValue]
+    case .dcSdJwt:
+      attribute.dataSources[CredentialFormat.dcSdJwt.rawValue] ?? attribute.dataSources[CredentialFormat.vcSdJwt.rawValue]
+    }
   }
 
   private func createCredentialClaims(from payload: JSON) -> [ClaimsPathPointer: Any] {

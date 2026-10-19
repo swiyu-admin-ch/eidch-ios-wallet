@@ -4,6 +4,7 @@ import Spyable
 // MARK: - ClosableRoutes
 
 @Spyable
+@MainActor
 public protocol ClosableRoutes: AnyObject {
   func close(onComplete: (() -> Void)?)
   func close()

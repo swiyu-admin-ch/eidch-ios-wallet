@@ -20,7 +20,7 @@ final class CameraAccessibilityFeedback: CameraAccessibilityFeedbackProtocol {
 
   // MARK: Lifecycle
 
-  deinit {
+  isolated deinit {
     announcementTimer = nil
   }
 
@@ -38,7 +38,9 @@ final class CameraAccessibilityFeedback: CameraAccessibilityFeedbackProtocol {
   func announceQRCodeDetected() {
     announce(L10n.tkQrscannerProcessingAlt)
     announcementTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
-      self?.announce(L10n.tkGlobalPleasewait)
+      Task { @MainActor in
+        self?.announce(L10n.tkGlobalPleasewait)
+      }
     }
   }
 

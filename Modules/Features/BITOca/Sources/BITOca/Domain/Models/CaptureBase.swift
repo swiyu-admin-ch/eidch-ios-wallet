@@ -5,7 +5,7 @@
 /// Capture Base object, representing structural characteristics of a dataset.
 ///
 /// https://oca.colossi.network/specification/#capture-base
-public protocol CaptureBase: Decodable, Equatable {
+public protocol CaptureBase: Decodable, Equatable, Sendable {
   var type: CaptureBaseSpecType { get }
   var digest: String { get }
   var attributes: [String: AttributeType] { get }
@@ -14,7 +14,7 @@ public protocol CaptureBase: Decodable, Equatable {
 // MARK: - CaptureBaseSpecType
 
 /// Enum representing the different types of Capture Base specifications.
-public enum CaptureBaseSpecType: String, Decodable {
+public enum CaptureBaseSpecType: String, Decodable, Sendable {
   case base1_0 = "spec/capture_base/1.0"
 }
 

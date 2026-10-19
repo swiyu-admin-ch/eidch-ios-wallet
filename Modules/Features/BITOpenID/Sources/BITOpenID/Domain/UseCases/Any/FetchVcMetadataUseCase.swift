@@ -7,7 +7,7 @@ import Spyable
 // MARK: - FetchVcMetadataUseCaseProtocol
 
 @Spyable
-public protocol FetchVcMetadataUseCaseProtocol {
+public protocol FetchVcMetadataUseCaseProtocol: Sendable {
   func execute(anyCredential: AnyCredential) async throws -> RawOcaBundle?
   func execute(metadata: any CredentialIssuerMetadata.AnyCredentialConfigurationSupported) async throws -> RawOcaBundle?
 }

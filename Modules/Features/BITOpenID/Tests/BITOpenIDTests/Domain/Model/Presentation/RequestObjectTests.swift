@@ -85,6 +85,22 @@ struct RequestObjectTests {
   }
 
   @Test
+  func decodingRequestObjectWithExpectedOrigins() {
+    let requestObject = RequestObjectJWS.Mock.sampleProximityDcApiJWT.payload
+
+    #expect(requestObject.expectedOrigins == ["iso18013-5://test"])
+  }
+
+  @Test
+  func decodingRequestObjectWithoutExpectedOrigins() throws {
+    let data = RequestObjectJWS.Mock.sampleData
+
+    let requestObject = try decoder.decode(RequestObject.self, from: data)
+
+    #expect(requestObject.expectedOrigins == nil)
+  }
+
+  @Test
   func getPreferredDisplay_multipleLanguages_returnsFirstValidLanguage() {
     let requestObject = RequestObjectJWS.Mock.sample.payload
     let languages: [UserLanguageCode] = ["cz", "de", "en"]

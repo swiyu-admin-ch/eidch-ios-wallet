@@ -14,7 +14,7 @@ public struct PresentationErrorRequestBody: Codable {
 
   // MARK: Public
 
-  public enum Code: String, Codable, Equatable {
+  public enum Code: String, Codable, Equatable, Sendable {
     case invalidRequest = "invalid_request"
     case invalidClient = "invalid_client"
     case accessDenied = "access_denied"

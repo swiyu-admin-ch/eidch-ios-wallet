@@ -10,9 +10,11 @@ final class GetCredentialsCountUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    credentialRepository = CredentialRepositoryProtocolSpy()
+    super.setUp()
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+    self.credentialRepository = credentialRepository
 
-    Container.shared.credentialRepository.register { self.credentialRepository }
+    Container.shared.credentialRepository.register { credentialRepository }
     useCase = GetCredentialsCountUseCase()
   }
 

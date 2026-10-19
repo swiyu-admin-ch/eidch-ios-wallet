@@ -70,11 +70,13 @@ final class GetWalletPairingQRCodeUseCaseTests: XCTestCase {
   }
 
   private func registerMocks() {
-    repository = SIDRepositoryProtocolSpy()
-    qrCodeGenerator = QRCodeGeneratorProtocolSpy()
+    let repository = SIDRepositoryProtocolSpy()
+    self.repository = repository
+    let qrCodeGenerator = QRCodeGeneratorProtocolSpy()
+    self.qrCodeGenerator = qrCodeGenerator
 
-    Container.shared.sidRepository.register { self.repository }
-    Container.shared.qrCodeGenerator.register { self.qrCodeGenerator }
+    Container.shared.sidRepository.register { repository }
+    Container.shared.qrCodeGenerator.register { qrCodeGenerator }
   }
 
 }

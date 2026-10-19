@@ -5,6 +5,7 @@
    "vct#integrity":"vctIntegrity",
    "vct_metadata_uri":"vctMetadataUri",
    "vct_metadata_uri#integrity":"vctMetadataUriIntegrity",
+   "credential_refresh_disabled": true,
    "cryptographic_binding_methods_supported":[
       "jwk"
    ],

@@ -1,56 +1,65 @@
 import Factory
-import XCTest
+import Testing
 @testable import BITCore
 
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
+struct ImageValidatorTests {
 
-final class ImageValidatorTests: XCTestCase {
+  // MARK: Lifecycle
+
+  init() {
+    let supportedImageTypes: [ValueType] = [.imageJpg, .imagePng]
+    self.supportedImageTypes = supportedImageTypes
+
+    Container.shared.supportedImageType.register { supportedImageTypes }
+
+    validator = ImageValidator()
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-
-    Container.shared.supportedImageType.register { self.supportedImageTypes }
-    validator = ImageValidator()
+  @Test
+  func validate_pngImage_success() throws {
+    try validator.validate(base64Image: mockPngBase64, against: .imagePng)
+    #expect(true)
   }
 
-  func testValidate_pngImage_success() throws {
-    XCTAssertNoThrow(try validator.validate(base64Image: mockPngBase64, against: .imagePng))
+  @Test
+  func validate_jpegImage_success() throws {
+    try validator.validate(base64Image: mockJpegBase64, against: .imageJpg)
+    #expect(true)
   }
 
-  func testValidate_jpegImage_success() throws {
-    XCTAssertNoThrow(try validator.validate(base64Image: mockJpegBase64, against: .imageJpg))
-  }
-
-  func testValidate_unsupportedImage_throwsError() throws {
+  @Test
+  func validate_unsupportedImage_throwsError() throws {
     Container.shared.supportedImageType.register { [.imagePng] }
-    validator = ImageValidator()
+    let validator = ImageValidator()
 
-    XCTAssertThrowsError(try validator.validate(base64Image: mockJpegBase64, against: .imageJpg)) { error in
-      XCTAssertEqual(error as? ImageValidatorError, .unsupportedImageFormat)
+    #expect(throws: ImageValidatorError.unsupportedImageFormat) {
+      try validator.validate(base64Image: mockJpegBase64, against: .imageJpg)
     }
   }
 
-  func testValidate_invalidImageData_throwsError() throws {
+  @Test
+  func validate_invalidImageData_throwsError() throws {
     Container.shared.supportedImageType.register { [.imagePng, .imageJpg, .boolean] }
-    validator = ImageValidator()
+    let validator = ImageValidator()
 
-    XCTAssertThrowsError(try validator.validate(base64Image: mockJpegBase64, against: .boolean)) { error in
-      XCTAssertEqual(error as? ImageValidatorError, .invalidImageData)
+    #expect(throws: ImageValidatorError.invalidImageData) {
+      try validator.validate(base64Image: mockJpegBase64, against: .boolean)
     }
   }
 
-  func testValidate_mismatchImageFormat_throwsError() throws {
-    XCTAssertThrowsError(try validator.validate(base64Image: mockPngBase64, against: .imageJpg)) { error in
-      XCTAssertEqual(error as? ImageValidatorError, .mismatchingImageFormat)
+  @Test
+  func validate_mismatchImageFormat_throwsError() throws {
+    #expect(throws: ImageValidatorError.mismatchingImageFormat) {
+      try validator.validate(base64Image: mockPngBase64, against: .imageJpg)
     }
   }
 
   // MARK: Private
 
-  private var validator: ImageValidator!
-  private var supportedImageTypes: [ValueType] = [.imageJpg, .imagePng]
+  private var validator: ImageValidator
+  private var supportedImageTypes: [ValueType]
   private let mockPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII="
   private let mockJpegBase64 = "/9j/4AAQSkZJRgAB"
 }

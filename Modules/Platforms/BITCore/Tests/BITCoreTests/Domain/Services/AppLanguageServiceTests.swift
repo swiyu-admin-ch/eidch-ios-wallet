@@ -3,6 +3,7 @@ import Foundation
 import Testing
 @testable import BITCore
 
+@Suite(.container)
 struct AppLanguageServiceTests {
 
   // MARK: Lifecycle

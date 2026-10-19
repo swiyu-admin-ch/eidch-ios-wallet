@@ -14,8 +14,6 @@ extension InvitationError {
     case .credentialRequest(let openIDError):
       let rawErrorCode = getRawErrorCode(from: openIDError)
       return makeIssuanceErrorDataSet(rawErrorCode: rawErrorCode, errorDescription: openIDError.invitationErrorDescription)
-    case .invalidPresentationRequest(let rawErrorCode):
-      return makePresentationErrorDataset(rawErrorCode: rawErrorCode, errorDescription: getPresentationErrorDescription(for: rawErrorCode))
     case .transactionDataNotSupported(let rawErrorCode):
       return makePresentationErrorDataset(rawErrorCode: rawErrorCode, errorDescription: L10n.tkPresentErrorInvalidTransactionDataSecondary)
     case .invalidRedirectUri:

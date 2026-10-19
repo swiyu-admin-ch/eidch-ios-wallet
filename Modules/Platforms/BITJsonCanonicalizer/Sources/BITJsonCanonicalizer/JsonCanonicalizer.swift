@@ -16,7 +16,7 @@ public enum JsonCanonicalizerError: Error {
 /// Protocol for JSON canonicalization according to RFC-8785
 /// https://www.rfc-editor.org/rfc/rfc8785.html
 @Spyable
-public protocol JsonCanonicalizerProtocol {
+public protocol JsonCanonicalizerProtocol: Sendable {
   func canonicalize(data: Data) throws -> Data
   func canonicalize(jsonString: String) throws -> Data
   func canonicalizeToString(_ jsonString: String) throws -> String

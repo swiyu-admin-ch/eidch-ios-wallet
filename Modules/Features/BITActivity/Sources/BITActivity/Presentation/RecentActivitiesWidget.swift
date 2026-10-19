@@ -35,7 +35,6 @@ public struct RecentActivitiesWidget: View {
   // MARK: Private
 
   @Environment(\.navigator) private var navigator
-  @ScaledMetric(relativeTo: .body) private var trailingIconSize: CGFloat = 11
   @ScaledMetric(relativeTo: .body) private var leadingIconSize: CGFloat = 30
 
   private let activities: [ActivityCellViewModel]
@@ -51,33 +50,12 @@ public struct RecentActivitiesWidget: View {
         Divider()
           .padding(.leading, leadingIconSize + .x7)
       }
-      entireHistoryLink
+
+      NavigationLink(to: ActivityDestinations.activities(credentialId: credentialId)) {
+        ActivityHistoryCell()
+      }
     }
     .padding(.vertical, .x2)
-  }
-
-  private var entireHistoryLink: some View {
-    Button(action: {
-      navigator.navigate(
-        to: ActivityDestinations.activities(credentialId: credentialId))
-    }) {
-      HStack {
-        Text(L10n.tkActivityLatestActivitiesEntireHistory)
-          .font(.custom.body)
-          .multilineTextAlignment(.leading)
-          .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
-        Spacer(minLength: .x2)
-        ThemingAssets.chevronRight.swiftUIImage
-          .resizable()
-          .scaledToFit()
-          .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
-          .frame(width: trailingIconSize, height: trailingIconSize)
-          .accessibilityHidden(true)
-          .padding(.trailing, .x4)
-      }
-      .padding(.top, .x2)
-      .padding(.leading, leadingIconSize + .x7)
-    }
   }
 
   private var activitySettingsLink: some View {
@@ -93,6 +71,38 @@ public struct RecentActivitiesWidget: View {
         .padding(.leading, leadingIconSize + .x7)
     }
   }
+}
+
+// MARK: - ActivityHistoryCell
+
+private struct ActivityHistoryCell: View {
+
+  // MARK: Internal
+
+  var body: some View {
+    HStack {
+      Text(L10n.tkActivityLatestActivitiesEntireHistory)
+        .font(.custom.body)
+        .multilineTextAlignment(.leading)
+        .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
+      Spacer(minLength: .x2)
+      ThemingAssets.chevronRight.swiftUIImage
+        .resizable()
+        .scaledToFit()
+        .foregroundColor(ThemingAssets.Label.primary.swiftUIColor)
+        .frame(width: trailingIconSize, height: trailingIconSize)
+        .accessibilityHidden(true)
+        .padding(.trailing, .x4)
+    }
+    .padding(.top, .x2)
+    .padding(.leading, leadingIconSize + .x7)
+  }
+
+  // MARK: Private
+
+  @ScaledMetric(relativeTo: .body) private var leadingIconSize: CGFloat = 30
+  @ScaledMetric(relativeTo: .body) private var trailingIconSize: CGFloat = 11
+
 }
 
 #if DEBUG

@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - VcSdJWSDecoderMock
 
-class VcSdJWSDecoderMock<U: JWT>: VcSdJWSDecoderProtocol {
+final class VcSdJWSDecoderMock<U: JWT>: VcSdJWSDecoderProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 

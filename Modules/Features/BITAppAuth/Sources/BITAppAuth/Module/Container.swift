@@ -69,11 +69,11 @@ extension Container {
 extension Container {
 
   public var loginRouter: Factory<LoginRouter> {
-    self { LoginRouter() }
+    self { @MainActor in LoginRouter() }
   }
 
   public var noDevicePinRouter: Factory<NoDevicePinCodeRouter> {
-    self { NoDevicePinCodeRouter() }
+    self { @MainActor in NoDevicePinCodeRouter() }
   }
 
 }
@@ -169,10 +169,6 @@ extension Container {
 
   var keyDeriver: Factory<KeyDerivable> {
     self { PBKDF2(using: .hmacSHA512) }
-  }
-
-  var encrypter: Factory<Encryptable> {
-    self { AESEncrypter() }
   }
 
   /// Length In byte

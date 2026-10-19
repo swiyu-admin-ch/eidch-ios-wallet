@@ -8,7 +8,7 @@ import Spyable
 // MARK: - CredentialKeyRepositoryProtocol
 
 @Spyable
-protocol CredentialKeyRepositoryProtocol {
+protocol CredentialKeyRepositoryProtocol: Sendable {
   func create(algorithm: String, isHardwareBound: Bool) throws -> VaultKeyPair
   func delete(_ keyPair: VaultKeyPair) throws
 }
@@ -57,8 +57,11 @@ struct CredentialKeyRepository: CredentialKeyRepositoryProtocol {
 
   // MARK: Private
 
-  private let protection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-
   @Injected(\.keyManager) private var keyManager: KeyManagerProtocol
   @Injected(\.userSession) private var userSession: Session
+
+  private var protection: CFString {
+    kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+  }
+
 }

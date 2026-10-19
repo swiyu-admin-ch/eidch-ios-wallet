@@ -5,7 +5,7 @@ import Spyable
 // MARK: - GetLegalRepresentantVerificationQRCodeUseCaseProtocol
 
 @Spyable
-protocol GetLegalRepresentantVerificationQRCodeUseCaseProtocol {
+protocol GetLegalRepresentantVerificationQRCodeUseCaseProtocol: Sendable {
   func execute(for caseId: String) async throws -> (imageData: Data, shareLink: URL)
 }
 

@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: - VerifiableCredential
 
-public struct VerifiableCredential: Codable, CredentialProtocol {
+public struct VerifiableCredential: Codable, CredentialProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 
@@ -13,6 +13,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     id: UUID = UUID(),
     createdAt: Date = Date(),
     refreshedAt: Date? = nil,
+    lastRefreshAttemptAt: Date? = nil,
     progressionState: ProgressState = .unaccepted,
     bundleItems: [BundleItem] = [],
     nextPresentableBundleItemId: UUID,
@@ -32,6 +33,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     self.id = id
     self.createdAt = createdAt
     self.refreshedAt = refreshedAt
+    self.lastRefreshAttemptAt = lastRefreshAttemptAt
     self.progressionState = progressionState
     self.bundleItems = bundleItems
     self.nextPresentableBundleItemId = nextPresentableBundleItemId
@@ -62,10 +64,11 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
       id: entity.id,
       createdAt: entity.createdAt,
       refreshedAt: verifiableCredential.refreshedAt,
+      lastRefreshAttemptAt: verifiableCredential.lastRefreshAttemptAt,
       progressionState: ProgressState(verifiableCredential.progressionState),
       bundleItems: Array(verifiableCredential.bundleItems.map(BundleItem.init)),
       nextPresentableBundleItemId: verifiableCredential.nextPresentableBundleItemId,
-      clusters: Array(verifiableCredential.clusters.map(CredentialClaimCluster.init)),
+      clusters: Array(entity.credentialRendering?.clusters.map(CredentialClaimCluster.init) ?? []),
       format: CredentialFormat(rawValue: entity.format) ?? .vcSdJwt,
       issuerUrl: issuerUrl,
       selectedConfigurationId: entity.selectedConfigurationId,
@@ -73,8 +76,8 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
       batchData: verifiableCredential.batchData.flatMap(BatchData.init),
       authentication: CredentialAuthentication(entity.authentication),
       rawCredentialData: entity.rawCredentialData.flatMap(RawCredentialData.init),
-      issuerDisplays: Array(entity.issuerDisplays.map(CredentialIssuerDisplay.init)),
-      displays: Array(entity.displays.map(CredentialDisplay.init)),
+      issuerDisplays: Array(entity.credentialRendering?.issuerDisplays.map(CredentialIssuerDisplay.init) ?? []),
+      displays: Array(entity.credentialRendering?.displays.map(CredentialDisplay.init) ?? []),
       validFrom: entity.verifiableCredential?.validFrom,
       validUntil: entity.verifiableCredential?.validUntil)
   }
@@ -98,9 +101,10 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
   public var displays: [CredentialDisplay]
   public var environment = TrustEnvironment.external
 
-  public let id: UUID
+  public var id: UUID
   public let createdAt: Date
   public let refreshedAt: Date?
+  public var lastRefreshAttemptAt: Date?
 
   public var progressionState: ProgressState
   public let rawCredentialData: RawCredentialData?
@@ -136,6 +140,7 @@ public struct VerifiableCredential: Codable, CredentialProtocol {
     case id
     case createdAt
     case refreshedAt
+    case lastRefreshAttemptAt
     case progressionState
     case bundleItems
     case nextPresentableBundleItemId
@@ -163,6 +168,7 @@ extension VerifiableCredential: Equatable {
     lhs.id == rhs.id &&
       lhs.createdAt == rhs.createdAt &&
       lhs.refreshedAt == rhs.refreshedAt &&
+      lhs.lastRefreshAttemptAt == rhs.lastRefreshAttemptAt &&
       lhs.progressionState == rhs.progressionState &&
       lhs.bundleItems == rhs.bundleItems &&
       lhs.nextPresentableBundleItemId == rhs.nextPresentableBundleItemId &&
@@ -185,7 +191,7 @@ extension VerifiableCredential: Equatable {
 
 extension VerifiableCredential {
 
-  public enum ProgressState: String, Codable {
+  public enum ProgressState: String, Codable, CaseIterable, Sendable {
     case accepted
     case unaccepted
 
@@ -210,6 +216,7 @@ extension VerifiableCredential: Hashable {
     hasher.combine(id)
     hasher.combine(createdAt)
     hasher.combine(refreshedAt)
+    hasher.combine(lastRefreshAttemptAt)
     hasher.combine(bundleItems)
     hasher.combine(nextPresentableBundleItemId)
     hasher.combine(issuer)

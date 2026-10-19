@@ -6,7 +6,7 @@ import Spyable
 // MARK: - GetCredentialListUseCaseProtocol
 
 @Spyable
-public protocol GetCredentialListUseCaseProtocol {
+public protocol GetCredentialListUseCaseProtocol: Sendable {
   func callAsFunction() async throws -> [CredentialProtocol]
 }
 

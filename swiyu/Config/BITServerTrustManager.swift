@@ -7,7 +7,7 @@ import Foundation
 
 /// `BITServerTrustManager`: A subclass of `WildcardServerTrustManager` provided by BITNetworking.
 /// Designed for handling server trust and configure certificate pinning for the BIT application based on domain name patterns.
-class BITServerTrustManager: WildcardServerTrustManager {
+class BITServerTrustManager: WildcardServerTrustManager, @unchecked Sendable {
 
   // MARK: Lifecycle
 

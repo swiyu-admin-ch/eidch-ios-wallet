@@ -10,7 +10,7 @@ import Spyable
 // MARK: - CredentialGeneratorProtocol
 
 @Spyable
-protocol CredentialGeneratorProtocol {
+protocol CredentialGeneratorProtocol: Sendable {
   func generate(
     for credentialsWithKeyBinding: [CredentialWithKeyBinding],
     rawOcaBundle: RawOcaBundle?,
@@ -93,7 +93,7 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
   {
     let id = UUID()
     let issuerNames = await getIssuerNames(from: metadataWrapper)
-    let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialIssuerMetadata.display, credentialId: id, issuerNames: issuerNames)
+    let issuerDisplays = createIssuerDisplays(from: metadataWrapper.credentialIssuerMetadata.display, issuerNames: issuerNames)
     let ocaBundle = rawOcaBundle.flatMap { try? ocaBundler.createOcaBundle($0) }
     let rawCredentialData = RawCredentialData(rawOIDMetadata: metadataWrapper.rawData, rawOcaBundle: rawOcaBundle)
     let batchData = createBatchData(batchSize: metadataWrapper.credentialIssuerMetadata.batchCredentialIssuance?.batchSize)
@@ -128,7 +128,6 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
 
   private func createIssuerDisplays(
     from displays: [CredentialIssuerMetadata.Display]?,
-    credentialId: UUID,
     issuerNames: [String: String]?)
     -> [CredentialIssuerDisplay]
   {
@@ -137,7 +136,6 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
         CredentialIssuerDisplay(
           locale: display.locale,
           name: display.name,
-          credentialId: credentialId,
           image: display.logo?.url?.dataURLData)
       } ?? []
     }
@@ -149,7 +147,6 @@ struct CredentialGenerator: CredentialGeneratorProtocol {
         CredentialIssuerDisplay(
           locale: locale,
           name: issuerNames[locale],
-          credentialId: credentialId,
           image: displayImage(for: locale, in: metadataDisplays))
       }
   }

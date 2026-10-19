@@ -1,70 +1,103 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import XCTest
+import FactoryTesting
+import Foundation
+import Testing
 @testable import BITActivity
 @testable import BITActivityDetail
 @testable import BITCredential
 @testable import BITCredentialShared
+@testable import BITL10n
 @testable import BITTestingCore
 
+// MARK: - ActivityCredentialViewModelTests
+
 @MainActor
-final class ActivityCredentialViewModelTests: XCTestCase {
+@Suite(.container)
+struct ActivityCredentialViewModelTests {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  @Test(arguments: ColorSchemeCase.all)
+  func init_takesTheDisplayMatchingTheColorScheme(colorSchemeCase: ColorSchemeCase) throws {
+    let viewModel = ActivityCredentialViewModel(detail: Self.activityDetailMock, colorScheme: colorSchemeCase.colorScheme)
+
+    #expect(viewModel.name == "name \(colorSchemeCase.matchedTheme)")
+    #expect(viewModel.summary == "summary \(colorSchemeCase.matchedTheme)")
+    #expect(viewModel.backgroundColor == Self.backgroundColors[colorSchemeCase.matchedTheme])
+    #expect(viewModel.logoBase64 == Data("logo \(colorSchemeCase.matchedTheme)".utf8))
+    #expect(viewModel.environment == .swiyu)
+
+    try assertClusters(of: viewModel)
   }
 
-  func testInit_noMatchingColorScheme_takesFirstDisplay() throws {
-    viewModel = ActivityCredentialViewModel(detail: activityDetailMock, colorScheme: "other")
+  @Test
+  func init_noDisplay_hasNilValues() throws {
+    let viewModel = ActivityCredentialViewModel(detail: ActivityDetail.Mock.noCredentialDisplays, colorScheme: "light")
 
-    XCTAssertEqual(viewModel.name, "name dark")
-    XCTAssertEqual(viewModel.summary, "summary dark")
-    XCTAssertEqual(viewModel.backgroundColor, "#FFFFFF")
-    XCTAssertEqual(viewModel.logoBase64, "logo dark".data(using: .utf8))
-    XCTAssertEqual(viewModel.environment, .swiyu)
+    #expect(viewModel.name == nil)
+    #expect(viewModel.summary == nil)
+    #expect(viewModel.backgroundColor == nil)
+    #expect(viewModel.logoBase64 == nil)
+    #expect(viewModel.environment == .swiyu)
 
-    XCTAssertEqual(viewModel.clusters.count, 1)
-    let cluster = try XCTUnwrap(viewModel.clusters.first)
-    XCTAssertEqual(cluster.id, UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
-    XCTAssertEqual(cluster.claims.count, 3)
+    try assertClusters(of: viewModel)
   }
 
-  func testInit_validColorScheme_takesDisplayInColorScheme() throws {
-    viewModel = ActivityCredentialViewModel(detail: activityDetailMock, colorScheme: "light")
+  @Test
+  func init_statusSnapshot_exposesTheStatusItHadAtActivityTime() {
+    let viewModel = ActivityCredentialViewModel(detail: Self.activityDetailMock, colorScheme: "light")
 
-    XCTAssertEqual(viewModel.name, "name light")
-    XCTAssertEqual(viewModel.summary, "summary light")
-    XCTAssertEqual(viewModel.backgroundColor, "#000000")
-    XCTAssertEqual(viewModel.logoBase64, "logo light".data(using: .utf8))
-    XCTAssertEqual(viewModel.environment, .swiyu)
-
-    XCTAssertEqual(viewModel.clusters.count, 1)
-    let cluster = try XCTUnwrap(viewModel.clusters.first)
-    XCTAssertEqual(cluster.id, UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
-    XCTAssertEqual(cluster.claims.count, 3)
+    #expect(viewModel.statusListState == .revoked)
+    #expect(viewModel.displayedStatus == .revoked)
+    #expect(viewModel.displayedStatus?.statusText() == L10n.tkCredentialStatusRevoked)
   }
 
-  func testInit_noDisplay_hasNilValues() throws {
-    viewModel = ActivityCredentialViewModel(detail: ActivityDetail.Mock.noCredentialDisplays, colorScheme: "light")
+  @Test
+  func init_noStatusSnapshot_exposesNoStatus() {
+    let viewModel = ActivityCredentialViewModel(detail: ActivityDetail.Mock.noCredentialDisplays, colorScheme: "light")
 
-    XCTAssertNil(viewModel.name)
-    XCTAssertNil(viewModel.summary)
-    XCTAssertNil(viewModel.backgroundColor)
-    XCTAssertNil(viewModel.logoBase64)
-    XCTAssertEqual(viewModel.environment, .swiyu)
+    #expect(viewModel.statusListState == nil)
+    #expect(viewModel.displayedStatus == nil)
+  }
 
-    XCTAssertEqual(viewModel.clusters.count, 1)
-    let cluster = try XCTUnwrap(viewModel.clusters.first)
-    XCTAssertEqual(cluster.id, UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
-    XCTAssertEqual(cluster.claims.count, 3)
+  @Test(arguments: [CredentialStatus.valid, .suspended, .revoked])
+  func init_statusListState_displaysIt(statusListState: CredentialStatus) {
+    let viewModel = ActivityCredentialViewModel(detail: makeDetail(statusListState: statusListState), colorScheme: "light")
+
+    #expect(viewModel.statusListState == statusListState)
+    #expect(viewModel.displayedStatus == statusListState)
+  }
+
+  @Test(arguments: [CredentialStatus.expired, .businessExpired, .notYetValid, .unsupported, .unknown])
+  func init_statusOutsideTheStatusList_displaysNothing(statusListState: CredentialStatus) {
+    let viewModel = ActivityCredentialViewModel(detail: makeDetail(statusListState: statusListState), colorScheme: "light")
+
+    #expect(viewModel.statusListState == statusListState)
+    #expect(viewModel.displayedStatus == nil, "\(statusListState) is not a status-list state and has nothing to show")
   }
 
   // MARK: Private
 
-  private let activityDetailMock = ActivityDetail.Mock.trustedIssuance
+  private static let activityDetailMock = ActivityDetail.Mock.trustedIssuance
+  private static let backgroundColors = ["dark": "#FFFFFF", "light": "#000000"]
 
-  private var viewModel: ActivityCredentialViewModel!
+  private func assertClusters(of viewModel: ActivityCredentialViewModel) throws {
+    #expect(viewModel.clusters.count == 1)
+    let cluster = try #require(viewModel.clusters.first)
+    #expect(cluster.id == UUID(uuidString: "b400b56d-dd63-40f8-b036-f0f788f57212"))
+    #expect(cluster.claims.count == 3)
+  }
+
+  private func makeDetail(statusListState: CredentialStatus) -> ActivityDetail {
+    ActivityDetail(
+      id: UUID(),
+      type: .issuance,
+      createdAt: Date(),
+      actorDisplay: nil,
+      actorTrust: .trusted,
+      vcSchemaTrust: .trusted,
+      actorCompliance: .compliant,
+      nonComplianceReasonDisplay: nil,
+      credential: ActivityDetailCredential(id: UUID(), displays: [], environment: .swiyu, clusters: [], statusListState: statusListState))
+  }
 }

@@ -81,6 +81,6 @@ public struct ButtonLinkText: View {
 #if DEBUG
 // swiftlint: disable force_unwrapping
 #Preview {
-  CustomLink(to: URL("www.admin.ch")!, label: "Test")
+  CustomLink(to: URL(string: "www.admin.ch")!, label: "Test")
 }
 #endif

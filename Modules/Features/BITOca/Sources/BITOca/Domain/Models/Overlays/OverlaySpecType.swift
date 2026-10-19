@@ -1,4 +1,4 @@
-public enum OverlaySpecType: String, Decodable {
+public enum OverlaySpecType: String, Decodable, Sendable {
   case branding1_1 = "aries/overlays/branding/1.1"
   case characterEncoding1_0 = "spec/overlays/character_encoding/1.0"
   case dataSource1_0 = "extend/overlays/data_source/1.0"

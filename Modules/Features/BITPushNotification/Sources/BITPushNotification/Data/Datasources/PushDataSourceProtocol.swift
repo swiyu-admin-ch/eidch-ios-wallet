@@ -4,7 +4,7 @@ import Spyable
 // MARK: - PushDataSourceProtocol
 
 @Spyable
-public protocol PushDataSourceProtocol {
+public protocol PushDataSourceProtocol: Sendable {
   func getPushToken() async -> String
   func getCurrentPushToken() async -> String?
   func setPushToken(_ pushToken: String) async

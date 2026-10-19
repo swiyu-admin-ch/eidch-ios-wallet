@@ -4,6 +4,7 @@ import SwiftUI
 extension RequestCaseViewState {
 
   @ViewBuilder
+  @MainActor
   func view() -> some View {
     switch self {
     case .agentReview(let viewModel):
@@ -29,7 +30,7 @@ extension RequestCaseViewState {
         content: viewModel.notificationContent,
         notificationType: .primary(
           label: viewModel.primaryActionLabel,
-          action: viewModel.primaryAction))
+          action: viewModel.primaryAction, style: .tertiary))
     case .expired(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
@@ -46,6 +47,7 @@ extension RequestCaseViewState {
         notificationType: .complete(
           label: viewModel.primaryActionLabel,
           action: viewModel.openFAQ,
+          style: .tertiary,
           dismissAction: {
             Task {
               await viewModel.deleteRequestCase()
@@ -66,12 +68,12 @@ extension RequestCaseViewState {
         content: viewModel.notificationContent,
         notificationType: .primary(
           label: viewModel.primaryActionLabel,
-          action: viewModel.primaryAction))
+          action: viewModel.primaryAction, style: .tertiary))
     case .autoVerification(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,
         content: viewModel.notificationContent,
-        notificationType: viewModel.filesSubmitted ? .default : .primary(label: viewModel.primaryActionLabel, action: viewModel.primaryAction))
+        notificationType: viewModel.filesSubmitted ? .default : .primary(label: viewModel.primaryActionLabel, action: viewModel.primaryAction, style: .tertiary))
     case .closed(let viewModel):
       RequestCaseNotificationView(
         title: viewModel.notificationTitle,

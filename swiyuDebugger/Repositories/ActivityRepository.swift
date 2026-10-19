@@ -4,7 +4,7 @@ import Combine
 import Factory
 import Foundation
 
-class LocalActivityRepository: ActivityRepositoryProtocol {
+final class LocalActivityRepository: ActivityRepositoryProtocol, @unchecked Sendable {
 
   // MARK: Internal
 

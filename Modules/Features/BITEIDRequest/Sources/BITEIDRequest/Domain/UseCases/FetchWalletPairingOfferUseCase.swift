@@ -6,7 +6,7 @@ import Spyable
 // MARK: - FetchWalletPairingOfferUseCaseProtocol
 
 @Spyable
-protocol FetchWalletPairingOfferUseCaseProtocol {
+protocol FetchWalletPairingOfferUseCaseProtocol: Sendable {
   func execute(for caseId: String) async throws -> WalletPairingOffer
 }
 

@@ -8,7 +8,7 @@ import Spyable
 // MARK: - RequestBiometricAuthUseCaseProtocol
 
 @Spyable
-public protocol RequestBiometricAuthUseCaseProtocol {
+public protocol RequestBiometricAuthUseCaseProtocol: Sendable {
   func callAsFunction(reason: String, context: LAContextProtocol) async throws
 }
 

@@ -5,7 +5,7 @@ import Spyable
 // MARK: - UpdateAnalyticStatusUseCaseProtocol
 
 @Spyable
-public protocol UpdateAnalyticStatusUseCaseProtocol {
+public protocol UpdateAnalyticStatusUseCaseProtocol: Sendable {
   func callAsFunction(isAllowed: Bool) async
 }
 

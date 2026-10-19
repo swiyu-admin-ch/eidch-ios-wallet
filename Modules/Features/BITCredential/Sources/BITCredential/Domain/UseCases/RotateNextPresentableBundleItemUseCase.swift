@@ -6,7 +6,7 @@ import Spyable
 // MARK: - RotateNextPresentableBundleItemUseCaseProtocol
 
 @Spyable
-public protocol RotateNextPresentableBundleItemUseCaseProtocol {
+public protocol RotateNextPresentableBundleItemUseCaseProtocol: Sendable {
   func callAsFunction(_ credential: VerifiableCredential) async throws
 }
 

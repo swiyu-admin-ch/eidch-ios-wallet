@@ -12,12 +12,14 @@ public class ChangePinCodeContext {
 
 // MARK: - ChangePinCodeDelegate
 
+@MainActor
 public protocol ChangePinCodeDelegate: AnyObject {
   func didChangePinCode()
 }
 
 // MARK: - NewPinCodeDelegate
 
+@MainActor
 public protocol NewPinCodeDelegate: AnyObject {
   func didFail()
 }

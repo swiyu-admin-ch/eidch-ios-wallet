@@ -20,29 +20,35 @@ class RecordSelfieViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     Container.shared.reset()
 
-    avBeam = AVBeamProtocolSpy()
-    saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
-    context = EIDRequestContext()
-    updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
+    let avBeam = AVBeamProtocolSpy()
+    self.avBeam = avBeam
+    let saveEIDRequestFilesUseCase = SaveEIDRequestFilesUseCaseProtocolSpy()
+    self.saveEIDRequestFilesUseCase = saveEIDRequestFilesUseCase
+    let context = EIDRequestContext()
+    self.context = context
+    let updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
+    self.updateInputFileUseCase = updateInputFileUseCase
+    let appId = appId
 
-    Container.shared.avBeam.register { @MainActor in self.avBeam }
-    Container.shared.saveEIDRequestFilesUseCase.register { @MainActor in self.saveEIDRequestFilesUseCase }
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.avBeam.register { @MainActor in avBeam }
+    Container.shared.saveEIDRequestFilesUseCase.register { @MainActor in saveEIDRequestFilesUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     Container.shared.recordSelfieTimeout.register { 10.0 }
-    Container.shared.avBeamAppID.register { @MainActor in self.appId }
-    Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
+    Container.shared.avBeamAppID.register { @MainActor in appId }
+    Container.shared.updateInputFileUseCase.register { @MainActor in updateInputFileUseCase }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     success()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInitialization_stateIsLoading() {
@@ -54,7 +60,6 @@ class RecordSelfieViewModelTests: XCTestCase {
     XCTAssertNotNil(avBeam.captureFaceDelegate)
   }
 
-  @MainActor
   func testCancelInitialization_sdkIsStopped() {
     viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)

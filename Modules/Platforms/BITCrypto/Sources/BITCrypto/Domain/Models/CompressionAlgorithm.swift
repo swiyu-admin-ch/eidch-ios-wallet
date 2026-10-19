@@ -1,3 +1,3 @@
-public enum CompressionAlgorithm: String, Codable {
+public enum CompressionAlgorithm: String, Codable, Sendable {
   case deflate = "DEF"
 }

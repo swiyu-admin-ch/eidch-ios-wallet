@@ -35,7 +35,7 @@ public enum CredentialDestinations: NavigationDestination {
 // MARK: Hashable
 
 extension CredentialDestinations {
-  public static func == (lhs: CredentialDestinations, rhs: CredentialDestinations) -> Bool {
+  public nonisolated static func == (lhs: CredentialDestinations, rhs: CredentialDestinations) -> Bool {
     switch (lhs, rhs) {
     case (.detail(let lhsInput), .detail(let rhsInput)):
       lhsInput == rhsInput
@@ -48,7 +48,7 @@ extension CredentialDestinations {
     }
   }
 
-  public func hash(into hasher: inout Hasher) {
+  public nonisolated func hash(into hasher: inout Hasher) {
     switch self {
     case .detail(let input):
       hasher.combine("detail")

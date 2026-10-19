@@ -11,9 +11,10 @@ final class RequestOTPUseCaseTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    repository = OTPRequestRepositoryProtocolSpy()
+    let repository = OTPRequestRepositoryProtocolSpy()
+    self.repository = repository
 
-    Container.shared.otpRequestRepository.register { self.repository }
+    Container.shared.otpRequestRepository.register { repository }
   }
 
   func testCallAsFunction_success_requestsMail() async throws {

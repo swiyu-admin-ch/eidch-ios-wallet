@@ -16,6 +16,7 @@ extension VerifiableCredentialEntity {
   public func setValues(from credential: VerifiableCredential) {
     createdAt = credential.createdAt
     refreshedAt = credential.refreshedAt
+    lastRefreshAttemptAt = credential.lastRefreshAttemptAt
     progressionState = ProgressionState(credential.progressionState)
     issuer = credential.issuer
     let bundleItemEntities = credential.bundleItems.map(BundleItemEntity.init)
@@ -23,10 +24,6 @@ extension VerifiableCredentialEntity {
     nextPresentableBundleItemId = credential.nextPresentableBundleItemId
 
     batchData = credential.batchData.flatMap(BatchDataEntity.init)
-
-    let sortedClusters = credential.clusters.sorted(by: { $0.order < $1.order })
-    let clusterEntities = sortedClusters.map(CredentialClaimClusterEntity.init)
-    clusters.replaceWithUpserted(clusterEntities, in: realm)
 
     validFrom = credential.validFrom
     validUntil = credential.validUntil

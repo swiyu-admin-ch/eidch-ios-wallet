@@ -21,6 +21,10 @@ public actor CacheManager<Value: Sendable> {
     }
 
     if let task = inFlightTasks[key] {
+      #if DEBUG
+      inFlightWaiterCount += 1
+      defer { inFlightWaiterCount -= 1 }
+      #endif
       return try await task.value
     }
 
@@ -43,6 +47,9 @@ public actor CacheManager<Value: Sendable> {
 
   private var cache = [AnyHashable: CacheEntry]()
   private var inFlightTasks = [AnyHashable: Task<Value, Error>]()
+  #if DEBUG
+  private(set) var inFlightWaiterCount = 0 // only for testing
+  #endif
 }
 
 extension CacheManager {

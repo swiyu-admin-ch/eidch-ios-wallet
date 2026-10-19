@@ -170,11 +170,17 @@ final class ValidateDeviceSecurityRequirementsUseCaseTests: XCTestCase {
   private var userContext = LAContextProtocolSpy()
 
   private func setupMocks() {
-    Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
-    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
-    Container.shared.validateAttestationsUseCase.register { self.validateAttestationsUseCase }
-    Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
-    Container.shared.keyAttestationValidator.register { self.keyAttestationValidator }
+    let clientAttestationRepository = clientAttestationRepository
+    let attestationServiceRepository = attestationServiceRepository
+    let validateAttestationsUseCase = validateAttestationsUseCase
+    let appAttestationKeyRepository = appAttestationKeyRepository
+    let keyAttestationValidator = keyAttestationValidator
+
+    Container.shared.clientAttestationRepository.register { clientAttestationRepository }
+    Container.shared.attestationServiceRepository.register { attestationServiceRepository }
+    Container.shared.validateAttestationsUseCase.register { validateAttestationsUseCase }
+    Container.shared.appAttestationKeyRepository.register { appAttestationKeyRepository }
+    Container.shared.keyAttestationValidator.register { keyAttestationValidator }
   }
 
   private func success() {

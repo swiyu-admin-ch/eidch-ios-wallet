@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - CredentialIssuerMetadataJWT
 
-public struct CredentialIssuerMetadataJWT: JWT, Codable, Equatable {
+public struct CredentialIssuerMetadataJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

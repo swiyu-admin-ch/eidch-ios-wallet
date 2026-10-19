@@ -7,7 +7,7 @@ enum EIDRequestStateError: Error {
 }
 
 
-public struct EIDRequestState: Codable, Equatable {
+public struct EIDRequestState: Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

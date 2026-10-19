@@ -1,5 +1,4 @@
-// swiftlint:disable force_unwrapping
-import XCTest
+import Testing
 @testable import BITAnyCredentialFormat
 @testable import BITClaimsPathPointer
 @testable import BITCore
@@ -17,51 +16,57 @@ struct ExpectedClaim {
   let locales: [String]
 }
 
-func assertClaimsEqual(_ claims: [CredentialClaim], expectedClaims: [ExpectedClaim]) {
-  XCTAssertEqual(claims.count, expectedClaims.count)
+func assertClaimsEqual(_ claims: [CredentialClaim], expectedClaims: [ExpectedClaim], sourceLocation: SourceLocation = #_sourceLocation) {
+  #expect(claims.count == expectedClaims.count, sourceLocation: sourceLocation)
   for expectedClaim in expectedClaims {
-    let claim = claims.first { $0.path == expectedClaim.path }!
-    XCTAssertEqual(claim.valueType, expectedClaim.valueType.rawValue)
-    XCTAssertEqual(claim.value, expectedClaim.value)
-    XCTAssertEqual(claim.order, Int(expectedClaim.order))
+    guard let claim = claims.first(where: { $0.path == expectedClaim.path }) else {
+      Issue.record("Missing claim with path \(expectedClaim.path)", sourceLocation: sourceLocation)
+      continue
+    }
+    #expect(claim.valueType == expectedClaim.valueType.rawValue, sourceLocation: sourceLocation)
+    #expect(claim.value == expectedClaim.value, sourceLocation: sourceLocation)
+    #expect(claim.order == Int(expectedClaim.order), sourceLocation: sourceLocation)
 
-    XCTAssertEqual(claim.displays.count, expectedClaim.locales.count)
+    #expect(claim.displays.count == expectedClaim.locales.count, sourceLocation: sourceLocation)
     for locale in expectedClaim.locales {
       var name = ""
       if case .string(let key) = expectedClaim.path.first {
         name = key
       }
-      assertContainsClaimDisplay(claim, locale: locale, name: "\(name) \(locale)")
+      assertContainsClaimDisplay(claim, locale: locale, name: "\(name) \(locale)", sourceLocation: sourceLocation)
     }
   }
 }
 
-private func assertContainsClaimDisplay(_ claim: CredentialClaim, locale: String, name: String) {
-  let display = claim.displays.first { $0.locale == locale }!
-  XCTAssertEqual(display.name, name)
-}
+func assertCredentialDisplays(_ displays: [CredentialDisplay], derivedFromOCA: Bool = false, sourceLocation: SourceLocation = #_sourceLocation) {
+  #expect(displays.count == 2, sourceLocation: sourceLocation)
+  guard displays.count == 2 else { return }
 
-func assertCredentialDisplays(_ displays: [CredentialDisplay], credentialId: UUID, derivedFromOCA: Bool = false) {
-  XCTAssertEqual(displays.count, 2)
-  XCTAssertEqual(displays[0].name, "credential de-CH")
-  XCTAssertEqual(displays[0].backgroundColor, "#ffffff")
-  XCTAssertEqual(displays[0].locale, "de-CH")
-  XCTAssertNotNil(displays[0].logoBase64)
-  XCTAssertEqual(displays[0].summary, "summary de-CH")
-  XCTAssertEqual(displays[0].credentialId, credentialId)
+  #expect(displays[0].name == "credential de-CH", sourceLocation: sourceLocation)
+  #expect(displays[0].backgroundColor == "#ffffff", sourceLocation: sourceLocation)
+  #expect(displays[0].locale == "de-CH", sourceLocation: sourceLocation)
+  #expect(displays[0].logoBase64 != nil, sourceLocation: sourceLocation)
+  #expect(displays[0].summary == "summary de-CH", sourceLocation: sourceLocation)
 
-  XCTAssertEqual(displays[1].name, "credential en-US")
-  XCTAssertEqual(displays[1].backgroundColor, "#000000")
-  XCTAssertEqual(displays[1].locale, "en-US")
-  XCTAssertNotNil(displays[1].logoBase64)
-  XCTAssertEqual(displays[1].summary, "summary en-US")
-  XCTAssertEqual(displays[1].credentialId, credentialId)
+  #expect(displays[1].name == "credential en-US", sourceLocation: sourceLocation)
+  #expect(displays[1].backgroundColor == "#000000", sourceLocation: sourceLocation)
+  #expect(displays[1].locale == "en-US", sourceLocation: sourceLocation)
+  #expect(displays[1].logoBase64 != nil, sourceLocation: sourceLocation)
+  #expect(displays[1].summary == "summary en-US", sourceLocation: sourceLocation)
 
   if derivedFromOCA {
-    XCTAssertEqual(displays[0].theme, "light")
-    XCTAssertEqual(displays[1].theme, "light")
+    #expect(displays[0].theme == "light", sourceLocation: sourceLocation)
+    #expect(displays[1].theme == "light", sourceLocation: sourceLocation)
   } else {
-    XCTAssertEqual(displays[0].logoAltText, "logo.altText de-CH")
-    XCTAssertEqual(displays[1].logoAltText, "logo.altText en-US")
+    #expect(displays[0].logoAltText == "logo.altText de-CH", sourceLocation: sourceLocation)
+    #expect(displays[1].logoAltText == "logo.altText en-US", sourceLocation: sourceLocation)
   }
+}
+
+private func assertContainsClaimDisplay(_ claim: CredentialClaim, locale: String, name: String, sourceLocation: SourceLocation) {
+  guard let display = claim.displays.first(where: { $0.locale == locale }) else {
+    Issue.record("Missing claim display for locale \(locale)", sourceLocation: sourceLocation)
+    return
+  }
+  #expect(display.name == name, sourceLocation: sourceLocation)
 }

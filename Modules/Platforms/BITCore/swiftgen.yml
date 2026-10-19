@@ -2,7 +2,7 @@ xcassets:
   inputs:
     - Sources/BITCore/Resources/CoreAssets.xcassets
   outputs:
-    - templateName: swift5
+    - templatePath: ../../../.resources/xcassets-swift6.stencil
       output: Sources/BITCore/Module/CoreAssets.swift
       params:
         enumName: CoreAssets

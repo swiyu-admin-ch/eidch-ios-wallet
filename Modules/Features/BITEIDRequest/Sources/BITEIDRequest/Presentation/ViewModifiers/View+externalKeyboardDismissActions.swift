@@ -37,7 +37,7 @@ private struct RequestCaseKeyboardDismissModifier: ViewModifier {
 
         // Adjusts List's seperator leading's padding since UIHostingController breaks
         // SwiftUI's communication between the row's view and the List.
-        .alignmentGuide(.listRowSeparatorLeading, computeValue: { _ in separatorLeadingInset })
+        .alignmentGuide(.listRowSeparatorLeading, computeValue: { [separatorLeadingInset] _ in separatorLeadingInset })
     }
   }
 

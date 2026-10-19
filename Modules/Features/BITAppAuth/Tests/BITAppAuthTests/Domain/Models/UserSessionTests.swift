@@ -14,8 +14,9 @@ final class UserSessionTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-    localContext = LAContextProtocolSpy()
-    Container.shared.internalContext.register { self.localContext }
+    let localContext = LAContextProtocolSpy()
+    self.localContext = localContext
+    Container.shared.internalContext.register { localContext }
   }
 
   func test_startSession_success() throws {

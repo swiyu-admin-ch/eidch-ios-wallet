@@ -12,11 +12,11 @@ extension Container {
   // MARK: Internal
 
   var settingsViewModel: Factory<SettingsViewModel> {
-    self { SettingsViewModel() }
+    self { @MainActor in SettingsViewModel() }
   }
 
   var securitySettingsViewModel: Factory<SecuritySettingsViewModel> {
-    self { SecuritySettingsViewModel() }
+    self { @MainActor in SecuritySettingsViewModel() }
   }
 
   @MainActor

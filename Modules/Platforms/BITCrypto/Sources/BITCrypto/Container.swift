@@ -24,8 +24,22 @@ extension Container {
     self { JWEDecrypter() }
   }
 
+  public var encrypter: Factory<Encryptable> {
+    self { AESEncrypter() }
+  }
+
   public var sha256Hasher: Factory<Hashable> {
     self { SHA256Hasher() }
+  }
+
+  // MARK: Internal
+
+  var concatKeyDerivable: Factory<ConcatKeyDerivable> {
+    self { ConcatKDF() }
+  }
+
+  var decrypter: Factory<Decryptable> {
+    self { AESDecrypter() }
   }
 
   // MARK: Private

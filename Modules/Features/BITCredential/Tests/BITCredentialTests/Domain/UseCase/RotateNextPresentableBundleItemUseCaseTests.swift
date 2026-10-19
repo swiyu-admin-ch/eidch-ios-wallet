@@ -14,8 +14,9 @@ final class RotateNextPresentableBundleItemUseCaseTests: XCTestCase {
     super.setUp()
     Container.shared.reset()
 
-    credentialRepository = CredentialRepositoryProtocolSpy()
-    Container.shared.credentialRepository.register { self.credentialRepository }
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+    self.credentialRepository = credentialRepository
+    Container.shared.credentialRepository.register { credentialRepository }
     useCase = RotateNextPresentableBundleItemUseCase()
   }
 

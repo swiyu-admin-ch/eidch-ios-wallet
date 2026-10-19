@@ -5,7 +5,7 @@ import Spyable
 // MARK: - CompareScanDocumentOutputUseCaseProtocol
 
 @Spyable
-protocol CompareScanDocumentOutputUseCaseProtocol {
+protocol CompareScanDocumentOutputUseCaseProtocol: Sendable {
   func callAsFunction(for caseId: String, with output: ScanDocumentOutput) async -> Bool
 }
 

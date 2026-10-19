@@ -3,7 +3,7 @@
 /// - appAttestation: Base64 encoded app attestation
 /// - appAssertion: Base64 encoded app assertion
 /// - clientData: Client data sent to the backend
-public struct ClientAttestationRequestBody: Codable, Equatable {
+public struct ClientAttestationRequestBody: Codable, Equatable, Sendable {
   let appAttestation: String
   let appAssertion: String
   let clientData: ClientDataObject

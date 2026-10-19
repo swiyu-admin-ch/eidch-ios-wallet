@@ -4,7 +4,7 @@ import Spyable
 // MARK: - StartOnlineSessionUseCaseProtocol
 
 @Spyable
-protocol StartOnlineSessionUseCaseProtocol {
+protocol StartOnlineSessionUseCaseProtocol: Sendable {
   func execute(for caseId: String) async throws
 }
 

@@ -18,6 +18,6 @@ extension ActivityDetail {
 
   private var nonComplianceReason: String? {
     guard actorCompliance == .notCompliant else { return nil }
-    return nonComplianceReasonDisplay?.value ?? L10n.tkNonComplianceReasonFallback
+    return nonComplianceReasonDisplay?.reason ?? L10n.tkNonComplianceReasonFallback
   }
 }

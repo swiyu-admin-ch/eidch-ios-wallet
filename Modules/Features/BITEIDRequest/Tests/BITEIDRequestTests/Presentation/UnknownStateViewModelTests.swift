@@ -1,4 +1,4 @@
-// swiftlint:disable all
+// swiftlint:disable implicitly_unwrapped_optional
 import Factory
 import XCTest
 @testable import BITEIDRequest
@@ -10,11 +10,18 @@ class UnknownStateViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
+  override func setUp() async throws {
+    try await super.setUp()
     delegate = RequestCaseViewStateDelegateSpy()
-    updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    let updateEIDRequestCaseStatusUseCase = UpdateEIDRequestCaseStatusUseCaseProtocolSpy()
+    self.updateEIDRequestCaseStatusUseCase = updateEIDRequestCaseStatusUseCase
 
-    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in self.updateEIDRequestCaseStatusUseCase }
+    Container.shared.updateEIDRequestCaseStatusUseCase.register { @MainActor in updateEIDRequestCaseStatusUseCase }
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInit_validRequestCase_success() throws {
@@ -47,9 +54,10 @@ class UnknownStateViewModelTests: XCTestCase {
   // MARK: Private
 
   private let mockEidRequestCase: EIDRequestCase = .Mock.sampleWithoutState
+  // swiftlint:disable:next weak_delegate
   private var delegate: RequestCaseViewStateDelegateSpy!
   private var viewModel: UnknownStateViewModel!
   private var updateEIDRequestCaseStatusUseCase: UpdateEIDRequestCaseStatusUseCaseProtocolSpy!
 }
 
-// swiftlint:enable all
+// swiftlint:enable implicitly_unwrapped_optional

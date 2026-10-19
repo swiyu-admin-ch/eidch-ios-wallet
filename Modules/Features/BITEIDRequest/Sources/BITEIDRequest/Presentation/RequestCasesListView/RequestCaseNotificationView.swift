@@ -16,11 +16,12 @@ struct RequestCaseNotificationView: View {
 
   // MARK: Internal
 
+  @MainActor
   enum NotificationType {
     case `default`
     case dismiss(action: () -> Void)
-    case primary(label: String, action: () -> Void, style: CustomButtonStyle = .tertiary)
-    case complete(label: String, action: () -> Void, style: CustomButtonStyle = .tertiary, dismissAction: () -> Void)
+    case primary(label: String, action: () -> Void, style: CustomButtonStyle)
+    case complete(label: String, action: () -> Void, style: CustomButtonStyle, dismissAction: () -> Void)
   }
 
   var body: some View {

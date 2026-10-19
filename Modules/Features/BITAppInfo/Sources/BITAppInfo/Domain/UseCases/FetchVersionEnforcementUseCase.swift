@@ -5,7 +5,7 @@ import Spyable
 // MARK: - FetchVersionEnforcementUseCaseProtocol
 
 @Spyable
-public protocol FetchVersionEnforcementUseCaseProtocol {
+public protocol FetchVersionEnforcementUseCaseProtocol: Sendable {
   func callAsFunction() async throws -> VersionEnforcement?
 }
 

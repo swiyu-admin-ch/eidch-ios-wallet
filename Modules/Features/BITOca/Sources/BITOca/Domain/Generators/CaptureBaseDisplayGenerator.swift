@@ -4,13 +4,13 @@ import Spyable
 // MARK: - CaptureBaseDisplayGeneratorProtocol
 
 @Spyable
-public protocol CaptureBaseDisplayGeneratorProtocol {
+public protocol CaptureBaseDisplayGeneratorProtocol: Sendable {
   func generate(from ocaBundle: OcaBundle) -> [CaptureBaseDisplay]
 }
 
 // MARK: - CaptureBaseDisplayGenerator
 
-public class CaptureBaseDisplayGenerator: CaptureBaseDisplayGeneratorProtocol {
+public struct CaptureBaseDisplayGenerator: CaptureBaseDisplayGeneratorProtocol {
 
   public func generate(from ocaBundle: OcaBundle) -> [CaptureBaseDisplay] {
     let brandingOverlays = ocaBundle.getLatestOverlaysOfType(overlayType: .branding)

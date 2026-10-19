@@ -9,7 +9,7 @@ public typealias DPoP = JWS<DPoPJWT>
 
 // MARK: - DPoPJWT
 
-public struct DPoPJWT: JWT, Codable, Equatable {
+public struct DPoPJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

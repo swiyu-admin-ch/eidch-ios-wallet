@@ -152,13 +152,16 @@ final class AppAttestationProviderTests: XCTestCase {
   }
 
   private func registerMocks() {
-    sha256Hasher = HashableSpy()
-    jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
-    deviceCheckAppAttestService = DeviceCheckAppAttestServiceProtocolSpy()
+    let sha256Hasher = HashableSpy()
+    let jsonCanonicalizer = JsonCanonicalizerProtocolSpy()
+    let deviceCheckAppAttestService = DeviceCheckAppAttestServiceProtocolSpy()
+    self.sha256Hasher = sha256Hasher
+    self.jsonCanonicalizer = jsonCanonicalizer
+    self.deviceCheckAppAttestService = deviceCheckAppAttestService
 
-    Container.shared.sha256Hasher.register { self.sha256Hasher }
-    Container.shared.deviceCheckAppAttestService.register { self.deviceCheckAppAttestService }
-    Container.shared.jsonCanonicalizer.register { self.jsonCanonicalizer }
+    Container.shared.sha256Hasher.register { sha256Hasher }
+    Container.shared.deviceCheckAppAttestService.register { deviceCheckAppAttestService }
+    Container.shared.jsonCanonicalizer.register { jsonCanonicalizer }
   }
 
 }

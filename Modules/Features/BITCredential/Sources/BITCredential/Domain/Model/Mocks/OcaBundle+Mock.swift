@@ -5,7 +5,7 @@ import Foundation
 
 extension OcaBundle {
   enum Mock {
-    static let oneAttribute = create(from: "oca-bundle-one-attribute")
+    nonisolated(unsafe) static let oneAttribute = create(from: "oca-bundle-one-attribute")
 
     // swiftlint:disable force_try
     static func create(from file: String) -> OcaBundle {

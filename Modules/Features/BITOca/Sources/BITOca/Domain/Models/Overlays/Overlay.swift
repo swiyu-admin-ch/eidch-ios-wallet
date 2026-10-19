@@ -1,6 +1,6 @@
 // MARK: - Overlay
 
-public protocol Overlay: Decodable, Equatable {
+public protocol Overlay: Decodable, Equatable, Sendable {
   var type: OverlaySpecType { get }
   var captureBaseDigest: String { get }
 

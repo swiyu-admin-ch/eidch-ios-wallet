@@ -5,7 +5,7 @@ import Foundation
 
 // https://www.rfc-editor.org/rfc/rfc7519
 
-public protocol JWT: Codable, Equatable {
+public protocol JWT: Codable, Equatable, Sendable {
   var type: String? { get }
   var acceptedTypes: [String]? { get }
   var issuer: String? { get }

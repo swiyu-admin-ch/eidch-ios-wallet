@@ -3,7 +3,7 @@ import Foundation
 
 extension EIDRequestContext {
   struct Mock {
-    static let documentRecordingSample = EIDRequestContext(
+    nonisolated(unsafe) static let documentRecordingSample = EIDRequestContext(
       caseId: "caseId",
       autoVerificationResponse: AutoVerificationResponse(
         jwt: "jwt",
@@ -11,7 +11,7 @@ extension EIDRequestContext {
         isScanDocumentRequired: false,
         isDocumentVideoRecordingRequired: true))
 
-    static let scanDocumentSample = EIDRequestContext(
+    nonisolated(unsafe) static let scanDocumentSample = EIDRequestContext(
       caseId: "caseId",
       autoVerificationResponse: AutoVerificationResponse(
         jwt: "jwt",
@@ -19,7 +19,7 @@ extension EIDRequestContext {
         isScanDocumentRequired: true,
         isDocumentVideoRecordingRequired: false))
 
-    static let nfcSample = EIDRequestContext(
+    nonisolated(unsafe) static let nfcSample = EIDRequestContext(
       caseId: "caseId",
       autoVerificationResponse: AutoVerificationResponse(
         jwt: "jwt",
@@ -27,7 +27,7 @@ extension EIDRequestContext {
         isScanDocumentRequired: false,
         isDocumentVideoRecordingRequired: false))
 
-    static let sample = EIDRequestContext(
+    nonisolated(unsafe) static let sample = EIDRequestContext(
       caseId: "caseId",
       autoVerificationResponse: AutoVerificationResponse(
         jwt: "jwt",

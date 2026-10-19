@@ -4,7 +4,7 @@ import Spyable
 // MARK: - SelectCredentialBundleItemUseCaseProtocol
 
 @Spyable
-public protocol SelectCredentialBundleItemUseCaseProtocol {
+public protocol SelectCredentialBundleItemUseCaseProtocol: Sendable {
   func callAsFunction(_ credential: VerifiableCredential) throws -> BundleItem
 }
 

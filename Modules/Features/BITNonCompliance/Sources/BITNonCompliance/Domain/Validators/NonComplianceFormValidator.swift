@@ -25,7 +25,7 @@ class NonComplianceFormValidator: NonComplianceFormValidatorProtocol {
 
   // MARK: Private
 
-  private static let emailRegex = #/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/#
+  private nonisolated(unsafe) static let emailRegex = #/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/#
 
   @Injected(\.descriptionFormFieldMaximumLength) private var descriptionFormFieldMaximumLength
   @Injected(\.descriptionFormFieldMinimumLength) private var descriptionFormFieldMinimumLength

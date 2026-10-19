@@ -27,7 +27,7 @@ public enum FetchAnyVerifiableCredentialError: Error {
 // MARK: - FetchAnyVerifiableCredentialUseCaseProtocol
 
 @Spyable
-public protocol FetchAnyVerifiableCredentialUseCaseProtocol {
+public protocol FetchAnyVerifiableCredentialUseCaseProtocol: Sendable {
   func callAsFunction(
     from offer: CredentialOffer,
     metadataWrapper: CredentialIssuerMetadataWrapper,

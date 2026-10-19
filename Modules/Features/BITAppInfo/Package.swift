@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -21,6 +20,7 @@ let package = Package(
     .package(path: "../../Platforms/BITTheming"),
     .package(path: "../../Platforms/BITNavigation"),
     .package(path: "../../Platforms/BITNetworking"),
+    .package(path: "../../Platforms/BITJWT"),
     .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/devicekit/DeviceKit.git", exact: "5.7.0"),
@@ -32,6 +32,7 @@ let package = Package(
         .product(name: "BITCore", package: "BITCore"),
         .product(name: "BITL10n", package: "BITL10n"),
         .product(name: "BITNetworking", package: "BITNetworking"),
+        .product(name: "BITJWT", package: "BITJWT"),
         .product(name: "BITNavigation", package: "BITNavigation"),
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
@@ -47,7 +48,10 @@ let package = Package(
       name: "BITAppInfoTests",
       dependencies: [
         "BITAppInfo",
+        .product(name: "BITJWT", package: "BITJWT"),
+        .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "Factory", package: "Factory"),
+        .product(name: "FactoryTesting", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "DeviceKit", package: "DeviceKit"),
       ],

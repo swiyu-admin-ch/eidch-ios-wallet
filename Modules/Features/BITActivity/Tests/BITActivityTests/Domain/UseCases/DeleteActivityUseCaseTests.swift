@@ -39,7 +39,8 @@ final class DeleteActivityUseCaseTests: XCTestCase {
   private var useCase: DeleteActivityUseCase!
 
   private func registerMocks() {
-    repositorySpy = ActivityRepositoryProtocolSpy()
-    Container.shared.activityRepository.register { self.repositorySpy }
+    let repositorySpy = ActivityRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    Container.shared.activityRepository.register { repositorySpy }
   }
 }

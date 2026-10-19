@@ -4,7 +4,7 @@ import Spyable
 // MARK: - BiometricRepositoryProtocol
 
 @Spyable
-public protocol BiometricRepositoryProtocol {
+public protocol BiometricRepositoryProtocol: Sendable {
   func setBiometricUsage(_ usage: BiometricUsage)
   func getBiometricUsage() -> BiometricUsage
 }
@@ -37,7 +37,7 @@ struct UserDefaultBiometricRepository: BiometricRepositoryProtocol {
 
   private let usageKey = "biometricUsageKey"
   private let legacyKey = "isBiometricUsageAllowed"
-  private let userDefaults: UserDefaults
+  nonisolated(unsafe) private let userDefaults: UserDefaults
 
   private func migrateFromLegacyKey() -> BiometricUsage {
     guard userDefaults.object(forKey: legacyKey) != nil else {

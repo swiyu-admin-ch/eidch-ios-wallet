@@ -34,8 +34,11 @@ enum Assets {
   static let noActivities = ImageAsset(name: "NoActivities")
   static let notTrustedBadge = ImageAsset(name: "NotTrustedBadge")
   static let sensitiveBadge = ImageAsset(name: "SensitiveBadge")
+  static let statusInProgress = ImageAsset(name: "StatusInProgress")
   static let statusInvalid = ImageAsset(name: "StatusInvalid")
   static let statusNotYetValid = ImageAsset(name: "StatusNotYetValid")
+  static let statusReadyToAdd = ImageAsset(name: "StatusReadyToAdd")
+  static let statusRejected = ImageAsset(name: "StatusRejected")
   static let statusSuspended = ImageAsset(name: "StatusSuspended")
   static let statusUnknown = ImageAsset(name: "StatusUnknown")
   static let statusValid = ImageAsset(name: "StatusValid")
@@ -50,7 +53,7 @@ enum Assets {
 
 // swiftlint:enable identifier_name line_length nesting type_body_length type_name
 
-struct ImageAsset {
+struct ImageAsset: Sendable {
   #if os(macOS)
   typealias Image = NSImage
   #elseif os(iOS) || os(tvOS) || os(watchOS)

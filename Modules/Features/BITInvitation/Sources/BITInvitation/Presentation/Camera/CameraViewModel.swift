@@ -30,7 +30,7 @@ public class CameraViewModel: Vibrating {
     invitationURL = url
   }
 
-  deinit {
+  isolated deinit {
     cameraManager.stop()
     proximityTask?.cancel()
   }
@@ -38,7 +38,7 @@ public class CameraViewModel: Vibrating {
   // MARK: Public
 
   public var isLoading = false
-  @ObservationIgnored nonisolated(unsafe) public var cameraManager = CameraManager()
+  @ObservationIgnored public var cameraManager = CameraManager()
   public var destination: InvitationDestinations?
 
   public var currentError: Error? {
@@ -141,7 +141,7 @@ public class CameraViewModel: Vibrating {
   private var credential: VerifiableCredential?
   private var qrCodeObject: AVMetadataMachineReadableCodeObject?
 
-  @ObservationIgnored nonisolated(unsafe) private var proximityTask: Task<Void, Never>?
+  @ObservationIgnored private var proximityTask: Task<Void, Never>?
   private var previousUrl: String?
   private var hasProcessedInitialURL = false
   private var isCameraReady = false

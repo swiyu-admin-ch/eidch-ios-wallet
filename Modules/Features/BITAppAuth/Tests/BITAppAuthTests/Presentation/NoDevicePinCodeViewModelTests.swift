@@ -4,30 +4,18 @@ import XCTest
 
 final class NoDevicePinCodeViewModelTests: XCTestCase {
 
-  // MARK: Internal
-
   override func setUp() {
     super.setUp()
-
-    hasDevicePinUseCase = HasDevicePinUseCaseProtocolSpy()
-
-    Container.shared.hasDevicePinUseCase.register { @MainActor in self.hasDevicePinUseCase }
-
-    router = NoDevicePinCodeRouterMock()
-    viewModel = NoDevicePinCodeViewModel(router: router)
+    let hasDevicePinUseCase = HasDevicePinUseCaseProtocolSpy()
+    Container.shared.hasDevicePinUseCase.register { @MainActor in hasDevicePinUseCase }
   }
 
   @MainActor
   func testOpenSettings() {
+    let router = NoDevicePinCodeRouterMock()
+    let viewModel = NoDevicePinCodeViewModel(router: router)
+
     viewModel.openSettings()
     XCTAssertTrue(router.didCallExternalSettings)
   }
-
-  // MARK: Private
-
-  // swiftlint:disable all
-  private var router: NoDevicePinCodeRouterMock!
-  private var viewModel: NoDevicePinCodeViewModel!
-  private var hasDevicePinUseCase: HasDevicePinUseCaseProtocolSpy!
-  // swiftlint:enable all
 }

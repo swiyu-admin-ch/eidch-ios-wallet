@@ -292,25 +292,33 @@ final class FetchAnyVerifiableCredentialUseCaseTests: XCTestCase {
   private var useCase = FetchAnyVerifiableCredentialUseCase()
 
   private func registerMocks() {
-    repository = OpenIDRepositoryProtocolSpy()
-    issuanceDPoPKeyRepository = IssuanceDPoPKeyRepositoryProtocolSpy()
-    attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
-    clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
-    keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
-    userSession = SessionSpy()
+    let repository = OpenIDRepositoryProtocolSpy()
+    self.repository = repository
+    let issuanceDPoPKeyRepository = IssuanceDPoPKeyRepositoryProtocolSpy()
+    self.issuanceDPoPKeyRepository = issuanceDPoPKeyRepository
+    let attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
+    self.attestationServiceRepository = attestationServiceRepository
+    let clientAttestationRepository = ClientAttestationRepositoryProtocolSpy()
+    self.clientAttestationRepository = clientAttestationRepository
+    let keyAttestationValidator = KeyAttestationValidatorProtocolSpy()
+    self.keyAttestationValidator = keyAttestationValidator
+    let userSession = SessionSpy()
+    self.userSession = userSession
     spyFetchCredentialVcSdJwtUseCase = FetchAnyCredentialUseCaseProtocolSpy()
-    credentialEncryptionContextGeneratorSpy = CredentialEncryptionContextGeneratorProtocolSpy()
-    mockDispatcher = [.vcSdJwt: spyFetchCredentialVcSdJwtUseCase]
+    let credentialEncryptionContextGeneratorSpy = CredentialEncryptionContextGeneratorProtocolSpy()
+    self.credentialEncryptionContextGeneratorSpy = credentialEncryptionContextGeneratorSpy
+    let mockDispatcher: [CredentialFormat: FetchAnyCredentialUseCaseProtocol] = [.vcSdJwt: spyFetchCredentialVcSdJwtUseCase]
+    self.mockDispatcher = mockDispatcher
     nonceResponses = []
 
-    Container.shared.anyFetchCredentialDispatcher.register { self.mockDispatcher }
-    Container.shared.openIDRepository.register { self.repository }
-    Container.shared.issuanceDPoPKeyRepository.register { self.issuanceDPoPKeyRepository }
-    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
-    Container.shared.clientAttestationRepository.register { self.clientAttestationRepository }
-    Container.shared.keyAttestationValidator.register { self.keyAttestationValidator }
-    Container.shared.userSession.register { self.userSession }
-    Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGeneratorSpy }
+    Container.shared.anyFetchCredentialDispatcher.register { mockDispatcher }
+    Container.shared.openIDRepository.register { repository }
+    Container.shared.issuanceDPoPKeyRepository.register { issuanceDPoPKeyRepository }
+    Container.shared.attestationServiceRepository.register { attestationServiceRepository }
+    Container.shared.clientAttestationRepository.register { clientAttestationRepository }
+    Container.shared.keyAttestationValidator.register { keyAttestationValidator }
+    Container.shared.userSession.register { userSession }
+    Container.shared.credentialEncryptionContextGenerator.register { credentialEncryptionContextGeneratorSpy }
     Container.shared.supportedDPoPSigningAlgorithms.register { [.ES256] }
   }
 

@@ -1,10 +1,14 @@
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_try
-import BITSwiyuSharedKMP
+@preconcurrency import BITSwiyuSharedKMP
 import Factory
 import XCTest
 @testable import BITOpenID
 @testable import BITPresentation
 @testable import BITTestingCore
+
+// MARK: - ProximityState + @retroactive @unchecked Sendable
+
+extension ProximityState: @retroactive @unchecked Sendable {}
 
 // MARK: - ProximityPresentationRepositoryTests
 
@@ -13,12 +17,17 @@ final class ProximityPresentationRepositoryTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    controller = ProximityPresentationControllerProtocolSpy()
-    Container.shared.proximityPresentationController.register { @MainActor in self.controller }
+  override func setUp() async throws {
+    try await super.setUp()
+    let controller = ProximityPresentationControllerProtocolSpy()
+    self.controller = controller
+    Container.shared.proximityPresentationController.register { @MainActor in controller }
     repository = ProximityPresentationRepository()
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   // MARK: Engagement - Start

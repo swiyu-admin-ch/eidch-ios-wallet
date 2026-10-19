@@ -5,7 +5,7 @@ import Spyable
 // MARK: - RegisterPushTokenUseCaseProtocol
 
 @Spyable
-protocol RegisterPushTokenUseCaseProtocol {
+protocol RegisterPushTokenUseCaseProtocol: Sendable {
   func callAsFunction(_ pushToken: String, caseId: String) async throws
   func callAsFunction(for caseId: String) async throws
 }

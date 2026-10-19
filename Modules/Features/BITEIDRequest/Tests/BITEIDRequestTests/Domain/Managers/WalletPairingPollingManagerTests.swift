@@ -8,24 +8,24 @@ final class WalletPairingPollingManagerTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-
+  override func setUp() async throws {
+    try await super.setUp()
     delegate = WalletPairingPollingDelegateSpy()
-    fetchWalletPairingStateUseCase = FetchWalletPairingStateUseCaseProtocolSpy()
-    Container.shared.fetchWalletPairingStateUseCase.register { @MainActor in self.fetchWalletPairingStateUseCase }
+    let fetchWalletPairingStateUseCase = FetchWalletPairingStateUseCaseProtocolSpy()
+    self.fetchWalletPairingStateUseCase = fetchWalletPairingStateUseCase
+    Container.shared.fetchWalletPairingStateUseCase.register { @MainActor in fetchWalletPairingStateUseCase }
 
     sut = WalletPairingPollingManager(pollingInterval: 0.1)
     sut.delegate = delegate
   }
 
-  override func tearDown() {
-    sut.stopPolling()
+  override func tearDown() async throws {
+    sut?.stopPolling()
+    Container.shared.reset()
     sut = nil
     delegate = nil
     fetchWalletPairingStateUseCase = nil
-    Container.shared.reset()
-    super.tearDown()
+    try await super.tearDown()
   }
 
   func testInitialState() {

@@ -8,6 +8,7 @@ import SwiftUI
 
 @Observable
 
+@MainActor
 class SetupSDKErrorViewModel: NavigationBackable {
 
   // MARK: Lifecycle

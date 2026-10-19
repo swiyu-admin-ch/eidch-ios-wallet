@@ -1,10 +1,9 @@
-import BITCrypto
 import Foundation
 import JWSETKit
 
 // MARK: - JWSDecoderProtocol
 
-public protocol JWSDecoderProtocol {
+public protocol JWSDecoderProtocol: Sendable {
   func decode<T: JWT>(_ type: T.Type, from data: Data) throws -> JWS<T>
 }
 
@@ -13,7 +12,6 @@ public protocol JWSDecoderProtocol {
 public enum JWSDecoderError: Error {
   case invalidType
   case invalidPayload
-  case algorithmNotFound
 }
 
 // MARK: - JWSDecoder
@@ -34,7 +32,7 @@ public struct JWSDecoder: JWSDecoderProtocol {
     let jws = try JSONWebSignaturePlain(from: data)
     let payload: T = try decodePayload(from: jws.payload.encoded)
     let rawPayload = try decodeRawPayload(from: jws.payload.encoded)
-    let header = try createHeader(from: jws)
+    let header = try JWSHeader(from: jws)
 
     #warning("To be deleted when contraction on dc+sd-jwt happens")
     if let acceptedTypes = payload.acceptedTypes {
@@ -61,36 +59,5 @@ public struct JWSDecoder: JWSDecoderProtocol {
       throw JWSDecoderError.invalidPayload
     }
     return rawPayload
-  }
-
-  private func createHeader(from jws: JSONWebSignaturePlain) throws -> JWSHeader {
-    guard
-      let algorithm = jws.header.algorithm,
-      let jwtAlgorithm = JWTAlgorithm(rawValue: algorithm.rawValue)
-    else { throw JWSDecoderError.algorithmNotFound }
-
-    return try JWSHeader(
-      algorithm: jwtAlgorithm,
-      type: jws.header.type?.rawValue,
-      keyIdentifier: jws.header.keyId,
-      jwk: jws.header.publicJwk(),
-      profileVersion: jws.profileVersion)
-  }
-}
-
-extension JOSEHeader {
-  fileprivate func publicJwk() throws -> BITCrypto.JWK? {
-    // swiftformat:disable:next redundantOptionalBinding redundantSelf
-    guard let key = self.key else {
-      return nil
-    }
-    let data = try JSONEncoder().encode(AnyJSONWebKey(key))
-    return try JSONDecoder().decode(BITCrypto.JWK.self, from: data)
-  }
-}
-
-extension JSONWebSignaturePlain {
-  fileprivate var profileVersion: String? {
-    header["profile_version"]
   }
 }

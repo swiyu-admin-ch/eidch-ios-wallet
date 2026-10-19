@@ -1,5 +1,6 @@
 import BITL10n
 
+@MainActor
 public class ReadyForFinalEntitlementCheckStateViewModel: RequestCaseStateBaseViewModel {
 
   var notificationTitle: String {

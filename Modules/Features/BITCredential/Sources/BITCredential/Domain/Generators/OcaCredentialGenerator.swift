@@ -10,7 +10,7 @@ import Spyable
 // MARK: - OcaCredentialGeneratorProtocol
 
 @Spyable
-protocol OcaCredentialGeneratorProtocol {
+protocol OcaCredentialGeneratorProtocol: Sendable {
   func generate(for credentialsWithKeyBinding: [CredentialWithKeyBinding], ocaBundle: OcaBundle, context: CredentialGeneratorContext) throws -> VerifiableCredential
   func generateDeferred(
     _ deferredCredentialContext: DeferredCredentialContext,
@@ -40,7 +40,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
       ocaBundle: ocaBundle)
     let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
-    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
+    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays)
 
     let bundleItems = try createBundleItems(from: credentialsWithKeyBinding)
 
@@ -76,7 +76,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
   {
     let captureBaseDisplays = captureBaseDisplayGenerator.generate(from: ocaBundle)
       .filter { $0.captureBaseDigest == ocaBundle.rootCaptureBaseDigest }
-    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays, credentialId: context.credentialId)
+    let credentialDisplays = createCredentialDisplays(from: captureBaseDisplays)
 
     return DeferredCredential(
       transactionId: deferredCredentialContext.transactionId,
@@ -105,7 +105,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
     }
   }
 
-  private func createCredentialDisplays(from displays: [CaptureBaseDisplay], credentialId: UUID) -> [CredentialDisplay] {
+  private func createCredentialDisplays(from displays: [CaptureBaseDisplay]) -> [CredentialDisplay] {
     displays.map { display in
       CredentialDisplay(
         name: display.metaName,
@@ -113,8 +113,7 @@ struct OcaCredentialGenerator: OcaCredentialGeneratorProtocol {
         theme: display.theme,
         locale: display.language,
         logoBase64: display.logo?.dataURLData,
-        summary: display.primaryField ?? display.metaDescription,
-        credentialId: credentialId)
+        summary: display.primaryField ?? display.metaDescription)
     }
   }
 

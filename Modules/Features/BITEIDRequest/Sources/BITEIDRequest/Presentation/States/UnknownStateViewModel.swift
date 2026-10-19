@@ -1,6 +1,7 @@
 import BITL10n
 import Factory
 
+@MainActor
 public class UnknownStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Internal

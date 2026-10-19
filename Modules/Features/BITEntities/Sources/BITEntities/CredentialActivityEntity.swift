@@ -11,6 +11,11 @@ public class CredentialActivityEntity: Object {
   @Persisted public var vcSchemaTrust: String
   @Persisted public var actorCompliance: String
   @Persisted public var nonComplianceData: String?
+  @Persisted public var issuer: String
+
+  @Persisted public var credentialRendering: CredentialRenderingEntity?
+  @Persisted public var rawCredentialData: RawCredentialDataEntity?
+  @Persisted public var bundleItem: ActivityBundleItemEntity?
 
   @Persisted public var claims = List<ActivityClaimEntity>()
   @Persisted public var actorDisplays = List<ActivityActorDisplayEntity>()

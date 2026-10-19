@@ -17,16 +17,17 @@ import XCTest
 
 // MARK: - SubmitPresentationUseCaseTests
 
-@MainActor
 final class SubmitPresentationUseCaseTests: XCTestCase {
 
   // MARK: Internal
 
   override func setUp() {
+    super.setUp()
     setupMocks()
     useCase = SubmitPresentationUseCase()
   }
 
+  @MainActor
   func testSubmitPresentation_Success_JustRuns() async throws {
     prepareSuccess()
     let redirect = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
@@ -46,6 +47,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     XCTAssertEqual(rotateNextPresentableBundleItemUseCaseProtocolSpy.callAsFunctionCallsCount, 1)
   }
 
+  @MainActor
   func testSubmitPresentation_generatorThrowsInvalidPayload_ThrowsAuthorizationRequestError() async throws {
     prepareSuccess()
     authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectWithOriginThrowableError = RequestObjectError.invalidPayload()
@@ -56,6 +58,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_NoSelectedCredential_ThrowsMissingSelectedCredential() async throws {
     prepareSuccess()
     context.selectedCredential = nil
@@ -66,6 +69,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_AuthorizationResponseBodyGeneratorThrows_ThrowsException() async throws {
     prepareSuccess()
     authorizationResponseBodyGeneratorSpy.callAsFunctionForRequestObjectWithOriginThrowableError = TestingError.error
@@ -76,6 +80,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_activityServiceThrows_justRuns() async throws {
     prepareSuccess()
     activityServiceSpy.createCredentialIdThrowableError = TestingError.error
@@ -83,6 +88,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     try await useCase.execute(context: context).collectAndAssertEquals([.success(nil)])
   }
 
+  @MainActor
   func testSubmitPresentation_encryptionGeneratorThrows_ThrowsException() async throws {
     prepareSuccess()
     authorizationResponseEncryptionGeneratorSpy.callAsFunctionForThrowableError = TestingError.error
@@ -92,6 +98,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_RepositoryThrows_ThrowsException() async throws {
     prepareSuccess()
     repositorySpy.submitAuthorizationResponseToEncryptionThrowableError = TestingError.error
@@ -104,6 +111,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_RepositoryThrowsTimeout_DoesNotCreateActivity() async throws {
     prepareSuccess()
     repositorySpy.submitAuthorizationResponseToEncryptionThrowableError = NetworkError(status: .timeout)
@@ -115,6 +123,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_RepositoryThrowsNoConnection_DoesNotCreateActivity() async throws {
     prepareSuccess()
     repositorySpy.submitAuthorizationResponseToEncryptionThrowableError = NetworkError(status: .noConnection)
@@ -126,6 +135,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_RepositoryThrowsHttpNetworkError_CreatesActivity() async throws {
     prepareSuccess()
     repositorySpy.submitAuthorizationResponseToEncryptionThrowableError = NetworkError(status: .badRequest)
@@ -139,6 +149,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_RepositoryThrowsPresentationResponseValidationError_CreatesActivity() async throws {
     prepareSuccess()
     repositorySpy.submitAuthorizationResponseToEncryptionThrowableError = PresentationResponseValidationError.invalidRedirectUri
@@ -152,6 +163,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitPresentation_Proximity_UsesProximityRepository() async throws {
     prepareSuccess(mockProximityRepository: true)
 
@@ -168,6 +180,7 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
     XCTAssertEqual(authorizationResponseEncryptionGeneratorSpy.callAsFunctionForCallsCount, 0)
   }
 
+  @MainActor
   func testSubmitPresentation_Proximity_RepositoryThrows_ThrowsException() async throws {
     prepareSuccess()
 
@@ -204,19 +217,25 @@ final class SubmitPresentationUseCaseTests: XCTestCase {
   private var rotateNextPresentableBundleItemUseCaseProtocolSpy: RotateNextPresentableBundleItemUseCaseProtocolSpy!
 
   private func setupMocks() {
-    repositorySpy = PresentationRequestRepositoryProtocolSpy()
-    authorizationResponseBodyGeneratorSpy = AuthorizationResponseBodyGeneratorProtocolSpy()
-    authorizationResponseEncryptionGeneratorSpy = AuthorizationResponseEncryptionGeneratorProtocolSpy()
-    activityServiceSpy = ActivityServiceProtocolSpy()
-    proximityRepository = ProximityPresentationRepositoryProtocolSpy()
-    rotateNextPresentableBundleItemUseCaseProtocolSpy = RotateNextPresentableBundleItemUseCaseProtocolSpy()
+    let repositorySpy = PresentationRequestRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    let authorizationResponseBodyGeneratorSpy = AuthorizationResponseBodyGeneratorProtocolSpy()
+    self.authorizationResponseBodyGeneratorSpy = authorizationResponseBodyGeneratorSpy
+    let authorizationResponseEncryptionGeneratorSpy = AuthorizationResponseEncryptionGeneratorProtocolSpy()
+    self.authorizationResponseEncryptionGeneratorSpy = authorizationResponseEncryptionGeneratorSpy
+    let activityServiceSpy = ActivityServiceProtocolSpy()
+    self.activityServiceSpy = activityServiceSpy
+    let proximityRepository = ProximityPresentationRepositoryProtocolSpy()
+    self.proximityRepository = proximityRepository
+    let rotateNextPresentableBundleItemUseCaseProtocolSpy = RotateNextPresentableBundleItemUseCaseProtocolSpy()
+    self.rotateNextPresentableBundleItemUseCaseProtocolSpy = rotateNextPresentableBundleItemUseCaseProtocolSpy
 
-    Container.shared.presentationRequestRepository.register { @MainActor in self.repositorySpy }
-    Container.shared.authorizationResponseBodyGenerator.register { @MainActor in self.authorizationResponseBodyGeneratorSpy }
-    Container.shared.authorizationResponseEncryptionGenerator.register { @MainActor in self.authorizationResponseEncryptionGeneratorSpy }
-    Container.shared.activityService.register { @MainActor in self.activityServiceSpy }
-    Container.shared.proximityPresentationRepository.register { @MainActor in self.proximityRepository }
-    Container.shared.rotateNextPresentableBundleItemUseCase.register { @MainActor in self.rotateNextPresentableBundleItemUseCaseProtocolSpy }
+    Container.shared.presentationRequestRepository.register { @MainActor in repositorySpy }
+    Container.shared.authorizationResponseBodyGenerator.register { @MainActor in authorizationResponseBodyGeneratorSpy }
+    Container.shared.authorizationResponseEncryptionGenerator.register { @MainActor in authorizationResponseEncryptionGeneratorSpy }
+    Container.shared.activityService.register { @MainActor in activityServiceSpy }
+    Container.shared.proximityPresentationRepository.register { @MainActor in proximityRepository }
+    Container.shared.rotateNextPresentableBundleItemUseCase.register { @MainActor in rotateNextPresentableBundleItemUseCaseProtocolSpy }
 
     mockCompatibleCredential = .Mock.BIT
   }

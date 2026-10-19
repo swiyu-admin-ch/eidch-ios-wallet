@@ -4,7 +4,7 @@ import Spyable
 // MARK: - RequestOTPUseCaseProtocol
 
 @Spyable
-protocol RequestOTPUseCaseProtocol {
+protocol RequestOTPUseCaseProtocol: Sendable {
   func callAsFunction(email: String) async throws
 }
 

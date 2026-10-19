@@ -320,16 +320,21 @@ final class TrustStatementServiceTests: XCTestCase {
   private var service: TrustStatementService!
 
   private func registerMocks() {
-    mapperSpy = TrustRegistryUrlMapperProtocolSpy()
-    repositorySpy = TrustStatementRepositoryProtocolSpy()
-    identityValidatorSpy = TrustStatementV1ValidatorProtocolSpy()
-    didResolverSpy = DidResolverHelperProtocolSpy()
+    let mapperSpy = TrustRegistryUrlMapperProtocolSpy()
+    self.mapperSpy = mapperSpy
+    let repositorySpy = TrustStatementRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    let identityValidatorSpy = TrustStatementV1ValidatorProtocolSpy<IdentityTrustStatementV1JWT>()
+    self.identityValidatorSpy = identityValidatorSpy
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    self.didResolverSpy = didResolverSpy
 
-    Container.shared.trustRegistryUrlMapper.register { self.mapperSpy }
-    Container.shared.trustStatementRepository.register { self.repositorySpy }
-    Container.shared.trustStatementV1Validator.register { self.identityValidatorSpy }
-    Container.shared.trustRegistryTrustedDidsV1.register { self.trustedDidsV1 }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
+    Container.shared.trustRegistryUrlMapper.register { mapperSpy }
+    Container.shared.trustStatementRepository.register { repositorySpy }
+    Container.shared.trustStatementV1Validator.register { identityValidatorSpy }
+    let trustedDidsV1 = trustedDidsV1
+    Container.shared.trustRegistryTrustedDidsV1.register { trustedDidsV1 }
+    Container.shared.didResolverHelper.register { didResolverSpy }
   }
 
   private func success() {
@@ -340,8 +345,9 @@ final class TrustStatementServiceTests: XCTestCase {
   }
 
   private func setupVcSchemaTrustStatement() {
-    vcSchemaValidatorSpy = TrustStatementV1ValidatorProtocolSpy()
-    Container.shared.trustStatementV1Validator.register { self.vcSchemaValidatorSpy }
+    let vcSchemaValidatorSpy = TrustStatementV1ValidatorProtocolSpy<VcSchemaTrustStatementJWT>()
+    self.vcSchemaValidatorSpy = vcSchemaValidatorSpy
+    Container.shared.trustStatementV1Validator.register { vcSchemaValidatorSpy }
 
     service = TrustStatementService()
 

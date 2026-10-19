@@ -9,7 +9,7 @@ import Spyable
 // MARK: - FetchPresentationRequestUseCaseProtocol
 
 @Spyable
-public protocol FetchPresentationRequestUseCaseProtocol {
+public protocol FetchPresentationRequestUseCaseProtocol: Sendable {
   func callAsFunction(url: URL) async throws -> PresentationRequestContext
 }
 
@@ -58,6 +58,8 @@ struct FetchPresentationRequestUseCase: FetchPresentationRequestUseCaseProtocol 
         throw FetchPresentationRequestUseCaseError.unknownRegistry(presentationResponse: presentationResponse)
       case .presentationRequestNotFound:
         throw FetchPresentationRequestUseCaseError.notFound
+      case .noInternetConnection:
+        throw FetchPresentationRequestUseCaseError.noInternetConnection
       }
     } catch {
       throw FetchPresentationRequestUseCaseError.invalidRequest(error.localizedDescription)
@@ -120,6 +122,9 @@ enum FetchPresentationRequestUseCaseError: Error, Equatable {
   case unknownRegistry(presentationResponse: PresentationResponse? = nil)
   case expired
   case notFound
+  case noInternetConnection
+
+  // MARK: Internal
 
   var presentationResponse: PresentationResponse? {
     switch self {

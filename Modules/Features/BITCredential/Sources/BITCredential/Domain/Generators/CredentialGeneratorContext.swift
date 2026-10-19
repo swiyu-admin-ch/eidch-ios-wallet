@@ -1,7 +1,7 @@
 import BITCredentialShared
 import Foundation
 
-struct CredentialGeneratorContext: Codable {
+struct CredentialGeneratorContext: Codable, Sendable {
   let credentialId: UUID
   let issuerUrl: URL
   let credentialConfigurationId: String

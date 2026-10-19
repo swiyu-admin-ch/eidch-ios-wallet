@@ -237,17 +237,22 @@ final class FetchDeferredCredentialServiceTests: XCTestCase {
   }
 
   private func registerMocks() {
-    openIDRepositorySpy = OpenIDRepositoryProtocolSpy()
-    trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy()
-    credentialEncryptionContextGeneratorSpy = CredentialEncryptionContextGeneratorProtocolSpy()
-    keyManagerSpy = KeyManagerProtocolSpy()
-    actorIdentityValidatorSpy = ActorIdentityValidatorProtocolSpy()
+    let openIDRepositorySpy = OpenIDRepositoryProtocolSpy()
+    self.openIDRepositorySpy = openIDRepositorySpy
+    let trustStatementValidatorSpy = TrustStatementValidatorProtocolSpy<IdentityTrustStatementJWT>()
+    self.trustStatementValidatorSpy = trustStatementValidatorSpy
+    let credentialEncryptionContextGeneratorSpy = CredentialEncryptionContextGeneratorProtocolSpy()
+    self.credentialEncryptionContextGeneratorSpy = credentialEncryptionContextGeneratorSpy
+    let keyManagerSpy = KeyManagerProtocolSpy()
+    self.keyManagerSpy = keyManagerSpy
+    let actorIdentityValidatorSpy = ActorIdentityValidatorProtocolSpy()
+    self.actorIdentityValidatorSpy = actorIdentityValidatorSpy
 
-    Container.shared.openIDRepository.register { self.openIDRepositorySpy }
-    Container.shared.trustStatementValidator.register { self.trustStatementValidatorSpy }
-    Container.shared.credentialEncryptionContextGenerator.register { self.credentialEncryptionContextGeneratorSpy }
-    Container.shared.keyManager.register { self.keyManagerSpy }
-    Container.shared.actorIdentityValidator.register { self.actorIdentityValidatorSpy }
+    Container.shared.openIDRepository.register { openIDRepositorySpy }
+    Container.shared.trustStatementValidator.register { trustStatementValidatorSpy }
+    Container.shared.credentialEncryptionContextGenerator.register { credentialEncryptionContextGeneratorSpy }
+    Container.shared.keyManager.register { keyManagerSpy }
+    Container.shared.actorIdentityValidator.register { actorIdentityValidatorSpy }
   }
 
   private func success() {

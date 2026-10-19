@@ -7,6 +7,7 @@ import UIKit
 
 // MARK: - InvitationRouterRoutes
 
+@MainActor
 public protocol InvitationRouterRoutes: ClosableRoutes & ExternalRoutes {}
 
 // MARK: - InvitationRouter

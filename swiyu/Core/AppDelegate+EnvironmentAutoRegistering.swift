@@ -33,7 +33,7 @@ extension EnvironmentAutoRegistering {
     registerFeatureFlags(config.features)
     registerBaseURLs(config.baseURLs)
     registerNetworking(config.networking)
-    registerVersionEnforcementConfiguration(isEnabled: config.features.isVersionEnforcementEnabled)
+    registerVersionEnforcementConfiguration(config.versionEnforcement, isEnabled: config.features.isVersionEnforcementEnabled)
     registerAttestationConfiguration(config.attestation)
   }
 
@@ -61,9 +61,6 @@ extension EnvironmentAutoRegistering {
   }
 
   private func registerBaseURLs(_ urls: EnvironmentBaseURLs) {
-    registerURL(urls.versionEnforcement) { url in
-      Container.shared.versionEnforcementUrl.register { url }
-    }
     registerURL(urls.sidBase) { url in
       Container.shared.sidBaseUrl.register { url }
     }
@@ -89,9 +86,16 @@ extension EnvironmentAutoRegistering {
     NetworkContainer.shared.userAgent.register { config.userAgent }
   }
 
-  private func registerVersionEnforcementConfiguration(isEnabled: Bool) {
-    guard !isEnabled else { return }
-    Container.shared.fetchVersionEnforcementUseCase.register { DisabledVersionEnforcementUseCase() }
+  private func registerVersionEnforcementConfiguration(_ config: EnvironmentVersionEnforcementConfiguration, isEnabled: Bool) {
+    guard isEnabled else {
+      Container.shared.fetchVersionEnforcementUseCase.register { DisabledVersionEnforcementUseCase() }
+      return
+    }
+
+    registerURL(config.serviceURL) { url in
+      Container.shared.versionEnforcementUrl.register { url }
+      Container.shared.versionEnforcementTrustedDids.register { config.trustedDids }
+    }
   }
 
   private func registerAttestationConfiguration(_ config: EnvironmentAttestationConfiguration?) {

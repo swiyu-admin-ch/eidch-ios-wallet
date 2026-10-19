@@ -34,7 +34,6 @@ public struct VerifiableCredentialCell: View {
 
   // MARK: Private
 
-  @ScaledMetric(relativeTo: .caption) private var statusImageWidth: CGFloat = 14
   @Environment(\.sizeCategory) private var sizeCategory
 
   private var disclosureIndicator: DisclosureIndicator
@@ -49,7 +48,7 @@ public struct VerifiableCredentialCell: View {
     if viewModel.environment == .swiyuInt {
       parts.append(L10n.tkCredentialStatusDemoAlt)
     }
-    parts.append(viewModel.statusBadgeAccessibilityText)
+    parts.append(viewModel.statusText)
     return parts.joined(separator: ", ")
   }
 
@@ -77,19 +76,13 @@ public struct VerifiableCredentialCell: View {
       HStack(spacing: .x3) {
         if viewModel.environment == .swiyuInt {
           Badge(label: L10n.tkCredentialStatusDemo)
-            .badgeStyle(.info)
+            .badgeType(.filled(.info))
         }
 
-        HStack(spacing: .x1) {
-          viewModel.statusImage
-            .resizable()
-            .scaledToFit()
-            .frame(width: statusImageWidth)
-          Text(viewModel.statusText)
-            .font(.custom.caption1)
-        }
-        .foregroundStyle(viewModel.statusColor)
+        CredentialStatusBadge(label: viewModel.statusText, image: viewModel.statusImage)
+          .badgeType(viewModel.statusBadgeType)
       }
+      .font(.custom.caption1)
       .padding(.top, 2)
     }
     .frame(maxWidth: .infinity, alignment: .leading)

@@ -5,7 +5,7 @@ import Foundation
 // MARK: - WildcardServerTrustManager
 
 /// A custom `ServerTrustManager` that supports wildcard domain matching.
-open class WildcardServerTrustManager: ServerTrustManager {
+open class WildcardServerTrustManager: ServerTrustManager, @unchecked Sendable {
 
   // MARK: Public
 

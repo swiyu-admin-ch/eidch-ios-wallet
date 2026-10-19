@@ -8,14 +8,16 @@ import Testing
 @testable import BITL10n
 @testable import BITTheming
 
+@MainActor
 @Suite(.container)
 struct VerifiableCredentialViewModelTests {
 
   // MARK: Lifecycle
 
   init() {
+    let currentDate = Self.currentDate
     Container.shared.isBatchIssuanceEnabled.register { true }
-    Container.shared.currentDate.register { Self.currentDate }
+    Container.shared.currentDate.register { currentDate }
   }
 
   // MARK: Internal
@@ -27,10 +29,9 @@ struct VerifiableCredentialViewModelTests {
 
     #expect(viewModel.environment == .external)
     #expect(viewModel.statusText == L10n.tkCredentialStatusValid)
-    #expect(viewModel.statusBadgeAccessibilityText == L10n.tkCredentialStatusValid)
     #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusValidAlt)
     #expect(viewModel.statusImage == Assets.statusValid.swiftUIImage)
-    #expect(viewModel.statusColor == ThemingAssets.Label.secondary.swiftUIColor)
+    #expect(viewModel.statusBadgeStyle == .success)
     #expect(viewModel.id == VerifiableCredential.Mock.sample.id)
   }
 
@@ -44,8 +45,7 @@ struct VerifiableCredentialViewModelTests {
     #expect(viewModel.statusText == L10n.tkCredentialStatusInvalid)
     #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusInvalidAlt)
     #expect(viewModel.statusImage == Assets.statusInvalid.swiftUIImage)
-    #expect(viewModel.statusColor == ThemingAssets.Brand.Core.swissRed.swiftUIColor)
-    #expect(viewModel.statusBadgeStyle is ErrorBadgeStyle)
+    #expect(viewModel.statusBadgeStyle == .error)
   }
 
   @Test
@@ -58,8 +58,49 @@ struct VerifiableCredentialViewModelTests {
     #expect(viewModel.statusText == L10n.tkCredentialStatusUnknown)
     #expect(viewModel.statusTextAlt == L10n.tkCredentialStatusUnknownAlt)
     #expect(viewModel.statusImage == Assets.statusUnknown.swiftUIImage)
-    #expect(viewModel.statusColor == ThemingAssets.Label.secondary.swiftUIColor)
-    #expect(viewModel.statusBadgeStyle is OutlineBadgeStyle)
+    #expect(viewModel.statusBadgeStyle == .info)
+  }
+
+  @Test(arguments: [CredentialStatus.expired, .businessExpired, .revoked, .suspended])
+  func statusBadgeStyle_withInvalidatingStatus_isError(status: CredentialStatus) {
+    var credential = VerifiableCredential.Mock.sample
+    credential.bundleItems[0].status = status
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusBadgeStyle == .error)
+  }
+
+  @Test(arguments: [CredentialStatus.notYetValid, .unknown, .unsupported])
+  func statusBadgeStyle_withNeutralStatus_isInfo(status: CredentialStatus) {
+    var credential = VerifiableCredential.Mock.sample
+    credential.bundleItems[0].status = status
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusBadgeStyle == .info)
+  }
+
+  @Test
+  func statusBadgeStyle_withUnacceptedProgressionState_isSuccess() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.progressionState = .unaccepted
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusBadgeStyle == .success)
+  }
+
+  @Test
+  func statusText_withUnacceptedProgressionState_isReadyToAdd() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.bundleItems[0].status = .revoked
+    credential.progressionState = .unaccepted
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusText == L10n.tkCredentialProgressionStateUnaccepted)
+    #expect(viewModel.statusBadgeStyle == .success)
   }
 
   @Test
@@ -103,14 +144,40 @@ struct VerifiableCredentialViewModelTests {
   }
 
   @Test
-  func init_withUnacceptedProgressionState_setsBadgeAccessibilityTextToProgressionState() {
+  func statusImage_withUnacceptedProgressionState_isReadyToAddIcon() {
     var credential = VerifiableCredential.Mock.sample
     credential.progressionState = .unaccepted
 
     let viewModel = VerifiableCredentialViewModel(credential: credential)
 
-    #expect(viewModel.statusText == L10n.tkCredentialStatusValid)
-    #expect(viewModel.statusBadgeAccessibilityText == L10n.tkCredentialProgressionStateUnaccepted)
+    #expect(viewModel.statusImage == Assets.statusReadyToAdd.swiftUIImage)
+  }
+
+  @Test
+  func statusImage_withNotYetValidStatus_isNotYetValidIcon() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.bundleItems[0].status = .notYetValid
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusImage == Assets.statusNotYetValid.swiftUIImage)
+  }
+
+  @Test
+  func statusBadgeType_withAcceptedProgressionState_isPlainWithStatusStyle() {
+    let viewModel = VerifiableCredentialViewModel(credential: .Mock.sample)
+
+    #expect(viewModel.statusBadgeType == .plain(.success))
+  }
+
+  @Test
+  func statusBadgeType_withUnacceptedProgressionState_isFilledSuccess() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.progressionState = .unaccepted
+
+    let viewModel = VerifiableCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusBadgeType == .filled(.success))
   }
 
   @Test

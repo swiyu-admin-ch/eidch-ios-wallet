@@ -2,6 +2,7 @@ import BITL10n
 import BITPushNotification
 import Factory
 
+@MainActor
 public class ExpiredStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Internal

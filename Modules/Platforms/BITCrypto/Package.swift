@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -20,6 +19,7 @@ let package = Package(
     .package(url: "https://github.com/Matejkob/swift-spyable", exact: "0.8.0"),
     .package(url: "https://github.com/krzyzanowskim/CryptoSwift", exact: "1.8.4"),
     .package(url: "https://github.com/amosavian/JWSETKit", exact: "2.2.0"),
+    .package(url: "https://github.com/hmlongco/Factory", exact: "2.5.3"),
   ],
   targets: [
     .target(
@@ -30,6 +30,7 @@ let package = Package(
         .product(name: "Spyable", package: "swift-spyable"),
         .product(name: "CryptoSwift", package: "CryptoSwift"),
         .product(name: "JWSETKit", package: "JWSETKit"),
+        .product(name: "Factory", package: "Factory"),
       ],
       resources: [.process("Resources")],
       swiftSettings: [
@@ -41,6 +42,7 @@ let package = Package(
         "BITCrypto",
         .product(name: "BITTestingCore", package: "BITCore"),
         .product(name: "JWSETKit", package: "JWSETKit"),
+        .product(name: "FactoryTesting", package: "Factory"),
       ],
       swiftSettings: [
         .define("DEBUG", .when(configuration: .debug)),

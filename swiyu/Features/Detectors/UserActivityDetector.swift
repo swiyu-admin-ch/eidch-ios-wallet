@@ -4,6 +4,7 @@ import UIKit
 
 // MARK: - UserActivityDetector
 
+@MainActor
 final class UserActivityDetector {
 
   // MARK: Lifecycle
@@ -16,7 +17,7 @@ final class UserActivityDetector {
     observeWindowActivity()
   }
 
-  deinit {
+  nonisolated deinit {
     NotificationCenter.default.removeObserver(self)
   }
 

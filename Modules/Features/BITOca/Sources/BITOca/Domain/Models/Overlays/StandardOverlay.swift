@@ -19,7 +19,7 @@ public struct StandardOverlay1x0: StandardOverlay {
 
 // MARK: - Standard
 
-public enum Standard: Decodable, Equatable {
+public enum Standard: Decodable, Equatable, Sendable {
   case dataURLScheme
   case dateTimeIso8601
   case dateTimeUnixEpoch

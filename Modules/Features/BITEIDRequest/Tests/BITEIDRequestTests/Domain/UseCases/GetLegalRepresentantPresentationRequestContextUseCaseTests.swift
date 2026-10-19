@@ -67,11 +67,13 @@ final class GetLegalRepresentantPresentationRequestContextUseCaseTests: XCTestCa
   }
 
   private func registerMocks() {
-    verificationService = LegalRepresentantVerificationServiceProtocolSpy()
-    fetchPresentationRequestUseCase = FetchPresentationRequestUseCaseProtocolSpy()
+    let verificationService = LegalRepresentantVerificationServiceProtocolSpy()
+    self.verificationService = verificationService
+    let fetchPresentationRequestUseCase = FetchPresentationRequestUseCaseProtocolSpy()
+    self.fetchPresentationRequestUseCase = fetchPresentationRequestUseCase
 
-    Container.shared.legalRepresentantVerificationService.register { self.verificationService }
-    Container.shared.fetchPresentationRequestUseCase.register { self.fetchPresentationRequestUseCase }
+    Container.shared.legalRepresentantVerificationService.register { verificationService }
+    Container.shared.fetchPresentationRequestUseCase.register { fetchPresentationRequestUseCase }
   }
 
 }

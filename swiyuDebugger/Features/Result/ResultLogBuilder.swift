@@ -81,7 +81,7 @@ struct ResultLogBuilder {
 
   // MARK: Private
 
-  private static let logDateFormatter: ISO8601DateFormatter = {
+  private nonisolated(unsafe) static let logDateFormatter: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter

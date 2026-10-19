@@ -99,15 +99,20 @@ final class KeyAttestationValidatorTests: XCTestCase {
   }
 
   private func registerMocks() {
-    mockKeyAttestation = KeyAttestationJWT.Mock.sample
-    trustedDids = [ "did:tdw:example.com" ]
-    jwsValidator = JWSValidatorMock()
-    didResolverSpy = DidResolverHelperProtocolSpy()
+    let mockKeyAttestation = KeyAttestationJWT.Mock.sample
+    let trustedDids = [ "did:tdw:example.com" ]
+    let jwsValidator = JWSValidatorMock<KeyAttestationJWT>()
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    let mockSupportedKeyStorageSecurityLevel = mockSupportedKeyStorageSecurityLevel
+    self.mockKeyAttestation = mockKeyAttestation
+    self.trustedDids = trustedDids
+    self.jwsValidator = jwsValidator
+    self.didResolverSpy = didResolverSpy
 
-    Container.shared.jwsValidator.register { self.jwsValidator }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
-    Container.shared.attestationServiceTrustedDids.register { self.trustedDids }
-    Container.shared.supportedKeyStorageSecurityLevel.register { self.mockSupportedKeyStorageSecurityLevel }
+    Container.shared.jwsValidator.register { jwsValidator }
+    Container.shared.didResolverHelper.register { didResolverSpy }
+    Container.shared.attestationServiceTrustedDids.register { trustedDids }
+    Container.shared.supportedKeyStorageSecurityLevel.register { mockSupportedKeyStorageSecurityLevel }
   }
 
 }

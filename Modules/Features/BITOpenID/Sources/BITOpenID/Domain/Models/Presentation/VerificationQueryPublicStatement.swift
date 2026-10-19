@@ -24,7 +24,7 @@ public struct VerificationQueryPublicStatementJWT: TrustStatementJWT, Equatable 
 // MARK: VerificationQueryPublicStatementJWT.VerificationRequestObject
 
 extension VerificationQueryPublicStatementJWT {
-  public struct VerificationRequestObject: Codable, Equatable {
+  public struct VerificationRequestObject: Codable, Equatable, Sendable {
 
     // MARK: Lifecycle
 
@@ -42,7 +42,7 @@ extension VerificationQueryPublicStatementJWT {
       case dcqlQuery = "query"
     }
 
-    public enum VerificationType: String, Codable, Equatable {
+    public enum VerificationType: String, Codable, Equatable, Sendable {
       case dcql = "DCQL"
     }
 

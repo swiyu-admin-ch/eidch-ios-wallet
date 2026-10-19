@@ -11,22 +11,26 @@ import XCTest
 @testable import BITSettings
 @testable import BITTestingCore
 
+@MainActor
 final class SetupViewModelTests: XCTestCase {
 
   // MARK: Internal
 
   @AppStorage(UserDefaultsKey.rootOnboardingIsEnabled.rawValue) var isOnboardingEnabled = true
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
     isOnboardingEnabled = true
     router = MockOnboardingInternalRoutes()
     viewModel = SetupViewModel(router: router)
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testRunSetup() async {
     router.context.pincode = "123456"
     router.context.analyticsOptIn = true
@@ -46,7 +50,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertFalse(viewModel.isOnboardingEnabled)
   }
 
-  @MainActor
   func testRunSetupWithoutPin() async {
     router.context.pincode = nil
 
@@ -61,7 +64,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isOnboardingEnabled)
   }
 
-  @MainActor
   func testRunSetupError() async {
     registerPinCodeUseCase.callAsFunctionPinCodeThrowableError = TestingError.error
     router.context.pincode = "123456"
@@ -77,7 +79,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertTrue(viewModel.isOnboardingEnabled)
   }
 
-  @MainActor
   func testRestartSetup() async {
     router.context.pincode = "123456"
 
@@ -104,12 +105,15 @@ final class SetupViewModelTests: XCTestCase {
   private var setActivityHistoryEnabledUseCase: SetActivityHistoryEnabledUseCaseProtocolSpy!
 
   private func registerMocks() {
-    registerPinCodeUseCase = RegisterPinCodeUseCaseProtocolSpy()
-    updateAnalyticsStatusUseCase = UpdateAnalyticStatusUseCaseProtocolSpy()
-    setActivityHistoryEnabledUseCase = SetActivityHistoryEnabledUseCaseProtocolSpy()
+    let registerPinCodeUseCase = RegisterPinCodeUseCaseProtocolSpy()
+    self.registerPinCodeUseCase = registerPinCodeUseCase
+    let updateAnalyticsStatusUseCase = UpdateAnalyticStatusUseCaseProtocolSpy()
+    self.updateAnalyticsStatusUseCase = updateAnalyticsStatusUseCase
+    let setActivityHistoryEnabledUseCase = SetActivityHistoryEnabledUseCaseProtocolSpy()
+    self.setActivityHistoryEnabledUseCase = setActivityHistoryEnabledUseCase
 
-    Container.shared.registerPinCodeUseCase.register { @MainActor in self.registerPinCodeUseCase }
-    Container.shared.updateAnalyticsStatusUseCase.register { @MainActor in self.updateAnalyticsStatusUseCase }
-    Container.shared.setActivityHistoryEnabledUseCase.register { @MainActor in self.setActivityHistoryEnabledUseCase }
+    Container.shared.registerPinCodeUseCase.register { @MainActor in registerPinCodeUseCase }
+    Container.shared.updateAnalyticsStatusUseCase.register { @MainActor in updateAnalyticsStatusUseCase }
+    Container.shared.setActivityHistoryEnabledUseCase.register { @MainActor in setActivityHistoryEnabledUseCase }
   }
 }

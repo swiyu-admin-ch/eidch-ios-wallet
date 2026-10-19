@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - Version
 
-public struct Version: Equatable, Comparable {
+public struct Version: Equatable, Comparable, Sendable {
 
   // MARK: Lifecycle
 

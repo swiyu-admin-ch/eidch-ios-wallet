@@ -1,7 +1,7 @@
 import BITCore
 import Foundation
 
-struct DisclosableArray<T: Codable & Equatable>: Codable, Equatable {
+struct DisclosableArray<T: Codable & Equatable & Sendable>: Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

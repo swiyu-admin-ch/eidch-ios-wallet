@@ -15,10 +15,14 @@ extension Container {
     self { DataStoreConfiguration() }
   }
 
+  public var contentHasher: Factory<ContentHasherProtocol> {
+    self { ContentHasher() }
+  }
+
   public var realmDataStoreConfiguration: Factory<Realm.Configuration> {
     self {
-      // Database schema v6.9
-      let schemaVersion: UInt64 = 31
+      // Batch Activities + lastRefreshAttemptAt
+      let schemaVersion: UInt64 = 33
 
       let config = Realm.Configuration(
         schemaVersion: schemaVersion,

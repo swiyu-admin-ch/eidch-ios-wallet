@@ -9,7 +9,7 @@ import Spyable
 // MARK: - DPoPGeneratorProtocol
 
 @Spyable
-public protocol DPoPGeneratorProtocol {
+public protocol DPoPGeneratorProtocol: Sendable {
 
   func generate(
     method: String,

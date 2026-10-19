@@ -6,13 +6,13 @@ import Spyable
 // MARK: - OverlayTemplateResolverProtocol
 
 @Spyable
-public protocol OverlayTemplateResolverProtocol {
+public protocol OverlayTemplateResolverProtocol: Sendable {
   func callAsFunction(overlays: [any Overlay]) -> [any Overlay]
 }
 
 // MARK: - OverlayTemplateResolver
 
-class OverlayTemplateResolver: OverlayTemplateResolverProtocol {
+struct OverlayTemplateResolver: OverlayTemplateResolverProtocol {
 
   // MARK: Internal
 

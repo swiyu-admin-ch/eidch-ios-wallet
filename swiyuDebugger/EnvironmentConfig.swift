@@ -5,7 +5,7 @@ import Moya
 
 // MARK: - EnvironmentFeatureFlags
 
-struct EnvironmentFeatureFlags {
+struct EnvironmentFeatureFlags: Sendable {
   let isEIDRequestFeatureEnabled: Bool
   let isBetaIdEnabled: Bool
   let isNonComplianceEnabled: Bool
@@ -20,8 +20,7 @@ struct EnvironmentFeatureFlags {
 
 // MARK: - EnvironmentBaseURLs
 
-struct EnvironmentBaseURLs {
-  let versionEnforcement: String
+struct EnvironmentBaseURLs: Sendable {
   let sidBase: String
   let avBase: String
   let nonComplianceBase: String
@@ -30,16 +29,23 @@ struct EnvironmentBaseURLs {
   let pushNotification: String
 }
 
+// MARK: - EnvironmentVersionEnforcementConfiguration
+
+struct EnvironmentVersionEnforcementConfiguration: Sendable {
+  let serviceURL: String
+  let trustedDids: [String]
+}
+
 // MARK: - EnvironmentAttestationConfiguration
 
-struct EnvironmentAttestationConfiguration {
+struct EnvironmentAttestationConfiguration: Sendable {
   let serviceURL: String
   let trustedDids: [String]
 }
 
 // MARK: - EnvironmentTrustConfiguration
 
-struct EnvironmentTrustConfiguration {
+struct EnvironmentTrustConfiguration: @unchecked Sendable {
   let registryMapping: [String: String]
   let statusRegistryMapping: [String: String]
   let trustedDidsV1: [String: [String]]
@@ -67,14 +73,14 @@ extension EnvironmentTrustConfiguration {
 
 // MARK: - EnvironmentNetworkingConfiguration
 
-struct EnvironmentNetworkingConfiguration {
+struct EnvironmentNetworkingConfiguration: @unchecked Sendable {
   let plugins: [PluginType]
   let userAgent: String
 }
 
 // MARK: - EnvironmentConfig
 
-struct EnvironmentConfig {
+struct EnvironmentConfig: Sendable {
 
   static var current: Self? {
     EnvironmentConfig(
@@ -142,13 +148,18 @@ struct EnvironmentConfig {
         isOTPSkipEnabled: true,
         isOTPDebugToggleEnabled: true),
       baseURLs: EnvironmentBaseURLs(
-        versionEnforcement: "https://versioning-r.trust-infra.swiyu.admin.ch/api/versioning?platform=ios&app_id=wallet",
         sidBase: "https://www.sid-intg.admin.ch/sid-web/",
         avBase: "https://av-intg.admin.ch/",
         nonComplianceBase: "https://noncompliance-r.trust-infra.swiyu.admin.ch/non-compliance-service/",
         avSocket: "wss://av-intg.admin.ch/nfc/ws1/validate",
         otpServiceBase: "https://attestations-r.trust-infra.swiyu.admin.ch",
         pushNotification: "https://push-api-r.trust-infra.swiyu.admin.ch"),
+      versionEnforcement: EnvironmentVersionEnforcementConfiguration(
+        serviceURL: "https://versioning-r.trust-infra.swiyu.admin.ch/api/versioning?platform=ios&app_id=wallet",
+        trustedDids: [
+          "did:tdw:QmVFLqiBMLqTspLPA5ki1WfGetaUQX5gChq57odi7TmYyW:identifier-reg-r.trust-infra.swiyu.admin.ch:api:v1:did:9b1bdb98-461f-4ce2-80e0-94cf3a04ac83",
+          "did:webvh:QmcMP7XEwvLCEFvCdmxZ5f9oD6s7zg1nudVSt3X2TNKik7:identifier-reg-r.trust-infra.swiyu.admin.ch:api:v1:did:0eabd843-02e0-449c-a94b-1432a678a98b",
+        ]),
       attestation: EnvironmentAttestationConfiguration(
         serviceURL: "https://attestations-r.trust-infra.swiyu.admin.ch/api/attestations",
         trustedDids: [
@@ -166,6 +177,7 @@ struct EnvironmentConfig {
   let trust: EnvironmentTrustConfiguration
   let features: EnvironmentFeatureFlags
   let baseURLs: EnvironmentBaseURLs
+  let versionEnforcement: EnvironmentVersionEnforcementConfiguration
   let attestation: EnvironmentAttestationConfiguration?
   let networking: EnvironmentNetworkingConfiguration
 }

@@ -3,7 +3,7 @@ import Spyable
 
 
 @Spyable
-public protocol DeleteEIDRequestCaseUseCaseProtocol {
+public protocol DeleteEIDRequestCaseUseCaseProtocol: Sendable {
   func execute(_ id: String) async throws
 }
 

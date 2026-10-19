@@ -53,7 +53,7 @@ public struct VerifiableCredentialCellV1: View {
     if viewModel.environment == .swiyuInt {
       parts.append(L10n.tkCredentialStatusDemoAlt)
     }
-    parts.append(viewModel.statusBadgeAccessibilityText)
+    parts.append(viewModel.statusText)
     return parts.joined(separator: ", ")
   }
 
@@ -132,18 +132,13 @@ extension VerifiableCredentialCellV1 {
     HStack(spacing: .x3) {
       if viewModel.environment == .swiyuInt {
         Badge(label: L10n.tkCredentialStatusDemo)
-          .badgeStyle(.info)
+          .badgeType(.filled(.info))
       }
 
-      switch viewModel.credential.progressionState {
-      case .accepted:
-        Badge(label: viewModel.statusText, image: viewModel.statusImage)
-      case .unaccepted:
-        CredentialStatusBadge(label: L10n.tkCredentialProgressionStateUnaccepted, image: Image(systemName: "clock"), style: .success)
-      }
+      CredentialStatusBadge(label: viewModel.statusText, image: viewModel.statusImage)
+        .badgeType(viewModel.statusBadgeType)
     }
     .font(.custom.caption1)
-    .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
     .padding(.top, 2)
   }
 }

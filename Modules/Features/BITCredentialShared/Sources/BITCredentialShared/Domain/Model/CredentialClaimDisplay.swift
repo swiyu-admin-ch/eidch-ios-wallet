@@ -2,7 +2,7 @@ import BITCore
 import BITEntities
 import Foundation
 
-public struct CredentialClaimDisplay: Codable, Hashable, Equatable, DisplayLocalizable {
+public struct CredentialClaimDisplay: Codable, Hashable, Equatable, DisplayLocalizable, Sendable {
 
   // MARK: Lifecycle
 

@@ -15,7 +15,7 @@ final class ProximityEngagementViewModel: Vibrating {
 
   // MARK: Lifecycle
 
-  deinit {
+  isolated deinit {
     proximityTask?.cancel()
   }
 
@@ -44,7 +44,7 @@ final class ProximityEngagementViewModel: Vibrating {
   @ObservationIgnored @Injected(\.startProximityEngagementUseCase) private var startProximityEngagementUseCase: StartProximityEngagementUseCaseProtocol
   @ObservationIgnored @Injected(\.invitationErrorMapper) private var invitationErrorMapper: InvitationErrorMapping
 
-  @ObservationIgnored nonisolated(unsafe) private var proximityTask: Task<Void, Never>?
+  @ObservationIgnored private var proximityTask: Task<Void, Never>?
 
   private func reset() {
     proximityTask?.cancel()

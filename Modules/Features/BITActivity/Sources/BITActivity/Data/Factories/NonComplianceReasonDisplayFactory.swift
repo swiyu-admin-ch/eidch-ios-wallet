@@ -5,7 +5,7 @@ import Spyable
 // MARK: - NonComplianceReasonDisplayFactoryProtocol
 
 @Spyable
-public protocol NonComplianceReasonDisplayFactoryProtocol {
+public protocol NonComplianceReasonDisplayFactoryProtocol: Sendable {
   func callAsFunction(_ entity: NonComplianceReasonDisplayEntity) -> NonComplianceReasonDisplay
 }
 
@@ -15,6 +15,6 @@ struct NonComplianceReasonDisplayFactory: NonComplianceReasonDisplayFactoryProto
   func callAsFunction(_ entity: NonComplianceReasonDisplayEntity) -> NonComplianceReasonDisplay {
     NonComplianceReasonDisplay(
       locale: entity.locale,
-      value: entity.value)
+      reason: entity.reason)
   }
 }

@@ -34,9 +34,10 @@ final class FetchNFCScanResultUseCaseTests: XCTestCase {
   private var avBeamNFCService: AVBeamNFCServiceProtocolSpy!
 
   private func registerMocks() {
-    avBeamNFCService = AVBeamNFCServiceProtocolSpy()
+    let avBeamNFCService = AVBeamNFCServiceProtocolSpy()
+    self.avBeamNFCService = avBeamNFCService
     avBeamNFCService.fetchResultForPackageResultReturnValue = NFCScanResult.Mock.sample
-    Container.shared.avBeamNFCService.register { self.avBeamNFCService }
+    Container.shared.avBeamNFCService.register { avBeamNFCService }
   }
 
 }

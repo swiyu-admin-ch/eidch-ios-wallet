@@ -11,11 +11,18 @@ class RefusedStateViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
+  override func setUp() async throws {
+    try await super.setUp()
     delegate = RequestCaseViewStateDelegateSpy()
-    deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
+    let deleteEIDRequestCaseUseCase = DeleteEIDRequestCaseUseCaseProtocolSpy()
+    self.deleteEIDRequestCaseUseCase = deleteEIDRequestCaseUseCase
 
-    Container.shared.deleteEIDRequestCaseUseCase.register { @MainActor in self.deleteEIDRequestCaseUseCase }
+    Container.shared.deleteEIDRequestCaseUseCase.register { @MainActor in deleteEIDRequestCaseUseCase }
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInitialState() throws {

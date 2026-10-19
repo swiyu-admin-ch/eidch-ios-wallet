@@ -5,28 +5,26 @@ import Spyable
 // MARK: - NonComplianceActivityFactoryProtocol
 
 @Spyable
-public protocol NonComplianceActivityFactoryProtocol {
+public protocol NonComplianceActivityFactoryProtocol: Sendable {
   func callAsFunction(_ entity: CredentialActivityEntity) throws -> NonComplianceActivity
 }
 
 // MARK: - NonComplianceActivityFactory
 
 struct NonComplianceActivityFactory: NonComplianceActivityFactoryProtocol {
+
   func callAsFunction(_ entity: CredentialActivityEntity) throws -> NonComplianceActivity {
-    guard
-      let credential = entity.credential.first,
-      let verifiableCredential = credential.verifiableCredential
-    else { throw NonComplianceActivityFactoryError.credentialNotFound }
+    guard !entity.issuer.isEmpty else { throw NonComplianceActivityFactoryError.issuerNotFound }
 
     return NonComplianceActivity(
       nonComplianceData: entity.nonComplianceData,
       createdAt: entity.createdAt,
-      issuer: verifiableCredential.issuer)
+      issuer: entity.issuer)
   }
 }
 
 // MARK: - NonComplianceActivityFactoryError
 
 enum NonComplianceActivityFactoryError: Error {
-  case credentialNotFound
+  case issuerNotFound
 }

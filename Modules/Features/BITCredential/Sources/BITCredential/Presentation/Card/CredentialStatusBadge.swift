@@ -7,10 +7,9 @@ public struct CredentialStatusBadge: View {
 
   // MARK: Lifecycle
 
-  public init(label: String, image: Image, style: any BadgeStyle) {
+  public init(label: String, image: Image) {
     self.label = label
     self.image = image
-    self.style = style
   }
 
   // MARK: Public
@@ -18,7 +17,6 @@ public struct CredentialStatusBadge: View {
   public var body: some View {
     let image = sizeCategory.isAccessibilityCategory ? nil : image
     Badge(label: label, image: image)
-      .badgeStyle(style)
       .accessibilityLabel(label)
   }
 
@@ -28,13 +26,13 @@ public struct CredentialStatusBadge: View {
 
   private let image: Image
   private let label: String
-  private let style: any BadgeStyle
 }
 
 #if DEBUG
 #Preview {
   VStack {
-    CredentialStatusBadge(label: "Label", image: Image(systemName: "faceid"), style: .info)
+    CredentialStatusBadge(label: "Label", image: Image(systemName: "faceid"))
+      .badgeType(.filled(.info))
   }.background(.blue)
 }
 #endif

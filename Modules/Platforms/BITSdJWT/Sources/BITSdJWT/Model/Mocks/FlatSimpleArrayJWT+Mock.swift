@@ -3,7 +3,7 @@ import Foundation
 @testable import BITCore
 @testable import BITJWT
 
-struct FlatSimpleArrayJWT: JWT, Codable, Equatable {
+struct FlatSimpleArrayJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

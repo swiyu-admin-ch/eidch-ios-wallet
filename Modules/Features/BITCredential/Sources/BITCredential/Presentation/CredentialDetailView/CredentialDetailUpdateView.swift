@@ -24,6 +24,7 @@ struct CredentialDetailUpdateView: View {
           title: viewModel.title,
           bodyText: viewModel.body)
       }
+      .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
 
       if viewModel.isRefreshable {
         Section {
@@ -43,6 +44,7 @@ struct CredentialDetailUpdateView: View {
               .foregroundStyle(ThemingAssets.Label.secondary.swiftUIColor)
           }
         }
+        .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
       }
 
       Section {
@@ -61,6 +63,7 @@ struct CredentialDetailUpdateView: View {
           .font(.custom.headline)
           .accessibilityAddTraits(.isHeader)
       }
+      .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
     }
     .listSectionSpacing(.x3)
     .contentMargins(.top, .x2, for: .scrollContent)

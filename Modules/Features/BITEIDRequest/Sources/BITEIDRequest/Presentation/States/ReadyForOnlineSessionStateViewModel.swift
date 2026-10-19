@@ -2,6 +2,7 @@ import BITEIDRequestShared
 import BITL10n
 import Foundation
 
+@MainActor
 public class ReadyForOnlineSessionStateViewModel: RequestCaseStateBaseViewModel {
 
   // MARK: Lifecycle

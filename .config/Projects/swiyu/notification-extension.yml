@@ -32,7 +32,7 @@ targets:
         TARGETED_DEVICE_FAMILY: 1
         CODE_SIGN_STYLE: Manual
         SDKROOT: iphoneos
-        SWIFT_VERSION: 5.7
+        SWIFT_VERSION: 6.0
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 100.0
         PRODUCT_NAME: swiyu-notification-extension

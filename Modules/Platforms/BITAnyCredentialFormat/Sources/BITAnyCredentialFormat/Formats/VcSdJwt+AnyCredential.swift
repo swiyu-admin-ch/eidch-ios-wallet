@@ -11,7 +11,13 @@ extension VcSdJWS: AnyCredential {
   }
 
   public var format: CredentialFormat {
-    CredentialFormat.vcSdJwt
+    guard
+      let type = header.type,
+      let format = CredentialFormat(rawValue: type) else
+    {
+      return .dcSdJwt
+    }
+    return format
   }
 
   public var issuer: String {

@@ -3,17 +3,17 @@ import Foundation
 
 // MARK: - NonComplianceReasonDisplay
 
-public struct NonComplianceReasonDisplay: Codable, Equatable, DisplayLocalizable {
+public struct NonComplianceReasonDisplay: Codable, Equatable, DisplayLocalizable, Sendable {
 
   // MARK: Lifecycle
 
-  public init(locale: UserLocale?, value: String) {
+  public init(locale: UserLocale?, reason: String) {
     self.locale = locale
-    self.value = value
+    self.reason = reason
   }
 
   // MARK: Public
 
   public let locale: UserLocale?
-  public let value: String
+  public let reason: String
 }

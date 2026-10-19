@@ -39,8 +39,9 @@ final class LockWalletUseCaseTests: XCTestCase {
   // swiftlint:enable all
 
   private func registerMocks() {
-    lockWalletRepositorySpy = LockWalletRepositoryProtocolSpy()
-    Container.shared.lockWalletRepository.register { self.lockWalletRepositorySpy }
+    let lockWalletRepositorySpy = LockWalletRepositoryProtocolSpy()
+    self.lockWalletRepositorySpy = lockWalletRepositorySpy
+    Container.shared.lockWalletRepository.register { lockWalletRepositorySpy }
   }
 
 }

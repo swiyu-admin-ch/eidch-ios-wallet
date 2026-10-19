@@ -1,23 +1,26 @@
 import Foundation
-import XCTest
+import Testing
 @testable import BITOnboarding
 
-class SecurityIntroductionViewModelTests: XCTestCase {
+@MainActor
+struct SecurityIntroductionViewModelTests {
 
-  func testPrimaryAction() {
+  @Test
+  func primaryAction() {
     let router = MockOnboardingInternalRoutes()
     let viewModel = SecurityIntroductionViewModel(router: router)
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.infoScreenActivitiesCalled)
+    #expect(router.infoScreenActivitiesCalled)
   }
 
-  func testSecondaryAction() {
+  @Test
+  func secondaryAction() {
     let router = MockOnboardingInternalRoutes()
     let viewModel = SecurityIntroductionViewModel(router: router)
     viewModel.secondaryAction()
 
-    XCTAssertTrue(router.linkCalled)
+    #expect(router.linkCalled)
   }
 
 }

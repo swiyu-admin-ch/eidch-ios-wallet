@@ -8,7 +8,7 @@ import Spyable
 // MARK: - AppAttestationProviderProtocol
 
 @Spyable
-protocol AppAttestationProviderProtocol {
+protocol AppAttestationProviderProtocol: Sendable {
 
   /// Create a key pair in the Secure Enclave with the DeviceCheck framework, then request Apple to attest of its validity
   ///

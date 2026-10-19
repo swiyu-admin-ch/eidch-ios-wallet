@@ -1,15 +1,17 @@
 import Foundation
-import XCTest
+import Testing
 @testable import BITOnboarding
 
-class WelcomeIntroductionViewModelTests: XCTestCase {
+@MainActor
+struct WelcomeIntroductionViewModelTests {
 
+  @Test
   func testPrimaryAction() {
     let router = MockOnboardingInternalRoutes()
     let viewModel = WelcomeIntroductionViewModel(router: router)
     viewModel.primaryAction()
 
-    XCTAssertTrue(router.infoScreenSecurityCalled)
+    #expect(router.infoScreenSecurityCalled)
   }
 
 }

@@ -5,13 +5,13 @@ import Spyable
 // MARK: - AttributeTemplateResolverProtocol
 
 @Spyable
-public protocol AttributeTemplateResolverProtocol {
+public protocol AttributeTemplateResolverProtocol: Sendable {
   func callAsFunction(_ attribute: String, digest: String, overlays: [any Overlay]) -> String
 }
 
 // MARK: - AttributeTemplateResolver
 
-class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
+struct AttributeTemplateResolver: AttributeTemplateResolverProtocol {
 
   // MARK: Internal
 
@@ -29,13 +29,13 @@ class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
 
   // MARK: Private
 
-  private static let digestReference = Reference(String?.self)
-  private static let keyReference = Reference(String?.self)
-  private static let indexReference = Reference(String?.self)
-  private static let joinReference = Reference(String?.self)
-  private static let quoteReference = Reference(Substring.self)
+  private nonisolated(unsafe) static let digestReference = Reference(String?.self)
+  private nonisolated(unsafe) static let keyReference = Reference(String?.self)
+  private nonisolated(unsafe) static let indexReference = Reference(String?.self)
+  private nonisolated(unsafe) static let joinReference = Reference(String?.self)
+  private nonisolated(unsafe) static let quoteReference = Reference(Substring.self)
 
-  private static let digestReferenceRegex = Regex {
+  private nonisolated(unsafe) static let digestReferenceRegex = Regex {
     "refs:"
     Capture(as: digestReference) {
       OneOrMore(CharacterClass(.anyOf(":").inverted))
@@ -43,7 +43,7 @@ class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
     ":"
   }
 
-  private static let nameRegex = Capture(as: keyReference) {
+  private nonisolated(unsafe) static let nameRegex = Capture(as: keyReference) {
     ZeroOrMore {
       NegativeLookahead {
         ChoiceOf {
@@ -57,7 +57,7 @@ class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
     }
   } transform: { String($0) }
 
-  private static let indexRegex = Regex {
+  private nonisolated(unsafe) static let indexRegex = Regex {
     "["
     ChoiceOf {
       Capture(as: indexReference) {
@@ -68,7 +68,7 @@ class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
     "]"
   }
 
-  private static let joinRegex = Capture(as: joinReference) {
+  private nonisolated(unsafe) static let joinRegex = Capture(as: joinReference) {
     ".join("
     Capture(as: quoteReference) {
       ChoiceOf {
@@ -84,7 +84,7 @@ class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
     ")"
   } transform: { String($0) }
 
-  private static let validTemplateRegex = Regex {
+  private nonisolated(unsafe) static let validTemplateRegex = Regex {
     Optionally {
       digestReferenceRegex
     }
@@ -97,7 +97,7 @@ class AttributeTemplateResolver: AttributeTemplateResolverProtocol {
     }
   }
 
-  private static let templateRegex = Regex {
+  private nonisolated(unsafe) static let templateRegex = Regex {
     "{{"
     ChoiceOf {
       validTemplateRegex

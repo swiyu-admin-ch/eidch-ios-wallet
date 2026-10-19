@@ -1,12 +1,12 @@
 import BITJWT
 import BITOpenID
-import BITSwiyuSharedKMP
+@preconcurrency import BITSwiyuSharedKMP
 import Factory
 import Foundation
 
 // MARK: - ProximityPresentationRepository
 
-final class ProximityPresentationRepository: ProximityPresentationRepositoryProtocol {
+final class ProximityPresentationRepository: ProximityPresentationRepositoryProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 

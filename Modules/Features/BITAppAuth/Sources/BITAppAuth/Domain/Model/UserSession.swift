@@ -13,7 +13,7 @@ public enum UserSessionError: Error {
 // MARK: - Session
 
 @Spyable
-public protocol Session {
+public protocol Session: Sendable {
 
   /// Indicates whether the user is currently logged in.
   var isLoggedIn: Bool { get }
@@ -56,7 +56,7 @@ extension Session {
 
 // MARK: - UserSession
 
-public class UserSession: Session {
+public final class UserSession: Session, @unchecked Sendable {
 
   public private(set) var context: (any LAContextProtocol)?
 

@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - ActivityActorDisplay
 
-public struct ActivityActorDisplay: Codable, Equatable, DisplayLocalizable {
+public struct ActivityActorDisplay: Codable, Equatable, DisplayLocalizable, Sendable {
 
   // MARK: Lifecycle
 

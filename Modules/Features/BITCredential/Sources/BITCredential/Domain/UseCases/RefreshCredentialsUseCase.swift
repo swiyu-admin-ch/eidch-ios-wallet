@@ -5,7 +5,7 @@ import Spyable
 // MARK: - RefreshCredentialsUseCaseProtocol
 
 @Spyable
-public protocol RefreshCredentialsUseCaseProtocol {
+public protocol RefreshCredentialsUseCaseProtocol: Sendable {
   func callAsFunction() async throws -> [CredentialProtocol]
 }
 
@@ -23,7 +23,7 @@ struct RefreshCredentialsUseCase: RefreshCredentialsUseCaseProtocol {
     await refreshVerifiableCredentialsUseCase(verifiableCredentials)
 
     let refreshedVerifiableCredentials = try await credentialRepository.getAllVerifiableCredentials()
-    try await checkAndUpdateCredentialStatusUseCase.execute(refreshedVerifiableCredentials)
+    try await checkAndUpdateCredentialStatusUseCase(refreshedVerifiableCredentials)
 
     return try await credentialRepository.getAll()
   }

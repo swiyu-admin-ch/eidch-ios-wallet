@@ -1,3 +1,4 @@
+import BITCrypto
 import Factory
 import Foundation
 import XCTest
@@ -42,7 +43,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
       XCTAssertEqual(deferredCrendentialRequest.endpoint, mockDeferredCrendentialRequest.endpoint)
       XCTAssertEqual(deferredCrendentialRequest.format, mockDeferredCrendentialRequest.format)
       XCTAssertEqual(deferredCrendentialRequest.interval, mockDeferredCrendentialRequest.interval)
-      XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 0)
+      let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+      XCTAssertEqual(validateCallsCount, 0)
     }
   }
 
@@ -65,7 +67,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     XCTAssertEqual(jwsEncoderMock.receivedAdditionalHeaderParameters["key_attestation"] as? String, fetchCredentialContextMock.holderBindings?.first?.keyAttestationJWS)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.audience, fetchCredentialContextMock.credentialIssuer.absoluteString)
     XCTAssertEqual(jwsEncoderMock.receivedValue?.nonce, fetchCredentialContextMock.nonce?.cNonce)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateReceivedJws as? VcSdJWS, vcSdJWSMock)
+    let validateReceivedJws = await jwsSignatureValidatorMock.validateReceivedJws
+    XCTAssertEqual(validateReceivedJws as? VcSdJWS, vcSdJWSMock)
   }
 
   func testExecute_withoutHolderBinding_returnsVcSdJwt() async throws {
@@ -100,7 +103,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
     XCTAssertTrue(jwsEncoderMock.receivedAdditionalHeaderParameters.isEmpty)
     XCTAssertNil(jwsEncoderMock.receivedValue?.audience)
     XCTAssertNil(jwsEncoderMock.receivedValue?.nonce)
-    XCTAssertEqual(jwsSignatureValidatorMock.validateReceivedJws as? VcSdJWS, vcSdJWSMock)
+    let validateReceivedJws = await jwsSignatureValidatorMock.validateReceivedJws
+    XCTAssertEqual(validateReceivedJws as? VcSdJWS, vcSdJWSMock)
   }
 
   func testExecute_withSoftwareHolderBinding_jwsEncoderArgumentsPassed() async throws {
@@ -124,7 +128,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
       XCTAssertEqual(credentials.count, 2)
       XCTAssertEqual(credentials[0].raw, vcSdJWSMock.raw)
       XCTAssertEqual(credentials[1].raw, vcSdJWSMock.raw)
-      XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 2)
+      let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+      XCTAssertEqual(validateCallsCount, 2)
     } else {
       XCTFail("Expected batch result")
     }
@@ -149,7 +154,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 1)
+      let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+      XCTAssertEqual(validateCallsCount, 2)
     }
   }
 
@@ -162,7 +168,8 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
       XCTFail("An error was expected")
     } catch {
       XCTAssertEqual(error as? TestingError, .error)
-      XCTAssertEqual(jwsSignatureValidatorMock.validateCallsCount, 2)
+      let validateCallsCount = await jwsSignatureValidatorMock.validateCallsCount
+      XCTAssertEqual(validateCallsCount, 2)
     }
   }
 
@@ -245,14 +252,19 @@ final class FetchVcSdJwtCredentialUseCaseTests: XCTestCase {
   private var sdJwtBatchCredentialConsistencyValidator = SdJwtBatchCredentialConsistencyValidatorProtocolSpy()
 
   private func registerMocks() {
-    jwsEncoderMock = JWSEncoderMock()
-    repositorySpy = OpenIDRepositoryProtocolSpy()
-    jwsSignatureValidatorMock = JWSSignatureValidatorMock()
+    let jwsEncoderMock = JWSEncoderMock<ProofJWT>()
+    self.jwsEncoderMock = jwsEncoderMock
+    let repositorySpy = OpenIDRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    let jwsSignatureValidatorMock = JWSSignatureValidatorMock<VcSdJwt>()
+    self.jwsSignatureValidatorMock = jwsSignatureValidatorMock
+    let sdJwtBatchCredentialConsistencyValidator = SdJwtBatchCredentialConsistencyValidatorProtocolSpy()
+    self.sdJwtBatchCredentialConsistencyValidator = sdJwtBatchCredentialConsistencyValidator
 
-    Container.shared.jwsEncoder.register { self.jwsEncoderMock }
-    Container.shared.openIDRepository.register { self.repositorySpy }
-    Container.shared.jwsSignatureValidator.register { self.jwsSignatureValidatorMock }
-    Container.shared.sdJwtBatchCredentialConsistencyValidator.register { self.sdJwtBatchCredentialConsistencyValidator }
+    Container.shared.jwsEncoder.register { jwsEncoderMock }
+    Container.shared.openIDRepository.register { repositorySpy }
+    Container.shared.jwsSignatureValidator.register { jwsSignatureValidatorMock }
+    Container.shared.sdJwtBatchCredentialConsistencyValidator.register { sdJwtBatchCredentialConsistencyValidator }
   }
 
   private func success() {

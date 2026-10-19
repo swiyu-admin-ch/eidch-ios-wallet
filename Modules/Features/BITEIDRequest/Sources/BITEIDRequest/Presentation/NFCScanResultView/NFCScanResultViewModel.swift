@@ -4,6 +4,7 @@ import BITNavigation
 import Factory
 import Foundation
 
+@MainActor
 @Observable
 class NFCScanResultViewModel {
 

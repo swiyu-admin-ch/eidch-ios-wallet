@@ -3,6 +3,7 @@ import UIKit
 
 // MARK: - ExternalRoutes
 
+@MainActor
 public protocol ExternalRoutes {
   func externalSettings()
   func openExternalLink(url: URL)

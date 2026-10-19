@@ -1,78 +1,77 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import XCTest
+import Foundation
+import Testing
 @testable import BITActivity
 @testable import BITTestingCore
 
 @MainActor
-final class ActivityListViewModelTests: XCTestCase {
+struct ActivityListViewModelTests {
 
-  // MARK: Internal
+  // MARK: Lifecycle
 
-  override func setUp() {
-    Container.shared.reset()
-    registerMocks()
-    createSuccessState()
+  init() {
+    let getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
+    getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReturnValue = activityMocks
+    self.getCredentialActivitiesUseCaseSpy = getCredentialActivitiesUseCaseSpy
+
+    Container.shared.getCredentialActivitiesUseCase.register { @MainActor in getCredentialActivitiesUseCaseSpy }
+
     viewModel = ActivityListViewModel(credentialIdMock)
   }
 
-  func testFetchActivites_activities_stateIsResultWithActivities() async {
+  // MARK: Internal
+
+  @Test
+  func fetchActivites_activities_stateIsResultWithActivities() async {
     await viewModel.fetchActivities()
 
     if case .result(let activities) = viewModel.state {
-      XCTAssertEqual(activities.map(\.id), activityMocks.map(\.id))
+      #expect(activities.map(\.id) == activityMocks.map(\.id))
     } else {
-      XCTFail("Expected result state")
+      Issue.record("Expected result state")
     }
   }
 
-  func testFetchActivites_noActivities_stateIsResultWithoutActivities() async {
+  @Test
+  func fetchActivites_noActivities_stateIsResultWithoutActivities() async {
     getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReturnValue = []
 
     await viewModel.fetchActivities()
 
     if case .result(let activities) = viewModel.state {
-      XCTAssertTrue(activities.isEmpty)
+      #expect(activities.isEmpty)
     } else {
-      XCTFail("Expected result state")
+      Issue.record("Expected result state")
     }
   }
 
-  func testFetchActivites_useCaseThrowsError_stateIsError() async {
+  @Test
+  func fetchActivites_useCaseThrowsError_stateIsError() async {
     getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitThrowableError = TestingError.error
 
     await viewModel.fetchActivities()
 
     if case .error(let error) = viewModel.state {
-      XCTAssertEqual(error as? TestingError, .error)
+      #expect(error as? TestingError == .error)
     } else {
-      XCTFail("Expected error state")
+      Issue.record("Expected error state")
     }
   }
 
-  func testShowActivityDeleted_toastIsPresented() {
-    XCTAssertNil(viewModel.toast)
+  @Test
+  func showActivityDeleted_toastIsPresented() {
+    #expect(viewModel.toast == nil)
 
     viewModel.showActivityDeleted()
 
-    XCTAssertNotNil(viewModel.toast)
+    #expect(viewModel.toast != nil)
   }
 
   // MARK: Private
 
-  private var activityMocks: [ActivityListItem] = [.Mock.issuance, .Mock.acceptedPresentation]
-  private var credentialIdMock = UUID()
+  private let activityMocks: [ActivityListItem] = [.Mock.issuance, .Mock.acceptedPresentation]
+  private let credentialIdMock = UUID()
 
-  private var getCredentialActivitiesUseCaseSpy: GetCredentialActivitiesUseCaseProtocolSpy!
-
-  private var viewModel: ActivityListViewModel!
-
-  private func registerMocks() {
-    getCredentialActivitiesUseCaseSpy = GetCredentialActivitiesUseCaseProtocolSpy()
-    Container.shared.getCredentialActivitiesUseCase.register { @MainActor in self.getCredentialActivitiesUseCaseSpy }
-  }
-
-  private func createSuccessState() {
-    getCredentialActivitiesUseCaseSpy.callAsFunctionForLimitReturnValue = activityMocks
-  }
+  private let getCredentialActivitiesUseCaseSpy: GetCredentialActivitiesUseCaseProtocolSpy
+  private let viewModel: ActivityListViewModel
 }

@@ -4,7 +4,7 @@ import Foundation
 // MARK: - CameraManager
 
 @Observable
-public class CameraManager: NSObject {
+public class CameraManager: NSObject, @unchecked Sendable {
 
   // MARK: Public
 
@@ -50,8 +50,6 @@ public class CameraManager: NSObject {
   // MARK: Internal
 
   enum Constant {
-    static let videoOutputSettings: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_32BGRA)]
-
     static let metadataScannerType: [AVMetadataObject.ObjectType] = [.qr]
   }
 
@@ -109,7 +107,7 @@ protocol QROutputDelegate: AnyObject {
 
 // MARK: - CameraQRCodeOutput
 
-class CameraQRCodeOutput: NSObject, AVCaptureMetadataOutputObjectsDelegate {
+class CameraQRCodeOutput: NSObject, AVCaptureMetadataOutputObjectsDelegate, @unchecked Sendable {
 
   var isEnabled = true
   weak var delegate: QROutputDelegate?
@@ -122,9 +120,10 @@ class CameraQRCodeOutput: NSObject, AVCaptureMetadataOutputObjectsDelegate {
       [.qr].contains(metadataObject.type)
     else { return }
 
+    nonisolated(unsafe) let capturedObject = object
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      delegate?.didCapture(object)
+      delegate?.didCapture(capturedObject)
     }
   }
 

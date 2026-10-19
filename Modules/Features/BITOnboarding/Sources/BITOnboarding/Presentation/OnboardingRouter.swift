@@ -8,6 +8,7 @@ import UIKit
 
 // MARK: - OnboardingRoutes
 
+@MainActor
 public protocol OnboardingRoutes: ClosableRoutes {
   func onboarding()
 }
@@ -22,6 +23,7 @@ extension OnboardingRoutes where Self: RouterProtocol {
 
 // MARK: - OnboardingInternalRoutes
 
+@MainActor
 protocol OnboardingInternalRoutes: ClosableRoutes {
 
   var context: OnboardingContext { get set }

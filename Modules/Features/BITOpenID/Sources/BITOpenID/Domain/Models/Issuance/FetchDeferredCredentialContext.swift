@@ -3,7 +3,7 @@ import BITCore
 import Foundation
 import Security
 
-public struct FetchDeferredCredentialContext: Changeable {
+public struct FetchDeferredCredentialContext: Changeable, Sendable {
 
   // MARK: Lifecycle
 

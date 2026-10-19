@@ -91,13 +91,16 @@ final class TrustStatementV1ValidatorTests: XCTestCase {
   private var validator: TrustStatementV1Validator!
 
   private func registerMocks() {
-    jwsValidatorMock = JWSValidatorMock()
-    didResolverSpy = DidResolverHelperProtocolSpy()
-    tokenStatusListValidatorSpy = AnyStatusCheckValidatorProtocolSpy()
+    let jwsValidatorMock = JWSValidatorMock<IdentityTrustStatementV1JWT>()
+    self.jwsValidatorMock = jwsValidatorMock
+    let didResolverSpy = DidResolverHelperProtocolSpy()
+    self.didResolverSpy = didResolverSpy
+    let tokenStatusListValidatorSpy = AnyStatusCheckValidatorProtocolSpy()
+    self.tokenStatusListValidatorSpy = tokenStatusListValidatorSpy
 
-    Container.shared.jwsValidator.register { self.jwsValidatorMock }
-    Container.shared.didResolverHelper.register { self.didResolverSpy }
-    Container.shared.tokenStatusListValidator.register { self.tokenStatusListValidatorSpy }
+    Container.shared.jwsValidator.register { jwsValidatorMock }
+    Container.shared.didResolverHelper.register { didResolverSpy }
+    Container.shared.tokenStatusListValidator.register { tokenStatusListValidatorSpy }
   }
 
   private func createSuccessState() {

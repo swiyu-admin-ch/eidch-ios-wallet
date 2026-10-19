@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PushUpdateBody
 
-public struct PushUpdateBody: Codable, Equatable {
+public struct PushUpdateBody: Codable, Equatable, Sendable {
 
   public init(pushIds: [String], pushDeviceToken: String) {
     self.pushIds = pushIds

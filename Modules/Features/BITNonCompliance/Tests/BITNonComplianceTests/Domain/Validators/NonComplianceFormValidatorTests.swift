@@ -1,66 +1,69 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import XCTest
+import Testing
 @testable import BITNonCompliance
 
-@MainActor
-final class NonComplianceFormValidatorTests: XCTestCase {
+struct NonComplianceFormValidatorTests {
+
+  // MARK: Lifecycle
+
+  init() {
+    Container.shared.descriptionFormFieldMinimumLength.register { @MainActor in Self.minimumDescriptionLengthMock }
+    Container.shared.descriptionFormFieldMaximumLength.register { @MainActor in Self.maximumDescriptionLengthMock }
+  }
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    Container.shared.descriptionFormFieldMinimumLength.register { @MainActor in Self.minimumDescriptionLengthMock }
-    Container.shared.descriptionFormFieldMaximumLength.register { @MainActor in Self.maximumDescriptionLengthMock }
-    validator = NonComplianceFormValidator()
-  }
-
-  func testValidate_emptyEmail_returnsValid() {
+  @Test
+  func validate_emptyEmail_returnsValid() {
     let result = validator.validate("", for: .email)
-    XCTAssertEqual(result, .valid)
+    #expect(result == .valid)
   }
 
-  func testValidate_validEmail_returnsValid() {
+  @Test
+  func validate_validEmail_returnsValid() {
     for email in validEmails {
       let result = validator.validate(email, for: .email)
-      XCTAssertEqual(result, .valid, "Expected \(email) to be valid")
+      #expect(result == .valid, "Expected \(email) to be valid")
     }
   }
 
-  func testValidate_invalidEmail_returnsMalformed() {
+  @Test
+  func validate_invalidEmail_returnsMalformed() {
     for email in invalidEmails {
       let result = validator.validate(email, for: .email)
-      XCTAssertEqual(result, .malformed, "Expected \(email) to be malformed")
+      #expect(result == .malformed, "Expected \(email) to be malformed")
     }
   }
 
-  func testValidate_validDescription_returnsValid() {
+  @Test
+  func validate_validDescription_returnsValid() {
     for length in Self.minimumDescriptionLengthMock...Self.maximumDescriptionLengthMock {
       let description = String(repeating: "x", count: length)
 
       let result = validator.validate(description, for: .description)
 
-      XCTAssertEqual(result, .valid, "Invalid state for length: \(length)")
+      #expect(result == .valid, "Invalid state for length: \(length)")
     }
   }
 
-  func testValidate_tooShortDescription_returnsTooShort() {
+  @Test
+  func validate_tooShortDescription_returnsTooShort() {
     for length in 0...Self.minimumDescriptionLengthMock - 1 {
       let description = String(repeating: "x", count: length)
 
       let result = validator.validate(description, for: .description)
 
-      XCTAssertEqual(result, .tooShort, "Invalid state for length: \(length)")
+      #expect(result == .tooShort, "Invalid state for length: \(length)")
     }
   }
 
-  func testValidate_tooLongDescription_returnsTooShort() {
+  @Test
+  func validate_tooLongDescription_returnsTooShort() {
     let description = String(repeating: "x", count: Self.maximumDescriptionLengthMock + 1)
 
     let result = validator.validate(description, for: .description)
 
-    XCTAssertEqual(result, .tooLong)
+    #expect(result == .tooLong)
   }
 
   // MARK: Private

@@ -386,6 +386,15 @@ struct FetchPresentationRequestUseCaseTests {
   }
 
   @Test
+  func execute_serviceNoInternetConnectionError_throwsNoInternetConnection() async throws {
+    serviceSpy.fetchFromThrowableError = PresentationRequestError.noInternetConnection
+
+    await #expect(throws: FetchPresentationRequestUseCaseError.noInternetConnection) {
+      _ = try await useCase(url: urlMock)
+    }
+  }
+
+  @Test
   func execute_serviceTestingError_throwsTestingError() async throws {
     serviceSpy.fetchFromThrowableError = TestingError.error
 

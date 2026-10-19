@@ -3,6 +3,7 @@ import Foundation
 
 // MARK: - RequestCaseStateBaseViewModel
 
+@MainActor
 public class RequestCaseStateBaseViewModel: Identifiable {
 
   // MARK: Lifecycle
@@ -25,12 +26,12 @@ public class RequestCaseStateBaseViewModel: Identifiable {
 
   public weak var delegate: RequestCaseViewStateDelegate?
 
-  public let id: String
+  public nonisolated let id: String
 
   // MARK: Internal
 
-  let pushId: String?
-  let fullName: String
+  nonisolated let pushId: String?
+  nonisolated let fullName: String
 
   var isLegalRepresentantConsentVerified: Bool {
     switch legalRepresentantConsent {
@@ -43,7 +44,7 @@ public class RequestCaseStateBaseViewModel: Identifiable {
 
   // MARK: Private
 
-  private let legalRepresentantConsent: LegalRepresentantConsent
+  private nonisolated let legalRepresentantConsent: LegalRepresentantConsent
 
 }
 
@@ -51,14 +52,14 @@ public class RequestCaseStateBaseViewModel: Identifiable {
 
 extension RequestCaseStateBaseViewModel: Hashable {
 
-  public static func == (lhs: RequestCaseStateBaseViewModel, rhs: RequestCaseStateBaseViewModel) -> Bool {
+  public nonisolated static func == (lhs: RequestCaseStateBaseViewModel, rhs: RequestCaseStateBaseViewModel) -> Bool {
     lhs.id == rhs.id &&
       lhs.fullName == rhs.fullName &&
       lhs.pushId == rhs.pushId &&
       lhs.legalRepresentantConsent == rhs.legalRepresentantConsent
   }
 
-  public func hash(into hasher: inout Hasher) {
+  public nonisolated func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(fullName)
     hasher.combine(pushId)

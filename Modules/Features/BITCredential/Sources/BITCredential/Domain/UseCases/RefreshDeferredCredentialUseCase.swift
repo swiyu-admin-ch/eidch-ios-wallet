@@ -10,7 +10,7 @@ import Spyable
 // MARK: - RefreshDeferredCredentialUseCaseProtocol
 
 @Spyable
-protocol RefreshDeferredCredentialUseCaseProtocol {
+protocol RefreshDeferredCredentialUseCaseProtocol: Sendable {
   func execute(for credential: DeferredCredential) async throws
   func execute(_ credentials: [DeferredCredential]) async throws
 }
@@ -109,7 +109,7 @@ struct RefreshDeferredCredentialUseCase: RefreshDeferredCredentialUseCaseProtoco
 
     let savedCredential = try await credentialRepository.create(verifiableCredential: credential)
     try await credentialRepository.delete(deferredCredential.id, deleteKeyPairs: false)
-    _ = try? await checkAndUpdateCredentialStatusUseCase.execute(for: savedCredential)
+    _ = try? await checkAndUpdateCredentialStatusUseCase(for: savedCredential)
   }
 
   private func mapBatchCredentialsToKeyBindings(_ credentials: [AnyCredential], deferredKeyBindings: [KeyBinding]) throws -> [CredentialWithKeyBinding] {

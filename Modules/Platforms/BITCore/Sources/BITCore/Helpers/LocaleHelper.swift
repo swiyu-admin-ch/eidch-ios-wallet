@@ -15,7 +15,7 @@ extension UserLocale {
     case romansh = "rm"
   }
 
-  public static var defaultLocaleIdentifier: UserLocale = LocaleIdentifier.english.rawValue
+  public static let defaultLocaleIdentifier: UserLocale = LocaleIdentifier.english.rawValue
 
 }
 
@@ -28,6 +28,6 @@ extension UserLanguageCode {
     case english = "en"
   }
 
-  public static var defaultAppLanguageCode: UserLanguageCode = LanguageIdentifier.english.rawValue
+  public static let defaultAppLanguageCode: UserLanguageCode = LanguageIdentifier.english.rawValue
 
 }

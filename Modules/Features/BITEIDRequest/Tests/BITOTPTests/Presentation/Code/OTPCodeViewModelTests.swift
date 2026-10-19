@@ -11,13 +11,20 @@ final class OTPCodeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    verifyOTPUseCase = VerifyOTPUseCaseProtocolSpy()
-    setOTPEnabledUseCase = SetOTPEnabledUseCaseProtocolSpy()
+  override func setUp() async throws {
+    try await super.setUp()
+    let verifyOTPUseCase = VerifyOTPUseCaseProtocolSpy()
+    self.verifyOTPUseCase = verifyOTPUseCase
+    let setOTPEnabledUseCase = SetOTPEnabledUseCaseProtocolSpy()
+    self.setOTPEnabledUseCase = setOTPEnabledUseCase
 
-    Container.shared.verifyOTPUseCase.register { @MainActor in self.verifyOTPUseCase }
-    Container.shared.setOTPEnabledUseCase.register { @MainActor in self.setOTPEnabledUseCase }
+    Container.shared.verifyOTPUseCase.register { @MainActor in verifyOTPUseCase }
+    Container.shared.setOTPEnabledUseCase.register { @MainActor in setOTPEnabledUseCase }
+  }
+
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testOnCodeChange_sanitizesToSixDigits() {

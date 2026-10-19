@@ -3,21 +3,21 @@ import Foundation
 
 // MARK: - ActivityClaim
 
-public struct ActivityClaim: Codable {
+public struct ActivityClaim: Codable, Sendable {
 
   // MARK: Lifecycle
 
-  public init(credentialClaimId: UUID) {
-    self.credentialClaimId = credentialClaimId
+  public init(path: String) {
+    self.path = path
   }
 
   public init(_ entity: ActivityClaimEntity) {
-    self.init(credentialClaimId: entity.credentialClaimId)
+    self.init(path: entity.path)
   }
 
   // MARK: Public
 
-  public var credentialClaimId: UUID
+  public var path: String
 }
 
 // MARK: Equatable

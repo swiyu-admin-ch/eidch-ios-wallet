@@ -8,7 +8,7 @@ import Spyable
 // MARK: - DeclinePresentationUseCaseProtocol
 
 @Spyable
-public protocol DeclinePresentationUseCaseProtocol {
+public protocol DeclinePresentationUseCaseProtocol: Sendable {
   func callAsFunction(context: PresentationRequestContext) async throws -> PresentationResponse?
 }
 

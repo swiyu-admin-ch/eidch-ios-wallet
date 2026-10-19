@@ -7,7 +7,7 @@ import Spyable
 // MARK: - GetLegalRepresentantPresentationRequestContextUseCaseProtocol
 
 @Spyable
-protocol GetLegalRepresentantPresentationRequestContextUseCaseProtocol {
+protocol GetLegalRepresentantPresentationRequestContextUseCaseProtocol: Sendable {
   func execute(for caseId: String) async throws -> PresentationRequestContext
 }
 

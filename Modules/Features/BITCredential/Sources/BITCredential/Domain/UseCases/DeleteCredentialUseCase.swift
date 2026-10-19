@@ -6,7 +6,7 @@ import Spyable
 // MARK: - DeleteCredentialUseCaseProtocol
 
 @Spyable
-public protocol DeleteCredentialUseCaseProtocol {
+public protocol DeleteCredentialUseCaseProtocol: Sendable {
   func execute(_ credential: CredentialProtocol) async throws
 }
 

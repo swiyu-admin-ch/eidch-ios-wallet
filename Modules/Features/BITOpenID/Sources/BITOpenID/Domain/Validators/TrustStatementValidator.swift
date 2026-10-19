@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - TrustStatementValidatorProtocol
 
-public protocol TrustStatementValidatorProtocol {
+public protocol TrustStatementValidatorProtocol: Sendable {
   func validate(_ trustStatement: JWS<some TrustStatementJWT>) async throws
   func validate(_ trustStatement: JWS<some TrustStatementJWT>, for subjectDid: String?) async throws
 }

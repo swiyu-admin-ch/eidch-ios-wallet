@@ -4,7 +4,7 @@ import Foundation
 
 extension VersionEnforcement {
 
-  struct Response: Decodable {
+  struct Response: Decodable, Sendable {
 
     // MARK: Lifecycle
 
@@ -128,7 +128,7 @@ extension VersionEnforcement.Response {
     }
   }
 
-  enum UpdateType: String, Codable {
+  enum UpdateType: String, Codable, Sendable {
     case optional, forced
   }
 }

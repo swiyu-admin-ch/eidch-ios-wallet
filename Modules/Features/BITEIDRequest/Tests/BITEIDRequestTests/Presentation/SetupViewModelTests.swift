@@ -14,35 +14,37 @@ import XCTest
 
 // swiftlint:disable implicitly_unwrapped_optional force_unwrapping force_cast
 
+@MainActor
 final class SetupViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    super.setUp()
-
-    userSession = SessionSpy()
-    validateDeviceSecurityRequirementsUseCase = ValidateDeviceSecurityRequirementsUseCaseProtocolSpy()
+  override func setUp() async throws {
+    try await super.setUp()
+    let userSession = SessionSpy()
+    self.userSession = userSession
+    let validateDeviceSecurityRequirementsUseCase = ValidateDeviceSecurityRequirementsUseCaseProtocolSpy()
+    self.validateDeviceSecurityRequirementsUseCase = validateDeviceSecurityRequirementsUseCase
     mockContext = LAContextProtocolSpy()
 
-    avBeam = AVBeamProtocolSpy()
+    let avBeam = AVBeamProtocolSpy()
+    self.avBeam = avBeam
     avBeam.state = .initialized
-    Container.shared.avBeam.register { @MainActor in self.avBeam }
-    Container.shared.avBeamAppID.register { @MainActor in self.appId }
+    let appId = appId
+    Container.shared.avBeam.register { @MainActor in avBeam }
+    Container.shared.avBeamAppID.register { @MainActor in appId }
 
-    Container.shared.userSession.register { @MainActor in self.userSession }
-    Container.shared.validateDeviceSecurityRequirementsUseCase.register { @MainActor in self.validateDeviceSecurityRequirementsUseCase }
+    Container.shared.userSession.register { @MainActor in userSession }
+    Container.shared.validateDeviceSecurityRequirementsUseCase.register { @MainActor in validateDeviceSecurityRequirementsUseCase }
 
     success()
   }
 
-  override func tearDown() {
-    super.tearDown()
+  override func tearDown() async throws {
     Container.shared.reset()
+    try await super.tearDown()
   }
 
-  @MainActor
   func testFetchAttestations_noContext_returnsEarly() async {
     userSession.context = nil
 
@@ -57,7 +59,6 @@ final class SetupViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testFetchAttestations_withContext_success() async {
     let startTime = Date()
 
@@ -72,7 +73,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertEqual(avBeam.initializeUsingReceivedConfig?.appId, appId)
   }
 
-  @MainActor
   func testFetchAttestations_clientAttestationFails_continuesFlow() async {
     validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = SIDRepository.Error.invalidClientAttestation
     let startTime = Date()
@@ -85,7 +85,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
-  @MainActor
   func testFetchAttestations_keyAttestationFails_continuesFlow() async {
     validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError = SIDRepository.Error.invalidKeyAttestation
     let startTime = Date()
@@ -98,7 +97,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
-  @MainActor
   func testFetchAttestations_attestationTimeout_displaysErrorView() async {
     validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError =
       ValidateDeviceSecurityRequirementsUseCaseError.attestationTimeout
@@ -115,7 +113,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
-  @MainActor
   func testFetchAttestations_attestationServiceDeactivated_displaysErrorView() async {
     validateDeviceSecurityRequirementsUseCase.callAsFunctionThrowableError =
       ValidateDeviceSecurityRequirementsUseCaseError.attestationServiceDeactivated
@@ -132,7 +129,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(elapsedTime, 2.0)
   }
 
-  @MainActor
   func testFetchAttestations_fastExecution_appliesMinimumDelay() async {
     let startTime = Date()
     await viewModel.fetchAttestations()
@@ -142,7 +138,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertLessThan(elapsedTime, 2.5, "Should not take significantly longer than minimum delay")
   }
 
-  @MainActor
   func testFetchAttestations_slowExecution_noAdditionalDelay() async {
     validateDeviceSecurityRequirementsUseCase.callAsFunctionClosure = { _ in
       try await Task.sleep(nanoseconds: 2_000_000_000)
@@ -158,7 +153,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertLessThan(elapsedTime, 4.5, "Should not add delay when execution is already slow")
   }
 
-  @MainActor
   func testFetchAttestations_moderateExecution_minimalAdditionalDelay() async {
     validateDeviceSecurityRequirementsUseCase.callAsFunctionClosure = { _ in
       try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -174,7 +168,6 @@ final class SetupViewModelTests: XCTestCase {
     XCTAssertLessThan(elapsedTime, 2.5, "Should add minimal delay to reach 3 seconds")
   }
 
-  @MainActor
   func testCancelInitialization_sdkIsStopped() {
     viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
 
@@ -190,7 +183,6 @@ final class SetupViewModelTests: XCTestCase {
   private var avBeam: AVBeamProtocolSpy!
   private let appId = "test-app-id"
 
-  @MainActor
   private func success() {
     userSession.context = mockContext
     viewModel = SetupViewModel()

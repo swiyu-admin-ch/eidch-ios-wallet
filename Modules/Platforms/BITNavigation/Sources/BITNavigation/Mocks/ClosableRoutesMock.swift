@@ -1,5 +1,3 @@
-import BITNavigation
-
 // MARK: - ClosableRoutesMock
 
 public class ClosableRoutesMock: ClosableRoutes {

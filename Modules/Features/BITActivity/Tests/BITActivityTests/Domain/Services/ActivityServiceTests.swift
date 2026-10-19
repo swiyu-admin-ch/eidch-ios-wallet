@@ -57,9 +57,10 @@ final class ActivityServiceTests: XCTestCase {
   private var service: ActivityService!
 
   private func registerMocks() {
-    repositorySpy = ActivityRepositoryProtocolSpy()
+    let repositorySpy = ActivityRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
 
-    Container.shared.activityRepository.register { self.repositorySpy }
+    Container.shared.activityRepository.register { repositorySpy }
   }
 
   private func setupSuccessState() {

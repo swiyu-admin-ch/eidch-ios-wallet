@@ -1,4 +1,3 @@
-import BITCrypto
 import BITEntities
 import Foundation
 
@@ -8,6 +7,6 @@ extension ActivityActorDisplayEntity {
     self.init()
     locale = display.locale ?? .defaultLocaleIdentifier
     name = display.name
-    imageHash = ImageHasher.hash(from: display.image)
+    imageHash = ImageEntity.contentHash(of: display.image)
   }
 }

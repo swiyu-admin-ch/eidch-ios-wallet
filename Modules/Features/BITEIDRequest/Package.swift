@@ -1,5 +1,4 @@
-// swift-tools-version: 5.10.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -83,7 +82,11 @@ let package = Package(
         .product(name: "Factory", package: "Factory"),
         .product(name: "Spyable", package: "swift-spyable"),
       ],
-      resources: [.process("Resources")]),
+      resources: [.process("Resources")],
+      // Swift 6 language mode crashes swift-frontend 6.3.2 during IRGen of
+      // OTPCodeView, while emitting the `@$sSSScA_pSgIeAghgg_SSIeAghn_TR`
+      // reabstraction thunk. Keep this target in Swift 5 mode until it is fixed.
+      swiftSettings: [.swiftLanguageMode(.v5)]),
     .testTarget(
       name: "BITOTPTests",
       dependencies: [

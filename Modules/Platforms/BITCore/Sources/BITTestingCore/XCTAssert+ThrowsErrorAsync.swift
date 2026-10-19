@@ -1,6 +1,6 @@
 import XCTest
 
-public func XCTAssertThrowsErrorAsync(
+nonisolated(nonsending) public func XCTAssertThrowsErrorAsync(
   _ expression: @autoclosure () async throws -> some Any,
   file: StaticString = #filePath,
   line: UInt = #line,

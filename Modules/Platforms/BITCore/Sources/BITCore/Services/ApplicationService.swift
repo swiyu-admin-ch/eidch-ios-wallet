@@ -5,14 +5,15 @@ import UIKit
 // MARK: - ApplicationServiceProtocol
 
 @Spyable
+@MainActor
 public protocol ApplicationServiceProtocol {
   @discardableResult
-  func open(_ url: URL, options: [UIApplication.OpenExternalURLOptionsKey: Any]) async -> Bool
+  func open(_ url: URL, options: [UIApplication.OpenExternalURLOptionsKey: any Sendable]) async -> Bool
   func registerForRemoteNotifications()
 }
 
 extension ApplicationServiceProtocol {
-  @MainActor @discardableResult
+  @discardableResult
   public func open(_ url: URL) async -> Bool {
     await open(url, options: [:])
   }
@@ -20,4 +21,9 @@ extension ApplicationServiceProtocol {
 
 // MARK: - UIApplication + ApplicationServiceProtocol
 
-extension UIApplication: ApplicationServiceProtocol {}
+extension UIApplication: ApplicationServiceProtocol {
+  @discardableResult
+  public func open(_ url: URL, options: [UIApplication.OpenExternalURLOptionsKey: any Sendable]) async -> Bool {
+    await open(url, options: options as [UIApplication.OpenExternalURLOptionsKey: Any])
+  }
+}

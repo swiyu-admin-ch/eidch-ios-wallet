@@ -1,6 +1,7 @@
 import BITL10n
 import Factory
 
+@MainActor
 public class WalletPairingStateViewModel: RequestCaseStateBaseViewModel {
 
   var notificationTitle: String {

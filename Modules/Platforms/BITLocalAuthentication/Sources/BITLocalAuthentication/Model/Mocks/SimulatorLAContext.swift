@@ -2,7 +2,7 @@ import Foundation
 import LocalAuthentication
 
 #if targetEnvironment (simulator)
-public class SimulatorLAContext: LAContext {
+public final class SimulatorLAContext: LAContext, @unchecked Sendable {
   override public func setCredential(_ credential: Data?, type: LACredentialType) -> Bool {
     true
   }

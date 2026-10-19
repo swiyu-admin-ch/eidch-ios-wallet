@@ -5,7 +5,7 @@ import JWSETKit
 
 // MARK: - JWSEncoderProtocol
 
-public protocol JWSEncoderProtocol {
+public protocol JWSEncoderProtocol: Sendable {
   func encode(_ value: some JWT, using keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> Data
   func encode<T: JWT>(_ value: T, keyPair: VaultKeyPair, additionalHeaderParameters: [String: Any]) throws -> JWS<T>
 }
@@ -42,7 +42,7 @@ public struct JWSEncoder: JWSEncoderProtocol {
 
   // MARK: Public
 
-  public enum KeyEncodingStrategy {
+  public enum KeyEncodingStrategy: Sendable {
     case jwk
     case none
   }

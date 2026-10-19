@@ -4,5 +4,5 @@ import RealmSwift
 
 public class NonComplianceReasonDisplayEntity: EmbeddedObject, DisplayLocalizable {
   @Persisted public var locale: String?
-  @Persisted public var value: String
+  @Persisted public var reason: String
 }

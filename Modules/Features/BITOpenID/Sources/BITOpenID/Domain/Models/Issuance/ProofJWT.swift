@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - ProofJWT
 
-struct ProofJWT: JWT, Codable, Equatable {
+struct ProofJWT: JWT, Codable, Equatable, Sendable {
 
   let type: String? = "openid4vci-proof+jwt"
 

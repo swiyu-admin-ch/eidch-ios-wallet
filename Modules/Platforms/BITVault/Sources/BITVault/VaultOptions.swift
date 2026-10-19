@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - VaultOptions
 
-public struct VaultOptions: OptionSet {
+public struct VaultOptions: OptionSet, Sendable {
 
   public init(rawValue: UInt8) {
     self.rawValue = rawValue

@@ -44,30 +44,11 @@ public struct KeyPad: View {
 
 }
 
-// MARK: - KeyPadLeftEnvironmentKey
-
-struct KeyPadLeftEnvironmentKey: EnvironmentKey {
-  static var defaultValue: KeyPadKeyTuple = (.none, nil)
-}
-
-// MARK: - KeyPadRightEnvironmentKey
-
-struct KeyPadRightEnvironmentKey: EnvironmentKey {
-  static var defaultValue: KeyPadKeyTuple = (.delete, nil)
-}
-
 typealias KeyPadKeyTuple = (key: KeyPadKey, handler: (() -> Void)?)
 
 extension EnvironmentValues {
-  var keyPadLeftKey: KeyPadKeyTuple {
-    get { self[KeyPadLeftEnvironmentKey.self] }
-    set { self[KeyPadLeftEnvironmentKey.self] = newValue }
-  }
-
-  var keyPadRightKey: KeyPadKeyTuple {
-    get { self[KeyPadRightEnvironmentKey.self] }
-    set { self[KeyPadRightEnvironmentKey.self] = newValue }
-  }
+  @Entry var keyPadLeftKey: KeyPadKeyTuple = (.none, nil)
+  @Entry var keyPadRightKey: KeyPadKeyTuple = (.delete, nil)
 }
 
 extension View {

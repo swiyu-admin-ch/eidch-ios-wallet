@@ -1,4 +1,4 @@
-// swiftlint: disable all
+// swiftlint:disable implicitly_unwrapped_optional
 import Factory
 import Foundation
 import NavigatorUI
@@ -15,14 +15,14 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
+  }
 
-    viewModel = CredentialOfferViewModel(credential: mockCredential)
-    viewModel.trustInformation = mockTrustInformation
-    viewModel.actorCompliance = mockActorCompliance
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInit_ValuesWithTrustStatement() {
@@ -161,11 +161,16 @@ final class CredentialOfferViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private var viewModel: CredentialOfferViewModel!
+  private lazy var viewModel: CredentialOfferViewModel = {
+    let viewModel = CredentialOfferViewModel(credential: mockCredential)
+    viewModel.trustInformation = mockTrustInformation
+    viewModel.actorCompliance = mockActorCompliance
+    return viewModel
+  }()
 
-  private var mockCredential = VerifiableCredential.Mock.sample
-  private var mockTrustInformation = TrustInformation.Mock.trustedIdentity
-  private var mockActorCompliance = ActorCompliance.notCompliant(LocalizedDisplay(values: ["en": "reason EN"]))
+  private let mockCredential = VerifiableCredential.Mock.sample
+  private let mockTrustInformation = TrustInformation.Mock.trustedIdentity
+  private let mockActorCompliance = ActorCompliance.notCompliant(LocalizedDisplay(values: ["en": "reason EN"]))
   private let themeMock = "light"
 
   private var acceptCredentialUseCase: AcceptCredentialUseCaseProtocolSpy!
@@ -173,15 +178,18 @@ final class CredentialOfferViewModelTests: XCTestCase {
   private var fetchIssuanceTrustInformationUseCase: FetchIssuanceTrustInformationUseCaseProtocolSpy!
 
   private func registerMocks() {
-    deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
-    acceptCredentialUseCase = AcceptCredentialUseCaseProtocolSpy()
+    let deleteCredentialUseCase = DeleteCredentialUseCaseProtocolSpy()
+    self.deleteCredentialUseCase = deleteCredentialUseCase
+    let acceptCredentialUseCase = AcceptCredentialUseCaseProtocolSpy()
+    self.acceptCredentialUseCase = acceptCredentialUseCase
     acceptCredentialUseCase.callAsFunctionTrustInformationActorComplianceReturnValue = mockCredential
-    fetchIssuanceTrustInformationUseCase = FetchIssuanceTrustInformationUseCaseProtocolSpy()
+    let fetchIssuanceTrustInformationUseCase = FetchIssuanceTrustInformationUseCaseProtocolSpy()
+    self.fetchIssuanceTrustInformationUseCase = fetchIssuanceTrustInformationUseCase
     fetchIssuanceTrustInformationUseCase.callAsFunctionForReturnValue = (mockTrustInformation, mockActorCompliance)
 
-    Container.shared.deleteCredentialUseCase.register { @MainActor in self.deleteCredentialUseCase }
-    Container.shared.acceptCredentialUseCase.register { @MainActor in self.acceptCredentialUseCase }
-    Container.shared.fetchIssuanceTrustInformationUseCase.register { @MainActor in self.fetchIssuanceTrustInformationUseCase }
+    Container.shared.deleteCredentialUseCase.register { @MainActor in deleteCredentialUseCase }
+    Container.shared.acceptCredentialUseCase.register { @MainActor in acceptCredentialUseCase }
+    Container.shared.fetchIssuanceTrustInformationUseCase.register { @MainActor in fetchIssuanceTrustInformationUseCase }
     Container.shared.preferredUserLanguageCodes.register { ["de"] }
   }
 

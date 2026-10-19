@@ -6,7 +6,7 @@ import Spyable
 // MARK: - ActivityDetailFactoryProtocol
 
 @Spyable
-public protocol ActivityDetailFactoryProtocol {
+public protocol ActivityDetailFactoryProtocol: Sendable {
   func callAsFunction(_ entity: CredentialActivityEntity) throws -> ActivityDetail
 }
 
@@ -17,10 +17,7 @@ struct ActivityDetailFactory: ActivityDetailFactoryProtocol {
   // MARK: Internal
 
   func callAsFunction(_ entity: CredentialActivityEntity) throws -> ActivityDetail {
-    guard let credential = entity.credential.first else {
-      throw ActivityDetailFactoryError.noCredentialFound
-    }
-    return ActivityDetail(
+    ActivityDetail(
       id: entity.id,
       type: ActivityType(rawValue: entity.type) ?? .issuance,
       createdAt: entity.createdAt,
@@ -29,7 +26,7 @@ struct ActivityDetailFactory: ActivityDetailFactoryProtocol {
       vcSchemaTrust: VcSchemaTrust(rawValue: entity.vcSchemaTrust) ?? .notProtected,
       actorCompliance: ActorComplianceStatus(rawValue: entity.actorCompliance) ?? .unknown,
       nonComplianceReasonDisplay: entity.nonComplianceReasonDisplays.findDisplayWithFallback().flatMap(nonComplianceReasonDisplayFactory.callAsFunction),
-      credential: activityDetailCredentialFactory(credential, claimIds: entity.claims.map(\.credentialClaimId)))
+      credential: activityDetailCredentialFactory(entity, paths: entity.claims.map(\.path)))
   }
 
   // MARK: Private
@@ -37,10 +34,4 @@ struct ActivityDetailFactory: ActivityDetailFactoryProtocol {
   @Injected(\.activityDetailCredentialFactory) private var activityDetailCredentialFactory
   @Injected(\.activityActorDisplayFactory) private var activityActorDisplayFactory
   @Injected(\.nonComplianceReasonDisplayFactory) private var nonComplianceReasonDisplayFactory
-}
-
-// MARK: - ActivityDetailFactoryError
-
-enum ActivityDetailFactoryError: Error {
-  case noCredentialFound
 }

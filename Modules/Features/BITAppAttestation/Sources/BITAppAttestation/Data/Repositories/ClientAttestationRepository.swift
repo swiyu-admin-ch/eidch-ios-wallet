@@ -11,7 +11,7 @@ import Spyable
 // MARK: - ClientAttestationRepositoryProtocol
 
 @Spyable
-public protocol ClientAttestationRepositoryProtocol {
+public protocol ClientAttestationRepositoryProtocol: Sendable {
   func get(using context: LAContextProtocol) async throws -> ClientAttestation
   func create(_ clientAttestation: ClientAttestation) async throws -> ClientAttestation
   func delete() throws

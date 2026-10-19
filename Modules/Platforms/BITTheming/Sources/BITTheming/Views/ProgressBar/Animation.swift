@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - AnimationStep
 
-public struct AnimationStep {
+public struct AnimationStep: Sendable {
 
   // MARK: Lifecycle
 
@@ -25,7 +25,7 @@ public struct AnimationStep {
 
 // MARK: - AnimationConfiguration
 
-public struct AnimationConfiguration {
+public struct AnimationConfiguration: Sendable {
 
   // MARK: Lifecycle
 
@@ -58,7 +58,7 @@ public struct AnimationConfiguration {
 
 // MARK: - AnimationSequence
 
-public struct AnimationSequence {
+public struct AnimationSequence: Sendable {
 
   // MARK: Lifecycle
 

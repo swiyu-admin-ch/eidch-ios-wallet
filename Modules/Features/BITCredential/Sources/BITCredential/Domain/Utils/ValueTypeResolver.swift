@@ -5,7 +5,7 @@ import Spyable
 // MARK: - ValueTypeResolverProtocol
 
 @Spyable
-protocol ValueTypeResolverProtocol {
+protocol ValueTypeResolverProtocol: Sendable {
   func callAsFunction(_ value: Any?) -> ValueType?
 }
 

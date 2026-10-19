@@ -5,7 +5,7 @@ import Spyable
 // MARK: - ActivityServiceProtocol
 
 @Spyable
-public protocol ActivityServiceProtocol {
+public protocol ActivityServiceProtocol: Sendable {
   func create(_ activity: Activity, credentialId: UUID) throws
 }
 

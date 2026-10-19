@@ -221,7 +221,7 @@ extension CredentialDetailView {
       environment: credentialViewModel.environment,
       statusBadgeLabel: credentialViewModel.statusText,
       statusBadgeImage: credentialViewModel.statusImage,
-      statusBadgeStyle: credentialViewModel.cardStatusBadgeStyle,
+      statusBadgeStyle: credentialViewModel.statusBadgeStyle,
       style: credentialViewModel.cardStyle)
       .accessibilityElement(children: .combine)
       .accessibilityIdentifier(AccessibilityIdentifier.card.rawValue)

@@ -10,8 +10,8 @@ extension ErrorDataset {
 
   static func avBeamError(
     _ error: AVBeamError,
-    retryAction: @escaping (Navigator) -> Void,
-    closeAction: (() -> Void)? = nil)
+    retryAction: @escaping NavigatorAction,
+    closeAction: VoidAction? = nil)
     -> ErrorDataset
   {
     let contents = avBeamContents(for: error)
@@ -36,28 +36,24 @@ extension ErrorDataset {
 
   // MARK: Private
 
-  private static func criticalDataset(_ contents: [InformationView2.ContentType], _ close: (() -> Void)? = nil) -> ErrorDataset {
+  private static func criticalDataset(_ contents: [InformationView2.ContentType], _ close: VoidAction? = nil) -> ErrorDataset {
     ErrorDataset(contents, actions: [
       .primary(L10n.tkGlobalClose, { navigator in
         close?()
-        Task { @MainActor in
-          navigator.dismiss()
-        }
+        navigator.dismiss()
       }),
     ])
   }
 
-  private static func errorDataset(_ contents: [InformationView2.ContentType], _ action: ((Navigator) -> Void)? = nil) -> ErrorDataset {
+  private static func errorDataset(_ contents: [InformationView2.ContentType], _ action: NavigatorAction? = nil) -> ErrorDataset {
     ErrorDataset(contents, actions: [
       .primary(L10n.tkErrorGenericButtonPrimary, { navigator in
-        Task { @MainActor in
-          action?(navigator)
-        }
+        action?(navigator)
       }),
     ])
   }
 
-  private static func warningDataset(_ contents: [InformationView2.ContentType], _ retry: @escaping (Navigator) -> Void) -> ErrorDataset {
+  private static func warningDataset(_ contents: [InformationView2.ContentType], _ retry: @escaping NavigatorAction) -> ErrorDataset {
     ErrorDataset(contents, actions: [
       .primary(L10n.tkErrorGenericButtonPrimary, retry),
     ])

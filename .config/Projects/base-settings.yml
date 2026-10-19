@@ -8,7 +8,7 @@ targetTemplates:
         TARGETED_DEVICE_FAMILY: 1
         CODE_SIGN_STYLE: Manual
         SDKROOT: iphoneos
-        SWIFT_VERSION: 5.7
+        SWIFT_VERSION: 6.0
         ENABLE_TESTING_SEARCH_PATHS: YES
         ENABLE_BITCODE: NO
     preBuildScripts:

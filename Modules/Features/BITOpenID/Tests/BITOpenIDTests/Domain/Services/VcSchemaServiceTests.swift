@@ -11,11 +11,13 @@ final class VcSchemaServiceTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    repository = OpenIDRepositoryProtocolSpy()
-    sriValidator = SRIValidatorProtocolSpy()
+    let repository = OpenIDRepositoryProtocolSpy()
+    self.repository = repository
+    let sriValidator = SRIValidatorProtocolSpy()
+    self.sriValidator = sriValidator
 
-    Container.shared.openIDRepository.register { self.repository }
-    Container.shared.sriValidator.register { self.sriValidator }
+    Container.shared.openIDRepository.register { repository }
+    Container.shared.sriValidator.register { sriValidator }
 
     service = VcSchemaService()
   }

@@ -12,7 +12,9 @@ enum RequestObjectJWSError: Error {
 
 // MARK: - RequestObjectJWT
 
-public class RequestObjectJWT: RequestObject, JWT {
+/// Inherits `RequestObject`, so a checked `Sendable` conformance is not expressible. Every stored
+/// property is `let` and the KMP-backed `dcqlQuery` is never mutated after decoding.
+public final class RequestObjectJWT: RequestObject, JWT, @unchecked Sendable {
 
   // MARK: Lifecycle
 

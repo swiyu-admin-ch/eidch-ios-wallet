@@ -4,7 +4,7 @@ import Spyable
 
 
 @Spyable
-public protocol UpdateEIDRequestCaseStatusUseCaseProtocol {
+public protocol UpdateEIDRequestCaseStatusUseCaseProtocol: Sendable {
   func execute(_ requestCaseIds: [String]) async throws
 
   @discardableResult

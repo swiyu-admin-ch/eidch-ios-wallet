@@ -5,7 +5,7 @@ import Spyable
 // MARK: - PresentationRequestUrlParserProtocol
 
 @Spyable
-protocol PresentationRequestUrlParserProtocol {
+protocol PresentationRequestUrlParserProtocol: Sendable {
   func parse(_ url: URL) throws -> PresentationRequestUrl
 }
 

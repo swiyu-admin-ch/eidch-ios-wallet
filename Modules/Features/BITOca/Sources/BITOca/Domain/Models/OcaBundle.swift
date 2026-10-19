@@ -8,7 +8,7 @@ public typealias DataSourceFormat = String
 // MARK: - OcaBundle
 
 /// Represents an OCA Bundle that contains Capture Bases and Overlays associated with a data source.
-public struct OcaBundle {
+public struct OcaBundle: Sendable {
 
   // MARK: Lifecycle
 

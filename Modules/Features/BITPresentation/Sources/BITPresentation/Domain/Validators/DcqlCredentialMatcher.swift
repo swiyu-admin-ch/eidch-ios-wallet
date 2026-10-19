@@ -55,7 +55,7 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
       guard !requestedPaths.isEmpty else {
         continue
       }
-      let presentingPaths = try getPresentingPaths(for: requestedPaths, payload: match.credentialPayload, format: credential.format)
+      let presentingPaths = try await getPresentingPaths(for: requestedPaths, payload: match.credentialPayload, format: credential.format)
       let compatibleCredential = CompatibleCredential(
         credential: credential,
         presentingPaths: presentingPaths,
@@ -77,8 +77,8 @@ struct DcqlCredentialMatcher: DcqlCredentialMatcherProtocol {
     }
   }
 
-  private func getPresentingPaths(for requestedPaths: [ClaimsPathPointer], payload: String, format: CredentialFormat) throws -> [ClaimsPathPointer] {
-    let anyCredential = try createAnyCredentialUseCase.execute(from: Data(payload.utf8), format: format)
+  private func getPresentingPaths(for requestedPaths: [ClaimsPathPointer], payload: String, format: CredentialFormat) async throws -> [ClaimsPathPointer] {
+    let anyCredential = try await createAnyCredentialUseCase.execute(from: Data(payload.utf8), format: format)
     return anyCredential.getPresentingPaths(for: requestedPaths)
   }
 

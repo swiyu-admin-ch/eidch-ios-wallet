@@ -29,7 +29,7 @@ struct JsonSchemaValidator: JsonSchemaValidatorProtocol {
 /// Providing functionality for working with JSON Schemas
 /// https://json-schema.org/draft/2020-12/release-notes
 @Spyable
-public protocol JsonSchemaValidatorProtocol {
+public protocol JsonSchemaValidatorProtocol: Sendable {
 
   /// Validates the provided JSON object against the given JSON Schema
   ///

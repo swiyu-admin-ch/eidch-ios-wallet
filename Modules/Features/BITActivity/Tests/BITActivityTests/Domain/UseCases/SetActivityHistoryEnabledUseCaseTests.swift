@@ -39,7 +39,8 @@ final class SetActivityHistoryEnabledUseCaseTests: XCTestCase {
   private var useCase: SetActivityHistoryEnabledUseCase!
 
   private func registerMocks() {
-    repositorySpy = ActivityRepositoryProtocolSpy()
-    Container.shared.activityRepository.register { self.repositorySpy }
+    let repositorySpy = ActivityRepositoryProtocolSpy()
+    self.repositorySpy = repositorySpy
+    Container.shared.activityRepository.register { repositorySpy }
   }
 }

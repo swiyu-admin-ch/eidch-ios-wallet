@@ -2,7 +2,9 @@ import AnyCodable
 import BITSwiyuSharedKMP
 import Foundation
 
-public struct DcqlQuery: Codable, Equatable {
+/// `query` is a Kotlin Multiplatform class that cannot be annotated here. It is decoded once in
+/// `init(from:)` and never mutated afterwards, which is what makes the unchecked conformance sound.
+public struct DcqlQuery: Codable, Equatable, @unchecked Sendable {
 
   // MARK: Lifecycle
 

@@ -2,7 +2,7 @@ import BITCredential
 import BITCredentialShared
 import Foundation
 
-class LocalCredentialRepository: CredentialRepositoryProtocol {
+final class LocalCredentialRepository: CredentialRepositoryProtocol, @unchecked Sendable {
 
   // MARK: Lifecycle
 

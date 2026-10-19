@@ -10,17 +10,18 @@ final class NonComplianceDescriptionViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  override func setUp() async throws {
+    try await super.setUp()
     registerMocks()
-    createSuccessState()
     viewModel = NonComplianceDescriptionViewModel(initialValue: valueMock)
   }
 
-  func testInit_validValue_valueSetAndIsValid() {
-    viewModel = NonComplianceDescriptionViewModel(initialValue: valueMock)
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
 
+  func testInit_validValue_valueSetAndIsValid() {
     XCTAssertEqual(viewModel.value, valueMock)
     XCTAssertEqual(viewModel.validation, .valid)
   }
@@ -62,18 +63,15 @@ final class NonComplianceDescriptionViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  private var viewModel: NonComplianceDescriptionViewModel!
   private let valueMock = "value"
 
   private var nonComplianceFormValidatorSpy: NonComplianceFormValidatorProtocolSpy!
+  private var viewModel: NonComplianceDescriptionViewModel!
 
   private func registerMocks() {
-    nonComplianceFormValidatorSpy = NonComplianceFormValidatorProtocolSpy()
-
-    Container.shared.nonComplianceFormValidator.register { @MainActor in self.nonComplianceFormValidatorSpy }
-  }
-
-  private func createSuccessState() {
+    let nonComplianceFormValidatorSpy = NonComplianceFormValidatorProtocolSpy()
+    self.nonComplianceFormValidatorSpy = nonComplianceFormValidatorSpy
     nonComplianceFormValidatorSpy.validateForReturnValue = .valid
+    Container.shared.nonComplianceFormValidator.register { @MainActor in nonComplianceFormValidatorSpy }
   }
 }

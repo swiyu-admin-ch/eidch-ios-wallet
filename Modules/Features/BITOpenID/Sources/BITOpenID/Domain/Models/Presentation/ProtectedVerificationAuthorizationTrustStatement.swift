@@ -13,7 +13,7 @@ public typealias ProtectedVerificationAuthorizationTrustStatement = JWS<Protecte
 
 // MARK: - ProtectedVerificationAuthorizationTrustStatementJWT
 
-public struct ProtectedVerificationAuthorizationTrustStatementJWT: TrustStatementJWT, Equatable {
+public struct ProtectedVerificationAuthorizationTrustStatementJWT: TrustStatementJWT, Equatable, Sendable {
 
   public var type: String? = "swiyu-protected-verification-authorization-trust-statement+jwt"
 

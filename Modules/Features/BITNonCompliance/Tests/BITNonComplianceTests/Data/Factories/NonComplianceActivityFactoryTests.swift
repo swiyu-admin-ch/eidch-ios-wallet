@@ -1,47 +1,47 @@
-// swiftlint: disable implicitly_unwrapped_optional
 import Factory
-import XCTest
+import FactoryTesting
+import Foundation
+import Testing
 @testable import BITDataStore
 @testable import BITEntities
 @testable import BITNonCompliance
 
-final class NonComplianceActivityFactoryTests: XCTestCase {
+// MARK: - NonComplianceActivityFactoryTests
 
-  // MARK: Internal
+@MainActor
+@Suite(.container)
+struct NonComplianceActivityFactoryTests {
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
+  // MARK: Lifecycle
+
+  init() {
     Container.shared.configureInMemoryDataStore()
     factory = NonComplianceActivityFactory()
   }
 
-  func testCallAsFunction_success() throws {
-    let activityEntity = try CredentialActivityEntity.Mock.create(nonComplianceData: Self.nonComplianceDataMock, createdAt: Self.createdAtMock, createParent: false)
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(issuer: Self.issuerMock)
-    _ = try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential, activities: [activityEntity])
+  // MARK: Internal
+
+  @Test
+  func callAsFunction_success() throws {
+    let activityEntity = try CredentialActivityEntity.Mock.create(
+      nonComplianceData: Self.nonComplianceDataMock,
+      createdAt: Self.createdAtMock,
+      issuer: Self.issuerMock,
+      createParent: false)
 
     let activity = try factory(activityEntity)
 
-    XCTAssertEqual(activity.nonComplianceData, Self.nonComplianceDataMock)
-    XCTAssertEqual(activity.createdAt, Self.createdAtMock)
-    XCTAssertEqual(activity.issuer, Self.issuerMock)
+    #expect(activity.nonComplianceData == Self.nonComplianceDataMock)
+    #expect(activity.createdAt == Self.createdAtMock)
+    #expect(activity.issuer == Self.issuerMock)
   }
 
-  func testCallAsFunction_noCredential_throwsError() throws {
+  @Test
+  func callAsFunction_noIssuer_throws() throws {
     let activity = try CredentialActivityEntity.Mock.create(createParent: false)
 
-    XCTAssertThrowsError(try factory(activity)) { error in
-      XCTAssertEqual(error as? NonComplianceActivityFactoryError, .credentialNotFound)
-    }
-  }
-
-  func testCallAsFunction_noVerifiableCredential_throwsError() throws {
-    let activity = try CredentialActivityEntity.Mock.create(createParent: false)
-    _ = try CredentialEntity.Mock.create(verifiableCredential: nil, activities: [activity])
-
-    XCTAssertThrowsError(try factory(activity)) { error in
-      XCTAssertEqual(error as? NonComplianceActivityFactoryError, .credentialNotFound)
+    #expect(throws: NonComplianceActivityFactoryError.issuerNotFound) {
+      _ = try factory(activity)
     }
   }
 
@@ -51,5 +51,5 @@ final class NonComplianceActivityFactoryTests: XCTestCase {
   private static let createdAtMock = Date()
   private static let nonComplianceDataMock = "nonComplianceData"
 
-  private var factory: NonComplianceActivityFactory!
+  private let factory: NonComplianceActivityFactory
 }

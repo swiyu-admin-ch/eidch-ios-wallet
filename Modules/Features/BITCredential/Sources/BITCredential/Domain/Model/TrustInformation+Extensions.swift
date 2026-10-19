@@ -32,7 +32,7 @@ extension ActorCompliance {
   public var nonComplianceReasonDisplays: [NonComplianceReasonDisplay] {
     guard case .notCompliant(let reason) = self else { return [] }
     return reason?.getAllDisplays().map {
-      NonComplianceReasonDisplay(locale: $0.key, value: $0.value)
+      NonComplianceReasonDisplay(locale: $0.key, reason: $0.value)
     } ?? []
   }
 }

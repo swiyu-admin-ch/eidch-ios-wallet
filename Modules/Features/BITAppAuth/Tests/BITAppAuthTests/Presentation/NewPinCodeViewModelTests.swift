@@ -8,24 +8,6 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  // swiftlint:disable all
-  var router = ChangePinRouterMock()
-
-  // swiftlint:enable all
-
-  @MainActor
-  override func setUp() {
-    super.setUp()
-
-    router = ChangePinRouterMock()
-    router.context.uniquePassphrase = "123456".data(using: .utf8)
-
-    validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
-
-    Container.shared.pinCodeMinimumSize.register { 6 }
-    Container.shared.validatePinCodeRuleUseCase.register { @MainActor in self.validatePinCodeRuleUseCase }
-  }
-
   override func tearDown() {
     super.tearDown()
     Container.shared.reset()
@@ -33,7 +15,8 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testInitialState() {
-    let viewModel = NewPinCodeViewModel(router: router)
+    let (_, viewModel, _) = makeSUT()
+
     XCTAssertTrue(viewModel.pinCode.isEmpty)
     XCTAssertNil(viewModel.toast)
     XCTAssertEqual(viewModel.inputFieldMessage, L10n.tkOnboardingCharactersSubtitle)
@@ -46,7 +29,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_success() {
-    let viewModel = NewPinCodeViewModel(router: router)
+    let (router, viewModel, validatePinCodeRuleUseCase) = makeSUT()
 
     viewModel.submit()
 
@@ -61,8 +44,8 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_error() {
+    let (router, viewModel, validatePinCodeRuleUseCase) = makeSUT()
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
-    let viewModel = NewPinCodeViewModel(router: router)
 
     viewModel.submit()
 
@@ -77,6 +60,7 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
   @MainActor
   func testPinCode_didRequestValidation() {
+    let (router, _, validatePinCodeRuleUseCase) = makeSUT()
     validatePinCodeRuleUseCase.callAsFunctionThrowableError = PinCodeError.tooShort
     let viewModel = Container.shared.newPinCodeViewModel(router)
 
@@ -112,7 +96,16 @@ final class NewPinCodeViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint:disable all
-  private var validatePinCodeRuleUseCase: ValidatePinCodeRuleUseCaseProtocolSpy!
-  // swiftlint:enable all
+  @MainActor
+  private func makeSUT() -> (ChangePinRouterMock, NewPinCodeViewModel, ValidatePinCodeRuleUseCaseProtocolSpy) {
+    let router = ChangePinRouterMock()
+    router.context.uniquePassphrase = "123456".data(using: .utf8)
+
+    let validatePinCodeRuleUseCase = ValidatePinCodeRuleUseCaseProtocolSpy()
+    Container.shared.pinCodeMinimumSize.register { 6 }
+    Container.shared.validatePinCodeRuleUseCase.register { @MainActor in validatePinCodeRuleUseCase }
+
+    let viewModel = NewPinCodeViewModel(router: router)
+    return (router, viewModel, validatePinCodeRuleUseCase)
+  }
 }

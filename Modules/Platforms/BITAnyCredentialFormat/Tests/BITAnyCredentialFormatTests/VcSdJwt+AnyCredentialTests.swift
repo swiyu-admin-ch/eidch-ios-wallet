@@ -6,8 +6,26 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
 
   // MARK: Internal
 
+  func testFormat_vcSdJwt_returnsVcSdJwt() {
+    let jws = VcSdJWS.Mock.create(type: "vc+sd-jwt")
+
+    XCTAssertEqual(jws.format, .vcSdJwt)
+  }
+
+  func testFormat_dcSdJwt_returnsDcSdJwt() {
+    let jws = VcSdJWS.Mock.create(type: "dc+sd-jwt")
+
+    XCTAssertEqual(jws.format, .dcSdJwt)
+  }
+
+  func testFormat_unknown_returnsDcSdJwt() {
+    let jws = VcSdJWS.Mock.create(type: "unknown")
+
+    XCTAssertEqual(jws.format, .dcSdJwt)
+  }
+
   func testBusinessExpiryDate_pastDate_returnsValidDate() throws {
-    let jws = makeJws(expiryDate: "2020-01-01")
+    let jws = VcSdJWS.Mock.create(expiryDate: "2020-01-01")
 
     let businessExpiryDate = try XCTUnwrap(jws.businessExpiryDate)
 
@@ -15,7 +33,7 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
   }
 
   func testBusinessExpiryDate_futureDate_returnsValidDate() throws {
-    let jws = makeJws(expiryDate: "2099-12-31")
+    let jws = VcSdJWS.Mock.create(expiryDate: "2099-12-31")
 
     let businessExpiryDate = try XCTUnwrap(jws.businessExpiryDate)
 
@@ -29,13 +47,13 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
   }
 
   func testBusinessExpiryDate_invalidFormat_returnsNil() {
-    let jws = makeJws(expiryDate: "01-01-2020")
+    let jws = VcSdJWS.Mock.create(expiryDate: "01-01-2020")
 
     XCTAssertNil(jws.businessExpiryDate)
   }
 
   func testBusinessExpiryDate_invalidValue_returnsNil() {
-    let jws = makeJws(expiryDate: "not-a-date")
+    let jws = VcSdJWS.Mock.create(expiryDate: "not-a-date")
 
     XCTAssertNil(jws.businessExpiryDate)
   }
@@ -71,21 +89,6 @@ final class VcSdJwtAnyCredentialTests: XCTestCase {
   private let claimValue1Mock = "test_value_1"
   private let claimKey2Mock = "test_key_2"
   private let claimValue2Mock = "test_value_2"
-
-  private func makeJws(expiryDate: String) -> VcSdJWS {
-    let base = VcSdJWS.Mock.sample
-    var resolvedJSON = base.resolvedJSON
-    resolvedJSON["expiry_date"] = expiryDate
-    return VcSdJWS(
-      jws: base,
-      payload: base.resolvedPayload,
-      resolvedJSON: resolvedJSON,
-      rawSdJWS: base.rawSdJWS,
-      digestAlgorithm: base.digestAlgorithm,
-      disclosures: base.disclosures,
-      rawKeyBinding: base.rawKeyBinding,
-      keyIdentifierDid: base.keyIdentifierDid)
-  }
 
   private func expectedBusinessExpiryDate(from dateString: String) -> Date? {
     let formatter = DateFormatter()

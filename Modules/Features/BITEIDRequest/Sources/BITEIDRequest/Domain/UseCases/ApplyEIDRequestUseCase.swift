@@ -6,7 +6,7 @@ import Spyable
 
 
 @Spyable
-protocol ApplyEIDRequestUseCaseProtocol {
+protocol ApplyEIDRequestUseCaseProtocol: Sendable {
   func callAsFunction(scanDocumentOutput: ScanDocumentOutput, hasLegalRepresentant: Bool) async throws -> EIDRequestCase
 }
 

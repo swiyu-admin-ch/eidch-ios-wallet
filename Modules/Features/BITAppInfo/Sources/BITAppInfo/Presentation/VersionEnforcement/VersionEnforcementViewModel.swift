@@ -3,6 +3,7 @@ import Factory
 import Foundation
 import UIKit
 
+@MainActor
 @Observable
 class VersionEnforcementViewModel {
 

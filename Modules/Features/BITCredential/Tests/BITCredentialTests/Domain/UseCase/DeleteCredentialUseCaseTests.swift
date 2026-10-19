@@ -9,9 +9,10 @@ final class DeleteCredentialUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    credentialRepository = CredentialRepositoryProtocolSpy()
+    let credentialRepository = CredentialRepositoryProtocolSpy()
+    self.credentialRepository = credentialRepository
 
-    Container.shared.credentialRepository.register { self.credentialRepository }
+    Container.shared.credentialRepository.register { credentialRepository }
 
     useCase = DeleteCredentialUseCase()
   }

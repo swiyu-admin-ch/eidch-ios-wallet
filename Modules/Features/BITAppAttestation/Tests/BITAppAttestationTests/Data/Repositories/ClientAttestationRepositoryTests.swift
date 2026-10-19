@@ -98,16 +98,21 @@ final class ClientAttestationRepositoryTests: XCTestCase {
   private var clientAttestationValidator: ClientAttestationValidatorProtocolSpy!
 
   private func registerMocks() {
-    context = LAContextProtocolSpy()
-    appAttestationProvider = AppAttestationProviderProtocolSpy()
-    attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
-    appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
-    clientAttestationValidator = ClientAttestationValidatorProtocolSpy()
+    let context = LAContextProtocolSpy()
+    let appAttestationProvider = AppAttestationProviderProtocolSpy()
+    let attestationServiceRepository = AttestationServiceRepositoryProtocolSpy()
+    let appAttestationKeyRepository = AppAttestationKeyRepositoryProtocolSpy()
+    let clientAttestationValidator = ClientAttestationValidatorProtocolSpy()
+    self.context = context
+    self.appAttestationProvider = appAttestationProvider
+    self.attestationServiceRepository = attestationServiceRepository
+    self.appAttestationKeyRepository = appAttestationKeyRepository
+    self.clientAttestationValidator = clientAttestationValidator
 
-    Container.shared.appAttestationProvider.register { self.appAttestationProvider }
-    Container.shared.attestationServiceRepository.register { self.attestationServiceRepository }
-    Container.shared.appAttestationKeyRepository.register { self.appAttestationKeyRepository }
-    Container.shared.clientAttestationValidator.register { self.clientAttestationValidator }
+    Container.shared.appAttestationProvider.register { appAttestationProvider }
+    Container.shared.attestationServiceRepository.register { attestationServiceRepository }
+    Container.shared.appAttestationKeyRepository.register { appAttestationKeyRepository }
+    Container.shared.clientAttestationValidator.register { clientAttestationValidator }
   }
 
   private func createSuccessState() {

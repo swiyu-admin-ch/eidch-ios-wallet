@@ -4,7 +4,7 @@ import Spyable
 // MARK: - KeyManagerProtocol
 
 @Spyable
-public protocol KeyManagerProtocol {
+public protocol KeyManagerProtocol: Sendable {
   @discardableResult
   func generateKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, options: VaultOptions, query: Query?) throws -> VaultKeyPair
   func getKeyPair(withIdentifier identifier: String, algorithm: VaultAlgorithm, query: Query?) throws -> VaultKeyPair

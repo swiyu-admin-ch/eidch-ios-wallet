@@ -231,8 +231,9 @@ final class SdJWSTests: XCTestCase {
   private var sdJws: SdJWS<FlatJWT>!
 
   private func registerMocks() {
-    didResolverHelperSpy = DidResolverHelperProtocolSpy()
-    Container.shared.didResolverHelper.register { self.didResolverHelperSpy }
+    let didResolverHelperSpy = DidResolverHelperProtocolSpy()
+    self.didResolverHelperSpy = didResolverHelperSpy
+    Container.shared.didResolverHelper.register { didResolverHelperSpy }
   }
 
   private func success() {

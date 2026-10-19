@@ -6,7 +6,7 @@ import Spyable
 // MARK: - OverlayAttributeDateParserProtocol
 
 @Spyable
-protocol OverlayAttributeDateParserProtocol {
+protocol OverlayAttributeDateParserProtocol: Sendable {
   func parse(_ dateString: String, with ocaAttribute: OverlayBundleAttribute) -> DateParserResult?
 }
 
@@ -28,6 +28,7 @@ struct OverlayAttributeDateParser: OverlayAttributeDateParserProtocol {
 
   private func parseISO8601(_ dateString: String) -> DateParserResult? {
     let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .gregorian)
     formatter.timeZone = .gmt
 
     for format in DateFormat.allCases {

@@ -9,7 +9,7 @@ import Spyable
 // MARK: - ClientAttestationValidatorProtocol
 
 @Spyable
-protocol ClientAttestationValidatorProtocol {
+protocol ClientAttestationValidatorProtocol: Sendable {
   func callAsFunction(_ clientAttestation: ClientAttestation) async -> Bool
 }
 

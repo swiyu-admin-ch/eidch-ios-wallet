@@ -5,14 +5,14 @@ import Foundation
 
 // MARK: - ClusterItem
 
-public protocol ClusterItem {
+public protocol ClusterItem: Sendable {
   var id: UUID { get }
   var order: Int { get }
 }
 
 // MARK: - CredentialClaimCluster
 
-public struct CredentialClaimCluster: Codable, ClusterItem {
+public struct CredentialClaimCluster: Codable, ClusterItem, Sendable {
 
   // MARK: Lifecycle
 

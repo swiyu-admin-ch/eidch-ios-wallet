@@ -9,9 +9,10 @@ final class GetEIDRequestCaseListUseCaseTests: XCTestCase {
   // MARK: Internal
 
   override func setUp() {
-    repository = EIDRequestCaseRepositoryProtocolSpy()
+    let repository = EIDRequestCaseRepositoryProtocolSpy()
+    self.repository = repository
 
-    Container.shared.eIDRequestCaseRepository.register { self.repository }
+    Container.shared.eIDRequestCaseRepository.register { repository }
   }
 
   func testExecuteSucces() async throws {

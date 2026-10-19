@@ -57,12 +57,9 @@ extension CredentialEntity {
     } else {
       authentication = CredentialAuthenticationEntity(credential.authentication)
     }
-    let issuerDisplayEntities = credential.issuerDisplays.map(CredentialIssuerDisplayEntity.init)
-    issuerDisplays.replaceWithUpserted(issuerDisplayEntities, in: realm)
-    let displayEntities = credential.displays.map(CredentialDisplayEntity.init)
-    displays.replaceWithUpserted(displayEntities, in: realm)
+    credentialRendering = CredentialRenderingEntity(credential).resolvedByContentHash(in: realm)
     rawCredentialData = credential.rawCredentialData
       .map(RawCredentialDataEntity.init)
-      .map { $0.upserted(in: realm) }
+      .map { $0.resolvedByContentHash(in: realm) }
   }
 }

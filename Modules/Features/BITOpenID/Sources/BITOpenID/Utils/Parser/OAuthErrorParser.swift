@@ -5,7 +5,7 @@ import Spyable
 // MARK: - OAuthErrorParserProtocol
 
 @Spyable
-protocol OAuthErrorParserProtocol {
+protocol OAuthErrorParserProtocol: Sendable {
   func parse(_ error: Error) -> Error
 }
 

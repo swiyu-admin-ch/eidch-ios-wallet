@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - ActivityListItem
 
-public struct ActivityListItem: Identifiable, Codable, Equatable {
+public struct ActivityListItem: Identifiable, Codable, Equatable, Sendable {
 
   // MARK: Public
 

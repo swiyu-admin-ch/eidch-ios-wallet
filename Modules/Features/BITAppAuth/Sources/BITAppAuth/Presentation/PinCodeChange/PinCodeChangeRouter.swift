@@ -6,6 +6,7 @@ import UIKit
 
 // MARK: - ChangePinCodeRouterRoutes
 
+@MainActor
 public protocol ChangePinCodeRouterRoutes: ClosableRoutes, LoginRoutes, ChangePinCodeRoutes {}
 
 // MARK: - ChangePinCodeRouter

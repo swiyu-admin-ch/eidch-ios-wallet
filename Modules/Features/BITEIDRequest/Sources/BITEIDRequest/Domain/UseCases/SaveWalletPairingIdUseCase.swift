@@ -5,7 +5,7 @@ import Spyable
 // MARK: - SaveWalletPairingIdUseCaseProtocol
 
 @Spyable
-protocol SaveWalletPairingIdUseCaseProtocol {
+protocol SaveWalletPairingIdUseCaseProtocol: Sendable {
   func callAsFunction(_ pairingId: String, forRequestCase: String) async throws
 }
 

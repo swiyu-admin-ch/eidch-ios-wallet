@@ -125,6 +125,62 @@ struct ActorIdentityValidatorTests {
   }
 
   @Test
+  func validate_externalActorTrust1_0_throwsUnknownRegistry() async {
+    didResolverHelperSpy.getDidFromReturnValue = externalActorDidMock
+    let validator = makeValidator(isActorIdentityValidationEnabled: true)
+
+    await #expect(throws: GovernanceError.unknownRegistry) {
+      try await validator.validate(metadataJwsWithoutIdentityTrustStatementMock)
+    }
+
+    #expect(trustStatementServiceSpy.fetchIdentityForCallsCount == 0)
+    #expect(analyticsProvider.logCounter == 1)
+  }
+
+  @Test
+  func validateIdentityTrustStatement_validIdentityTrustStatement_validates() async throws {
+    let validator = makeValidator(isActorIdentityValidationEnabled: true)
+
+    try await validator.validate(identityTrustStatementMock, for: actorDidMock)
+
+    #expect(trustStatementValidatorSpy.validateForCallsCount == 1)
+    #expect(analyticsProvider.logCounter == 0)
+  }
+
+  @Test
+  func validateIdentityTrustStatement_externalActor_throwsUnknownRegistry() async {
+    let validator = makeValidator(isActorIdentityValidationEnabled: true)
+
+    await #expect(throws: GovernanceError.unknownRegistry) {
+      try await validator.validate(identityTrustStatementMock, for: externalActorDidMock)
+    }
+
+    #expect(trustStatementValidatorSpy.validateForCallsCount == 0)
+    #expect(analyticsProvider.logCounter == 1)
+  }
+
+  @Test
+  func validateIdentityTrustStatement_noIdTS_fetchesTP1_0() async throws {
+    trustStatementServiceSpy.fetchIdentityForReturnValue = IdentityTrustStatementV1JWT.Mock.validSample
+    let validator = makeValidator(isActorIdentityValidationEnabled: true)
+
+    try await validator.validate(nil, for: actorDidMock)
+
+    #expect(trustStatementServiceSpy.fetchIdentityForCallsCount == 1)
+    #expect(analyticsProvider.logCounter == 0)
+  }
+
+  @Test
+  func validateIdentityTrustStatement_trustServiceThrows_throwsUnverifiedActor() async throws {
+    trustStatementServiceSpy.fetchIdentityForThrowableError = TestingError.error
+    let validator = makeValidator(isActorIdentityValidationEnabled: true)
+
+    await #expect(throws: GovernanceError.unverifiedActor) {
+      try await validator.validate(nil, for: actorDidMock)
+    }
+  }
+
+  @Test
   func validate_matchingCredentialIssuerDid_validates() throws {
     let validator = makeValidator(isActorIdentityValidationEnabled: true)
 
@@ -184,6 +240,8 @@ struct ActorIdentityValidatorTests {
     metadata.identityTrustStatement = nil
     return CredentialIssuerMetadataJWT.Mock.createJWS(from: metadata)
   }()
+
+  private let identityTrustStatementMock = IdentityTrustStatementJWT.Mock.validSample
 
   private let actorDidMock = "did:example:actor"
   private let externalActorDidMock = "did:example:external"

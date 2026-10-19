@@ -43,20 +43,20 @@ struct PinCodeRepository: PinCodeSecretStoreProtocol {
     case unavailableData
   }
 
-  private enum SecretConfiguration {
-    static let protection: CFString = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-  }
-
   @Injected(\.secretManager) private var secretManager: SecretManagerProtocol
   @Injected(\.appPepperKeyRepository) private var appPepperKeyRepository: AppPepperKeyRepositoryProtocol
   @Injected(\.appPinSaltLength) private var appPinSaltLength: Int
   @Injected(\.pepperKeyInitialVectorLength) private var pepperKeyInitialVectorLength: Int
 
+  private var protection: CFString {
+    kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+  }
+
   private func setPepperInitialVector(_ initialVector: Data) throws {
     let query = try QueryBuilder()
       .setService(Key.authenticationService)
       .setAccessControlFlags([])
-      .setProtection(SecretConfiguration.protection)
+      .setProtection(protection)
       .build()
 
     try secretManager.set(initialVector, forKey: Key.pepperInitialVectorIdentifier, query: query)
@@ -78,7 +78,7 @@ struct PinCodeRepository: PinCodeSecretStoreProtocol {
     let query = try QueryBuilder()
       .setService(Key.authenticationService)
       .setAccessControlFlags([])
-      .setProtection(SecretConfiguration.protection)
+      .setProtection(protection)
       .build()
 
     try secretManager.set(salt, forKey: Key.saltAppPinIdentifier, query: query)

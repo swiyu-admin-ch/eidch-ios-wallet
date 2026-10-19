@@ -4,6 +4,7 @@
 RESET := \033[0m
 GREEN := \033[0;32m
 BLUE := \033[0;34m
+RED := \033[0;31m
 
 # Main setup target
 setup: .install-mise .configure-mise .install-mise-tools .install-git-hooks .configure-xcode .bundler .list-tools .list-tasks .warm generate
@@ -11,35 +12,34 @@ setup: .install-mise .configure-mise .install-mise-tools .install-git-hooks .con
 	@printf "$(BLUE)=> Opening up swiyu$(RESET)\n"
 	@printf "$(BLUE)=> Note: From now on, you can simply use make to open the project$(RESET)\n"
 
-setup-ci: .install-mise-github-action .install-mise-tools
+setup-ci: .install-mise .install-mise-tools
 	@printf "$(GREEN)=> Setup CI completed successfully!$(RESET)\n"
 
-# Check if mise is installed, install if not
+# Check if mise is installed, install it with Homebrew if not
 .install-mise:
 	@if command -v mise >/dev/null 2>&1; then \
 		printf "$(BLUE)=> Mise is already installed, skipping installation$(RESET)\n"; \
 		mise self-update -y || true; \
-	else \
-		printf "$(GREEN)=> Installing mise$(RESET)\n"; \
-		curl https://mise.run | sh; \
-		echo 'eval "$$(~/.local/bin/mise activate zsh)"' >> ~/.zshrc; \
-		exec zsh; \
-		mise doctor; \
+	elif command -v brew >/dev/null 2>&1; then \
+		printf "$(GREEN)=> Installing mise with Homebrew$(RESET)\n"; \
+		brew install mise; \
+		shell_name=$$(basename "$${SHELL:-/bin/zsh}"); \
+		case "$$shell_name" in \
+			zsh|bash) \
+				rc="$$HOME/.$${shell_name}rc"; \
+				grep -qs 'mise activate' "$$rc" || echo 'eval "$$(mise activate '"$$shell_name"')"' >> "$$rc"; \
+				printf "$(BLUE)=> Mise activation added to $$rc, run 'exec $$shell_name' to apply it$(RESET)\n"; \
+				;; \
+			*) \
+				printf "$(BLUE)=> Add 'mise activate $$shell_name' to your shell config to activate mise$(RESET)\n"; \
+				;; \
+		esac; \
+		mise doctor || true; \
 		printf "$(GREEN)=> Mise installed successfully!$(RESET)\n"; \
-	fi
-
-# Check if mise is installed, install if not
-.install-mise-github-action:
-	@if command -v mise >/dev/null 2>&1; then \
-		printf "$(BLUE)=> Mise is already installed, skipping installation$(RESET)\n"; \
-		mise self-update -y || true; \
 	else \
-		printf "$(GREEN)=> Installing mise$(RESET)\n"; \
-		curl https://mise.run | sh; \
-		echo 'eval "$$(~/.local/bin/mise activate bash)"' >> ~/.bashrc; \
-		exec bash; \
-		mise doctor; \
-		printf "$(GREEN)=> Mise installed successfully!$(RESET)\n"; \
+		printf "$(RED)=> Homebrew is required to install mise automatically.$(RESET)\n"; \
+		printf "$(RED)=> Install Homebrew (https://brew.sh) or mise (https://mise.jdx.dev/installing-mise.html), then run make setup again.$(RESET)\n"; \
+		exit 1; \
 	fi
 
 # Configure mise settings

@@ -1,6 +1,6 @@
-// swiftlint:disable implicitly_unwrapped_optional force_unwrapping
 import Factory
-import XCTest
+import Foundation
+import Testing
 @testable import BITActivity
 @testable import BITCredential
 @testable import BITCredentialShared
@@ -8,52 +8,101 @@ import XCTest
 @testable import BITPresentation
 @testable import BITTestingCore
 
-final class ActivityPresentationTests: XCTestCase {
+// MARK: - ActivityPresentationTests
+
+struct ActivityPresentationTests {
 
   // MARK: Internal
 
-  func testInit_plainRequestObject_mapsDataCorrectly() throws {
-    contextMock.requestObject.raw = Self.rawRequestObjectMock
+  enum RequestObjectKind: CaseIterable {
+    case plain
+    case jwt
 
-    let activity = try Activity(context: contextMock, credential: XCTUnwrap(contextMock.selectedCredential), type: .presentationAccepted)
-
-    assertActivity(
-      activity,
-      type: .presentationAccepted,
-      verifierDisplays: contextMock.verifierDisplays)
+    var activityType: ActivityType {
+      switch self {
+      case .plain: .presentationAccepted
+      case .jwt: .presentationDeclined
+      }
+    }
   }
 
-  func testInit_jwtPresentationRequest_nonComplianceDataIsRawJWS() throws {
-    let activity = try Activity(context: jwtContextMock, credential: XCTUnwrap(jwtContextMock.selectedCredential), type: .presentationDeclined)
+  @Test(arguments: RequestObjectKind.allCases)
+  func init_mapsDataCorrectly(requestObject: RequestObjectKind) throws {
+    let context = makeContext(requestObject)
+
+    let activity = try Activity(context: context, credential: #require(context.selectedCredential), type: requestObject.activityType)
 
     assertActivity(
       activity,
-      type: .presentationDeclined,
-      verifierDisplays: jwtContextMock.verifierDisplays)
+      type: requestObject.activityType,
+      verifierDisplays: context.verifierDisplays)
+  }
+
+  @Test
+  func init_severalBundleItems_snapshotsThePresentedOne() throws {
+    let credential = try makeCredential(presentedStatus: .revoked, otherStatus: .valid)
+    let presented = try #require(credential.presentableBundleItem)
+
+    let activity = Activity(context: contextMock, credential: CompatibleCredential(credential: credential, presentingPaths: []), type: .presentationAccepted)
+
+    #expect(activity.bundleItem?.statusListState == .revoked)
+    #expect(activity.bundleItem?.payload == presented.payload)
+  }
+
+  @Test
+  func init_noPresentableBundleItem_snapshotsNoBundleItem() {
+    var credential = VerifiableCredential.Mock.sample
+    credential.bundleItems = []
+
+    let activity = Activity(context: contextMock, credential: CompatibleCredential(credential: credential, presentingPaths: []), type: .presentationAccepted)
+
+    #expect(activity.bundleItem == nil)
   }
 
   // MARK: Private
 
-  private static let rawRequestObjectMock = "rawRequestObject".data(using: .utf8)!
+  private static let rawRequestObjectMock = Data("rawRequestObject".utf8)
 
   private let contextMock = PresentationRequestContext.Mock.vcSdJwtSample
   private let jwtContextMock = PresentationRequestContext(requestObjectJWS: RequestObjectJWS.Mock.sample, compatibleCredentials: [CompatibleCredential.Mock.BIT], trustInformation: .Mock.trustedIdentity)
 
+  private func makeContext(_ kind: RequestObjectKind) -> PresentationRequestContext {
+    switch kind {
+    case .plain:
+      contextMock.requestObject.raw = Self.rawRequestObjectMock
+      return contextMock
+    case .jwt:
+      return jwtContextMock
+    }
+  }
+
+  private func makeCredential(presentedStatus: CredentialStatus, otherStatus: CredentialStatus) throws -> VerifiableCredential {
+    var credential = VerifiableCredential.Mock.sample
+    var presented = try #require(credential.presentableBundleItem)
+    presented.status = presentedStatus
+    let other = BundleItem(payload: Data("other-token".utf8), status: otherStatus)
+    credential.bundleItems = [other, presented]
+    return credential
+  }
+
   private func assertActivity(_ activity: Activity, type: ActivityType, verifierDisplays: [VerifierDisplay]) {
-    XCTAssertEqual(activity.type, type)
-    XCTAssertEqual(activity.actorTrust, .trusted)
-    XCTAssertEqual(activity.vcSchemaTrust, .notProtected)
+    #expect(activity.type == type)
+    #expect(activity.actorTrust == .trusted)
+    #expect(activity.vcSchemaTrust == .notProtected)
 
-    XCTAssertEqual(activity.claims.count, 2)
-    let claimIds = activity.claims.map(\.credentialClaimId.uuidString)
-    XCTAssertTrue(claimIds.contains("416A2EC2-213B-438C-B9DA-47A2FF596A0C"))
-    XCTAssertTrue(claimIds.contains("649E6F22-464A-4879-A301-266F78A06921"))
+    #expect(activity.claims.count == 2)
+    let paths = activity.claims.map(\.path)
+    #expect(paths.contains("[\"firstName\"]"))
+    #expect(paths.contains("[\"lastName\"]"))
 
-    XCTAssertEqual(activity.actorDisplays.count, verifierDisplays.count)
+    #expect(activity.actorDisplays.count == verifierDisplays.count)
     for display in activity.actorDisplays {
-      let verifierDisplay = verifierDisplays.first { $0.locale == display.locale }!
-      XCTAssertEqual(display.name, verifierDisplay.name)
-      XCTAssertEqual(display.image, verifierDisplay.logo)
+      guard let verifierDisplay = verifierDisplays.first(where: { $0.locale == display.locale }) else {
+        Issue.record("Missing verifier display for locale \(String(describing: display.locale))")
+        continue
+      }
+      #expect(display.name == verifierDisplay.name)
+      #expect(display.image == verifierDisplay.logo)
     }
   }
 }

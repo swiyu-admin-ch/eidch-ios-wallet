@@ -3,7 +3,7 @@ import Foundation
 // MARK: - RegisteredClaimsJWT
 
 /// This class contains all registered claims which are specified by https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1
-public struct RegisteredClaimsJWT: JWT, Codable, Equatable {
+public struct RegisteredClaimsJWT: JWT, Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

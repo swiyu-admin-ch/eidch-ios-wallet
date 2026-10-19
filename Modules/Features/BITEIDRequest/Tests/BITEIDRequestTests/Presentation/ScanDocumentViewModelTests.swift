@@ -18,30 +18,37 @@ class ScanDocumentViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  override func setUp() {
-    super.setUp()
+  override func setUp() async throws {
+    try await super.setUp()
 
     Container.shared.reset()
 
-    context = EIDRequestContext()
-    avBeam = AVBeamProtocolSpy()
-    updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
-    updateEIDRequestCaseFilesUseCase = UpdateEIDRequestCaseFilesUseCaseProtocolSpy()
-    compareScanDocumentOutputUseCase = CompareScanDocumentOutputUseCaseProtocolSpy()
+    let context = EIDRequestContext()
+    self.context = context
+    let avBeam = AVBeamProtocolSpy()
+    self.avBeam = avBeam
+    let updateInputFileUseCase = UpdateInputFileUseCaseProtocolSpy()
+    self.updateInputFileUseCase = updateInputFileUseCase
+    let updateEIDRequestCaseFilesUseCase = UpdateEIDRequestCaseFilesUseCaseProtocolSpy()
+    self.updateEIDRequestCaseFilesUseCase = updateEIDRequestCaseFilesUseCase
+    let compareScanDocumentOutputUseCase = CompareScanDocumentOutputUseCaseProtocolSpy()
+    self.compareScanDocumentOutputUseCase = compareScanDocumentOutputUseCase
+    let appId = appId
 
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
-    Container.shared.avBeam.register { @MainActor in self.avBeam }
-    Container.shared.avBeamAppID.register { @MainActor in self.appId }
-    Container.shared.updateEIDRequestCaseFilesUseCase.register { @MainActor in self.updateEIDRequestCaseFilesUseCase }
-    Container.shared.compareScanDocumentOutputUseCase.register { @MainActor in self.compareScanDocumentOutputUseCase }
-    Container.shared.updateInputFileUseCase.register { @MainActor in self.updateInputFileUseCase }
+    Container.shared.eidRequestContext.register { @MainActor in context }
+    Container.shared.avBeam.register { @MainActor in avBeam }
+    Container.shared.avBeamAppID.register { @MainActor in appId }
+    Container.shared.updateEIDRequestCaseFilesUseCase.register { @MainActor in updateEIDRequestCaseFilesUseCase }
+    Container.shared.compareScanDocumentOutputUseCase.register { @MainActor in compareScanDocumentOutputUseCase }
+    Container.shared.updateInputFileUseCase.register { @MainActor in updateInputFileUseCase }
     Container.shared.eidRequestFlowCoordinator.register { @MainActor in EIDRequestFlowCoordinatorProtocolSpy() }
 
     success()
   }
 
-  override func tearDown() {
+  override func tearDown() async throws {
     Container.shared.reset()
+    try await super.tearDown()
   }
 
   func testInitialization_stateIsLoading() {
@@ -54,7 +61,6 @@ class ScanDocumentViewModelTests: XCTestCase {
     XCTAssertNotNil(avBeam.scanDocumentDelegate)
   }
 
-  @MainActor
   func testCancelInitialization_sdkIsStopped() {
     viewModel.cancelInitialization(Navigator(configuration: NavigationConfiguration()))
     XCTAssertEqual(avBeam.shutdownCallsCount, 1)
@@ -310,10 +316,11 @@ class ScanDocumentViewModelTests: XCTestCase {
   }
 
   func testDidCompleteScanDocument_videoRecordingRequired_routeToVideoRecording() async {
-    context = EIDRequestContext.Mock.documentRecordingSample
+    let context = EIDRequestContext.Mock.documentRecordingSample
     context.identityType = .identityCard
+    self.context = context
 
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = ScanDocumentViewModel()
 
     viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
@@ -330,10 +337,11 @@ class ScanDocumentViewModelTests: XCTestCase {
   }
 
   func testDidCompleteScanDocument_videoRecordingNotRequired_routeToSelfieVideo() async {
-    context = EIDRequestContext.Mock.sample
+    let context = EIDRequestContext.Mock.sample
     context.identityType = .identityCard
+    self.context = context
 
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = ScanDocumentViewModel()
 
     viewModel.didCompleteScanDocument(packageResult: .Mock.sample)
@@ -350,10 +358,11 @@ class ScanDocumentViewModelTests: XCTestCase {
   }
 
   func testDidCompleteScanDocument_videoRecordingNotRequiredComparisonDocumentsFails_routeToError() async {
-    context = EIDRequestContext.Mock.sample
+    let context = EIDRequestContext.Mock.sample
     context.identityType = .identityCard
+    self.context = context
 
-    Container.shared.eidRequestContext.register { @MainActor in self.context }
+    Container.shared.eidRequestContext.register { @MainActor in context }
     viewModel = ScanDocumentViewModel()
     compareScanDocumentOutputUseCase.callAsFunctionForWithReturnValue = false
 

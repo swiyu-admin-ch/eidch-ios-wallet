@@ -6,7 +6,7 @@ import SwiftUI
 
 extension ErrorDataset {
   enum NFC {
-    static func critical(_ error: AVBeamError, closeAction: @escaping () -> Void)
+    static func critical(_ error: AVBeamError, closeAction: @escaping VoidAction)
       -> ErrorDataset
     {
       ErrorDataset(
@@ -16,14 +16,12 @@ extension ErrorDataset {
             L10n.tkGlobalClose,
             { navigator in
               closeAction()
-              Task { @MainActor in
-                navigator.dismiss()
-              }
+              navigator.dismiss()
             }),
         ])
     }
 
-    static func retry(_ error: Error, _ retryAction: @escaping (Navigator) -> Void)
+    static func retry(_ error: Error, _ retryAction: @escaping NavigatorAction)
       -> ErrorDataset
     {
       ErrorDataset(
@@ -39,8 +37,8 @@ extension ErrorDataset {
 
     static func retryOrContinue(
       _ error: Error,
-      continueAction: @escaping (Navigator) -> Void,
-      retryAction: @escaping (Navigator) -> Void)
+      continueAction: @escaping NavigatorAction,
+      retryAction: @escaping NavigatorAction)
       -> ErrorDataset
     {
       ErrorDataset(

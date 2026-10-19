@@ -7,7 +7,7 @@ import Foundation
 
 @MainActor
 @Observable
-final class SubmitEIDRequestFilesViewModel {
+final class SubmitEIDRequestFilesViewModel: @unchecked Sendable {
 
   // MARK: Internal
 
@@ -139,8 +139,11 @@ final class SubmitEIDRequestFilesViewModel {
   }
 
   private func upload(_ file: EIDRequestCaseFile, caseId: String, authJwt: String) async {
-    let progressHandler: ProgressHandler = { [weak self] response in
-      self?.updateProgress(file.id, progress: Double(response.progress))
+    let progressHandler: ProgressHandler = { @Sendable [weak self] response in
+      let progress = Double(response.progress)
+      Task { @MainActor in
+        self?.updateProgress(file.id, progress: progress)
+      }
     }
 
     updateProgress(file.id, progress: 0.0)

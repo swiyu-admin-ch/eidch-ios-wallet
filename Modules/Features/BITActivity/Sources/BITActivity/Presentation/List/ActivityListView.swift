@@ -6,17 +6,17 @@ import SwiftUI
 
 // MARK: - ActivityListView
 
-public struct ActivityListView: View {
+struct ActivityListView: View {
 
   // MARK: Lifecycle
 
-  public init(credentialId: UUID) {
+  init(credentialId: UUID) {
     _viewModel = State(initialValue: Container.shared.activityListViewModel(credentialId))
   }
 
-  // MARK: Public
+  // MARK: Internal
 
-  public var body: some View {
+  var body: some View {
     content
       .navigationBar(.secondaryScroll, scrollEdgeAppearance: .secondary)
       .navigationTitle(L10n.tkActivityActivityListTitle)
@@ -26,8 +26,10 @@ public struct ActivityListView: View {
           viewModel.showActivityDeleted()
         }
       }
-      .task {
-        await viewModel.fetchActivities()
+      .onAppear {
+        Task {
+          await viewModel.fetchActivities()
+        }
       }
       .toast($viewModel.toast)
   }
@@ -64,9 +66,8 @@ public struct ActivityListView: View {
   private func list(_ viewModels: [ActivityCellViewModel]) -> some View {
     List {
       ForEach(viewModels) { viewModel in
-        ActivityCell(viewModel) {
-          navigator.navigate(
-            to: ActivityDestinations.activityDetail(activityId: viewModel.id))
+        NavigationLink(to: ActivityDestinations.activityDetail(activityId: viewModel.id)) {
+          ActivityCell(viewModel)
         }
         .listRowBackground(ThemingAssets.Background.groupedRow.swiftUIColor)
         .accessibilityFocused($focusedItemID, equals: viewModel.id)

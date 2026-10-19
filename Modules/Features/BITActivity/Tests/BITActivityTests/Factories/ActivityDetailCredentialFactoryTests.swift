@@ -1,132 +1,163 @@
-// swiftlint: disable implicitly_unwrapped_optional force_unwrapping force_try
 import Factory
-import XCTest
+import FactoryTesting
+import Foundation
+import Testing
 @testable import BITActivity
 @testable import BITClaimsPathPointer
+@testable import BITCredentialShared
 @testable import BITEntities
 
-final class ActivityDetailCredentialFactoryTests: XCTestCase {
+// MARK: - ActivityDetailCredentialFactoryTests
 
-  // MARK: Internal
+@MainActor
+@Suite(.container)
+struct ActivityDetailCredentialFactoryTests {
 
-  override func setUp() {
-    super.setUp()
-    Container.shared.reset()
-    registerMocks()
+  // MARK: Lifecycle
+
+  init() throws {
+    let localeMock = Self.localeMock
+    Container.shared.configureInMemoryDataStore()
+    Container.shared.preferredUserLanguageCodes.register { [localeMock] }
+
+    displayMock = try CredentialDisplayEntity.Mock.create(locale: "locale", createParent: false)
+    otherDisplayMock = try CredentialDisplayEntity.Mock.create(locale: "other", createParent: false)
     factory = ActivityDetailCredentialFactory()
   }
 
-  func testCallAsFunction_noClaimIdsAndNoDisplays_returnsCredentialWithoutClustersAndDisplays() throws {
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create()
-    let credential = try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential)
+  // MARK: Internal
 
-    let result = factory(credential, claimIds: [])
+  @Test
+  func callAsFunction_noPathsAndNoDisplays_returnsCredentialWithoutClustersAndDisplays() throws {
+    let activity = try createActivity()
 
-    XCTAssertEqual(result.id, credential.id)
-    XCTAssertEqual(result.displays.count, 0)
-    XCTAssertEqual(result.environment, .external)
-    XCTAssertEqual(result.clusters.count, 0)
+    let result = factory(activity, paths: [])
+
+    #expect(result.id == activity.id)
+    #expect(result.displays.isEmpty)
+    #expect(result.environment == .external)
+    #expect(result.clusters.isEmpty)
   }
 
-  func testCallAsFunction_displaysAvailable_returnsCredentialWithDisplays() throws {
+  @Test
+  func callAsFunction_displaysAvailable_returnsCredentialWithDisplays() throws {
     let displayMockEn = try CredentialDisplayEntity.Mock.create(locale: "locale", createParent: false)
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(createParent: false)
-    let credential = try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential, displays: [displayMock, otherDisplayMock, displayMockEn])
+    let activity = try createActivity(displays: [displayMock, otherDisplayMock, displayMockEn])
 
-    let result = factory(credential, claimIds: [])
+    let result = factory(activity, paths: [])
 
-    XCTAssertEqual(result.displays.count, 2)
+    #expect(result.displays.count == 2)
   }
 
-  func testCallAsFunction_claimsAndDisplaysAvailable_returnsCredentialWithClusterAndDisplays() throws {
-    let claimId = UUID()
-    let cluster = try createCluster(claims: [createClaim(id: claimId)])
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(issuer: didMock, clusters: [cluster], createParent: false)
-    let credential = try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential, displays: [displayMock, otherDisplayMock])
+  @Test
+  func callAsFunction_claimsAndDisplaysAvailable_returnsCredentialWithClusterAndDisplays() throws {
+    let cluster = try createCluster(claims: [createClaim(id: UUID())])
+    let activity = try createActivity(displays: [displayMock, otherDisplayMock], clusters: [cluster], issuer: didMock)
 
-    let result = factory(credential, claimIds: [claimId])
+    let result = factory(activity, paths: [Self.claimPath.stringValue])
 
-    XCTAssertEqual(result.id, credential.id)
-    XCTAssertEqual(result.displays.count, 1)
-    XCTAssertEqual(result.environment, .swiyu)
-    XCTAssertEqual(result.clusters.count, 1)
-    XCTAssertEqual(result.clusters.first?.claims.count, 1)
+    #expect(result.id == activity.id)
+    #expect(result.displays.count == 1)
+    #expect(result.environment == .swiyu)
+    #expect(result.clusters.count == 1)
+    #expect(result.clusters.first?.claims.count == 1)
   }
 
-  func testCallAsFunction_nestedClaims_returnsCredentialWithClusters() throws {
+  @Test
+  func callAsFunction_nestedClaims_returnsCredentialWithClusters() throws {
     let claimId1 = UUID()
     let claimId2 = UUID()
     let claimId3 = UUID()
-    let childCluster = try createCluster(claims: [createClaim(), createClaim(id: claimId1)])
-    let parentCluster = try createCluster(claims: [createClaim(), createClaim(id: claimId2)], childClusters: [childCluster, createCluster()])
-    let cluster = try createCluster(claims: [createClaim(), createClaim(id: claimId3)])
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(issuer: didMock, clusters: [parentCluster, cluster], createParent: false)
-    let credential = try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential, displays: [displayMock, otherDisplayMock])
+    let childCluster = try createCluster(claims: [createClaim(), createClaim(id: claimId1, path: Self.firstPath)])
+    let parentCluster = try createCluster(claims: [createClaim(), createClaim(id: claimId2, path: Self.secondPath)], childClusters: [childCluster, createCluster()])
+    let cluster = try createCluster(claims: [createClaim(), createClaim(id: claimId3, path: Self.thirdPath)])
+    let activity = try createActivity(displays: [displayMock, otherDisplayMock], clusters: [parentCluster, cluster], issuer: didMock)
 
-    let result = factory(credential, claimIds: [claimId1, claimId2, claimId3])
+    let result = factory(activity, paths: [Self.firstPath, Self.secondPath, Self.thirdPath])
 
-    XCTAssertEqual(result.clusters.count, 2)
+    #expect(result.clusters.count == 2)
 
-    XCTAssertEqual(result.clusters[0].childClusters.count, 1)
-    XCTAssertEqual(result.clusters[0].childClusters.first?.claims.count, 1)
-    XCTAssertEqual(result.clusters[0].childClusters.first?.claims.first?.id, claimId1)
+    #expect(result.clusters[0].childClusters.count == 1)
+    #expect(result.clusters[0].childClusters.first?.claims.count == 1)
+    #expect(result.clusters[0].childClusters.first?.claims.first?.id == claimId1)
 
-    XCTAssertEqual(result.clusters[0].claims.count, 1)
-    XCTAssertEqual(result.clusters[0].claims.first?.id, claimId2)
+    #expect(result.clusters[0].claims.count == 1)
+    #expect(result.clusters[0].claims.first?.id == claimId2)
 
-    XCTAssertEqual(result.clusters[1].claims.count, 1)
-    XCTAssertEqual(result.clusters[1].claims.first?.id, claimId3)
+    #expect(result.clusters[1].claims.count == 1)
+    #expect(result.clusters[1].claims.first?.id == claimId3)
   }
 
-  func testCallAsFunction_credentialDisplayWithClaimTemplate_returnsResolvedSummary() throws {
-    let credential = try createCredential(claims: [claim], summary: "Value: {{\(Self.claimPath.stringValue)}}")
+  @Test
+  func callAsFunction_credentialDisplayWithClaimTemplate_returnsResolvedSummary() throws {
+    let activity = try createActivity(claims: [claim()], summary: "Value: {{\(Self.claimPath.stringValue)}}")
 
-    let result = factory(credential, claimIds: [])
+    let result = factory(activity, paths: [])
 
-    XCTAssertEqual(result.displays.first?.summary, "Value: \(Self.value)")
+    #expect(result.displays.first?.summary == "Value: \(Self.value)")
   }
 
-  func testCallAsFunction_clusterDisplayWithClaimTemplate_returnsResolvedName() throws {
-    let cluster = try createCluster(claims: [claim], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{\(Self.claimPath.stringValue)}}", createParent: false)])
-    let credential = try createCredential(clusters: [cluster])
+  @Test
+  func callAsFunction_clusterDisplayWithClaimTemplate_returnsResolvedName() throws {
+    let cluster = try createCluster(claims: [claim()], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{\(Self.claimPath.stringValue)}}", createParent: false)])
+    let activity = try createActivity(clusters: [cluster], summary: "summary")
 
-    let result = factory(credential, claimIds: [Self.claimId])
+    let result = factory(activity, paths: [Self.claimPath.stringValue])
 
-    XCTAssertEqual(result.clusters.first?.displays.first?.name, "Value: \(Self.value)")
+    #expect(result.clusters.first?.displays.first?.name == "Value: \(Self.value)")
   }
 
-  func testCallAsFunction_nestedClusterDisplayWithClaimTemplate_returnsResolvedName() throws {
-    let nestedCluster = try createCluster(claims: [claim], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{\(Self.claimPath.stringValue)}}", createParent: false)])
+  @Test
+  func callAsFunction_nestedClusterDisplayWithClaimTemplate_returnsResolvedName() throws {
+    let nestedCluster = try createCluster(claims: [claim()], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{\(Self.claimPath.stringValue)}}", createParent: false)])
     let cluster = try createCluster(childClusters: [nestedCluster])
-    let credential = try createCredential(clusters: [cluster])
+    let activity = try createActivity(clusters: [cluster], summary: "summary")
 
-    let result = factory(credential, claimIds: [Self.claimId])
+    let result = factory(activity, paths: [Self.claimPath.stringValue])
 
-    XCTAssertEqual(result.clusters.first?.childClusters.first?.displays.first?.name, "Value: \(Self.value)")
+    #expect(result.clusters.first?.childClusters.first?.displays.first?.name == "Value: \(Self.value)")
   }
 
-  func testCallAsFunction_indexedClusterDisplayWithClaimTemplate_returnsResolvedName() throws {
-    let claimId = UUID()
-    let claim1 = try createClaim(id: claimId, path: "[0, \"key\"]", value: "value1")
-    let claim2 = try createClaim(path: "[1, \"key\"]", value: "value2")
+  @Test
+  func callAsFunction_indexedClusterDisplayWithClaimTemplate_returnsResolvedName() throws {
+    let claim1 = try createClaim(id: UUID(), path: "[0, \"key\"]", value: "value1")
+    let claim2 = try createClaim(id: UUID(), path: "[1, \"key\"]", value: "value2")
     let cluster1 = try createCluster(path: [.index(0)], claims: [claim1], displays: [CredentialClaimClusterDisplayEntity.Mock.create(name: "Value: {{[null, \"key\"]}}", createParent: false)])
     let cluster2 = try createCluster(path: [.index(1)], claims: [claim2], displays: [])
-    let credential = try createCredential(clusters: [cluster1, cluster2])
+    let activity = try createActivity(clusters: [cluster1, cluster2], summary: "summary")
 
-    let result = factory(credential, claimIds: [claimId])
+    let result = factory(activity, paths: ["[0, \"key\"]"])
 
-    XCTAssertEqual(result.clusters.first?.displays.first?.name, "Value: value1")
+    #expect(result.clusters.first?.displays.first?.name == "Value: value1")
   }
 
-  func testCallAsFunction_noVerifiableCredential_returnsCredentialWithDisplays() throws {
-    let credential = try CredentialEntity.Mock.create(displays: [displayMock])
+  @Test(arguments: [true, false])
+  func callAsFunction_statusListState_comesFromTheBundleItemSnapshot(hasBundleItemSnapshot: Bool) throws {
+    let activity: CredentialActivityEntity
+    if hasBundleItemSnapshot {
+      let bundleItem = ActivityBundleItemEntity()
+      bundleItem.statusListState = .suspended
+      activity = try CredentialActivityEntity.Mock.create(bundleItem: bundleItem, createParent: false)
+    } else {
+      activity = try createActivity()
+    }
 
-    let result = factory(credential, claimIds: [])
+    let result = factory(activity, paths: [])
 
-    XCTAssertEqual(result.id, credential.id)
-    XCTAssertEqual(result.displays.count, 1)
-    XCTAssertEqual(result.environment, .external)
-    XCTAssertEqual(result.clusters.count, 0)
+    let expected: CredentialStatus? = hasBundleItemSnapshot ? .suspended : nil
+    #expect(result.statusListState == expected)
+  }
+
+  @Test
+  func callAsFunction_noIssuer_returnsCredentialWithDisplays() throws {
+    let activity = try createActivity(displays: [displayMock])
+
+    let result = factory(activity, paths: [])
+
+    #expect(result.id == activity.id)
+    #expect(result.displays.count == 1)
+    #expect(result.environment == .external)
+    #expect(result.clusters.isEmpty)
   }
 
   // MARK: Private
@@ -134,25 +165,19 @@ final class ActivityDetailCredentialFactoryTests: XCTestCase {
   private static let claimId = UUID()
   private static let key = "key"
   private static let claimPath: ClaimsPathPointer = [.string(key)]
+  private static let firstPath = "[\"first\"]"
+  private static let secondPath = "[\"second\"]"
+  private static let thirdPath = "[\"third\"]"
   private static let value = "value"
+  private static let localeMock = "locale"
 
-  private let nameMock = "issuer"
-  private let localeMock = "locale"
   private let didMock = "did:tdw:mock:identifier-reg.trust-infra.swiyu.admin.ch:example"
-  private var displayMock: CredentialDisplayEntity!
-  private var otherDisplayMock: CredentialDisplayEntity!
-  private var factory: ActivityDetailCredentialFactory!
+  private let displayMock: CredentialDisplayEntity
+  private let otherDisplayMock: CredentialDisplayEntity
+  private let factory: ActivityDetailCredentialFactory
 
-  private var claim: CredentialClaimEntity {
-    try! createClaim(id: Self.claimId, path: Self.claimPath.stringValue, value: Self.value)
-  }
-
-  private func registerMocks() {
-    Container.shared.configureInMemoryDataStore()
-    Container.shared.preferredUserLanguageCodes.register { [self.localeMock] }
-
-    displayMock = try! CredentialDisplayEntity.Mock.create(locale: "locale", createParent: false)
-    otherDisplayMock = try! CredentialDisplayEntity.Mock.create(locale: "other", createParent: false)
+  private func claim() throws -> CredentialClaimEntity {
+    try createClaim(id: Self.claimId, path: Self.claimPath.stringValue, value: Self.value)
   }
 
   private func createClaim(id: UUID = claimId, path: String = claimPath.stringValue, value: String? = nil) throws -> CredentialClaimEntity {
@@ -163,14 +188,23 @@ final class ActivityDetailCredentialFactoryTests: XCTestCase {
     try CredentialClaimClusterEntity.Mock.create(path: path.stringValue, claims: claims, childClusters: childClusters, displays: displays, createParent: false)
   }
 
-  private func createCredential(clusters: [CredentialClaimClusterEntity], summary: String = "summary") throws -> CredentialEntity {
-    let verifiableCredential = try VerifiableCredentialEntity.Mock.create(clusters: clusters, createParent: false)
-    let display = try CredentialDisplayEntity.Mock.create(locale: localeMock, summary: summary, createParent: false)
-    return try CredentialEntity.Mock.create(verifiableCredential: verifiableCredential, displays: [display])
+  private func createActivity(
+    displays: [CredentialDisplayEntity] = [],
+    clusters: [CredentialClaimClusterEntity] = [],
+    issuer: String = "") throws
+    -> CredentialActivityEntity
+  {
+    let rendering = try CredentialRenderingEntity.Mock.create(displays: displays, clusters: clusters)
+    return try CredentialActivityEntity.Mock.create(issuer: issuer, credentialRendering: rendering, createParent: false)
   }
 
-  private func createCredential(claims: [CredentialClaimEntity], summary: String = "summary") throws -> CredentialEntity {
+  private func createActivity(clusters: [CredentialClaimClusterEntity], summary: String) throws -> CredentialActivityEntity {
+    let display = try CredentialDisplayEntity.Mock.create(locale: Self.localeMock, summary: summary, createParent: false)
+    return try createActivity(displays: [display], clusters: clusters)
+  }
+
+  private func createActivity(claims: [CredentialClaimEntity], summary: String) throws -> CredentialActivityEntity {
     let cluster = try createCluster(claims: claims)
-    return try createCredential(clusters: [cluster], summary: summary)
+    return try createActivity(clusters: [cluster], summary: summary)
   }
 }

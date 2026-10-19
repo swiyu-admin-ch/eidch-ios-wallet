@@ -7,6 +7,7 @@ import UIKit
 
 // MARK: - LoginRouterRoutes
 
+@MainActor
 public protocol LoginRouterRoutes: ClosableRoutes, LoginRoutes, VersionEnforcementRoutes, ExternalRoutes {}
 
 // MARK: - LoginRouter

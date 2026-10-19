@@ -14,7 +14,7 @@ enum OCABundleServiceError: Error {
 // MARK: - OCABundleServiceProtocol
 
 @Spyable
-public protocol OCABundleServiceProtocol {
+public protocol OCABundleServiceProtocol: Sendable {
   func fetchVcSdJwtOcaBundle(from ocaRendering: VcSdJwtOcaRendering) async throws -> RawOcaBundle?
 }
 

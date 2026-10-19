@@ -7,7 +7,7 @@ import Spyable
 // MARK: - GetBiometricStateUseCaseProtocol
 
 @Spyable
-public protocol GetBiometricStateUseCaseProtocol {
+public protocol GetBiometricStateUseCaseProtocol: Sendable {
   func callAsFunction() -> BiometricState
 }
 

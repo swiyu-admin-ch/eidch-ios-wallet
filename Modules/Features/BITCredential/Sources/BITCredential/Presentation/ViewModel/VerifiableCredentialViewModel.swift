@@ -46,81 +46,26 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
   }
 
   public var statusText: String {
-    switch selectedCredentialStatus {
-    case .valid: L10n.tkCredentialStatusValid
-    case .businessExpired,
-         .expired: L10n.tkCredentialStatusInvalid
-    case .notYetValid: getNotYetValidText()
-    case .revoked: L10n.tkCredentialStatusRevoked
-    case .suspended: L10n.tkCredentialStatusSuspended
-    case .unknown,
-         .unsupported: L10n.tkCredentialStatusUnknown
-    }
+    guard credential.progressionState == .accepted else { return L10n.tkCredentialProgressionStateUnaccepted }
+    return selectedCredentialStatus.statusText(validFrom: credential.validFrom, currentDate: currentDate, calendar: calendar)
   }
 
   public var statusTextAlt: String {
-    switch selectedCredentialStatus {
-    case .valid: L10n.tkCredentialStatusValidAlt
-    case .businessExpired,
-         .expired: L10n.tkCredentialStatusInvalidAlt
-    case .notYetValid: getNotYetValidAltText()
-    case .revoked: L10n.tkCredentialStatusRevokedAlt
-    case .suspended: L10n.tkCredentialStatusSuspendedAlt
-    case .unknown,
-         .unsupported: L10n.tkCredentialStatusUnknownAlt
-    }
+    selectedCredentialStatus.statusTextAlt(validFrom: credential.validFrom, currentDate: currentDate, calendar: calendar)
   }
 
   public var statusImage: Image {
-    switch selectedCredentialStatus {
-    case .valid: Assets.statusValid.swiftUIImage
-    case .businessExpired,
-         .expired: Assets.statusInvalid.swiftUIImage
-    case .notYetValid: Assets.statusNotYetValid.swiftUIImage
-    case .revoked: Assets.statusInvalid.swiftUIImage
-    case .suspended: Assets.statusSuspended.swiftUIImage
-    case .unknown,
-         .unsupported: Assets.statusUnknown.swiftUIImage
-    }
+    guard credential.progressionState == .accepted else { return Assets.statusReadyToAdd.swiftUIImage }
+    return selectedCredentialStatus.statusImage
   }
 
-  public var statusBadgeAccessibilityText: String {
-    switch credential.progressionState {
-    case .accepted:
-      statusText
-    case .unaccepted:
-      L10n.tkCredentialProgressionStateUnaccepted
-    }
+  public var statusBadgeStyle: BadgeStyle {
+    guard credential.progressionState == .accepted else { return .success }
+    return selectedCredentialStatus.statusBadgeStyle
   }
 
-  public var statusColor: Color {
-    switch selectedCredentialStatus {
-    case .unknown,
-         .unsupported,
-         .valid: ThemingAssets.Label.secondary.swiftUIColor
-    case .businessExpired,
-         .expired,
-         .notYetValid,
-         .revoked,
-         .suspended: ThemingAssets.Brand.Core.swissRed.swiftUIColor
-    }
-  }
-
-  public var cardStatusBadgeStyle: any BadgeStyle {
-    statusBadgeStyle
-  }
-
-  public var statusBadgeStyle: any BadgeStyle {
-    switch selectedCredentialStatus {
-    case .unknown,
-         .unsupported,
-         .valid: .outline
-    case .businessExpired,
-         .expired,
-         .notYetValid,
-         .revoked,
-         .suspended: .error
-    }
+  public var statusBadgeType: BadgeType {
+    credential.progressionState == .accepted ? .plain(statusBadgeStyle) : .filled(statusBadgeStyle)
   }
 
   public var cardStyle: CredentialCardStyle {
@@ -149,30 +94,13 @@ public struct VerifiableCredentialViewModel: CredentialCardViewModelProtocol, Cr
     (try? selectCredentialBundleItemUseCase(credential).status) ?? CredentialStatus.unknown
   }
 
-  private func getNotYetValidText() -> String {
-    guard let date = credential.validFrom else { return L10n.tkCredentialStatusUnknown }
-    return if calendar.isDate(date, inSameDayAs: currentDate) {
-      L10n.tkCredentialStatusValidAt(DateFormatter.shortHourFormatter.string(from: date))
-    } else {
-      L10n.tkCredentialStatusNotYetValid(DateFormatter.shortDateFormatter.string(from: date))
-    }
-  }
-
-  private func getNotYetValidAltText() -> String {
-    guard let date = credential.validFrom else { return L10n.tkCredentialStatusUnknownAlt }
-    return if calendar.isDate(date, inSameDayAs: currentDate) {
-      L10n.tkCredentialStatusValidAtAlt(DateFormatter.shortHourFormatter.string(from: date))
-    } else {
-      L10n.tkCredentialStatusNotYetValidAlt(DateFormatter.shortDateFormatter.string(from: date))
-    }
-  }
 }
 
 // MARK: Equatable
 
 extension VerifiableCredentialViewModel: Equatable {
 
-  public static func == (lhs: VerifiableCredentialViewModel, rhs: VerifiableCredentialViewModel) -> Bool {
+  nonisolated public static func == (lhs: VerifiableCredentialViewModel, rhs: VerifiableCredentialViewModel) -> Bool {
     lhs.credential == rhs.credential &&
       lhs.environment == rhs.environment &&
       lhs.credentialDisplay == rhs.credentialDisplay &&

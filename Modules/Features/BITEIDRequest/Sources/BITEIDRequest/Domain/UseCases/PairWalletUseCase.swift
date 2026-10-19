@@ -8,7 +8,7 @@ import Spyable
 // MARK: - PairWalletUseCaseProtocol
 
 @Spyable
-protocol PairWalletUseCaseProtocol {
+protocol PairWalletUseCaseProtocol: Sendable {
   @discardableResult
   func execute(for caseId: String) async throws -> String
 }

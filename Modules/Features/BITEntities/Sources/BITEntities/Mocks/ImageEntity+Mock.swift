@@ -5,10 +5,10 @@ import RealmSwift
 
 extension ImageEntity: Mockable {
   public struct Mock {
-    public static func create(imageHash: String = "imageHash", data: Data = Data()) throws -> ImageEntity {
+    public static func create(contentHash: String = "imageHash", image: Data = Data()) throws -> ImageEntity {
       let entity = ImageEntity()
-      entity.imageHash = imageHash
-      entity.data = data
+      entity.contentHash = contentHash
+      entity.image = image
 
       try Realm.save(entity)
       return entity

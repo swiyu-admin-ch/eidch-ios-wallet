@@ -8,7 +8,7 @@ import Spyable
 // MARK: - ValidateDeviceSecurityRequirementsUseCaseProtocol
 
 @Spyable
-protocol ValidateDeviceSecurityRequirementsUseCaseProtocol {
+protocol ValidateDeviceSecurityRequirementsUseCaseProtocol: Sendable {
   func callAsFunction(_ context: LAContextProtocol) async throws
 }
 

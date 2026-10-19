@@ -7,9 +7,9 @@ extension AVBeamPackageResult: Mockable {
 
   struct Mock {
 
-    static var sample = Self.with()
+    nonisolated(unsafe) static let sample = Self.with()
 
-    static var defaultExtractedData: [Int: String] = [
+    nonisolated(unsafe) static let defaultExtractedData: [Int: String] = [
       1: "name",
       43: "MINDERJAEHRIGE",
       44: "ANNETTE",
@@ -20,7 +20,7 @@ extension AVBeamPackageResult: Mockable {
       66: "MINDERJAEHRIGE<<ANNETTE<<<<<<<",
     ]
 
-    static var mrzData: [Int: String] = [
+    nonisolated(unsafe) static let mrzData: [Int: String] = [
       64: "ID<<<I7A<<<<<<7<<<<<<<<<<<<<<<",
       65: "1001015X3012316<<<<<<<<<<<<<<2",
       66: "MINDERJAEHRIGE<<ANNETTE<<<<<<<",

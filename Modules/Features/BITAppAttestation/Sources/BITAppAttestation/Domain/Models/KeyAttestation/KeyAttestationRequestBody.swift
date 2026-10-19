@@ -3,7 +3,7 @@ import BITVault
 
 // MARK: - KeyAttestationRequestBody
 
-public struct KeyAttestationRequestBody: Codable, Equatable {
+public struct KeyAttestationRequestBody: Codable, Equatable, Sendable {
 
   // MARK: Lifecycle
 

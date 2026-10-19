@@ -12,7 +12,7 @@ enum JWSEncoderMockError: Error {
 
 // MARK: - JWSEncoderMock
 
-class JWSEncoderMock<U: JWT>: JWSEncoderProtocol {
+final class JWSEncoderMock<U: JWT>: JWSEncoderProtocol, @unchecked Sendable {
 
   var encodeUsingReturnValue: Data?
   var receivedKeyPair: VaultKeyPair?

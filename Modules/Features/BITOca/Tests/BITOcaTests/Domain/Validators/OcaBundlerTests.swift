@@ -98,10 +98,12 @@ final class OcaBundlerTests: XCTestCase {
   private var overlayTemplateResolverSpy = OverlayTemplateResolverProtocolSpy()
 
   private func registerMocks() {
-    digestsValidatorSpy = OcaCaptureBaseDigestsValidatorProtocolSpy()
-    overlayTemplateResolverSpy = OverlayTemplateResolverProtocolSpy()
-    Container.shared.ocaCaptureBaseDigestsValidator.register { self.digestsValidatorSpy }
-    Container.shared.overlayTemplateResolver.register { self.overlayTemplateResolverSpy }
+    let digestsValidatorSpy = OcaCaptureBaseDigestsValidatorProtocolSpy()
+    let overlayTemplateResolverSpy = OverlayTemplateResolverProtocolSpy()
+    self.digestsValidatorSpy = digestsValidatorSpy
+    self.overlayTemplateResolverSpy = overlayTemplateResolverSpy
+    Container.shared.ocaCaptureBaseDigestsValidator.register { digestsValidatorSpy }
+    Container.shared.overlayTemplateResolver.register { overlayTemplateResolverSpy }
   }
 
   private func successState() {

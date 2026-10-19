@@ -115,6 +115,7 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
 
   func testExecute_invalidVctWithVctIntegrity_throwsError() async throws {
     let vcSdJWSMock = createVcSdJWS(vct: Self.nonURLVctMock, vctIntegrity: Self.vctIntegrityMock)
+    let useCase = useCase
 
     await XCTAssertThrowsErrorAsync(try await useCase.execute(anyCredential: vcSdJWSMock)) { error in
       XCTAssertEqual(error as? VcMetadataForVcSdJwtError, .superfluousVctIntegrity)
@@ -187,15 +188,19 @@ final class FetchVcMetadataForVcSdJwtUseCaseTests: XCTestCase {
   private var useCase = FetchVcMetadataForVcSdJwtUseCase()
 
   private func registerMocks() {
-    vcSchemaServiceSpy = VcSchemaServiceProtocolSpy()
-    vcSdJwtSchemaValidatorSpy = VcSdJwtSchemaValidatorProtocolSpy()
-    typeMetadataServiceSpy = TypeMetadataServiceProtocolSpy()
-    ocaBundleServiceSpy = OCABundleServiceProtocolSpy()
+    let vcSchemaServiceSpy = VcSchemaServiceProtocolSpy()
+    self.vcSchemaServiceSpy = vcSchemaServiceSpy
+    let vcSdJwtSchemaValidatorSpy = VcSdJwtSchemaValidatorProtocolSpy()
+    self.vcSdJwtSchemaValidatorSpy = vcSdJwtSchemaValidatorSpy
+    let typeMetadataServiceSpy = TypeMetadataServiceProtocolSpy()
+    self.typeMetadataServiceSpy = typeMetadataServiceSpy
+    let ocaBundleServiceSpy = OCABundleServiceProtocolSpy()
+    self.ocaBundleServiceSpy = ocaBundleServiceSpy
 
-    Container.shared.vcSchemaService.register { self.vcSchemaServiceSpy }
-    Container.shared.vcSdJwtSchemaValidator.register { self.vcSdJwtSchemaValidatorSpy }
-    Container.shared.typeMetadataService.register { self.typeMetadataServiceSpy }
-    Container.shared.ocaBundleService.register { self.ocaBundleServiceSpy }
+    Container.shared.vcSchemaService.register { vcSchemaServiceSpy }
+    Container.shared.vcSdJwtSchemaValidator.register { vcSdJwtSchemaValidatorSpy }
+    Container.shared.typeMetadataService.register { typeMetadataServiceSpy }
+    Container.shared.ocaBundleService.register { ocaBundleServiceSpy }
   }
 
   private func success() {

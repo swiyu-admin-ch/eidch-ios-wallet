@@ -4,7 +4,7 @@ import Spyable
 // MARK: - DeviceInfoProviderProtocol
 
 @Spyable
-protocol DeviceInfoProviderProtocol {
+protocol DeviceInfoProviderProtocol: Sendable {
   var systemVersion: Version? { get }
   var modelDescription: String { get }
 }

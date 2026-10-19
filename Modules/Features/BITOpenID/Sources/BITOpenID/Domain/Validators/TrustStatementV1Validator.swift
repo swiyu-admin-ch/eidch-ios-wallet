@@ -5,7 +5,7 @@ import Foundation
 
 // MARK: - TrustStatementV1ValidatorProtocol
 
-public protocol TrustStatementV1ValidatorProtocol {
+public protocol TrustStatementV1ValidatorProtocol: Sendable {
   func validate(_ trustStatement: SdJWS<some TrustStatementV1JWT & Decodable>, for subject: String) async -> Bool
 }
 

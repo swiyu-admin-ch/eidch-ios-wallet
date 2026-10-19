@@ -14,9 +14,9 @@ extension String {
 
   // MARK: Private
 
-  private static let keyReference = Reference(String.self)
+  private nonisolated(unsafe) static let keyReference = Reference(String.self)
 
-  private static let jsonPathTemplateRegex = Regex {
+  private nonisolated(unsafe) static let jsonPathTemplateRegex = Regex {
     "{{"
     "$."
     Capture(as: keyReference) {

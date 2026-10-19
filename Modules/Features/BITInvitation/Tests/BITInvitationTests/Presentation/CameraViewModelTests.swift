@@ -16,32 +16,48 @@ import XCTest
 
 // MARK: - CameraViewModelTests
 
+@MainActor
 final class CameraViewModelTests: XCTestCase {
 
   // MARK: Internal
 
-  @MainActor
-  override func setUp() {
-    Container.shared.validateCredentialOfferInvitationUrlUseCase.register { @MainActor in self.validateCredentialOfferInvitationUrlUseCase }
-    Container.shared.fetchPresentationRequestUseCase.register { @MainActor in self.fetchPresentationRequestUseCase }
-    Container.shared.checkInvitationTypeUseCase.register { @MainActor in self.checkInvitationTypeUseCase }
-    Container.shared.getCompatibleCredentialsUseCase.register { @MainActor in self.getCompatibleCredentialsUseCase }
-    Container.shared.fetchCredentialUseCase.register { @MainActor in self.fetchCredentialUseCase }
-    Container.shared.getCredentialsCountUseCase.register { @MainActor in self.getCredentialsCountUseCase }
-    Container.shared.saveDeferredCredentialUseCase.register { @MainActor in self.saveDeferredCredentialUseCase }
-    Container.shared.accessibilityFeedback.register { @MainActor in self.accessibilityFeedback }
+  override func setUp() async throws {
+    try await super.setUp()
+    let validateCredentialOfferInvitationUrlUseCase = validateCredentialOfferInvitationUrlUseCase
+    let fetchPresentationRequestUseCase = fetchPresentationRequestUseCase
+    let checkInvitationTypeUseCase = checkInvitationTypeUseCase
+    let getCompatibleCredentialsUseCase = getCompatibleCredentialsUseCase
+    let fetchCredentialUseCase = fetchCredentialUseCase
+    let getCredentialsCountUseCase = getCredentialsCountUseCase
+    let saveDeferredCredentialUseCase = saveDeferredCredentialUseCase
+
+    Container.shared.validateCredentialOfferInvitationUrlUseCase.register { @MainActor in validateCredentialOfferInvitationUrlUseCase }
+    Container.shared.fetchPresentationRequestUseCase.register { @MainActor in fetchPresentationRequestUseCase }
+    Container.shared.checkInvitationTypeUseCase.register { @MainActor in checkInvitationTypeUseCase }
+    Container.shared.getCompatibleCredentialsUseCase.register { @MainActor in getCompatibleCredentialsUseCase }
+    Container.shared.fetchCredentialUseCase.register { @MainActor in fetchCredentialUseCase }
+    Container.shared.getCredentialsCountUseCase.register { @MainActor in getCredentialsCountUseCase }
+    Container.shared.saveDeferredCredentialUseCase.register { @MainActor in saveDeferredCredentialUseCase }
 
     analyticsProvider = MockProvider()
-    analytics = AnalyticsSpy()
+    let analytics = AnalyticsSpy()
+    self.analytics = analytics
     analytics.register(analyticsProvider)
 
-    Container.shared.analytics.register { @MainActor in self.analytics }
+    Container.shared.analytics.register { @MainActor in analytics }
 
+    let accessibilityFeedback = CameraAccessibilityFeedbackProtocolSpy()
+    self.accessibilityFeedback = accessibilityFeedback
+    Container.shared.accessibilityFeedback.register { @MainActor in accessibilityFeedback }
     viewModel = createViewModel(mode: .qr)
     viewModel.cameraManager = cameraManager
   }
 
-  @MainActor
+  override func tearDown() async throws {
+    Container.shared.reset()
+    try await super.tearDown()
+  }
+
   func testWithInitialData() {
     XCTAssertFalse(viewModel.isTorchEnabled)
     XCTAssertFalse(viewModel.isLoading)
@@ -52,7 +68,6 @@ final class CameraViewModelTests: XCTestCase {
 
   // MARK: - Issuing
 
-  @MainActor
   func testValidateCredentialOfferSuccess() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
     let credential = VerifiableCredential.Mock.sample
@@ -85,7 +100,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(accessibilityFeedback.announceCameraDidStopRunningCallsCount, 1)
   }
 
-  @MainActor
   func testValidateCredentialOffer_deferredCredential_saveCredential() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
 
@@ -102,7 +116,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testValidateCredentialOfferSuccess_deeplink() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
     let credential = VerifiableCredential.Mock.sample
@@ -136,7 +149,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertFalse(getCredentialsCountUseCase.callAsFunctionCalled)
   }
 
-  @MainActor
   func testValidateCredentialOfferFailure() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
@@ -167,7 +179,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testValidateCredentialOfferVerificationFailure() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
@@ -201,7 +212,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testValidateCredentialOfferUnknownIssuer() async {
     let mockCredentialOffer = CredentialOffer.Mock.sample
 
@@ -227,7 +237,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testValidateCredentialOfferUnverifiedActor_showsErrorView() async throws {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
@@ -248,7 +257,6 @@ final class CameraViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testValidateCredentialOfferUnknownRegistry_showsErrorView() async throws {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
@@ -269,7 +277,6 @@ final class CameraViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testValidateCredentialOfferUnauthorizedIssuance_showsErrorView() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
@@ -292,7 +299,6 @@ final class CameraViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testFetchCredential_userNotLoggedIn_showsErrorPopup() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample
@@ -311,7 +317,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testFetchCredential_invalidClient_showsErrorView() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample
@@ -334,7 +339,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testFetchCredential_temporarilyUnavailableErrorInDeeplink_showsPushedErrorView() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
@@ -357,7 +361,6 @@ final class CameraViewModelTests: XCTestCase {
 
   // MARK: - Presentation
 
-  @MainActor
   func testValidatePresentationWithOneCredentialSuccess() async {
     let bundle = PresentationRequestContext.Mock.vcSdJwtSample
 
@@ -387,7 +390,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(accessibilityFeedback.announceCameraDidStopRunningCallsCount, 1)
   }
 
-  @MainActor
   func testValidatePresentationWithMultipleCredentialSuccess() async {
     let context = PresentationRequestContext.Mock.vcSdJwtSample
 
@@ -417,7 +419,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(accessibilityFeedback.announceCameraDidStopRunningCallsCount, 1)
   }
 
-  @MainActor
   func testValidatePresentationFailure() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
     fetchPresentationRequestUseCase.callAsFunctionUrlThrowableError = TestingError.error
@@ -443,7 +444,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testValidatePresentationInvalidRedirectUri_showsRedirectErrorView() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
     fetchPresentationRequestUseCase.callAsFunctionUrlThrowableError = PresentationResponseValidationError.invalidRedirectUri
@@ -458,7 +458,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(dataset, .invalidRedirectUri)
   }
 
-  @MainActor
   func testValidatePresentationTransactionDataNotSupported_showsPushedErrorView() async throws {
     let presentationResponse = PresentationResponse(redirectUri: URL(string: "https://verifier.ch"))
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
@@ -482,7 +481,6 @@ final class CameraViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testValidatePresentationUnverifiedActor_showsErrorView() async throws {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
@@ -491,7 +489,7 @@ final class CameraViewModelTests: XCTestCase {
     viewModel = createViewModel(mode: .deeplink(url: url))
     await viewModel.onAppear()
 
-    let expectedError = InvitationError.invalidPresentationRequest(GovernanceError.unverifiedActor.rawValue)
+    let expectedError = InvitationError.unverifiedActor
     XCTAssertNil(viewModel.notificationState)
     XCTAssertEqual(viewModel.error as? InvitationError, expectedError)
 
@@ -504,7 +502,6 @@ final class CameraViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testValidatePresentationUnknownRegistry_showsErrorView() async throws {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
@@ -525,7 +522,6 @@ final class CameraViewModelTests: XCTestCase {
     }
   }
 
-  @MainActor
   func testFetchCredentialFailed_networkError() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.credentialOffer
     validateCredentialOfferInvitationUrlUseCase.executeReturnValue = CredentialOffer.Mock.sample
@@ -540,7 +536,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testSubmitPresentationFailed_networkError() async {
     checkInvitationTypeUseCase.executeUrlReturnValue = InvitationType.presentation
     fetchPresentationRequestUseCase.callAsFunctionUrlThrowableError = NetworkError(status: .noConnection)
@@ -563,7 +558,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testCheckInvitationTypeFailed_wrongScheme() async {
     checkInvitationTypeUseCase.executeUrlThrowableError = CheckInvitationTypeError.wrongScheme
 
@@ -579,7 +573,6 @@ final class CameraViewModelTests: XCTestCase {
     assertSetMetadataUrlAccessibilityFeedback()
   }
 
-  @MainActor
   func testCloseErrorView() {
     viewModel.notificationState = .failure(error: TestingError.error)
 
@@ -590,21 +583,18 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.destination)
   }
 
-  @MainActor
   func testCloseTipView() {
     viewModel.closeTipView()
 
     XCTAssertNil(viewModel.notificationState)
   }
 
-  @MainActor
   func testToggleTorch() {
     let initialState = viewModel.isTorchEnabled
     viewModel.toggleTorch()
     XCTAssertEqual(viewModel.isTorchEnabled, !initialState)
   }
 
-  @MainActor
   func testOnAppearWithCredentials() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 2
 
@@ -613,7 +603,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.notificationState)
   }
 
-  @MainActor
   func testOnCameraPermissionChangeWithoutCredentials() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 0
 
@@ -623,7 +612,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.notificationState, .tip)
   }
 
-  @MainActor
   func testOnCameraPermissionChangeWithError() async {
     getCredentialsCountUseCase.callAsFunctionThrowableError = TestingError.error
 
@@ -633,7 +621,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.notificationState, .tip)
   }
 
-  @MainActor
   func test_onCameraPermissionChange_toAuthorized_withoutCredentials() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 0
 
@@ -643,7 +630,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertEqual(viewModel.notificationState, .tip)
   }
 
-  @MainActor
   func test_onCameraPermissionChange_toAuthorized_withCredentials() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 1
 
@@ -653,7 +639,6 @@ final class CameraViewModelTests: XCTestCase {
     XCTAssertNil(viewModel.notificationState)
   }
 
-  @MainActor
   func test_onCameraPermissionChange_toDenied() async {
     getCredentialsCountUseCase.callAsFunctionReturnValue = 0
 
@@ -664,23 +649,22 @@ final class CameraViewModelTests: XCTestCase {
 
   // MARK: Private
 
-  // swiftlint: disable all
-  private var validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
-  private var fetchPresentationRequestUseCase = FetchPresentationRequestUseCaseProtocolSpy()
-  private var checkInvitationTypeUseCase = CheckInvitationTypeUseCaseProtocolSpy()
-  private var getCompatibleCredentialsUseCase = GetCompatibleCredentialsUseCaseProtocolSpy()
-  private var fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
-  private var getCredentialsCountUseCase = GetCredentialsCountUseCaseProtocolSpy()
-  private var saveDeferredCredentialUseCase = SaveDeferredCredentialUseCaseProtocolSpy()
-  @MainActor
-  private let accessibilityFeedback = CameraAccessibilityFeedbackProtocolSpy()
+  // swiftlint:disable implicitly_unwrapped_optional force_unwrapping
+  private let validateCredentialOfferInvitationUrlUseCase = ValidateCredentialOfferInvitationUrlUseCaseProtocolSpy()
+  private let fetchPresentationRequestUseCase = FetchPresentationRequestUseCaseProtocolSpy()
+  private let checkInvitationTypeUseCase = CheckInvitationTypeUseCaseProtocolSpy()
+  private let getCompatibleCredentialsUseCase = GetCompatibleCredentialsUseCaseProtocolSpy()
+  private let fetchCredentialUseCase = FetchCredentialUseCaseProtocolSpy()
+  private let getCredentialsCountUseCase = GetCredentialsCountUseCaseProtocolSpy()
+  private let saveDeferredCredentialUseCase = SaveDeferredCredentialUseCaseProtocolSpy()
+  private var accessibilityFeedback: CameraAccessibilityFeedbackProtocolSpy!
   private let cameraManager = MockCameraManager()
   private var viewModel: CameraViewModel!
   private let url = URL(string: "openid-credential-offer://url")!
 
   private var analytics: AnalyticsProtocol!
   private var analyticsProvider: MockProvider!
-  // swiftlint: enable all
+  // swiftlint:enable implicitly_unwrapped_optional force_unwrapping
 }
 
 extension CameraViewModelTests {
@@ -690,7 +674,6 @@ extension CameraViewModelTests {
     case qr
   }
 
-  @MainActor
   private func createViewModel(mode: InvitationMode = .qr) -> CameraViewModel {
     switch mode {
     case .qr: CameraViewModel()
@@ -698,7 +681,6 @@ extension CameraViewModelTests {
     }
   }
 
-  @MainActor
   private func assertsNoInternetConnexion() {
     if case .failure(let error as InvitationError) = viewModel.notificationState {
       XCTAssertEqual(error, .noConnection)
@@ -715,13 +697,11 @@ extension CameraViewModelTests {
     XCTAssertFalse(getCompatibleCredentialsUseCase.callAsFunctionUsingCalled)
   }
 
-  @MainActor
   private func assertSetMetadataUrlAccessibilityFeedback() {
     XCTAssertEqual(accessibilityFeedback.announceQRCodeDetectedCallsCount, 1)
     XCTAssertEqual(accessibilityFeedback.stopQRCodeLoadingAnnouncementsCallsCount, 1)
   }
 
-  @MainActor
   private func assertOnAppearWhenCameraIsReady() {
     XCTAssertEqual(cameraManager.configureCallCount, 1)
     XCTAssertEqual(cameraManager.startCallCount, 1)

@@ -15,7 +15,6 @@ extension CredentialGeneratorContext {
       authentication: CredentialAuthentication(accessToken: "accessToken"),
       issuerDisplays: [CredentialIssuerDisplay(
         id: UUID(),
-        credentialId: nil,
         image: nil)],
       rawCredentialData: RawCredentialData())
   }

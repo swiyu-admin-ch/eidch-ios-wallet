@@ -65,7 +65,7 @@ struct BiometricsView: View {
   // MARK: Private
 
   private enum Constants {
-    static var errorAnimation = Animation.interpolatingSpring(stiffness: 500, damping: 30)
+    static let errorAnimation = Animation.interpolatingSpring(stiffness: 500, damping: 30)
   }
 
   @AccessibilityFocusState private var errorFocusedState: Bool

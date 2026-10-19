@@ -9,10 +9,7 @@ struct CacheManagerTests {
   // MARK: Lifecycle
 
   init() {
-    let dateProvider = DateProvider(currentDate: Self.referenceDate)
-    self.dateProvider = dateProvider
-
-    Container.shared.currentDate.register { dateProvider.currentDate }
+    Container.shared.currentDate.register { Self.referenceDate }
 
     cacheManager = CacheManager<String>(defaultTimeToLive: 5 * 60)
   }
@@ -48,7 +45,7 @@ struct CacheManagerTests {
     _ = try await cacheManager.get(for: key, timeToLive: 1) {
       await fetchSpy.fetch(result: value)
     }
-    dateProvider.currentDate = Self.referenceDate.addingTimeInterval(2)
+    Container.shared.currentDate.register { Self.referenceDate.addingTimeInterval(2) }
 
     let cachedValue = try await cacheManager.get(for: key) {
       await fetchSpy.fetch(result: otherValue)
@@ -81,7 +78,7 @@ struct CacheManagerTests {
     _ = try await cacheManager.get(for: otherKey, timeToLive: 3) {
       await fetchSpy.fetch(result: otherValue)
     }
-    dateProvider.currentDate = Self.referenceDate.addingTimeInterval(2)
+    Container.shared.currentDate.register { Self.referenceDate.addingTimeInterval(2) }
 
     let refreshedValue = try await cacheManager.get(for: key) {
       await fetchSpy.fetch(result: "value1")
@@ -119,6 +116,9 @@ struct CacheManagerTests {
       Issue.record("Second fetch should never execute")
       return otherValue
     }
+    while await cacheManager.inFlightWaiterCount < 1 {
+      await Task.yield()
+    }
     await checkpoint.resumeNext()
 
     #expect(try await value1 == value)
@@ -146,6 +146,9 @@ struct CacheManagerTests {
         }
       }
     }()
+    while await cacheManager.inFlightWaiterCount < 1 {
+      await Task.yield()
+    }
 
     await checkpoint.resumeNext()
 
@@ -209,20 +212,6 @@ struct CacheManagerTests {
 
   // MARK: Private
 
-  private final class DateProvider {
-
-    // MARK: Lifecycle
-
-    init(currentDate: Date) {
-      self.currentDate = currentDate
-    }
-
-    // MARK: Internal
-
-    var currentDate: Date
-
-  }
-
   private actor FetchSpy {
     private(set) var callCount = 0
 
@@ -243,7 +232,6 @@ struct CacheManagerTests {
   private let checkpoint = TestCheckpoint()
 
   private let cacheManager: CacheManager<String>
-  private let dateProvider: DateProvider
   private let fetchSpy = FetchSpy()
 
 }

@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - NonComplianceExcessiveDataReport
 
-struct NonComplianceExcessiveDataReport: NonComplianceReport, Equatable {
+struct NonComplianceExcessiveDataReport: NonComplianceReport, Equatable, Sendable {
   let category = NonComplianceCategory.excessiveDataRequest
 
   let description: String

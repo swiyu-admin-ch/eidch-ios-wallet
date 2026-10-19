@@ -6,6 +6,7 @@ import Testing
 @testable import BITL10n
 @testable import BITTheming
 
+@MainActor
 @Suite(.container)
 struct DeferredCredentialViewModelTests {
 
@@ -40,6 +41,61 @@ struct DeferredCredentialViewModelTests {
   }
 
   @Test
+  func statusBadgeStyle_withInProgressCredential_isInfo() {
+    let viewModel = DeferredCredentialViewModel(credential: mockInProgressDeferredCredential)
+
+    #expect(viewModel.statusBadgeStyle == .info)
+  }
+
+  @Test
+  func statusBadgeStyle_withInvalidCredential_isError() {
+    let viewModel = DeferredCredentialViewModel(credential: mockInvalidDeferredCredential)
+
+    #expect(viewModel.statusBadgeStyle == .error)
+  }
+
+  @Test
+  func statusBadgeStyle_withIssuanceFailedCredential_isError() {
+    var credential = DeferredCredential.Mock.sample
+    credential.progressionState = .issuanceFailed
+
+    let viewModel = DeferredCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusBadgeStyle == .error)
+  }
+
+  @Test
+  func statusImage_withInProgressCredential_isInProgressIcon() {
+    let viewModel = DeferredCredentialViewModel(credential: mockInProgressDeferredCredential)
+
+    #expect(viewModel.statusImage == Assets.statusInProgress.swiftUIImage)
+  }
+
+  @Test
+  func statusImage_withInvalidCredential_isRejectedIcon() {
+    let viewModel = DeferredCredentialViewModel(credential: mockInvalidDeferredCredential)
+
+    #expect(viewModel.statusImage == Assets.statusRejected.swiftUIImage)
+  }
+
+  @Test
+  func statusImage_withIssuanceFailedCredential_isRejectedIcon() {
+    var credential = DeferredCredential.Mock.sample
+    credential.progressionState = .issuanceFailed
+
+    let viewModel = DeferredCredentialViewModel(credential: credential)
+
+    #expect(viewModel.statusImage == Assets.statusRejected.swiftUIImage)
+  }
+
+  @Test
+  func statusBadgeType_isPlainWithStatusStyle() {
+    let viewModel = DeferredCredentialViewModel(credential: .Mock.sample)
+
+    #expect(viewModel.statusBadgeType == .plain(.info))
+  }
+
+  @Test
   func isRefreshable_returnsFalse() {
     let viewModel = DeferredCredentialViewModel(credential: .Mock.sample)
 
@@ -62,8 +118,6 @@ struct DeferredCredentialViewModelTests {
   private func assert(viewModel: DeferredCredentialViewModel, with credential: DeferredCredential) {
     #expect(viewModel.id == credential.id)
     #expect(viewModel.credential == credential)
-    #expect(viewModel.statusBadgeAccessibilityText == viewModel.statusText)
-    #expect(viewModel.statusColor == ThemingAssets.Label.secondary.swiftUIColor)
     #expect(viewModel.cardStyle == .deferred)
 
     #expect(getCredentialDisplayUseCaseSpy.executeForColorSchemeCallsCount == 1)

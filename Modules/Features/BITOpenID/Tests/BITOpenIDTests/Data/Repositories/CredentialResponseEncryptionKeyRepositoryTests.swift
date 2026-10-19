@@ -69,9 +69,10 @@ final class CredentialResponseEncryptionKeyRepositoryTests: XCTestCase {
   private var keyManagerSpy: KeyManagerProtocolSpy!
 
   private func registerMocks() {
-    keyManagerSpy = KeyManagerProtocolSpy()
+    let keyManagerSpy = KeyManagerProtocolSpy()
+    self.keyManagerSpy = keyManagerSpy
 
-    Container.shared.keyManager.register { self.keyManagerSpy }
+    Container.shared.keyManager.register { keyManagerSpy }
   }
 
   private func success() {

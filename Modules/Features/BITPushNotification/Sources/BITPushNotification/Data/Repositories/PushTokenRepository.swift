@@ -4,7 +4,7 @@ import Spyable
 // MARK: - PushTokenRepositoryProtocol
 
 @Spyable
-public protocol PushTokenRepositoryProtocol {
+public protocol PushTokenRepositoryProtocol: Sendable {
   func get() async throws -> String
   func getCurrent() async -> String?
   func delete() async
