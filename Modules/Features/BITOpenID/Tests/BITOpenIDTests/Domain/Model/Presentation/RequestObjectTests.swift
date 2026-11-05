@@ -53,6 +53,17 @@ struct RequestObjectTests {
   }
 
   @Test
+  func decodingRequestObjectWithMultipleTrustStatements() throws {
+    let data = RequestObjectJWS.Mock.duplicateTrustStatements
+
+    let requestObject = try decoder.decode(RequestObject.self, from: data)
+
+    #expect(requestObject.identityTrustStatement != nil)
+    #expect(requestObject.protectedVerificationAuthorizationTrustStatement != nil)
+    #expect(requestObject.verificationQueryPublicStatement != nil)
+  }
+
+  @Test
   func decodingVcSdJwtRequestObjectWithUnsupportedClientMetadata() throws {
     let data = RequestObjectJWS.Mock.unsupportedClientMetadata
     let requestObject = try decoder.decode(RequestObject.self, from: data)
@@ -125,9 +136,6 @@ struct RequestObjectTests {
 
   @Test(arguments: [
     ValidationCase(
-      data: RequestObjectJWS.Mock.duplicateIdTS,
-      expected: .duplicateTrustStatement),
-    ValidationCase(
       data: RequestObjectJWS.Mock.missingDcqlQueryAndScopeData,
       expected: .missingDcqlQuery),
     ValidationCase(
@@ -139,12 +147,6 @@ struct RequestObjectTests {
     ValidationCase(
       data: RequestObjectJWS.Mock.queryScopeMismatch,
       expected: .noQueryFoundOnVQPS),
-    ValidationCase(
-      data: RequestObjectJWS.Mock.duplicateVqPS,
-      expected: .duplicateTrustStatement),
-    ValidationCase(
-      data: RequestObjectJWS.Mock.duplicatePvaTS,
-      expected: .duplicateTrustStatement),
   ])
   func validate_knownValidationErrors(testCase: ValidationCase) {
     #expect(throws: testCase.expected) {

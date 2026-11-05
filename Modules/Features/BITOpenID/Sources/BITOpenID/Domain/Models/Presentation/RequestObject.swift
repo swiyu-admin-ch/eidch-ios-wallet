@@ -10,7 +10,6 @@ public enum RequestObjectError: Error, Equatable {
   case invalidPayload(_ underlyingError: Error? = nil)
   case invalidQuery
   case missingDcqlQuery
-  case duplicateTrustStatement
   case missingVQPS
   case verifiedAndNotVerifiedQueryPresent
   case noQueryFoundOnVQPS
@@ -19,8 +18,7 @@ public enum RequestObjectError: Error, Equatable {
 
   public static func == (lhs: RequestObjectError, rhs: RequestObjectError) -> Bool {
     switch (lhs, rhs) {
-    case (.duplicateTrustStatement, .duplicateTrustStatement),
-         (.invalidPayload, .invalidPayload),
+    case (.invalidPayload, .invalidPayload),
          (.invalidQuery, .invalidQuery),
          (.missingDcqlQuery, .missingDcqlQuery),
          (.missingVQPS, .missingVQPS),
@@ -182,15 +180,13 @@ extension KeyedDecodingContainer<RequestObject.CodingKeys> {
     }
 
     let decoder = JWSDecoder()
-    var result: U?
     while !container.isAtEnd {
       let info = try container.decode(RequestObject.VerifierInfo.self)
       let data = Data(info.data.utf8)
       guard let decoded = try? decoder.decode(T.self, from: data) else { continue }
-      guard result == nil else { throw RequestObjectError.duplicateTrustStatement }
-      result = decoded as? U
+      return decoded as? U
     }
-    return result
+    return nil
   }
 }
 
